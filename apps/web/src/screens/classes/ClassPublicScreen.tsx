@@ -23,39 +23,6 @@ import { getLocaleFromI18n } from '@/utils/locale';
 
 type SourceType = 'teacher' | 'academy';
 
-// Función para construir URL de WhatsApp para clases
-function buildClassWhatsAppUrl(
-  phone?: string | null,
-  messageTemplate?: string | null,
-  className?: string,
-  helloFromDb?: string
-): string | undefined {
-  if (!phone) return undefined;
-  
-  const cleanedPhone = phone.replace(/[^\d]/g, '');
-  if (!cleanedPhone) return undefined;
-
-  let message = '';
-  if (messageTemplate && className) {
-    // Reemplazar {nombre} o {clase} con el nombre de la clase
-    message = messageTemplate
-      .replace(/\{nombre\}/g, className)
-      .replace(/\{clase\}/g, className);
-  } else if (className) {
-    // Mensaje por defecto si no hay template
-    message = t('me_interested_class', { name: className });
-  }
-
-  // Prepend "Hola vengo de Donde Bailar MX, " al mensaje
-  const defaultHello = helloFromDb || t('hello_from_db');
-  const fullMessage = message.trim() 
-    ? `${defaultHello}, ${message.trim()}`
-    : defaultHello;
-
-  const encoded = encodeURIComponent(fullMessage);
-  return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
-}
-
 export default function ClassPublicScreen() {
   const [sp] = useSearchParams();
   const params = useParams();
@@ -65,6 +32,39 @@ export default function ClassPublicScreen() {
   const createCheckout = useCreateCheckoutSession();
   const { t } = useTranslation();
   const locale = getLocaleFromI18n();
+
+  // Función para construir URL de WhatsApp para clases
+  const buildClassWhatsAppUrl = React.useCallback((
+    phone?: string | null,
+    messageTemplate?: string | null,
+    className?: string,
+    helloFromDb?: string
+  ): string | undefined => {
+    if (!phone) return undefined;
+    
+    const cleanedPhone = phone.replace(/[^\d]/g, '');
+    if (!cleanedPhone) return undefined;
+
+    let message = '';
+    if (messageTemplate && className) {
+      // Reemplazar {nombre} o {clase} con el nombre de la clase
+      message = messageTemplate
+        .replace(/\{nombre\}/g, className)
+        .replace(/\{clase\}/g, className);
+    } else if (className) {
+      // Mensaje por defecto si no hay template
+      message = t('me_interested_class', { name: className });
+    }
+
+    // Prepend "Hola vengo de Donde Bailar MX, " al mensaje
+    const defaultHello = helloFromDb || t('hello_from_db');
+    const fullMessage = message.trim() 
+      ? `${defaultHello}, ${message.trim()}`
+      : defaultHello;
+
+    const encoded = encodeURIComponent(fullMessage);
+    return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
+  }, [t]);
 
   // Permitir /clase?type=teacher&id=123 o /clase/:type/:id
   const sourceType = (params as any)?.type || (sp.get('type') as SourceType) || 'teacher';
@@ -570,6 +570,8 @@ export default function ClassPublicScreen() {
         </div>
       )}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+        
         .date-public-root { padding: 24px 0; }
         .date-public-inner { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
         
@@ -652,6 +654,7 @@ export default function ClassPublicScreen() {
           letter-spacing: -0.04em;
           line-height: 1.05;
           color: #fff;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         
         @media (max-width: 1024px) {
@@ -917,6 +920,7 @@ export default function ClassPublicScreen() {
           box-shadow:0 6px 18px rgba(0,0,0,0.18);
           backdrop-filter: blur(8px);
           transition: all 0.2s ease;
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         .chip-date { 
           background:linear-gradient(135deg, rgba(240,147,251,.18), rgba(152,71,255,0.16));
@@ -956,12 +960,12 @@ export default function ClassPublicScreen() {
         .loc-item{display:flex;align-items:flex-start;gap:.75rem;padding:1rem;border-radius:18px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);box-shadow:0 10px 24px rgba(0,0,0,0.18)}
         .loc-item-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.35rem;background:linear-gradient(135deg,rgba(240,147,251,0.22),rgba(240,147,251,0.08));border:1px solid rgba(240,147,251,0.32);color:#f5d6ff}
         .loc-item-content{display:flex;flex-direction:column;gap:.25rem}
-        .loc-item-content strong{font-size:.95rem;color:#fff;letter-spacing:.01em}
-        .loc-item-content span{font-size:.9rem;color:rgba(255,255,255,.78);line-height:1.45}
+        .loc-item-content strong{font-size:.95rem;color:#fff;letter-spacing:.01em;font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif}
+        .loc-item-content span{font-size:.9rem;color:rgba(255,255,255,.78);line-height:1.45;font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif}
         .muted{color:rgba(255,255,255,.72)}
         .divider{height:1px;background:rgba(255,255,255,.12);margin:.75rem 0}
         .actions{display:flex;gap:.75rem;flex-wrap:wrap}
-        .btn{display:inline-flex;align-items:center;gap:.55rem;padding:.6rem .95rem;border-radius:999px;font-weight:800;letter-spacing:.01em}
+        .btn{display:inline-flex;align-items:center;gap:.55rem;padding:.6rem .95rem;border-radius:999px;font-weight:800;letter-spacing:.01em;font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif}
         .btn-maps{border:1px solid rgba(240,147,251,.4);color:#f7d9ff; background:radial-gradient(120% 120% at 0% 0%,rgba(240,147,251,.18),rgba(240,147,251,.08)); box-shadow:0 6px 18px rgba(240,147,251,.20) }
         .btn-copy{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.06)}
       `}</style>
@@ -989,7 +993,7 @@ export default function ClassPublicScreen() {
             {/* Columna 1: Info de la clase */}
             <div>
               <div className="class-back-button-container" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', width: '100%' }}>
-                <motion.button
+                  <motion.button
                   className="class-back-button"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.97 }}
@@ -1003,7 +1007,8 @@ export default function ClassPublicScreen() {
                     fontWeight: 800,
                     cursor: 'pointer',
                     fontSize: '0.9rem',
-                    boxShadow: '0 8px 20px rgba(240,147,251,.25)'
+                    boxShadow: '0 8px 20px rgba(240,147,251,.25)',
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                   >
                     {t('back')}
@@ -1142,7 +1147,8 @@ export default function ClassPublicScreen() {
                       fontSize: '.9rem',
                       textDecoration: 'none',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}
                   >
                     <span>📍</span>
@@ -1173,7 +1179,8 @@ export default function ClassPublicScreen() {
                       fontSize: '.9rem',
                       textDecoration: 'none',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}
                   >
                     <FaWhatsapp size={18} />
@@ -1203,6 +1210,7 @@ export default function ClassPublicScreen() {
                       cursor: createCheckout.isPending ? 'not-allowed' : 'pointer',
                       opacity: createCheckout.isPending ? 0.7 : 1,
                       transition: 'all 0.2s ease',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}
                   >
                     <span>💳</span>
@@ -1532,7 +1540,8 @@ export default function ClassPublicScreen() {
                   borderBottom: '2px solid rgba(255,209,102,0.5)',
                   paddingBottom: '2px',
                   transition: 'all 0.2s',
-                  display: 'inline-block'
+                  display: 'inline-block',
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {creatorTypeLabel} · {creatorName}
                 </Link>

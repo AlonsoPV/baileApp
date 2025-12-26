@@ -92,8 +92,8 @@ export default function BrandProfileLive() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
-          <p style={{ fontSize: typography.fontSize.lg, marginBottom: spacing[2] }}>Estamos cargando la marca…</p>
-          <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8 }}>
+          <p style={{ fontSize: typography.fontSize.lg, marginBottom: spacing[2], fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Estamos cargando la marca…</p>
+          <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             Si tarda mucho, intenta refrescar la página para una carga más rápida.
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function BrandProfileLive() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>❌</div>
-          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>Marca no encontrada</h2>
+          <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4], fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Marca no encontrada</h2>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -123,7 +123,8 @@ export default function BrandProfileLive() {
               color: colors.gray[50],
               fontSize: typography.fontSize.base,
               fontWeight: typography.fontWeight.bold,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
             }}
           >
             🔍 Explorar
@@ -165,14 +166,18 @@ export default function BrandProfileLive() {
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+        
         .profile-container h2,
         .profile-container h3 {
           color: #fff;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         .section-title {
           font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0;
           display: flex; align-items: center; gap: .5rem;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         @media (max-width: 768px) { .brand-root { padding-top: calc(64px + max(env(safe-area-inset-top), 0px) + 0px); } }
         @media (max-width: 480px) { .brand-root { padding-top: calc(60px + max(env(safe-area-inset-top), 0px) + 0px); } }
@@ -232,6 +237,7 @@ export default function BrandProfileLive() {
           margin-top: .25rem;
           color: #e5e7eb;
           text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         @media (max-width: 768px) {
           .profile-container { max-width: 100% !important; padding: 1rem !important; }
@@ -376,7 +382,8 @@ export default function BrandProfileLive() {
                     border: '1px solid rgba(16,185,129,0.45)',
                     color: '#9be7a1',
                     fontSize: '0.8rem',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
                     <div
                       style={{
@@ -430,7 +437,8 @@ export default function BrandProfileLive() {
                     backdropFilter: 'blur(8px)',
                     cursor: 'pointer',
                     fontSize: '0.9rem',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
                   📤 Compartir
@@ -446,7 +454,8 @@ export default function BrandProfileLive() {
                       color: '#fff',
                       border: '1px solid rgba(255,255,255,0.25)',
                       fontSize: 12,
-                      fontWeight: 700
+                      fontWeight: 700,
+                      fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}
                   >
                     Copiado
@@ -464,6 +473,7 @@ export default function BrandProfileLive() {
                   fontWeight: 900,
                   letterSpacing: '0.02em',
                   lineHeight: 1.1,
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}
               >
                 {(brand as any).nombre_publico || (brand as any).nombre || 'Marca'}
@@ -476,7 +486,8 @@ export default function BrandProfileLive() {
                   lineHeight: 1.6, 
                   margin: '0.5rem 0',
                   fontSize: '1rem',
-                  color: 'rgba(255, 255, 255, 0.95)'
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {(brand as any).bio}
                 </p>
@@ -716,7 +727,7 @@ export default function BrandProfileLive() {
                 }}>
                   ✨
                 </div>
-                <h3 className="section-title" style={{ margin: 0 }}>Novedades</h3>
+                <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Novedades</h3>
               </div>
               <div className="brand-novedades-wrap" aria-label="Carrusel de novedades de productos">
                 {featured.slice(0, 6).map((item) => (
@@ -748,9 +759,9 @@ export default function BrandProfileLive() {
                       )}
                     </div>
                     <div className="brand-novedad-body">
-                      <h4 style={{ margin: '0.1rem 0' }}>{item.name}</h4>
+                      <h4 style={{ margin: '0.1rem 0', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{item.name}</h4>
                       {item.description && (
-                        <p style={{ margin: '0.15rem 0', fontSize: '0.9rem', opacity: 0.8 }}>{item.description}</p>
+                        <p style={{ margin: '0.15rem 0', fontSize: '0.9rem', opacity: 0.8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{item.description}</p>
                       )}
                       {item.price && (
                         <div className="brand-novedad-price">{item.price}</div>
@@ -776,6 +787,7 @@ export default function BrandProfileLive() {
                             fontWeight: 600,
                             fontSize: '0.85rem',
                             transition: 'all 0.3s ease',
+                            fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                             boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
                             border: 'none',
                             cursor: 'pointer',
@@ -829,8 +841,8 @@ export default function BrandProfileLive() {
                   🛍️
                 </div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Catálogo de Productos</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                  <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Catálogo de Productos</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     Explora nuestra colección
                   </p>
                 </div>
@@ -877,8 +889,8 @@ export default function BrandProfileLive() {
                   📏
                 </div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Guía de Tallas y Ajuste</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                  <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Guía de Tallas y Ajuste</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     Encuentra tu talla perfecta
                   </p>
                 </div>
@@ -912,8 +924,8 @@ export default function BrandProfileLive() {
                 💬
               </div>
               <div>
-                <h3 className="section-title" style={{ margin: 0 }}>Qué dice la comunidad</h3>
-                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Qué dice la comunidad</h3>
+                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Opiniones de personas que ya usan esta marca
                 </p>
               </div>
@@ -959,8 +971,8 @@ export default function BrandProfileLive() {
                 🌿
               </div>
               <div>
-                <h3 className="section-title" style={{ margin: 0 }}>Compromiso con la calidad</h3>
-                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Compromiso con la calidad</h3>
+                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Cómo se fabrican las piezas y qué las hace especiales
                 </p>
               </div>
@@ -1003,28 +1015,28 @@ export default function BrandProfileLive() {
                 ❓
               </div>
               <div>
-                <h3 className="section-title" style={{ margin: 0 }}>Preguntas frecuentes</h3>
-                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Preguntas frecuentes</h3>
+                <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Respuestas rápidas sobre envíos, cambios y cuidado de tus prendas
                 </p>
               </div>
             </div>
             <div style={{ display: 'grid', gap: '.6rem' }}>
               <details style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, background: 'rgba(255,255,255,.03)', padding: '.6rem 1rem' }}>
-                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>¿Cuánto tardan los envíos?</summary>
-                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>¿Cuánto tardan los envíos?</summary>
+                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   En promedio 2–5 días hábiles dentro de México. Algunos drops especiales pueden especificar tiempos distintos.
                 </div>
               </details>
               <details style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, background: 'rgba(255,255,255,.03)', padding: '.6rem 1rem' }}>
-                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>¿Puedo cambiar una talla?</summary>
-                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>¿Puedo cambiar una talla?</summary>
+                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Sí, contamos con ventana de cambios. Revisa las políticas de la marca más arriba para ver el detalle de días y condiciones.
                 </div>
               </details>
               <details style={{ border: '1px solid rgba(255,255,255,.12)', borderRadius: 12, background: 'rgba(255,255,255,.03)', padding: '.6rem 1rem' }}>
-                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>¿Cómo cuido mis prendas?</summary>
-                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>¿Cómo cuido mis prendas?</summary>
+                <div style={{ margin: '.5rem 0 .2rem', color: 'rgba(255,255,255,.75)', fontSize: '0.9rem', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Recomendamos lavar en frío, ciclo suave y secado a la sombra. Para prendas de baile, evita suavizantes fuertes para mantener la estructura.
                 </div>
               </details>
@@ -1060,8 +1072,8 @@ export default function BrandProfileLive() {
                   🔒
                 </div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Políticas de la Marca</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0' }}>
+                  <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Políticas de la Marca</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: '0.25rem 0 0 0', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     Envíos, cambios y garantías
                   </p>
                 </div>
@@ -1080,11 +1092,12 @@ export default function BrandProfileLive() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      fontSize: '1rem'
+                      fontSize: '1rem',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}>
                       📦 Envíos
                     </div>
-                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6' }}>
+                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {policies.shipping}
                     </div>
                   </div>
@@ -1102,11 +1115,12 @@ export default function BrandProfileLive() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      fontSize: '1rem'
+                      fontSize: '1rem',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}>
                       🔄 Cambios y Devoluciones
                     </div>
-                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6' }}>
+                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {policies.returns}
                     </div>
                   </div>
@@ -1124,11 +1138,12 @@ export default function BrandProfileLive() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      fontSize: '1rem'
+                      fontSize: '1rem',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}>
                       ✅ Garantía
                     </div>
-                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6' }}>
+                    <div style={{ fontSize: '0.95rem', opacity: 0.9, lineHeight: '1.6', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {policies.warranty}
                     </div>
                   </div>
@@ -1145,7 +1160,7 @@ export default function BrandProfileLive() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.24, delay: 0.14 }}
             >
-              <h3 className="section-title">🤝 Colaboraciones</h3>
+                  <h3 className="section-title" style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>🤝 Colaboraciones</h3>
               <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
                 {partners.map((p: any) => (
                   <a key={p.id} href={p.href} style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 999, padding: '.45rem .7rem', background: 'rgba(255,255,255,0.06)', color: '#fff' }}>
@@ -1186,11 +1201,11 @@ export default function BrandProfileLive() {
                   🎁
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3 className="section-title" style={{ margin: 0 }}>
+                  <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {conversion?.headline || 'Promoción Especial'}
                   </h3>
                   {conversion?.subtitle && (
-                    <p style={{ fontSize: '0.95rem', opacity: 0.85, margin: '0.25rem 0 0 0' }}>
+                    <p style={{ fontSize: '0.95rem', opacity: 0.85, margin: '0.25rem 0 0 0', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {conversion.subtitle}
                     </p>
                   )}
@@ -1250,6 +1265,7 @@ export default function BrandProfileLive() {
                       fontWeight: 900,
                       fontSize: '1rem',
                       textDecoration: 'none',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.5rem',
@@ -1589,6 +1605,7 @@ function CatalogTabs({
                         fontWeight: 600,
                         fontSize: '0.95rem',
                         transition: 'all 0.3s ease',
+                        fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                         boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
                         border: 'none',
                         cursor: 'pointer',
@@ -1647,10 +1664,10 @@ function FitTips({ tips = [] as { style:string; tip:string }[] }){
   ];
   return (
     <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, padding: '.75rem', background: 'rgba(255,255,255,0.05)' }}>
-      <b>Fit recomendado por estilo</b>
-      <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1rem', lineHeight: 1.6 }}>
+      <b style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Fit recomendado por estilo</b>
+      <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1rem', lineHeight: 1.6, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
         {data.map((it, i) => (
-          <li key={i}><b>{it.style}:</b> {it.tip}</li>
+          <li key={i}><b style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{it.style}:</b> {it.tip}</li>
         ))}
       </ul>
     </div>

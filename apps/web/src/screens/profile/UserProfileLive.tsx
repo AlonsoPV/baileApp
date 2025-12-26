@@ -22,6 +22,8 @@ import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 
 const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+  
   .profile-container {
     width: 100%;
     max-width: 900px;
@@ -62,6 +64,7 @@ const STYLES = `
   .profile-container h3 {
     color: #fff;
     text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .section-title {
     font-size: 1.5rem;
@@ -70,6 +73,7 @@ const STYLES = `
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .carousel-container {
     position: relative;
@@ -150,6 +154,7 @@ const STYLES = `
     border-radius: 20px;
     font-size: 0.875rem;
     font-weight: 600;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   
   .glass-card-container {
@@ -712,8 +717,8 @@ export const UserProfileLive: React.FC = () => {
           }}
         >
           <div style={{ textAlign: 'center', maxWidth: '400px', padding: '0 16px' }}>
-            <p style={{ marginBottom: '8px' }}>Estamos cargando tu perfil...</p>
-            <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+            <p style={{ marginBottom: '8px', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Estamos cargando tu perfil...</p>
+            <p style={{ fontSize: '0.9rem', opacity: 0.8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               Si tarda mucho, intenta refrescar la página para una carga más rápida.
             </p>
           </div>
@@ -821,7 +826,7 @@ export const UserProfileLive: React.FC = () => {
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </motion.button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
+          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Copiado</div>}
           <div
             id="user-profile-banner-grid"
             data-baile-id="user-profile-banner-grid"
@@ -944,7 +949,8 @@ export const UserProfileLive: React.FC = () => {
                     backdropFilter: 'blur(8px)',
                     cursor: 'pointer',
                     fontSize: '0.9rem',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
                   📤 Compartir
@@ -973,7 +979,8 @@ export const UserProfileLive: React.FC = () => {
                   margin: 0,
                   color: '#fff',
                   lineHeight: '1.2',
-                  textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px'
+                  textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px',
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}
               >
                 {profile?.display_name || 'Usuario'}
@@ -1009,10 +1016,10 @@ export const UserProfileLive: React.FC = () => {
                   >
                     <span style={{ fontSize: '1rem', opacity: 0.9 }}>{chip.icon}</span>
                     <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-                      <span style={{ fontSize: '0.75rem', letterSpacing: 0.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' }}>
+                      <span style={{ fontSize: '0.75rem', letterSpacing: 0.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                         {chip.label}
                       </span>
-                      <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>{chip.value}</span>
+                      <span style={{ fontSize: '1.15rem', fontWeight: 800, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{chip.value}</span>
                     </div>
                     <span
                       aria-hidden
@@ -1119,7 +1126,8 @@ export const UserProfileLive: React.FC = () => {
                     boxShadow: networkTab === 'following'
                       ? '0 12px 28px rgba(82,144,250,0.35), inset 0 1px 0 rgba(255,255,255,0.22)'
                       : 'inset 0 1px 0 rgba(255,255,255,0.08)',
-                    transform: networkTab === 'following' ? 'translateY(-1px)' : 'translateY(0)'
+                    transform: networkTab === 'following' ? 'translateY(-1px)' : 'translateY(0)',
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
                   <span style={{ opacity: 0.9, marginRight: 6 }}>➜</span> Sigues {counts.following}
@@ -1141,7 +1149,8 @@ export const UserProfileLive: React.FC = () => {
                     boxShadow: networkTab === 'followers'
                       ? '0 12px 28px rgba(82,144,250,0.35), inset 0 1px 0 rgba(255,255,255,0.22)'
                       : 'inset 0 1px 0 rgba(255,255,255,0.08)',
-                    transform: networkTab === 'followers' ? 'translateY(-1px)' : 'translateY(0)'
+                    transform: networkTab === 'followers' ? 'translateY(-1px)' : 'translateY(0)',
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
                   <span style={{ opacity: 0.9, marginRight: 6 }}>★</span> Seguidores {counts.followers}
@@ -1160,9 +1169,11 @@ export const UserProfileLive: React.FC = () => {
                   color: 'rgba(255,255,255,0.7)'
                 }}
               >
-                {networkTab === 'following'
-                  ? 'Aún no sigues a nadie. Descubre nuevos perfiles en Explorar.'
-                  : 'Todavía no tienes seguidores. Comparte tu perfil para que más personas te encuentren.'}
+                <span style={{ fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                  {networkTab === 'following'
+                    ? 'Aún no sigues a nadie. Descubre nuevos perfiles en Explorar.'
+                    : 'Todavía no tienes seguidores. Comparte tu perfil para que más personas te encuentren.'}
+                </span>
               </div>
             ) : (
               <div style={{ position: 'relative' }}>
@@ -1259,7 +1270,7 @@ export const UserProfileLive: React.FC = () => {
                           </div>
                         </div>
                         <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                          <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem' }}>
+                          <div style={{ fontWeight: 800, color: '#fff', fontSize: '1rem', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                             {person.display_name || 'Bailarín'}
                           </div>
                           <span
@@ -1272,7 +1283,8 @@ export const UserProfileLive: React.FC = () => {
                               textTransform: 'uppercase',
                               background: 'rgba(0,0,0,0.35)',
                               border: '1px solid rgba(255,255,255,0.18)',
-                              color: 'rgba(255,255,255,0.8)'
+                              color: 'rgba(255,255,255,0.8)',
+                              fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                             }}
                           >
                             {networkTab === 'followers' ? 'Te sigue' : 'Lo sigues'}
@@ -1290,10 +1302,10 @@ export const UserProfileLive: React.FC = () => {
                           borderTop: '1px solid rgba(255,255,255,0.08)'
                         }}
                       >
-                        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', fontWeight: 600 }}>
+                        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', fontWeight: 600, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                           Ver perfil
                         </span>
-                        <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>→</span>
+                        <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>→</span>
                       </div>
                     </button>
                   ))}
@@ -1357,7 +1369,8 @@ export const UserProfileLive: React.FC = () => {
                     fontSize: '1.05rem',
                     lineHeight: '1.7',
                     color: 'rgba(255, 255, 255, 0.95)',
-                    fontWeight: '400'
+                    fontWeight: '400',
+                    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
                     {profile?.respuestas?.dato_curioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
                   </div>
@@ -1384,7 +1397,8 @@ export const UserProfileLive: React.FC = () => {
                     fontSize: '1.05rem',
                     lineHeight: '1.7',
                     color: 'rgba(255, 255, 255, 0.95)',
-                    fontWeight: '400'
+                    fontWeight: '400',
+                    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
                     {profile?.respuestas?.gusta_bailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
                   </div>
@@ -1454,7 +1468,8 @@ export const UserProfileLive: React.FC = () => {
                   fontSize: '0.875rem',
                   fontWeight: '600',
                   color: colors.light,
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {availableRsvpEvents.length} evento{availableRsvpEvents.length !== 1 ? 's' : ''}
                 </div>
@@ -1499,7 +1514,8 @@ export const UserProfileLive: React.FC = () => {
                   fontSize: '1.125rem',
                   fontWeight: '600',
                   marginBottom: '0.5rem',
-                  color: colors.light
+                  color: colors.light,
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   Sin eventos de interés por ahora
                 </h4>
@@ -1507,7 +1523,8 @@ export const UserProfileLive: React.FC = () => {
                   fontSize: '0.875rem',
                   opacity: 0.7,
                   marginBottom: '1.5rem',
-                  color: colors.light
+                  color: colors.light,
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   Explora eventos y marca los que te interesen para verlos aquí
                 </p>
@@ -1524,7 +1541,8 @@ export const UserProfileLive: React.FC = () => {
                     fontSize: '0.875rem',
                     fontWeight: '600',
                     cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
                   🔍 Explorar Eventos
@@ -1661,7 +1679,8 @@ export const UserProfileLive: React.FC = () => {
                   borderRadius: '20px',
                   fontSize: '0.875rem',
                   fontWeight: '600',
-                  color: colors.light
+                  color: colors.light,
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
                 </div>

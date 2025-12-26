@@ -493,7 +493,7 @@ export default function TeacherProfileLive() {
         color: colors.light,
       }}>
         <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-        <p>Cargando maestro...</p>
+        <p style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Cargando maestro...</p>
       </div>
     );
   }
@@ -515,10 +515,10 @@ export default function TeacherProfileLive() {
       }}>
         <div>
           <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⚠️</div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '2rem', marginBottom: '16px', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             Error al cargar perfil
           </h2>
-          <p style={{ opacity: 0.7, marginBottom: '24px' }}>
+          <p style={{ opacity: 0.7, marginBottom: '24px', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             {errorMessage}
             {errorCode && ` (Código: ${errorCode})`}
           </p>
@@ -536,6 +536,7 @@ export default function TeacherProfileLive() {
               cursor: 'pointer',
               fontSize: '1rem',
               fontWeight: 600,
+              fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
             }}
           >
             Reintentar
@@ -558,13 +559,13 @@ export default function TeacherProfileLive() {
       }}>
         <div>
           <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '2rem', marginBottom: '16px', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             Estamos cargando tu perfil...
           </h2>
-          <p style={{ opacity: 0.7, marginBottom: '8px' }}>
+          <p style={{ opacity: 0.7, marginBottom: '8px', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             Redirigiendo a edición para crear tu perfil de maestro
           </p>
-          <p style={{ opacity: 0.6, fontSize: '0.9rem' }}>
+          <p style={{ opacity: 0.6, fontSize: '0.9rem', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
             Si tarda mucho, intenta refrescar la página para una carga más rápida.
           </p>
         </div>
@@ -664,7 +665,7 @@ export default function TeacherProfileLive() {
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </motion.button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
+          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Copiado</div>}
           <div className="teacher-banner-grid">
             <div style={{
               display: 'flex',
@@ -752,7 +753,8 @@ export default function TeacherProfileLive() {
                     backdropFilter: 'blur(8px)',
                     cursor: 'pointer',
                     fontSize: '0.9rem',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
                   📤 Compartir
@@ -768,7 +770,8 @@ export default function TeacherProfileLive() {
                 fontWeight: '800',
                 color: 'white',
                 margin: '0 0 0.5rem 0',
-                textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 {(teacher as any)?.nombre_publico}
               </h1>
@@ -792,7 +795,8 @@ export default function TeacherProfileLive() {
                 fontSize: '1.25rem',
                 color: 'rgba(255, 255, 255, 0.9)',
                 margin: '0 0 1.5rem 0',
-                lineHeight: 1.4
+                lineHeight: 1.4,
+                fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 Maestro
               </p>
@@ -944,13 +948,14 @@ export default function TeacherProfileLive() {
                 🎓
               </div>
               <div>
-                <h3 className="section-title" style={{ margin: 0 }}>Mis clases</h3>
+                <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Mis clases</h3>
                 <p style={{
                   fontSize: '0.9rem',
                   opacity: 0.8,
                   margin: '0.25rem 0 0 0',
                   fontWeight: '500',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   Horarios, costos y ubicaciones
                 </p>
@@ -960,7 +965,7 @@ export default function TeacherProfileLive() {
             {/* Contenido de clases */}
             <div style={{ position: 'relative', zIndex: 1 }}>
               {classesLoading ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   Cargando clases...
                 </div>
               ) : classesFromTables && classesFromTables.length > 0 ? (
@@ -1012,8 +1017,8 @@ export default function TeacherProfileLive() {
               <header className="promo-header">
                 <div className="promo-icon">💸</div>
                 <div>
-                  <h3>Promociones y Paquetes</h3>
-                  <p>Ofertas especiales y descuentos disponibles</p>
+                  <h3 style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Promociones y Paquetes</h3>
+                  <p style={{ fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Ofertas especiales y descuentos disponibles</p>
                 </div>
               </header>
 
@@ -1045,7 +1050,7 @@ export default function TeacherProfileLive() {
                         <span className={`promo-chip${isDestacado ? ' promo-chip--destacado' : ''}`}>
                           {typeMeta.icon} {typeMeta.label}
                         </span>
-                        <h3>{promo?.nombre || 'Promoción'}</h3>
+                        <h3 style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{promo?.nombre || 'Promoción'}</h3>
                         {promo?.descripcion && (
                           <p className="promo-desc">{promo.descripcion}</p>
                         )}
@@ -1093,8 +1098,8 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(240, 147, 251, 0.4)' }}>🏆</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Mis Grupos de Competencia</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Grupos de entrenamiento y competencia</p>
+                  <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Mis Grupos de Competencia</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Grupos de entrenamiento y competencia</p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -1149,8 +1154,8 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)' }}>🎓</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Doy clases en</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Academias donde colaboro</p>
+                  <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Doy clases en</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Academias donde colaboro</p>
                 </div>
               </div>
               <Suspense fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
@@ -1230,8 +1235,8 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FB8C00, #FF7043)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)' }}>❓</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Información para Estudiantes</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Preguntas frecuentes</p>
+                  <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Información para Estudiantes</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Preguntas frecuentes</p>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1266,8 +1271,8 @@ export default function TeacherProfileLive() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(34, 197, 94, 0.4)' }}>⭐</div>
                 <div>
-                  <h3 className="section-title" style={{ margin: 0 }}>Qué dicen mis alumnos</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>Testimonios de estudiantes</p>
+                  <h3 className="section-title" style={{ margin: 0, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Qué dicen mis alumnos</h3>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Testimonios de estudiantes</p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
@@ -1289,16 +1294,16 @@ export default function TeacherProfileLive() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                       <div>
-                        <div style={{ fontWeight: 700, color: '#fff', fontSize: '1rem' }}>{review.author}</div>
+                        <div style={{ fontWeight: 700, color: '#fff', fontSize: '1rem', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{review.author}</div>
                         {review.location && (
-                          <div style={{ fontSize: '0.85rem', opacity: 0.75, color: 'rgba(255,255,255,0.8)' }}>{review.location}</div>
+                          <div style={{ fontSize: '0.85rem', opacity: 0.75, color: 'rgba(255,255,255,0.8)', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{review.location}</div>
                         )}
                       </div>
                       <div style={{ letterSpacing: '0.15rem', fontSize: '0.9rem', color: '#FFD166' }}>
                         {'★'.repeat(review.rating || 5)}{'☆'.repeat(5 - (review.rating || 5))}
                       </div>
                     </div>
-                    <p style={{ fontSize: '0.9rem', opacity: 0.85, margin: 0, lineHeight: 1.6, fontStyle: 'italic' }}>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.85, margin: 0, lineHeight: 1.6, fontStyle: 'italic', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       "{review.text}"
                     </p>
                   </motion.div>
@@ -1364,7 +1369,7 @@ export default function TeacherProfileLive() {
                   🎥
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
+                  <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     Video Principal
                   </h3>
                   <p style={{
@@ -1372,7 +1377,8 @@ export default function TeacherProfileLive() {
                     fontSize: '0.75rem',
                     color: 'rgba(255, 255, 255, 0.7)',
                     fontWeight: 400,
-                    lineHeight: 1.2
+                    lineHeight: 1.2,
+                    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
                     Contenido multimedia destacado
                   </p>
@@ -1471,7 +1477,7 @@ export default function TeacherProfileLive() {
                 justifyContent: 'space-between',
                 marginBottom: '1.5rem'
               }}>
-                <h3 className="section-title">
+                <h3 className="section-title" style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   📷 Galería de Fotos
                 </h3>
                 <div style={{
@@ -1480,7 +1486,8 @@ export default function TeacherProfileLive() {
                   borderRadius: '20px',
                   fontSize: '0.875rem',
                   fontWeight: '600',
-                  color: colors.light
+                  color: colors.light,
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
                 </div>

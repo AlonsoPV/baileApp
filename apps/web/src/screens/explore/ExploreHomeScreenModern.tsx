@@ -263,6 +263,8 @@ const CTACard = React.memo(({
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+        
         /* En escritorio, igualar ALTURA con las ClassCard (que ahora usan fillHeight en el slider).
            En mobile mantenemos la proporción 4/5 para que se vea consistente. */
         .cta-card-mobile {
@@ -337,7 +339,8 @@ const CTACard = React.memo(({
           fontSize: '0.75rem',
           fontWeight: 700,
           boxShadow: '0 4px 12px rgba(240, 147, 251, 0.5)',
-          border: '2px solid rgba(255, 255, 255, 0.3)'
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
         }}>
           {t('join')}
         </div>
@@ -361,7 +364,8 @@ const CTACard = React.memo(({
           fontWeight: 600,
           margin: 0,
           lineHeight: 1.4,
-          maxWidth: '90%'
+          maxWidth: '90%',
+          fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
         }}>
           {text}
         </p>

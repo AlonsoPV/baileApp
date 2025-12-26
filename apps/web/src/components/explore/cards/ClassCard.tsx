@@ -202,6 +202,8 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+        
         .class-card-mobile {
           width: 100%;
         }
@@ -316,6 +318,7 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
           border: 1px solid rgba(255, 255, 255, 0.14);
           background: rgba(17, 21, 32, 0.55);
           backdrop-filter: blur(8px);
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .class-card-badge.hot {
@@ -340,6 +343,7 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
           word-break: break-word;
           line-height: 1.3;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .class-card-meta {
@@ -364,6 +368,7 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
           overflow: hidden;
           text-overflow: ellipsis;
           backdrop-filter: blur(8px);
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .class-card-actions {
@@ -465,8 +470,8 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
             <h3 className="class-card-title">{item.titulo || 'Clase'}</h3>
 
             {item.ownerName && (
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8 }}>
-                por <strong style={{ color: '#fff' }}>{item.ownerName}</strong>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                por <strong style={{ color: '#fff', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{item.ownerName}</strong>
               </div>
             )}
 

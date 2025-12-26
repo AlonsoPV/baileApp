@@ -93,16 +93,34 @@ export function useUserProfile() {
         });
         
         if (rpcError) {
+          console.error("[useUserProfile] RPC error:", rpcError);
+          
           // Si el RPC falla, intentar upsert directo como fallback
           if (import.meta.env.MODE === "development") {
             console.warn("[useUserProfile] RPC failed, trying direct upsert:", rpcError);
           }
+          
+          // Limpiar valores undefined del patch antes del upsert
+          const cleanPatch: any = {};
+          for (const [key, value] of Object.entries(patch)) {
+            if (value !== undefined) {
+              cleanPatch[key] = value === null ? null : value;
+            }
+          }
+          
           const { error: upsertError } = await supabase
             .from("profiles_user")
-            .upsert({ user_id: user.id, ...(patch as any) }, { onConflict: 'user_id' });
+            .upsert({ user_id: user.id, ...cleanPatch }, { onConflict: 'user_id' });
+            
           if (upsertError) {
             console.error("[useUserProfile] Upsert fallback failed:", upsertError);
-            throw upsertError;
+            
+            // Crear un error más descriptivo
+            const errorMessage = upsertError.message || 'Error al guardar el perfil';
+            const error = new Error(errorMessage);
+            (error as any).code = upsertError.code;
+            (error as any).details = upsertError.details;
+            throw error;
           }
         }
       } catch (e: any) {

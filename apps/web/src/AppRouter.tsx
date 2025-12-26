@@ -84,6 +84,7 @@ import RequestRoleScreen from './screens/roles/RequestRoleScreen';
 import RolesInfoScreen from './screens/roles/RolesInfoScreen';
 import ValidationInfoScreen from './screens/static/ValidationInfoScreen';
 import IntegrityDebugScreen from './screens/debug/IntegrityDebugScreen';
+import SupportScreen from './screens/static/SupportScreen';
 
 // Challenges
 import ChallengesList from './screens/challenges/ChallengesList';
@@ -137,6 +138,7 @@ export default function AppRouter() {
         <Route path="/explore/list" element={<ExploreListScreen />} />
         <Route path="/quienes-somos" element={<QuienesSomosScreen />} />
         <Route path="/about" element={<AboutScreen />} />
+        <Route path="/soporte" element={<SupportScreen />} />
         <Route path="/legal" element={<LegalScreen />} />
         <Route path="/aviso-de-privacidad" element={<LegalScreen />} />
         <Route path="/eliminar-cuenta" element={<DeleteAccountScreen />} />

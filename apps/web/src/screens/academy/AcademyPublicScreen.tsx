@@ -611,6 +611,8 @@ const formatCurrency = (value?: number | string | null) => {
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
 const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+  
   .academy-container { width: 100%; max-width: 900px; margin: 0 auto; }
   .academy-banner { width: 100%; max-width: 900px; margin: 0 auto; position: relative; }
   .glass-card-container {
@@ -623,10 +625,12 @@ const STYLES = `
   .academy-container h3 {
     color: #fff;
     text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .section-title {
     font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0;
     display: flex; align-items: center; gap: 0.5rem;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .academy-banner-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center; }
   .academy-banner-avatar {
@@ -707,6 +711,7 @@ const STYLES = `
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .academy-section-subtitle {
     font-size: 0.9rem;
@@ -714,6 +719,7 @@ const STYLES = `
     margin: 0.25rem 0 0 0;
     fontWeight: 500;
     color: rgba(255, 255, 255, 0.9);
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .academy-videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
   .promo-section {
@@ -745,11 +751,13 @@ const STYLES = `
     color: #fff;
     margin: 0;
     font-weight: 900;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-header p {
     color: #a9b1c8;
     font-size: 0.95rem;
     margin: 0.5rem 0 0 0;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-list {
     display: flex;
@@ -790,6 +798,7 @@ const STYLES = `
     background: rgba(37, 99, 235, 0.15);
     color: #bfdbfe;
     border: 1px solid rgba(59, 130, 246, 0.5);
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-chip--destacado {
     background: rgba(249, 115, 22, 0.18);
@@ -801,11 +810,13 @@ const STYLES = `
     color: #fff;
     margin: 0;
     font-weight: 800;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-desc {
     color: #a9b1c8;
     font-size: 0.9rem;
     margin: 0;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-price-box {
     min-width: 120px;
@@ -827,6 +838,7 @@ const STYLES = `
     font-weight: 700;
     color: #fff;
     margin: 0;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-unit {
     font-size: 0.75rem;
@@ -834,6 +846,7 @@ const STYLES = `
     text-transform: uppercase;
     color: rgba(191, 219, 254, 0.85);
     margin: 0;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   @media (max-width: 768px) {
     .academy-container { padding: 1rem !important; }
@@ -942,6 +955,7 @@ const STYLES = `
     margin: 0 0 0.25rem 0;
     color: #fff;
     text-shadow: 0 2px 8px rgba(229, 57, 53, 0.3), 0 0 16px rgba(251, 140, 0, 0.2);
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .photo-gallery-section-subtitle {
     font-size: 0.95rem;
@@ -949,6 +963,7 @@ const STYLES = `
     margin: 0;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 500;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .photo-gallery-section-count {
     display: flex;
@@ -968,6 +983,7 @@ const STYLES = `
     color: #fff;
     line-height: 1;
     margin-bottom: 0.125rem;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .photo-gallery-section-count-label {
     font-size: 0.75rem;
@@ -975,6 +991,7 @@ const STYLES = `
     letter-spacing: 0.1em;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 600;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   @media (max-width: 768px) {
     .photo-gallery-section {
@@ -1117,6 +1134,7 @@ const STYLES = `
     margin: 0 0 0.25rem 0;
     color: #fff;
     text-shadow: 0 2px 8px rgba(229, 57, 53, 0.3), 0 0 16px rgba(251, 140, 0, 0.2);
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .teachers-invited-subtitle {
     font-size: 0.95rem;
@@ -1124,6 +1142,7 @@ const STYLES = `
     margin: 0;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 500;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .teachers-invited-section .horizontal-slider-grid {
     display: grid !important;
@@ -1277,7 +1296,8 @@ export default function AcademyPublicScreen() {
           color: 'rgba(255, 255, 255, 0.95)',
           margin: 0,
           marginBottom: shouldTruncate ? '1rem' : 0,
-          fontWeight: 400
+          fontWeight: 400,
+          fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
         }}>
           {displayText}
         </p>
@@ -1294,7 +1314,8 @@ export default function AcademyPublicScreen() {
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              alignSelf: 'flex-start'
+              alignSelf: 'flex-start',
+              fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
@@ -1581,12 +1602,19 @@ export default function AcademyPublicScreen() {
             <div>
               <h1 style={{
                 fontSize: '3rem', display: 'inline', fontWeight: 800, color: 'white',
-                margin: '0 0 0.5rem 0', textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                margin: '0 0 0.5rem 0', textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 {academy.nombre_publico}
               </h1>
 
-              <p style={{ fontSize: '1.25rem', color: 'rgba(255, 255, 255, 0.9)', margin: '0 0 1.5rem 0', lineHeight: 1.4 }}>
+              <p style={{ 
+                fontSize: '1.25rem', 
+                color: 'rgba(255, 255, 255, 0.9)', 
+                margin: '0 0 1.5rem 0', 
+                lineHeight: 1.4,
+                fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+              }}>
                 {t('dance_academy')}
               </p>
 
@@ -2213,7 +2241,8 @@ export default function AcademyPublicScreen() {
                       fontWeight: 900,
                       margin: 0,
                       color: '#fff',
-                      textShadow: '0 2px 8px rgba(229, 57, 53, 0.3), 0 0 16px rgba(251, 140, 0, 0.2)'
+                      textShadow: '0 2px 8px rgba(229, 57, 53, 0.3), 0 0 16px rgba(251, 140, 0, 0.2)',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}>
                       {t('more_about_us')}
                     </h2>
@@ -2222,7 +2251,8 @@ export default function AcademyPublicScreen() {
                       opacity: 0.85,
                       margin: '0.25rem 0 0 0',
                       color: 'rgba(255, 255, 255, 0.9)',
-                      fontWeight: 500
+                      fontWeight: 500,
+                      fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}>
                       {t('learn_more_academy')}
                     </p>
@@ -2265,7 +2295,8 @@ export default function AcademyPublicScreen() {
                             textDecoration: 'none',
                             transition: 'all 0.3s ease',
                             boxShadow: '0 8px 24px rgba(30,136,229,0.3)',
-                            width: 'fit-content'
+                            width: 'fit-content',
+                            fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.35), rgba(124,77,255,0.35))';
@@ -2316,7 +2347,8 @@ export default function AcademyPublicScreen() {
                         textDecoration: 'none',
                         transition: 'all 0.3s ease',
                         boxShadow: '0 8px 24px rgba(30,136,229,0.3)',
-                        width: 'fit-content'
+                        width: 'fit-content',
+                        fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'linear-gradient(135deg, rgba(30,136,229,0.35), rgba(124,77,255,0.35))';
@@ -2371,51 +2403,53 @@ export default function AcademyPublicScreen() {
                 justifyContent: 'space-between',
                 marginBottom: '1.5rem'
               }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.6rem'
-                }}>
                   <div style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.2rem',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                    flexShrink: 0
+                    gap: '0.6rem'
                   }}>
-                    🎥
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
-                      {t('videos_section')}
-                    </h3>
-                    <p style={{
-                      margin: '0.15rem 0 0 0',
-                      fontSize: '0.75rem',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      fontWeight: 400,
-                      lineHeight: 1.2
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 209, 102, 0.2))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                      flexShrink: 0
                     }}>
-                      {videos.length === 1 ? t('promotional_video') : t('multimedia_highlighted')}
-                    </p>
+                      🎥
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 className="section-title" style={{ margin: 0, fontSize: '1.15rem', lineHeight: 1.3 }}>
+                        {t('videos_section')}
+                      </h3>
+                      <p style={{
+                        margin: '0.15rem 0 0 0',
+                        fontSize: '0.75rem',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontWeight: 400,
+                        lineHeight: 1.2,
+                        fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                      }}>
+                        {videos.length === 1 ? t('promotional_video') : t('multimedia_highlighted')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div style={{
-                  padding: '0.5rem 1rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '20px',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: colors.light
-                }}>
-                  {videos.length} {videos.length !== 1 ? t('videos') : t('video')}
-                </div>
+                  <div style={{
+                    padding: '0.5rem 1rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '20px',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    color: colors.light,
+                    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                  }}>
+                    {videos.length} {videos.length !== 1 ? t('videos') : t('video')}
+                  </div>
               </div>
 
               {/* Carrusel de Videos - Siempre usar carrusel para mostrar todos los videos */}
@@ -2451,7 +2485,8 @@ export default function AcademyPublicScreen() {
                   borderRadius: '20px',
                   fontSize: '0.875rem',
                   fontWeight: '600',
-                  color: colors.light
+                  color: colors.light,
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {carouselPhotos.length} {carouselPhotos.length !== 1 ? t('photos') : t('photo')}
                 </div>

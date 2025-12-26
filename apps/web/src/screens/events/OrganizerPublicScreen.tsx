@@ -35,13 +35,13 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ borderRadius: borderRadius.xl, border: `1px solid ${colors.glass.medium}`, overflow: 'hidden', transition: transitions.normal }}>
       <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setIsOpen(!isOpen)}
-        style={{ width: '100%', padding: spacing[5], background: 'transparent', border: 'none', color: colors.gray[50], cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, textAlign: 'left', transition: transitions.normal }}>
+        style={{ width: '100%', padding: spacing[5], background: 'transparent', border: 'none', color: colors.gray[50], cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, textAlign: 'left', transition: transitions.normal, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
         <span>{question}</span>
         <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.bold, color: colors.primary[500] }}>▼</motion.span>
       </motion.button>
       <motion.div initial={false} animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }} transition={{ duration: 0.3, ease: 'easeInOut' }} style={{ overflow: 'hidden' }}>
         <div style={{ padding: `0 ${spacing[5]} ${spacing[5]} ${spacing[5]}`, borderTop: `1px solid ${colors.glass.medium}`, background: colors.glass.light }}>
-          <p style={{ lineHeight: typography.lineHeight.relaxed, opacity: 0.9, fontSize: typography.fontSize.base, margin: 0, color: colors.gray[100] }}>{answer}</p>
+          <p style={{ lineHeight: typography.lineHeight.relaxed, opacity: 0.9, fontSize: typography.fontSize.base, margin: 0, color: colors.gray[100], fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{answer}</p>
         </div>
       </motion.div>
     </motion.div>
@@ -405,10 +405,10 @@ export function OrganizerPublicScreen() {
                   letterSpacing: '0.02em'
                 }}>{ev.nombre}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2], fontSize: typography.fontSize.sm, marginBottom: spacing[2] }}>
-                  {ev.date && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>📅 {ev.date}</span>}
-                  {ev.time && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>🕒 {ev.time}</span>}
-                  {ev.place && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background:'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>📍 {ev.place}</span>}
-                  {ev.price && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background:'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999 }}>💰 {ev.price}</span>}
+                  {ev.date && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>📅 {ev.date}</span>}
+                  {ev.time && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background: 'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>🕒 {ev.time}</span>}
+                  {ev.place && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background:'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>📍 {ev.place}</span>}
+                  {ev.price && <span style={{ border: '1px solid rgb(255 255 255 / 48%)', background:'rgb(25 25 25 / 89%)', padding: '8px 8px', borderRadius: 999, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>💰 {ev.price}</span>}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: spacing[2], position: 'relative', zIndex: 5, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
                   <RequireLogin>
@@ -430,8 +430,8 @@ export function OrganizerPublicScreen() {
         </motion.div>
         {items.length > 1 && (
           <div style={{ width: 350, maxWidth: '80vw', display: 'flex', justifyContent: 'space-between' }}>
-            <button type="button" onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer' }}>‹ Anterior</button>
-            <button type="button" onClick={() => setIdx((p) => (p + 1) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer' }}>Siguiente ›</button>
+            <button type="button" onClick={() => setIdx((p) => (p - 1 + items.length) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>‹ Anterior</button>
+            <button type="button" onClick={() => setIdx((p) => (p + 1) % items.length)} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Siguiente ›</button>
           </div>
         )}
       </div>
@@ -520,7 +520,7 @@ export function OrganizerPublicScreen() {
         ].filter(Boolean) as string[]}
       />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
         * { font-family: ${typography.fontFamily.primary}; }
         .org-container { width: 100%; max-width: 900px; margin: 0 auto; }
         .org-banner { width: 100%; max-width: 900px; margin: auto !important; position: relative; overflow: hidden; }
@@ -641,6 +641,13 @@ export function OrganizerPublicScreen() {
           gap: 6px;
           white-space: nowrap;
         }
+        .org-banner h1,
+        .org-banner h2,
+        .org-banner h3,
+        .org-container h2,
+        .org-container h3 {
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
         .org-banner h2,
         .org-banner h3,
         .org-container h2,
@@ -648,7 +655,7 @@ export function OrganizerPublicScreen() {
           color: #fff;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
         }
-        .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0; display: flex; align-items: center; gap: .5rem; }
+        .section-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 1rem 0; display: flex; align-items: center; gap: .5rem; font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         @media (max-width: 768px) { .org-root { padding-top: 0; } }
         @media (max-width: 768px) {
           .org-container { max-width: 100% !important; padding: 1rem !important; }

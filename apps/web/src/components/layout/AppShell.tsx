@@ -63,6 +63,7 @@ export default function AppShell() {
     { id: 'trending', label: 'Trending', icon: '📈', onClick: () => navigate('/trending') },
     { id: 'roles-info', label: '¿Quieres saber más sobre nuestros roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
     { id: 'validation-info', label: '¿Qué significa los perfiles con ✅?', icon: '✅', onClick: () => navigate('/validation/info') },
+    { id: 'support', label: 'Soporte', icon: '🛟', onClick: () => navigate('/soporte') },
     { id: 'legal', label: 'Aviso de Privacidad', icon: '🔒', onClick: () => navigate('/aviso-de-privacidad') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
     { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: handleLogout },
@@ -388,6 +389,11 @@ export default function AppShell() {
         <footer className="app-footer">
           <div className="app-footer-content">
             <JoinCommunityForm />
+            <div className="footer-separator" />
+            <Link to="/soporte" className="app-footer-link">
+              <span>🛟</span>
+              <span className="footer-link-text">Soporte</span>
+            </Link>
             <div className="footer-separator" />
             <Link to="/aviso-de-privacidad" className="app-footer-link">
               <span>🔒</span>

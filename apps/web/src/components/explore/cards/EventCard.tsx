@@ -133,6 +133,8 @@ export default function EventCard({ item }: EventCardProps) {
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+        
         .event-card-mobile {
           width: 100%;
         }
@@ -236,6 +238,7 @@ export default function EventCard({ item }: EventCardProps) {
           border: 1px solid rgba(255, 255, 255, 0.14);
           background: rgba(17, 21, 32, 0.55);
           backdrop-filter: blur(8px);
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         .badge.hot {
           border: none;
@@ -257,6 +260,7 @@ export default function EventCard({ item }: EventCardProps) {
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
           word-break: break-word;
           line-height: 1.3;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         .meta {
           display: flex;
@@ -279,6 +283,7 @@ export default function EventCard({ item }: EventCardProps) {
           overflow: hidden;
           text-overflow: ellipsis;
           backdrop-filter: blur(8px);
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
         .card-actions {
           position: absolute;
@@ -389,8 +394,8 @@ export default function EventCard({ item }: EventCardProps) {
             <h3 className="event-title">{nombre}</h3>
 
         {item.ownerName && (
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8 }}>
-                por <strong style={{ color: '#fff' }}>{item.ownerName}</strong>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+                por <strong style={{ color: '#fff', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{item.ownerName}</strong>
               </div>
         )}
 
@@ -410,12 +415,12 @@ export default function EventCard({ item }: EventCardProps) {
 
         {organizador && (
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>👤</div>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>👤</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.92)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={organizador}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.92)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }} title={organizador}>
                 {organizador}
               </div>
-              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>Organizador</div>
+              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Organizador</div>
             </div>
           </div>
         )}

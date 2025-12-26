@@ -56,6 +56,11 @@ type PublicTeacher = Partial<{
   bio: string;
   redes_sociales: any;
   respuestas?: { redes?: any };
+  cuenta_bancaria?: any;
+  stripe_account_id?: string;
+  stripe_charges_enabled?: boolean;
+  whatsapp_number?: string;
+  whatsapp_message_template?: string;
 }>;
 
 // Componente FAQ Accordion (memoizado con a11y)
@@ -124,7 +129,7 @@ const FAQAccordion = React.memo(function FAQAccordion({ question, answer }: { qu
 });
 
 // Componente Carousel para fotos (memoizado)
-const CarouselComponent = React.memo(function CarouselComponent({ photos }: { photos: string[] }) {
+const CarouselComponent = React.memo(function CarouselComponent({ photos, t }: { photos: string[]; t: (key: string, options?: any) => string }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -553,16 +558,17 @@ export default function TeacherProfileLive() {
                   window.location.reload();
                 }
               }}
-              style={{
-                padding: '10px 20px',
-                borderRadius: 999,
-                border: 'none',
-                background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                color: colors.light,
-                fontSize: '0.95rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                    color: colors.light,
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                  }}
             >
               {t('retry')}
             </button>
@@ -601,6 +607,7 @@ export default function TeacherProfileLive() {
             fontWeight: '700',
             cursor: 'pointer',
             boxShadow: '0 8px 24px rgba(30,136,229,0.5)',
+            fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
           }}
         >
           {t('create_teacher_profile')}
@@ -776,7 +783,8 @@ export default function TeacherProfileLive() {
                     backdropFilter: 'blur(8px)',
                     cursor: 'pointer',
                     fontSize: '0.9rem',
-                    fontWeight: 700
+                    fontWeight: 700,
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
                   📤 {t('share')}
@@ -792,7 +800,8 @@ export default function TeacherProfileLive() {
                 fontWeight: '800',
                 color: 'white',
                 margin: '0 0 0.5rem 0',
-                textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 {(teacher as PublicTeacher)?.nombre_publico}
               </h1>
@@ -816,7 +825,8 @@ export default function TeacherProfileLive() {
                 fontSize: '1.25rem',
                 color: 'rgba(255, 255, 255, 0.9)',
                 margin: '0 0 1.5rem 0',
-                lineHeight: 1.4
+                lineHeight: 1.4,
+                fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 {t('teacher')}
               </p>
@@ -976,7 +986,8 @@ export default function TeacherProfileLive() {
                   opacity: 0.8,
                   margin: '0.25rem 0 0 0',
                   fontWeight: '500',
-                  color: 'rgba(255, 255, 255, 0.9)'
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {t('schedule_costs_locations')}
                 </p>
@@ -1110,7 +1121,7 @@ export default function TeacherProfileLive() {
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(240, 147, 251, 0.4)' }}>🏆</div>
                 <div>
                   <h3 className="section-title" style={{ margin: 0 }}>{t('competition_groups')}</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{t('training_competition')}</p>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t('training_competition')}</p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -1167,7 +1178,7 @@ export default function TeacherProfileLive() {
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #1E88E5, #7C4DFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(30, 136, 229, 0.4)' }}>🎓</div>
                 <div>
                   <h3 className="section-title" style={{ margin: 0 }}>{t('teach_at')}</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{t('academies_where_collaborate')}</p>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t('academies_where_collaborate')}</p>
                 </div>
               </div>
               <Suspense fallback={<div style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
@@ -1252,7 +1263,7 @@ export default function TeacherProfileLive() {
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #FB8C00, #FF7043)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(251, 140, 0, 0.4)' }}>❓</div>
                 <div>
                   <h3 className="section-title" style={{ margin: 0 }}>{t('info_for_students')}</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{t('frequently_asked_questions_short')}</p>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t('frequently_asked_questions_short')}</p>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1288,7 +1299,7 @@ export default function TeacherProfileLive() {
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: '0 8px 24px rgba(34, 197, 94, 0.4)' }}>⭐</div>
                 <div>
                   <h3 className="section-title" style={{ margin: 0 }}>{t('what_students_say')}</h3>
-                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500' }}>{t('student_testimonials')}</p>
+                  <p style={{ fontSize: '0.9rem', opacity: 0.8, margin: 0, fontWeight: '500', fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t('student_testimonials')}</p>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
@@ -1403,7 +1414,8 @@ export default function TeacherProfileLive() {
                     fontSize: '0.75rem',
                     color: 'rgba(255, 255, 255, 0.7)',
                     fontWeight: 400,
-                    lineHeight: 1.2
+                    lineHeight: 1.2,
+                    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
                     {t('multimedia_highlighted')}
                   </p>
@@ -1510,13 +1522,14 @@ export default function TeacherProfileLive() {
                   borderRadius: '20px',
                   fontSize: '0.875rem',
                   fontWeight: '600',
-                  color: colors.light
+                  color: colors.light,
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {carouselPhotos.length} {carouselPhotos.length !== 1 ? t('photos') : t('photo')}
                 </div>
               </div>
 
-              <CarouselComponent photos={carouselPhotos} />
+              <CarouselComponent photos={carouselPhotos} t={t} />
             </motion.section>
           )}
 

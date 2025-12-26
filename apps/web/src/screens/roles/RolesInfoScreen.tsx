@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthProvider';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 
 export default function RolesInfoScreen() {
   const navigate = useNavigate();
@@ -129,6 +129,8 @@ export default function RolesInfoScreen() {
       }} />
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+        
         @media (max-width: 768px) {
           .roles-wrapper {
             padding: 1.5rem !important;
@@ -192,7 +194,8 @@ export default function RolesInfoScreen() {
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
         backdropFilter: 'blur(20px)',
         position: 'relative',
-        zIndex: 1
+        zIndex: 1,
+        fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
       }}>
         <div style={{ position: 'relative', zIndex: 2 }}>
           {/* Header */}
@@ -234,14 +237,16 @@ export default function RolesInfoScreen() {
                   letterSpacing: '0.1em',
                   color: 'rgba(255,255,255,0.7)',
                   fontWeight: 600,
-                  marginBottom: '2px'
+                  marginBottom: '2px',
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {t('where_dance')}
                 </div>
                 <div style={{
                   fontSize: '12px',
                   color: 'rgba(255,255,255,0.5)',
-                  fontWeight: 500
+                  fontWeight: 500,
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {t('roles_system')}
                 </div>
@@ -260,7 +265,8 @@ export default function RolesInfoScreen() {
               color: '#fff',
               background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))',
               fontWeight: 600,
-              boxShadow: '0 4px 16px rgba(240, 147, 251, 0.2)'
+              boxShadow: '0 4px 16px rgba(240, 147, 251, 0.2)',
+              fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
             }}>
               <span style={{
                 width: '8px',
@@ -291,7 +297,8 @@ export default function RolesInfoScreen() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              lineHeight: 1.2
+              lineHeight: 1.2,
+              fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
             }}>
               {t('join_community_title')}
             </h1>
@@ -300,7 +307,8 @@ export default function RolesInfoScreen() {
               maxWidth: '700px',
               fontSize: '1.1rem',
               marginBottom: '1.5rem',
-              lineHeight: 1.7
+              lineHeight: 1.7,
+              fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
             }}>
               {t('join_community_description_part1')} <span style={{ color: '#f5576c', fontWeight: '700' }}>{t('join_community_description_part2')}</span> {t('join_community_description_part3')}
             </p>
@@ -351,11 +359,12 @@ export default function RolesInfoScreen() {
                 fontWeight: 700,
                 display: 'inline-block',
                 marginBottom: '6px',
-                border: '1px solid rgba(239,68,68,0.4)'
+                border: '1px solid rgba(239,68,68,0.4)',
+                fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 {t('launch')}
               </div>
-              <div style={{ fontWeight: 600, color: '#fbbf24', marginBottom: '8px' }}>
+              <div style={{ fontWeight: 600, color: '#fbbf24', marginBottom: '8px', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                 {t('launch_promo_text')}
               </div>
               <div style={{ 
@@ -364,10 +373,18 @@ export default function RolesInfoScreen() {
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '6px',
+                fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 <span>💚</span>
-                <span>{t('free_role_always_free')}</span>
+                <span>
+                  <Trans
+                    i18nKey="free_role_always_free"
+                    components={{
+                      strong: <strong style={{ fontWeight: 700, color: '#22c55e' }} />
+                    }}
+                  />
+                </span>
               </div>
             </div>
           </motion.div>
@@ -386,7 +403,8 @@ export default function RolesInfoScreen() {
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
-              gap: '12px'
+              gap: '12px',
+              fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
             }}
           >
             <div style={{
@@ -478,7 +496,8 @@ export default function RolesInfoScreen() {
                       letterSpacing: '0.05em',
                       color: '#fff',
                       marginBottom: '4px',
-                      lineHeight: 1.2
+                      lineHeight: 1.2,
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}>
                       {role.name}
                     </div>
@@ -492,7 +511,8 @@ export default function RolesInfoScreen() {
                         background: 'rgba(251,191,36,0.15)',
                         display: 'inline-block',
                         fontWeight: 600,
-                        marginTop: '4px'
+                        marginTop: '4px',
+                        fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}>
                         ⭐ {t('featured')}
                       </div>
@@ -509,7 +529,8 @@ export default function RolesInfoScreen() {
                         fontWeight: 700,
                         marginTop: '4px',
                         marginLeft: role.highlight ? '6px' : '0',
-                        boxShadow: '0 0 12px rgba(34,197,94,0.3)'
+                        boxShadow: '0 0 12px rgba(34,197,94,0.3)',
+                        fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}>
                         💚 {t('always_free')}
                       </div>
@@ -527,7 +548,8 @@ export default function RolesInfoScreen() {
                   background: 'rgba(255,255,255,0.05)',
                   marginBottom: '1.25rem',
                   fontWeight: 500,
-                  lineHeight: 1.5
+                  lineHeight: 1.5,
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {role.tag}
                 </div>
@@ -540,7 +562,8 @@ export default function RolesInfoScreen() {
                   color: 'rgba(255,255,255,0.95)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   <span style={{
                     width: '4px',
@@ -560,7 +583,8 @@ export default function RolesInfoScreen() {
                   color: 'rgba(255,255,255,0.85)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px'
+                  gap: '10px',
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
                   {role.features.map((feature, idx) => (
                     <motion.li
@@ -615,7 +639,8 @@ export default function RolesInfoScreen() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px'
+                      gap: '8px',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)';
@@ -663,7 +688,8 @@ export default function RolesInfoScreen() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)';
@@ -738,7 +764,8 @@ export default function RolesInfoScreen() {
                     fontWeight: 800,
                     color: '#fff',
                     margin: '0 0 0.5rem',
-                    lineHeight: 1.2
+                    lineHeight: 1.2,
+                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
                     {t('would_you_like_to_join_community')}
                   </h3>
@@ -746,7 +773,8 @@ export default function RolesInfoScreen() {
                     fontSize: '1rem',
                     color: 'rgba(255,255,255,0.9)',
                     margin: 0,
-                    lineHeight: 1.6
+                    lineHeight: 1.6,
+                    fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
                     {t('we_can_help_create_profile')}
                   </p>
@@ -770,7 +798,8 @@ export default function RolesInfoScreen() {
                   alignItems: 'center',
                   gap: '10px',
                   boxShadow: '0 8px 24px rgba(245, 87, 108, 0.4)',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
@@ -807,7 +836,8 @@ export default function RolesInfoScreen() {
               fontSize: '14px',
               color: 'rgba(255,255,255,0.8)',
               margin: 0,
-              lineHeight: 1.6
+              lineHeight: 1.6,
+              fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
             }}>
               {t('have_questions_about_role')}
               <a
@@ -818,7 +848,8 @@ export default function RolesInfoScreen() {
                   textDecoration: 'none',
                   borderBottom: '2px solid rgba(245, 87, 108, 0.4)',
                   marginLeft: '6px',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderBottomColor = '#f5576c';
@@ -851,7 +882,8 @@ export default function RolesInfoScreen() {
                 background: 'rgba(34,197,94,0.1)',
                 border: '1px solid rgba(34,197,94,0.3)',
                 transition: 'all 0.2s',
-                alignSelf: 'flex-start'
+                alignSelf: 'flex-start',
+                fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(34,197,94,0.15)';
@@ -888,7 +920,8 @@ export default function RolesInfoScreen() {
                 fontSize: '0.95rem',
                 fontWeight: 600,
                 transition: 'all 0.3s ease',
-                backdropFilter: 'blur(10px)'
+                backdropFilter: 'blur(10px)',
+                fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}
               whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.12)' }}
               whileTap={{ scale: 0.95 }}

@@ -517,7 +517,12 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         padding: '8px 0 24px 0',
       }}>
         <style>{`
-        .date-public-root { padding: 8px 0 24px 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .date-public-root { 
+          padding: 8px 0 24px 0; 
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
         .date-public-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
         
         /* Responsividad general */
@@ -725,6 +730,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                    rgba(0, 0, 0, 0.8) 1px -1px 0px,
                    rgba(0, 0, 0, 0.8) -1px 1px 0px,
                    rgba(0, 0, 0, 0.8) 1px 1px 0px;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     .chip {
       display:inline-flex;
@@ -740,6 +746,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       box-shadow:0 6px 18px rgba(0,0,0,0.18);
       backdrop-filter: blur(8px);
       transition: all 0.2s ease;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     .chip-date { 
       background:linear-gradient(135deg, rgba(240,147,251,.18), rgba(152,71,255,0.16));
@@ -901,6 +908,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       color: #ffffff;
       letter-spacing: -0.01em;
       line-height: 1.2;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .event-card__title span:first-of-type + div > p {
@@ -909,6 +917,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       color: rgba(255, 255, 255, 0.7);
       font-weight: 500;
       line-height: 1.4;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .event-card__body {
@@ -990,6 +999,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       color: #ffffff;
       line-height: 1.3;
       letter-spacing: -0.01em;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .event-row__subtitle {
@@ -998,6 +1008,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       color: rgba(255, 255, 255, 0.75);
       line-height: 1.4;
       font-weight: 500;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .event-row__right {
@@ -1023,6 +1034,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         0 4px 12px rgba(30, 136, 229, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
       letter-spacing: 0.02em;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     /* Cost Rows mejorados */
@@ -1074,6 +1086,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       font-weight: 600;
       font-size: 14px;
       letter-spacing: -0.01em;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .cost-row__pill {
@@ -1098,6 +1111,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       letter-spacing: 0.1em;
       color: rgba(255, 255, 255, 0.8);
       font-weight: 700;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .cost-row__pill-price {
@@ -1105,6 +1119,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       color: #FFE6A8;
       font-size: 14px;
       letter-spacing: -0.01em;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .cost-row__pill--highlight {
@@ -1403,19 +1418,20 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         background: 'rgba(240,147,251,0.10)',
                         color: '#f093fb',
                         fontWeight: 700,
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}
                     >
                       {t('back_to_home')}
                     </button>
                   </div>
 
-                  <h1 className="event-title">
+                  <h1 className="event-title" style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {date.nombre || `Fecha: ${formatDate(date.fecha)}`}
                   </h1>
 
                   {date.biografia && (
-                    <p style={{ margin: 0, color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.5 }}>
+                    <p style={{ margin: 0, color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.5, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                       {date.biografia}
                     </p>
                   )}
@@ -1582,7 +1598,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem',
-                          boxShadow: '0 4px 12px rgba(30,136,229,0.2)'
+                          boxShadow: '0 4px 12px rgba(30,136,229,0.2)',
+                          fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                         }}
                       >
                         ✏️ {t('edit')}
@@ -1698,7 +1715,11 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                                     <span className="cost-row__pill-price">
                                       {typeof formattedPrice === 'string'
                                         ? formattedPrice
-                                        : `$${String(formattedPrice ?? '').toLocaleString(getLocaleFromI18n())}`}
+                                        : new Intl.NumberFormat(getLocaleFromI18n(), {
+                                            style: 'currency',
+                                            currency: 'MXN',
+                                            maximumFractionDigits: 0,
+                                          }).format(Number(formattedPrice ?? 0))}
                                     </span>
                                   </span>
                                 )}
@@ -1784,6 +1805,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       color:#fff; 
       box-shadow:0 8px 22px rgba(30,136,229,.30);
       white-space: nowrap;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .avatars { 
@@ -1814,6 +1836,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       font-size:.9rem;
       text-align: center;
       width: 100%;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .cta-row { 
@@ -1837,6 +1860,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       font-weight:800;
       white-space: nowrap;
       min-width: fit-content;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .btn-ghost:hover { 
@@ -1853,6 +1877,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       color:#fff; 
       letter-spacing:-0.01em;
       text-align: center;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     .subtle { 
@@ -1860,6 +1885,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       color:rgba(255,255,255,.6);
       text-align: center;
       line-height: 1.4;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
     /* Responsive adjustments */
@@ -2111,6 +2137,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       text-transform:uppercase;
       display:block;
       margin-bottom:0.125rem;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     .loc-chip .muted{
       color:rgba(255,255,255,0.92);
@@ -2118,10 +2145,11 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       font-size:0.9rem;
       line-height:1.5;
       word-break:break-word;
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .row{display:grid;grid-template-columns:22px 1fr;gap:.5rem;align-items:start;color:rgba(255,255,255,.92)}
+    .row{display:grid;grid-template-columns:22px 1fr;gap:.5rem;align-items:start;color:rgba(255,255,255,.92); font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;}
     .row+.row{margin-top:.5rem}
-    .muted{color:rgba(255,255,255,.72);font-weight:500}
+    .muted{color:rgba(255,255,255,.72);font-weight:500; font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;}
     .divider{
       height:1px;
       background:linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
@@ -2146,6 +2174,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       cursor:pointer;
       text-decoration:none;
+      font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     .btn-maps{
       border:1px solid rgba(240,147,251,.5);
@@ -2326,7 +2355,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     }
   `}</style>
 
-            <h3 className="ubicacion-requisitos-title" style={{ margin: 0, marginBottom: '.9rem', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.01em', color: '#fff' }}>
+            <h3 className="ubicacion-requisitos-title" style={{ margin: 0, marginBottom: '.9rem', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.01em', color: '#fff', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
               {t('location_and_requirements')}
             </h3>
 
@@ -2410,8 +2439,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
               {/* Fila 2: Requisitos */}
               {date.requisitos && (
                 <div className="card req" aria-label="Requisitos">
-                  <div style={{ fontWeight: 800, marginBottom: '.6rem' }}>{t('requirements')}</div>
-                  <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.92)', fontWeight: 500 }}>
+                  <div style={{ fontWeight: 800, marginBottom: '.6rem', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t('requirements')}</div>
+                  <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.92)', fontWeight: 500, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                     {date.requisitos}
                   </p>
                 </div>
@@ -2467,7 +2496,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       margin: 0,
-                      lineHeight: 1.2
+                      lineHeight: 1.2,
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}>
                       {t('event_flyer')}
                     </h3>
@@ -2475,7 +2505,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                       fontSize: '0.9rem',
                       opacity: 0.8,
                       margin: 0,
-                      fontWeight: '500'
+                      fontWeight: '500',
+                      fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                     }}>
                       {t('promotional_date')}
                     </p>
@@ -2568,7 +2599,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         margin: 0,
-                        lineHeight: 1.2
+                        lineHeight: 1.2,
+                        fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}>
                         {t('photo_gallery')}
                       </h3>
@@ -2576,7 +2608,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         fontSize: '0.9rem',
                         opacity: 0.8,
                         margin: 0,
-                        fontWeight: '500'
+                        fontWeight: '500',
+                        fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}>
                         {t('photo_gallery')}
                       </p>
@@ -2658,7 +2691,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         margin: 0,
-                        lineHeight: 1.2
+                        lineHeight: 1.2,
+                        fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}>
                         {t('date_videos')}
                       </h3>
@@ -2666,7 +2700,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         fontSize: '0.9rem',
                         opacity: 0.8,
                         margin: 0,
-                        fontWeight: '500'
+                        fontWeight: '500',
+                        fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                       }}>
                         {t('promotional_videos')}
                       </p>

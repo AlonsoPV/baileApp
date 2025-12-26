@@ -91,21 +91,84 @@ export function ProfileBasics() {
   }, []);
 
   const handleAvatarChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    try {
+      const file = e.target.files?.[0];
+      
+      // Si no hay archivo (usuario canceló), limpiar y salir
+      if (!file) {
+        // Limpiar el input para permitir seleccionar el mismo archivo nuevamente
+        e.target.value = '';
+        return;
+      }
 
-    setAvatarFile(file);
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        const errorMsg = 'Por favor selecciona un archivo de imagen válido.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error');
+        e.target.value = '';
+        return;
+      }
 
-    // Revoca el URL anterior para no filtrar memoria
-    if (previousObjectUrlRef.current) {
-      URL.revokeObjectURL(previousObjectUrlRef.current);
-      previousObjectUrlRef.current = null;
+      // Validar tamaño máximo (10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        const errorMsg = 'La imagen es demasiado grande. Por favor selecciona una imagen menor a 10MB.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error');
+        e.target.value = '';
+        return;
+      }
+
+      // Validar tamaño mínimo (1KB)
+      const minSize = 1024; // 1KB
+      if (file.size < minSize) {
+        const errorMsg = 'La imagen es demasiado pequeña. Por favor selecciona una imagen válida.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error');
+        e.target.value = '';
+        return;
+      }
+
+      setAvatarFile(file);
+      setError(''); // Limpiar errores previos
+
+      // Revoca el URL anterior para no filtrar memoria
+      if (previousObjectUrlRef.current) {
+        try {
+          URL.revokeObjectURL(previousObjectUrlRef.current);
+        } catch (revokeError) {
+          console.warn('[ProfileBasics] Error al revocar URL anterior:', revokeError);
+        }
+        previousObjectUrlRef.current = null;
+      }
+
+      // Crear URL del objeto de forma segura
+      try {
+        const objectUrl = URL.createObjectURL(file);
+        previousObjectUrlRef.current = objectUrl;
+        setAvatarPreview(objectUrl);
+      } catch (urlError) {
+        console.error('[ProfileBasics] Error al crear ObjectURL:', urlError);
+        const errorMsg = 'Error al procesar la imagen. Por favor intenta con otra imagen.';
+        setError(errorMsg);
+        showToast(errorMsg, 'error');
+        setAvatarFile(null);
+        setAvatarPreview('');
+        e.target.value = '';
+      }
+    } catch (error) {
+      console.error('[ProfileBasics] Error inesperado en handleAvatarChange:', error);
+      const errorMsg = 'Error inesperado al seleccionar la imagen. Por favor intenta de nuevo.';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
+      setAvatarFile(null);
+      setAvatarPreview('');
+      if (e.target) {
+        e.target.value = '';
+      }
     }
-
-    const objectUrl = URL.createObjectURL(file);
-    previousObjectUrlRef.current = objectUrl;
-    setAvatarPreview(objectUrl);
-  }, []);
+  }, [showToast]);
 
   const handleSubmit = useCallback(async (e: FormEvent) => {
     e.preventDefault();
@@ -147,31 +210,141 @@ export function ProfileBasics() {
       let avatarUrl: string | undefined;
 
       if (avatarFile) {
-        const fileName = `avatars/${user.id}.png`;
+        // Validar archivo antes de subir
+        if (!avatarFile.type.startsWith('image/')) {
+          throw new Error('El archivo seleccionado no es una imagen válida.');
+        }
+
+        // Procesar imagen de forma segura con manejo de errores
+        let fileToUpload: File;
+        try {
+          // Intentar redimensionar si es necesario (máximo 800px)
+          const { resizeImageIfNeeded } = await import('../../lib/imageResize');
+          fileToUpload = await resizeImageIfNeeded(avatarFile, 800);
+        } catch (resizeError) {
+          console.warn('[ProfileBasics] Error al redimensionar imagen, usando original:', resizeError);
+          // Si falla el redimensionamiento, usar el archivo original
+          fileToUpload = avatarFile;
+        }
+
+        // Determinar extensión basada en el tipo de archivo
+        const getExtension = (file: File): string => {
+          const type = file.type.toLowerCase();
+          if (type.includes('jpeg') || type.includes('jpg')) return 'jpg';
+          if (type.includes('png')) return 'png';
+          if (type.includes('webp')) return 'webp';
+          if (type.includes('gif')) return 'gif';
+          // Fallback: extraer del nombre del archivo
+          const nameExt = file.name.split('.').pop()?.toLowerCase();
+          return nameExt && ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(nameExt) 
+            ? nameExt 
+            : 'jpg'; // Default a jpg si no se puede determinar
+        };
+
+        const ext = getExtension(fileToUpload);
+        const fileName = `avatars/${user.id}.${ext}`;
+        const contentType = fileToUpload.type || `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+        
+        if (import.meta.env.MODE === 'development') {
+          console.log('[ProfileBasics] Subiendo avatar:', { fileName, contentType, size: fileToUpload.size });
+        }
+
         const { error: uploadError } = await supabase.storage
           .from('media')
-          .upload(fileName, avatarFile, { upsert: true });
+          .upload(fileName, fileToUpload, { 
+            upsert: true,
+            contentType: contentType
+          });
 
-        if (uploadError) throw new Error(`Error uploading avatar: ${uploadError.message}`);
+        if (uploadError) {
+          console.error('[ProfileBasics] Error de upload:', uploadError);
+          throw new Error(`Error al subir la imagen: ${uploadError.message}`);
+        }
 
         // Usa helper centralizado (cache-control consistente)
         avatarUrl = getBucketPublicUrl('media', fileName);
+        
+        // Validar que la URL se generó correctamente
+        if (!avatarUrl || !avatarUrl.startsWith('http')) {
+          console.error('[ProfileBasics] URL de avatar inválida:', avatarUrl);
+          throw new Error('Error al generar la URL de la imagen. Por favor intenta de nuevo.');
+        }
+        
+        if (import.meta.env.MODE === 'development') {
+          console.log('[ProfileBasics] Avatar subido exitosamente:', avatarUrl);
+        }
       }
 
-      const updates = mergeProfile(profile as any, {
-        display_name: displayName,
-        bio: bio || undefined,
-        avatar_url: avatarUrl ?? profile?.avatar_url,
-        rol_baile: rolBaile || undefined,
-      } as any);
+      // Normalizar valores antes de crear el update
+      // Convertir undefined a null para evitar problemas con la base de datos
+      const normalizedUpdates = {
+        display_name: displayName.trim() || null,
+        bio: bio?.trim() || null,
+        avatar_url: avatarUrl || profile?.avatar_url || null,
+        rol_baile: rolBaile || null,
+      };
 
-      await updateProfileFields(updates);
+      // Validar que tenemos al menos display_name y avatar_url
+      if (!normalizedUpdates.display_name) {
+        throw new Error('El nombre es requerido');
+      }
 
-      showToast('Perfil guardado exitosamente ✅', 'success');
-      navigate('/onboarding/ritmos');
+      if (!normalizedUpdates.avatar_url) {
+        throw new Error('La foto de perfil es requerida');
+      }
+
+      const updates = mergeProfile(profile as any, normalizedUpdates as any);
+
+      // Logging detallado en desarrollo
+      if (import.meta.env.MODE === 'development') {
+        console.log('[ProfileBasics] Updates a enviar:', updates);
+        console.log('[ProfileBasics] Avatar URL:', normalizedUpdates.avatar_url);
+      }
+
+      try {
+        await updateProfileFields(updates);
+        
+        // Esperar un momento para asegurar que la actualización se complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        showToast('Perfil guardado exitosamente ✅', 'success');
+        navigate('/onboarding/ritmos');
+      } catch (updateError: any) {
+        console.error('[ProfileBasics] Error en updateProfileFields:', updateError);
+        
+        // Mensajes de error más específicos
+        let errorMessage = 'Error al guardar el perfil';
+        if (updateError?.message) {
+          errorMessage = updateError.message;
+        } else if (updateError?.code) {
+          errorMessage = `Error de base de datos (${updateError.code})`;
+        }
+        
+        throw new Error(errorMessage);
+      }
     } catch (err: any) {
-      setError(err?.message || 'Error desconocido');
-      showToast('Error al guardar el perfil', 'error');
+      console.error('[ProfileBasics] Error completo en handleSubmit:', err);
+      
+      // Mensaje de error más amigable para el usuario
+      let userFriendlyMessage = 'Error al guardar el perfil. Por favor intenta de nuevo.';
+      
+      if (err?.message) {
+        // Si el error ya tiene un mensaje claro, usarlo
+        if (err.message.includes('subir') || err.message.includes('upload')) {
+          userFriendlyMessage = 'Error al subir la imagen. Verifica tu conexión e intenta de nuevo.';
+        } else if (err.message.includes('nombre') || err.message.includes('name')) {
+          userFriendlyMessage = err.message;
+        } else if (err.message.includes('foto') || err.message.includes('avatar')) {
+          userFriendlyMessage = err.message;
+        } else if (err.message.includes('base de datos') || err.message.includes('database')) {
+          userFriendlyMessage = 'Error de conexión. Por favor intenta de nuevo en un momento.';
+        } else {
+          userFriendlyMessage = err.message;
+        }
+      }
+      
+      setError(userFriendlyMessage);
+      showToast(userFriendlyMessage, 'error');
     } finally {
       if (submitTimeoutRef.current) {
         window.clearTimeout(submitTimeoutRef.current);

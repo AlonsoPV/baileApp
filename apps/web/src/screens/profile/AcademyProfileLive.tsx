@@ -62,7 +62,8 @@ const FAQAccordion = React.memo(function FAQAccordion({ question, answer }: { qu
           alignItems: 'center',
           fontSize: '1rem',
           fontWeight: '600',
-          transition: 'all 0.2s'
+          transition: 'all 0.2s',
+          fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
         }}
       >
         <span>{question}</span>
@@ -83,7 +84,8 @@ const FAQAccordion = React.memo(function FAQAccordion({ question, answer }: { qu
           style={{
             padding: '0 1.5rem 1rem 1.5rem',
             color: 'rgba(255, 255, 255, 0.8)',
-            lineHeight: 1.6
+            lineHeight: 1.6,
+            fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
           }}
         >
           {answer}
@@ -426,6 +428,9 @@ const STYLES = `
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
   }
+  .share-button {
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
   .share-button:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.35);
@@ -680,6 +685,8 @@ const STYLES = `
     max-height: 90vh;
     position: relative;
   }
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+  
   .academy-container {
     width: 100%;
     max-width: 900px;
@@ -707,6 +714,10 @@ const STYLES = `
   .academy-container h3 {
     color: #fff;
     text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .academy-container h1 {
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .section-title {
     font-size: 1.5rem;
@@ -715,6 +726,7 @@ const STYLES = `
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .academy-banner-grid {
     display: grid;
@@ -769,11 +781,13 @@ const STYLES = `
     color: #fff;
     margin: 0;
     font-weight: 900;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-header p {
     color: #a9b1c8;
     font-size: 0.95rem;
     margin: 0.5rem 0 0 0;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-list {
     display: flex;
@@ -814,6 +828,7 @@ const STYLES = `
     background: rgba(37, 99, 235, 0.15);
     color: #bfdbfe;
     border: 1px solid rgba(59, 130, 246, 0.5);
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-chip--destacado {
     background: rgba(249, 115, 22, 0.18);
@@ -825,11 +840,13 @@ const STYLES = `
     color: #fff;
     margin: 0;
     font-weight: 800;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-desc {
     color: #a9b1c8;
     font-size: 0.9rem;
     margin: 0;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-price-box {
     min-width: 120px;
@@ -851,6 +868,7 @@ const STYLES = `
     font-weight: 700;
     color: #fff;
     margin: 0;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .promo-unit {
     font-size: 0.75rem;
@@ -858,6 +876,7 @@ const STYLES = `
     text-transform: uppercase;
     color: rgba(191, 219, 254, 0.85);
     margin: 0;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   .teachers-invited-section {
     position: relative;
@@ -913,6 +932,7 @@ const STYLES = `
     font-size: 0.95rem;
     opacity: 0.85;
     margin: 0;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 500;
   }
@@ -1027,6 +1047,7 @@ const STYLES = `
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 600;
   }

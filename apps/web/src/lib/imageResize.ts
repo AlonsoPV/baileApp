@@ -24,12 +24,30 @@ export async function resizeImageIfNeeded(
     return file;
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const img = new Image();
     const reader = new FileReader();
 
+    // Timeout de seguridad para evitar que la promesa quede colgada
+    const timeoutId = setTimeout(() => {
+      console.warn('[ImageResize] Timeout al procesar imagen, devolviendo archivo original');
+      resolve(file);
+    }, 30000); // 30 segundos máximo
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+    };
+
     reader.onload = (e) => {
       img.onload = () => {
+        cleanup();
+        // Validar dimensiones antes de procesar
+        if (!img.width || !img.height || img.width <= 0 || img.height <= 0) {
+          console.warn('[ImageResize] Dimensiones inválidas, devolviendo archivo original');
+          resolve(file);
+          return;
+        }
+
         // Si la imagen es menor o igual al máximo, devolver original
         if (img.width <= maxWidth) {
           console.log(`[ImageResize] Imagen no necesita redimensionamiento (${img.width}px <= ${maxWidth}px)`);
@@ -95,18 +113,28 @@ export async function resizeImageIfNeeded(
       };
 
       img.onerror = (error) => {
+        cleanup();
         console.warn('[ImageResize] Error al cargar imagen, devolviendo archivo original:', error);
         resolve(file); // Fallback a original en error
       };
       
-      if (e.target?.result) {
-        img.src = e.target.result as string;
+      if (e.target?.result && typeof e.target.result === 'string') {
+        try {
+          img.src = e.target.result;
+        } catch (srcError) {
+          cleanup();
+          console.warn('[ImageResize] Error al establecer src de imagen, devolviendo archivo original:', srcError);
+          resolve(file);
+        }
       } else {
+        cleanup();
+        console.warn('[ImageResize] No se pudo obtener resultado del FileReader, devolviendo archivo original');
         resolve(file);
       }
     };
 
     reader.onerror = () => {
+      cleanup();
       console.warn('[ImageResize] Error al leer archivo, devolviendo archivo original');
       resolve(file); // Fallback a original en error
     };

@@ -1,5 +1,7 @@
 // Shared modern card frame styles (based on EventCard visual system)
 export const EXPLORE_CARD_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+  
   .explore-card-mobile {
     width: 100%;
   }
@@ -92,6 +94,7 @@ export const EXPLORE_CARD_STYLES = `
     text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
     word-break: break-word;
     line-height: 1.3;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
   .explore-card-subtitle {
@@ -103,6 +106,7 @@ export const EXPLORE_CARD_STYLES = `
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.4;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
   .explore-card-meta {
@@ -127,6 +131,7 @@ export const EXPLORE_CARD_STYLES = `
     overflow: hidden;
     text-overflow: ellipsis;
     backdrop-filter: blur(8px);
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
   .explore-card-actions {

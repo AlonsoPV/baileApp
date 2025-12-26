@@ -58,6 +58,7 @@ export const routes = {
   },
   
   misc: {
+    support: '/soporte',
     notFound: '/404',
     unauthorized: '/unauthorized',
   },
@@ -131,4 +132,5 @@ const routeLabels: Record<string, string> = {
   'maestro': 'Maestro',
   'marca': 'Marca',
   'u': 'Usuario',
+  'soporte': 'Soporte',
 };

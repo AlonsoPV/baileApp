@@ -33,6 +33,7 @@ export function Login() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSignUpSuccess, setIsSignUpSuccess] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -79,7 +80,7 @@ export function Login() {
     } catch (error: any) {
       // Verificar si es rate limit
       if (error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('email rate limit')) {
-        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Google" para iniciar sesión, o contacta al administrador si el problema persiste.';
+        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Apple" o "Continuar con Google" para iniciar sesión, o contacta al administrador si el problema persiste.';
         setError(rateLimitMessage);
         showToast(rateLimitMessage, 'error');
       } else {
@@ -135,7 +136,7 @@ export function Login() {
     } catch (error: any) {
       // Verificar si es rate limit
       if (error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('email rate limit')) {
-        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Google" para registrarte, o contacta al administrador si el problema persiste.';
+        const rateLimitMessage = 'El servicio de emails está temporalmente limitado. Por favor usa "Continuar con Apple" o "Continuar con Google" para registrarte, o contacta al administrador si el problema persiste.';
         setSignUpError(rateLimitMessage);
         showToast(rateLimitMessage, 'error');
       } else {
@@ -184,6 +185,38 @@ export function Login() {
         showToast(msg, 'error');
       }
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleAppleAuth = async (isSignUp: boolean = false) => {
+    setIsAppleLoading(true);
+    setError('');
+    setSignUpError('');
+
+    try {
+      const siteUrl = getSiteUrl();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: `${siteUrl}/auth/callback`,
+          // Apple supports requesting email + name. Supabase will only receive what's granted by the user.
+          scopes: 'email name',
+        },
+      });
+
+      if (error) throw error;
+      // OAuth flow redirects automatically
+    } catch (err: any) {
+      console.error('[Login] Apple OAuth error', err);
+      const msg = err?.message ?? 'Error al iniciar sesión con Apple.';
+      if (isSignUp) {
+        setSignUpError(msg);
+        showToast(msg, 'error');
+      } else {
+        setError(msg);
+        showToast(msg, 'error');
+      }
+      setIsAppleLoading(false);
     }
   };
 
@@ -497,11 +530,40 @@ export function Login() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2], marginBottom: spacing[3] }}>
               <Button
                 type="button"
-                onClick={() => handleGoogleAuth(false)}
-                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
+                onClick={() => handleAppleAuth(false)}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading}
                 style={{
                   width: '100%',
-                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                  background: '#000000',
+                  color: '#FFFFFF',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing[2],
+                  fontWeight: 700,
+                }}
+              >
+                {isAppleLoading ? (
+                  '⏳ Conectando...'
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                      <path d="M16.365 1.43c0 1.14-.41 2.17-1.23 3.08-.99 1.1-2.2 1.74-3.53 1.63-.08-1.12.44-2.3 1.28-3.2.93-1 2.38-1.73 3.48-1.51zM20.33 17.19c-.6 1.4-.88 2.03-1.66 3.27-1.09 1.72-2.62 3.86-4.53 3.88-1.7.02-2.14-1.1-4.44-1.09-2.3.01-2.79 1.11-4.49 1.09-1.91-.02-3.37-1.95-4.46-3.67C.76 18.8-.36 15.34.64 12.92c.71-1.74 2.32-2.83 4.1-2.86 1.62-.03 3.15 1.1 4.44 1.1 1.27 0 3.26-1.36 5.5-1.16.94.04 3.58.38 5.28 2.86-.14.09-3.15 1.84-3.12 5.49.03 4.36 3.83 5.81 3.88 5.83z" />
+                    </svg>
+                    Continuar con Apple
+                  </>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => handleGoogleAuth(false)}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading}
+                style={{
+                  width: '100%',
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading ? 0.5 : 1,
                   background: '#FFFFFF',
                   color: '#1F2937',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -664,10 +726,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={() => handleGoogleAuth(true)}
-                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading}
                 style={{
                   width: '100%',
-                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading ? 0.5 : 1,
                   background: '#FFFFFF',
                   color: '#1F2937',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -701,6 +763,35 @@ export function Login() {
                       />
                     </svg>
                     Continuar con Google
+                  </>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => handleAppleAuth(true)}
+                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading}
+                style={{
+                  width: '100%',
+                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                  background: '#000000',
+                  color: '#FFFFFF',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: spacing[2],
+                  fontWeight: 700,
+                }}
+              >
+                {isAppleLoading ? (
+                  '⏳ Conectando...'
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                      <path d="M16.365 1.43c0 1.14-.41 2.17-1.23 3.08-.99 1.1-2.2 1.74-3.53 1.63-.08-1.12.44-2.3 1.28-3.2.93-1 2.38-1.73 3.48-1.51zM20.33 17.19c-.6 1.4-.88 2.03-1.66 3.27-1.09 1.72-2.62 3.86-4.53 3.88-1.7.02-2.14-1.1-4.44-1.09-2.3.01-2.79 1.11-4.49 1.09-1.91-.02-3.37-1.95-4.46-3.67C.76 18.8-.36 15.34.64 12.92c.71-1.74 2.32-2.83 4.1-2.86 1.62-.03 3.15 1.1 4.44 1.1 1.27 0 3.26-1.36 5.5-1.16.94.04 3.58.38 5.28 2.86-.14.09-3.15 1.84-3.12 5.49.03 4.36 3.83 5.81 3.88 5.83z" />
+                    </svg>
+                    Continuar con Apple
                   </>
                 )}
               </Button>
