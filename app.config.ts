@@ -146,19 +146,19 @@ const config: ExpoConfig = {
 
   scheme: "dondebailarmx",
   orientation: "default", // Permite todas las orientaciones para compatibilidad con pantallas grandes (Android 16+)
-  icon: "./assets/icon.png",
+  icon: "./assets/adaptive-icon.png",
   userInterfaceStyle: "automatic",
   newArchEnabled: false, // ⚠️ Deshabilitado temporalmente debido a crash en TurboModules (iOS 18.1)
 
   splash: {
-    image: "./assets/splash-icon.png",
+    image: "./assets/adaptive-icon",
     resizeMode: "contain",
     backgroundColor: "#000000",
   },
 
   web: {
     bundler: "metro",
-    favicon: "./assets/favicon.png",
+    favicon: "./assets/adaptive-icon",
   },
 
   ios: {
