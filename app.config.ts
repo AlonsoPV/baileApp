@@ -151,14 +151,14 @@ const config: ExpoConfig = {
   newArchEnabled: false, // ⚠️ Deshabilitado temporalmente debido a crash en TurboModules (iOS 18.1)
 
   splash: {
-    image: "./assets/adaptive-icon",
+    image: "./assets/adaptive-icon.png",
     resizeMode: "contain",
     backgroundColor: "#000000",
   },
 
   web: {
     bundler: "metro",
-    favicon: "./assets/adaptive-icon",
+    favicon: "./assets/adaptive-icon.png",
   },
 
   ios: {

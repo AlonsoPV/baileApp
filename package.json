@@ -25,6 +25,7 @@
     "update": "eas update --branch main --message \"OTA\"",
     "update:android": "eas update --branch main --message \"OTA\" --platform android",
     "update:ios": "eas update --branch main --message \"OTA\" --platform ios",
+    "fix:certificates": "powershell -ExecutionPolicy Bypass -File scripts/actualizar-certificados-nodejs.ps1",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },
