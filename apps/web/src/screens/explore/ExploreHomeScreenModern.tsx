@@ -904,7 +904,7 @@ const STYLES = `
       max-width: 100% !important;
       padding: 12px 14px 14px !important;
       border-radius: 20px !important;
-      margin: 1.5px 0 !important;
+      margin: 1.5px 0 2em 0 !important;
     }
     .filters-fav {
       padding: 10px 12px !important;
@@ -1027,7 +1027,7 @@ const STYLES = `
     .filters-panel {
       padding: 10px 12px 12px !important;
       border-radius: 18px !important;
-      margin: 1.5px 0 !important;
+      margin: 1.5px 0 2em 0 !important;
     }
     .filters-fav {
       padding: 8px 10px !important;
@@ -1164,7 +1164,7 @@ const STYLES = `
     .filters-panel {
       padding: 9px 10px 11px !important;
       border-radius: 16px !important;
-      margin: 1.5px 0 !important;
+      margin: 1.5px 0 2em 0 !important;
     }
     .filters-fav {
       padding: 7px 9px !important;
