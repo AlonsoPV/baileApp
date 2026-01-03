@@ -112,12 +112,30 @@ export default function WebAppScreen() {
           mixedContentMode="always"
           // Evitar que target="_blank" intente abrir una nueva "ventana" nativa
           setSupportMultipleWindows={false}
-          // Inyectar JavaScript para forzar que window.open abra en la misma pestaña
+          // Inyectar JavaScript para forzar que window.open y redirecciones OAuth se mantengan en el WebView
           injectedJavaScript={`
             (function() {
               // Forzar que window.open abra en la misma pestaña
-              window.open = function(url) {
-                window.location.href = url;
+              const originalOpen = window.open;
+              window.open = function(url, target, features) {
+                // Si es una URL de OAuth o del mismo dominio, redirigir en la misma pestaña
+                if (url && (url.includes('supabase.co') || url.includes('appleid.apple.com') || url.includes('dondebailar.com.mx'))) {
+                  window.location.href = url;
+                  return null;
+                }
+                // Para otras URLs, usar el comportamiento original
+                return originalOpen.call(window, url, target, features);
+              };
+              
+              // Interceptar redirecciones de OAuth que puedan usar location.replace
+              const originalReplace = window.location.replace;
+              window.location.replace = function(url) {
+                // Si es una URL de OAuth, permitir la redirección
+                if (url && (url.includes('supabase.co') || url.includes('appleid.apple.com') || url.includes('dondebailar.com.mx'))) {
+                  window.location.href = url;
+                } else {
+                  originalReplace.call(window.location, url);
+                }
               };
             })();
           `}
@@ -131,6 +149,18 @@ export default function WebAppScreen() {
               url.startsWith("https://dondebailar.com.mx") ||
               url.startsWith("https://www.dondebailar.com.mx");
 
+            // Permitir URLs de OAuth de Supabase dentro del WebView
+            const isSupabaseOAuth =
+              url.includes("supabase.co/auth/v1/authorize") ||
+              url.includes("supabase.co/auth/v1/callback") ||
+              url.includes("supabase.co/auth/v1/verify");
+
+            // Permitir URLs de OAuth de Apple dentro del WebView
+            const isAppleOAuth =
+              url.includes("appleid.apple.com") ||
+              url.includes("idmsa.apple.com") ||
+              url.includes("/auth/authorize") && url.includes("apple");
+
             // Detectar enlaces de calendario (.ics o protocolos webcal/calshow)
             const isCalendarLink =
               url.endsWith(".ics") || url.startsWith("webcal:") || url.startsWith("calshow:");
@@ -143,8 +173,14 @@ export default function WebAppScreen() {
               return false;
             }
 
+            // Permitir navegación dentro del mismo dominio
             if (isSameDomain) {
               return true;
+            }
+
+            // Permitir URLs de OAuth dentro del WebView para mantener el flujo de autenticación
+            if (isSupabaseOAuth || isAppleOAuth) {
+              return true; // Mantener dentro del WebView
             }
 
             // Protocolos y enlaces externos (redes sociales, maps, mail, tel, etc.)
