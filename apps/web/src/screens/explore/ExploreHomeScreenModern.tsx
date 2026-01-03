@@ -23,6 +23,7 @@ import SeoHead from "@/components/SeoHead";
 import { EventsSection } from "../../components/sections/EventsSection";
 import { ClassesSection } from "../../components/sections/ClassesSection";
 import { AcademiesSection } from "../../components/sections/AcademiesSection";
+import { WelcomeCurtainWeb } from "../../components/WelcomeCurtainWeb";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -2090,6 +2091,7 @@ export default function ExploreHomeScreen() {
     <>
       <SeoHead section="explore" />
       <style>{STYLES}</style>
+      <WelcomeCurtainWeb />
 
       <div className="explore-container">
         <div className="wrap">
