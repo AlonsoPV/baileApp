@@ -708,6 +708,8 @@ const STYLES = `
   .segment {
     display: inline-flex;
     gap: 0.25rem;
+    width: 100%;
+    justify-content: space-evenly;
     padding: 0.2rem;
     background: hsl(235 25% 21% / .55);
     border: 1px solid var(--stroke);
@@ -1280,10 +1282,7 @@ function Section({ title, toAll, children, count }: { title: string; toAll: stri
             fontWeight: 800,
             margin: 0,
             marginBottom: '0.25rem',
-            background: 'linear-gradient(135deg, #f093fb, #FFD166)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            color: '#fff',
             lineHeight: 1.2,
             display: 'flex',
             alignItems: 'center',
@@ -1314,7 +1313,7 @@ function Section({ title, toAll, children, count }: { title: string; toAll: stri
             width: 60,
             height: 4,
             borderRadius: 2,
-            background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)',
+            background: '#fff',
             opacity: 0.8
           }} />
         </div>

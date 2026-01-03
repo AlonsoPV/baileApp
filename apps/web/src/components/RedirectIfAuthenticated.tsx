@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from '../hooks/useUserProfile';
+import LoadingScreen from './LoadingScreen';
 
 interface RedirectIfAuthenticatedProps {
   children: React.ReactNode;
@@ -12,17 +13,10 @@ export function RedirectIfAuthenticated({ children }: RedirectIfAuthenticatedPro
 
   if (loading || isLoading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          fontSize: '1.5rem',
-        }}
-      >
-        Cargando...
-      </div>
+      <LoadingScreen 
+        message="Cargando aplicación..." 
+        submessage="Por favor espera un momento"
+      />
     );
   }
 

@@ -11,6 +11,7 @@ import { envReport } from "./src/lib/envReport";
 // import { useOTAUpdates } from "./src/hooks/useOTAUpdates"; // Temporarily disabled to prevent crash
 import { clearLastCrash, readLastCrash, type CrashRecord } from "./src/lib/crashRecorder";
 import { markPerformance, logPerformanceReport } from "./src/lib/performance";
+import { WelcomeCurtain } from "./src/components/WelcomeCurtain";
 
 // ✅ Generate ENV report at startup (logs to console for debugging)
 markPerformance("app_config_start");
@@ -220,6 +221,7 @@ function AppContent() {
         <ErrorBoundary title="Error al iniciar la app">
           <RootNavigator />
         </ErrorBoundary>
+        <WelcomeCurtain />
         <StatusBar style="auto" />
       </QueryClientProvider>
     </SafeAreaProvider>

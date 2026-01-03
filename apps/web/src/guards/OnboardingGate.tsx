@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { routes } from '@/routes/registry';
 import { isPinVerified, needsPinVerify } from '@/lib/pin';
+import LoadingScreen from '@/components/LoadingScreen';
 
 // ---------- Constantes / Tipos (fuera del componente) ----------
 const PROTECTED_PREFIX = [/^\/app\//, /^\/profile(\/|$)/];
@@ -187,22 +188,10 @@ export default function OnboardingGate() {
       );
     }
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'grid',
-        placeItems: 'center',
-        background: '#0b0d10',
-        color: '#e5e7eb',
-        fontFamily: 'system-ui, sans-serif'
-      }}>
-        <div style={{
-          padding: 16,
-          borderRadius: 12,
-          border: '1px solid rgba(255,255,255,.12)'
-        }}>
-          Cargando…
-        </div>
-      </div>
+      <LoadingScreen 
+        message="Verificando tu perfil..." 
+        submessage="Un momento por favor"
+      />
     );
   }
 
