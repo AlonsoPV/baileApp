@@ -18,17 +18,8 @@ const LOGO_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/pub
  */
 export function WelcomeCurtainWeb() {
   const { shouldShow, isReady, markAsSeen } = useWelcomeCurtainWeb();
-  const [isVisible, setIsVisible] = useState(false);
-
-  // Mostrar después de un pequeño delay
-  useEffect(() => {
-    if (shouldShow && isReady) {
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [shouldShow, isReady]);
+  // Mostrar inmediatamente si debe mostrarse (sin delay para que aparezca primero)
+  const [isVisible, setIsVisible] = useState(() => shouldShow && isReady);
 
   // Función para cerrar con animación
   const handleClose = () => {
@@ -60,8 +51,10 @@ export function WelcomeCurtainWeb() {
             bottom: 0,
             width: '100vw',
             height: '100vh',
-            zIndex: 9999,
+            zIndex: 99999, // Z-index muy alto para estar por encima de todo
             pointerEvents: 'auto',
+            // Asegurar que esté por encima de todo el contenido
+            isolation: 'isolate',
           }}
         >
           {/* Fondo con color de navbar (gradiente) */}

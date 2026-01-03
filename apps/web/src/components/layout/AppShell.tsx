@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useNavigate, Link } from 'react-router-dom';
+import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '../Navbar';
 import AppBootstrap from '@/providers/AppBootstrap';
@@ -12,6 +12,8 @@ import { useIsAdmin } from '@/hooks/useRoleRequests';
 import { getMediaBySlot } from '@/utils/mediaSlots';
 import SeoHead from '@/components/SeoHead';
 import JoinCommunityForm from '@/components/forms/JoinCommunityForm';
+import { WelcomeCurtainWeb } from '../WelcomeCurtainWeb';
+import { useWelcomeCurtainWeb } from '../../hooks/useWelcomeCurtainWeb';
 
 export default function AppShell() {
   const { user, signOut } = useAuth();
@@ -20,8 +22,18 @@ export default function AppShell() {
   const { getDefaultRoute, getDefaultEditRoute, getDefaultProfileInfo } = useDefaultProfile();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: isSuperAdmin } = useIsAdmin();
   const { t } = useTranslation();
+
+  // Solo mostrar la cortina en la ruta /explore
+  const isExploreRoute = location.pathname === '/explore' || location.pathname.startsWith('/explore/');
+  
+  // Hook para verificar si la cortina debe mostrarse (siempre se llama, pero solo se usa en /explore)
+  const { shouldShow: shouldShowCurtain, isReady: curtainReady } = useWelcomeCurtainWeb();
+  
+  // Si la cortina debe mostrarse en /explore, bloquear el renderizado del contenido
+  const shouldBlockContent = isExploreRoute && shouldShowCurtain && curtainReady;
 
   const defaultProfileInfo = getDefaultProfileInfo();
 
@@ -72,6 +84,8 @@ export default function AppShell() {
   return (
     <>
       <SeoHead section="default" />
+      {/* Cortina de bienvenida - solo en /explore, renderizada ANTES del contenido */}
+      {isExploreRoute && <WelcomeCurtainWeb />}
       <style>{`
         .app-shell-root {
           min-height: 100vh;

@@ -12,55 +12,41 @@ const APP_TERMINATED_KEY = '@baileapp:appTerminated';
  * - Persiste el estado usando localStorage
  */
 export function useWelcomeCurtainWeb() {
-  const [shouldShow, setShouldShow] = useState(false);
-  const [isReady, setIsReady] = useState(false);
+  // Verificar de forma síncrona para que aparezca inmediatamente
+  const checkWelcomeCurtainSync = () => {
+    try {
+      // Verificar si ya vieron la cortina
+      const hasSeen = localStorage.getItem(WELCOME_CURTAIN_KEY) === 'true';
+      // Solo mostrar si nunca han visto la cortina (primera vez)
+      return !hasSeen;
+    } catch (error) {
+      console.error('[useWelcomeCurtainWeb] Error checking state:', error);
+      return false; // En caso de error, no mostrar
+    }
+  };
+
+  // Estado inicial síncrono para que aparezca inmediatamente
+  const [shouldShow, setShouldShow] = useState(() => checkWelcomeCurtainSync());
+  const [isReady, setIsReady] = useState(true); // Ya está listo desde el inicio
 
   // Verificar si debe mostrarse la cortina (solo en cold start, primera vez)
   useEffect(() => {
-    let mounted = true;
+    // Verificación adicional asíncrona para limpiar flags
+    try {
+      // Verificar si la página fue cerrada (marcado cuando se detecta beforeunload)
+      const wasTerminated = sessionStorage.getItem(APP_TERMINATED_KEY) === 'true';
 
-    const checkWelcomeCurtain = () => {
-      try {
-        // Verificar si ya vieron la cortina
-        const hasSeen = localStorage.getItem(WELCOME_CURTAIN_KEY) === 'true';
-
-        // Verificar si la página fue cerrada (marcado cuando se detecta beforeunload)
-        const wasTerminated = sessionStorage.getItem(APP_TERMINATED_KEY) === 'true';
-
-        if (mounted) {
-          // Solo mostrar si nunca han visto la cortina (primera vez)
-          const shouldShowCurtain = !hasSeen;
-          
-          setShouldShow(shouldShowCurtain);
-          setIsReady(true);
-
-          // Limpiar el flag de terminación después de verificar
-          if (wasTerminated) {
-            try {
-              sessionStorage.removeItem(APP_TERMINATED_KEY);
-            } catch {
-              // Ignore deletion errors
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[useWelcomeCurtainWeb] Error checking state:', error);
-        if (mounted) {
-          setIsReady(true);
-          setShouldShow(false); // En caso de error, no mostrar
+      // Limpiar el flag de terminación después de verificar
+      if (wasTerminated) {
+        try {
+          sessionStorage.removeItem(APP_TERMINATED_KEY);
+        } catch {
+          // Ignore deletion errors
         }
       }
-    };
-
-    // Pequeño delay para asegurar que el DOM está listo
-    const timer = setTimeout(() => {
-      checkWelcomeCurtain();
-    }, 100);
-
-    return () => {
-      mounted = false;
-      clearTimeout(timer);
-    };
+    } catch (error) {
+      // Ignore errors
+    }
   }, []);
 
   // Detectar cuando la página se va a cerrar (para marcar posible terminación)
