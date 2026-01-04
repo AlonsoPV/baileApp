@@ -112,15 +112,7 @@ export default function AppShell() {
           /* Optimizaciones de scroll vertical */
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
-          /* Aceleración de hardware para scroll fluido */
-          transform: translateZ(0);
-          -webkit-transform: translateZ(0);
-          will-change: auto;
-          /* Mejorar rendimiento en mobile */
-          backfaceVisibility: hidden;
-          -webkit-backfaceVisibility: hidden;
-          /* Contenido optimizado para scroll */
-          contain: layout style;
+          /* Nota: NO aplicar transform/contain aquí; rompe overlays fixed en iOS/WebView */
         }
         @media (max-width: 768px) {
           .app-shell-content {

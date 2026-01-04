@@ -19,9 +19,7 @@ html {
   overflow-x: hidden;
   /* Mejorar rendimiento de scroll - solo activar durante scroll activo */
   will-change: auto;
-  /* Aceleración de hardware */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  /* Nota: NO usar transform en html; rompe position: fixed (se vuelve relativo al documento) */
 }
 
 body {
@@ -35,20 +33,23 @@ body {
   /* Optimizaciones de scroll para móvil */
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  /* Aceleración de hardware para scroll fluido */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  /* Nota: NO usar transform en body; rompe position: fixed (se vuelve relativo al documento) */
   /* Prevenir scroll horizontal */
   overflow-x: hidden;
   /* Mejorar rendimiento - solo durante scroll activo */
   will-change: auto;
   /* Touch actions optimizadas */
   touch-action: pan-y;
-  /* Reducir repaints durante scroll */
-  backfaceVisibility: hidden;
-  -webkit-backfaceVisibility: hidden;
-  /* Contenido optimizado */
-  contain: layout style;
+  /* Importante: no aplicar contain/transform globales al body; afectan fixed/sticky */
+}
+
+/* Overlay root: capa fija global (no afecta layout, no bloquea scroll) */
+#overlay-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647; /* encima de todo */
+  pointer-events: none; /* no bloquear scroll */
+  isolation: isolate; /* stacking context propio */
 }
 
 button {

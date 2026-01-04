@@ -160,7 +160,7 @@ export default function HorizontalSlider<T>({
         </div>
       </div>
 
-      {/* Botones de navegación debajo del viewport */}
+      {/* Botones de navegación debajo del viewport - Ocultos en móvil */}
       {canScroll && (
         <div
           style={{
@@ -170,7 +170,16 @@ export default function HorizontalSlider<T>({
             gap: 12,
             width: "100%"
           }}
+          className="horizontal-slider-buttons"
         >
+          <style>{`
+            /* Ocultar botones en móvil */
+            @media (max-width: 768px) {
+              .horizontal-slider-buttons {
+                display: none !important;
+              }
+            }
+          `}</style>
           <motion.button
             type="button"
             aria-label="Anterior"

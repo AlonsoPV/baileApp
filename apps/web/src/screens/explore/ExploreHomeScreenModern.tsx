@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -408,13 +409,7 @@ const STYLES = `
     /* Optimizaciones de scroll vertical */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    /* Aceleración de hardware para scroll fluido */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: auto;
-    /* Mejorar rendimiento en mobile */
-    backfaceVisibility: hidden;
-    -webkit-backfaceVisibility: hidden;
+    /* Nota: NO aplicar transform/backface aquí; puede romper position: fixed en iOS/WebView */
   }
   .filters { padding: ${spacing[6]}; }
   .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }
@@ -1256,16 +1251,18 @@ const STYLES = `
   }
 `;
 
-function Section({ title, toAll, children, count }: { title: string; toAll: string; children: React.ReactNode; count?: number }) {
+function Section({ title, toAll, children, count, sectionId }: { title: string; toAll: string; children: React.ReactNode; count?: number; sectionId?: string }) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className="section-container"
+      data-section-id={sectionId}
       style={{
         marginBottom: '4rem',
-        position: 'relative'
+        position: 'relative',
+        scrollMarginTop: '100px' // Espacio para el scroll cuando se navega
       }}
     >
       <div className="section-header" style={{
@@ -1339,6 +1336,55 @@ export default function ExploreHomeScreen() {
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  
+  // Navegación entre secciones (solo móvil)
+  const scrollToSection = React.useCallback((direction: 'up' | 'down') => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>('.section-container'));
+    if (sections.length === 0) return;
+    
+    const currentScroll = window.scrollY + window.innerHeight / 2; // Centro de la ventana
+    let targetSection: HTMLElement | null = null;
+    
+    if (direction === 'down') {
+      // Buscar la siguiente sección que esté debajo del centro actual
+      for (const section of sections) {
+        const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+        if (sectionTop > currentScroll) {
+          targetSection = section;
+          break;
+        }
+      }
+      // Si no hay sección debajo, ir a la última
+      if (!targetSection && sections.length > 0) {
+        targetSection = sections[sections.length - 1];
+      }
+    } else {
+      // Buscar la sección anterior que esté arriba del centro actual
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+        if (sectionTop < currentScroll) {
+          targetSection = section;
+          break;
+        }
+      }
+      // Si no hay sección arriba, ir a la primera
+      if (!targetSection && sections.length > 0) {
+        targetSection = sections[0];
+      }
+    }
+    
+    if (targetSection) {
+      const headerOffset = 100; // Offset para el header
+      const elementPosition = targetSection.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
 
   const { data: allTags } = useTags();
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
@@ -1366,6 +1412,26 @@ export default function ExploreHomeScreen() {
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
+
+  // Guard rail: asegurar overlay-root (para casos de WebView/PWA o HTML cacheado)
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const existing = document.getElementById('overlay-root');
+    if (existing) return;
+
+    const el = document.createElement('div');
+    el.id = 'overlay-root';
+    el.style.position = 'fixed';
+    el.style.inset = '0';
+    el.style.pointerEvents = 'none';
+    el.style.zIndex = '2147483647';
+    // Aislar stacking context para que nada quede "encima" accidentalmente
+    (el.style as any).isolation = 'isolate';
+    document.body.appendChild(el);
+  }, []);
+
+  const shouldShowSectionNav =
+    typeof window !== 'undefined' ? window.innerWidth < 769 : isMobile;
 
   const computePresetRange = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
     const todayCDMX = getTodayCDMX();
@@ -2519,7 +2585,7 @@ export default function ExploreHomeScreen() {
           </section>
 
           {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas) && (
-            <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length}>
+            <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length} sectionId="fechas">
               {fechasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
@@ -2548,7 +2614,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'clases') && ((academiasLoading || maestrosLoading) || hasClases) && (
-            <Section title={t('section_recommended_classes')} toAll="/explore/list?type=clases" count={classesList.length}>
+            <Section title={t('section_recommended_classes')} toAll="/explore/list?type=clases" count={classesList.length} sectionId="clases">
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>;
@@ -2579,7 +2645,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'academias') && (academiasLoading || hasAcademias) && (
-            <Section title={t('section_best_academies_zone')} toAll="/explore/list?type=academias" count={academiasData.length}>
+            <Section title={t('section_best_academies_zone')} toAll="/explore/list?type=academias" count={academiasData.length} sectionId="academias">
               <AcademiesSection
                 filters={filters}
                 q={qDeferred || undefined}
@@ -2611,7 +2677,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
-            <Section title={t('section_featured_teachers')} toAll="/explore/list?type=teacher" count={maestrosData.length}>
+            <Section title={t('section_featured_teachers')} toAll="/explore/list?type=teacher" count={maestrosData.length} sectionId="maestros">
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
@@ -2678,7 +2744,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
-            <Section title={t('section_dancers_near_you')} toAll="/explore/list?type=usuarios" count={validUsuarios.length}>
+            <Section title={t('section_dancers_near_you')} toAll="/explore/list?type=usuarios" count={validUsuarios.length} sectionId="usuarios">
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -2739,7 +2805,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0) && (
-            <Section title={t('section_event_producers')} toAll="/explore/list?type=organizadores" count={organizadoresData.length}>
+            <Section title={t('section_event_producers')} toAll="/explore/list?type=organizadores" count={organizadoresData.length} sectionId="organizadores">
               {organizadoresLoading ? (
                 <div className="cards-grid">
                   {[...Array(6)].map((_, i) => (
@@ -2814,7 +2880,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(showAll || selectedType === 'marcas') && (marcasLoading || hasMarcas) && (
-            <Section title={t('section_specialized_brands')} toAll="/explore/list?type=marcas" count={marcasData.length}>
+            <Section title={t('section_specialized_brands')} toAll="/explore/list?type=marcas" count={marcasData.length} sectionId="marcas">
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
@@ -2881,7 +2947,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {/* Sección Comparte */}
-          <Section title={t('share_section')} toAll="">
+          <Section title={t('share_section')} toAll="" sectionId="comparte">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -2933,7 +2999,7 @@ export default function ExploreHomeScreen() {
                         filter: "drop-shadow(0 4px 8px rgba(240, 147, 251, 0.3))",
                       }}
                     >
-                      📱📱📱📱
+                      📱
                     </div>
                     <h3
                       style={{
@@ -3089,6 +3155,110 @@ export default function ExploreHomeScreen() {
           )}
         </div>
       </div>
+
+      {/* Botones de navegación entre secciones (solo móvil)
+          Portal a document.body + estilos inline (evita overrides / CSS invalidado). */}
+      {shouldShowSectionNav && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              className="section-navigation-buttons-portal"
+              style={{
+                position: 'fixed',
+                left: '50%',
+                bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 12,
+                pointerEvents: 'none',
+                zIndex: 2147483647,
+                width: 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <style>{`
+                /* Mostrar solo en móvil usando media query (más confiable que isMobile al primer paint) */
+                @media (min-width: 769px) {
+                  .section-navigation-buttons-portal { display: none !important; }
+                }
+                @media (max-width: 480px) {
+                  .section-navigation-buttons-portal { bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important; }
+                }
+              `}</style>
+              <button
+                onClick={() => scrollToSection('up')}
+                aria-label="Sección anterior"
+                type="button"
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 999,
+                  border: '2px solid rgba(240, 147, 251, 0.4)',
+                  background: 'rgba(240, 147, 251, 0.15)',
+                  backdropFilter: 'blur(20px)',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
+                  transition: 'transform 0.15s ease, background 0.15s ease, border-color 0.15s ease',
+                  pointerEvents: 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)',
+                }}
+                onPointerDown={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.95)';
+                }}
+                onPointerUp={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                }}
+                onPointerCancel={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                }}
+              >
+                ↑
+              </button>
+              <button
+                onClick={() => scrollToSection('down')}
+                aria-label="Siguiente sección"
+                type="button"
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 999,
+                  border: '2px solid rgba(240, 147, 251, 0.4)',
+                  background: 'rgba(240, 147, 251, 0.15)',
+                  backdropFilter: 'blur(20px)',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1.5rem',
+                  boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
+                  transition: 'transform 0.15s ease, background 0.15s ease, border-color 0.15s ease',
+                  pointerEvents: 'auto',
+                  touchAction: 'manipulation',
+                  WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)',
+                }}
+                onPointerDown={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.95)';
+                }}
+                onPointerUp={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                }}
+                onPointerCancel={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                }}
+              >
+                ↓
+              </button>
+            </div>,
+            (document.getElementById('overlay-root') ?? document.body)
+          )
+        : null}
     </>
   );
 }
