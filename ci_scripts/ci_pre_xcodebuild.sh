@@ -49,9 +49,20 @@ echo "==> Ensure iOS AppIcon asset has applicable content"
 # sizes at CI time to avoid committing many binary files.
 ICONSET_DIR="ios/DondeBailarMX/Images.xcassets/AppIcon.appiconset"
 SRC_ICON="$ICONSET_DIR/App-Icon-1024x1024@1x.png"
+OPAQUE_SRC="$ICONSET_DIR/AppIcon-1024-opaque.png"
 
 if [ -d "$ICONSET_DIR" ] && [ -f "$SRC_ICON" ]; then
   echo "Using source icon: $SRC_ICON"
+
+  # App Store Connect rejects app icons with alpha/transparency.
+  # Create an opaque 1024 PNG via a JPEG round-trip (JPEG has no alpha).
+  if [ ! -f "$OPAQUE_SRC" ]; then
+    TMP_JPG="$ICONSET_DIR/.tmp_appicon_opaque.jpg"
+    echo "Generating opaque base icon: $(basename "$OPAQUE_SRC")"
+    /usr/bin/sips -s format jpeg "$SRC_ICON" --out "$TMP_JPG" >/dev/null
+    /usr/bin/sips -s format png "$TMP_JPG" --out "$OPAQUE_SRC" >/dev/null
+    rm -f "$TMP_JPG" || true
+  fi
 
   gen_icon() {
     local px="$1"
@@ -60,7 +71,7 @@ if [ -d "$ICONSET_DIR" ] && [ -f "$SRC_ICON" ]; then
       return 0
     fi
     echo "Generating $(basename "$out") (${px}x${px})"
-    /usr/bin/sips -Z "$px" "$SRC_ICON" --out "$out" >/dev/null
+    /usr/bin/sips -Z "$px" "$OPAQUE_SRC" --out "$out" >/dev/null
   }
 
   # iPad
