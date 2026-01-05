@@ -368,7 +368,12 @@ export function ProfileBasics() {
       // Mensaje de error más amigable para el usuario
       let userFriendlyMessage = 'Error al guardar el perfil. Por favor intenta de nuevo.';
       
-      if (err?.message) {
+      // Detectar errores específicos de permisos o cámara
+      if (err?.message?.includes('camera') || err?.message?.includes('permission') || 
+          err?.message?.includes('NSCameraUsageDescription') || 
+          err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+        userFriendlyMessage = 'Error de permisos. Por favor verifica que la app tenga permisos para acceder a la cámara y galería en Configuración > Privacidad.';
+      } else if (err?.message) {
         // Si el error ya tiene un mensaje claro, usarlo directamente
         userFriendlyMessage = err.message;
       } else if (err?.name === 'NetworkError' || err?.message?.includes('network') || err?.message?.includes('fetch')) {
@@ -617,6 +622,25 @@ export function ProfileBasics() {
                     type="file"
                     accept="image/*"
                     onChange={handleAvatarChange}
+                    onClick={(e) => {
+                      // En iOS/iPadOS, si el usuario cancela o hay un error de permisos,
+                      // el evento onChange no se dispara, pero podemos capturar errores aquí
+                      try {
+                        // Verificar si hay errores de permisos (solo en desarrollo)
+                        if (import.meta.env.MODE === 'development') {
+                          console.log('[ProfileBasics] Input file clicked');
+                        }
+                      } catch (error) {
+                        console.error('[ProfileBasics] Error al hacer clic en input file:', error);
+                      }
+                    }}
+                    onError={(e) => {
+                      // Capturar errores de permisos si es posible
+                      console.error('[ProfileBasics] Error en input file:', e);
+                      const errorMsg = 'Error al acceder a la galería o cámara. Por favor verifica los permisos de la app en Configuración.';
+                      setError(errorMsg);
+                      showToast(errorMsg, 'error');
+                    }}
                     disabled={isLoading}
                     style={{
                       width: '100%',

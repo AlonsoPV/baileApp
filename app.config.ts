@@ -168,6 +168,8 @@ const config: ExpoConfig = {
       ITSAppUsesNonExemptEncryption: false, // Usa cifrado estándar/exento (HTTPS)
       // ✅ Permisos de cámara y galería para selección de fotos
       NSCameraUsageDescription: "Necesitamos acceso a la cámara para tomar fotos de perfil y eventos.",
+      // Algunas UIs de cámara pueden requerir micrófono (p. ej. si el usuario cambia a video)
+      NSMicrophoneUsageDescription: "Necesitamos acceso al micrófono para grabar video cuando lo solicites.",
       NSPhotoLibraryUsageDescription: "Necesitamos acceso a tu galería para seleccionar fotos de perfil y eventos.",
       NSPhotoLibraryAddUsageDescription: "Permite guardar fotos en tu galería cuando lo desees.",
       // ✅ Configuración de Expo Updates (se genera automáticamente desde updates.url y runtimeVersion)
