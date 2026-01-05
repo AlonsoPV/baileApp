@@ -1341,49 +1341,30 @@ export default function ExploreHomeScreen() {
   const scrollToSection = React.useCallback((direction: 'up' | 'down') => {
     const sections = Array.from(document.querySelectorAll<HTMLElement>('.section-container'));
     if (sections.length === 0) return;
-    
-    const currentScroll = window.scrollY + window.innerHeight / 2; // Centro de la ventana
-    let targetSection: HTMLElement | null = null;
-    
-    if (direction === 'down') {
-      // Buscar la siguiente sección que esté debajo del centro actual
-      for (const section of sections) {
-        const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-        if (sectionTop > currentScroll) {
-          targetSection = section;
-          break;
-        }
-      }
-      // Si no hay sección debajo, ir a la última
-      if (!targetSection && sections.length > 0) {
-        targetSection = sections[sections.length - 1];
-      }
-    } else {
-      // Buscar la sección anterior que esté arriba del centro actual
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const section = sections[i];
-        const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-        if (sectionTop < currentScroll) {
-          targetSection = section;
-          break;
-        }
-      }
-      // Si no hay sección arriba, ir a la primera
-      if (!targetSection && sections.length > 0) {
-        targetSection = sections[0];
-      }
+
+    // Determinar sección "actual" usando el scroll real (no el centro),
+    // para que "up" no caiga en la misma sección.
+    const headerOffset = 110; // un poco más que el header fijo
+    const y = window.scrollY + headerOffset + 1;
+
+    const tops = sections.map((el) => el.getBoundingClientRect().top + window.scrollY);
+    let currentIndex = 0;
+    for (let i = 0; i < tops.length; i++) {
+      if (tops[i] <= y) currentIndex = i;
+      else break;
     }
-    
-    if (targetSection) {
-      const headerOffset = 100; // Offset para el header
-      const elementPosition = targetSection.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
+
+    const nextIndex =
+      direction === 'down'
+        ? Math.min(sections.length - 1, currentIndex + 1)
+        : Math.max(0, currentIndex - 1);
+
+    const target = sections[nextIndex];
+    if (!target) return;
+
+    const targetTop = target.getBoundingClientRect().top + window.scrollY;
+    const offsetPosition = targetTop - headerOffset;
+    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
   }, []);
 
   const { data: allTags } = useTags();
@@ -3174,6 +3155,14 @@ export default function ExploreHomeScreen() {
                 zIndex: 2147483647,
                 width: 'auto',
                 justifyContent: 'center',
+                // “Píldora” minimalista detrás (no bloquea scroll porque pointerEvents: none)
+                padding: '6px',
+                borderRadius: 999,
+                background: 'rgba(17, 24, 39, 0.55)', // slate/black glass
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                boxShadow: '0 10px 28px rgba(0,0,0,0.35)',
+                WebkitBackdropFilter: 'blur(14px)',
+                backdropFilter: 'blur(14px)',
               }}
             >
               <style>{`
@@ -3190,32 +3179,40 @@ export default function ExploreHomeScreen() {
                 aria-label="Sección anterior"
                 type="button"
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 44,
+                  height: 44,
                   borderRadius: 999,
-                  border: '2px solid rgba(240, 147, 251, 0.4)',
-                  background: 'rgba(240, 147, 251, 0.15)',
-                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  background: 'rgba(255, 255, 255, 0.08)',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  fontSize: '1.5rem',
-                  boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
-                  transition: 'transform 0.15s ease, background 0.15s ease, border-color 0.15s ease',
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  boxShadow: '0 6px 18px rgba(0,0,0,0.28)',
+                  transition:
+                    'transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
                   pointerEvents: 'auto',
                   touchAction: 'manipulation',
                   WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)',
                 }}
                 onPointerDown={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.95)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.14)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.26)';
                 }}
                 onPointerUp={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.08)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.16)';
                 }}
                 onPointerCancel={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.08)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.16)';
                 }}
               >
                 ↑
@@ -3225,32 +3222,40 @@ export default function ExploreHomeScreen() {
                 aria-label="Siguiente sección"
                 type="button"
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 44,
+                  height: 44,
                   borderRadius: 999,
-                  border: '2px solid rgba(240, 147, 251, 0.4)',
-                  background: 'rgba(240, 147, 251, 0.15)',
-                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  background: 'rgba(255, 255, 255, 0.08)',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  fontSize: '1.5rem',
-                  boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
-                  transition: 'transform 0.15s ease, background 0.15s ease, border-color 0.15s ease',
+                  fontSize: '1.15rem',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  boxShadow: '0 6px 18px rgba(0,0,0,0.28)',
+                  transition:
+                    'transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
                   pointerEvents: 'auto',
                   touchAction: 'manipulation',
                   WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)',
                 }}
                 onPointerDown={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.95)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.14)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.26)';
                 }}
                 onPointerUp={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.08)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.16)';
                 }}
                 onPointerCancel={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.08)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.16)';
                 }}
               >
                 ↓

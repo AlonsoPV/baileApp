@@ -101,7 +101,8 @@ button {
   -webkit-transform: translateZ(0);
   will-change: scroll-position;
   /* Touch actions */
-  touch-action: pan-x;
+  /* Permitir scroll vertical del parent aunque el gesto inicie en un slider horizontal */
+  touch-action: pan-x pan-y;
 }
 
 /* Scroll vertical optimizado */

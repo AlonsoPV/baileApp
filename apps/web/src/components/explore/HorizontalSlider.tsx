@@ -97,7 +97,9 @@ export default function HorizontalSlider<T>({
           transform: "translateZ(0)",
           willChange: isScrolling ? "scroll-position" : "auto",
           // Touch actions
-          touchAction: "pan-x",
+          // Permitir scroll vertical del contenedor padre aunque el gesto inicie aquí,
+          // manteniendo swipe horizontal dentro del slider.
+          touchAction: "pan-x pan-y",
           // Mejorar rendimiento en mobile
           WebkitTransform: "translateZ(0)",
           backfaceVisibility: "hidden",

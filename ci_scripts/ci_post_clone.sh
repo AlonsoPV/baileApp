@@ -170,12 +170,14 @@ if [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
 fi
 
 # -----------------------------
-# 5) Expo prebuild (IMPORTANTE)
-#    Esto genera/actualiza iOS config usando app.config.ts + ENV vars.
+# 5) Expo prebuild (solo si NO tienes ios/ commiteado)
 # -----------------------------
-echo "==> Expo prebuild (ios)"
-# Nota: esto NO corre el simulador; solo genera/ajusta carpeta ios y config
-pnpm exec expo prebuild --platform ios --no-install
+if [ ! -d "ios" ] || [ ! -f "ios/Podfile" ]; then
+  echo "==> Expo prebuild (ios) (ios/ no encontrado o sin Podfile)"
+  pnpm exec expo prebuild --platform ios --no-install
+else
+  echo "==> Skipping expo prebuild (ios/ already committed)"
+fi
 
 # -----------------------------
 # 6) CocoaPods
@@ -183,42 +185,44 @@ pnpm exec expo prebuild --platform ios --no-install
 echo "==> CocoaPods install"
 cd ios
 
-# CocoaPods (sin perder tiempo con repo update)
+export COCOAPODS_DISABLE_STATS=1
+
+# CocoaPods: evitar sudo en Xcode Cloud (instalar en user-install si hiciera falta)
 if ! command -v pod >/dev/null 2>&1; then
-  echo "==> CocoaPods not found. Installing..."
-  sudo gem install cocoapods -N
+  echo "==> CocoaPods not found. Installing via gem --user-install..."
+  gem install cocoapods -N --user-install
+  USER_GEM_DIR="$(ruby -r rubygems -e 'print Gem.user_dir' 2>/dev/null || echo '')"
+  if [ -n "$USER_GEM_DIR" ]; then
+    export PATH="$USER_GEM_DIR/bin:$PATH"
+  fi
 fi
 
 echo "==> pod: $(pod --version)"
+echo "==> ruby: $(ruby -v || true)"
+echo "==> gem: $(gem -v || true)"
+echo "==> pod env:"
+pod env || true
 
-# ✅ Configurar CocoaPods para usar repositorio git como fallback si CDN falla
-# Esto evita problemas cuando jsdelivr.net no está disponible en Xcode Cloud
-if ! pod repo list | grep -q "master"; then
-  echo "==> Adding CocoaPods master repo (git fallback)"
-  pod repo add master https://github.com/CocoaPods/Specs.git || true
-fi
-
-# ✅ Intentar pod install con retry si falla por problemas de red
 echo "==> Installing CocoaPods dependencies"
-MAX_RETRIES=3
-RETRY_COUNT=0
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-  if pod install --repo-update --verbose; then
-    echo "==> ✅ Pod install successful"
-    break
+
+# 1) Intento rápido: NO repo update (más estable en CI)
+if pod install --verbose --no-repo-update; then
+  echo "==> ✅ Pod install successful (no-repo-update)"
+else
+  echo "==> ⚠️  pod install failed (no-repo-update). Retrying with --repo-update..."
+  # 2) Intento con repo update (si el CDN necesita actualizar specs)
+  if pod install --verbose --repo-update; then
+    echo "==> ✅ Pod install successful (repo-update)"
   else
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-      echo "==> ⚠️  Pod install failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
-      sleep 5
-      # Intentar usar repositorio git en lugar de CDN
-      pod repo update master || true
-    else
-      echo "==> ❌ Pod install failed after $MAX_RETRIES attempts"
+    echo "==> ⚠️  pod install failed (repo-update). One last retry after cleaning cache..."
+    # 3) Último intento: limpiar cache (sin clonar Specs gigante)
+    pod cache clean --all || true
+    pod install --verbose --repo-update || {
+      echo "==> ❌ Pod install failed after 3 attempts"
       exit 1
-    fi
+    }
   fi
-done
+fi
 
 echo "==> Pods ready"
 ls -la "Pods/Target Support Files/Pods-DondeBailarMX" || true

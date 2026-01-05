@@ -62,7 +62,8 @@ export function WelcomeCurtainWeb() {
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.78) 0%, rgba(251, 140, 0, 0.72) 100%)',
+              // Fondo 100% opaco (sin transparencia)
+              background: 'linear-gradient(135deg, #E53935 0%, #FB8C00 100%)',
             }}
           />
 
