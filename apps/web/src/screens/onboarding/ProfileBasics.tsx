@@ -47,6 +47,7 @@ export function ProfileBasics() {
   // Ref en vez de state: evita un render extra
   const profileInitializedRef = useRef(false);
   const submitTimeoutRef = useRef<number | null>(null);
+  const submitWarnTimeoutRef = useRef<number | null>(null);
   const previousObjectUrlRef = useRef<string | null>(null);
 
   const { user, loading: authLoading } = useAuth();
@@ -82,6 +83,10 @@ export function ProfileBasics() {
       if (submitTimeoutRef.current) {
         window.clearTimeout(submitTimeoutRef.current);
         submitTimeoutRef.current = null;
+      }
+      if (submitWarnTimeoutRef.current) {
+        window.clearTimeout(submitWarnTimeoutRef.current);
+        submitWarnTimeoutRef.current = null;
       }
       if (previousObjectUrlRef.current) {
         URL.revokeObjectURL(previousObjectUrlRef.current);
@@ -197,15 +202,37 @@ export function ProfileBasics() {
 
     setIsLoading(true);
 
-    // Timeout de seguridad
+    const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+    const isNetworkishMessage = (msg?: string) => {
+      const m = (msg || '').toLowerCase();
+      return (
+        m.includes('failed to fetch') ||
+        m.includes('network request failed') ||
+        m.includes('networkerror') ||
+        m.includes('load failed') ||
+        m.includes('fetch') ||
+        m.includes('network') ||
+        m.includes('timeout')
+      );
+    };
+
+    // Timeout UX (red lenta): avisar sin marcar error y sin soltar el loading
     if (submitTimeoutRef.current) {
       window.clearTimeout(submitTimeoutRef.current);
     }
+    if (submitWarnTimeoutRef.current) {
+      window.clearTimeout(submitWarnTimeoutRef.current);
+    }
+    submitWarnTimeoutRef.current = window.setTimeout(() => {
+      // Solo informar; seguimos guardando
+      showToast('Está tardando un poco… seguimos guardando tu perfil.', 'info');
+    }, 15000);
+    // Timeout HARD: cortar UI si realmente se colgó (evita spinner infinito)
     submitTimeoutRef.current = window.setTimeout(() => {
       setIsLoading(false);
       submitTimeoutRef.current = null;
-      showToast('La conexión está tardando demasiado. Intenta de nuevo en un momento.', 'error');
-    }, 15000);
+      showToast('No se pudo completar el guardado. Intenta de nuevo en un momento.', 'error');
+    }, 90000);
 
     try {
       let avatarUrl: string | undefined;
@@ -235,9 +262,12 @@ export function ProfileBasics() {
           if (type.includes('png')) return 'png';
           if (type.includes('webp')) return 'webp';
           if (type.includes('gif')) return 'gif';
+          // iOS/iPadOS puede entregar HEIC/HEIF al "Tomar foto"
+          if (type.includes('heic')) return 'heic';
+          if (type.includes('heif')) return 'heif';
           // Fallback: extraer del nombre del archivo
           const nameExt = file.name.split('.').pop()?.toLowerCase();
-          return nameExt && ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(nameExt) 
+          return nameExt && ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'].includes(nameExt) 
             ? nameExt 
             : 'jpg'; // Default a jpg si no se puede determinar
         };
@@ -250,17 +280,33 @@ export function ProfileBasics() {
           console.log('[ProfileBasics] Subiendo avatar:', { fileName, contentType, size: fileToUpload.size });
         }
 
-        // Verificar conexión antes de intentar subir
-        if (!navigator.onLine) {
-          throw new Error('No hay conexión a internet. Por favor verifica tu conexión e intenta de nuevo.');
-        }
+        // Nota: NO usar navigator.onLine como hard-block (en iPad/WKWebView puede dar falsos negativos).
+        // Intentamos la operación y si falla por red, mostramos un error claro y reintentamos 1 vez.
+        let uploadError: any = null;
+        let uploadData: any = null;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const res = await supabase.storage
+            .from('media')
+            .upload(fileName, fileToUpload, {
+              upsert: true,
+              contentType: contentType,
+            });
+          uploadError = res.error;
+          uploadData = res.data;
 
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('media')
-          .upload(fileName, fileToUpload, { 
-            upsert: true,
-            contentType: contentType
-          });
+          if (!uploadError) break;
+
+          const msg = uploadError?.message || '';
+          const retryable = isNetworkishMessage(msg);
+          if (retryable && attempt === 0) {
+            if (import.meta.env.MODE === 'development') {
+              console.warn('[ProfileBasics] Upload falló por red, reintentando…', uploadError);
+            }
+            await sleep(800);
+            continue;
+          }
+          break;
+        }
 
         if (uploadError) {
           console.error('[ProfileBasics] Error de upload:', uploadError);
@@ -325,13 +371,21 @@ export function ProfileBasics() {
         console.log('[ProfileBasics] Avatar URL:', normalizedUpdates.avatar_url);
       }
 
-      // Verificar conexión antes de actualizar perfil
-      if (!navigator.onLine) {
-        throw new Error('No hay conexión a internet. Por favor verifica tu conexión e intenta de nuevo.');
-      }
-
       try {
-        await updateProfileFields(updates);
+        // Guardado con un reintento si el error parece de red (review puede tener red lenta/filtrada)
+        try {
+          await updateProfileFields(updates);
+        } catch (firstErr: any) {
+          if (isNetworkishMessage(firstErr?.message) || isNetworkishMessage(firstErr?.toString?.())) {
+            if (import.meta.env.MODE === 'development') {
+              console.warn('[ProfileBasics] Update falló por red, reintentando…', firstErr);
+            }
+            await sleep(800);
+            await updateProfileFields(updates);
+          } else {
+            throw firstErr;
+          }
+        }
         
         // Esperar un momento para asegurar que la actualización se complete
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -395,6 +449,10 @@ export function ProfileBasics() {
       if (submitTimeoutRef.current) {
         window.clearTimeout(submitTimeoutRef.current);
         submitTimeoutRef.current = null;
+      }
+      if (submitWarnTimeoutRef.current) {
+        window.clearTimeout(submitWarnTimeoutRef.current);
+        submitWarnTimeoutRef.current = null;
       }
       setIsLoading(false);
     }

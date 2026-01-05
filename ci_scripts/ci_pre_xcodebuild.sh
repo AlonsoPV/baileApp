@@ -42,6 +42,51 @@ sed -n '1,80p' "$WORKSPACE_PATH/contents.xcworkspacedata" || true
 echo "==> Schemes in workspace:"
 xcodebuild -list -workspace "$WORKSPACE_PATH" || true
 
+echo "==> Ensure iOS AppIcon asset has applicable content"
+# Xcode will fail (exit 65) if ASSETCATALOG_COMPILER_APPICON_NAME points to an
+# AppIcon.appiconset that doesn't contain any *applicable* idioms/sizes.
+# In this repo we keep a single 1024x1024 source PNG and generate all required
+# sizes at CI time to avoid committing many binary files.
+ICONSET_DIR="ios/DondeBailarMX/Images.xcassets/AppIcon.appiconset"
+SRC_ICON="$ICONSET_DIR/App-Icon-1024x1024@1x.png"
+
+if [ -d "$ICONSET_DIR" ] && [ -f "$SRC_ICON" ]; then
+  echo "Using source icon: $SRC_ICON"
+
+  gen_icon() {
+    local px="$1"
+    local out="$2"
+    if [ -f "$out" ]; then
+      return 0
+    fi
+    echo "Generating $(basename "$out") (${px}x${px})"
+    /usr/bin/sips -Z "$px" "$SRC_ICON" --out "$out" >/dev/null
+  }
+
+  # iPad
+  gen_icon 20  "$ICONSET_DIR/AppIcon-20@1x.png"
+  gen_icon 29  "$ICONSET_DIR/AppIcon-29@1x.png"
+  gen_icon 40  "$ICONSET_DIR/AppIcon-40@1x.png"
+  gen_icon 76  "$ICONSET_DIR/AppIcon-76@1x.png"
+  gen_icon 152 "$ICONSET_DIR/AppIcon-76@2x.png"
+  gen_icon 167 "$ICONSET_DIR/AppIcon-83.5@2x.png"
+
+  # Shared / iPhone (also covers many iPad @2x)
+  gen_icon 40  "$ICONSET_DIR/AppIcon-20@2x.png"
+  gen_icon 60  "$ICONSET_DIR/AppIcon-20@3x.png"
+  gen_icon 58  "$ICONSET_DIR/AppIcon-29@2x.png"
+  gen_icon 87  "$ICONSET_DIR/AppIcon-29@3x.png"
+  gen_icon 80  "$ICONSET_DIR/AppIcon-40@2x.png"
+  gen_icon 120 "$ICONSET_DIR/AppIcon-40@3x.png"
+  gen_icon 120 "$ICONSET_DIR/AppIcon-60@2x.png"
+  gen_icon 180 "$ICONSET_DIR/AppIcon-60@3x.png"
+
+  echo "AppIcon generation done. Contents:"
+  ls -la "$ICONSET_DIR" || true
+else
+  echo "WARN: AppIcon source not found at $SRC_ICON (skipping icon generation)"
+fi
+
 echo "==> Check CocoaPods artifacts"
 echo "Running ensure_pods.sh (pod install + xcconfig verification)"
 
