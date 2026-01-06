@@ -186,15 +186,49 @@ echo "==> CocoaPods install"
 cd ios
 
 export COCOAPODS_DISABLE_STATS=1
+export COCOAPODS_SKIP_STATS=1
+
+echo "==> Debug: PATH=$PATH"
+echo "==> Debug: node in ios/: $(command -v node || echo '<missing>')"
+echo "==> Debug: node -v: $(node -v 2>/dev/null || echo '<node failed>')"
+echo "==> Debug: expo package resolve:"
+node --print "require.resolve('expo/package.json')" 2>&1 || true
+echo "==> Debug: react-native package resolve:"
+node --print "require.resolve('react-native/package.json')" 2>&1 || true
 
 # CocoaPods: evitar sudo en Xcode Cloud (instalar en user-install si hiciera falta)
+echo "==> Ensuring CocoaPods via RubyGems (prefer over Homebrew pod)"
+USER_GEM_DIR="$(ruby -r rubygems -e 'print Gem.user_dir' 2>/dev/null || echo '')"
+if [ -n "$USER_GEM_DIR" ]; then
+  # Put user gem bin FIRST so we don't accidentally pick up /usr/local/Cellar/.../pod
+  export PATH="$USER_GEM_DIR/bin:$PATH"
+fi
+
+# Install the exact CocoaPods version pinned by Podfile.lock (best reproducibility)
+PINNED_PODS_VER="$(ruby -e 'begin; lock = File.read("Podfile.lock"); m = lock.match(/^COCOAPODS:\\s+([0-9.]+)\\s*$/); puts(m ? m[1] : ""); rescue; puts(""); end' 2>/dev/null || echo '')"
+if [ -z "$PINNED_PODS_VER" ]; then
+  PINNED_PODS_VER="1.16.2"
+fi
+echo "==> CocoaPods pinned version: $PINNED_PODS_VER"
+
 if ! command -v pod >/dev/null 2>&1; then
-  echo "==> CocoaPods not found. Installing via gem --user-install..."
-  gem install cocoapods -N --user-install
-  USER_GEM_DIR="$(ruby -r rubygems -e 'print Gem.user_dir' 2>/dev/null || echo '')"
-  if [ -n "$USER_GEM_DIR" ]; then
-    export PATH="$USER_GEM_DIR/bin:$PATH"
+  echo "==> pod not found, installing cocoapods..."
+  gem install cocoapods -N --user-install -v "$PINNED_PODS_VER"
+else
+  # If pod exists but is broken (common with Homebrew Ruby mismatch), reinstall via gems and prefer it
+  if ! pod --version >/dev/null 2>&1; then
+    echo "==> pod exists but is not runnable; reinstalling cocoapods via gems..."
+    gem install cocoapods -N --user-install -v "$PINNED_PODS_VER"
   fi
+fi
+
+# Final sanity: show which pod we're using
+echo "==> pod path: $(command -v pod || echo '<missing>')"
+if command -v pod >/dev/null 2>&1; then
+  echo "==> pod --version: $(pod --version || true)"
+else
+  echo "ERROR: pod still missing after gem install"
+  exit 1
 fi
 
 echo "==> pod: $(pod --version)"
@@ -205,19 +239,37 @@ pod env || true
 
 echo "==> Installing CocoaPods dependencies"
 
+# Helper: run pod install and always print last lines of output on failure (Xcode Cloud truncates logs).
+run_pod_install() {
+  local label="$1"
+  shift
+  local log="/tmp/pod_install_${label}.log"
+  echo "==> pod install ($label): pod install $*"
+  set +e
+  pod install "$@" 2>&1 | tee "$log"
+  local code="${PIPESTATUS[0]}"
+  set -e
+  if [ "$code" -ne 0 ]; then
+    echo "==> ❌ pod install failed ($label) exit=$code"
+    echo "==> Last 200 lines of $log:"
+    tail -n 200 "$log" || true
+    return "$code"
+  fi
+  echo "==> ✅ pod install successful ($label)"
+  return 0
+}
+
 # 1) Intento rápido: NO repo update (más estable en CI)
-if pod install --verbose --no-repo-update; then
-  echo "==> ✅ Pod install successful (no-repo-update)"
+if run_pod_install "no_repo_update" --verbose --no-repo-update; then
+  true
 else
   echo "==> ⚠️  pod install failed (no-repo-update). Retrying with --repo-update..."
-  # 2) Intento con repo update (si el CDN necesita actualizar specs)
-  if pod install --verbose --repo-update; then
-    echo "==> ✅ Pod install successful (repo-update)"
+  if run_pod_install "repo_update" --verbose --repo-update; then
+    true
   else
     echo "==> ⚠️  pod install failed (repo-update). One last retry after cleaning cache..."
-    # 3) Último intento: limpiar cache (sin clonar Specs gigante)
     pod cache clean --all || true
-    pod install --verbose --repo-update || {
+    run_pod_install "repo_update_after_cache_clean" --verbose --repo-update || {
       echo "==> ❌ Pod install failed after 3 attempts"
       exit 1
     }
