@@ -1381,7 +1381,8 @@ export default function ExploreHomeScreen() {
   const sliderProps = React.useMemo(
     () => ({
       className: isMobile ? 'explore-slider explore-slider--mobile' : 'explore-slider',
-      autoColumns: isMobile ? 'minmax(0, calc(100vw - 2rem))' : undefined
+      // No pasar autoColumns en mobile - el componente HorizontalSlider ya tiene estilos CSS para mobile
+      autoColumns: undefined
     }),
     [isMobile]
   );
@@ -1395,21 +1396,22 @@ export default function ExploreHomeScreen() {
   }, []);
 
   // Guard rail: asegurar overlay-root (para casos de WebView/PWA o HTML cacheado)
-  React.useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const existing = document.getElementById('overlay-root');
-    if (existing) return;
+  // COMENTADO: Cortina deshabilitada
+  // React.useEffect(() => {
+  //   if (typeof document === 'undefined') return;
+  //   const existing = document.getElementById('overlay-root');
+  //   if (existing) return;
 
-    const el = document.createElement('div');
-    el.id = 'overlay-root';
-    el.style.position = 'fixed';
-    el.style.inset = '0';
-    el.style.pointerEvents = 'none';
-    el.style.zIndex = '2147483647';
-    // Aislar stacking context para que nada quede "encima" accidentalmente
-    (el.style as any).isolation = 'isolate';
-    document.body.appendChild(el);
-  }, []);
+  //   const el = document.createElement('div');
+  //   el.id = 'overlay-root';
+  //   el.style.position = 'fixed';
+  //   el.style.inset = '0';
+  //   el.style.pointerEvents = 'none';
+  //   el.style.zIndex = '2147483647';
+  //   // Aislar stacking context para que nada quede "encima" accidentalmente
+  //   (el.style as any).isolation = 'isolate';
+  //   document.body.appendChild(el);
+  // }, []);
 
   const shouldShowSectionNav =
     typeof window !== 'undefined' ? window.innerWidth < 769 : isMobile;

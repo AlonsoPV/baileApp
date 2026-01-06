@@ -45,6 +45,8 @@ export const routes = {
   academy: {
     edit: '/academia/editar',
     live: (academyId: number | string) => `/academia/${academyId}`,
+    proposal: '/propuesta-academias',
+    proposalAlt: '/academias/propuesta',
   },
   
   teacher: {

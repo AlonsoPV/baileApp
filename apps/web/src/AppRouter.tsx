@@ -85,6 +85,7 @@ import RolesInfoScreen from './screens/roles/RolesInfoScreen';
 import ValidationInfoScreen from './screens/static/ValidationInfoScreen';
 import IntegrityDebugScreen from './screens/debug/IntegrityDebugScreen';
 import SupportScreen from './screens/static/SupportScreen';
+import AcademyProposalScreen from './screens/static/AcademyProposalScreen';
 
 // Challenges
 import ChallengesList from './screens/challenges/ChallengesList';
@@ -130,6 +131,10 @@ export default function AppRouter() {
       {/* Redirect for double slashes in payment routes */}
       <Route path="//pago/exitoso" element={<Navigate to="/pago/exitoso" replace />} />
       <Route path="//pago/cancelado" element={<Navigate to="/pago/cancelado" replace />} />
+
+      {/* Landing pages (sin AppShell) */}
+      <Route path="/propuesta-academias" element={<AcademyProposalScreen />} />
+      <Route path="/academias/propuesta" element={<AcademyProposalScreen />} />
 
       {/* AppShell layout */}
       <Route element={<AppShell />}>
