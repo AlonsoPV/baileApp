@@ -3140,8 +3140,9 @@ export default function ExploreHomeScreen() {
       </div>
 
       {/* Botones de navegación entre secciones (solo móvil)
-          Portal a document.body + estilos inline (evita overrides / CSS invalidado). */}
-      {shouldShowSectionNav && typeof document !== 'undefined'
+          Portal a document.body + estilos inline (evita overrides / CSS invalidado).
+          COMENTADO: Uso de cortina deshabilitado */}
+      {false && shouldShowSectionNav && typeof document !== 'undefined'
         ? createPortal(
             <div
               className="section-navigation-buttons-portal"
@@ -3157,7 +3158,7 @@ export default function ExploreHomeScreen() {
                 zIndex: 2147483647,
                 width: 'auto',
                 justifyContent: 'center',
-                // “Píldora” minimalista detrás (no bloquea scroll porque pointerEvents: none)
+                // "Píldora" minimalista detrás (no bloquea scroll porque pointerEvents: none)
                 padding: '6px',
                 borderRadius: 999,
                 background: 'rgba(17, 24, 39, 0.55)', // slate/black glass

@@ -144,6 +144,7 @@
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				B0C1A2B3C4D5E6F708090A0B /* Verify Privacy Usage Descriptions */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				12F47460C6E7BEFE804F3C66 /* [CP] Embed Pods Frameworks */,
@@ -351,6 +352,21 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DondeBailarMX/expo-configure-project.sh\"\n";
 		};
+		B0C1A2B3C4D5E6F708090A0B /* Verify Privacy Usage Descriptions */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Verify Privacy Usage Descriptions";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\n\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n\necho \"[Privacy] Verifying usage descriptions in: ${PLIST}\"\n\nif [ ! -f \"${PLIST}\" ]; then\n  echo \"[Privacy] ERROR: Built Info.plist not found at: ${PLIST}\"\n  exit 1\nfi\n\nREQ_KEYS=(\n  NSCameraUsageDescription\n  NSPhotoLibraryUsageDescription\n  NSPhotoLibraryAddUsageDescription\n  NSMicrophoneUsageDescription\n)\n\nmissing=0\nfor key in \"${REQ_KEYS[@]}\"; do\n  value=$(/usr/libexec/PlistBuddy -c \"Print :${key}\" \"${PLIST}\" 2>/dev/null || true)\n  if [ -z \"${value}\" ]; then\n    echo \"[Privacy] ERROR: Missing or empty ${key} in built Info.plist.\"\n    missing=1\n  fi\ndone\n\nif [ \"${missing}\" -ne 0 ]; then\n  echo \"[Privacy] Build failed because required privacy usage descriptions are missing.\"\n  echo \"[Privacy] Fix: ensure ios/DondeBailarMX/Info.plist contains these keys with non-empty strings (or ensure Expo config injects them).\"\n  exit 1\nfi\n\necho \"[Privacy] OK: All required privacy usage descriptions are present.\"";
+			showEnvVarsInLog = 0;
+		};
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* Generate Hermes dSYM */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -390,7 +406,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DondeBailarMX/DondeBailarMX.entitlements;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 113;
 				DEVELOPMENT_TEAM = RBFLD93SSL;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -403,7 +419,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -427,7 +443,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DondeBailarMX/DondeBailarMX.entitlements;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 113;
 				DEVELOPMENT_TEAM = RBFLD93SSL;
 				INFOPLIST_FILE = DondeBailarMX/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -435,7 +451,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
