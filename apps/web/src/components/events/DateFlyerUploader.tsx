@@ -7,9 +7,10 @@ type Props = {
   onChange: (url: string | null) => void;
   dateId?: number;     // opcional para nombrado
   parentId?: number;   // opcional para nombrado
+  onStatusChange?: (status: 'PENDING' | 'UPLOADING' | 'DONE' | 'ERROR', errorMessage?: string) => void;
 };
 
-export default function DateFlyerUploader({ value, onChange, dateId, parentId }: Props) {
+export default function DateFlyerUploader({ value, onChange, dateId, parentId, onStatusChange }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -32,23 +33,30 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId }:
     setErr(null);
 
     // Validaciones básicas
-    const allowed = ["image/jpeg","image/png","image/jpg"];
+    const allowed = ["image/jpeg","image/png","image/jpg","image/webp"];
     if (!allowed.includes(file.type)) {
-      setErr("Formato no permitido. Usa JPG o PNG.");
+      const msg = "Formato no permitido. Usa JPG, PNG o WebP.";
+      setErr(msg);
+      onStatusChange?.('ERROR', msg);
       return;
     }
     if (file.size > 6 * 1024 * 1024) {
-      setErr("El archivo supera 6MB.");
+      const msg = "El archivo supera 6MB.";
+      setErr(msg);
+      onStatusChange?.('ERROR', msg);
       return;
     }
 
     setLoading(true);
+    onStatusChange?.('UPLOADING');
     try {
-      const user = (await supabase.auth.getUser()).data.user;
+      // getUser() pega a la red y puede ser lento; getSession() es local/cache.
+      const user = (await supabase.auth.getSession()).data.session?.user;
       if (!user) throw new Error("No hay sesión.");
 
-      // Redimensionar imagen si es necesario (máximo 800px de ancho)
-      const processedFile = await resizeImageIfNeeded(file, 800);
+      // Redimensionar imagen si es necesario (recomendación 1080x1350, ratio 4:5)
+      // Mantener 1080px de ancho para buena calidad, pero comprimir para subir rápido.
+      const processedFile = await resizeImageIfNeeded(file, 1080, 0.82);
 
       // Ruta: media/event-flyers/USERID/{parentId}/{dateId}_flyer.ext
       const ext = processedFile.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -74,10 +82,13 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId }:
       const { data: pub } = supabase.storage.from("media").getPublicUrl(up.path);
       console.log('[DateFlyerUploader] Public URL:', pub.publicUrl);
       
+      onStatusChange?.('DONE');
       onChange(pub.publicUrl || null);
     } catch (e: any) {
       console.error('[DateFlyerUploader] Error:', e);
-      setErr(e?.message || "Error subiendo el flyer.");
+      const msg = e?.message || "Error subiendo el flyer.";
+      setErr(msg);
+      onStatusChange?.('ERROR', msg);
     } finally {
       setLoading(false);
     }
@@ -193,7 +204,10 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId }:
           {value && (
             <button
               type="button"
-              onClick={() => onChange(null)}
+              onClick={() => {
+                onStatusChange?.('PENDING');
+                onChange(null);
+              }}
               style={{
                 padding: '0.75rem 1.5rem',
                 borderRadius: '8px',

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useMyOrganizer, useUpsertMyOrganizer, useSubmitOrganizerForReview } from "../../hooks/useOrganizer";
-import { useParentsByOrganizer, useDeleteParent, useDatesByParent, useDeleteDate, useCreateParent } from "../../hooks/useEvents";
+import { useParentsByOrganizer, useDeleteParent, useDatesByParent, useDeleteDate, useCreateParent, useUpdateDate } from "../../hooks/useEvents";
 import { useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useCreateEventDate } from "../../hooks/useEventDate";
@@ -71,6 +71,165 @@ const toAcademyLocation = (loc?: OrganizerLocation | null): AcademyLocation | nu
         : null,
   };
 };
+
+type BulkPubEstado = 'borrador' | 'publicado';
+type BulkFlyerStatus = 'PENDING' | 'UPLOADING' | 'DONE' | 'ERROR';
+
+type BulkRow = {
+  id: string;
+  fecha: string;
+  hora_inicio: string;
+  hora_fin: string;
+  estado_publicacion: BulkPubEstado;
+  notas: string;
+  selected: boolean;
+  flyer_status: BulkFlyerStatus;
+  flyer_url?: string | null;
+};
+
+const makeRowId = () => {
+  try {
+    // @ts-ignore - crypto puede no existir en algunos entornos antiguos
+    return typeof crypto !== 'undefined' && crypto?.randomUUID ? crypto.randomUUID() : `row_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  } catch {
+    return `row_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+};
+
+const BulkRowItem = React.memo(function BulkRowItem({
+  row,
+  errors,
+  onChange,
+  onRemove,
+}: {
+  row: BulkRow;
+  errors?: Record<string, string>;
+  onChange: (rowId: string, patch: Partial<BulkRow>) => void;
+  onRemove: (rowId: string) => void;
+}) {
+  const rowErr = errors || {};
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '44px 140px 120px 120px 140px 1fr 44px',
+        gap: 10,
+        alignItems: 'center',
+        padding: '10px 10px',
+        borderRadius: 12,
+        border: '1px solid rgba(255,255,255,0.10)',
+        background: 'rgba(255,255,255,0.04)',
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={row.selected}
+        onChange={(e) => onChange(row.id, { selected: e.target.checked })}
+        style={{ width: 18, height: 18 }}
+      />
+
+      <div>
+        <input
+          type="date"
+          value={row.fecha}
+          onChange={(e) => onChange(row.id, { fecha: e.target.value })}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            borderRadius: 10,
+            border: rowErr.fecha ? '1px solid rgba(255,61,87,0.9)' : '1px solid rgba(255,255,255,0.18)',
+            background: 'rgba(0,0,0,0.25)',
+            color: '#fff',
+          }}
+        />
+        {rowErr.fecha && (
+          <div style={{ color: '#ff3d57', fontSize: 11, marginTop: 4 }}>{rowErr.fecha}</div>
+        )}
+      </div>
+
+      <input
+        type="time"
+        value={row.hora_inicio}
+        onChange={(e) => onChange(row.id, { hora_inicio: e.target.value })}
+        style={{
+          width: '100%',
+          padding: '8px 10px',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.18)',
+          background: 'rgba(0,0,0,0.25)',
+          color: '#fff',
+        }}
+      />
+
+      <div>
+        <input
+          type="time"
+          value={row.hora_fin}
+          onChange={(e) => onChange(row.id, { hora_fin: e.target.value })}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            borderRadius: 10,
+            border: rowErr.hora_fin ? '1px solid rgba(255,61,87,0.9)' : '1px solid rgba(255,255,255,0.18)',
+            background: 'rgba(0,0,0,0.25)',
+            color: '#fff',
+          }}
+        />
+        {rowErr.hora_fin && (
+          <div style={{ color: '#ff3d57', fontSize: 11, marginTop: 4 }}>{rowErr.hora_fin}</div>
+        )}
+      </div>
+
+      <select
+        value={row.estado_publicacion}
+        onChange={(e) => onChange(row.id, { estado_publicacion: e.target.value as BulkPubEstado })}
+        style={{
+          width: '100%',
+          padding: '8px 10px',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.18)',
+          background: '#2b2b2b',
+          color: '#fff',
+        }}
+      >
+        <option value="borrador">📝 borrador</option>
+        <option value="publicado">🌐 publicado</option>
+      </select>
+
+      <input
+        type="text"
+        value={row.notas}
+        onChange={(e) => onChange(row.id, { notas: e.target.value })}
+        placeholder="Notas (opcional)"
+        style={{
+          width: '100%',
+          padding: '8px 10px',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.18)',
+          background: 'rgba(0,0,0,0.25)',
+          color: '#fff',
+        }}
+      />
+
+      <button
+        type="button"
+        onClick={() => onRemove(row.id)}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.18)',
+          background: 'rgba(255,255,255,0.05)',
+          color: '#fff',
+          cursor: 'pointer',
+        }}
+        title="Eliminar fila"
+      >
+        🗑️
+      </button>
+    </div>
+  );
+});
 
 // Componente para mostrar un social con sus fechas
 function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId, isMobile }: any) {
@@ -488,6 +647,7 @@ export default function OrganizerProfileEditor() {
   const deleteParent = useDeleteParent();
   const deleteDate = useDeleteDate();
   const createParent = useCreateParent();
+  const updateDate = useUpdateDate();
   const { media, add, remove } = useOrganizerMedia();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<"perfil" | "metricas">("perfil");
@@ -582,6 +742,173 @@ export default function OrganizerProfileEditor() {
     repetir_semanal: false,
     semanas_repetir: 4
   });
+
+  // Bulk planner (v1)
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
+  const [bulkPaste, setBulkPaste] = useState<string>('');
+  const [bulkErrors, setBulkErrors] = useState<Record<string, Record<string, string>>>({});
+  const [createdBatchDates, setCreatedBatchDates] = useState<any[]>([]);
+  const [showPendingFlyers, setShowPendingFlyers] = useState(false);
+  const [createdDateIdByRow, setCreatedDateIdByRow] = useState<Record<string, number>>({});
+
+  const updateBulkRow = useCallback((rowId: string, patch: Partial<BulkRow>) => {
+    setBulkRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, ...patch } : r)));
+  }, []);
+
+  const addBulkRow = useCallback((partial?: Partial<BulkRow>) => {
+    const base: BulkRow = {
+      id: makeRowId(),
+      fecha: '',
+      hora_inicio: dateForm.hora_inicio || '',
+      hora_fin: dateForm.hora_fin || '',
+      estado_publicacion: (dateForm.estado_publicacion || 'borrador') as BulkPubEstado,
+      notas: '',
+      selected: true,
+      flyer_status: 'PENDING',
+      flyer_url: null,
+    };
+    setBulkRows((prev) => [...prev, { ...base, ...(partial || {}) }]);
+  }, [dateForm.estado_publicacion, dateForm.hora_fin, dateForm.hora_inicio]);
+
+  const removeBulkRow = useCallback((rowId: string) => {
+    setBulkRows((prev) => prev.filter((r) => r.id !== rowId));
+    setBulkErrors((prev) => {
+      const next = { ...prev };
+      delete next[rowId];
+      return next;
+    });
+    setCreatedDateIdByRow((prev) => {
+      const next = { ...prev };
+      delete next[rowId];
+      return next;
+    });
+  }, []);
+
+  const setAllBulkSelected = useCallback((selected: boolean) => {
+    setBulkRows((prev) => prev.map((r) => ({ ...r, selected })));
+  }, []);
+
+  const bulkSelectedCount = useMemo(() => bulkRows.filter((r) => r.selected).length, [bulkRows]);
+
+  const parseBulkPasteToRows = useCallback(() => {
+    const lines = (bulkPaste || '')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    if (lines.length === 0) return;
+
+    const nextRows: BulkRow[] = [];
+
+    for (const line of lines) {
+      // Acepta:
+      // - YYYY-MM-DD
+      // - YYYY-MM-DD HH:MM
+      // - YYYY-MM-DD HH:MM-HH:MM
+      // - YYYY-MM-DD,HH:MM,HH:MM
+      const parts = line.split(/[,\t ]+/).filter(Boolean);
+      const datePart = parts[0] || '';
+
+      let start = '';
+      let end = '';
+
+      const timePart = parts[1] || '';
+      if (timePart && timePart.includes('-')) {
+        const [a, b] = timePart.split('-', 2);
+        start = (a || '').trim();
+        end = (b || '').trim();
+      } else {
+        start = (parts[1] || '').trim();
+        end = (parts[2] || '').trim();
+      }
+
+      nextRows.push({
+        id: makeRowId(),
+        fecha: datePart,
+        hora_inicio: start || (dateForm.hora_inicio || ''),
+        hora_fin: end || (dateForm.hora_fin || ''),
+        estado_publicacion: (dateForm.estado_publicacion || 'borrador') as BulkPubEstado,
+        notas: '',
+        selected: true,
+        flyer_status: 'PENDING',
+        flyer_url: null,
+      });
+    }
+
+    setBulkRows((prev) => [...prev, ...nextRows]);
+  }, [bulkPaste, dateForm.estado_publicacion, dateForm.hora_fin, dateForm.hora_inicio]);
+
+  const generateWeeklyRowsFromTemplate = useCallback(() => {
+    if (!dateForm.fecha) {
+      showToast('Selecciona una fecha base para generar ocurrencias', 'info');
+      return;
+    }
+    const semanas = Math.max(1, Math.min(52, dateForm.semanas_repetir || 1));
+    const [year, month, day] = dateForm.fecha.split('-').map(Number);
+    const primeraFecha = new Date(year, (month - 1), day);
+
+    const nextRows: BulkRow[] = Array.from({ length: semanas }, (_, i) => {
+      const f = new Date(primeraFecha);
+      f.setDate(f.getDate() + 7 * i);
+      const y = f.getFullYear();
+      const m = String(f.getMonth() + 1).padStart(2, '0');
+      const d = String(f.getDate()).padStart(2, '0');
+      const fechaStr = `${y}-${m}-${d}`;
+
+      return {
+        id: makeRowId(),
+        fecha: fechaStr,
+        hora_inicio: dateForm.hora_inicio || '',
+        hora_fin: dateForm.hora_fin || '',
+        estado_publicacion: (dateForm.estado_publicacion || 'borrador') as BulkPubEstado,
+        notas: '',
+        selected: true,
+        flyer_status: 'PENDING',
+        flyer_url: null,
+      };
+    });
+
+    setBulkRows((prev) => [...prev, ...nextRows]);
+  }, [dateForm.estado_publicacion, dateForm.fecha, dateForm.hora_fin, dateForm.hora_inicio, dateForm.semanas_repetir, showToast]);
+
+  const validateBulkRows = useCallback((rows: BulkRow[]) => {
+    const errors: Record<string, Record<string, string>> = {};
+
+    for (const r of rows) {
+      const rowErr: Record<string, string> = {};
+      if (!r.fecha) rowErr.fecha = 'Fecha requerida';
+      if (r.hora_inicio && r.hora_fin) {
+        if (r.hora_inicio === r.hora_fin) {
+          rowErr.hora_fin = 'Hora fin no puede ser igual a hora inicio';
+        } else if (r.hora_fin < r.hora_inicio) {
+          rowErr.hora_fin = 'Hora fin debe ser mayor a hora inicio';
+        }
+      }
+      if (Object.keys(rowErr).length) errors[r.id] = rowErr;
+    }
+
+    setBulkErrors(errors);
+    return errors;
+  }, []);
+
+  const bulkPreview = useMemo(() => {
+    const selected = bulkRows.filter((r) => r.selected).map((r) => r.fecha).filter(Boolean);
+    const sorted = [...selected].sort();
+    return {
+      count: selected.length,
+      first: sorted[0] || null,
+      last: sorted[sorted.length - 1] || null,
+    };
+  }, [bulkRows]);
+
+  const clearBulk = useCallback(() => {
+    setBulkRows([]);
+    setBulkPaste('');
+    setBulkErrors({});
+    setCreatedBatchDates([]);
+    setShowPendingFlyers(false);
+  }, []);
 
   const handleDateUbicacionesChange = (list: AcademyLocation[]) => {
     const zonasSet = new Set<number>();
@@ -1076,6 +1403,194 @@ export default function OrganizerProfileEditor() {
     }
   };
 
+  const handleBulkCreateDates = async () => {
+    const selectedRows = bulkRows.filter((r) => r.selected);
+    if (selectedRows.length === 0) {
+      showToast('Selecciona al menos una fila', 'info');
+      return;
+    }
+
+    const errs = validateBulkRows(selectedRows);
+    if (Object.keys(errs).length > 0) {
+      showToast('Revisa los errores en la tabla antes de guardar', 'error');
+      return;
+    }
+
+    try {
+      const parentIdToUse: number | null = selectedParentId ? Number(selectedParentId) : null;
+
+      const selectedOrganizerLocation = selectedDateLocationId
+        ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
+        : undefined;
+
+      const primaryLocation = (dateForm.ubicaciones && dateForm.ubicaciones[0]) || undefined;
+      const resolvedLugar = primaryLocation?.sede || dateForm.lugar || selectedOrganizerLocation?.nombre || null;
+      const resolvedDireccion = primaryLocation?.direccion || dateForm.direccion || selectedOrganizerLocation?.direccion || null;
+      const resolvedCiudad = primaryLocation?.ciudad || dateForm.ciudad || selectedOrganizerLocation?.ciudad || null;
+      const resolvedReferencias = primaryLocation?.referencias || dateForm.referencias || selectedOrganizerLocation?.referencias || null;
+
+      const resolvedZonaFromLocation = () => {
+        if (typeof dateForm.zona === 'number') return dateForm.zona;
+        if (typeof primaryLocation?.zona_id === 'number') return primaryLocation.zona_id;
+        if (typeof selectedOrganizerLocation?.zona_id === 'number') return selectedOrganizerLocation.zona_id;
+        if (Array.isArray(selectedOrganizerLocation?.zona_ids) && selectedOrganizerLocation.zona_ids.length) {
+          return selectedOrganizerLocation.zona_ids[0] ?? null;
+        }
+        return null;
+      };
+
+      const resolvedZonasFromLocations = () => {
+        if (dateForm.zonas && dateForm.zonas.length) return dateForm.zonas;
+        const set = new Set<number>();
+        (dateForm.ubicaciones || []).forEach((loc) => {
+          if (typeof loc?.zona_id === 'number') set.add(loc.zona_id);
+        });
+        if (Array.isArray(selectedOrganizerLocation?.zona_ids) && selectedOrganizerLocation.zona_ids.length) {
+          selectedOrganizerLocation.zona_ids.forEach((z) => {
+            if (typeof z === 'number') set.add(z);
+          });
+        }
+        return set.size ? Array.from(set) : [];
+      };
+
+      const resolvedZona = resolvedZonaFromLocation();
+      const resolvedZonasRaw = resolvedZonasFromLocations();
+      const resolvedZonas = validateZonasAgainstCatalog(resolvedZonasRaw, allTags);
+
+      const basePayload = {
+        parent_id: parentIdToUse ? Number(parentIdToUse) : null,
+        organizer_id: (org as any)?.id ?? null,
+        nombre: dateForm.nombre || null,
+        biografia: dateForm.biografia || null,
+        djs: dateForm.djs || null,
+        telefono_contacto: dateForm.telefono_contacto || null,
+        mensaje_contacto: dateForm.mensaje_contacto || null,
+        lugar: resolvedLugar,
+        direccion: resolvedDireccion,
+        ciudad: resolvedCiudad,
+        zona: resolvedZona,
+        referencias: resolvedReferencias,
+        requisitos: dateForm.requisitos || null,
+        estilos: dateForm.estilos || [],
+        ritmos_seleccionados: dateForm.ritmos_seleccionados || [],
+        zonas: resolvedZonas,
+        cronograma: dateForm.cronograma || [],
+        costos: dateForm.costos || [],
+      };
+
+      // Importante: Bulk no se bloquea por flyers. Todo nace en borrador.
+      const payloads = selectedRows.map((r) => ({
+        ...basePayload,
+        fecha: r.fecha,
+        hora_inicio: r.hora_inicio || null,
+        hora_fin: r.hora_fin || null,
+        flyer_url: null,
+        estado_publicacion: 'borrador' as const,
+        dia_semana: null,
+      }));
+
+      const created = await createEventDate.mutateAsync(payloads);
+      const createdDates = Array.isArray(created) ? created : [created];
+
+      // Mapear rowId -> dateId de forma robusta (sin depender del orden).
+      // Key: fecha|hora_inicio|hora_fin|lugar|ciudad|parent_id
+      const makeKey = (o: {
+        fecha?: string | null;
+        hora_inicio?: string | null;
+        hora_fin?: string | null;
+        lugar?: string | null;
+        ciudad?: string | null;
+        parent_id?: number | null;
+      }) => `${o.fecha || ''}|${o.hora_inicio || ''}|${o.hora_fin || ''}|${o.lugar || ''}|${o.ciudad || ''}|${o.parent_id ?? ''}`;
+
+      const buckets = new Map<string, number[]>();
+      for (const d of createdDates as any[]) {
+        const key = makeKey({
+          fecha: d?.fecha ? String(d.fecha).split('T')[0] : null,
+          hora_inicio: d?.hora_inicio ?? null,
+          hora_fin: d?.hora_fin ?? null,
+          lugar: d?.lugar ?? null,
+          ciudad: d?.ciudad ?? null,
+          parent_id: d?.parent_id ?? null,
+        });
+        const arr = buckets.get(key) || [];
+        if (d?.id) arr.push(Number(d.id));
+        buckets.set(key, arr);
+      }
+
+      const mapping: Record<string, number> = {};
+      for (let i = 0; i < selectedRows.length; i++) {
+        const row = selectedRows[i];
+        const key = makeKey({
+          fecha: row.fecha,
+          hora_inicio: row.hora_inicio || null,
+          hora_fin: row.hora_fin || null,
+          lugar: resolvedLugar,
+          ciudad: resolvedCiudad,
+          parent_id: parentIdToUse,
+        });
+        const arr = buckets.get(key) || [];
+        const id = arr.shift();
+        if (id) {
+          mapping[row.id] = id;
+          buckets.set(key, arr);
+        }
+      }
+
+      // Fallback: si por alguna razón faltan algunos, completar por orden
+      const stillMissing = selectedRows.filter((r) => !mapping[r.id]);
+      if (stillMissing.length) {
+        stillMissing.forEach((row, idx) => {
+          const d = createdDates[idx] as any;
+          if (d?.id) mapping[row.id] = Number(d.id);
+        });
+      }
+
+      setCreatedBatchDates(createdDates);
+      setCreatedDateIdByRow((prev) => ({ ...prev, ...mapping }));
+      setShowPendingFlyers(true);
+
+      showToast(`${createdDates.length} fechas creadas ✅ (en borrador)`, 'success');
+    } catch (e: any) {
+      console.error('[OrganizerProfileEditor] bulk create error:', e);
+      showToast(e?.message || 'Error al crear fechas en batch', 'error');
+    }
+  };
+
+  const handleBulkPublish = async (onlySelected: boolean) => {
+    const rows = onlySelected ? bulkRows.filter((r) => r.selected) : bulkRows;
+    const withIds = rows
+      .map((r) => ({ row: r, id: createdDateIdByRow[r.id] }))
+      .filter((x) => !!x.id);
+
+    if (withIds.length === 0) {
+      showToast('No hay fechas creadas para publicar (primero guarda el batch)', 'info');
+      return;
+    }
+
+    try {
+      const ids = withIds.map((x) => Number(x.id));
+      const { error } = await supabase
+        .from('events_date')
+        .update({ estado_publicacion: 'publicado' as any })
+        .in('id', ids);
+      if (error) throw error;
+
+      // refrescar listas (evita stale)
+      queryClient.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+      queryClient.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+      if (selectedParentId) {
+        queryClient.invalidateQueries({ queryKey: ["event", "dates", selectedParentId] });
+        queryClient.invalidateQueries({ queryKey: ["dates", selectedParentId] });
+      }
+
+      showToast('Fechas publicadas ✅', 'success');
+    } catch (e: any) {
+      console.error('[OrganizerProfileEditor] bulk publish error:', e);
+      showToast(e?.message || 'Error al publicar', 'error');
+    }
+  };
+
   const handleDuplicateDate = async (date: any) => {
     if (!date) return;
     if (createEventDate.isPending) {
@@ -1149,11 +1664,15 @@ export default function OrganizerProfileEditor() {
       setDateToDelete(null); // Cerrar modal inmediatamente
       
       // Optimización: Limpiar RSVPs en paralelo con la eliminación (no bloqueante)
-      const rsvpCleanup = supabase.from('event_rsvp').delete().eq('event_date_id', dateId)
-        .catch((e) => {
+      // Nota TS: el builder de Supabase no es Promise hasta que se `await` (no existe `.catch()` en el tipo).
+      const rsvpCleanup = (async () => {
+        try {
+          await supabase.from('event_rsvp').delete().eq('event_date_id', dateId);
+        } catch (e) {
           // No bloquear si falla la limpieza de RSVPs
           console.warn('[OrganizerProfileEditor] Limpieza de RSVPs omitida:', e);
-        });
+        }
+      })();
       
       // Eliminar la fecha (esto es lo importante)
       await deleteDate.mutateAsync(dateId);
@@ -3857,10 +4376,57 @@ export default function OrganizerProfileEditor() {
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
                       📅 Fecha y Hora
                     </h3>
+
+                    {/* Toggle Simple / Bulk */}
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBulkMode(false);
+                          setShowPendingFlyers(false);
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: 999,
+                          border: '1px solid rgba(255,255,255,0.22)',
+                          background: !bulkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontWeight: 800,
+                          fontSize: 13,
+                        }}
+                      >
+                        🧍 Simple
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBulkMode(true);
+                          if (bulkRows.length === 0) addBulkRow();
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: 999,
+                          border: '1px solid rgba(39,195,255,0.40)',
+                          background: bulkMode ? 'rgba(39,195,255,0.14)' : 'rgba(39,195,255,0.06)',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontWeight: 800,
+                          fontSize: 13,
+                        }}
+                      >
+                        📋 Bulk (10+)
+                      </button>
+                      {bulkMode && (
+                        <div style={{ fontSize: 12, opacity: 0.85 }}>
+                          En bulk, **todas las fechas se crean en borrador** y los flyers se suben después.
+                        </div>
+                      )}
+                    </div>
                     <div className="org-date-form-grid">
                       <div>
                         <label className="org-editor-field">
-                          Fecha *
+                          {bulkMode ? 'Fecha base (para generar)' : 'Fecha *'}
                         </label>
                         <input
                           type="date"
@@ -3897,51 +4463,230 @@ export default function OrganizerProfileEditor() {
                       </div>
                     </div>
 
-                    {/* Repetición Semanal */}
-                    <div className="org-date-form-repetition" style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                      <label className="org-date-form-checkbox" style={{ marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
-                        <input
-                          type="checkbox"
-                          checked={dateForm.repetir_semanal || false}
-                          onChange={(e) => setDateForm({ ...dateForm, repetir_semanal: e.target.checked })}
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            cursor: 'pointer',
-                          }}
-                        />
-                        <span style={{ fontSize: '1rem', fontWeight: '600', color: '#FFFFFF' }}>
-                          🔁 Repetir semanalmente
-                        </span>
-                      </label>
-
-                      {dateForm.repetir_semanal && (
-                        <div style={{ marginTop: '16px' }}>
-                          <label style={{
-                            display: 'block',
-                            marginBottom: '8px',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: '#FFFFFF',
-                          }}>
-                            Número de semanas
-                          </label>
+                    {/* Repetición Semanal (solo simple) */}
+                    {!bulkMode && (
+                      <div className="org-date-form-repetition" style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <label className="org-date-form-checkbox" style={{ marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
                           <input
-                            type="number"
-                            min="1"
-                            max="52"
-                            value={dateForm.semanas_repetir || 4}
-                            onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
-                            className="org-editor-input"
-                            style={{ color: '#FFFFFF' }}
+                            type="checkbox"
+                            checked={dateForm.repetir_semanal || false}
+                            onChange={(e) => setDateForm({ ...dateForm, repetir_semanal: e.target.checked })}
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              cursor: 'pointer',
+                            }}
                           />
-                          <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: '#FFFFFF' }}>
-                            Se crearán fechas cada semana durante {dateForm.semanas_repetir || 4} semana{(dateForm.semanas_repetir || 4) !== 1 ? 's' : ''}
-                          </p>
+                          <span style={{ fontSize: '1rem', fontWeight: '600', color: '#FFFFFF' }}>
+                            🔁 Repetir semanalmente
+                          </span>
+                        </label>
+
+                        {dateForm.repetir_semanal && (
+                          <div style={{ marginTop: '16px' }}>
+                            <label style={{
+                              display: 'block',
+                              marginBottom: '8px',
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                              color: '#FFFFFF',
+                            }}>
+                              Número de semanas
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="52"
+                              value={dateForm.semanas_repetir || 4}
+                              onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
+                              className="org-editor-input"
+                              style={{ color: '#FFFFFF' }}
+                            />
+                            <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: '#FFFFFF' }}>
+                              Se crearán fechas cada semana durante {dateForm.semanas_repetir || 4} semana{(dateForm.semanas_repetir || 4) !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Acciones bulk rápidas */}
+                    {bulkMode && (
+                      <div style={{ marginTop: 14, padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}>
+                        <div style={{ fontWeight: 800, marginBottom: 8 }}>⚡ Acciones rápidas</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => addBulkRow()}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            ➕ Agregar fila
+                          </button>
+                          <button
+                            type="button"
+                            onClick={generateWeeklyRowsFromTemplate}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(39,195,255,0.40)', background: 'rgba(39,195,255,0.10)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            🔁 Generar semanal ({Math.max(1, Math.min(52, dateForm.semanas_repetir || 1))})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAllBulkSelected(true)}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            ✅ Seleccionar todo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAllBulkSelected(false)}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            ⛔ Deseleccionar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={clearBulk}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,61,87,0.35)', background: 'rgba(255,61,87,0.10)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            🧹 Limpiar bulk
+                          </button>
                         </div>
-                      )}
-                    </div>
+
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 6 }}>
+                            Pegar lista (una línea por fecha): <code style={{ color: '#fff' }}>YYYY-MM-DD</code> o <code style={{ color: '#fff' }}>YYYY-MM-DD HH:MM</code> o <code style={{ color: '#fff' }}>YYYY-MM-DD HH:MM-HH:MM</code>
+                          </div>
+                          <textarea
+                            value={bulkPaste}
+                            onChange={(e) => setBulkPaste(e.target.value)}
+                            placeholder={`2026-02-01 21:00\n2026-02-08 21:00\n2026-02-15 21:00`}
+                            rows={3}
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: 12,
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              background: 'rgba(0,0,0,0.25)',
+                              color: '#fff',
+                              resize: 'vertical',
+                            }}
+                          />
+                          <div style={{ marginTop: 8, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={parseBulkPasteToRows}
+                              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            >
+                              📥 Agregar filas desde lista
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBulkPaste('')}
+                              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            >
+                              🧽 Limpiar texto
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Planificador bulk (sheet) */}
+                  {bulkMode && (
+                    <div className="org-editor-card">
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: '#FFFFFF' }}>
+                        📋 Planificador (bulk)
+                      </h3>
+                      <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}>
+                        Seleccionadas: <b>{bulkSelectedCount}</b>
+                        {bulkPreview.count > 0 && (
+                          <>
+                            {' '}· Preview: <b>{bulkPreview.first}</b> → <b>{bulkPreview.last}</b>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Header */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '44px 140px 120px 120px 140px 1fr 44px', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
+                        <div></div>
+                        <div>Fecha</div>
+                        <div>Hora inicio</div>
+                        <div>Hora fin</div>
+                        <div>Estado</div>
+                        <div>Notas</div>
+                        <div></div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {bulkRows.map((r) => (
+                          <BulkRowItem
+                            key={r.id}
+                            row={r}
+                            errors={bulkErrors[r.id]}
+                            onChange={updateBulkRow}
+                            onRemove={removeBulkRow}
+                          />
+                        ))}
+                      </div>
+
+                      <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={handleBulkCreateDates}
+                          disabled={createEventDate.isPending || bulkSelectedCount === 0}
+                          style={{
+                            padding: '10px 14px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(39,195,255,0.40)',
+                            background: 'rgba(39,195,255,0.14)',
+                            color: '#fff',
+                            cursor: createEventDate.isPending || bulkSelectedCount === 0 ? 'not-allowed' : 'pointer',
+                            fontWeight: 800,
+                            opacity: createEventDate.isPending || bulkSelectedCount === 0 ? 0.55 : 1,
+                          }}
+                        >
+                          {createEventDate.isPending ? '⏳ Guardando batch...' : '✅ Guardar fechas (batch)'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleBulkPublish(true)}
+                          disabled={Object.keys(createdDateIdByRow).length === 0}
+                          style={{
+                            padding: '10px 14px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            background: 'rgba(255,255,255,0.06)',
+                            color: '#fff',
+                            cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
+                            fontWeight: 800,
+                            opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                          }}
+                        >
+                          🌐 Publicar seleccionadas
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleBulkPublish(false)}
+                          disabled={Object.keys(createdDateIdByRow).length === 0}
+                          style={{
+                            padding: '10px 14px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            background: 'rgba(255,255,255,0.06)',
+                            color: '#fff',
+                            cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
+                            fontWeight: 800,
+                            opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                          }}
+                        >
+                          🚀 Publicar todas
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Ubicaciones */}
                   <div className="org-editor-card">
@@ -4097,55 +4842,121 @@ export default function OrganizerProfileEditor() {
 
                  
 
-                  {/* Flyer */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      🖼️ Flyer del Evento
-                    </h3>
-                    <DateFlyerUploader
-                      value={dateForm.flyer_url || null}
-                      onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
-                      dateId={null}
-                      parentId={selectedParentId || undefined}
-                    />
-                  </div>
-
-                  {/* Estado de Publicación */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      🌐 Estado de Publicación
-                    </h3>
-                    <div className="org-date-form-radio-group">
-                      <label className="org-date-form-checkbox">
-                        <input
-                          type="radio"
-                          name="estado_publicacion"
-                          value="borrador"
-                          checked={dateForm.estado_publicacion === 'borrador'}
-                          onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                          style={{ transform: 'scale(1.2)' }}
-                        />
-                        <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                          📝 Borrador (solo tú puedes verlo)
-                        </span>
-                      </label>
-                      <label className="org-date-form-checkbox">
-                        <input
-                          type="radio"
-                          name="estado_publicacion"
-                          value="publicado"
-                          checked={dateForm.estado_publicacion === 'publicado'}
-                          onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                          style={{ transform: 'scale(1.2)' }}
-                        />
-                        <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                          🌐 Público (visible para todos)
-                        </span>
-                      </label>
+                  {/* Flyer (solo simple; bulk se maneja en cola de pendientes) */}
+                  {!bulkMode && (
+                    <div className="org-editor-card">
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                        🖼️ Flyer del Evento
+                      </h3>
+                      <DateFlyerUploader
+                        value={dateForm.flyer_url || null}
+                        onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
+                        dateId={null}
+                        parentId={selectedParentId || undefined}
+                      />
                     </div>
-                  </div>
+                  )}
 
-                  {/* Botones */}
+                  {/* Flyers pendientes (bulk) */}
+                  {bulkMode && showPendingFlyers && (
+                    <div className="org-editor-card">
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: '#FFFFFF' }}>
+                        🧾 Flyers pendientes
+                      </h3>
+                      <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 12 }}>
+                        Sube flyers después del batch. No bloquea la creación.
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        {bulkRows
+                          .map((r) => ({ r, dateId: createdDateIdByRow[r.id] }))
+                          .filter((x) => !!x.dateId)
+                          .map(({ r, dateId }) => (
+                            <div
+                              key={r.id}
+                              style={{
+                                border: '1px solid rgba(255,255,255,0.10)',
+                                borderRadius: 14,
+                                padding: 12,
+                                background: 'rgba(255,255,255,0.04)',
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 8 }}>
+                                <div style={{ fontWeight: 800 }}>
+                                  📅 {r.fecha} {r.hora_inicio ? `· ${r.hora_inicio}` : ''}
+                                </div>
+                                <div style={{ fontSize: 12, opacity: 0.85 }}>
+                                  {r.flyer_url ? '✅ DONE' : '⏳ PENDING'}
+                                </div>
+                              </div>
+
+                              <DateFlyerUploader
+                                value={r.flyer_url || null}
+                                dateId={Number(dateId)}
+                                parentId={selectedParentId || undefined}
+                                onStatusChange={(status) => {
+                                  if (status === 'UPLOADING') updateBulkRow(r.id, { flyer_status: 'UPLOADING' });
+                                  if (status === 'DONE') updateBulkRow(r.id, { flyer_status: 'DONE' });
+                                  if (status === 'ERROR') updateBulkRow(r.id, { flyer_status: 'ERROR' });
+                                  if (status === 'PENDING') updateBulkRow(r.id, { flyer_status: 'PENDING', flyer_url: null });
+                                }}
+                                onChange={async (url) => {
+                                  try {
+                                    await updateDate.mutateAsync({ id: Number(dateId), flyer_url: url || null });
+                                    updateBulkRow(r.id, { flyer_url: url || null, flyer_status: url ? 'DONE' : 'PENDING' });
+                                    showToast('Flyer guardado ✅', 'success');
+                                  } catch (e: any) {
+                                    console.error('[OrganizerProfileEditor] error updating flyer_url:', e);
+                                    updateBulkRow(r.id, { flyer_status: 'ERROR' });
+                                    showToast(e?.message || 'Error guardando flyer', 'error');
+                                  }
+                                }}
+                              />
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Estado de Publicación (solo simple; bulk publica por lote) */}
+                  {!bulkMode && (
+                    <div className="org-editor-card">
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                        🌐 Estado de Publicación
+                      </h3>
+                      <div className="org-date-form-radio-group">
+                        <label className="org-date-form-checkbox">
+                          <input
+                            type="radio"
+                            name="estado_publicacion"
+                            value="borrador"
+                            checked={dateForm.estado_publicacion === 'borrador'}
+                            onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                            style={{ transform: 'scale(1.2)' }}
+                          />
+                          <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                            📝 Borrador (solo tú puedes verlo)
+                          </span>
+                        </label>
+                        <label className="org-date-form-checkbox">
+                          <input
+                            type="radio"
+                            name="estado_publicacion"
+                            value="publicado"
+                            checked={dateForm.estado_publicacion === 'publicado'}
+                            onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                            style={{ transform: 'scale(1.2)' }}
+                          />
+                          <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                            🌐 Público (visible para todos)
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Botones (solo simple; bulk tiene sus botones en el planificador) */}
+                  {!bulkMode && (
                   <div className="org-editor-card org-date-form-buttons">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -4223,6 +5034,7 @@ export default function OrganizerProfileEditor() {
                             : '✨ Crear')}
                     </motion.button>
                   </div>
+                  )}
                 </motion.div>
               )}
 

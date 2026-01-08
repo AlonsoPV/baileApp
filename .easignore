@@ -6,12 +6,9 @@ dist/
 *.md
 *.sql
 supabase/
-packages/
 scripts/
 *.ps1
-*.sh
 vercel.json
-pnpm-lock.yaml
 .env
 .env.local
 .env.*.local

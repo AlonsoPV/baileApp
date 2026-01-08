@@ -87,5 +87,12 @@ export const ZONAS_CATALOG: ZonaGroup[] = [
       { id: 'playa_del_carmen', label: 'Playa del Carmen', slug: 'playa_del_carmen', parent: 'sur_sureste' },
     ],
   },
+  {
+    id: 'eeuu',
+    label: 'EEUU',
+    items: [
+      { id: 'portland', label: 'Portland', slug: 'portland', parent: 'eeuu' },
+    ],
+  },
 ];
 

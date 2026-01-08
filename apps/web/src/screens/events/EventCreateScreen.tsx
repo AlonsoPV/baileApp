@@ -44,10 +44,13 @@ export default function EventCreateScreen() {
       return;
     }
 
-    // Asegurar que existe organizador
-    if (!(organizer as any)?.id) {
+    // Resolver organizer_id (evita esperar refetch; el mutateAsync ya regresa el id)
+    let orgId: number | null = (organizer as any)?.id ?? null;
+    if (!orgId) {
       try {
-        await upsertOrganizer.mutateAsync({ nombre_publico: "Mi Social" });
+        const createdId = await upsertOrganizer.mutateAsync({ nombre_publico: "Mi Social" });
+        // useUpsertMyOrganizer retorna id (number)
+        orgId = typeof createdId === 'number' ? createdId : null;
       } catch (err: any) {
         console.error('[EventCreateScreen] Error creating organizer:', err);
         showToast('Error al crear organizador', 'error');
@@ -57,7 +60,6 @@ export default function EventCreateScreen() {
 
     setIsLoading(true);
     try {
-      const orgId = (organizer as any)?.id;
       if (!orgId) {
         showToast('No se pudo obtener el ID del organizador', 'error');
         return;
@@ -108,6 +110,10 @@ export default function EventCreateScreen() {
         ciudad: date.ciudad || null,
         direccion: date.direccion || null,
         requisitos: date.requisitos || null,
+        // ✅ guardar flyer + selecciones del form (evita guardar y luego hacer updates extra)
+        flyer_url: (date as any).flyer_url || null,
+        zonas: (date as any).zonas || [],
+        estilos: (date as any).estilos || parent.estilos || [],
         estado_publicacion: date.estado_publicacion
       });
 

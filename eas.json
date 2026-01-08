@@ -9,7 +9,10 @@
       "distribution": "internal",
       "channel": "development",
       "ios": {
-        "simulator": true
+        "simulator": true,
+        "env": {
+          "EXPO_NO_CAPABILITY_SYNC": "1"
+        }
       }
     },
     "developmentClient": {
@@ -17,7 +20,10 @@
       "distribution": "internal",
       "channel": "development",
       "ios": {
-        "simulator": true
+        "simulator": true,
+        "env": {
+          "EXPO_NO_CAPABILITY_SYNC": "1"
+        }
       }
     },
     "preview": {
@@ -36,13 +42,14 @@
       "channel": "production",
       "android": {
         "image": "latest",
-        "node": "20.18.0",
+        "node": "20.19.4",
         "env": {
           "YARN_IGNORE_ENGINES": "1"
         }
       },
       "ios": {
         "image": "latest",
+        "node": "20.19.4",
         "buildConfiguration": "Release",
         "env": {
           "EXPO_NO_CAPABILITY_SYNC": "1"
