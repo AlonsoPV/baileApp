@@ -746,7 +746,6 @@ export default function OrganizerProfileEditor() {
   // Bulk planner (v1)
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
-  const [bulkPaste, setBulkPaste] = useState<string>('');
   const [bulkErrors, setBulkErrors] = useState<Record<string, Record<string, string>>>({});
   const [createdBatchDates, setCreatedBatchDates] = useState<any[]>([]);
   const [showPendingFlyers, setShowPendingFlyers] = useState(false);
@@ -792,54 +791,6 @@ export default function OrganizerProfileEditor() {
   }, []);
 
   const bulkSelectedCount = useMemo(() => bulkRows.filter((r) => r.selected).length, [bulkRows]);
-
-  const parseBulkPasteToRows = useCallback(() => {
-    const lines = (bulkPaste || '')
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-
-    if (lines.length === 0) return;
-
-    const nextRows: BulkRow[] = [];
-
-    for (const line of lines) {
-      // Acepta:
-      // - YYYY-MM-DD
-      // - YYYY-MM-DD HH:MM
-      // - YYYY-MM-DD HH:MM-HH:MM
-      // - YYYY-MM-DD,HH:MM,HH:MM
-      const parts = line.split(/[,\t ]+/).filter(Boolean);
-      const datePart = parts[0] || '';
-
-      let start = '';
-      let end = '';
-
-      const timePart = parts[1] || '';
-      if (timePart && timePart.includes('-')) {
-        const [a, b] = timePart.split('-', 2);
-        start = (a || '').trim();
-        end = (b || '').trim();
-      } else {
-        start = (parts[1] || '').trim();
-        end = (parts[2] || '').trim();
-      }
-
-      nextRows.push({
-        id: makeRowId(),
-        fecha: datePart,
-        hora_inicio: start || (dateForm.hora_inicio || ''),
-        hora_fin: end || (dateForm.hora_fin || ''),
-        estado_publicacion: (dateForm.estado_publicacion || 'borrador') as BulkPubEstado,
-        notas: '',
-        selected: true,
-        flyer_status: 'PENDING',
-        flyer_url: null,
-      });
-    }
-
-    setBulkRows((prev) => [...prev, ...nextRows]);
-  }, [bulkPaste, dateForm.estado_publicacion, dateForm.hora_fin, dateForm.hora_inicio]);
 
   const generateWeeklyRowsFromTemplate = useCallback(() => {
     if (!dateForm.fecha) {
@@ -904,7 +855,6 @@ export default function OrganizerProfileEditor() {
 
   const clearBulk = useCallback(() => {
     setBulkRows([]);
-    setBulkPaste('');
     setBulkErrors({});
     setCreatedBatchDates([]);
     setShowPendingFlyers(false);
@@ -1313,38 +1263,13 @@ export default function OrganizerProfileEditor() {
         estado_publicacion: dateForm.estado_publicacion || 'borrador'
       };
 
-      // Crear fechas de forma optimizada:
-      // - Si NO es semanal: una sola fila en events_date con la fecha indicada
-      // - Si es semanal: N filas (semanas_repetir) cada 7 días a partir de la fecha seleccionada
-      // OPTIMIZACIÓN: Crear todas las fechas en una sola operación batch
-      let datesToCreate: any[] = [];
-      
-      if (!dateForm.repetir_semanal) {
-        datesToCreate = [{
-          ...basePayload,
-          fecha: dateForm.fecha,
-          dia_semana: null,
-        }];
-      } else {
-        const semanas = Math.max(1, Math.min(52, dateForm.semanas_repetir || 1));
-        const [year, month, day] = dateForm.fecha.split('-').map(Number);
-        const primeraFecha = new Date(year, (month - 1), day);
-
-        datesToCreate = Array.from({ length: semanas }, (_, i) => {
-          const f = new Date(primeraFecha);
-          f.setDate(f.getDate() + 7 * i);
-          const y = f.getFullYear();
-          const m = String(f.getMonth() + 1).padStart(2, '0');
-          const d = String(f.getDate()).padStart(2, '0');
-          const fechaStr = `${y}-${m}-${d}`;
-
-          return {
-            ...basePayload,
-            fecha: fechaStr,
-            dia_semana: null, // cada fila es una fecha concreta; RSVP será por fecha
-          };
-        });
-      }
+      // Modo Único: siempre se crea 1 sola fecha (sin repetición semanal).
+      // Si quieres múltiples, usa “Frecuentes” (bulk).
+      const datesToCreate: any[] = [{
+        ...basePayload,
+        fecha: dateForm.fecha,
+        dia_semana: null,
+      }];
       
       // Crear todas las fechas en una sola operación batch (mucho más rápido)
       try {
@@ -1394,12 +1319,9 @@ export default function OrganizerProfileEditor() {
     } catch (err: any) {
       console.error('Error creating date:', err);
       const errorMessage = err?.message || 'Error desconocido';
-      const isMultiple = dateForm.repetir_semanal && (dateForm.semanas_repetir || 1) > 1;
       
       showToast(
-        isMultiple 
-          ? `Error al crear fechas: ${errorMessage}` 
-          : `Error al crear fecha: ${errorMessage}`,
+        `Error al crear fecha: ${errorMessage}`,
         'error'
       );
     }
@@ -4600,6 +4522,7 @@ export default function OrganizerProfileEditor() {
                         onClick={() => {
                           setBulkMode(false);
                           setShowPendingFlyers(false);
+                          setDateForm((prev) => ({ ...prev, repetir_semanal: false }));
                         }}
                         style={{
                           padding: '8px 12px',
@@ -4612,7 +4535,7 @@ export default function OrganizerProfileEditor() {
                           fontSize: 13,
                         }}
                       >
-                        🧍 Simple
+                        🧍 Único
                       </button>
                       <button
                         type="button"
@@ -4631,11 +4554,8 @@ export default function OrganizerProfileEditor() {
                           fontSize: 13,
                         }}
                       >
-                        📋 Bulk (10+)
+                        📋 Frecuentes
                       </button>
-                      <div style={{ fontSize: 12, opacity: 0.85 }}>
-                        Tip: si <b>Hora fin</b> es menor que <b>Hora inicio</b>, se interpreta como <b>termina al día siguiente</b> (madrugada).
-                      </div>
                     </div>
 
                     <div className="org-date-form-grid">
@@ -4678,50 +4598,10 @@ export default function OrganizerProfileEditor() {
                       </div>
                     </div>
 
-                    {/* Repetición Semanal (solo simple) */}
+                    {/* Banner Único (después de fecha y hora) */}
                     {!bulkMode && (
-                      <div className="org-date-form-repetition" style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <label className="org-date-form-checkbox" style={{ marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
-                          <input
-                            type="checkbox"
-                            checked={dateForm.repetir_semanal || false}
-                            onChange={(e) => setDateForm({ ...dateForm, repetir_semanal: e.target.checked })}
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              cursor: 'pointer',
-                            }}
-                          />
-                          <span style={{ fontSize: '1rem', fontWeight: '600', color: '#FFFFFF' }}>
-                            🔁 Repetir semanalmente
-                          </span>
-                        </label>
-
-                        {dateForm.repetir_semanal && (
-                          <div style={{ marginTop: '16px' }}>
-                            <label style={{
-                              display: 'block',
-                              marginBottom: '8px',
-                              fontSize: '0.9rem',
-                              fontWeight: '600',
-                              color: '#FFFFFF',
-                            }}>
-                              Número de semanas
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="52"
-                              value={dateForm.semanas_repetir || 4}
-                              onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
-                              className="org-editor-input"
-                              style={{ color: '#FFFFFF' }}
-                            />
-                            <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: '#FFFFFF' }}>
-                              Se crearán fechas cada semana durante {dateForm.semanas_repetir || 4} semana{(dateForm.semanas_repetir || 4) !== 1 ? 's' : ''}
-                            </p>
-                          </div>
-                        )}
+                      <div style={{ marginTop: 14, padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', fontSize: 13, opacity: 0.92 }}>
+                        <b>Modo Único</b>: se crea <b>una sola fecha</b> (sin repetición semanal). Si necesitas varias fechas, usa <b>Frecuentes</b>.
                       </div>
                     )}
 
@@ -4730,6 +4610,18 @@ export default function OrganizerProfileEditor() {
                       <div style={{ marginTop: 14, padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}>
                         <div style={{ fontWeight: 800, marginBottom: 8 }}>⚡ Acciones rápidas</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 12, opacity: 0.85 }}>Semanas:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="52"
+                              value={dateForm.semanas_repetir || 4}
+                              onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
+                              className="org-editor-input"
+                              style={{ width: 90, color: '#FFFFFF' }}
+                            />
+                          </div>
                           <button
                             type="button"
                             onClick={() => addBulkRow()}
@@ -4766,6 +4658,7 @@ export default function OrganizerProfileEditor() {
                             🧹 Limpiar bulk
                           </button>
                         </div>
+                        
 
                         <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
                           <div style={{ fontWeight: 800, marginBottom: 8 }}>🖼️ Flyer general (opcional)</div>
@@ -4839,49 +4732,7 @@ export default function OrganizerProfileEditor() {
                           </div>
                         </div>
 
-                        {/*
-                          Pegar lista (una línea por fecha):
-                          - YYYY-MM-DD
-                          - YYYY-MM-DD HH:MM
-                          - YYYY-MM-DD HH:MM-HH:MM
-                          Nota: si HH:MM-HH:MM cruza medianoche (ej. 21:00-02:00), se interpreta como termina al día siguiente.
-                        */}
-                        <div style={{ marginTop: 12 }}>
-                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 6 }}>
-                            Pegar lista (una línea por fecha): <code style={{ color: '#fff' }}>YYYY-MM-DD</code> o <code style={{ color: '#fff' }}>YYYY-MM-DD HH:MM</code> o <code style={{ color: '#fff' }}>YYYY-MM-DD HH:MM-HH:MM</code> (ej. <code style={{ color: '#fff' }}>21:00-02:00</code>)
-                          </div>
-                          <textarea
-                            value={bulkPaste}
-                            onChange={(e) => setBulkPaste(e.target.value)}
-                            placeholder={`2026-02-01 21:00-02:00\n2026-02-08 21:00-02:00\n2026-02-15 21:00`}
-                            rows={3}
-                            style={{
-                              width: '100%',
-                              padding: '10px 12px',
-                              borderRadius: 12,
-                              border: '1px solid rgba(255,255,255,0.18)',
-                              background: 'rgba(0,0,0,0.25)',
-                              color: '#fff',
-                              resize: 'vertical',
-                            }}
-                          />
-                          <div style={{ marginTop: 8, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                            <button
-                              type="button"
-                              onClick={parseBulkPasteToRows}
-                              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                            >
-                              📥 Agregar filas desde lista
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setBulkPaste('')}
-                              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                            >
-                              🧽 Limpiar texto
-                            </button>
-                          </div>
-                        </div>
+                        
                       </div>
                     )}
 
@@ -4989,13 +4840,7 @@ export default function OrganizerProfileEditor() {
                             opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
                           }}
                         >
-                          {createEventDate.isPending 
-                            ? (dateForm.repetir_semanal && dateForm.semanas_repetir 
-                                ? `⏳ Creando ${dateForm.semanas_repetir} fechas...` 
-                                : '⏳ Creando...')
-                            : (dateForm.repetir_semanal && dateForm.semanas_repetir 
-                                ? `✨ Crear ${dateForm.semanas_repetir} fechas` 
-                                : '✨ Crear')}
+                          {createEventDate.isPending ? '⏳ Creando...' : '✨ Crear'}
                         </motion.button>
                       </div>
                     )}
