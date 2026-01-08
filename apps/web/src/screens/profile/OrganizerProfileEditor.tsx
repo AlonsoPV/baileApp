@@ -751,6 +751,8 @@ export default function OrganizerProfileEditor() {
   const [createdBatchDates, setCreatedBatchDates] = useState<any[]>([]);
   const [showPendingFlyers, setShowPendingFlyers] = useState(false);
   const [createdDateIdByRow, setCreatedDateIdByRow] = useState<Record<string, number>>({});
+  const [bulkGeneralFlyerUrl, setBulkGeneralFlyerUrl] = useState<string | null>(null);
+  const [bulkShowAllFlyers, setBulkShowAllFlyers] = useState(false);
 
   const updateBulkRow = useCallback((rowId: string, patch: Partial<BulkRow>) => {
     setBulkRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, ...patch } : r)));
@@ -881,8 +883,6 @@ export default function OrganizerProfileEditor() {
       if (r.hora_inicio && r.hora_fin) {
         if (r.hora_inicio === r.hora_fin) {
           rowErr.hora_fin = 'Hora fin no puede ser igual a hora inicio';
-        } else if (r.hora_fin < r.hora_inicio) {
-          rowErr.hora_fin = 'Hora fin debe ser mayor a hora inicio';
         }
       }
       if (Object.keys(rowErr).length) errors[r.id] = rowErr;
@@ -908,6 +908,8 @@ export default function OrganizerProfileEditor() {
     setBulkErrors({});
     setCreatedBatchDates([]);
     setShowPendingFlyers(false);
+    setBulkGeneralFlyerUrl(null);
+    setBulkShowAllFlyers(false);
   }, []);
 
   const handleDateUbicacionesChange = (list: AcademyLocation[]) => {
@@ -1484,7 +1486,8 @@ export default function OrganizerProfileEditor() {
         fecha: r.fecha,
         hora_inicio: r.hora_inicio || null,
         hora_fin: r.hora_fin || null,
-        flyer_url: null,
+        // Si hay flyer general, se aplica a todas las fechas del batch.
+        flyer_url: bulkGeneralFlyerUrl || null,
         estado_publicacion: 'borrador' as const,
         dia_semana: null,
       }));
@@ -1548,12 +1551,56 @@ export default function OrganizerProfileEditor() {
 
       setCreatedBatchDates(createdDates);
       setCreatedDateIdByRow((prev) => ({ ...prev, ...mapping }));
-      setShowPendingFlyers(true);
+      // Si ya hay flyer general, por default no es necesario abrir el panel de flyers.
+      setShowPendingFlyers(!bulkGeneralFlyerUrl);
+
+      // Sincronizar estado local de filas: si usamos flyer general, marcarlas como DONE.
+      if (bulkGeneralFlyerUrl) {
+        selectedRows.forEach((row) => {
+          updateBulkRow(row.id, { flyer_url: bulkGeneralFlyerUrl, flyer_status: 'DONE' });
+        });
+      }
 
       showToast(`${createdDates.length} fechas creadas ✅ (en borrador)`, 'success');
     } catch (e: any) {
       console.error('[OrganizerProfileEditor] bulk create error:', e);
       showToast(e?.message || 'Error al crear fechas en batch', 'error');
+    }
+  };
+
+  const applyBulkGeneralFlyerToCreated = async (onlySelected: boolean) => {
+    if (!bulkGeneralFlyerUrl) {
+      showToast('Primero sube/selecciona un flyer general', 'info');
+      return;
+    }
+    const rows = onlySelected ? bulkRows.filter((r) => r.selected) : bulkRows;
+    const withIds = rows
+      .map((r) => ({ row: r, id: createdDateIdByRow[r.id] }))
+      .filter((x) => !!x.id);
+
+    if (withIds.length === 0) {
+      showToast('No hay fechas creadas a las que aplicar el flyer (guarda el batch primero)', 'info');
+      return;
+    }
+
+    try {
+      const ids = withIds.map((x) => Number(x.id));
+      const { error } = await supabase
+        .from('events_date')
+        .update({ flyer_url: bulkGeneralFlyerUrl as any })
+        .in('id', ids);
+      if (error) throw error;
+
+      // Estado local (para que el panel muestre DONE sin recargar)
+      withIds.forEach(({ row }) => {
+        updateBulkRow(row.id, { flyer_url: bulkGeneralFlyerUrl, flyer_status: 'DONE' });
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+      showToast(`Flyer aplicado a ${ids.length} fecha${ids.length !== 1 ? 's' : ''} ✅`, 'success');
+    } catch (e: any) {
+      console.error('[OrganizerProfileEditor] apply bulk general flyer error:', e);
+      showToast(e?.message || 'Error aplicando flyer general', 'error');
     }
   };
 
@@ -4371,323 +4418,6 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
-                  {/* Fecha y Hora */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📅 Fecha y Hora
-                    </h3>
-
-                    {/* Toggle Simple / Bulk */}
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBulkMode(false);
-                          setShowPendingFlyers(false);
-                        }}
-                        style={{
-                          padding: '8px 12px',
-                          borderRadius: 999,
-                          border: '1px solid rgba(255,255,255,0.22)',
-                          background: !bulkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          fontWeight: 800,
-                          fontSize: 13,
-                        }}
-                      >
-                        🧍 Simple
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBulkMode(true);
-                          if (bulkRows.length === 0) addBulkRow();
-                        }}
-                        style={{
-                          padding: '8px 12px',
-                          borderRadius: 999,
-                          border: '1px solid rgba(39,195,255,0.40)',
-                          background: bulkMode ? 'rgba(39,195,255,0.14)' : 'rgba(39,195,255,0.06)',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          fontWeight: 800,
-                          fontSize: 13,
-                        }}
-                      >
-                        📋 Bulk (10+)
-                      </button>
-                      {bulkMode && (
-                        <div style={{ fontSize: 12, opacity: 0.85 }}>
-                          En bulk, **todas las fechas se crean en borrador** y los flyers se suben después.
-                        </div>
-                      )}
-                    </div>
-                    <div className="org-date-form-grid">
-                      <div>
-                        <label className="org-editor-field">
-                          {bulkMode ? 'Fecha base (para generar)' : 'Fecha *'}
-                        </label>
-                        <input
-                          type="date"
-                          value={dateForm.fecha}
-                          onChange={(e) => setDateForm({ ...dateForm, fecha: e.target.value })}
-                          required
-                          className="org-editor-input"
-                          style={{ color: '#FFFFFF' }}
-                        />
-                      </div>
-                      <div>
-                        <label className="org-editor-field">
-                          Hora Inicio
-                        </label>
-                        <input
-                          type="time"
-                          value={dateForm.hora_inicio}
-                          onChange={(e) => setDateForm({ ...dateForm, hora_inicio: e.target.value })}
-                          className="org-editor-input"
-                          style={{ color: '#FFFFFF' }}
-                        />
-                      </div>
-                      <div>
-                        <label className="org-editor-field">
-                          Hora Fin
-                        </label>
-                        <input
-                          type="time"
-                          value={dateForm.hora_fin}
-                          onChange={(e) => setDateForm({ ...dateForm, hora_fin: e.target.value })}
-                          className="org-editor-input"
-                          style={{ color: '#FFFFFF' }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Repetición Semanal (solo simple) */}
-                    {!bulkMode && (
-                      <div className="org-date-form-repetition" style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        <label className="org-date-form-checkbox" style={{ marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
-                          <input
-                            type="checkbox"
-                            checked={dateForm.repetir_semanal || false}
-                            onChange={(e) => setDateForm({ ...dateForm, repetir_semanal: e.target.checked })}
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              cursor: 'pointer',
-                            }}
-                          />
-                          <span style={{ fontSize: '1rem', fontWeight: '600', color: '#FFFFFF' }}>
-                            🔁 Repetir semanalmente
-                          </span>
-                        </label>
-
-                        {dateForm.repetir_semanal && (
-                          <div style={{ marginTop: '16px' }}>
-                            <label style={{
-                              display: 'block',
-                              marginBottom: '8px',
-                              fontSize: '0.9rem',
-                              fontWeight: '600',
-                              color: '#FFFFFF',
-                            }}>
-                              Número de semanas
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="52"
-                              value={dateForm.semanas_repetir || 4}
-                              onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
-                              className="org-editor-input"
-                              style={{ color: '#FFFFFF' }}
-                            />
-                            <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: '#FFFFFF' }}>
-                              Se crearán fechas cada semana durante {dateForm.semanas_repetir || 4} semana{(dateForm.semanas_repetir || 4) !== 1 ? 's' : ''}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Acciones bulk rápidas */}
-                    {bulkMode && (
-                      <div style={{ marginTop: 14, padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}>
-                        <div style={{ fontWeight: 800, marginBottom: 8 }}>⚡ Acciones rápidas</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-                          <button
-                            type="button"
-                            onClick={() => addBulkRow()}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                          >
-                            ➕ Agregar fila
-                          </button>
-                          <button
-                            type="button"
-                            onClick={generateWeeklyRowsFromTemplate}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(39,195,255,0.40)', background: 'rgba(39,195,255,0.10)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                          >
-                            🔁 Generar semanal ({Math.max(1, Math.min(52, dateForm.semanas_repetir || 1))})
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAllBulkSelected(true)}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                          >
-                            ✅ Seleccionar todo
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAllBulkSelected(false)}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                          >
-                            ⛔ Deseleccionar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={clearBulk}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,61,87,0.35)', background: 'rgba(255,61,87,0.10)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                          >
-                            🧹 Limpiar bulk
-                          </button>
-                        </div>
-
-                        <div style={{ marginTop: 12 }}>
-                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 6 }}>
-                            Pegar lista (una línea por fecha): <code style={{ color: '#fff' }}>YYYY-MM-DD</code> o <code style={{ color: '#fff' }}>YYYY-MM-DD HH:MM</code> o <code style={{ color: '#fff' }}>YYYY-MM-DD HH:MM-HH:MM</code>
-                          </div>
-                          <textarea
-                            value={bulkPaste}
-                            onChange={(e) => setBulkPaste(e.target.value)}
-                            placeholder={`2026-02-01 21:00\n2026-02-08 21:00\n2026-02-15 21:00`}
-                            rows={3}
-                            style={{
-                              width: '100%',
-                              padding: '10px 12px',
-                              borderRadius: 12,
-                              border: '1px solid rgba(255,255,255,0.18)',
-                              background: 'rgba(0,0,0,0.25)',
-                              color: '#fff',
-                              resize: 'vertical',
-                            }}
-                          />
-                          <div style={{ marginTop: 8, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                            <button
-                              type="button"
-                              onClick={parseBulkPasteToRows}
-                              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                            >
-                              📥 Agregar filas desde lista
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setBulkPaste('')}
-                              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
-                            >
-                              🧽 Limpiar texto
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Planificador bulk (sheet) */}
-                  {bulkMode && (
-                    <div className="org-editor-card">
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: '#FFFFFF' }}>
-                        📋 Planificador (bulk)
-                      </h3>
-                      <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}>
-                        Seleccionadas: <b>{bulkSelectedCount}</b>
-                        {bulkPreview.count > 0 && (
-                          <>
-                            {' '}· Preview: <b>{bulkPreview.first}</b> → <b>{bulkPreview.last}</b>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Header */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '44px 140px 120px 120px 140px 1fr 44px', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
-                        <div></div>
-                        <div>Fecha</div>
-                        <div>Hora inicio</div>
-                        <div>Hora fin</div>
-                        <div>Estado</div>
-                        <div>Notas</div>
-                        <div></div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {bulkRows.map((r) => (
-                          <BulkRowItem
-                            key={r.id}
-                            row={r}
-                            errors={bulkErrors[r.id]}
-                            onChange={updateBulkRow}
-                            onRemove={removeBulkRow}
-                          />
-                        ))}
-                      </div>
-
-                      <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <button
-                          type="button"
-                          onClick={handleBulkCreateDates}
-                          disabled={createEventDate.isPending || bulkSelectedCount === 0}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: 12,
-                            border: '1px solid rgba(39,195,255,0.40)',
-                            background: 'rgba(39,195,255,0.14)',
-                            color: '#fff',
-                            cursor: createEventDate.isPending || bulkSelectedCount === 0 ? 'not-allowed' : 'pointer',
-                            fontWeight: 800,
-                            opacity: createEventDate.isPending || bulkSelectedCount === 0 ? 0.55 : 1,
-                          }}
-                        >
-                          {createEventDate.isPending ? '⏳ Guardando batch...' : '✅ Guardar fechas (batch)'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleBulkPublish(true)}
-                          disabled={Object.keys(createdDateIdByRow).length === 0}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: 12,
-                            border: '1px solid rgba(255,255,255,0.18)',
-                            background: 'rgba(255,255,255,0.06)',
-                            color: '#fff',
-                            cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
-                            fontWeight: 800,
-                            opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
-                          }}
-                        >
-                          🌐 Publicar seleccionadas
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleBulkPublish(false)}
-                          disabled={Object.keys(createdDateIdByRow).length === 0}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: 12,
-                            border: '1px solid rgba(255,255,255,0.18)',
-                            background: 'rgba(255,255,255,0.06)',
-                            color: '#fff',
-                            cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
-                            fontWeight: 800,
-                            opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
-                          }}
-                        >
-                          🚀 Publicar todas
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Ubicaciones */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
@@ -4857,6 +4587,516 @@ export default function OrganizerProfileEditor() {
                     </div>
                   )}
 
+                  {/* Fecha y Hora (último paso) */}
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      📅 Fecha y Hora
+                    </h3>
+
+                    {/* Toggle Simple / Bulk */}
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBulkMode(false);
+                          setShowPendingFlyers(false);
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: 999,
+                          border: '1px solid rgba(255,255,255,0.22)',
+                          background: !bulkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontWeight: 800,
+                          fontSize: 13,
+                        }}
+                      >
+                        🧍 Simple
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBulkMode(true);
+                          if (bulkRows.length === 0) addBulkRow();
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: 999,
+                          border: '1px solid rgba(39,195,255,0.40)',
+                          background: bulkMode ? 'rgba(39,195,255,0.14)' : 'rgba(39,195,255,0.06)',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontWeight: 800,
+                          fontSize: 13,
+                        }}
+                      >
+                        📋 Bulk (10+)
+                      </button>
+                      <div style={{ fontSize: 12, opacity: 0.85 }}>
+                        Tip: si <b>Hora fin</b> es menor que <b>Hora inicio</b>, se interpreta como <b>termina al día siguiente</b> (madrugada).
+                      </div>
+                    </div>
+
+                    <div className="org-date-form-grid">
+                      <div>
+                        <label className="org-editor-field">
+                          {bulkMode ? 'Fecha base (para generar)' : 'Fecha *'}
+                        </label>
+                        <input
+                          type="date"
+                          value={dateForm.fecha}
+                          onChange={(e) => setDateForm({ ...dateForm, fecha: e.target.value })}
+                          required
+                          className="org-editor-input"
+                          style={{ color: '#FFFFFF' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">
+                          Hora Inicio
+                        </label>
+                        <input
+                          type="time"
+                          value={dateForm.hora_inicio}
+                          onChange={(e) => setDateForm({ ...dateForm, hora_inicio: e.target.value })}
+                          className="org-editor-input"
+                          style={{ color: '#FFFFFF' }}
+                        />
+                      </div>
+                      <div>
+                        <label className="org-editor-field">
+                          Hora Fin
+                        </label>
+                        <input
+                          type="time"
+                          value={dateForm.hora_fin}
+                          onChange={(e) => setDateForm({ ...dateForm, hora_fin: e.target.value })}
+                          className="org-editor-input"
+                          style={{ color: '#FFFFFF' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Repetición Semanal (solo simple) */}
+                    {!bulkMode && (
+                      <div className="org-date-form-repetition" style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <label className="org-date-form-checkbox" style={{ marginBottom: dateForm.repetir_semanal ? '16px' : '0' }}>
+                          <input
+                            type="checkbox"
+                            checked={dateForm.repetir_semanal || false}
+                            onChange={(e) => setDateForm({ ...dateForm, repetir_semanal: e.target.checked })}
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              cursor: 'pointer',
+                            }}
+                          />
+                          <span style={{ fontSize: '1rem', fontWeight: '600', color: '#FFFFFF' }}>
+                            🔁 Repetir semanalmente
+                          </span>
+                        </label>
+
+                        {dateForm.repetir_semanal && (
+                          <div style={{ marginTop: '16px' }}>
+                            <label style={{
+                              display: 'block',
+                              marginBottom: '8px',
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                              color: '#FFFFFF',
+                            }}>
+                              Número de semanas
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="52"
+                              value={dateForm.semanas_repetir || 4}
+                              onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
+                              className="org-editor-input"
+                              style={{ color: '#FFFFFF' }}
+                            />
+                            <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: '#FFFFFF' }}>
+                              Se crearán fechas cada semana durante {dateForm.semanas_repetir || 4} semana{(dateForm.semanas_repetir || 4) !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Acciones bulk rápidas */}
+                    {bulkMode && (
+                      <div style={{ marginTop: 14, padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}>
+                        <div style={{ fontWeight: 800, marginBottom: 8 }}>⚡ Acciones rápidas</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => addBulkRow()}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            ➕ Agregar fila
+                          </button>
+                          <button
+                            type="button"
+                            onClick={generateWeeklyRowsFromTemplate}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(39,195,255,0.40)', background: 'rgba(39,195,255,0.10)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            🔁 Generar semanal ({Math.max(1, Math.min(52, dateForm.semanas_repetir || 1))})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAllBulkSelected(true)}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            ✅ Seleccionar todo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAllBulkSelected(false)}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            ⛔ Deseleccionar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={clearBulk}
+                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,61,87,0.35)', background: 'rgba(255,61,87,0.10)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            🧹 Limpiar bulk
+                          </button>
+                        </div>
+
+                        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+                          <div style={{ fontWeight: 800, marginBottom: 8 }}>🖼️ Flyer general (opcional)</div>
+                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 10 }}>
+                            Si lo cargas aquí, se usará como flyer para <b>todas</b> las fechas del batch. Después puedes reemplazarlo por fecha en “Flyers pendientes”.
+                          </div>
+                          <DateFlyerUploader
+                            value={bulkGeneralFlyerUrl || null}
+                            onChange={(url) => {
+                              setBulkGeneralFlyerUrl(url || null);
+                              if (url) {
+                                // Si ya hay fechas creadas, permitir aplicar con un click.
+                                // No aplicamos automáticamente para evitar sorpresas.
+                              }
+                            }}
+                            dateId={null}
+                            parentId={selectedParentId || undefined}
+                          />
+                          <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={() => applyBulkGeneralFlyerToCreated(true)}
+                              disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(255,255,255,0.18)',
+                                background: 'rgba(255,255,255,0.06)',
+                                color: '#fff',
+                                cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
+                                fontWeight: 700,
+                                opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
+                              }}
+                            >
+                              🧩 Aplicar a seleccionadas (creadas)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => applyBulkGeneralFlyerToCreated(false)}
+                              disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(255,255,255,0.18)',
+                                background: 'rgba(255,255,255,0.06)',
+                                color: '#fff',
+                                cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
+                                fontWeight: 700,
+                                opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
+                              }}
+                            >
+                              🧩 Aplicar a todas (creadas)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowPendingFlyers((v) => !v)}
+                              disabled={Object.keys(createdDateIdByRow).length === 0}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(39,195,255,0.40)',
+                                background: 'rgba(39,195,255,0.10)',
+                                color: '#fff',
+                                cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
+                                fontWeight: 700,
+                                opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                              }}
+                            >
+                              🧾 {showPendingFlyers ? 'Ocultar flyers individuales' : 'Abrir flyers individuales'}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/*
+                          Pegar lista (una línea por fecha):
+                          - YYYY-MM-DD
+                          - YYYY-MM-DD HH:MM
+                          - YYYY-MM-DD HH:MM-HH:MM
+                          Nota: si HH:MM-HH:MM cruza medianoche (ej. 21:00-02:00), se interpreta como termina al día siguiente.
+                        */}
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 6 }}>
+                            Pegar lista (una línea por fecha): <code style={{ color: '#fff' }}>YYYY-MM-DD</code> o <code style={{ color: '#fff' }}>YYYY-MM-DD HH:MM</code> o <code style={{ color: '#fff' }}>YYYY-MM-DD HH:MM-HH:MM</code> (ej. <code style={{ color: '#fff' }}>21:00-02:00</code>)
+                          </div>
+                          <textarea
+                            value={bulkPaste}
+                            onChange={(e) => setBulkPaste(e.target.value)}
+                            placeholder={`2026-02-01 21:00-02:00\n2026-02-08 21:00-02:00\n2026-02-15 21:00`}
+                            rows={3}
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: 12,
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              background: 'rgba(0,0,0,0.25)',
+                              color: '#fff',
+                              resize: 'vertical',
+                            }}
+                          />
+                          <div style={{ marginTop: 8, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={parseBulkPasteToRows}
+                              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            >
+                              📥 Agregar filas desde lista
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBulkPaste('')}
+                              style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            >
+                              🧽 Limpiar texto
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Estado de Publicación (solo simple; bulk publica por lote) */}
+                    {!bulkMode && (
+                      <div style={{ marginTop: 20 }}>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: '800', marginBottom: '0.75rem', color: '#FFFFFF' }}>
+                          🌐 Estado de Publicación
+                        </h3>
+                        <div className="org-date-form-radio-group">
+                          <label className="org-date-form-checkbox">
+                            <input
+                              type="radio"
+                              name="estado_publicacion"
+                              value="borrador"
+                              checked={dateForm.estado_publicacion === 'borrador'}
+                              onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                              style={{ transform: 'scale(1.2)' }}
+                            />
+                            <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                              📝 Borrador (solo tú puedes verlo)
+                            </span>
+                          </label>
+                          <label className="org-date-form-checkbox">
+                            <input
+                              type="radio"
+                              name="estado_publicacion"
+                              value="publicado"
+                              checked={dateForm.estado_publicacion === 'publicado'}
+                              onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                              style={{ transform: 'scale(1.2)' }}
+                            />
+                            <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                              🌐 Público (visible para todos)
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Botones (solo simple; bulk tiene sus botones en el planificador) */}
+                    {!bulkMode && (
+                      <div className="org-editor-card org-date-form-buttons" style={{ marginTop: 16 }}>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setShowDateForm(false);
+                            setDateForm({
+                              nombre: '',
+                              biografia: '',
+                              djs: '',
+                              telefono_contacto: '',
+                              mensaje_contacto: '',
+                              fecha: '',
+                              hora_inicio: '',
+                              hora_fin: '',
+                              lugar: '',
+                              ciudad: '',
+                              direccion: '',
+                              referencias: '',
+                              requisitos: '',
+                              ubicaciones: [],
+                              zona: null,
+                              estilos: [],
+                              ritmos_seleccionados: [],
+                              zonas: [],
+                              cronograma: [],
+                              costos: [],
+                              flyer_url: null,
+                              estado_publicacion: 'borrador',
+                              repetir_semanal: false,
+                              semanas_repetir: 4
+                            });
+                            setSelectedDateLocationId('');
+                            setSelectedParentId(null);
+                          }}
+                          style={{
+                            padding: '12px 24px',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            background: 'transparent',
+                            color: '#FFFFFF',
+                            fontSize: '0.9rem',
+                            fontWeight: '700',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          ❌ Cancelar
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleCreateDate}
+                          disabled={createEventDate.isPending || !dateForm.fecha}
+                          style={{
+                            padding: '12px 24px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            color: '#FFFFFF',
+                            fontSize: '0.9rem',
+                            fontWeight: '700',
+                            cursor: createEventDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
+                            boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                            opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
+                          }}
+                        >
+                          {createEventDate.isPending 
+                            ? (dateForm.repetir_semanal && dateForm.semanas_repetir 
+                                ? `⏳ Creando ${dateForm.semanas_repetir} fechas...` 
+                                : '⏳ Creando...')
+                            : (dateForm.repetir_semanal && dateForm.semanas_repetir 
+                                ? `✨ Crear ${dateForm.semanas_repetir} fechas` 
+                                : '✨ Crear')}
+                        </motion.button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Planificador bulk (sheet) */}
+                  {bulkMode && (
+                    <div className="org-editor-card">
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: '#FFFFFF' }}>
+                        📋 Planificador (bulk)
+                      </h3>
+                      <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}>
+                        Seleccionadas: <b>{bulkSelectedCount}</b>
+                        {bulkPreview.count > 0 && (
+                          <>
+                            {' '}· Preview: <b>{bulkPreview.first}</b> → <b>{bulkPreview.last}</b>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Header */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '44px 140px 120px 120px 140px 1fr 44px', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
+                        <div></div>
+                        <div>Fecha</div>
+                        <div>Hora inicio</div>
+                        <div>Hora fin</div>
+                        <div>Estado</div>
+                        <div>Notas</div>
+                        <div></div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {bulkRows.map((r) => (
+                          <BulkRowItem
+                            key={r.id}
+                            row={r}
+                            errors={bulkErrors[r.id]}
+                            onChange={updateBulkRow}
+                            onRemove={removeBulkRow}
+                          />
+                        ))}
+                      </div>
+
+                      <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={handleBulkCreateDates}
+                          disabled={createEventDate.isPending || bulkSelectedCount === 0}
+                          style={{
+                            padding: '10px 14px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(39,195,255,0.40)',
+                            background: 'rgba(39,195,255,0.14)',
+                            color: '#fff',
+                            cursor: createEventDate.isPending || bulkSelectedCount === 0 ? 'not-allowed' : 'pointer',
+                            fontWeight: 800,
+                            opacity: createEventDate.isPending || bulkSelectedCount === 0 ? 0.55 : 1,
+                          }}
+                        >
+                          {createEventDate.isPending ? '⏳ Guardando batch...' : '✅ Guardar fechas (batch)'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleBulkPublish(true)}
+                          disabled={Object.keys(createdDateIdByRow).length === 0}
+                          style={{
+                            padding: '10px 14px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            background: 'rgba(255,255,255,0.06)',
+                            color: '#fff',
+                            cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
+                            fontWeight: 800,
+                            opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                          }}
+                        >
+                          🌐 Publicar seleccionadas
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleBulkPublish(false)}
+                          disabled={Object.keys(createdDateIdByRow).length === 0}
+                          style={{
+                            padding: '10px 14px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            background: 'rgba(255,255,255,0.06)',
+                            color: '#fff',
+                            cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
+                            fontWeight: 800,
+                            opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                          }}
+                        >
+                          🚀 Publicar todas
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Flyers pendientes (bulk) */}
                   {bulkMode && showPendingFlyers && (
                     <div className="org-editor-card">
@@ -4864,176 +5104,95 @@ export default function OrganizerProfileEditor() {
                         🧾 Flyers pendientes
                       </h3>
                       <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 12 }}>
-                        Sube flyers después del batch. No bloquea la creación.
+                        Sube flyers después del batch. No bloquea la creación. Puedes usar flyer general o reemplazar individualmente.
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                        {bulkRows
-                          .map((r) => ({ r, dateId: createdDateIdByRow[r.id] }))
-                          .filter((x) => !!x.dateId)
-                          .map(({ r, dateId }) => (
-                            <div
-                              key={r.id}
-                              style={{
-                                border: '1px solid rgba(255,255,255,0.10)',
-                                borderRadius: 14,
-                                padding: 12,
-                                background: 'rgba(255,255,255,0.04)',
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 8 }}>
-                                <div style={{ fontWeight: 800 }}>
-                                  📅 {r.fecha} {r.hora_inicio ? `· ${r.hora_inicio}` : ''}
-                                </div>
-                                <div style={{ fontSize: 12, opacity: 0.85 }}>
-                                  {r.flyer_url ? '✅ DONE' : '⏳ PENDING'}
-                                </div>
-                              </div>
+                        {(() => {
+                          const all = bulkRows
+                            .map((r) => ({ r, dateId: createdDateIdByRow[r.id] }))
+                            .filter((x) => !!x.dateId);
+                          const filtered = bulkShowAllFlyers
+                            ? all
+                            : all.filter(({ r }) => !r.flyer_url || r.flyer_status === 'ERROR' || r.flyer_status === 'PENDING');
+                          const showing = filtered;
 
-                              <DateFlyerUploader
-                                value={r.flyer_url || null}
-                                dateId={Number(dateId)}
-                                parentId={selectedParentId || undefined}
-                                onStatusChange={(status) => {
-                                  if (status === 'UPLOADING') updateBulkRow(r.id, { flyer_status: 'UPLOADING' });
-                                  if (status === 'DONE') updateBulkRow(r.id, { flyer_status: 'DONE' });
-                                  if (status === 'ERROR') updateBulkRow(r.id, { flyer_status: 'ERROR' });
-                                  if (status === 'PENDING') updateBulkRow(r.id, { flyer_status: 'PENDING', flyer_url: null });
-                                }}
-                                onChange={async (url) => {
-                                  try {
-                                    await updateDate.mutateAsync({ id: Number(dateId), flyer_url: url || null });
-                                    updateBulkRow(r.id, { flyer_url: url || null, flyer_status: url ? 'DONE' : 'PENDING' });
-                                    showToast('Flyer guardado ✅', 'success');
-                                  } catch (e: any) {
-                                    console.error('[OrganizerProfileEditor] error updating flyer_url:', e);
-                                    updateBulkRow(r.id, { flyer_status: 'ERROR' });
-                                    showToast(e?.message || 'Error guardando flyer', 'error');
-                                  }
-                                }}
-                              />
-                            </div>
-                          ))}
+                          return (
+                            <>
+                              {all.length > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                                  <div style={{ fontSize: 12, opacity: 0.85 }}>
+                                    Mostrando <b>{showing.length}</b> de <b>{all.length}</b>.
+                                    {!bulkShowAllFlyers && all.length !== showing.length && (
+                                      <> (las que ya tienen flyer no se muestran)</>
+                                    )}
+                                  </div>
+                                  {all.length !== showing.length && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setBulkShowAllFlyers((v) => !v)}
+                                      style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                                    >
+                                      {bulkShowAllFlyers ? '🙈 Ocultar las que ya tienen flyer' : '👀 Mostrar todas (para reemplazar)'}
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+
+                              {showing.length === 0 && (
+                                <div style={{ fontSize: 13, opacity: 0.9 }}>
+                                  ✅ Todas las fechas ya tienen flyer. Si quieres reemplazar alguno, usa “Mostrar todas”.
+                                </div>
+                              )}
+
+                              {showing.map(({ r, dateId }) => (
+                                <div
+                                  key={r.id}
+                                  style={{
+                                    border: '1px solid rgba(255,255,255,0.10)',
+                                    borderRadius: 14,
+                                    padding: 12,
+                                    background: 'rgba(255,255,255,0.04)',
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 8 }}>
+                                    <div style={{ fontWeight: 800 }}>
+                                      📅 {r.fecha} {r.hora_inicio ? `· ${r.hora_inicio}` : ''}
+                                    </div>
+                                    <div style={{ fontSize: 12, opacity: 0.85 }}>
+                                      {r.flyer_status === 'UPLOADING' ? '⏳ UPLOADING' : (r.flyer_url ? '✅ DONE' : (r.flyer_status === 'ERROR' ? '❌ ERROR' : '⏳ PENDING'))}
+                                    </div>
+                                  </div>
+
+                                  <DateFlyerUploader
+                                    value={r.flyer_url || null}
+                                    dateId={Number(dateId)}
+                                    parentId={selectedParentId || undefined}
+                                    onStatusChange={(status) => {
+                                      if (status === 'UPLOADING') updateBulkRow(r.id, { flyer_status: 'UPLOADING' });
+                                      if (status === 'DONE') updateBulkRow(r.id, { flyer_status: 'DONE' });
+                                      if (status === 'ERROR') updateBulkRow(r.id, { flyer_status: 'ERROR' });
+                                      if (status === 'PENDING') updateBulkRow(r.id, { flyer_status: 'PENDING', flyer_url: null });
+                                    }}
+                                    onChange={async (url) => {
+                                      try {
+                                        await updateDate.mutateAsync({ id: Number(dateId), flyer_url: url || null });
+                                        updateBulkRow(r.id, { flyer_url: url || null, flyer_status: url ? 'DONE' : 'PENDING' });
+                                        showToast('Flyer guardado ✅', 'success');
+                                      } catch (e: any) {
+                                        console.error('[OrganizerProfileEditor] error updating flyer_url:', e);
+                                        updateBulkRow(r.id, { flyer_status: 'ERROR' });
+                                        showToast(e?.message || 'Error guardando flyer', 'error');
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
-                  )}
-
-                  {/* Estado de Publicación (solo simple; bulk publica por lote) */}
-                  {!bulkMode && (
-                    <div className="org-editor-card">
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                        🌐 Estado de Publicación
-                      </h3>
-                      <div className="org-date-form-radio-group">
-                        <label className="org-date-form-checkbox">
-                          <input
-                            type="radio"
-                            name="estado_publicacion"
-                            value="borrador"
-                            checked={dateForm.estado_publicacion === 'borrador'}
-                            onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                            style={{ transform: 'scale(1.2)' }}
-                          />
-                          <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                            📝 Borrador (solo tú puedes verlo)
-                          </span>
-                        </label>
-                        <label className="org-date-form-checkbox">
-                          <input
-                            type="radio"
-                            name="estado_publicacion"
-                            value="publicado"
-                            checked={dateForm.estado_publicacion === 'publicado'}
-                            onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                            style={{ transform: 'scale(1.2)' }}
-                          />
-                          <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                            🌐 Público (visible para todos)
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Botones (solo simple; bulk tiene sus botones en el planificador) */}
-                  {!bulkMode && (
-                  <div className="org-editor-card org-date-form-buttons">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setShowDateForm(false);
-                        setDateForm({
-                          nombre: '',
-                          biografia: '',
-                          djs: '',
-                          telefono_contacto: '',
-                          mensaje_contacto: '',
-                          fecha: '',
-                          hora_inicio: '',
-                          hora_fin: '',
-                          lugar: '',
-                          ciudad: '',
-                          direccion: '',
-                          referencias: '',
-                          requisitos: '',
-                          ubicaciones: [],
-                          zona: null,
-                          estilos: [],
-                          ritmos_seleccionados: [],
-                          zonas: [],
-                          cronograma: [],
-                          costos: [],
-                          flyer_url: null,
-                          estado_publicacion: 'borrador',
-                          repetir_semanal: false,
-                          semanas_repetir: 4
-                        });
-                        setSelectedDateLocationId('');
-                        setSelectedParentId(null);
-                      }}
-                      style={{
-                        padding: '12px 24px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        background: 'transparent',
-                        color: '#FFFFFF',
-                        fontSize: '0.9rem',
-                        fontWeight: '700',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ❌ Cancelar
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleCreateDate}
-                      disabled={createEventDate.isPending || !dateForm.fecha}
-                      style={{
-                        padding: '12px 24px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        /* background: createEventDate.isPending || !dateForm.fecha || (parents.length > 1 && !selectedParentId)
-                          ? 'rgba(255, 255, 255, 0.2)'
-                          : 'linear-gradient(135deg, rgba(30, 136, 229, 0.9), rgba(255, 61, 87, 0.9))', */
-                        color: '#FFFFFF',
-                        fontSize: '0.9rem',
-                        fontWeight: '700',
-                        cursor: createEventDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                        opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
-                      }}
-                    >
-                      {createEventDate.isPending 
-                        ? (dateForm.repetir_semanal && dateForm.semanas_repetir 
-                            ? `⏳ Creando ${dateForm.semanas_repetir} fechas...` 
-                            : '⏳ Creando...')
-                        : (dateForm.repetir_semanal && dateForm.semanas_repetir 
-                            ? `✨ Crear ${dateForm.semanas_repetir} fechas` 
-                            : '✨ Crear')}
-                    </motion.button>
-                  </div>
                   )}
                 </motion.div>
               )}
