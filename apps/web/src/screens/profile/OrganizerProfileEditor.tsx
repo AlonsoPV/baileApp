@@ -101,31 +101,34 @@ const BulkRowItem = React.memo(function BulkRowItem({
   errors,
   onChange,
   onRemove,
+  dense,
 }: {
   row: BulkRow;
   errors?: Record<string, string>;
   onChange: (rowId: string, patch: Partial<BulkRow>) => void;
   onRemove: (rowId: string) => void;
+  dense?: boolean;
 }) {
   const rowErr = errors || {};
   return (
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: '44px 140px 120px 120px 140px 1fr 44px',
-        gap: 10,
+        gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 44px)',
+        gap: dense ? 8 : 10,
         alignItems: 'center',
-        padding: '10px 10px',
+        padding: dense ? '8px 8px' : '10px 10px',
         borderRadius: 12,
         border: '1px solid rgba(255,255,255,0.10)',
         background: 'rgba(255,255,255,0.04)',
       }}
+      className="bulk-row"
     >
       <input
         type="checkbox"
         checked={row.selected}
         onChange={(e) => onChange(row.id, { selected: e.target.checked })}
-        style={{ width: 18, height: 18 }}
+        style={{ width: dense ? 16 : 18, height: dense ? 16 : 18 }}
       />
 
       <div>
@@ -135,11 +138,12 @@ const BulkRowItem = React.memo(function BulkRowItem({
           onChange={(e) => onChange(row.id, { fecha: e.target.value })}
           style={{
             width: '100%',
-            padding: '8px 10px',
+            padding: dense ? '7px 8px' : '8px 10px',
             borderRadius: 10,
             border: rowErr.fecha ? '1px solid rgba(255,61,87,0.9)' : '1px solid rgba(255,255,255,0.18)',
             background: 'rgba(0,0,0,0.25)',
             color: '#fff',
+            fontSize: dense ? 12 : 13,
           }}
         />
         {rowErr.fecha && (
@@ -153,11 +157,12 @@ const BulkRowItem = React.memo(function BulkRowItem({
         onChange={(e) => onChange(row.id, { hora_inicio: e.target.value })}
         style={{
           width: '100%',
-          padding: '8px 10px',
+          padding: dense ? '7px 8px' : '8px 10px',
           borderRadius: 10,
           border: '1px solid rgba(255,255,255,0.18)',
           background: 'rgba(0,0,0,0.25)',
           color: '#fff',
+          fontSize: dense ? 12 : 13,
         }}
       />
 
@@ -168,11 +173,12 @@ const BulkRowItem = React.memo(function BulkRowItem({
           onChange={(e) => onChange(row.id, { hora_fin: e.target.value })}
           style={{
             width: '100%',
-            padding: '8px 10px',
+            padding: dense ? '7px 8px' : '8px 10px',
             borderRadius: 10,
             border: rowErr.hora_fin ? '1px solid rgba(255,61,87,0.9)' : '1px solid rgba(255,255,255,0.18)',
             background: 'rgba(0,0,0,0.25)',
             color: '#fff',
+            fontSize: dense ? 12 : 13,
           }}
         />
         {rowErr.hora_fin && (
@@ -185,11 +191,12 @@ const BulkRowItem = React.memo(function BulkRowItem({
         onChange={(e) => onChange(row.id, { estado_publicacion: e.target.value as BulkPubEstado })}
         style={{
           width: '100%',
-          padding: '8px 10px',
+          padding: dense ? '7px 8px' : '8px 10px',
           borderRadius: 10,
           border: '1px solid rgba(255,255,255,0.18)',
           background: '#2b2b2b',
           color: '#fff',
+          fontSize: dense ? 12 : 13,
         }}
       >
         <option value="borrador">📝 borrador</option>
@@ -203,11 +210,12 @@ const BulkRowItem = React.memo(function BulkRowItem({
         placeholder="Notas (opcional)"
         style={{
           width: '100%',
-          padding: '8px 10px',
+          padding: dense ? '7px 8px' : '8px 10px',
           borderRadius: 10,
           border: '1px solid rgba(255,255,255,0.18)',
           background: 'rgba(0,0,0,0.25)',
           color: '#fff',
+          fontSize: dense ? 12 : 13,
         }}
       />
 
@@ -215,8 +223,8 @@ const BulkRowItem = React.memo(function BulkRowItem({
         type="button"
         onClick={() => onRemove(row.id)}
         style={{
-          width: 36,
-          height: 36,
+          width: dense ? 34 : 36,
+          height: dense ? 34 : 36,
           borderRadius: 10,
           border: '1px solid rgba(255,255,255,0.18)',
           background: 'rgba(255,255,255,0.05)',
@@ -2929,6 +2937,37 @@ export default function OrganizerProfileEditor() {
           grid-template-columns: 1fr 1fr 1fr;
           gap: 16px;
         }
+
+        .mode-toggle button:focus-visible {
+          outline: 2px solid rgba(39,195,255,0.9);
+          outline-offset: 3px;
+        }
+
+        .bulk-sheet {
+          border: 1px solid rgba(255,255,255,0.10);
+          border-radius: 14px;
+          padding: 10px;
+          background: rgba(0,0,0,0.18);
+        }
+
+        .bulk-sheet::-webkit-scrollbar {
+          height: 10px;
+        }
+        .bulk-sheet::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.18);
+          border-radius: 999px;
+        }
+
+        .bulk-header {
+          position: sticky;
+          top: 0;
+          z-index: 1;
+          padding: 6px 0;
+          background: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.05));
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border-radius: 12px;
+        }
         
         .org-date-form-grid-2 {
           display: grid;
@@ -3101,6 +3140,11 @@ export default function OrganizerProfileEditor() {
           .org-date-form-grid {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
+          }
+
+          .bulk-sheet {
+            padding: 8px !important;
+            border-radius: 12px !important;
           }
           
           .org-date-form-grid-2 {
@@ -4516,7 +4560,7 @@ export default function OrganizerProfileEditor() {
                     </h3>
 
                     {/* Toggle Simple / Bulk */}
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+                    <div className="mode-toggle" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
                       <button
                         type="button"
                         onClick={() => {
@@ -4525,15 +4569,19 @@ export default function OrganizerProfileEditor() {
                           setDateForm((prev) => ({ ...prev, repetir_semanal: false }));
                         }}
                         style={{
-                          padding: '8px 12px',
+                          padding: '10px 14px',
                           borderRadius: 999,
-                          border: '1px solid rgba(255,255,255,0.22)',
-                          background: !bulkMode ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)',
+                          border: !bulkMode ? '2px solid rgba(255,255,255,0.55)' : '1px solid rgba(255,255,255,0.22)',
+                          background: !bulkMode
+                            ? 'linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.10))'
+                            : 'rgba(255,255,255,0.06)',
                           color: '#fff',
                           cursor: 'pointer',
                           fontWeight: 800,
-                          fontSize: 13,
+                          fontSize: 14,
+                          boxShadow: !bulkMode ? '0 10px 26px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.08) inset' : 'none',
                         }}
+                        aria-pressed={!bulkMode}
                       >
                         🧍 Único
                       </button>
@@ -4544,15 +4592,19 @@ export default function OrganizerProfileEditor() {
                           if (bulkRows.length === 0) addBulkRow();
                         }}
                         style={{
-                          padding: '8px 12px',
+                          padding: '10px 14px',
                           borderRadius: 999,
-                          border: '1px solid rgba(39,195,255,0.40)',
-                          background: bulkMode ? 'rgba(39,195,255,0.14)' : 'rgba(39,195,255,0.06)',
+                          border: bulkMode ? '2px solid rgba(39,195,255,0.70)' : '1px solid rgba(39,195,255,0.40)',
+                          background: bulkMode
+                            ? 'linear-gradient(135deg, rgba(39,195,255,0.28), rgba(30,136,229,0.22))'
+                            : 'rgba(39,195,255,0.06)',
                           color: '#fff',
                           cursor: 'pointer',
                           fontWeight: 800,
-                          fontSize: 13,
+                          fontSize: 14,
+                          boxShadow: bulkMode ? '0 10px 26px rgba(0,0,0,0.35), 0 0 0 2px rgba(39,195,255,0.12) inset' : 'none',
                         }}
+                        aria-pressed={bulkMode}
                       >
                         📋 Frecuentes
                       </button>
@@ -4732,6 +4784,121 @@ export default function OrganizerProfileEditor() {
                           </div>
                         </div>
 
+                        {/* Planificador bulk (sheet) */}
+                        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+                          <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: 10, color: '#FFFFFF' }}>
+                            📋 Planificador (frecuentes)
+                          </h3>
+                          <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}>
+                            Seleccionadas: <b>{bulkSelectedCount}</b>
+                            {bulkPreview.count > 0 && (
+                              <>
+                                {' '}· Preview: <b>{bulkPreview.first}</b> → <b>{bulkPreview.last}</b>
+                              </>
+                            )}
+                          </div>
+
+                          <div className="bulk-sheet" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+                            <div
+                              className="bulk-sheet-inner"
+                              style={{
+                                minWidth: isMobile ? 760 : 0,
+                                // CSS var para alinear header/filas en responsive
+                                ['--bulk-cols' as any]: isMobile
+                                  ? '38px 140px 110px 110px 130px 220px 44px'
+                                  : '44px 140px 120px 120px 140px 1fr 44px',
+                              }}
+                            >
+                              {/* Header */}
+                              <div className="bulk-header" style={{ display: 'grid', gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 44px)', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
+                                <div></div>
+                                <div>Fecha</div>
+                                <div>Hora inicio</div>
+                                <div>Hora fin</div>
+                                <div>Estado</div>
+                                <div>Notas</div>
+                                <div></div>
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                {bulkRows.map((r) => (
+                                  <BulkRowItem
+                                    key={r.id}
+                                    row={r}
+                                    errors={bulkErrors[r.id]}
+                                    onChange={updateBulkRow}
+                                    onRemove={removeBulkRow}
+                                    dense={isMobile}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={handleBulkCreateDates}
+                              disabled={createEventDate.isPending || bulkSelectedCount === 0}
+                              style={{
+                                padding: '12px 16px',
+                                borderRadius: 14,
+                                border: '1px solid rgba(39,195,255,0.55)',
+                                background: 'linear-gradient(135deg, rgba(39,195,255,0.22), rgba(30,136,229,0.22))',
+                                color: '#fff',
+                                cursor: createEventDate.isPending || bulkSelectedCount === 0 ? 'not-allowed' : 'pointer',
+                                fontWeight: 900,
+                                fontSize: 14,
+                                letterSpacing: 0.2,
+                                opacity: createEventDate.isPending || bulkSelectedCount === 0 ? 0.55 : 1,
+                                boxShadow: '0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset',
+                              }}
+                            >
+                              {createEventDate.isPending ? '⏳ Guardando batch...' : '✅ Guardar fechas'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleBulkPublish(true)}
+                              disabled={Object.keys(createdDateIdByRow).length === 0}
+                              style={{
+                                padding: '12px 16px',
+                                borderRadius: 14,
+                                border: '1px solid rgba(255,255,255,0.28)',
+                                background: 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))',
+                                color: '#fff',
+                                cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
+                                fontWeight: 900,
+                                fontSize: 14,
+                                opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                                boxShadow: '0 10px 22px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.04) inset',
+                              }}
+                            >
+                              🌐 Publicar seleccionadas
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleBulkPublish(false)}
+                              disabled={Object.keys(createdDateIdByRow).length === 0}
+                              style={{
+                                padding: '12px 16px',
+                                borderRadius: 14,
+                                border: '1px solid rgba(255,61,87,0.55)',
+                                background: 'linear-gradient(135deg, rgba(255,61,87,0.22), rgba(255,140,66,0.18))',
+                                color: '#fff',
+                                cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
+                                fontWeight: 900,
+                                fontSize: 14,
+                                opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                                boxShadow: '0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05) inset',
+                              }}
+                            >
+                              🚀 Publicar todas
+                            </button>
+                          </div>
+                        </div>
+
                         
                       </div>
                     )}
@@ -4845,102 +5012,6 @@ export default function OrganizerProfileEditor() {
                       </div>
                     )}
                   </div>
-
-                  {/* Planificador bulk (sheet) */}
-                  {bulkMode && (
-                    <div className="org-editor-card">
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: '#FFFFFF' }}>
-                        📋 Planificador (bulk)
-                      </h3>
-                      <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}>
-                        Seleccionadas: <b>{bulkSelectedCount}</b>
-                        {bulkPreview.count > 0 && (
-                          <>
-                            {' '}· Preview: <b>{bulkPreview.first}</b> → <b>{bulkPreview.last}</b>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Header */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '44px 140px 120px 120px 140px 1fr 44px', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
-                        <div></div>
-                        <div>Fecha</div>
-                        <div>Hora inicio</div>
-                        <div>Hora fin</div>
-                        <div>Estado</div>
-                        <div>Notas</div>
-                        <div></div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {bulkRows.map((r) => (
-                          <BulkRowItem
-                            key={r.id}
-                            row={r}
-                            errors={bulkErrors[r.id]}
-                            onChange={updateBulkRow}
-                            onRemove={removeBulkRow}
-                          />
-                        ))}
-                      </div>
-
-                      <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <button
-                          type="button"
-                          onClick={handleBulkCreateDates}
-                          disabled={createEventDate.isPending || bulkSelectedCount === 0}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: 12,
-                            border: '1px solid rgba(39,195,255,0.40)',
-                            background: 'rgba(39,195,255,0.14)',
-                            color: '#fff',
-                            cursor: createEventDate.isPending || bulkSelectedCount === 0 ? 'not-allowed' : 'pointer',
-                            fontWeight: 800,
-                            opacity: createEventDate.isPending || bulkSelectedCount === 0 ? 0.55 : 1,
-                          }}
-                        >
-                          {createEventDate.isPending ? '⏳ Guardando batch...' : '✅ Guardar fechas (batch)'}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleBulkPublish(true)}
-                          disabled={Object.keys(createdDateIdByRow).length === 0}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: 12,
-                            border: '1px solid rgba(255,255,255,0.18)',
-                            background: 'rgba(255,255,255,0.06)',
-                            color: '#fff',
-                            cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
-                            fontWeight: 800,
-                            opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
-                          }}
-                        >
-                          🌐 Publicar seleccionadas
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleBulkPublish(false)}
-                          disabled={Object.keys(createdDateIdByRow).length === 0}
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: 12,
-                            border: '1px solid rgba(255,255,255,0.18)',
-                            background: 'rgba(255,255,255,0.06)',
-                            color: '#fff',
-                            cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
-                            fontWeight: 800,
-                            opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
-                          }}
-                        >
-                          🚀 Publicar todas
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Flyers pendientes (bulk) */}
                   {bulkMode && showPendingFlyers && (

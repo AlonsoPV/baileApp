@@ -204,12 +204,101 @@ export function EventDateEditScreen() {
   }
 
   return (
-    <div style={{
-      padding: '24px',
-      maxWidth: '800px',
-      margin: '0 auto',
-      color: colors.light,
-    }}>
+    <div
+      className="event-date-editor"
+      style={{
+        padding: 'clamp(16px, 3vw, 28px)',
+        maxWidth: '900px',
+        margin: '0 auto',
+        color: colors.light,
+      }}
+    >
+      <style>{`
+        .event-date-editor .org-editor-card {
+          margin-bottom: 24px;
+          padding: 1.2rem;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(255,255,255,0.04) inset;
+        }
+
+        .event-date-editor .org-date-form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 16px;
+        }
+
+        .event-date-editor .org-date-form-grid-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+
+        .event-date-editor .org-date-form-select {
+          width: 100%;
+          padding: 12px 14px;
+          padding-right: 40px;
+          background: #2b2b2b;
+          border: 1px solid rgba(255,255,255,0.25);
+          color: #FFFFFF;
+          outline: none;
+          font-size: 14px;
+          border-radius: 12px;
+          appearance: none;
+          -webkit-appearance: none;
+        }
+
+        .event-date-editor .org-date-form-select-arrow {
+          position: absolute;
+          right: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+          color: rgba(255,255,255,0.6);
+        }
+
+        .event-date-editor .event-date-actions {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .event-date-editor .event-date-actions > button {
+          flex: 1 1 220px;
+          min-width: 220px;
+        }
+
+        @media (max-width: 768px) {
+          .event-date-editor {
+            padding: 16px !important;
+          }
+          .event-date-editor h1 {
+            font-size: 1.6rem !important;
+            margin-bottom: 20px !important;
+          }
+          .event-date-editor .org-editor-card {
+            padding: 1rem !important;
+            border-radius: 12px !important;
+            margin-bottom: 18px !important;
+          }
+          .event-date-editor .org-date-form-grid {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+          .event-date-editor .org-date-form-grid-2 {
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+          .event-date-editor .event-date-actions {
+            flex-direction: column !important;
+          }
+          .event-date-editor .event-date-actions > button {
+            width: 100% !important;
+            min-width: 100% !important;
+          }
+        }
+      `}</style>
       <Breadcrumbs
         items={[
           { label: 'Inicio', href: '/app/profile', icon: '🏠' },
@@ -225,20 +314,12 @@ export function EventDateEditScreen() {
       {/* Fecha y Hora - estilo similar a OrganizerProfileEditor */}
       <div
         className="org-editor-card"
-        style={{
-          marginBottom: '24px',
-          padding: '1.2rem',
-          background: 'rgba(255, 255, 255, 0.08)',
-          borderRadius: 16,
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-        }}
       >
         <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
           📅 Fecha y Hora
         </h3>
         <div
           className="org-date-form-grid"
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}
         >
           <div>
             <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
@@ -307,13 +388,6 @@ export function EventDateEditScreen() {
       {/* Ubicación del Evento - estilo similar a OrganizerProfileEditor */}
       <div
         className="org-editor-card"
-        style={{
-          marginBottom: '24px',
-          padding: '1.2rem',
-          background: 'rgba(255, 255, 255, 0.08)',
-          borderRadius: 16,
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-        }}
       >
         <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
           📍 Ubicación del Evento
@@ -336,19 +410,6 @@ export function EventDateEditScreen() {
                   const found = orgLocations.find((loc) => String(loc.id ?? "") === nextId);
                   applyOrganizerLocationToForm(found);
                 }}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  paddingRight: 40,
-                  background: '#2b2b2b',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                  color: '#FFFFFF',
-                  outline: 'none',
-                  fontSize: 14,
-                  borderRadius: 12,
-                  appearance: 'none',
-                  WebkitAppearance: 'none',
-                }}
               >
                 <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
                   — Escribir manualmente —
@@ -365,14 +426,6 @@ export function EventDateEditScreen() {
               </select>
               <span
                 className="org-date-form-select-arrow"
-                style={{
-                  position: 'absolute',
-                  right: 14,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  pointerEvents: 'none',
-                  color: 'rgba(255,255,255,0.6)',
-                }}
               >
                 ▼
               </span>
@@ -383,7 +436,6 @@ export function EventDateEditScreen() {
         {/* Formulario de ubicación manual */}
         <div
           className="org-date-form-grid-2"
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}
         >
           <div>
             <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
@@ -430,7 +482,7 @@ export function EventDateEditScreen() {
         </div>
         <div
           className="org-date-form-grid-2"
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}
+          style={{ marginTop: '16px' }}
         >
           <div>
             <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
@@ -617,26 +669,25 @@ export function EventDateEditScreen() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      <div className="event-date-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={save}
           disabled={create.isPending || update.isPending}
           style={{
-            flex: 1,
-            minWidth: '200px',
             padding: '16px',
             borderRadius: '50px',
             border: 'none',
             background: (create.isPending || update.isPending)
               ? `${colors.light}33` 
-              : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+              : `linear-gradient(135deg, rgba(39,195,255,0.26), rgba(30,136,229,0.34), rgba(255,61,87,0.20))`,
             color: colors.light,
             fontSize: '1rem',
-            fontWeight: '700',
+            fontWeight: '900',
             cursor: (create.isPending || update.isPending) ? 'not-allowed' : 'pointer',
-            boxShadow: `0 8px 24px ${colors.blue}66`,
+            boxShadow: `0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset`,
+            letterSpacing: 0.2,
           }}
         >
           {(create.isPending || update.isPending) ? 'Guardando...' : '💾 Guardar'}
@@ -649,12 +700,13 @@ export function EventDateEditScreen() {
           style={{
             padding: '16px 24px',
             borderRadius: '50px',
-            border: `2px solid ${colors.light}33`,
-            background: 'transparent',
+            border: `1px solid rgba(255,255,255,0.28)`,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05))',
             color: colors.light,
             fontSize: '1rem',
-            fontWeight: '700',
+            fontWeight: '900',
             cursor: 'pointer',
+            boxShadow: `0 10px 22px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.04) inset`,
           }}
         >
           ← Volver
