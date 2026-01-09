@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMyOrganizer, useUpsertMyOrganizer, useSubmitOrganizerForReview } from "../../hooks/useOrganizer";
 import { useParentsByOrganizer, useDeleteParent, useDatesByParent, useDeleteDate, useCreateParent, useUpdateDate } from "../../hooks/useEvents";
 import { useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
@@ -638,6 +638,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
 
 export default function OrganizerProfileEditor() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -760,6 +761,7 @@ export default function OrganizerProfileEditor() {
   const [createdDateIdByRow, setCreatedDateIdByRow] = useState<Record<string, number>>({});
   const [bulkGeneralFlyerUrl, setBulkGeneralFlyerUrl] = useState<string | null>(null);
   const [bulkShowAllFlyers, setBulkShowAllFlyers] = useState(false);
+  const [didAutoOpenFrecuentes, setDidAutoOpenFrecuentes] = useState(false);
 
   const updateBulkRow = useCallback((rowId: string, patch: Partial<BulkRow>) => {
     setBulkRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, ...patch } : r)));
@@ -779,6 +781,79 @@ export default function OrganizerProfileEditor() {
     };
     setBulkRows((prev) => [...prev, { ...base, ...(partial || {}) }]);
   }, [dateForm.estado_publicacion, dateForm.hora_fin, dateForm.hora_inicio]);
+
+  // Auto-abrir Frecuentes desde query params (p.ej. al “convertir” desde el editor de fecha)
+  useEffect(() => {
+    if (didAutoOpenFrecuentes) return;
+    if (!location?.search) return;
+
+    const params = new URLSearchParams(location.search);
+    const mode = (params.get('mode') || '').toLowerCase();
+    const fromDateId = params.get('fromDateId');
+    if (mode !== 'frecuentes' || !fromDateId) return;
+
+    const fromId = Number(fromDateId);
+    if (!Number.isFinite(fromId)) return;
+
+    const found = (allOrganizerDates || []).find((d: any) => Number(d?.id) === fromId);
+    if (!found) return; // esperar a que carguen las fechas
+    const f: any = found;
+
+    setShowDateForm(true);
+    setBulkMode(true);
+    setShowPendingFlyers(false);
+    setBulkRows([]);
+    setBulkErrors({});
+    setCreatedBatchDates([]);
+    setCreatedDateIdByRow({});
+    setBulkGeneralFlyerUrl(f.flyer_url || null);
+    setBulkShowAllFlyers(false);
+
+    setSelectedParentId(typeof f.parent_id === 'number' ? f.parent_id : null);
+    setSelectedDateLocationId('');
+    setDateForm((prev) => ({
+      ...prev,
+      nombre: f.nombre || '',
+      biografia: f.biografia || '',
+      djs: f.djs || '',
+      telefono_contacto: f.telefono_contacto || '',
+      mensaje_contacto: f.mensaje_contacto || '',
+      fecha: f.fecha ? String(f.fecha).split('T')[0] : '',
+      hora_inicio: f.hora_inicio || '',
+      hora_fin: f.hora_fin || '',
+      lugar: f.lugar || '',
+      ciudad: f.ciudad || '',
+      direccion: f.direccion || '',
+      referencias: f.referencias || '',
+      requisitos: f.requisitos || '',
+      ubicaciones: [],
+      zona: typeof f.zona === 'number' ? f.zona : null,
+      estilos: Array.isArray(f.estilos) ? [...f.estilos] : [],
+      ritmos_seleccionados: Array.isArray(f.ritmos_seleccionados) ? [...f.ritmos_seleccionados] : [],
+      zonas: Array.isArray(f.zonas) ? [...f.zonas] : [],
+      cronograma: Array.isArray(f.cronograma) ? f.cronograma.map((x: any) => ({ ...x })) : [],
+      costos: Array.isArray(f.costos) ? f.costos.map((x: any) => ({ ...x })) : [],
+      flyer_url: f.flyer_url || null,
+      estado_publicacion: 'borrador',
+      repetir_semanal: false,
+      semanas_repetir: prev.semanas_repetir || 4,
+    }));
+
+    // Primera fila = la fecha original (como plantilla editable)
+    addBulkRow({
+      fecha: f.fecha ? String(f.fecha).split('T')[0] : '',
+      hora_inicio: f.hora_inicio || '',
+      hora_fin: f.hora_fin || '',
+      selected: true,
+      estado_publicacion: 'borrador',
+      flyer_url: f.flyer_url || null,
+      flyer_status: f.flyer_url ? 'DONE' : 'PENDING',
+      notas: '',
+    });
+
+    setDidAutoOpenFrecuentes(true);
+    navigate('/profile/organizer/edit', { replace: true });
+  }, [didAutoOpenFrecuentes, location.search, allOrganizerDates, addBulkRow, navigate]);
 
   const removeBulkRow = useCallback((rowId: string) => {
     setBulkRows((prev) => prev.filter((r) => r.id !== rowId));
@@ -4538,21 +4613,6 @@ export default function OrganizerProfileEditor() {
 
                  
 
-                  {/* Flyer (solo simple; bulk se maneja en cola de pendientes) */}
-                  {!bulkMode && (
-                    <div className="org-editor-card">
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                        🖼️ Flyer del Evento
-                      </h3>
-                      <DateFlyerUploader
-                        value={dateForm.flyer_url || null}
-                        onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
-                        dateId={null}
-                        parentId={selectedParentId || undefined}
-                      />
-                    </div>
-                  )}
-
                   {/* Fecha y Hora (último paso) */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
@@ -4660,6 +4720,24 @@ export default function OrganizerProfileEditor() {
                     {/* Acciones bulk rápidas */}
                     {bulkMode && (
                       <div style={{ marginTop: 14, padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}>
+                        {/*
+                          Requerimos fecha base para evitar que el usuario ejecute acciones sin contexto.
+                          (En especial "Generar semanal", pero el usuario pidió apagar todos los botones aquí.)
+                        */}
+                        {(() => {
+                          const baseReady = !!dateForm.fecha;
+                          const disabledStyle = {
+                            cursor: 'not-allowed',
+                            opacity: 0.55,
+                          } as const;
+                          const enabledStyle = {
+                            cursor: 'pointer',
+                            opacity: 1,
+                          } as const;
+                          const tip = baseReady ? undefined : 'Configura la fecha base para habilitar acciones rápidas';
+
+                          return (
+                            <>
                         <div style={{ fontWeight: 800, marginBottom: 8 }}>⚡ Acciones rápidas</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -4676,116 +4754,102 @@ export default function OrganizerProfileEditor() {
                           </div>
                           <button
                             type="button"
-                            onClick={() => addBulkRow()}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            onClick={() => baseReady && addBulkRow()}
+                            disabled={!baseReady}
+                            title={tip}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 10,
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              background: 'rgba(255,255,255,0.06)',
+                              color: '#fff',
+                              fontWeight: 700,
+                              ...(baseReady ? enabledStyle : disabledStyle),
+                            }}
                           >
                             ➕ Agregar fila
                           </button>
                           <button
                             type="button"
-                            onClick={generateWeeklyRowsFromTemplate}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(39,195,255,0.40)', background: 'rgba(39,195,255,0.10)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            onClick={() => baseReady && generateWeeklyRowsFromTemplate()}
+                            disabled={!baseReady}
+                            title={tip}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 10,
+                              border: '1px solid rgba(39,195,255,0.40)',
+                              background: 'rgba(39,195,255,0.10)',
+                              color: '#fff',
+                              fontWeight: 700,
+                              ...(baseReady ? enabledStyle : disabledStyle),
+                            }}
                           >
                             🔁 Generar semanal ({Math.max(1, Math.min(52, dateForm.semanas_repetir || 1))})
                           </button>
                           <button
                             type="button"
-                            onClick={() => setAllBulkSelected(true)}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            onClick={() => baseReady && setAllBulkSelected(true)}
+                            disabled={!baseReady}
+                            title={tip}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 10,
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              background: 'rgba(255,255,255,0.06)',
+                              color: '#fff',
+                              fontWeight: 700,
+                              ...(baseReady ? enabledStyle : disabledStyle),
+                            }}
                           >
                             ✅ Seleccionar todo
                           </button>
                           <button
                             type="button"
-                            onClick={() => setAllBulkSelected(false)}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            onClick={() => baseReady && setAllBulkSelected(false)}
+                            disabled={!baseReady}
+                            title={tip}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 10,
+                              border: '1px solid rgba(255,255,255,0.18)',
+                              background: 'rgba(255,255,255,0.06)',
+                              color: '#fff',
+                              fontWeight: 700,
+                              ...(baseReady ? enabledStyle : disabledStyle),
+                            }}
                           >
                             ⛔ Deseleccionar
                           </button>
                           <button
                             type="button"
-                            onClick={clearBulk}
-                            style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,61,87,0.35)', background: 'rgba(255,61,87,0.10)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+                            onClick={() => baseReady && clearBulk()}
+                            disabled={!baseReady}
+                            title={tip}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 10,
+                              border: '1px solid rgba(255,61,87,0.35)',
+                              background: 'rgba(255,61,87,0.10)',
+                              color: '#fff',
+                              fontWeight: 700,
+                              ...(baseReady ? enabledStyle : disabledStyle),
+                            }}
                           >
                             🧹 Limpiar bulk
                           </button>
                         </div>
+                        {!baseReady && (
+                          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85 }}>
+                            Configura la <b>Fecha base</b> para habilitar estas acciones.
+                          </div>
+                        )}
+                            </>
+                          );
+                        })()}
                         
 
-                        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
-                          <div style={{ fontWeight: 800, marginBottom: 8 }}>🖼️ Flyer general (opcional)</div>
-                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 10 }}>
-                            Si lo cargas aquí, se usará como flyer para <b>todas</b> las fechas del batch. Después puedes reemplazarlo por fecha en “Flyers pendientes”.
-                          </div>
-                          <DateFlyerUploader
-                            value={bulkGeneralFlyerUrl || null}
-                            onChange={(url) => {
-                              setBulkGeneralFlyerUrl(url || null);
-                              if (url) {
-                                // Si ya hay fechas creadas, permitir aplicar con un click.
-                                // No aplicamos automáticamente para evitar sorpresas.
-                              }
-                            }}
-                            dateId={null}
-                            parentId={selectedParentId || undefined}
-                          />
-                          <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                            <button
-                              type="button"
-                              onClick={() => applyBulkGeneralFlyerToCreated(true)}
-                              disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
-                              style={{
-                                padding: '8px 12px',
-                                borderRadius: 10,
-                                border: '1px solid rgba(255,255,255,0.18)',
-                                background: 'rgba(255,255,255,0.06)',
-                                color: '#fff',
-                                cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
-                                fontWeight: 700,
-                                opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
-                              }}
-                            >
-                              🧩 Aplicar a seleccionadas (creadas)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => applyBulkGeneralFlyerToCreated(false)}
-                              disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
-                              style={{
-                                padding: '8px 12px',
-                                borderRadius: 10,
-                                border: '1px solid rgba(255,255,255,0.18)',
-                                background: 'rgba(255,255,255,0.06)',
-                                color: '#fff',
-                                cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
-                                fontWeight: 700,
-                                opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
-                              }}
-                            >
-                              🧩 Aplicar a todas (creadas)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setShowPendingFlyers((v) => !v)}
-                              disabled={Object.keys(createdDateIdByRow).length === 0}
-                              style={{
-                                padding: '8px 12px',
-                                borderRadius: 10,
-                                border: '1px solid rgba(39,195,255,0.40)',
-                                background: 'rgba(39,195,255,0.10)',
-                                color: '#fff',
-                                cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
-                                fontWeight: 700,
-                                opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
-                              }}
-                            >
-                              🧾 {showPendingFlyers ? 'Ocultar flyers individuales' : 'Abrir flyers individuales'}
-                            </button>
-                          </div>
-                        </div>
-
                         {/* Planificador bulk (sheet) */}
-                        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+                        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
                           <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: 10, color: '#FFFFFF' }}>
                             📋 Planificador (frecuentes)
                           </h3>
@@ -4899,119 +4963,207 @@ export default function OrganizerProfileEditor() {
                           </div>
                         </div>
 
+                        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+                          <div style={{ fontWeight: 800, marginBottom: 8 }}>🖼️ Flyer general (opcional)</div>
+                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 10 }}>
+                            Si lo cargas aquí, se usará como flyer para <b>todas</b> las fechas del batch. Después puedes reemplazarlo por fecha en “Flyers pendientes”.
+                          </div>
+                          <DateFlyerUploader
+                            value={bulkGeneralFlyerUrl || null}
+                            onChange={(url) => {
+                              setBulkGeneralFlyerUrl(url || null);
+                              if (url) {
+                                // Si ya hay fechas creadas, permitir aplicar con un click.
+                                // No aplicamos automáticamente para evitar sorpresas.
+                              }
+                            }}
+                            dateId={null}
+                            parentId={selectedParentId || undefined}
+                          />
+                          <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={() => applyBulkGeneralFlyerToCreated(true)}
+                              disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(255,255,255,0.18)',
+                                background: 'rgba(255,255,255,0.06)',
+                                color: '#fff',
+                                cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
+                                fontWeight: 700,
+                                opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
+                              }}
+                            >
+                              🧩 Aplicar a seleccionadas (creadas)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => applyBulkGeneralFlyerToCreated(false)}
+                              disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(255,255,255,0.18)',
+                                background: 'rgba(255,255,255,0.06)',
+                                color: '#fff',
+                                cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
+                                fontWeight: 700,
+                                opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
+                              }}
+                            >
+                              🧩 Aplicar a todas (creadas)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowPendingFlyers((v) => !v)}
+                              disabled={Object.keys(createdDateIdByRow).length === 0}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(39,195,255,0.40)',
+                                background: 'rgba(39,195,255,0.10)',
+                                color: '#fff',
+                                cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
+                                fontWeight: 700,
+                                opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                              }}
+                            >
+                              🧾 {showPendingFlyers ? 'Ocultar flyers individuales' : 'Abrir flyers individuales'}
+                            </button>
+                          </div>
+                        </div>
+
                         
                       </div>
                     )}
 
-                    {/* Estado de Publicación (solo simple; bulk publica por lote) */}
-                    {!bulkMode && (
-                      <div style={{ marginTop: 20 }}>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: '800', marginBottom: '0.75rem', color: '#FFFFFF' }}>
-                          🌐 Estado de Publicación
-                        </h3>
-                        <div className="org-date-form-radio-group">
-                          <label className="org-date-form-checkbox">
-                            <input
-                              type="radio"
-                              name="estado_publicacion"
-                              value="borrador"
-                              checked={dateForm.estado_publicacion === 'borrador'}
-                              onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                              style={{ transform: 'scale(1.2)' }}
-                            />
-                            <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                              📝 Borrador (solo tú puedes verlo)
-                            </span>
-                          </label>
-                          <label className="org-date-form-checkbox">
-                            <input
-                              type="radio"
-                              name="estado_publicacion"
-                              value="publicado"
-                              checked={dateForm.estado_publicacion === 'publicado'}
-                              onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                              style={{ transform: 'scale(1.2)' }}
-                            />
-                            <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                              🌐 Público (visible para todos)
-                            </span>
-                          </label>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Botones (solo simple; bulk tiene sus botones en el planificador) */}
-                    {!bulkMode && (
-                      <div className="org-editor-card org-date-form-buttons" style={{ marginTop: 16 }}>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            setShowDateForm(false);
-                            setDateForm({
-                              nombre: '',
-                              biografia: '',
-                              djs: '',
-                              telefono_contacto: '',
-                              mensaje_contacto: '',
-                              fecha: '',
-                              hora_inicio: '',
-                              hora_fin: '',
-                              lugar: '',
-                              ciudad: '',
-                              direccion: '',
-                              referencias: '',
-                              requisitos: '',
-                              ubicaciones: [],
-                              zona: null,
-                              estilos: [],
-                              ritmos_seleccionados: [],
-                              zonas: [],
-                              cronograma: [],
-                              costos: [],
-                              flyer_url: null,
-                              estado_publicacion: 'borrador',
-                              repetir_semanal: false,
-                              semanas_repetir: 4
-                            });
-                            setSelectedDateLocationId('');
-                            setSelectedParentId(null);
-                          }}
-                          style={{
-                            padding: '12px 24px',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(255, 255, 255, 0.3)',
-                            background: 'transparent',
-                            color: '#FFFFFF',
-                            fontSize: '0.9rem',
-                            fontWeight: '700',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          ❌ Cancelar
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={handleCreateDate}
-                          disabled={createEventDate.isPending || !dateForm.fecha}
-                          style={{
-                            padding: '12px 24px',
-                            borderRadius: '12px',
-                            border: 'none',
-                            color: '#FFFFFF',
-                            fontSize: '0.9rem',
-                            fontWeight: '700',
-                            cursor: createEventDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
-                            boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                            opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
-                          }}
-                        >
-                          {createEventDate.isPending ? '⏳ Creando...' : '✨ Crear'}
-                        </motion.button>
-                      </div>
-                    )}
                   </div>
+
+                  {/* Flyer (solo único; después de Fecha y Hora) */}
+                  {!bulkMode && (
+                    <div className="org-editor-card">
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                        🖼️ Flyer del Evento
+                      </h3>
+                      <DateFlyerUploader
+                        value={dateForm.flyer_url || null}
+                        onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
+                        dateId={null}
+                        parentId={selectedParentId || undefined}
+                      />
+                    </div>
+                  )}
+
+                  {/* Estado de Publicación (solo único; después del flyer) */}
+                  {!bulkMode && (
+                    <div className="org-editor-card">
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                        🌐 Estado de Publicación
+                      </h3>
+                      <div className="org-date-form-radio-group">
+                        <label className="org-date-form-checkbox">
+                          <input
+                            type="radio"
+                            name="estado_publicacion"
+                            value="borrador"
+                            checked={dateForm.estado_publicacion === 'borrador'}
+                            onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                            style={{ transform: 'scale(1.2)' }}
+                          />
+                          <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                            📝 Borrador (solo tú puedes verlo)
+                          </span>
+                        </label>
+                        <label className="org-date-form-checkbox">
+                          <input
+                            type="radio"
+                            name="estado_publicacion"
+                            value="publicado"
+                            checked={dateForm.estado_publicacion === 'publicado'}
+                            onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                            style={{ transform: 'scale(1.2)' }}
+                          />
+                          <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                            🌐 Público (visible para todos)
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Botones (solo único; después de estado) */}
+                  {!bulkMode && (
+                    <div className="org-editor-card org-date-form-buttons">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setShowDateForm(false);
+                          setDateForm({
+                            nombre: '',
+                            biografia: '',
+                            djs: '',
+                            telefono_contacto: '',
+                            mensaje_contacto: '',
+                            fecha: '',
+                            hora_inicio: '',
+                            hora_fin: '',
+                            lugar: '',
+                            ciudad: '',
+                            direccion: '',
+                            referencias: '',
+                            requisitos: '',
+                            ubicaciones: [],
+                            zona: null,
+                            estilos: [],
+                            ritmos_seleccionados: [],
+                            zonas: [],
+                            cronograma: [],
+                            costos: [],
+                            flyer_url: null,
+                            estado_publicacion: 'borrador',
+                            repetir_semanal: false,
+                            semanas_repetir: 4
+                          });
+                          setSelectedDateLocationId('');
+                          setSelectedParentId(null);
+                        }}
+                        style={{
+                          padding: '12px 24px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          background: 'transparent',
+                          color: '#FFFFFF',
+                          fontSize: '0.9rem',
+                          fontWeight: '700',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ❌ Cancelar
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleCreateDate}
+                        disabled={createEventDate.isPending || !dateForm.fecha}
+                        style={{
+                          padding: '12px 24px',
+                          borderRadius: '12px',
+                          border: 'none',
+                          color: '#FFFFFF',
+                          fontSize: '0.9rem',
+                          fontWeight: '700',
+                          cursor: createEventDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
+                          boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                          opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
+                        }}
+                      >
+                        {createEventDate.isPending ? '⏳ Creando...' : '✨ Crear'}
+                      </motion.button>
+                    </div>
+                  )}
 
                   {/* Flyers pendientes (bulk) */}
                   {bulkMode && showPendingFlyers && (
