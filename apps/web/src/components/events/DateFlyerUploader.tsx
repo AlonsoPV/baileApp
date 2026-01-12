@@ -1,6 +1,5 @@
 import React, { useRef, useState, useMemo } from "react";
-import { supabase } from "../../lib/supabase";
-import { resizeImageIfNeeded } from "../../lib/imageResize";
+import { uploadEventFlyer } from "../../lib/uploadEventFlyer";
 
 type Props = {
   value?: string | null;
@@ -32,58 +31,12 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId, o
     if (!file) return;
     setErr(null);
 
-    // Validaciones básicas
-    const allowed = ["image/jpeg","image/png","image/jpg","image/webp"];
-    if (!allowed.includes(file.type)) {
-      const msg = "Formato no permitido. Usa JPG, PNG o WebP.";
-      setErr(msg);
-      onStatusChange?.('ERROR', msg);
-      return;
-    }
-    if (file.size > 6 * 1024 * 1024) {
-      const msg = "El archivo supera 6MB.";
-      setErr(msg);
-      onStatusChange?.('ERROR', msg);
-      return;
-    }
-
     setLoading(true);
     onStatusChange?.('UPLOADING');
     try {
-      // getUser() pega a la red y puede ser lento; getSession() es local/cache.
-      const user = (await supabase.auth.getSession()).data.session?.user;
-      if (!user) throw new Error("No hay sesión.");
-
-      // Redimensionar imagen si es necesario (recomendación 1080x1350, ratio 4:5)
-      // Mantener 1080px de ancho para buena calidad, pero comprimir para subir rápido.
-      const processedFile = await resizeImageIfNeeded(file, 1080, 0.82);
-
-      // Ruta: media/event-flyers/USERID/{parentId}/{dateId}_flyer.ext
-      const ext = processedFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      const safeParent = parentId ? String(parentId) : "no-parent";
-      const safeDate = dateId ? String(dateId) : String(Date.now());
-      const path = `media/event-flyers/${user.id}/${safeParent}/${safeDate}_flyer.${ext}`;
-
-      console.log('[DateFlyerUploader] Uploading to path:', path);
-      console.log('[DateFlyerUploader] File type:', processedFile.type);
-      console.log('[DateFlyerUploader] Original size:', file.size, 'Processed size:', processedFile.size);
-
-      const { data: up, error: upErr } = await supabase.storage
-        .from("media")
-        .upload(path, processedFile, { upsert: true, contentType: processedFile.type });
-
-      if (upErr) {
-        console.error('[DateFlyerUploader] Upload error:', upErr);
-        throw upErr;
-      }
-
-      console.log('[DateFlyerUploader] Upload successful:', up);
-
-      const { data: pub } = supabase.storage.from("media").getPublicUrl(up.path);
-      console.log('[DateFlyerUploader] Public URL:', pub.publicUrl);
-      
+      const url = await uploadEventFlyer({ file, parentId, dateId });
       onStatusChange?.('DONE');
-      onChange(pub.publicUrl || null);
+      onChange(url || null);
     } catch (e: any) {
       console.error('[DateFlyerUploader] Error:', e);
       const msg = e?.message || "Error subiendo el flyer.";

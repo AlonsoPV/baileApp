@@ -1092,18 +1092,7 @@ export default function OrganizerEventDateEditScreen() {
         color: colors.light,
         position: 'relative',
       }}>
-        {/* Efecto de fondo decorativo */}
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: `radial-gradient(circle at 20% 50%, rgba(30, 136, 229, 0.05) 0%, transparent 50%),
-                       radial-gradient(circle at 80% 80%, rgba(255, 61, 87, 0.05) 0%, transparent 50%)`,
-          pointerEvents: 'none',
-          zIndex: 0,
-        }} />
+        {/* Cortina decorativa removida (causaba issues en responsive/scroll en mobile) */}
         
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
         {/* Header con título */}

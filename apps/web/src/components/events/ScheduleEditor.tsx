@@ -134,6 +134,7 @@ export default function ScheduleEditorPlus({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingCosto, setIsAddingCosto] = useState(false); // ✅ Estado para colapsar costos
+  const [collapsedCostIdxs, setCollapsedCostIdxs] = useState<Set<number>>(() => new Set());
   const [meta, setMeta] = useState<MetaState>({
     ritmoId: selectedRitmoId ?? null,
     zonaId: selectedZonaId ?? null,
@@ -229,6 +230,23 @@ export default function ScheduleEditorPlus({
     onChangeSchedule(next);
   };
 
+  const duplicateCosto = (index: number) => {
+    const original = costos[index];
+    if (!original) return;
+    const clone: CostoItem = {
+      ...original,
+      nombre: original.nombre ? `${original.nombre} (copia)` : 'Costo (copia)',
+    };
+    const next = [
+      ...costos.slice(0, index + 1),
+      clone,
+      ...costos.slice(index + 1),
+    ];
+    onChangeCostos(next);
+    // Evitar desalineación de índices tras duplicar
+    setCollapsedCostIdxs(new Set([index, index + 1]));
+  };
+
   const startEdit = (i: number) => setEditingIndex(i);
   const finishEdit = () => setEditingIndex(null);
 
@@ -244,17 +262,28 @@ export default function ScheduleEditorPlus({
     const next = [...costos];
     next[idx] = { ...next[idx], ...patch };
     onChangeCostos(next);
+    // Si el usuario toca cualquier campo, re-abrimos (descolapsamos) el item.
+    setCollapsedCostIdxs((prev) => {
+      if (!prev.has(idx)) return prev;
+      const n = new Set(prev);
+      n.delete(idx);
+      return n;
+    });
   };
 
   const addCostoToList = () => {
     if (!newCosto.nombre?.trim()) return;
     onChangeCostos([...costos, newCosto]);
+    // Colapsar el item recién agregado para mantener el formulario limpio.
+    setCollapsedCostIdxs((prev) => new Set(prev).add((costos || []).length));
     setNewCosto({ nombre: '', tipo: 'Otro', precio: null, regla: '' });
     setIsAddingCosto(false);
   };
 
   const removeCosto = (idx: number) => {
     onChangeCostos(costos.filter((_, i) => i !== idx));
+    // Evitar desalineación de índices tras eliminar
+    setCollapsedCostIdxs(new Set());
   };
 
   const costoNombres = useMemo(() => (costos || []).map(c => (c.nombre || '').trim()).filter(Boolean), [costos]);
@@ -778,81 +807,142 @@ export default function ScheduleEditorPlus({
         <div style={{ display: 'grid', gap: 12 }}>
           {costos.map((c, idx)=> (
             <div key={idx} style={card}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre (referencia)</div>
-                  <input
-                    style={input}
-                    placeholder="Ej. Clase suelta / Paquete 4 clases"
-                    value={c.nombre || ''}
-                    onChange={(e)=> setCosto(idx, { nombre: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
-                  <div style={pillWrap}>
-                    {tiposCosto.map(t => (
-                      <div
-                        key={t}
-                        style={pill(c.tipo === t)}
-                        onClick={()=> setCosto(idx, { tipo: t })}
-                      >{t}</div>
-                    ))}
+              {collapsedCostIdxs.has(idx) ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: 6, marginBottom: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontSize: '1.2rem' }}>💸</span>
+                      <span style={{
+                        padding: '4px 8px', borderRadius: 12,
+                        background: `${colors.light}33`, color: colors.light, fontSize: '0.8rem', fontWeight: 600,
+                        textTransform: 'capitalize'
+                      }}>
+                        {c.tipo || 'Otro'}
+                      </span>
+                      <span style={{
+                        padding: '4px 8px', borderRadius: 12,
+                        background: `${colors.light}33`, color: colors.light, fontSize: '0.8rem', fontWeight: 600
+                      }}>
+                        {c.precio === null || c.precio === undefined ? 'Gratis' : `$${Number(c.precio).toLocaleString()}`}
+                      </span>
+                    </div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 600, color: colors.light, marginBottom: 4 }}>
+                      {(c.nombre || 'Costo').toString()}
+                    </h4>
+                    {c.regla && (
+                      <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8, margin: 0 }}>
+                        📋 {c.regla}
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginLeft: 12 }}>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                      onClick={() => setCollapsedCostIdxs((prev) => { const n = new Set(prev); n.delete(idx); return n; })}
+                      style={{ padding: 6, borderRadius: 6, border: 'none', background: colors.blue, color: colors.light, cursor: 'pointer' }}
+                    >✏️</motion.button>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                      onClick={() => duplicateCosto(idx)}
+                      style={{ padding: 6, borderRadius: 6, border: 'none', background: colors.yellow, color: colors.dark, cursor: 'pointer' }}
+                    >📄</motion.button>
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                      onClick={()=> removeCosto(idx)}
+                      style={{ padding: 6, borderRadius: 6, border: 'none', background: colors.coral, color: colors.light, cursor: 'pointer' }}
+                    >🗑️</motion.button>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre (referencia)</div>
+                      <input
+                        style={input}
+                        placeholder="Ej. Clase suelta / Paquete 4 clases"
+                        value={c.nombre || ''}
+                        onChange={(e)=> setCosto(idx, { nombre: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
+                      <div style={pillWrap}>
+                        {tiposCosto.map(t => (
+                          <div
+                            key={t}
+                            style={pill(c.tipo === t)}
+                            onClick={()=> setCosto(idx, { tipo: t })}
+                          >{t}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
-                <div>
-                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Precio</div>
-                  <input
-                    type="number" min={0} step="1" placeholder="Ej. 200"
-                    value={c.precio ?? ''}
-                    onChange={(e)=> setCosto(idx, { precio: e.target.value === '' ? null : Number(e.target.value) })}
-                    style={input}
-                  />
-                </div>
-                <div>
-                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Regla / Descripción (opcional)</div>
-                  <input
-                    style={input}
-                    placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
-                    value={c.regla || ''}
-                    onChange={(e)=> setCosto(idx, { regla: e.target.value })}
-                  />
-                </div>
-              </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Precio</div>
+                      <input
+                        type="number" min={0} step="1" placeholder="Ej. 200"
+                        value={c.precio ?? ''}
+                        onChange={(e)=> setCosto(idx, { precio: e.target.value === '' ? null : Number(e.target.value) })}
+                        style={input}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Regla / Descripción (opcional)</div>
+                      <input
+                        style={input}
+                        placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
+                        value={c.regla || ''}
+                        onChange={(e)=> setCosto(idx, { regla: e.target.value })}
+                      />
+                    </div>
+                  </div>
 
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start', marginTop: 10 }}>
-                {onSaveCosto && (
-                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    onClick={()=> onSaveCosto(idx)}
-                    style={{
-                      padding: '10px 20px',
-                      borderRadius: 8,
-                      border: 'none',
-                      background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                      color: colors.light,
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >💾 Guardar</motion.button>
-                )}
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                  onClick={()=> removeCosto(idx)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    border: `1px solid ${colors.light}33`,
-                    background: 'transparent',
-                    color: colors.light,
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >🗑️ Eliminar</motion.button>
-              </div>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start', marginTop: 10, flexWrap: 'wrap' }}>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        onSaveCosto?.(idx);
+                        setCollapsedCostIdxs((prev) => new Set(prev).add(idx));
+                      }}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                        color: colors.light,
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >💾 Guardar</motion.button>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={() => duplicateCosto(idx)}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: `${colors.yellow}`,
+                        color: colors.dark,
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >📄 Duplicar</motion.button>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={()=> removeCosto(idx)}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: 8,
+                        border: `1px solid ${colors.light}33`,
+                        background: 'transparent',
+                        color: colors.light,
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >🗑️ Eliminar</motion.button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

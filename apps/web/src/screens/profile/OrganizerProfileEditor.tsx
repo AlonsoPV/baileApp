@@ -47,6 +47,11 @@ import { FaInstagram, FaFacebookF, FaWhatsapp, FaGlobe, FaTelegram } from 'react
 import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
 import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
 import { useQueryClient } from "@tanstack/react-query";
+import EventDatesSheet from "../../components/events/EventDatesSheet";
+import EventDateDrawer from "../../components/events/EventDateDrawer";
+import PendingFlyersPanel from "../../components/events/PendingFlyersPanel";
+import { useEventDatesBulk } from "../../hooks/useEventDatesBulk";
+import { useUploadFlyerQueue } from "../../hooks/useUploadFlyerQueue";
 
 const colors = {
   coral: '#FF3D57',
@@ -240,7 +245,7 @@ const BulkRowItem = React.memo(function BulkRowItem({
 });
 
 // Componente para mostrar un social con sus fechas
-function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId, isMobile }: any) {
+function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId, isMobile, orgLocations }: any) {
   const navigate = useNavigate();
   const { data: dates } = useDatesByParent(parent.id);
   const [expanded, setExpanded] = useState(false);
@@ -415,98 +420,17 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                         <span className="dates-chevron">▼</span>
                       </summary>
 
-                      <div className="dates-strip">
-                        {availableDates.map((date: any) => (
-                          <article
-                            key={date.id}
-                            className="date-card"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/social/fecha/${date.id}`);
-                            }}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <header className="date-card-header">
-                              <div>
-                                <h3 className="date-card-title">
-                                  {date.nombre || 'Fecha sin nombre'}
-                                </h3>
-                                <div className="date-pill">
-                                  <span className="date-pill-icon">📅</span>
-                                  {formatEsDate(getDisplayFechaYmd(date) || date.fecha)}
-                                </div>
-                              </div>
-                              <span className="date-status date-status-available">
-                                Disponible
-                              </span>
-                            </header>
-
-                            <div className="date-card-body">
-                              {date.hora_inicio && date.hora_fin && (
-                                <div className="date-row">
-                                  <span className="chip">
-                                    🕒 {date.hora_inicio} – {date.hora_fin}
-                                  </span>
-                                </div>
-                              )}
-                              {(date.lugar || date.ciudad) && (
-                                <div className="date-row">
-                                  {date.lugar && (
-                                    <span className="chip">📍 {date.lugar}</span>
-                                  )}
-                                  {date.ciudad && (
-                                    <span className="chip chip-muted">
-                                      {date.ciudad}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-
-                            <footer className="date-card-footer">
-                              <span className="chip chip-people">
-                                <RSVPCounter
-                                  eventDateId={date.id}
-                                  variant="minimal"
-                                  showIcons={true}
-                                />
-                              </span>
-                              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                                <button
-                                  type="button"
-                                  className="date-card-button date-card-button--view"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/social/fecha/${date.id}`);
-                                  }}
-                                >
-                                  👁 Ver
-                                </button>
-                                <button
-                                  type="button"
-                                  className="date-card-button date-card-button--edit"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/social/fecha/${date.id}/edit`);
-                                  }}
-                                >
-                                  ✏️ Editar
-                                </button>
-                                <button
-                                  type="button"
-                                  className="date-card-button date-card-button--delete"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteDate(date);
-                                  }}
-                                  disabled={deletingDateId === date.id}
-                                >
-                                  {deletingDateId === date.id ? '⏳' : '🗑️'} Eliminar
-                                </button>
-                              </div>
-                            </footer>
-                          </article>
-                        ))}
+                      <div style={{ marginTop: 12 }}>
+                        <EventDatesSheet
+                          rows={availableDates.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
+                          variant="embedded"
+                          showHeader={false}
+                          onOpenRow={(id) => navigate(`/social/fecha/${id}/edit`)}
+                          onViewRow={(id) => navigate(`/social/fecha/${id}`)}
+                          onDeleteRow={(row) => onDeleteDate(row as any)}
+                          deletingRowId={deletingDateId as any}
+                          locations={orgLocations || []}
+                        />
                       </div>
                     </details>
                   )}
@@ -525,91 +449,17 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                         <span className="dates-chevron">▼</span>
                       </summary>
 
-                      <div className="dates-strip">
-                        {pastDates.map((date: any) => (
-                          <article
-                            key={date.id}
-                            className="date-card past"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/social/fecha/${date.id}`);
-                            }}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <header className="date-card-header">
-                              <div>
-                                <h3 className="date-card-title">
-                                  {date.nombre || 'Fecha sin nombre'}
-                                </h3>
-                                <div className="date-pill">
-                                  <span className="date-pill-icon">📅</span>
-                                  {formatEsDate(getDisplayFechaYmd(date) || date.fecha)}
-                                </div>
-                              </div>
-                              <span className="date-status date-status-past">
-                                Pasada
-                              </span>
-                            </header>
-
-                            <div className="date-card-body">
-                              {(date.lugar || date.ciudad) && (
-                                <div className="date-row">
-                                  {date.lugar && (
-                                    <span className="chip">{date.lugar}</span>
-                                  )}
-                                  {date.ciudad && (
-                                    <span className="chip chip-muted">
-                                      {date.ciudad}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-
-                            <footer className="date-card-footer">
-                              <span className="chip chip-people">
-                                <RSVPCounter
-                                  eventDateId={date.id}
-                                  variant="minimal"
-                                  showIcons={true}
-                                />
-                              </span>
-                              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                                <button
-                                  type="button"
-                                  className="date-card-button date-card-button--view"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/social/fecha/${date.id}`);
-                                  }}
-                                >
-                                  👁 Ver
-                                </button>
-                                <button
-                                  type="button"
-                                  className="date-card-button date-card-button--edit"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/social/fecha/${date.id}/edit`);
-                                  }}
-                                >
-                                  ✏️ Editar
-                                </button>
-                                <button
-                                  type="button"
-                                  className="date-card-button date-card-button--delete"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteDate(date);
-                                  }}
-                                  disabled={deletingDateId === date.id}
-                                >
-                                  {deletingDateId === date.id ? '⏳' : '🗑️'} Eliminar
-                                </button>
-                              </div>
-                            </footer>
-                          </article>
-                        ))}
+                      <div style={{ marginTop: 12 }}>
+                        <EventDatesSheet
+                          rows={pastDates.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
+                          variant="embedded"
+                          showHeader={false}
+                          onOpenRow={(id) => navigate(`/social/fecha/${id}/edit`)}
+                          onViewRow={(id) => navigate(`/social/fecha/${id}`)}
+                          onDeleteRow={(row) => onDeleteDate(row as any)}
+                          deletingRowId={deletingDateId as any}
+                          locations={orgLocations || []}
+                        />
                       </div>
                     </details>
                   )}
@@ -649,6 +499,8 @@ export default function OrganizerProfileEditor() {
   const submit = useSubmitOrganizerForReview();
   const { data: parents } = useParentsByOrganizer((org as any)?.id);
   const { data: allOrganizerDates = [] } = useEventDatesByOrganizer((org as any)?.id);
+  // Bulk editor (solo events_date; sin joins a events_parent)
+  const { data: bulkDates = [], isLoading: bulkDatesLoading } = useEventDatesBulk((org as any)?.id);
   const { data: orgLocations = [] } = useOrganizerLocations((org as any)?.id);
   const createOrgLoc = useCreateOrganizerLocation();
   const updateOrgLoc = useUpdateOrganizerLocation();
@@ -750,6 +602,29 @@ export default function OrganizerProfileEditor() {
     estado_publicacion: 'borrador' as 'borrador' | 'publicado',
     repetir_semanal: false,
     semanas_repetir: 4
+  });
+
+  // Drawer para edición individual desde tabla bulk (override flyer + ajustes puntuales)
+  const [drawerDateId, setDrawerDateId] = useState<number | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const bulkOrganizerId = (org as any)?.id ? Number((org as any).id) : undefined;
+  const patchBulkCache = useCallback((ids: number[], patch: Record<string, any>) => {
+    if (!bulkOrganizerId) return;
+    queryClient.setQueryData(["event-dates", "bulk", bulkOrganizerId], (prev: any) => {
+      if (!Array.isArray(prev)) return prev;
+      const idSet = new Set(ids.map((n) => Number(n)));
+      return prev.map((r: any) => (idSet.has(Number(r.id)) ? { ...r, ...patch } : r));
+    });
+  }, [queryClient, bulkOrganizerId]);
+
+  // Upload queue para flyers pendientes (concurrency=3)
+  const flyerQueue = useUploadFlyerQueue({
+    concurrency: 3,
+    maxAttempts: 2,
+    onUploaded: (dateId, flyerUrl) => {
+      patchBulkCache([dateId], { flyer_url: flyerUrl });
+    },
   });
 
   // Bulk planner (v1)
@@ -1349,10 +1224,10 @@ export default function OrganizerProfileEditor() {
       // Modo Único: siempre se crea 1 sola fecha (sin repetición semanal).
       // Si quieres múltiples, usa “Frecuentes” (bulk).
       const datesToCreate: any[] = [{
-        ...basePayload,
-        fecha: dateForm.fecha,
-        dia_semana: null,
-      }];
+          ...basePayload,
+          fecha: dateForm.fecha,
+          dia_semana: null,
+        }];
       
       // Crear todas las fechas en una sola operación batch (mucho más rápido)
       try {
@@ -4335,6 +4210,13 @@ export default function OrganizerProfileEditor() {
                 </div>
               </div>
 
+              {/* Flyers pendientes (solo events_date.flyer_url == null) */}
+              <PendingFlyersPanel
+                rows={(bulkDates as any) || []}
+                queue={flyerQueue as any}
+                title="🧾 Flyers pendientes (fechas)"
+              />
+
               {/* Formulario de crear fecha */}
               {showDateForm && (
                 <motion.div
@@ -5043,126 +4925,126 @@ export default function OrganizerProfileEditor() {
 
                   {/* Flyer (solo único; después de Fecha y Hora) */}
                   {!bulkMode && (
-                    <div className="org-editor-card">
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                        🖼️ Flyer del Evento
-                      </h3>
-                      <DateFlyerUploader
-                        value={dateForm.flyer_url || null}
-                        onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
-                        dateId={null}
-                        parentId={selectedParentId || undefined}
-                      />
-                    </div>
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      🖼️ Flyer del Evento
+                    </h3>
+                    <DateFlyerUploader
+                      value={dateForm.flyer_url || null}
+                      onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
+                      dateId={null}
+                      parentId={selectedParentId || undefined}
+                    />
+                  </div>
                   )}
 
                   {/* Estado de Publicación (solo único; después del flyer) */}
                   {!bulkMode && (
-                    <div className="org-editor-card">
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                        🌐 Estado de Publicación
-                      </h3>
-                      <div className="org-date-form-radio-group">
-                        <label className="org-date-form-checkbox">
-                          <input
-                            type="radio"
-                            name="estado_publicacion"
-                            value="borrador"
-                            checked={dateForm.estado_publicacion === 'borrador'}
-                            onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                            style={{ transform: 'scale(1.2)' }}
-                          />
-                          <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                            📝 Borrador (solo tú puedes verlo)
-                          </span>
-                        </label>
-                        <label className="org-date-form-checkbox">
-                          <input
-                            type="radio"
-                            name="estado_publicacion"
-                            value="publicado"
-                            checked={dateForm.estado_publicacion === 'publicado'}
-                            onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                            style={{ transform: 'scale(1.2)' }}
-                          />
-                          <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                            🌐 Público (visible para todos)
-                          </span>
-                        </label>
-                      </div>
+                  <div className="org-editor-card">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
+                      🌐 Estado de Publicación
+                    </h3>
+                    <div className="org-date-form-radio-group">
+                      <label className="org-date-form-checkbox">
+                        <input
+                          type="radio"
+                          name="estado_publicacion"
+                          value="borrador"
+                          checked={dateForm.estado_publicacion === 'borrador'}
+                          onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                          style={{ transform: 'scale(1.2)' }}
+                        />
+                        <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                          📝 Borrador (solo tú puedes verlo)
+                        </span>
+                      </label>
+                      <label className="org-date-form-checkbox">
+                        <input
+                          type="radio"
+                          name="estado_publicacion"
+                          value="publicado"
+                          checked={dateForm.estado_publicacion === 'publicado'}
+                          onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
+                          style={{ transform: 'scale(1.2)' }}
+                        />
+                        <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
+                          🌐 Público (visible para todos)
+                        </span>
+                      </label>
                     </div>
+                  </div>
                   )}
 
                   {/* Botones (solo único; después de estado) */}
                   {!bulkMode && (
-                    <div className="org-editor-card org-date-form-buttons">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => {
-                          setShowDateForm(false);
-                          setDateForm({
-                            nombre: '',
-                            biografia: '',
-                            djs: '',
-                            telefono_contacto: '',
-                            mensaje_contacto: '',
-                            fecha: '',
-                            hora_inicio: '',
-                            hora_fin: '',
-                            lugar: '',
-                            ciudad: '',
-                            direccion: '',
-                            referencias: '',
-                            requisitos: '',
-                            ubicaciones: [],
-                            zona: null,
-                            estilos: [],
-                            ritmos_seleccionados: [],
-                            zonas: [],
-                            cronograma: [],
-                            costos: [],
-                            flyer_url: null,
-                            estado_publicacion: 'borrador',
-                            repetir_semanal: false,
-                            semanas_repetir: 4
-                          });
-                          setSelectedDateLocationId('');
-                          setSelectedParentId(null);
-                        }}
-                        style={{
-                          padding: '12px 24px',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(255, 255, 255, 0.3)',
-                          background: 'transparent',
-                          color: '#FFFFFF',
-                          fontSize: '0.9rem',
-                          fontWeight: '700',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        ❌ Cancelar
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleCreateDate}
-                        disabled={createEventDate.isPending || !dateForm.fecha}
-                        style={{
-                          padding: '12px 24px',
-                          borderRadius: '12px',
-                          border: 'none',
-                          color: '#FFFFFF',
-                          fontSize: '0.9rem',
-                          fontWeight: '700',
-                          cursor: createEventDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
-                          boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                          opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
-                        }}
-                      >
+                  <div className="org-editor-card org-date-form-buttons">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setShowDateForm(false);
+                        setDateForm({
+                          nombre: '',
+                          biografia: '',
+                          djs: '',
+                          telefono_contacto: '',
+                          mensaje_contacto: '',
+                          fecha: '',
+                          hora_inicio: '',
+                          hora_fin: '',
+                          lugar: '',
+                          ciudad: '',
+                          direccion: '',
+                          referencias: '',
+                          requisitos: '',
+                          ubicaciones: [],
+                          zona: null,
+                          estilos: [],
+                          ritmos_seleccionados: [],
+                          zonas: [],
+                          cronograma: [],
+                          costos: [],
+                          flyer_url: null,
+                          estado_publicacion: 'borrador',
+                          repetir_semanal: false,
+                          semanas_repetir: 4
+                        });
+                        setSelectedDateLocationId('');
+                        setSelectedParentId(null);
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        background: 'transparent',
+                        color: '#FFFFFF',
+                        fontSize: '0.9rem',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ❌ Cancelar
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCreateDate}
+                      disabled={createEventDate.isPending || !dateForm.fecha}
+                      style={{
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        color: '#FFFFFF',
+                        fontSize: '0.9rem',
+                        fontWeight: '700',
+                        cursor: createEventDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
+                        opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
+                      }}
+                    >
                         {createEventDate.isPending ? '⏳ Creando...' : '✨ Crear'}
-                      </motion.button>
-                    </div>
+                    </motion.button>
+                  </div>
                   )}
 
                   {/* Flyers pendientes (bulk) */}
@@ -5265,9 +5147,17 @@ export default function OrganizerProfileEditor() {
                 </motion.div>
               )}
 
+              {/* Drawer edición individual (override flyer + ajustes puntuales) */}
+              <EventDateDrawer
+                open={drawerOpen}
+                dateId={drawerDateId}
+                onClose={() => setDrawerOpen(false)}
+                onUpdated={(dateId, patch) => patchBulkCache([dateId], patch)}
+              />
+
               {(() => {
                 // Filtrar fechas independientes (sin parent_id)
-                const independentDates = (allOrganizerDates || []).filter((d: any) => !d.parent_id);
+                const independentDates = ((bulkDates as any) || []).filter((d: any) => !d.parent_id);
                 
                 // Clasificar fechas independientes en disponibles y pasadas
                 // NOTA: No usar useMemo aquí porque estamos dentro de una IIFE (viola reglas de hooks)
@@ -5387,6 +5277,7 @@ export default function OrganizerProfileEditor() {
                               onDeleteDate={handleDeleteDate}
                               deletingDateId={deletingDateId}
                               isMobile={isMobile}
+                              orgLocations={orgLocations}
                             />
                           </motion.div>
                         ))}
@@ -5410,121 +5301,20 @@ export default function OrganizerProfileEditor() {
                                 </span>
                                 <span className="dates-chevron">▼</span>
                               </summary>
-                              <div className="dates-strip">
-                                {independentAvailable.map((date: any) => (
-                                  <article
-                                    key={date.id}
-                                    className="date-card"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigate(`/social/fecha/${date.id}`);
-                                    }}
-                                    style={{ cursor: 'pointer' }}
-                                  >
-                                    <header className="date-card-header">
-                                      <div>
-                                        <h3 className="date-card-title">
-                                          {date.nombre || 'Fecha sin nombre'}
-                                        </h3>
-                                        <div className="date-pill">
-                                          <span className="date-pill-icon">📅</span>
-                                          {formatEsDate(getDisplayFechaYmd(date) || date.fecha)}
-                                        </div>
-                                      </div>
-                                      <span className="date-status date-status-available">
-                                        Disponible
-                                      </span>
-                                    </header>
-                                    <div className="date-card-body">
-                                      {date.hora_inicio && date.hora_fin && (
-                                        <div className="date-row">
-                                          <span className="chip">
-                                            🕒 {date.hora_inicio} – {date.hora_fin}
-                                          </span>
-                                        </div>
-                                      )}
-                                      {(date.lugar || date.ciudad) && (
-                                        <div className="date-row">
-                                          {date.lugar && (
-                                            <span className="chip">📍 {date.lugar}</span>
-                                          )}
-                                          {date.ciudad && (
-                                            <span className="chip chip-muted">
-                                              {date.ciudad}
-                                            </span>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                    <footer className="date-card-footer">
-                                      <span className="chip chip-people">
-                                        <RSVPCounter
-                                          eventDateId={date.id}
-                                          variant="minimal"
-                                          showIcons={true}
-                                        />
-                                      </span>
-                                      <div style={{ display: 'flex', gap: 6 }}>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/social/fecha/${date.id}`);
-                                          }}
-                                          style={{
-                                            padding: '3px 8px',
-                                            borderRadius: 999,
-                                            border: '1px solid rgba(255,255,255,0.18)',
-                                            background: 'transparent',
-                                            color: 'var(--text-main)',
-                                            fontSize: 11,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          👁 Ver
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/social/fecha/${date.id}/edit`);
-                                          }}
-                                          style={{
-                                            padding: '3px 8px',
-                                            borderRadius: 999,
-                                            border: '1px solid rgba(39,195,255,0.6)',
-                                            background: 'rgba(39,195,255,0.12)',
-                                            color: 'var(--accent-blue)',
-                                            fontSize: 11,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          ✏️ Editar
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteDate(date);
-                                          }}
-                                          disabled={deletingDateId === date.id}
-                                          style={{
-                                            padding: '3px 8px',
-                                            borderRadius: 999,
-                                            border: '1px solid rgba(255,61,87,0.6)',
-                                            background: 'rgba(255,61,87,0.12)',
-                                            color: '#ff3d57',
-                                            fontSize: 11,
-                                            cursor: deletingDateId === date.id ? 'not-allowed' : 'pointer',
-                                            opacity: deletingDateId === date.id ? 0.5 : 1
-                                          }}
-                                        >
-                                          {deletingDateId === date.id ? '⏳' : '🗑️'} Eliminar
-                                        </button>
-                                      </div>
-                                    </footer>
-                                  </article>
-                                ))}
+                              <div style={{ marginTop: 12 }}>
+                                <EventDatesSheet
+                                  rows={independentAvailable.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
+                                  variant="embedded"
+                                  showHeader={false}
+                                  onOpenRow={(id) => {
+                                    setDrawerDateId(Number(id));
+                                    setDrawerOpen(true);
+                                  }}
+                                  onViewRow={(id) => navigate(`/social/fecha/${id}`)}
+                                  onDeleteRow={(row) => handleDeleteDate(row as any)}
+                                  deletingRowId={deletingDateId as any}
+                                  locations={orgLocations}
+                                />
                               </div>
                             </details>
                           )}
@@ -5542,114 +5332,20 @@ export default function OrganizerProfileEditor() {
                                 </span>
                                 <span className="dates-chevron">▼</span>
                               </summary>
-                              <div className="dates-strip">
-                                {independentPast.map((date: any) => (
-                                  <article
-                                    key={date.id}
-                                    className="date-card past"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigate(`/social/fecha/${date.id}`);
-                                    }}
-                                    style={{ cursor: 'pointer' }}
-                                  >
-                                    <header className="date-card-header">
-                                      <div>
-                                        <h3 className="date-card-title">
-                                          {date.nombre || 'Fecha sin nombre'}
-                                        </h3>
-                                        <div className="date-pill">
-                                          <span className="date-pill-icon">📅</span>
-                                          {formatEsDate(getDisplayFechaYmd(date) || date.fecha)}
-                                        </div>
-                                      </div>
-                                      <span className="date-status date-status-past">
-                                        Pasada
-                                      </span>
-                                    </header>
-                                    <div className="date-card-body">
-                                      {(date.lugar || date.ciudad) && (
-                                        <div className="date-row">
-                                          {date.lugar && (
-                                            <span className="chip">{date.lugar}</span>
-                                          )}
-                                          {date.ciudad && (
-                                            <span className="chip chip-muted">
-                                              {date.ciudad}
-                                            </span>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                    <footer className="date-card-footer">
-                                      <span className="chip chip-people">
-                                        <RSVPCounter
-                                          eventDateId={date.id}
-                                          variant="minimal"
-                                          showIcons={true}
-                                        />
-                                      </span>
-                                      <div style={{ display: 'flex', gap: 6 }}>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/social/fecha/${date.id}`);
-                                          }}
-                                          style={{
-                                            padding: '3px 8px',
-                                            borderRadius: 999,
-                                            border: '1px solid rgba(255,255,255,0.18)',
-                                            background: 'transparent',
-                                            color: 'var(--text-main)',
-                                            fontSize: 11,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          👁 Ver
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/social/fecha/${date.id}/edit`);
-                                          }}
-                                          style={{
-                                            padding: '3px 8px',
-                                            borderRadius: 999,
-                                            border: '1px solid rgba(39,195,255,0.6)',
-                                            background: 'rgba(39,195,255,0.12)',
-                                            color: 'var(--accent-blue)',
-                                            fontSize: 11,
-                                            cursor: 'pointer'
-                                          }}
-                                        >
-                                          ✏️ Editar
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteDate(date);
-                                          }}
-                                          disabled={deletingDateId === date.id}
-                                          style={{
-                                            padding: '3px 8px',
-                                            borderRadius: 999,
-                                            border: '1px solid rgba(255,61,87,0.6)',
-                                            background: 'rgba(255,61,87,0.12)',
-                                            color: '#ff3d57',
-                                            fontSize: 11,
-                                            cursor: deletingDateId === date.id ? 'not-allowed' : 'pointer',
-                                            opacity: deletingDateId === date.id ? 0.5 : 1
-                                          }}
-                                        >
-                                          {deletingDateId === date.id ? '⏳' : '🗑️'} Eliminar
-                                        </button>
-                                      </div>
-                                    </footer>
-                                  </article>
-                                ))}
+                              <div style={{ marginTop: 12 }}>
+                                <EventDatesSheet
+                                  rows={independentPast.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
+                                  variant="embedded"
+                                  showHeader={false}
+                                  onOpenRow={(id) => {
+                                    setDrawerDateId(Number(id));
+                                    setDrawerOpen(true);
+                                  }}
+                                  onViewRow={(id) => navigate(`/social/fecha/${id}`)}
+                                  onDeleteRow={(row) => handleDeleteDate(row as any)}
+                                  deletingRowId={deletingDateId as any}
+                                  locations={orgLocations}
+                                />
                               </div>
                             </details>
                           )}
