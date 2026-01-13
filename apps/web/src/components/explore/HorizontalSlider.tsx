@@ -37,6 +37,23 @@ export default function HorizontalSlider<T>({
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
 
+  // Permitir wheel/trackpad vertical para desplazar horizontalmente el slider (desktop)
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    // Solo interceptar si hay intención horizontal (shift) o si el deltaY domina
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!delta) return;
+
+    const maxScrollLeft = el.scrollWidth - el.clientWidth;
+    if (maxScrollLeft <= 0) return;
+
+    // Si podemos desplazar horizontalmente, prevenir scroll vertical del page mientras el puntero está encima
+    e.preventDefault();
+    el.scrollLeft += delta;
+  }, []);
+
   // Detectar cuando el scroll está activo para desactivar animaciones pesadas
   const handleScroll = useCallback(() => {
     setIsScrolling(true);
@@ -81,6 +98,7 @@ export default function HorizontalSlider<T>({
       <div
         ref={viewportRef}
         className={`horizontal-scroll ${isScrolling ? 'scrolling' : ''}`}
+        onWheel={handleWheel}
         style={{
           position: "relative",
           overflowX: "auto",
@@ -93,15 +111,16 @@ export default function HorizontalSlider<T>({
           WebkitOverflowScrolling: "touch",
           scrollBehavior: isScrolling ? "auto" : "smooth",
           overscrollBehaviorX: "contain",
-          // Aceleración de hardware
-          transform: "translateZ(0)",
+          // ⚠️ Importante: NO aplicar transform al contenedor scrolleable.
+          // En iOS/Safari, transform en un elemento con overflow puede romper el scroll/inercia.
+          transform: "none",
+          WebkitTransform: "none",
           willChange: isScrolling ? "scroll-position" : "auto",
           // Touch actions
           // Permitir scroll vertical del contenedor padre aunque el gesto inicie aquí,
           // manteniendo swipe horizontal dentro del slider.
           touchAction: "pan-x pan-y",
-          // Mejorar rendimiento en mobile
-          WebkitTransform: "translateZ(0)",
+          // Mejorar rendimiento en mobile (sin tocar transform)
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden"
         }}
