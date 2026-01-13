@@ -8,18 +8,85 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
+import * as ExpoLinking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
 // Puedes ajustar esto a staging si lo necesitas.
 const WEB_APP_URL = "https://dondebailar.com.mx";
+
+// Required for iOS auth sessions cleanup (safe to call always)
+WebBrowser.maybeCompleteAuthSession();
+
 export default function WebAppScreen() {
   const [loading, setLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
   const [webViewImportError, setWebViewImportError] = React.useState<string | null>(null);
   const [webViewModule, setWebViewModule] = React.useState<any>(null);
+  const [authSessionInProgress, setAuthSessionInProgress] = React.useState(false);
   const webviewRef = React.useRef<any>(null);
   const insets = useSafeAreaInsets();
+
+  const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
+    try {
+      // Custom scheme deep link from Supabase redirect (e.g. dondebailarmx://auth/callback?code=...)
+      if (incomingUrl.startsWith("dondebailarmx://")) {
+        const u = new URL(incomingUrl);
+        // For custom schemes, `host` is usually the first segment after `//` (e.g. "auth")
+        const host = u.host ? `/${u.host}` : "";
+        const path = u.pathname || "";
+        const qs = u.search || "";
+        const hash = u.hash || "";
+        const mappedPath = `${host}${path}` || "/auth/callback";
+        return `${WEB_APP_URL}${mappedPath}${qs}${hash}`;
+      }
+
+      // Universal/App link to our domain should stay in WebView
+      if (
+        incomingUrl.startsWith("https://dondebailar.com.mx") ||
+        incomingUrl.startsWith("https://www.dondebailar.com.mx")
+      ) {
+        return incomingUrl;
+      }
+
+      return null;
+    } catch (e) {
+      console.warn("[WebAppScreen] Failed to map incoming URL:", incomingUrl, e);
+      return null;
+    }
+  }, []);
+
+  const navigateWebView = React.useCallback(
+    (targetUrl: string) => {
+      // Prefer request URL change through WebView ref when possible.
+      // Fallback is to inject JS, which works even when ref APIs differ by platform.
+      try {
+        webviewRef.current?.stopLoading?.();
+      } catch {
+        // ignore
+      }
+
+      try {
+        webviewRef.current?.injectJavaScript?.(
+          `window.location.href = ${JSON.stringify(targetUrl)}; true;`
+        );
+      } catch (e) {
+        console.warn("[WebAppScreen] Failed to inject navigation JS:", e);
+      }
+    },
+    []
+  );
+
+  const handleIncomingUrl = React.useCallback(
+    (incomingUrl: string) => {
+      const webUrl = mapIncomingUrlToWebUrl(incomingUrl);
+      if (!webUrl) return;
+      console.log("[WebAppScreen] Handling auth deep link -> WebView:", webUrl);
+      navigateWebView(webUrl);
+    },
+    [mapIncomingUrlToWebUrl, navigateWebView]
+  );
 
   const loadWebViewModule = React.useCallback(() => {
     try {
@@ -41,6 +108,49 @@ export default function WebAppScreen() {
   React.useEffect(() => {
     loadWebViewModule();
   }, [loadWebViewModule]);
+
+  React.useEffect(() => {
+    // Handle cold start URL
+    Linking.getInitialURL()
+      .then((url) => {
+        if (url) handleIncomingUrl(url);
+      })
+      .catch(() => {});
+
+    const sub = Linking.addEventListener("url", (event) => {
+      if (event?.url) handleIncomingUrl(event.url);
+    });
+
+    return () => {
+      // RN >= 0.65 returns subscription with remove()
+      // @ts-ignore
+      sub?.remove?.();
+    };
+  }, [handleIncomingUrl]);
+
+  const startAuthSession = React.useCallback(
+    async (startUrl: string) => {
+      if (authSessionInProgress) return;
+      setAuthSessionInProgress(true);
+      try {
+        // Must match the redirectTo configured in the web app when inside WebView
+        const returnUrl = ExpoLinking.createURL("auth/callback", { scheme: "dondebailarmx" });
+
+        const result = await WebBrowser.openAuthSessionAsync(startUrl, returnUrl);
+
+        if (result.type === "success" && "url" in result && result.url) {
+          handleIncomingUrl(result.url);
+        } else {
+          console.log("[WebAppScreen] Auth session finished:", result.type);
+        }
+      } catch (e) {
+        console.warn("[WebAppScreen] Auth session failed:", e);
+      } finally {
+        setAuthSessionInProgress(false);
+      }
+    },
+    [authSessionInProgress, handleIncomingUrl]
+  );
 
   const handleReload = () => {
     setHasError(false);
@@ -145,6 +255,12 @@ export default function WebAppScreen() {
           onShouldStartLoadWithRequest={(request: any) => {
             const url = request.url;
 
+            // Intercept auth deep links so they don't kick user to browser
+            if (url.startsWith("dondebailarmx://")) {
+              handleIncomingUrl(url);
+              return false;
+            }
+
             const isSameDomain =
               url.startsWith("https://dondebailar.com.mx") ||
               url.startsWith("https://www.dondebailar.com.mx");
@@ -160,6 +276,12 @@ export default function WebAppScreen() {
               url.includes("appleid.apple.com") ||
               url.includes("idmsa.apple.com") ||
               url.includes("/auth/authorize") && url.includes("apple");
+
+            // Detectar navegación a Google OAuth / cuentas (suele abrirse durante el flow)
+            const isGoogleOAuth =
+              url.includes("accounts.google.com") ||
+              url.includes("google.com/o/oauth2") ||
+              url.includes("oauth2.googleapis.com");
 
             // Detectar enlaces de calendario (.ics o protocolos webcal/calshow)
             const isCalendarLink =
@@ -178,9 +300,11 @@ export default function WebAppScreen() {
               return true;
             }
 
-            // Permitir URLs de OAuth dentro del WebView para mantener el flujo de autenticación
-            if (isSupabaseOAuth || isAppleOAuth) {
-              return true; // Mantener dentro del WebView
+            // OAuth: abrir sesión de autenticación in-app (no navegador externo “normal”)
+            // Esto evita que el usuario “salga” de la app y garantiza retorno por deep link.
+            if (isSupabaseOAuth || isAppleOAuth || isGoogleOAuth) {
+              void startAuthSession(url);
+              return false;
             }
 
             // Protocolos y enlaces externos (redes sociales, maps, mail, tel, etc.)

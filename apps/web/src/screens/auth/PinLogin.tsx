@@ -3,12 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthProvider';
 import { verifyPin, setPinVerified, hashPin } from '@/lib/pin';
 import { supabase } from '@/lib/supabase';
+import { getRedirectUrl } from '@/utils/authRedirect';
 
 // Cambia esto según tu proyecto
 const USE_PASSWORD_LOGIN = true;           // true: email+password | false: OTP (passwordless)
-const OTP_REDIRECT = typeof window !== 'undefined'
-  ? `${window.location.origin}/auth/pin`
-  : undefined;
+const OTP_REDIRECT = typeof window !== 'undefined' ? getRedirectUrl('/auth/pin') : undefined;
 
 type Mode = 'login' | 'reset';
 

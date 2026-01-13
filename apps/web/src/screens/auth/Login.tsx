@@ -8,24 +8,7 @@ import { signInWithMagicLink, signUpWithMagicLink } from '../../utils/magicLinkA
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '@/contexts/AuthProvider';
 import { motion } from 'framer-motion';
-
-// Detectar si estamos en un WebView móvil
-const isMobileWebView = () => {
-  if (typeof window === 'undefined') return false;
-  // Detectar WebView de React Native
-  const userAgent = window.navigator.userAgent || '';
-  const isReactNativeWebView = 
-    userAgent.includes('ReactNativeWebView') ||
-    userAgent.includes('wv') || // Android WebView
-    (window as any).ReactNativeWebView !== undefined;
-  
-  // Detectar si estamos en un WebView móvil (iOS o Android)
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
-  const isWebView = isReactNativeWebView || 
-    (isMobile && !userAgent.includes('Safari') && !userAgent.includes('Chrome'));
-  
-  return isWebView;
-};
+import { getAuthRedirectUrl } from '../../utils/authRedirect';
 
 // Obtener el dominio de la aplicación (producción o desarrollo)
 const getSiteUrl = () => {
@@ -175,10 +158,11 @@ export function Login() {
 
     try {
       const siteUrl = getSiteUrl();
+      const redirectTo = getAuthRedirectUrl();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${siteUrl}/auth/callback`,
+          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -213,24 +197,14 @@ export function Login() {
 
     try {
       const siteUrl = getSiteUrl();
-      const inWebView = isMobileWebView();
+      const redirectTo = getAuthRedirectUrl();
       
       // Configuración para mantener el flujo dentro del WebView
       const oauthOptions: any = {
-        redirectTo: `${siteUrl}/auth/callback`,
+        redirectTo,
         // Apple supports requesting email + name. Supabase will only receive what's granted by the user.
         scopes: 'email name',
       };
-
-      // Si estamos en un WebView móvil, forzar que la redirección se mantenga dentro del WebView
-      if (inWebView) {
-        // No usar skipBrowserRedirect porque queremos que redirija, pero dentro del WebView
-        // En su lugar, asegurarnos de que la URL de redirección sea manejada por el WebView
-        oauthOptions.queryParams = {
-          // Forzar que se abra en la misma ventana/contexto
-          redirect_to: `${siteUrl}/auth/callback`,
-        };
-      }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
@@ -239,12 +213,6 @@ export function Login() {
 
       if (error) throw error;
       
-      // En WebView, la redirección debería manejarse automáticamente
-      // pero si tenemos una URL, podemos forzar la navegación dentro del WebView
-      if (inWebView && data?.url) {
-        // En lugar de abrir en nueva ventana, redirigir en el mismo contexto
-        window.location.href = data.url;
-      }
       // OAuth flow redirects automatically
     } catch (err: any) {
       console.error('[Login] Apple OAuth error', err);

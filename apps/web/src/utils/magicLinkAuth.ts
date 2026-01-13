@@ -1,5 +1,6 @@
 // Utilidad para autenticación con Magic Link (sin contraseña)
 import { supabase } from '../lib/supabase';
+import { getAuthRedirectUrl } from './authRedirect';
 
 // Protección contra múltiples llamadas simultáneas para el mismo email
 const pendingRequests = new Map<string, Promise<any>>();
@@ -38,7 +39,7 @@ export async function signInWithMagicLink(email: string) {
       const { error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: getAuthRedirectUrl(),
         }
       });
       
@@ -174,7 +175,7 @@ export async function signUpWithMagicLink(email: string) {
       const { error } = await supabase.auth.signInWithOtp({
         email: normalizedEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: getAuthRedirectUrl(),
         }
       });
       
