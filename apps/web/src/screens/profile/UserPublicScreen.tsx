@@ -407,6 +407,7 @@ const STYLES = `
 `;
 
 const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -463,7 +464,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
         >
           <ImageWithFallback
             src={photos[currentIndex]}
-            alt={`Foto ${currentIndex + 1}`}
+            alt={`${t('photo')} ${currentIndex + 1}`}
             style={{
               width: '100%',
               height: '100%',
@@ -525,7 +526,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
             >
               <ImageWithFallback
                 src={photo}
-                alt={`Miniatura ${index + 1}`}
+                alt={`${t('photo_thumbnail')} ${index + 1}`}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -563,7 +564,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
           }}>
             <ImageWithFallback
               src={photos[currentIndex]}
-              alt={`Foto ${currentIndex + 1} - Pantalla completa`}
+              alt={`${t('photo')} ${currentIndex + 1} - ${t('close_fullscreen')}`}
               style={{
                 width: '100%',
                 height: '100%',
@@ -1997,7 +1998,7 @@ export const UserProfileLive: React.FC = () => {
                 marginBottom: '1.5rem'
               }}>
                 <h3 className="section-title">
-                  📷 Galería de Fotos
+                  📷 {t('photo_gallery')}
                 </h3>
                 <div style={{
                   padding: '0.5rem 1rem',

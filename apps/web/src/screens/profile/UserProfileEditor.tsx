@@ -23,6 +23,7 @@ import { FilterPreferencesModal } from '../../components/profile/FilterPreferenc
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp } from 'react-icons/fa';
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import { validateZonasAgainstCatalog } from '../../utils/validateZonas';
+import { useTranslation } from 'react-i18next';
 
 const colors = {
   dark: '#121212',
@@ -531,6 +532,7 @@ const STYLES = `
 
 export default function UserProfileEditor() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { profile, updateProfileFields, refetchProfile } = useUserProfile();
 
@@ -638,7 +640,7 @@ export default function UserProfileEditor() {
 
     try {
       await uploadToSlot.mutateAsync({ file, slot, kind });
-      showToast(`${kind === 'photo' ? 'Foto' : 'Video'} subido correctamente`, 'success');
+      showToast(`${kind === 'photo' ? t('photo') : t('video')} ${t('uploaded_successfully')}`, 'success');
     } catch (error) {
       console.error('Error uploading file:', error);
       showToast('Error al subir el archivo', 'error');
@@ -735,9 +737,9 @@ export default function UserProfileEditor() {
           color: '#F5F5F5',
         }}>
           <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-          <p style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</p>
+          <p style={{ marginBottom: '8px' }}>{t('loading_your_session')}</p>
           <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+            {t('refresh_page_for_faster_load')}
           </p>
         </div>
       </>
@@ -805,7 +807,7 @@ export default function UserProfileEditor() {
           color: '#F5F5F5',
         }}>
           <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
-          <p>Cargando tu información...</p>
+          <p>{t('loading_your_info')}</p>
         </div>
       </>
     );
@@ -821,10 +823,10 @@ export default function UserProfileEditor() {
               onClick={() => navigate(-1)}
               className="editor-back-btn"
             >
-              ← Volver
+              ← {t('back')}
             </button>
             <h1 className="editor-title">
-              ✏️ Editar Perfil
+              ✏️ {t('edit_profile')}
             </h1>
             <div style={{ width: '100px' }}></div>
           </div>
@@ -860,13 +862,13 @@ export default function UserProfileEditor() {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
               }}
             >
-              ⚙️ Configuración
+              ⚙️ {t('settings')}
             </button>
           </div>
 
           <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">
-              👤 Información Personal
+              👤 {t('personal_information')}
             </h2>
 
             <div
@@ -881,25 +883,25 @@ export default function UserProfileEditor() {
               <div>
                 <div style={{ marginBottom: '1rem' }}>
                   <label className="editor-field">
-                    Nombre de Usuario
+                    {t('username')}
                   </label>
                   <input
                     type="text"
                     value={form.display_name}
                     onChange={(e) => setField('display_name', e.target.value)}
-                    placeholder="Tu nombre de usuario"
+                    placeholder={t('username')}
                     className="editor-input"
                   />
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label className="editor-field">
-                    Biografía
+                    {t('biography')}
                   </label>
                   <textarea
                     value={form.bio || ''}
                     onChange={(e) => setField('bio', e.target.value)}
-                    placeholder="Cuéntanos sobre ti..."
+                    placeholder={t('tell_us_about_you')}
                     rows={3}
                     className="editor-textarea"
                   />
@@ -908,7 +910,7 @@ export default function UserProfileEditor() {
 
               <div className="profile-section-compact">
                 <div className="row-top">
-                  <h3 className="title">¿Cómo te identificas?</h3>
+                  <h3 className="title">{t('how_do_you_identify')}</h3>
                   <div className="identity-pills">
                     {(['lead', 'follow', 'ambos'] as const).map((rol) => (
                       <label
@@ -941,8 +943,8 @@ export default function UserProfileEditor() {
 
                 <div className="row-bottom">
                   <div className="row-bottom-header">
-                    <h4 className="subtitle">Redes Sociales</h4>
-                    <span className="tag">Opcional</span>
+                    <h4 className="subtitle">{t('social_networks')}</h4>
+                    <span className="tag">{t('optional')}</span>
                   </div>
 
                   <div className="social-list">
@@ -1033,7 +1035,7 @@ export default function UserProfileEditor() {
 
           <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">
-              📅 Eventos y compras
+              📅 {t('events_and_purchases')}
             </h2>
             <p
               style={{
@@ -1042,8 +1044,7 @@ export default function UserProfileEditor() {
                 fontSize: '0.95rem',
               }}
             >
-              Desde aquí puedes revisar a qué eventos te has apuntado y ver las clases,
-              boletos o eventos que has pagado dentro de Donde Bailar MX.
+              {t('events_and_purchases_description')}
             </p>
 
             <div
@@ -1087,7 +1088,7 @@ export default function UserProfileEditor() {
                       marginBottom: '0.15rem',
                     }}
                   >
-                    🎫 Mis RSVPs
+                    🎫 {t('my_rsvps')}
                   </div>
                   <div
                     style={{
@@ -1095,7 +1096,7 @@ export default function UserProfileEditor() {
                       color: 'rgba(255,255,255,0.7)',
                     }}
                   >
-                    Ver eventos a los que te has apuntado
+                    {t('view_rsvps_description')}
                   </div>
                 </div>
                 <div style={{ fontSize: '1.4rem' }}>→</div>
@@ -1137,7 +1138,7 @@ export default function UserProfileEditor() {
                       marginBottom: '0.15rem',
                     }}
                   >
-                    🧾 Mis compras
+                    🧾 {t('my_purchases')}
                   </div>
                   <div
                     style={{
@@ -1145,7 +1146,7 @@ export default function UserProfileEditor() {
                       color: 'rgba(255,255,255,0.7)',
                     }}
                   >
-                    Ver clases, boletos y eventos que has pagado
+                    {t('view_purchases_description')}
                   </div>
                 </div>
                 <div style={{ fontSize: '1.4rem' }}>→</div>
@@ -1201,7 +1202,7 @@ export default function UserProfileEditor() {
 
           <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">
-              💬 Preguntas Personalizadas
+              💬 {t('custom_questions')}
             </h2>
 
             <div className="editor-grid">
@@ -1229,7 +1230,7 @@ export default function UserProfileEditor() {
                   onChange={(e) => {
                     setNested('respuestas.gusta_bailar', e.target.value);
                   }}
-                  placeholder="Cuéntanos qué te apasiona del baile..."
+                  placeholder={t('tell_us_what_passionates_you')}
                   rows={2}
                   className="editor-textarea"
                 />
@@ -1239,10 +1240,10 @@ export default function UserProfileEditor() {
 
           <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">
-              ⭐ Preferencias de Filtros
+              ⭐ {t('filter_preferences')}
             </h2>
             <p style={{ marginBottom: '1.5rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }}>
-              Configura tus filtros favoritos (ritmos, zonas, fechas) para aplicarlos automáticamente al explorar eventos y clases
+              {t('filter_preferences_description')}
             </p>
             <button
               onClick={() => setShowFilterPreferences(true)}
@@ -1267,7 +1268,7 @@ export default function UserProfileEditor() {
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(240,147,251,0.3)';
               }}
             >
-              ⚙️ Configurar Preferencias de Filtros
+              ⚙️ {t('configure_filter_preferences')}
             </button>
           </div>
 
@@ -1277,8 +1278,8 @@ export default function UserProfileEditor() {
               uploading={uploading}
               uploadFile={uploadFile}
               removeFile={removeFile}
-              title="📷 Gestión de Fotos"
-              description="👤 Avatar / Foto Principal (p1)"
+              title={`📷 ${t('photo_management')}`}
+              description={`👤 ${t('avatar_main_photo')}`}
               slots={['p1']}
               isMainPhoto={true}
             />
@@ -1288,8 +1289,8 @@ export default function UserProfileEditor() {
               uploading={uploading}
               uploadFile={uploadFile}
               removeFile={removeFile}
-              title="📷 Fotos Destacadas (p2 - p3)"
-              description="Estas fotos se usan en las secciones destacadas de tu perfil"
+              title={`📷 ${t('featured_photos')}`}
+              description={t('featured_photos_description')}
               slots={['p2', 'p3']}
               isMainPhoto={false}
               verticalLayout={true}
@@ -1301,8 +1302,8 @@ export default function UserProfileEditor() {
             uploading={uploading}
             uploadFile={uploadFile}
             removeFile={removeFile}
-            title="📷 Fotos Adicionales (p4-p10)"
-            description="Estas fotos aparecerán en la galería de tu perfil"
+            title={`📷 ${t('additional_photos')}`}
+            description={t('photos_gallery_description')}
             slots={['p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
             isMainPhoto={false}
           />
@@ -1312,8 +1313,8 @@ export default function UserProfileEditor() {
             uploading={uploading}
             uploadFile={uploadFile}
             removeFile={removeFile}
-            title="🎥 Gestión de Videos"
-            description="Los videos aparecerán en la sección de videos de tu perfil"
+            title={`🎥 ${t('video_management')}`}
+            description={t('videos_section_description')}
             slots={['v1', 'v2', 'v3']}
           />
         </div>

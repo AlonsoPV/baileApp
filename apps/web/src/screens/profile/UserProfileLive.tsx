@@ -20,6 +20,7 @@ import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
+import { useTranslation } from "react-i18next";
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
@@ -352,6 +353,7 @@ const STYLES = `
 `;
 
 const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -406,7 +408,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
         >
           <ImageWithFallback
             src={photos[currentIndex]}
-            alt={`Foto ${currentIndex + 1}`}
+            alt={`${t('photo')} ${currentIndex + 1}`}
             style={{
               width: '100%',
               height: '100%',
@@ -466,7 +468,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
             >
               <ImageWithFallback
                 src={photo}
-                alt={`Miniatura ${index + 1}`}
+                alt={`${t('photo_thumbnail')} ${index + 1}`}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -504,7 +506,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
           }}>
             <ImageWithFallback
               src={photos[currentIndex]}
-              alt={`Foto ${currentIndex + 1} - Pantalla completa`}
+              alt={`${t('photo')} ${currentIndex + 1} - ${t('close_fullscreen')}`}
               style={{
                 width: '100%',
                 height: '100%',
@@ -546,6 +548,7 @@ CarouselComponent.displayName = 'CarouselComponent';
 export const UserProfileLive: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { profile, isLoading: profileLoading, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
   const { media, addMedia } = useUserMedia();
@@ -717,9 +720,9 @@ export const UserProfileLive: React.FC = () => {
           }}
         >
           <div style={{ textAlign: 'center', maxWidth: '400px', padding: '0 16px' }}>
-            <p style={{ marginBottom: '8px', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Estamos cargando tu perfil...</p>
+            <p style={{ marginBottom: '8px', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{t('loading_your_profile')}</p>
             <p style={{ fontSize: '0.9rem', opacity: 0.8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-              Si tarda mucho, intenta refrescar la página para una carga más rápida.
+              {t('refresh_page_for_faster_load')}
             </p>
           </div>
         </div>
@@ -784,7 +787,7 @@ export const UserProfileLive: React.FC = () => {
             onClick={() => navigate('/explore')}
             whileHover={{ scale: 1.1, x: -3 }}
             whileTap={{ scale: 0.95 }}
-            aria-label="Volver a inicio"
+            aria-label={t('back_to_start')}
             style={{
               position: 'absolute',
               top: '1rem',
@@ -894,8 +897,8 @@ export const UserProfileLive: React.FC = () => {
                 flexWrap: 'wrap'
               }}>
                 <button
-                  aria-label="Compartir perfil"
-                  title="Compartir"
+                  aria-label={t('share_profile')}
+                  title={t('share')}
                   onClick={() => {
                     try {
                       if (!user?.id) {
@@ -952,8 +955,8 @@ export const UserProfileLive: React.FC = () => {
                     fontWeight: 700,
                     fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
-                >
-                  📤 Compartir
+                  >
+                  📤 {t('share')}
                 </button>
               </div>
             </div>
@@ -983,7 +986,7 @@ export const UserProfileLive: React.FC = () => {
                   fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}
               >
-                {profile?.display_name || 'Usuario'}
+                {profile?.display_name || t('user')}
               </h1>
 
               <div
@@ -995,8 +998,8 @@ export const UserProfileLive: React.FC = () => {
                 }}
               >
                 {[
-                  { label: 'Sigues', value: counts.following, icon: '➜', hue: 'rgba(59,130,246,0.2)' },
-                  { label: 'Seguidores', value: counts.followers, icon: '★', hue: 'rgba(236,72,153,0.2)' },
+                  { label: t('following_label'), value: counts.following, icon: '➜', hue: 'rgba(59,130,246,0.2)' },
+                  { label: t('followers_label'), value: counts.followers, icon: '★', hue: 'rgba(236,72,153,0.2)' },
                 ].map((chip) => (
                   <div
                     key={chip.label}
@@ -1096,7 +1099,7 @@ export const UserProfileLive: React.FC = () => {
                 marginBottom: '1.25rem'
               }}
             >
-              <h3 className="section-title" style={{ marginBottom: 0 }}>Tu comunidad</h3>
+              <h3 className="section-title" style={{ marginBottom: 0 }}>{t('your_community')}</h3>
               <div
                 style={{
                   display: 'inline-flex',
@@ -1130,7 +1133,7 @@ export const UserProfileLive: React.FC = () => {
                     fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
-                  <span style={{ opacity: 0.9, marginRight: 6 }}>➜</span> Sigues {counts.following}
+                  <span style={{ opacity: 0.9, marginRight: 6 }}>➜</span> {t('following_label')} {counts.following}
                 </button>
                 <button
                   onClick={() => setNetworkTab('followers')}
@@ -1153,7 +1156,7 @@ export const UserProfileLive: React.FC = () => {
                     fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
-                  <span style={{ opacity: 0.9, marginRight: 6 }}>★</span> Seguidores {counts.followers}
+                  <span style={{ opacity: 0.9, marginRight: 6 }}>★</span> {t('followers_label')} {counts.followers}
                 </button>
               </div>
             </div>
@@ -1171,8 +1174,8 @@ export const UserProfileLive: React.FC = () => {
               >
                 <span style={{ fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
                   {networkTab === 'following'
-                    ? 'Aún no sigues a nadie. Descubre nuevos perfiles en Explorar.'
-                    : 'Todavía no tienes seguidores. Comparte tu perfil para que más personas te encuentren.'}
+                    ? t('no_following_yet_message')
+                    : t('no_followers_yet_message')}
                 </span>
               </div>
             ) : (
@@ -1287,7 +1290,7 @@ export const UserProfileLive: React.FC = () => {
                               fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                             }}
                           >
-                            {networkTab === 'followers' ? 'Te sigue' : 'Lo sigues'}
+                            {networkTab === 'followers' ? t('follows_you') : t('you_follow')}
                           </span>
                         </div>
                       </div>
@@ -1303,7 +1306,7 @@ export const UserProfileLive: React.FC = () => {
                         }}
                       >
                         <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', fontWeight: 600, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-                          Ver perfil
+                          {t('view_profile')}
                         </span>
                         <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 700, fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>→</span>
                       </div>
@@ -1336,7 +1339,7 @@ export const UserProfileLive: React.FC = () => {
                   {getMediaBySlot(safeMedia as any, 'p2') ? (
                     <ImageWithFallback
                       src={getMediaBySlot(safeMedia as any, 'p2')!.url}
-                      alt="Foto personal"
+                      alt={t('personal_photo')}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -1372,7 +1375,7 @@ export const UserProfileLive: React.FC = () => {
                     fontWeight: '400',
                     fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
-                    {profile?.respuestas?.dato_curioso || "Aún no has compartido un dato curioso sobre ti. ¡Cuéntanos algo interesante!"}
+                    {profile?.respuestas?.dato_curioso || t('no_curious_fact')}
                   </div>
                 </div>
               </div>
@@ -1400,7 +1403,7 @@ export const UserProfileLive: React.FC = () => {
                     fontWeight: '400',
                     fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}>
-                    {profile?.respuestas?.gusta_bailar || "Aún no has compartido qué te gusta bailar. ¡Cuéntanos tu estilo favorito!"}
+                    {profile?.respuestas?.gusta_bailar || t('no_dance_style')}
                   </div>
                 </div>
 
@@ -1414,7 +1417,7 @@ export const UserProfileLive: React.FC = () => {
                   {getMediaBySlot(safeMedia as any, 'p3') ? (
                     <ImageWithFallback
                       src={getMediaBySlot(safeMedia as any, 'p3')!.url}
-                      alt="Foto de baile"
+                      alt={t('dance_photo')}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -1458,7 +1461,7 @@ export const UserProfileLive: React.FC = () => {
               gap: '0.75rem'
             }}>
               <h3 className="section-title" style={{ margin: 0 }}>
-                ✨ Eventos de Interés
+                ✨ {t('interested_events_title')}
               </h3>
               {availableRsvpEvents.length > 0 && (
                 <div style={{
@@ -1517,7 +1520,7 @@ export const UserProfileLive: React.FC = () => {
                   color: colors.light,
                   fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
-                  Sin eventos de interés por ahora
+                  {t('no_interested_events_yet')}
                 </h4>
                 <p style={{
                   fontSize: '0.875rem',
@@ -1526,7 +1529,7 @@ export const UserProfileLive: React.FC = () => {
                   color: colors.light,
                   fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 }}>
-                  Explora eventos y marca los que te interesen para verlos aquí
+                  {t('explore_events_prompt')}
                 </p>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -1545,7 +1548,7 @@ export const UserProfileLive: React.FC = () => {
                     fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
-                  🔍 Explorar Eventos
+                  🔍 {t('explore_events')}
                 </motion.button>
               </motion.div>
             )}
@@ -1560,7 +1563,7 @@ export const UserProfileLive: React.FC = () => {
             >
               <div className="question-section">
                 <div>
-                  <h3 className="section-title">🎥 Video principal</h3>
+                  <h3 className="section-title">🎥 {t('main_video')}</h3>
                   {/* <div style={{
                     padding: '1.25rem',
                     background: 'rgba(255, 255, 255, 0.08)',
@@ -1671,7 +1674,7 @@ export const UserProfileLive: React.FC = () => {
                 marginBottom: '1.5rem'
               }}>
                 <h3 className="section-title">
-                  📷 Galería de Fotos
+                  📷 {t('photo_gallery')}
                 </h3>
                 <div style={{
                   padding: '0.5rem 1rem',

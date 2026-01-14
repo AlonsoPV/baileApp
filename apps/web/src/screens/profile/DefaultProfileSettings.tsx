@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useToast } from "../../components/Toast";
 import { supabase } from "../../lib/supabase";
 import { updatePassword } from "../../utils/passwordReset";
+import { useTranslation } from "react-i18next";
 
 const colors = {
   primary: '#E53935',
@@ -25,6 +26,7 @@ const colors = {
 };
 
 export default function DefaultProfileSettings() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { getProfileOptions, defaultProfile } = useDefaultProfile();
   const { data: organizerProfile, refetch: refetchOrganizer } = useMyOrganizer();
@@ -68,10 +70,10 @@ export default function DefaultProfileSettings() {
     }
     
     // Si el rol está aprobado, mostrar el estado del perfil
-    if (profileStatus === 'aprobado') return '✅ Verificado';
-    if (profileStatus === 'en_revision') return '⏳ En revisión';
-    if (profileStatus === 'rechazado') return '❌ Rechazado';
-    return '📝 Borrador';
+    if (profileStatus === 'aprobado') return t('status_verified');
+    if (profileStatus === 'en_revision') return t('status_in_review');
+    if (profileStatus === 'rechazado') return t('status_rejected');
+    return t('status_draft');
   };
   const { user, signOut } = useAuth();
   const { showToast } = useToast();
@@ -99,22 +101,22 @@ export default function DefaultProfileSettings() {
     
     // Validar campos
     if (hasPassword && !currentPassword) {
-      setPasswordError('Por favor ingresa tu contraseña actual');
+      setPasswordError(t('please_enter_current_password'));
       return;
     }
     
     if (!newPassword || newPassword.length < 6) {
-      setPasswordError('La contraseña debe tener al menos 6 caracteres');
+      setPasswordError(t('password_min_length'));
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      setPasswordError('Las contraseñas no coinciden');
+      setPasswordError(t('passwords_dont_match'));
       return;
     }
 
     if (hasPassword && currentPassword === newPassword) {
-      setPasswordError('La nueva contraseña debe ser diferente a la actual');
+      setPasswordError(t('new_password_different'));
       return;
     }
     
@@ -123,21 +125,21 @@ export default function DefaultProfileSettings() {
       const result = await updatePassword(newPassword, hasPassword ? currentPassword : undefined);
       if (result.success) {
         setPasswordSuccess(hasPassword 
-          ? 'Contraseña actualizada correctamente' 
-          : 'Contraseña establecida correctamente. Ahora puedes iniciar sesión con email y contraseña.');
+          ? t('password_updated') 
+          : t('password_set'));
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
         setShowPasswordSection(false);
         setHasPassword(true); // Ahora tiene contraseña
-        showToast(hasPassword ? 'Contraseña actualizada correctamente' : 'Contraseña establecida correctamente', 'success');
+        showToast(hasPassword ? t('password_updated') : t('password_set_success'), 'success');
       } else {
-        setPasswordError(result.error?.message || (hasPassword ? 'Error al actualizar la contraseña' : 'Error al establecer la contraseña'));
-        showToast(hasPassword ? 'Error al actualizar la contraseña' : 'Error al establecer la contraseña', 'error');
+        setPasswordError(result.error?.message || (hasPassword ? t('error_updating_password') : t('error_setting_password')));
+        showToast(hasPassword ? t('error_updating_password') : t('error_setting_password'), 'error');
       }
     } catch (error: any) {
       setPasswordError(error?.message || 'Error inesperado');
-      showToast(hasPassword ? 'Error al actualizar la contraseña' : 'Error al establecer la contraseña', 'error');
+      showToast(hasPassword ? t('error_updating_password') : t('error_setting_password'), 'error');
     } finally {
       setIsSettingPassword(false);
     }
@@ -145,7 +147,7 @@ export default function DefaultProfileSettings() {
   
   const handleDeleteRequest = async () => {
     if (!user?.email) {
-      showToast('No se pudo obtener tu información de usuario', 'error');
+      showToast(t('could_not_get_user_info'), 'error');
       return;
     }
 
@@ -163,13 +165,13 @@ export default function DefaultProfileSettings() {
       );
       
       window.location.href = `mailto:info@dondebailar.com.mx?subject=${subject}&body=${body}`;
-      showToast('Se abrió tu cliente de correo. Por favor envía la solicitud con tu identificación oficial.', 'success');
+      showToast(t('email_opened'), 'success');
       return;
     }
 
     // Eliminación directa (requiere confirmación)
     if (deleteConfirmationText !== 'ELIMINAR') {
-      showToast('Por favor escribe "ELIMINAR" para confirmar', 'error');
+      showToast(t('type_delete_to_confirm'), 'error');
       return;
     }
 
@@ -202,7 +204,7 @@ export default function DefaultProfileSettings() {
         window.location.href = `mailto:info@dondebailar.com.mx?subject=${subject}&body=${body}`;
       }
 
-      showToast('Tu solicitud ha sido enviada. Te contactaremos pronto.', 'success');
+      showToast(t('delete_request_sent'), 'success');
       
       // Cerrar sesión después de un momento
       setTimeout(async () => {
@@ -212,7 +214,7 @@ export default function DefaultProfileSettings() {
       
     } catch (error: any) {
       console.error('[DeleteAccount] Error:', error);
-      showToast('Error al procesar la solicitud. Por favor contacta a info@dondebailar.com.mx', 'error');
+      showToast(t('delete_request_error'), 'error');
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -282,7 +284,7 @@ export default function DefaultProfileSettings() {
               className="settings-back-button"
             >
               <span>←</span>
-              <span>Volver al Editor</span>
+              <span>{t('back_to_editor')}</span>
             </button>
           <h1 style={{
             fontSize: '2.5rem',
@@ -292,14 +294,14 @@ export default function DefaultProfileSettings() {
             WebkitTextFillColor: 'transparent',
             margin: '4rem 0 1rem 0'
           }}>
-            🎯 Configurar Perfil por Defecto
+            {t('configure_default_profile')}
           </h1>
           <p style={{
             fontSize: '1.1rem',
             color: 'rgba(255, 255, 255, 0.7)',
             margin: 0
           }}>
-            Elige tu perfil principal para navegación rápida
+            {t('choose_default_profile_description')}
           </p>
         </div>
 
@@ -321,7 +323,7 @@ export default function DefaultProfileSettings() {
             showTitle={true}
             onProfileChange={(profileType) => {
               console.log('Perfil por defecto cambiado a:', profileType);
-              showToast(`Perfil por defecto cambiado a: ${profileType}`, 'success');
+              showToast(t('default_profile_changed', { type: profileType }), 'success');
               // Forzar actualización del componente
               setRefreshKey(prev => prev + 1);
             }}
@@ -349,7 +351,7 @@ export default function DefaultProfileSettings() {
             alignItems: 'center',
             gap: '0.5rem'
           }}>
-            📋 Tus Perfiles Disponibles
+            {t('your_available_profiles')}
           </h2>
           
           <div style={{
@@ -394,7 +396,7 @@ export default function DefaultProfileSettings() {
                   </h3>
                   {option.id === defaultProfile && (
                     <Chip
-                      label="Por Defecto"
+                      label={t('default')}
                       active={true}
                     />
                   )}
@@ -409,12 +411,12 @@ export default function DefaultProfileSettings() {
                 }}>
                   {option.hasProfile ? (
                     <Chip
-                      label="✓ Configurado"
+                      label={t('configured')}
                       active={true}
                     />
                   ) : (
                     <Chip
-                      label="⚠️ No configurado"
+                      label={t('not_configured')}
                       active={false}
                     />
                   )}
@@ -437,7 +439,7 @@ export default function DefaultProfileSettings() {
                   
                   {!option.available && (
                     <Chip
-                      label="Próximamente"
+                      label={t('coming_soon')}
                       active={false}
                     />
                   )}
@@ -449,11 +451,11 @@ export default function DefaultProfileSettings() {
                   margin: '0 0 1rem 0',
                   lineHeight: 1.4
                 }}>
-                  {option.id === 'user' && 'Tu perfil personal como usuario de la plataforma.'}
-                  {option.id === 'organizer' && 'Perfil para organizadores de eventos y actividades.'}
-                  {option.id === 'academy' && 'Perfil para academias y centros de enseñanza.'}
-                  {option.id === 'teacher' && 'Perfil para maestros e instructores independientes.'}
-                  {option.id === 'brand' && 'Perfil para marcas y empresas del sector.'}
+                  {option.id === 'user' && t('profile_user_description')}
+                  {option.id === 'organizer' && t('profile_organizer_description')}
+                  {option.id === 'academy' && t('profile_academy_description')}
+                  {option.id === 'teacher' && t('profile_teacher_description')}
+                  {option.id === 'brand' && t('profile_brand_description')}
                 </p>
                 
                 {option.hasProfile && (
@@ -477,7 +479,7 @@ export default function DefaultProfileSettings() {
                         transition: 'all 0.2s ease'
                       }}
                     >
-                      👁️ Ver
+                      {t('view')}
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -495,7 +497,7 @@ export default function DefaultProfileSettings() {
                         transition: 'all 0.2s ease'
                       }}
                     >
-                      ✏️ Editar
+                      {t('edit')}
                     </motion.button>
                   </div>
                 )}
@@ -531,7 +533,7 @@ export default function DefaultProfileSettings() {
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              🔐 {hasPassword ? 'Cambiar Contraseña' : 'Establecer Contraseña'}
+              🔐 {hasPassword ? t('change_password') : t('set_password')}
             </h2>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -556,7 +558,7 @@ export default function DefaultProfileSettings() {
                 transition: 'all 0.2s ease'
               }}
             >
-              {showPasswordSection ? '✕ Cancelar' : '✏️ ' + (hasPassword ? 'Cambiar' : 'Establecer')}
+              {showPasswordSection ? `✕ ${t('cancel')}` : `✏️ ${hasPassword ? t('change_password') : t('set_password')}`}
             </motion.button>
           </div>
 
@@ -598,13 +600,13 @@ export default function DefaultProfileSettings() {
                       color: 'rgba(255, 255, 255, 0.9)',
                       fontWeight: 600
                     }}>
-                      Contraseña Actual
+                      {t('current_password')}
                     </label>
                     <input
                       type="password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Ingresa tu contraseña actual"
+                      placeholder={t('enter_current_password')}
                       style={{
                         width: '100%',
                         padding: '0.75rem',
@@ -626,13 +628,13 @@ export default function DefaultProfileSettings() {
                     color: 'rgba(255, 255, 255, 0.9)',
                     fontWeight: 600
                   }}>
-                    {hasPassword ? 'Nueva Contraseña' : 'Contraseña'}
+                    {hasPassword ? t('new_password') : t('password')}
                   </label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={t('password_min_chars')}
                     style={{
                       width: '100%',
                       padding: '0.75rem',
@@ -653,13 +655,13 @@ export default function DefaultProfileSettings() {
                     color: 'rgba(255, 255, 255, 0.9)',
                     fontWeight: 600
                   }}>
-                    Confirmar {hasPassword ? 'Nueva ' : ''}Contraseña
+                    {t('confirm_password')}
                   </label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repite la contraseña"
+                    placeholder={t('repeat_password')}
                     style={{
                       width: '100%',
                       padding: '0.75rem',
@@ -692,7 +694,7 @@ export default function DefaultProfileSettings() {
                     opacity: isSettingPassword ? 0.6 : 1
                   }}
                 >
-                  {isSettingPassword ? '⏳ Actualizando...' : (hasPassword ? '✅ Actualizar Contraseña' : '✅ Establecer Contraseña')}
+                  {isSettingPassword ? t('updating_password') : (hasPassword ? t('update_password') : t('set_password_button'))}
                 </motion.button>
               </div>
             </div>
@@ -720,16 +722,16 @@ export default function DefaultProfileSettings() {
             alignItems: 'center',
             gap: '0.5rem'
           }}>
-            🗑️ Eliminación de Datos de Usuario
+            {t('delete_account')}
           </h2>
           
           <p style={{
             color: 'rgba(255, 255, 255, 0.9)',
             marginBottom: '1.5rem',
             lineHeight: 1.6
-          }}>
-            De acuerdo con el <a href="/aviso-de-privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', textDecoration: 'underline' }}>Aviso de Privacidad</a>, tienes derecho a solicitar la eliminación de tu cuenta y todos tus datos personales en cualquier momento.
-          </p>
+          }}
+          dangerouslySetInnerHTML={{ __html: t('delete_account_description') }}
+          />
 
           {!showDeleteConfirm ? (
             <div>
@@ -745,20 +747,20 @@ export default function DefaultProfileSettings() {
                   margin: 0,
                   fontWeight: 600,
                   marginBottom: '0.5rem'
-                }}>
-                  ⚠️ Advertencia Importante
-                </p>
+                }}
+                dangerouslySetInnerHTML={{ __html: t('delete_warning_title') }}
+                />
                 <ul style={{
                   color: 'rgba(255, 255, 255, 0.85)',
                   margin: 0,
                   paddingLeft: '1.5rem',
                   lineHeight: 1.8
                 }}>
-                  <li>Esta acción es <strong>irreversible</strong></li>
-                  <li>Se eliminarán todos tus perfiles (usuario, organizador, academia, maestro, marca)</li>
-                  <li>Se eliminarán todos tus datos personales, fotos, videos y contenido</li>
-                  <li>Se eliminarán tus RSVPs, clases guardadas y preferencias</li>
-                  <li>No podrás recuperar tu cuenta después de la eliminación</li>
+                  <li dangerouslySetInnerHTML={{ __html: t('delete_warning_irreversible') }} />
+                  <li>{t('delete_warning_profiles')}</li>
+                  <li>{t('delete_warning_data')}</li>
+                  <li>{t('delete_warning_rsvps')}</li>
+                  <li>{t('delete_warning_no_recovery')}</li>
                 </ul>
               </div>
 
@@ -786,7 +788,7 @@ export default function DefaultProfileSettings() {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  📧 Solicitar por Email
+                  {t('request_by_email')}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -807,7 +809,7 @@ export default function DefaultProfileSettings() {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  🗑️ Eliminar Cuenta Directamente
+                  {t('delete_account_directly')}
                 </motion.button>
               </div>
             </div>
@@ -819,8 +821,8 @@ export default function DefaultProfileSettings() {
                 fontWeight: 600
               }}>
                 {deleteMethod === 'email' 
-                  ? 'Se abrirá tu cliente de correo con un mensaje prellenado. Por favor completa tu información y adjunta una identificación oficial.'
-                  : 'Para confirmar, escribe "ELIMINAR" en el campo de abajo:'}
+                  ? t('email_request_description')
+                  : t('direct_delete_description')}
               </p>
 
               {deleteMethod === 'direct' && (
@@ -828,7 +830,7 @@ export default function DefaultProfileSettings() {
                   type="text"
                   value={deleteConfirmationText}
                   onChange={(e) => setDeleteConfirmationText(e.target.value)}
-                  placeholder="Escribe ELIMINAR para confirmar"
+                  placeholder={t('type_delete_to_confirm')}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -869,7 +871,7 @@ export default function DefaultProfileSettings() {
                     opacity: isDeleting || (deleteMethod === 'direct' && deleteConfirmationText !== 'ELIMINAR') ? 0.6 : 1
                   }}
                 >
-                  {isDeleting ? '⏳ Procesando...' : deleteMethod === 'email' ? '📧 Abrir Email' : '🗑️ Confirmar Eliminación'}
+                  {isDeleting ? t('processing') : deleteMethod === 'email' ? t('open_email') : t('confirm_deletion')}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -891,7 +893,7 @@ export default function DefaultProfileSettings() {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  Cancelar
+                  {t('cancel')}
                 </motion.button>
               </div>
             </div>
@@ -909,16 +911,9 @@ export default function DefaultProfileSettings() {
               margin: 0,
               fontSize: '0.875rem',
               lineHeight: 1.6
-            }}>
-              <strong>💡 Información:</strong> Si tienes dudas o necesitas ayuda, puedes contactarnos en{' '}
-              <a href="mailto:info@dondebailar.com.mx" style={{ color: '#60a5fa', textDecoration: 'underline' }}>
-                info@dondebailar.com.mx
-              </a>
-              {' '}o revisar nuestro{' '}
-              <a href="/aviso-de-privacidad" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', textDecoration: 'underline' }}>
-                Aviso de Privacidad
-              </a>.
-            </p>
+            }}
+            dangerouslySetInnerHTML={{ __html: t('delete_info') }}
+            />
           </div>
         </motion.div>
 
@@ -944,15 +939,14 @@ export default function DefaultProfileSettings() {
             justifyContent: 'center',
             gap: '0.5rem'
           }}>
-            💡 ¿Cómo funciona?
+            {t('how_it_works')}
           </h3>
           <p style={{
             color: 'rgba(255, 255, 255, 0.8)',
             margin: '0 0 1rem 0',
             lineHeight: 1.6
           }}>
-            El perfil por defecto determina a dónde te llevan los botones de navegación en el menú y la barra superior. 
-            Puedes cambiarlo en cualquier momento desde esta pantalla.
+            {t('default_profile_explanation')}
           </p>
           <div style={{
             display: 'flex',
@@ -976,7 +970,7 @@ export default function DefaultProfileSettings() {
                 transition: 'all 0.2s ease'
               }}
             >
-              ← Volver al Perfil
+              {t('back_to_profile')}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -994,7 +988,7 @@ export default function DefaultProfileSettings() {
                 transition: 'all 0.2s ease'
               }}
             >
-              🔍 Explorar
+              {t('explore')}
             </motion.button>
           </div>
         </motion.div>

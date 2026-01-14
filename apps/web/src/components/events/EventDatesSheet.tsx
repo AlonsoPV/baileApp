@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../Toast";
@@ -166,10 +166,33 @@ const Row = React.memo(function Row({
         onChange={(e) => onToggle(row.id, e.target.checked)}
         style={{ width: 18, height: 18 }}
       />
-      <div style={{ color: "#fff", fontWeight: 900, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <div
+        className="eds-eventName"
+        style={{
+          color: "#fff",
+          fontWeight: 900,
+          fontSize: 13,
+          minWidth: 0,
+          overflow: "hidden",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical" as any,
+          lineHeight: 1.15,
+        }}
+        title={row.nombre || ""}
+      >
         {row.nombre || "—"}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div
+        className="eds-dateCell"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          minWidth: 0,
+          overflow: "hidden",
+        }}
+      >
         {!isEditingFecha ? (
           <button
             type="button"
@@ -180,46 +203,96 @@ const Row = React.memo(function Row({
                 : "Editar fecha"
             }
             className={`eds-editableDate ${canEditFecha ? "" : "eds-editableDateDisabled"}`}
+            style={{ maxWidth: "100%", minWidth: 0 }}
           >
             <span style={{ opacity: 1 }}>{String(row.fecha).split("T")[0]}</span>
+            {isRecurrent && (
+              <span
+                className="eds-recurMark"
+                title="Recurrente semanal"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 18,
+                  height: 18,
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.10)",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  fontSize: 12,
+                  lineHeight: "18px",
+                }}
+              >
+                🔁
+              </span>
+            )}
             <span style={{ opacity: 0.9, fontSize: 12 }}>✎</span>
           </button>
         ) : (
-          <>
+          <div
+            style={{
+              display: "grid",
+              gap: 8,
+              width: "100%",
+              minWidth: 0,
+              maxWidth: "100%",
+              overflow: "hidden",
+              flex: "1 1 0%",
+            }}
+          >
             <input
               type="date"
               value={editingFechaValue}
               onChange={(e) => onChangeEditFecha(e.target.value)}
               style={{
-                padding: "6px 8px",
-                borderRadius: 10,
+                width: "100%",
+                padding: "8px 10px",
+                borderRadius: 12,
                 border: "1px solid rgba(255,255,255,0.18)",
                 background: "rgba(0,0,0,0.25)",
                 color: "#fff",
+                boxSizing: "border-box",
+                minWidth: 0,
               }}
             />
-            <button
-              type="button"
-              onClick={onSaveFecha}
-              className="eds-iconBtn eds-iconBtnPrimary"
-              title="Guardar fecha"
-            >
-              ✓
-            </button>
-            <button
-              type="button"
-              onClick={onCancelFecha}
-              className="eds-iconBtn"
-              title="Cancelar"
-            >
-              ✕
-            </button>
-          </>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={onCancelFecha}
+                className="eds-iconBtn"
+                title="Cancelar"
+              >
+                ✕
+              </button>
+              <button
+                type="button"
+                onClick={onSaveFecha}
+                className="eds-iconBtn eds-iconBtnPrimary"
+                title="Guardar fecha"
+              >
+                ✓
+              </button>
+            </div>
+          </div>
         )}
       </div>
       <div style={{ color: "#fff", fontSize: 13, opacity: 0.9 }}>{toHHmm(row.hora_inicio)}</div>
       <div style={{ color: "#fff", fontSize: 13, opacity: 0.9 }}>{toHHmm(row.hora_fin)}</div>
-      <div className="eds-place" style={{ color: "#fff", fontSize: 12, opacity: 0.9, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <div
+        className="eds-place"
+        style={{
+          color: "#fff",
+          fontSize: 12,
+          opacity: 0.9,
+          minWidth: 0,
+          overflow: "hidden",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical" as any,
+          lineHeight: 1.2,
+        }}
+        title={row.lugar || ""}
+      >
         {row.lugar || "—"}
       </div>
       <div
@@ -474,9 +547,44 @@ export default function EventDatesSheet({
     ciudad: "",
     referencias: "",
   });
+  // Optimistic UI patches per row id so actions reflect immediately even if parent doesn't pass onRowsPatched.
+  const [localPatchById, setLocalPatchById] = useState<Record<number, Record<string, any>>>({});
+
+  const applyLocalPatch = useCallback((ids: number[], patch: Record<string, any>) => {
+    if (!ids?.length) return;
+    setLocalPatchById((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => {
+        const key = Number(id);
+        if (!Number.isFinite(key)) return;
+        next[key] = { ...(next[key] || {}), ...(patch || {}) };
+      });
+      return next;
+    });
+  }, []);
+
+  // Prune patches for rows that no longer exist (e.g., after delete or filters).
+  useEffect(() => {
+    const idSet = new Set((rows || []).map((r) => Number(r.id)));
+    setLocalPatchById((prev) => {
+      const next: Record<number, Record<string, any>> = {};
+      for (const [k, v] of Object.entries(prev)) {
+        const id = Number(k);
+        if (idSet.has(id)) next[id] = v as any;
+      }
+      return next;
+    });
+  }, [rows]);
+
+  const renderedRows = useMemo(() => {
+    return (rows || []).map((r) => {
+      const patch = localPatchById[Number(r.id)];
+      return patch ? ({ ...(r as any), ...(patch as any) } as EventDateRow) : r;
+    });
+  }, [rows, localPatchById]);
 
   const sortedRows = useMemo(() => {
-    return [...(rows || [])].sort((a, b) => {
+    return [...renderedRows].sort((a, b) => {
       const fa = String(a.fecha || "");
       const fb = String(b.fecha || "");
       const byDate = fa.localeCompare(fb);
@@ -485,11 +593,21 @@ export default function EventDatesSheet({
       const nb = String(b.nombre || "");
       return na.localeCompare(nb);
     });
-  }, [rows]);
+  }, [renderedRows]);
 
   const selectedCount = selectedIds.size;
   const selectedList = useMemo(() => Array.from(selectedIds), [selectedIds]);
   const lastPointerDownRef = useRef<{ id: number | null; ts: number }>({ id: null, ts: 0 });
+  const selectAllRef = useRef<HTMLInputElement | null>(null);
+
+  const allCount = sortedRows.length;
+  const allSelected = allCount > 0 && selectedCount === allCount;
+  const someSelected = selectedCount > 0 && selectedCount < allCount;
+
+  useEffect(() => {
+    if (!selectAllRef.current) return;
+    selectAllRef.current.indeterminate = someSelected;
+  }, [someSelected]);
 
   const seedAndPrefetchDate = useCallback(
     (row: EventDateRow) => {
@@ -509,6 +627,29 @@ export default function EventDatesSheet({
       });
     },
     [qc]
+  );
+
+  // Back-compat helper for any stale HMR closures that still reference `prefetchDate(id)`.
+  // Safe to keep: it reuses the new seeding path when possible.
+  const prefetchDate = useCallback(
+    (id: number) => {
+      if (!id) return;
+      const row = sortedRows.find((r) => r.id === id);
+      if (row) {
+        seedAndPrefetchDate(row);
+        return;
+      }
+      void qc.prefetchQuery({
+        queryKey: ["event", "date", id],
+        queryFn: async () => {
+          const { data, error } = await supabase.from("events_date").select("*").eq("id", id).maybeSingle();
+          if (error) throw error;
+          return data;
+        },
+        staleTime: 1000 * 30,
+      });
+    },
+    [qc, seedAndPrefetchDate, sortedRows]
   );
 
   const openDrawerPointerDown = useCallback(
@@ -556,12 +697,13 @@ export default function EventDatesSheet({
       try {
         const res = await bulkUpdate.mutateAsync({ dateIds: selectedList, patch });
         onRowsPatched?.(res.updatedIds, patch);
+        applyLocalPatch(res.updatedIds, patch);
         showToast("Actualizado ✅", "success");
       } catch (e: any) {
         showToast(e?.message || "Error en bulk update", "error");
       }
     },
-    [bulkUpdate, selectedList, onRowsPatched, showToast]
+    [bulkUpdate, selectedList, onRowsPatched, showToast, applyLocalPatch]
   );
 
   const canRun = selectedCount > 0 && !bulkUpdate.isPending && !bulkDeleting;
@@ -572,6 +714,19 @@ export default function EventDatesSheet({
         const { error } = await supabase.from("events_date").update(patch).eq("id", rowId);
         if (error) throw error;
         onRowsPatched?.([rowId], patch);
+        applyLocalPatch([rowId], patch);
+        // Refrescar caches/listas para que la UI refleje el cambio aunque el parent no pase onRowsPatched.
+        // Nota: usamos invalidación por prefijo para cubrir keys como ["dates", parentId, publishedOnly].
+        const row = sortedRows.find((r) => r.id === rowId);
+        qc.invalidateQueries({ queryKey: ["event", "date", rowId] });
+        qc.invalidateQueries({ queryKey: ["date", rowId] });
+        qc.invalidateQueries({ queryKey: ["dates"] });
+        qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+        qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+        if (row?.parent_id) {
+          qc.invalidateQueries({ queryKey: ["dates", row.parent_id] });
+          qc.invalidateQueries({ queryKey: ["event", "dates", row.parent_id] });
+        }
         if (successMsg) showToast(successMsg, "success");
       } catch (e: any) {
         console.error("[EventDatesSheet] updateRow error:", e);
@@ -579,7 +734,7 @@ export default function EventDatesSheet({
         throw e;
       }
     },
-    [onRowsPatched, showToast]
+    [onRowsPatched, showToast, qc, sortedRows, applyLocalPatch]
   );
 
   const makeDiaSemanaFromFecha = useCallback((fechaValue: any): number | null => {
@@ -635,9 +790,13 @@ export default function EventDatesSheet({
   }, [onStartFrecuentes, selectedList, showToast]);
 
   const startEditFecha = useCallback((row: EventDateRow) => {
+    const isRecurrent = (row as any)?.dia_semana !== null && (row as any)?.dia_semana !== undefined;
+    if (isRecurrent) {
+      showToast("ℹ️ Este evento es recurrente. Si guardas una fecha específica, se quitará la recurrencia.", "info");
+    }
     setEditingFechaId(row.id);
     setEditingFechaValue(String(row.fecha || "").split("T")[0]);
-  }, []);
+  }, [showToast]);
 
   const saveFecha = useCallback(async () => {
     if (!editingFechaId) return;
@@ -648,16 +807,18 @@ export default function EventDatesSheet({
     }
     const row = sortedRows.find((r) => r.id === editingFechaId);
     const isRecurrent = (row as any)?.dia_semana !== null && (row as any)?.dia_semana !== undefined;
-    if (isRecurrent) {
-      const ok = window.confirm(
-        "Este evento es recurrente semanal. Para asignar una fecha específica, se quitará la recurrencia.\n\n¿Continuar?"
-      );
-      if (!ok) return;
-    }
     const patch: Record<string, any> = { fecha: value };
     if (isRecurrent) patch.dia_semana = null;
-    await updateRow(editingFechaId, patch, isRecurrent ? "Fecha guardada ✅ (recurrencia removida)" : "Fecha guardada ✅");
-    setEditingFechaId(null);
+    try {
+      await updateRow(
+        editingFechaId,
+        patch,
+        isRecurrent ? "Fecha guardada ✅ (recurrencia removida)" : "Fecha guardada ✅"
+      );
+      setEditingFechaId(null);
+    } catch {
+      // updateRow ya muestra toast; mantener el modo edición para que el usuario pueda reintentar.
+    }
   }, [editingFechaId, editingFechaValue, showToast, updateRow, sortedRows]);
 
   const cancelFecha = useCallback(() => {
@@ -713,6 +874,7 @@ export default function EventDatesSheet({
         const { error } = await supabase.from("events_date").update({ flyer_url: url }).eq("id", row.id);
         if (error) throw error;
         onRowsPatched?.([row.id], { flyer_url: url });
+        applyLocalPatch([row.id], { flyer_url: url });
         showToast("Flyer añadido ✅", "success");
       } catch (e: any) {
         console.error("[EventDatesSheet] flyer upload error:", e);
@@ -755,7 +917,12 @@ export default function EventDatesSheet({
           --eds-flyer-col: 64px;
           --eds-estado-col: 64px;
           --eds-actions-col: 140px;
-          --eds-cols: 42px 220px 120px 72px 72px minmax(220px, 1fr) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col);
+          /* ↓ Reduce Evento/Lugar widths and let them wrap to 2 lines */
+          --eds-event-col: 165px;
+          --eds-date-col: 140px;
+          --eds-time-col: 72px;
+          --eds-place-col: minmax(160px, 1fr);
+          --eds-cols: 42px var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-place-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col);
         }
         /* Explicit grid-template-columns per request */
         .eds-grid.eds-row { grid-template-columns: var(--eds-cols); }
@@ -783,21 +950,24 @@ export default function EventDatesSheet({
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          border-radius: 12px;
-          border: 1px solid rgba(255,255,255,0.18);
-          background: rgba(255,255,255,0.06);
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.22);
+          background: #1a1f2b;
           color: #fff;
           cursor: pointer;
           font-weight: 900;
-          user-select: none;
+          user-select: text; /* requerido: contenido seleccionable */
+          -webkit-user-select: text;
           box-shadow: 0 8px 18px rgba(0,0,0,0.25);
           transition: transform .12s ease, border-color .12s ease, background .12s ease, box-shadow .12s ease, opacity .12s ease;
         }
-        .eds-iconBtn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,0.30); background: rgba(255,255,255,0.08); }
+        .eds-iconBtn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,0.32); background: #23293a; }
         .eds-iconBtn:active{ transform: translateY(0px) scale(0.98); }
         .eds-iconBtn:disabled{ opacity: .55; cursor: not-allowed; box-shadow: none; }
-        .eds-iconBtnPrimary{ border-color: rgba(39,195,255,0.55); background: rgba(39,195,255,0.12); }
-        .eds-iconBtnDanger{ border-color: rgba(255,61,87,0.55); background: rgba(255,61,87,0.12); }
+        .eds-iconBtnPrimary{ border-color: rgba(39,195,255,0.75); background: #1E88E5; }
+        .eds-iconBtnPrimary:hover{ background: #1976D2; border-color: rgba(39,195,255,0.9); }
+        .eds-iconBtnDanger{ border-color: rgba(255,61,87,0.75); background: #FF3D57; }
+        .eds-iconBtnDanger:hover{ background: #E53935; border-color: rgba(255,61,87,0.9); }
 
         .eds-editableDate{
           display: inline-flex;
@@ -811,6 +981,9 @@ export default function EventDatesSheet({
           font-weight: 900;
           cursor: pointer;
           transition: border-color .12s ease, background .12s ease, transform .12s ease;
+          max-width: 100%;
+          min-width: 0;
+          overflow: hidden;
         }
         .eds-editableDate:hover{ border-color: rgba(39,195,255,0.65); background: rgba(39,195,255,0.12); transform: translateY(-1px); }
         .eds-editableDate:active{ transform: translateY(0px) scale(0.99); }
@@ -863,22 +1036,24 @@ export default function EventDatesSheet({
         }
         .eds-actionBtn{
           padding: 10px 12px;
-          border-radius: 12px;
+          border-radius: 999px;
           border: 1px solid rgba(255,255,255,0.28);
-          background: rgba(255,255,255,0.06);
+          background: #1a1f2b;
           color: #fff;
           cursor: pointer;
           font-weight: 900;
+          user-select: text; /* requerido: contenido seleccionable */
+          -webkit-user-select: text;
           min-height: 40px;
           white-space: nowrap;
         }
         .eds-actionBtnPrimary{
-          border-color: rgba(39,195,255,0.55);
-          background: linear-gradient(135deg, rgba(39,195,255,0.22), rgba(30,136,229,0.22));
+          border-color: rgba(39,195,255,0.75);
+          background: #1E88E5;
         }
         .eds-actionBtnDanger{
-          border-color: rgba(255,61,87,0.55);
-          background: rgba(255,61,87,0.12);
+          border-color: rgba(255,61,87,0.75);
+          background: #FF3D57;
         }
         .eds-actionBtn:disabled{
           opacity: .55;
@@ -895,13 +1070,13 @@ export default function EventDatesSheet({
         @media (max-width: 720px) {
           .eds-minWidth { min-width: 780px; }
           /* Give more room to "Evento" on mobile */
-          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-cols: 36px 220px 96px 64px 64px minmax(200px, 1fr) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
-          .eds-iconBtn{ width: 36px; height: 36px; border-radius: 11px; }
+          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-event-col: 160px; --eds-date-col: 132px; --eds-time-col: 64px; --eds-place-col: minmax(160px, 1fr); --eds-cols: 36px var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-place-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
+          .eds-iconBtn{ width: 36px; height: 36px; border-radius: 999px; }
         }
         @media (max-width: 520px) {
           .eds-minWidth { min-width: 620px; }
           .eds-place { display: none; }
-          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-cols: 36px minmax(180px, 1fr) 110px 64px 64px var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
+          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-event-col: minmax(180px, 1fr); --eds-date-col: 110px; --eds-time-col: 64px; --eds-cols: 36px var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
           .eds-editableDate{ padding: 6px 8px; }
         }
       `}</style>
@@ -1061,7 +1236,16 @@ export default function EventDatesSheet({
       <div className="eds-scroll">
         <div className="eds-minWidth">
           <div className="eds-grid eds-header" style={{ display: "grid", gap: 10, opacity: 0.9, fontSize: 12, marginBottom: 8, color: "#fff" }}>
-            <div></div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <input
+                ref={selectAllRef}
+                type="checkbox"
+                checked={allSelected}
+                onChange={(e) => setAll(e.target.checked)}
+                aria-label={allSelected ? "Deseleccionar todo" : "Seleccionar todo"}
+                style={{ width: 18, height: 18, cursor: "pointer" }}
+              />
+            </div>
             <div>Evento</div>
             <div>Fecha</div>
             <div>Inicio</div>

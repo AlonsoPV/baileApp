@@ -3,6 +3,23 @@ import { supabase } from "../lib/supabase";
 
 export type BulkValidationError = { id: number; field: string; message: string };
 
+const REQUEST_TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("Timeout: la operación tardó demasiado. Intenta de nuevo.")), ms);
+    promise
+      .then((v) => {
+        clearTimeout(t);
+        resolve(v);
+      })
+      .catch((e) => {
+        clearTimeout(t);
+        reject(e);
+      });
+  });
+}
+
 const isHHmm = (v?: string | null) => {
   if (!v) return true;
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v));
@@ -34,11 +51,14 @@ export function useBulkUpdateEventDates() {
         throw new Error(msg);
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await withTimeout(
+        supabase
         .from("events_date")
         .update(patch as any)
         .in("id", dateIds)
-        .select("id");
+        .select("id"),
+        REQUEST_TIMEOUT_MS
+      );
       if (error) throw error;
       const updatedIds = (data || []).map((r: any) => Number(r.id)).filter(Boolean);
       return { updatedIds };

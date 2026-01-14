@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useMyOrganizer, useUpsertMyOrganizer, useSubmitOrganizerForReview } from "../../hooks/useOrganizer";
 import { useParentsByOrganizer, useDeleteParent, useDatesByParent, useDeleteDate, useCreateParent, useUpdateDate } from "../../hooks/useEvents";
 import { useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
@@ -533,6 +534,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
 }
 
 export default function OrganizerProfileEditor() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -599,7 +601,7 @@ export default function OrganizerProfileEditor() {
       currentStatus === 'aprobado' &&
       previousApprovalStatus !== currentStatus
     ) {
-      showToast('🎉 ¡Bienvenido, Organizador! Tu perfil ha sido aprobado. Ya puedes empezar a crear tus eventos.', 'success');
+      showToast(t('welcome_organizer') + ' ' + t('profile_approved_message'), 'success');
       setShowWelcomeBanner(true); // Mostrar banner de bienvenida
       // Ocultar el banner después de 10 segundos
       setTimeout(() => setShowWelcomeBanner(false), 10000);
@@ -1649,6 +1651,45 @@ export default function OrganizerProfileEditor() {
       
       // Eliminar la fecha (esto es lo importante)
       await deleteDate.mutateAsync(dateId);
+
+      // ✅ Quitar inmediatamente la fecha de las listas/caches para que no “se quede disponible”
+      try {
+        const organizerId = (org as any)?.id ? Number((org as any).id) : undefined;
+        // Mejor esfuerzo para obtener parent_id del row eliminado
+        const rowAny =
+          ((bulkDates as any) || []).find((d: any) => Number(d?.id) === Number(dateId)) ||
+          ((allOrganizerDates as any) || []).find((d: any) => Number(d?.id) === Number(dateId)) ||
+          null;
+        const parentId = rowAny && rowAny.parent_id ? Number(rowAny.parent_id) : null;
+
+        // 1) Bulk list (events_date only)
+        if (organizerId) {
+          queryClient.setQueryData(["event-dates", "bulk", organizerId], (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.filter((r: any) => Number(r?.id) !== Number(dateId));
+          });
+          queryClient.setQueryData(["event-dates", "by-organizer", organizerId], (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.filter((r: any) => Number(r?.id) !== Number(dateId));
+          });
+        }
+
+        // 2) Per-parent dates lists used by EventParentCard: keys look like ["dates", parentId, publishedOnly]
+        if (parentId) {
+          // update all matching queries by prefix
+          (queryClient as any).setQueriesData?.({ queryKey: ["dates", parentId] }, (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.filter((r: any) => Number(r?.id) !== Number(dateId));
+          });
+          (queryClient as any).setQueriesData?.({ queryKey: ["event", "dates", parentId] }, (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.filter((r: any) => Number(r?.id) !== Number(dateId));
+          });
+        }
+      } catch (e) {
+        // no bloquear por errores de cache
+        console.warn("[OrganizerProfileEditor] No se pudo aplicar borrado optimista en cache:", e);
+      }
       
       // Esperar limpieza de RSVPs en background (no bloquea)
       await rsvpCleanup;
@@ -1714,9 +1755,9 @@ export default function OrganizerProfileEditor() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-          <div style={{ marginBottom: '8px' }}>Estamos cargando tu sesión...</div>
+          <div style={{ marginBottom: '8px' }}>{t('loading_session')}</div>
           <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+            {t('if_takes_long')}
           </div>
         </div>
       </div>
@@ -1737,7 +1778,7 @@ export default function OrganizerProfileEditor() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>⚠️</div>
           <div style={{ marginBottom: '0.75rem' }}>
-            No pudimos cargar tu sesión. Revisa tu conexión e inténtalo de nuevo.
+            {t('could_not_get_user_info')}
           </div>
           <button
             type="button"
@@ -1754,7 +1795,7 @@ export default function OrganizerProfileEditor() {
               fontWeight: 600,
             }}
           >
-            Reintentar
+            {t('retry')}
           </button>
         </div>
       </div>
@@ -1774,7 +1815,7 @@ export default function OrganizerProfileEditor() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔒</div>
-          <div>No has iniciado sesión</div>
+          <div>{t('login')}</div>
         </div>
       </div>
     );
@@ -1793,9 +1834,9 @@ export default function OrganizerProfileEditor() {
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-          <div style={{ marginBottom: '8px' }}>Estamos cargando tu perfil del organizador...</div>
+          <div style={{ marginBottom: '8px' }}>{t('loading_organizer_profile')}</div>
           <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+            {t('if_takes_long')}
           </div>
         </div>
       </div>
@@ -1816,7 +1857,7 @@ export default function OrganizerProfileEditor() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>⚠️</div>
           <div style={{ marginBottom: '0.75rem' }}>
-            No pudimos cargar el perfil del organizador. Revisa tu conexión e inténtalo de nuevo.
+            {t('error_loading_profile')}
           </div>
           <button
             type="button"
@@ -1833,7 +1874,7 @@ export default function OrganizerProfileEditor() {
               fontWeight: 600,
             }}
           >
-            Reintentar
+            {t('retry')}
           </button>
         </div>
       </div>
@@ -3814,10 +3855,10 @@ export default function OrganizerProfileEditor() {
               onClick={() => navigate(-1)}
               className="org-editor-back"
             >
-              ← Volver
+              ← {t('back')}
             </button>
             <h1 className="org-editor-title">
-              ✏️ Editar Organizador
+              {t('edit_organizer')}
             </h1>
             <div style={{ width: '100px' }}></div>
           </div>
@@ -3864,7 +3905,7 @@ export default function OrganizerProfileEditor() {
                     : "2px solid transparent",
               }}
             >
-              📝 Perfil
+              📝 {t('edit_profile')}
             </button>
             <button
               onClick={() => setActiveTab("metricas")}
@@ -3886,7 +3927,7 @@ export default function OrganizerProfileEditor() {
                     : "2px solid transparent",
               }}
             >
-              📊 Métricas eventos
+              📊 {t('events_and_purchases')}
             </button>
           </div>
 
@@ -3900,7 +3941,7 @@ export default function OrganizerProfileEditor() {
                   color: colors.light,
                 }}
               >
-                📊 Métricas de eventos
+                📊 {t('events_and_purchases')}
               </h2>
               <OrganizerEventMetricsPanel organizerId={(org as any).id} />
             </div>
@@ -3940,7 +3981,7 @@ export default function OrganizerProfileEditor() {
                       color: "#FFFFFF",
                     }}
                   >
-                    ¡Bienvenido, Organizador!
+                    {t('welcome_organizer')}
                   </h3>
                   <p
                     style={{
@@ -3950,8 +3991,8 @@ export default function OrganizerProfileEditor() {
                     }}
                   >
                     {showWelcomeBanner 
-                      ? <>Tu perfil ha sido aprobado. Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para actualizar tu perfil.</>
-                      : <>Completa tu información básica y haz clic en <strong>💾 Guardar</strong> arriba para crear tu perfil</>
+                      ? <span dangerouslySetInnerHTML={{ __html: t('profile_approved_message') }} />
+                      : <span dangerouslySetInnerHTML={{ __html: t('new_profile_message') }} />
                     }
                   </p>
                   <div
@@ -3964,7 +4005,7 @@ export default function OrganizerProfileEditor() {
                       fontWeight: "600",
                     }}
                   >
-                    👆 Mínimo requerido: <strong>Nombre Público</strong> y <strong>Ritmos</strong>
+                    <span dangerouslySetInnerHTML={{ __html: t('minimum_required') }} />
                   </div>
                 </motion.div>
               )}
@@ -3977,7 +4018,7 @@ export default function OrganizerProfileEditor() {
                 style={{ marginBottom: '3rem' }}
               >
                 <h2 className="editor-section-title">
-                  👤 Información Personal
+                  {t('personal_information')}
                 </h2>
 
                 <div style={{
@@ -3991,7 +4032,7 @@ export default function OrganizerProfileEditor() {
                   <div>
                     <div style={{ marginBottom: '1rem' }}>
                       <label className="editor-field">
-                        🏢 Nombre Público *
+                        {t('public_name')}
                       </label>
                       <input
                         id="organizer-name-input"
@@ -4001,21 +4042,21 @@ export default function OrganizerProfileEditor() {
                         onChange={(e) =>
                           setField("nombre_publico", e.target.value)
                         }
-                        placeholder="Nombre de tu organización"
+                        placeholder={t('public_name_placeholder')}
                         className="editor-input"
                       />
                     </div>
 
                     <div style={{ marginBottom: '1rem' }}>
                       <label className="editor-field">
-                        📝 Biografía
+                        {t('biography')}
                       </label>
                       <textarea
                         id="organizer-bio-input"
                         data-test-id="organizer-bio-input"
                         value={form.bio || ''}
                         onChange={(e) => setField("bio", e.target.value)}
-                        placeholder="Cuéntanos sobre tu organización..."
+                        placeholder={t('biography_placeholder')}
                         rows={3}
                         className="editor-textarea"
                       />
@@ -4027,8 +4068,8 @@ export default function OrganizerProfileEditor() {
                     {/* REDES SOCIALES */}
                     <div className="row-bottom">
                       <div className="row-bottom-header">
-                        <h4 className="subtitle">Redes Sociales</h4>
-                        <span className="tag">Opcional</span>
+                        <h4 className="subtitle">{t('social_networks')}</h4>
+                        <span className="tag">{t('optional')}</span>
                       </div>
 
                       <div className="social-list">
@@ -4139,14 +4180,14 @@ export default function OrganizerProfileEditor() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
                       <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
                       <div>
-                        <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Ritmos que Organizas</h2>
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que organizas</div>
+                        <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>{t('rhythms_you_organize')}</h2>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>{t('select_rhythms_organize')}</div>
                       </div>
                     </div>
 
                     {/* Catálogo agrupado */}
                     <div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>{t('grouped_catalog')}</div>
                       <RitmosSelectorEditor
                         selected={
                           (((form as any)?.ritmos_seleccionados) ||
@@ -4164,8 +4205,8 @@ export default function OrganizerProfileEditor() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
                       <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
                       <div>
-                        <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Zonas</h2>
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde operas</div>
+                        <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>{t('zones')}</h2>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>{t('indicate_zones_operate')}</div>
                       </div>
                     </div>
 
@@ -4190,7 +4231,7 @@ export default function OrganizerProfileEditor() {
           {approvedRoles?.approved?.includes('organizador') && user?.id && org && (
             <div className="org-editor-card" style={{ marginBottom: '3rem' }}>
               <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
-                💸 Pagos y Cobros
+                {t('payments_and_collections')}
               </h2>
               <StripePayoutSettings
                 userId={user.id}
@@ -4221,8 +4262,8 @@ export default function OrganizerProfileEditor() {
                     🎭
                   </div>
                   <div className="org-events-header-text">
-                    <h2>Mis Sociales</h2>
-                    <p>Gestiona tus eventos sociales</p>
+                    <h2>{t('my_socials')}</h2>
+                    <p>{t('manage_social_events')}</p>
                   </div>
                 </div>
                 <div className="org-events-header-actions">
@@ -4238,7 +4279,7 @@ export default function OrganizerProfileEditor() {
                     className={`org-events-action-button ${showDateForm ? 'org-events-action-button--active' : 'org-events-action-button--primary'}`}
                   >
                     <span>{showDateForm ? '✖️' : '📅'}</span>
-                    <span>{showDateForm ? 'Cerrar' : 'Crear Fecha'}</span>
+                    <span>{showDateForm ? t('close') : t('create_date')}</span>
                   </motion.button>
 
                   {/* Botón de crear social desactivado temporalmente */}
@@ -4284,60 +4325,60 @@ export default function OrganizerProfileEditor() {
                   {/* Información Básica */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📝 Información Básica
+                      {t('basic_information')}
                     </h3>
                     <div className="org-editor-grid">
                       <div>
                         <label className="org-editor-field">
-                          Nombre del Evento *
+                          {t('event_name')}
                         </label>
                         <input
                           type="text"
                           value={dateForm.nombre}
                           onChange={(e) => setDateForm({ ...dateForm, nombre: e.target.value })}
-                          placeholder="Nombre del evento"
+                          placeholder={t('event_name_placeholder')}
                           className="org-editor-input"
                         />
                       </div>
                       <div style={{ gridColumn: '1 / -1' }}>
                         <label className="org-editor-field">
-                          Biografía
+                          {t('biography')}
                         </label>
                         <textarea
                           value={dateForm.biografia || ''}
                           onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
-                          placeholder="Describe el evento, su propósito, qué esperar..."
+                          placeholder={t('biography_placeholder_event')}
                           rows={2}
                           className="org-editor-textarea"
                         />
                       </div>
                       <div style={{ gridColumn: '1 / -1' }}>
                         <label className="org-editor-field">
-                          DJs presentes
+                          {t('djs_present')}
                         </label>
                         <textarea
                           value={dateForm.djs || ''}
                           onChange={(e) => setDateForm({ ...dateForm, djs: e.target.value })}
-                          placeholder="Ejemplo: DJ Juan | DJ María | DJ Invitado Especial"
+                          placeholder={t('djs_placeholder')}
                           rows={2}
                           className="org-editor-textarea"
                         />
                       </div>
                       <div>
                         <label className="org-editor-field">
-                          Teléfono / WhatsApp para más información
+                          {t('phone_whatsapp_info')}
                         </label>
                         <input
                           type="tel"
                           value={dateForm.telefono_contacto}
                           onChange={(e) => setDateForm({ ...dateForm, telefono_contacto: e.target.value })}
-                          placeholder="Ejemplo: 55 1234 5678"
+                          placeholder={t('phone_placeholder')}
                           className="org-editor-input"
                         />
                       </div>
                       <div style={{ gridColumn: '1 / -1' }}>
                         <label className="org-editor-field">
-                          Mensaje de saludo para WhatsApp
+                          {t('whatsapp_greeting')}
                         </label>
                         <textarea
                           value={dateForm.mensaje_contacto}
@@ -4349,7 +4390,7 @@ export default function OrganizerProfileEditor() {
                               setDateForm(prev => ({ ...prev, mensaje_contacto: template }));
                             }
                           }}
-                          placeholder='Ejemplo: "Hola! Vengo de Donde Bailar MX, me interesa el evento de esta fecha..."'
+                          placeholder={t('whatsapp_greeting_placeholder')}
                           rows={2}
                           className="org-editor-textarea"
                         />
@@ -4360,7 +4401,7 @@ export default function OrganizerProfileEditor() {
                   {/* Ritmos */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      🎵 Ritmos de Baile
+                      {t('dance_rhythms')}
                     </h3>
                     <div style={{ marginTop: 8 }}>
                       <RitmosChips
@@ -4390,13 +4431,13 @@ export default function OrganizerProfileEditor() {
                   {/* Ubicaciones */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📍 Ubicación del Evento
+                      {t('event_location')}
                     </h3>
                     {orgLocations.length > 0 && (
                       <>
 
                         <div style={{ marginBottom: 16 }}>
-                          <label className="org-editor-field">Elegir ubicación existente o ingresa una nueva</label>
+                          <label className="org-editor-field">{t('choose_existing_or_new')}</label>
                           <div className="org-date-form-select-wrapper" style={{ position: 'relative' }}>
                             <select
                               className="org-date-form-select"
@@ -4413,7 +4454,7 @@ export default function OrganizerProfileEditor() {
                               }}
                             >
                               <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
-                                — Escribir manualmente —
+                                {t('enter_manually')}
                               </option>
                               {orgLocations.map((loc) => (
                                 <option
@@ -4435,44 +4476,44 @@ export default function OrganizerProfileEditor() {
                     {/* Formulario de ubicación manual (como en CrearClase) */}
                     <div className="org-date-form-grid-2">
                       <div>
-                        <label className="org-editor-field">Nombre de la ubicación</label>
+                        <label className="org-editor-field">{t('location_name')}</label>
                         <input
                           type="text"
                           value={dateForm.lugar || ''}
                           onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
-                          placeholder="Ej: Sede Central / Salón Principal"
+                          placeholder={t('location_name_placeholder')}
                           className="org-editor-input"
                         />
                       </div>
                       <div>
-                        <label className="org-editor-field">Dirección</label>
+                        <label className="org-editor-field">{t('address')}</label>
                         <input
                           type="text"
                           value={dateForm.direccion || ''}
                           onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
-                          placeholder="Calle, número, colonia"
+                          placeholder={t('address_placeholder')}
                           className="org-editor-input"
                         />
                       </div>
                     </div>
                     <div className="org-date-form-grid-2" style={{ marginTop: '16px' }}>
                       <div>
-                        <label className="org-editor-field">Ciudad</label>
+                        <label className="org-editor-field">{t('city')}</label>
                         <input
                           type="text"
                           value={dateForm.ciudad || ''}
                           onChange={(e) => updateManualDateLocationField('ciudad', e.target.value)}
-                          placeholder="Ciudad"
+                          placeholder={t('city_placeholder')}
                           className="org-editor-input"
                         />
                       </div>
                       <div>
-                        <label className="org-editor-field">Notas o referencias</label>
+                        <label className="org-editor-field">{t('notes_references')}</label>
                         <input
                           type="text"
                           value={dateForm.referencias || ''}
                           onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
-                          placeholder="Ej. Entrada lateral, 2do piso"
+                          placeholder={t('notes_placeholder')}
                           className="org-editor-input"
                         />
                       </div>
@@ -4482,7 +4523,7 @@ export default function OrganizerProfileEditor() {
                     {selectedDateLocationId && (dateForm.zonas || []).length > 0 && (
                       <div style={{ marginTop: '16px' }}>
                         <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
-                          Zonas de la ubicación seleccionada
+                          {t('zones_selected_location')}
                         </label>
                         <ZonaGroupedChips
                           selectedIds={dateForm.zonas || []}
