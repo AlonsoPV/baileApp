@@ -1,6 +1,7 @@
 import Expo
 import React
 import ReactAppDependencyProvider
+import GoogleSignIn
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -38,7 +39,9 @@ public class AppDelegate: ExpoAppDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
-    return super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
+    // Google Sign-In callback handling (required for URL scheme redirects)
+    let handledByGoogle = GIDSignIn.sharedInstance.handle(url)
+    return handledByGoogle || super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
   }
 
   // Universal Links

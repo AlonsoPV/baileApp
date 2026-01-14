@@ -27,6 +27,9 @@ target 'DondeBailarMX' do
   # SocketRocket es una dependencia de React Native y puede fallar al descargar desde jsdelivr
   pod 'SocketRocket', '~> 0.7.1'
 
+  # ✅ Native Google Sign-In SDK (in-app; no Safari browser)
+  pod 'GoogleSignIn'
+
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
     config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
   else

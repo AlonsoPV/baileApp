@@ -110,8 +110,12 @@ export default function OnboardingGate() {
     enabled: shouldGuard && !!user && !authLoading && !!user?.id,
     queryFn: async () => {
       if (!user?.id) throw new Error('Usuario sin ID');
-      // Timeout real de 15s sobre la query
-      return withTimeout(fetchOnboardingStatus(user.id), QUERY_TIMEOUT_MS);
+      try {
+        // Timeout real de 15s sobre la query
+        return await withTimeout(fetchOnboardingStatus(user.id), QUERY_TIMEOUT_MS);
+      } catch (e: any) {
+        throw e;
+      }
     },
     staleTime: 30000,
     retry: 2,

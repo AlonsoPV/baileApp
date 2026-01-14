@@ -9,24 +9,43 @@ import {
   Linking,
 } from "react-native";
 import * as ExpoLinking from "expo-linking";
-import * as WebBrowser from "expo-web-browser";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Constants from "expo-constants";
+import { AuthCoordinator } from "../auth/AuthCoordinator";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
 // Puedes ajustar esto a staging si lo necesitas.
 const WEB_APP_URL = "https://dondebailar.com.mx";
-
-// Required for iOS auth sessions cleanup (safe to call always)
-WebBrowser.maybeCompleteAuthSession();
 
 export default function WebAppScreen() {
   const [loading, setLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
   const [webViewImportError, setWebViewImportError] = React.useState<string | null>(null);
   const [webViewModule, setWebViewModule] = React.useState<any>(null);
-  const [authSessionInProgress, setAuthSessionInProgress] = React.useState(false);
+  const [nativeAuthInProgress, setNativeAuthInProgress] = React.useState(false);
+  const [nativeAuthError, setNativeAuthError] = React.useState<string | null>(null);
   const webviewRef = React.useRef<any>(null);
   const insets = useSafeAreaInsets();
+  const loadWatchdogRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearLoadWatchdog = React.useCallback(() => {
+    if (loadWatchdogRef.current) {
+      clearTimeout(loadWatchdogRef.current);
+      loadWatchdogRef.current = null;
+    }
+  }, []);
+
+  const armLoadWatchdog = React.useCallback(() => {
+    clearLoadWatchdog();
+    // Safety net: WKWebView sometimes never fires onLoadEnd/onError when a navigation is cancelled/blocked.
+    // This prevents the native overlay from becoming an "infinite spinner".
+    loadWatchdogRef.current = setTimeout(() => {
+      console.warn("[WebAppScreen] Load watchdog fired (60s). Clearing loader and showing error overlay.");
+      setLoading(false);
+      setHasError(true);
+      loadWatchdogRef.current = null;
+    }, 60_000);
+  }, [clearLoadWatchdog]);
 
   const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
     try {
@@ -110,6 +129,12 @@ export default function WebAppScreen() {
   }, [loadWebViewModule]);
 
   React.useEffect(() => {
+    return () => {
+      clearLoadWatchdog();
+    };
+  }, [clearLoadWatchdog]);
+
+  React.useEffect(() => {
     // Handle cold start URL
     Linking.getInitialURL()
       .then((url) => {
@@ -128,28 +153,115 @@ export default function WebAppScreen() {
     };
   }, [handleIncomingUrl]);
 
-  const startAuthSession = React.useCallback(
-    async (startUrl: string) => {
-      if (authSessionInProgress) return;
-      setAuthSessionInProgress(true);
+  const getGoogleIosClientId = React.useCallback((): string => {
+    // Prefer Expo extra (recommended for Xcode Cloud / EAS)
+    const extra = (Constants.expoConfig as any)?.extra ?? (Constants as any)?.manifest?.extra ?? (Constants as any)?.manifest2?.extra ?? {};
+    return (
+      extra.googleIosClientId ||
+      extra.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
+      // build-time env fallback (may be undefined at runtime)
+      (process as any)?.env?.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
+      ""
+    );
+  }, []);
+
+  const injectWebAuthError = React.useCallback((message: string) => {
+    const js = `
       try {
-        // Must match the redirectTo configured in the web app when inside WebView
-        const returnUrl = ExpoLinking.createURL("auth/callback", { scheme: "dondebailarmx" });
+        window.dispatchEvent(new CustomEvent('baileapp:native-auth-error', { detail: { message: ${JSON.stringify(
+          message
+        )} } }));
+      } catch (e) {}
+      true;
+    `;
+    try {
+      webviewRef.current?.injectJavaScript?.(js);
+    } catch {
+      // ignore
+    }
+  }, []);
 
-        const result = await WebBrowser.openAuthSessionAsync(startUrl, returnUrl);
-
-        if (result.type === "success" && "url" in result && result.url) {
-          handleIncomingUrl(result.url);
-        } else {
-          console.log("[WebAppScreen] Auth session finished:", result.type);
+  const injectWebSetSession = React.useCallback((tokens: { access_token: string; refresh_token: string }) => {
+    const js = `
+      (async function() {
+        try {
+          if (window.__BAILEAPP_SET_SUPABASE_SESSION) {
+            await window.__BAILEAPP_SET_SUPABASE_SESSION(${JSON.stringify(tokens)});
+          } else {
+            window.dispatchEvent(new CustomEvent('baileapp:native-auth-error', { detail: { message: 'No se pudo aplicar sesión en la web (bridge no disponible).' } }));
+          }
+        } catch (e) {
+          window.dispatchEvent(new CustomEvent('baileapp:native-auth-error', { detail: { message: 'Error aplicando sesión en la web.' } }));
         }
-      } catch (e) {
-        console.warn("[WebAppScreen] Auth session failed:", e);
-      } finally {
-        setAuthSessionInProgress(false);
+      })();
+      true;
+    `;
+    try {
+      webviewRef.current?.injectJavaScript?.(js);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleWebMessage = React.useCallback(
+    async (event: any) => {
+      const raw = event?.nativeEvent?.data;
+      if (!raw) return;
+      let msg: any = null;
+      try {
+        msg = JSON.parse(raw);
+      } catch {
+        return;
+      }
+
+      if (nativeAuthInProgress) return;
+
+      if (msg?.type === "NATIVE_AUTH_APPLE") {
+        setNativeAuthInProgress(true);
+        setNativeAuthError(null);
+        try {
+          const tokens = await AuthCoordinator.signInWithApple();
+          injectWebSetSession(tokens);
+        } catch (e: any) {
+          const message = e?.message || "Error al iniciar sesión con Apple.";
+          setNativeAuthError(message);
+          injectWebAuthError(message);
+        } finally {
+          setNativeAuthInProgress(false);
+        }
+      }
+
+      if (msg?.type === "NATIVE_AUTH_GOOGLE") {
+        setNativeAuthInProgress(true);
+        setNativeAuthError(null);
+        try {
+          const clientId = getGoogleIosClientId();
+          const tokens = await AuthCoordinator.signInWithGoogle(clientId);
+          injectWebSetSession(tokens);
+        } catch (e: any) {
+          const message = e?.message || "Error al iniciar sesión con Google.";
+          setNativeAuthError(message);
+          injectWebAuthError(message);
+        } finally {
+          setNativeAuthInProgress(false);
+        }
+      }
+
+      if (msg?.type === "NATIVE_SIGN_OUT") {
+        setNativeAuthInProgress(true);
+        setNativeAuthError(null);
+        try {
+          await AuthCoordinator.signOut();
+        } catch (e: any) {
+          const message = e?.message || "No se pudo cerrar sesión.";
+          setNativeAuthError(message);
+          injectWebAuthError(message);
+        } finally {
+          setNativeAuthInProgress(false);
+        }
       }
     },
-    [authSessionInProgress, handleIncomingUrl]
+    [getGoogleIosClientId, injectWebAuthError, injectWebSetSession, nativeAuthInProgress]
   );
 
   const handleReload = () => {
@@ -198,12 +310,21 @@ export default function WebAppScreen() {
           source={{ uri: WEB_APP_URL }}
           style={styles.webview}
           originWhitelist={["*"]}
+          onMessage={handleWebMessage}
           // Mostrar loader inicial
           startInLoadingState
-          onLoadStart={() => setLoading(true)}
-          onLoadEnd={() => setLoading(false)}
+          onLoadStart={() => {
+            setHasError(false);
+            setLoading(true);
+            armLoadWatchdog();
+          }}
+          onLoadEnd={() => {
+            clearLoadWatchdog();
+            setLoading(false);
+          }}
           onError={(e: any) => {
             console.log("WebView error:", e?.nativeEvent);
+            clearLoadWatchdog();
             setLoading(false);
             setHasError(true);
           }}
@@ -213,6 +334,11 @@ export default function WebAppScreen() {
           // Permitir JS y almacenamiento para que la web funcione igual que en el navegador
           javaScriptEnabled
           domStorageEnabled
+          // iOS (WKWebView): helps when the embedded web requests camera/mic (iOS 15+ API)
+          // This is especially important on iPad where media/capture permission flows can behave differently.
+          mediaCapturePermissionGrantType="grantIfSameHostElsePrompt"
+          // Keep WKWebView media behavior closer to Safari
+          allowsInlineMediaPlayback
           // Habilitar cookies compartidas para mejor funcionamiento de autenticación (Supabase, Google, etc.)
           sharedCookiesEnabled
           thirdPartyCookiesEnabled
@@ -225,11 +351,29 @@ export default function WebAppScreen() {
           // Inyectar JavaScript para forzar que window.open y redirecciones OAuth se mantengan en el WebView
           injectedJavaScript={`
             (function() {
+              const isOAuthLike = (url) => {
+                try {
+                  if (!url) return false;
+                  const s = String(url);
+                  return (
+                    s.includes('supabase.co/auth/v1/') ||
+                    s.includes('appleid.apple.com') ||
+                    s.includes('idmsa.apple.com') ||
+                    s.includes('accounts.google.com') ||
+                    s.includes('google.com/o/oauth2') ||
+                    s.includes('oauth2.googleapis.com') ||
+                    s.includes('dondebailar.com.mx')
+                  );
+                } catch (e) {
+                  return false;
+                }
+              };
+
               // Forzar que window.open abra en la misma pestaña
               const originalOpen = window.open;
               window.open = function(url, target, features) {
                 // Si es una URL de OAuth o del mismo dominio, redirigir en la misma pestaña
-                if (url && (url.includes('supabase.co') || url.includes('appleid.apple.com') || url.includes('dondebailar.com.mx'))) {
+                if (isOAuthLike(url)) {
                   window.location.href = url;
                   return null;
                 }
@@ -241,10 +385,20 @@ export default function WebAppScreen() {
               const originalReplace = window.location.replace;
               window.location.replace = function(url) {
                 // Si es una URL de OAuth, permitir la redirección
-                if (url && (url.includes('supabase.co') || url.includes('appleid.apple.com') || url.includes('dondebailar.com.mx'))) {
+                if (isOAuthLike(url)) {
                   window.location.href = url;
                 } else {
                   originalReplace.call(window.location, url);
+                }
+              };
+
+              // Algunos flows usan location.assign
+              const originalAssign = window.location.assign;
+              window.location.assign = function(url) {
+                if (isOAuthLike(url)) {
+                  window.location.href = url;
+                } else {
+                  originalAssign.call(window.location, url);
                 }
               };
             })();
@@ -258,6 +412,9 @@ export default function WebAppScreen() {
             // Intercept auth deep links so they don't kick user to browser
             if (url.startsWith("dondebailarmx://")) {
               handleIncomingUrl(url);
+              // Navigation cancelled: make sure we don't leave native loader stuck.
+              clearLoadWatchdog();
+              setLoading(false);
               return false;
             }
 
@@ -292,6 +449,9 @@ export default function WebAppScreen() {
               Linking.openURL(url).catch((err) => {
                 console.warn("No se pudo abrir el calendario:", err);
               });
+              // Navigation cancelled: make sure we don't leave native loader stuck.
+              clearLoadWatchdog();
+              setLoading(false);
               return false;
             }
 
@@ -301,9 +461,16 @@ export default function WebAppScreen() {
             }
 
             // OAuth: abrir sesión de autenticación in-app (no navegador externo “normal”)
-            // Esto evita que el usuario “salga” de la app y garantiza retorno por deep link.
             if (isSupabaseOAuth || isAppleOAuth || isGoogleOAuth) {
-              void startAuthSession(url);
+              // ✅ Guideline 4.0: Do not open browser for auth.
+              // Web buttons should call native auth via postMessage.
+              const msg =
+                "Inicio de sesión: abre usando los botones nativos (Apple/Google). Si ves este error, actualiza la app.";
+              setNativeAuthError(msg);
+              injectWebAuthError(msg);
+              // Navigation cancelled: make sure we don't leave native loader stuck.
+              clearLoadWatchdog();
+              setLoading(false);
               return false;
             }
 
@@ -322,10 +489,15 @@ export default function WebAppScreen() {
               Linking.openURL(url).catch((err) => {
                 console.warn("No se pudo abrir la URL externa:", err);
               });
+              // Navigation cancelled: make sure we don't leave native loader stuck.
+              clearLoadWatchdog();
+              setLoading(false);
               return false;
             }
 
             // Cualquier otra cosa la bloqueamos por seguridad
+            clearLoadWatchdog();
+            setLoading(false);
             return false;
           }}
           // Mejores gestos de navegación en iOS
@@ -342,6 +514,25 @@ export default function WebAppScreen() {
       {loading && !hasError && (
         <View style={styles.loaderOverlay}>
           <ActivityIndicator size="large" color="#f093fb" />
+        </View>
+      )}
+
+      {nativeAuthInProgress && (
+        <View style={styles.loaderOverlay}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={{ color: "#fff", marginTop: 12, fontWeight: "600" }}>
+            Conectando…
+          </Text>
+        </View>
+      )}
+
+      {nativeAuthError && !nativeAuthInProgress && (
+        <View style={styles.authErrorOverlay}>
+          <Text style={styles.errorTitle}>No se pudo iniciar sesión</Text>
+          <Text style={styles.errorText}>{nativeAuthError}</Text>
+          <TouchableOpacity style={styles.button} onPress={() => setNativeAuthError(null)}>
+            <Text style={styles.buttonText}>Cerrar</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -392,6 +583,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
     backgroundColor: "rgba(0,0,0,0.8)",
+  },
+  authErrorOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+    backgroundColor: "rgba(0,0,0,0.92)",
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
   },
   errorTitle: {
     color: "#fff",

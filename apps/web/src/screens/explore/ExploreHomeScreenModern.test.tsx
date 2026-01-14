@@ -96,11 +96,11 @@ describe('ExploreHomeScreenModern - Filtros de Fecha', () => {
     );
   };
 
-  it('debe renderizar la barra de filtros con className="filters-tabs"', () => {
+  it('debe renderizar la barra de rangos rápidos (.quick-row)', () => {
     renderComponent();
     
-    const filtersTabs = document.querySelector('.filters-tabs');
-    expect(filtersTabs).toBeTruthy();
+    const quickRow = document.querySelector('.quick-row');
+    expect(quickRow).toBeTruthy();
   });
 
   it('debe renderizar todos los botones de filtro de fecha', () => {
@@ -112,11 +112,13 @@ describe('ExploreHomeScreenModern - Filtros de Fecha', () => {
     expect(screen.getByText('Siguientes')).toBeTruthy();
   });
 
-  it('debe marcar el filtro activo con la clase "tab--active"', () => {
+  it('debe marcar el filtro activo con la clase "q--active"', () => {
     renderComponent();
     
     const todosButton = screen.getByText('Todos');
-    expect(todosButton).toHaveClass('tab--active');
+    // The active class is on the <button class="q ...">, not the inner <span>
+    const btn = todosButton.closest('button');
+    expect(btn).toHaveClass('q--active');
   });
 
   it('debe actualizar el estado cuando se hace clic en "Hoy"', async () => {
@@ -228,13 +230,14 @@ describe('ExploreHomeScreenModern - Filtros de Fecha', () => {
     it('debe tener overflow-x: auto en la barra de filtros', () => {
       renderComponent();
       
-      const filtersTabs = document.querySelector('.filters-tabs');
-      const styles = window.getComputedStyle(filtersTabs!);
+      const quickRow = document.querySelector('.quick-row');
+      expect(quickRow).toBeTruthy();
+      const styles = window.getComputedStyle(quickRow as Element);
       
       // En mobile, debería tener overflow-x: auto
       // Nota: Esto puede no funcionar en el entorno de testing sin configuración adicional
       // pero documenta el comportamiento esperado
-      expect(filtersTabs).toBeTruthy();
+      expect(styles).toBeTruthy();
     });
 
     it('debe tener botones con min-height adecuado para tapping', () => {

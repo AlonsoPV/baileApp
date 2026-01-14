@@ -29,6 +29,8 @@
 			<array>
 				<string>dondebailarmx</string>
 				<string>com.tuorg.dondebailarmx</string>
+				<!-- Google Sign-In callback scheme (set this build setting / env var) -->
+				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
 			</array>
 		</dict>
 	</array>

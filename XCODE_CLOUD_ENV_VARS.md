@@ -14,6 +14,24 @@ https://xjagwppplovcqmztcymd.supabase.co
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqYWd3cHBwbG92Y3FtenRjeW1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5MzU3MzMsImV4cCI6MjA3NjUxMTczM30.zPvdVaknTp5yAT7mwdUWHxa8EkhLBxK4S0SAsQegtYY
 ```
 
+### 3. EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID (Guideline 4.0 — Google Sign-In nativo)
+
+Este valor es el **iOS Client ID** de Google (OAuth Client) usado por el SDK nativo.
+
+```
+<tu-google-ios-client-id>.apps.googleusercontent.com
+```
+
+### 4. GOOGLE_REVERSED_CLIENT_ID (Guideline 4.0 — URL Scheme callback iOS)
+
+Este valor es el **REVERSED_CLIENT_ID** (normalmente viene de `GoogleService-Info.plist` o del panel de Google).
+
+Se usa en `ios/DondeBailarMX/Info.plist` como `$(GOOGLE_REVERSED_CLIENT_ID)` para registrar el scheme y poder volver a la app.
+
+```
+com.googleusercontent.apps.<tu-reversed-id>
+```
+
 ## 📋 Cómo Configurarlas en Xcode Cloud
 
 ### Pasos:
@@ -37,6 +55,14 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqYWd3cHB
    **Variable 2:**
    - **Name:** `EXPO_PUBLIC_SUPABASE_ANON_KEY`
    - **Value:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqYWd3cHBwbG92Y3FtenRjeW1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5MzU3MzMsImV4cCI6MjA3NjUxMTczM30.zPvdVaknTp5yAT7mwdUWHxa8EkhLBxK4S0SAsQegtYY`
+
+   **Variable 3 (Google iOS Client ID):**
+   - **Name:** `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`
+   - **Value:** `<tu-google-ios-client-id>.apps.googleusercontent.com`
+
+   **Variable 4 (Google reversed scheme):**
+   - **Name:** `GOOGLE_REVERSED_CLIENT_ID`
+   - **Value:** `com.googleusercontent.apps.<tu-reversed-id>`
 
 4. **Guardar y Verificar**
    - Guarda los cambios

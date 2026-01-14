@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ENV } from "./env";
 import { markPerformance } from "./performance";
 
@@ -66,7 +67,16 @@ try {
   if (supabaseUrl && supabaseAnonKey) {
     try {
       markPerformance("supabase_init_start");
-      supabase = createClient(supabaseUrl, supabaseAnonKey);
+      supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          // React Native: persistencia y refresh usando AsyncStorage
+          storage: AsyncStorage as any,
+          persistSession: true,
+          autoRefreshToken: true,
+          // RN no usa "callback URL hash" como web
+          detectSessionInUrl: false,
+        },
+      });
       markPerformance("supabase_init_complete");
     } catch (e) {
       console.error("[Supabase] Error creating client:", e);

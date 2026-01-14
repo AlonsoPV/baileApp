@@ -208,6 +208,9 @@ const config: ExpoConfig = {
     // Keep EXPO_PUBLIC_* for backwards compatibility
     EXPO_PUBLIC_SUPABASE_URL: required('EXPO_PUBLIC_SUPABASE_URL', ''),
     EXPO_PUBLIC_SUPABASE_ANON_KEY: required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
+    // Native Google Sign-In (iOS) - required for in-app OAuth without Safari
+    googleIosClientId: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
+    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
     eas: {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },

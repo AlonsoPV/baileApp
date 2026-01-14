@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useEventParentsByOrganizer, useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
@@ -794,7 +795,7 @@ const VideoCarouselComponent = React.memo<{ videos: string[] }>(({ videos }) => 
           preload="metadata"
           controlsList="nodownload noplaybackrate"
           aspectRatio="16 / 9"
-          aria-label={`Video ${currentIndex + 1} de ${videos.length}`}
+          aria-label={t('video_aria_label', { current: currentIndex + 1, total: videos.length })}
         />
 
         <div className="video-gallery-counter">
@@ -806,7 +807,7 @@ const VideoCarouselComponent = React.memo<{ videos: string[] }>(({ videos }) => 
             <button
               onClick={(e) => { e.stopPropagation(); prevVideo(); }}
               className="video-gallery-nav-btn video-gallery-nav-btn--prev"
-              aria-label="Video anterior"
+              aria-label={t('previous_video')}
               disabled={!hasMultipleVideos}
             >
               ‹
@@ -814,7 +815,7 @@ const VideoCarouselComponent = React.memo<{ videos: string[] }>(({ videos }) => 
             <button
               onClick={(e) => { e.stopPropagation(); nextVideo(); }}
               className="video-gallery-nav-btn video-gallery-nav-btn--next"
-              aria-label="Video siguiente"
+              aria-label={t('next_video')}
               disabled={!hasMultipleVideos}
             >
               ›
@@ -830,7 +831,7 @@ const VideoCarouselComponent = React.memo<{ videos: string[] }>(({ videos }) => 
               key={index}
               onClick={() => goToVideo(index)}
               className={`video-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
-              aria-label={`Ver video ${index + 1}`}
+              aria-label={t('view_video_aria_label', { index: index + 1 })}
             >
               <video src={video} muted />
             </button>
@@ -1091,6 +1092,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
 CarouselComponent.displayName = 'CarouselComponent';
 
 export function OrganizerProfileLive() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: org, isLoading, error, isError } = useMyOrganizer();
   const { data: parents } = useEventParentsByOrganizer((org as any)?.id);
@@ -1491,13 +1493,13 @@ export function OrganizerProfileLive() {
         }}>
           <div style={{ fontSize: typography.fontSize['4xl'], marginBottom: spacing[4] }}>⏳</div>
           <h2 style={{ fontSize: typography.fontSize['2xl'], marginBottom: spacing[4] }}>
-            Estamos cargando tu perfil...
+            {t('loading_your_profile')}
           </h2>
           <p style={{ opacity: 0.7, fontSize: typography.fontSize.lg, marginBottom: spacing[2] }}>
-            Redirigiendo a edición para crear tu perfil
+            {t('redirecting_to_edit')}
           </p>
           <p style={{ opacity: 0.6, fontSize: typography.fontSize.sm }}>
-            Si tarda mucho, intenta refrescar la página para una carga más rápida.
+            {t('if_takes_long_refresh')}
           </p>
         </div>
       </>
@@ -1908,7 +1910,7 @@ export function OrganizerProfileLive() {
                     border: '1px solid rgba(255,255,255,0.12)',
                     background: 'rgba(255,255,255,0.05)'
                   }}>
-                    <div style={{ fontWeight: 700 }}>{u?.nombre || 'Ubicación'}</div>
+                    <div style={{ fontWeight: 700 }}>{u?.nombre || t('location')}</div>
                     <div style={{ opacity: 0.9 }}>{u?.direccion}</div>
                     {u?.referencias && <div style={{ opacity: 0.75, fontSize: 13 }}>Ref: {u.referencias}</div>}
                     {!!(u?.zonaIds?.length) && (
@@ -1984,7 +1986,7 @@ export function OrganizerProfileLive() {
                   📅
                 </div>
                 <div>
-                  <h3 className="section-title">Próximas Fechas</h3>
+                  <h3 className="section-title">{t('upcoming_dates')}</h3>
                 </div>
               </div>
               <DateFlyerSlider items={inviteItems} onOpen={(href: string) => navigate(href)} />
@@ -2052,7 +2054,7 @@ export function OrganizerProfileLive() {
                       fontWeight: 400,
                       lineHeight: 1.2
                     }}>
-                      {videos.length === 1 ? 'Video promocional' : 'Contenido multimedia destacado'}
+                      {videos.length === 1 ? t('promotional_video') : t('featured_multimedia_content')}
                     </p>
                   </div>
                 </div>
@@ -2064,7 +2066,7 @@ export function OrganizerProfileLive() {
                   fontWeight: '600',
                   color: colors.light
                 }}>
-                  {videos.length} video{videos.length !== 1 ? 's' : ''}
+                  {t('video_count', { count: videos.length })}
                 </div>
               </div>
 
@@ -2091,7 +2093,7 @@ export function OrganizerProfileLive() {
                 marginBottom: '1.5rem'
               }}>
                 <h3 className="section-title">
-                  📷 Galería de Fotos
+                  {t('photo_gallery')}
                 </h3>
                 <div style={{
                   padding: '0.5rem 1rem',
@@ -2101,7 +2103,7 @@ export function OrganizerProfileLive() {
                   fontWeight: '600',
                   color: colors.light
                 }}>
-                  {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
+                  {t('photo_count', { count: carouselPhotos.length })}
                 </div>
               </div>
 
@@ -2141,14 +2143,14 @@ export function OrganizerProfileLive() {
                   ❓
                 </div>
                 <div>
-                  <h3 className="section-title">❓ Información para Asistentes</h3>
+                  <h3 className="section-title">{t('info_for_attendees')}</h3>
                   <p style={{
                     fontSize: typography.fontSize.sm,
                     opacity: 0.8,
                     margin: 0,
                     color: colors.light
                   }}>
-                    Preguntas frecuentes
+                    {t('frequently_asked_questions')}
                   </p>
                 </div>
               </div>
@@ -2156,14 +2158,14 @@ export function OrganizerProfileLive() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
                 {(org as any)?.respuestas?.musica_tocaran && (
                   <FAQAccordion
-                    question="🎵 ¿Qué música tocarán?"
+                    question={t('what_music_will_play')}
                     answer={(org as any)?.respuestas?.musica_tocaran}
                   />
                 )}
 
                 {(org as any)?.respuestas?.hay_estacionamiento && (
                   <FAQAccordion
-                    question="🅿️ ¿Hay estacionamiento?"
+                    question={t('is_there_parking')}
                     answer={(org as any)?.respuestas?.hay_estacionamiento}
                   />
                 )}

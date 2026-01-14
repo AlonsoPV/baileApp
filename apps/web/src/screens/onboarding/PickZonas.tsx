@@ -18,7 +18,7 @@ export function PickZonas() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: allTags, isLoading: loadingTags } = useTags();
+  const { data: allTags, isLoading: loadingTags, error: tagsError, refetch: refetchTags } = useTags();
   const { profile, updateProfileFields } = useUserProfile();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -85,6 +85,8 @@ export function PickZonas() {
     } catch (err: any) {
       setError(err.message);
       showToast('Error al guardar zonas', 'error');
+    } finally {
+      // Safety: if navigation fails (WebView edge cases), don't leave spinner stuck forever
       setIsLoading(false);
     }
   };
@@ -162,6 +164,31 @@ export function PickZonas() {
           {loadingTags ? (
             <div style={{ textAlign: 'center', padding: spacing[4], color: colors.gray[400] }}>
               Cargando zonas...
+            </div>
+          ) : tagsError ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2], padding: spacing[4] }}>
+              <div style={{ color: '#ef4444', fontWeight: 700 }}>
+                No se pudieron cargar las zonas
+              </div>
+              <div style={{ color: colors.gray[300], fontSize: '0.9rem' }}>
+                {String((tagsError as any)?.message ?? 'Error de red. Intenta de nuevo.').slice(0, 160)}
+              </div>
+              <button
+                type="button"
+                onClick={() => refetchTags()}
+                style={{
+                  width: '100%',
+                  padding: spacing[2],
+                  borderRadius: borderRadius.lg,
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'transparent',
+                  color: '#fff',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Reintentar
+              </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>

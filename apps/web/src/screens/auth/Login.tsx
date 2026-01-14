@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
 import { Button } from '@ui/index';
@@ -8,17 +8,7 @@ import { signInWithMagicLink, signUpWithMagicLink } from '../../utils/magicLinkA
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '@/contexts/AuthProvider';
 import { motion } from 'framer-motion';
-import { getAuthRedirectUrl } from '../../utils/authRedirect';
-
-// Obtener el dominio de la aplicación (producción o desarrollo)
-const getSiteUrl = () => {
-  // En producción, usar el dominio real
-  if (import.meta.env.VITE_SITE_URL) {
-    return import.meta.env.VITE_SITE_URL;
-  }
-  // En desarrollo, usar el origin actual
-  return window.location.origin;
-};
+import { getAuthRedirectUrl, isMobileWebView } from '../../utils/authRedirect';
 
 export function Login() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -38,6 +28,20 @@ export function Login() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { signIn } = useAuth();
+
+  // Listen for errors coming from the native host (React Native WebView)
+  useEffect(() => {
+    const onNativeAuthError = (e: any) => {
+      const msg = e?.detail?.message || 'No se pudo iniciar sesión.';
+      setError(msg);
+      setSignUpError(msg);
+      setIsGoogleLoading(false);
+      setIsAppleLoading(false);
+      showToast(msg, 'error');
+    };
+    window.addEventListener('baileapp:native-auth-error', onNativeAuthError as any);
+    return () => window.removeEventListener('baileapp:native-auth-error', onNativeAuthError as any);
+  }, [showToast]);
 
   const handleMagicLink = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -157,7 +161,16 @@ export function Login() {
     setSignUpError('');
 
     try {
-      const siteUrl = getSiteUrl();
+      // ✅ Guideline 4.0: in-app auth inside React Native WebView (no browser OAuth)
+      if (isMobileWebView()) {
+        const rn = (window as any).ReactNativeWebView;
+        if (!rn?.postMessage) {
+          throw new Error('No se detectó el bridge nativo para Google.');
+        }
+        rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_GOOGLE' }));
+        return; // native will set web session + redirect
+      }
+
       const redirectTo = getAuthRedirectUrl();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -196,7 +209,16 @@ export function Login() {
     setSignUpError('');
 
     try {
-      const siteUrl = getSiteUrl();
+      // ✅ Guideline 4.0: in-app auth inside React Native WebView (no browser OAuth)
+      if (isMobileWebView()) {
+        const rn = (window as any).ReactNativeWebView;
+        if (!rn?.postMessage) {
+          throw new Error('No se detectó el bridge nativo para Apple.');
+        }
+        rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_APPLE' }));
+        return; // native will set web session + redirect
+      }
+
       const redirectTo = getAuthRedirectUrl();
       
       // Configuración para mantener el flujo dentro del WebView

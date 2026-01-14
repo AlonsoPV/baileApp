@@ -40,6 +40,8 @@ export function PickRitmos() {
     } catch (err: any) {
       setError(err.message);
       showToast('Error al guardar ritmos', 'error');
+    } finally {
+      // Safety: if navigation fails (WebView edge cases), don't leave spinner stuck forever
       setIsLoading(false);
     }
   };

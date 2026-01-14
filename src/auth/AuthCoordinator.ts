@@ -1,0 +1,121 @@
+import { supabase } from "../lib/supabase";
+import { nativeGoogleSignOut, nativeSignInWithApple, nativeSignInWithGoogle } from "./nativeAuth";
+
+export type AuthStatus = "loading" | "loggedOut" | "loggedIn" | "error";
+
+export type AuthState = {
+  status: AuthStatus;
+  error?: string | null;
+};
+
+export type AuthSessionTokens = {
+  access_token: string;
+  refresh_token: string;
+};
+
+type Listener = (state: AuthState) => void;
+
+function normalizeErrorMessage(e: unknown, fallback: string) {
+  if (e instanceof Error) return e.message || fallback;
+  if (typeof e === "string") return e;
+  return fallback;
+}
+
+/**
+ * Single coordinator for native auth flows.
+ * - Apple: ASAuthorizationController (via iOS native module)
+ * - Google: GoogleSignIn SDK (via iOS native module)
+ * - Supabase: signInWithIdToken to mint app session tokens
+ */
+class AuthCoordinatorImpl {
+  private state: AuthState = { status: "loggedOut", error: null };
+  private listeners = new Set<Listener>();
+
+  getState(): AuthState {
+    return this.state;
+  }
+
+  subscribe(cb: Listener): () => void {
+    this.listeners.add(cb);
+    cb(this.state);
+    return () => this.listeners.delete(cb);
+  }
+
+  private setState(next: AuthState) {
+    this.state = next;
+    for (const l of this.listeners) l(this.state);
+  }
+
+  async signInWithApple(): Promise<AuthSessionTokens> {
+    this.setState({ status: "loading", error: null });
+    try {
+      const apple = await nativeSignInWithApple();
+      if (!supabase) throw new Error("Supabase no está configurado en la app.");
+
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: apple.identityToken,
+        nonce: apple.nonce,
+      });
+
+      if (error) throw error;
+      const sess = data.session;
+      if (!sess?.access_token || !sess?.refresh_token) {
+        throw new Error("No se pudo obtener sesión de Supabase (Apple).");
+      }
+
+      this.setState({ status: "loggedIn", error: null });
+      return { access_token: sess.access_token, refresh_token: sess.refresh_token };
+    } catch (e) {
+      const msg = normalizeErrorMessage(e, "Error al iniciar sesión con Apple.");
+      this.setState({ status: "error", error: msg });
+      throw new Error(msg);
+    }
+  }
+
+  async signInWithGoogle(iosClientId: string): Promise<AuthSessionTokens> {
+    this.setState({ status: "loading", error: null });
+    try {
+      const google = await nativeSignInWithGoogle(iosClientId);
+      if (!supabase) throw new Error("Supabase no está configurado en la app.");
+
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: "google",
+        token: google.idToken,
+      });
+
+      if (error) throw error;
+      const sess = data.session;
+      if (!sess?.access_token || !sess?.refresh_token) {
+        throw new Error("No se pudo obtener sesión de Supabase (Google).");
+      }
+
+      this.setState({ status: "loggedIn", error: null });
+      return { access_token: sess.access_token, refresh_token: sess.refresh_token };
+    } catch (e) {
+      const msg = normalizeErrorMessage(e, "Error al iniciar sesión con Google.");
+      this.setState({ status: "error", error: msg });
+      throw new Error(msg);
+    }
+  }
+
+  async signOut(): Promise<void> {
+    this.setState({ status: "loading", error: null });
+    try {
+      // Best-effort sign out in native SDKs
+      await nativeGoogleSignOut();
+      if (supabase) {
+        // Best-effort; web will also sign out its own session
+        await supabase.auth.signOut({ scope: "local" });
+      }
+      this.setState({ status: "loggedOut", error: null });
+    } catch (e) {
+      const msg = normalizeErrorMessage(e, "No se pudo cerrar sesión.");
+      this.setState({ status: "error", error: msg });
+      throw new Error(msg);
+    }
+  }
+}
+
+export const AuthCoordinator = new AuthCoordinatorImpl();
+

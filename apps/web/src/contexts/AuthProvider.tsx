@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useProfileMode } from '@/state/profileMode';
 import { clearAllPinVerified, setNeedsPinVerify } from '@/lib/pin';
+import { isMobileWebView } from '@/utils/authRedirect';
 
 type AuthCtx = {
   session: import('@supabase/supabase-js').Session | null;
@@ -60,10 +61,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // Intentar obtener sesión con timeout más generoso para conexiones lentas
         const sessionPromise = supabase.auth.getSession();
+        // IMPORTANT:
+        // If we "race" and the timeout wins, the original sessionPromise may still
+        // reject later (e.g. due to AbortSignal.timeout in the global fetch wrapper),
+        // which would surface as an unhandled rejection / "AbortError: Aborted" in console.
+        // Attach a no-op catch to prevent noisy unhandled rejections in slow/offline cases.
+        sessionPromise.catch(() => {});
+
         let timeoutTriggered = false;
+        let raceTimer: ReturnType<typeof setTimeout> | null = null;
         
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
+          raceTimer = setTimeout(() => {
             timeoutTriggered = true;
             reject(new Error('getSession timeout'));
           }, 8000); // Aumentado de 7s a 8s para dar más tiempo en conexiones lentas
@@ -77,6 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             timeoutPromise
           ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
         } catch (raceError: any) {
+          if (raceTimer) {
+            clearTimeout(raceTimer);
+            raceTimer = null;
+          }
           // Si el timeout se disparó, continuar sin sesión
           if (timeoutTriggered || raceError?.message?.includes('timeout')) {
             if (!mounted) return;
@@ -95,6 +108,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
           }
           throw raceError;
+        }
+        
+        if (raceTimer) {
+          clearTimeout(raceTimer);
+          raceTimer = null;
         }
         
         if (!mounted) return;
@@ -276,6 +294,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Si hay error, solo loguearlo pero no fallar (ya limpiamos el estado local)
       if (error) {
         console.warn('[AuthProvider] Logout warning (puede ignorarse, estado local ya limpiado):', error);
+      }
+
+      // ✅ Best-effort: notify native host to clear any SDK session (Google)
+      try {
+        if (isMobileWebView()) {
+          const rn = (window as any).ReactNativeWebView;
+          rn?.postMessage?.(JSON.stringify({ type: 'NATIVE_SIGN_OUT' }));
+        }
+      } catch {
+        // ignore
       }
       
       return { error: null }; // Siempre retornar success porque el estado local ya está limpio

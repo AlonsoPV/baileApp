@@ -13,6 +13,11 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		C92C260A5C64FFAA012BEA84 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6E8AC9391CDBA55090B34FC /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		F11748512D1A00010044C1D9 /* AppleSignInModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748502D1A00010044C1D9 /* AppleSignInModule.swift */; };
+		F11748612D1A00040044C1D9 /* AppleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */; };
+		F11748532D1A00020044C1D9 /* GoogleSignInModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748522D1A00020044C1D9 /* GoogleSignInModule.swift */; };
+		F11748632D1A00050044C1D9 /* GoogleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */; };
+		F11748552D1A00030044C1D9 /* NativeAuthTopViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748542D1A00030044C1D9 /* NativeAuthTopViewController.swift */; };
 		F689B9C1871C4D09B1607619 /* libPods-DondeBailarMX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA89DBAFB6ABFDEE14950A52 /* libPods-DondeBailarMX.a */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +34,11 @@
 		E6E8AC9391CDBA55090B34FC /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DondeBailarMX/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DondeBailarMX/AppDelegate.swift; sourceTree = "<group>"; };
+		F11748502D1A00010044C1D9 /* AppleSignInModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppleSignInModule.swift; path = DondeBailarMX/AppleSignInModule.swift; sourceTree = "<group>"; };
+		F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AppleSignInModuleBridge.m; path = DondeBailarMX/AppleSignInModuleBridge.m; sourceTree = "<group>"; };
+		F11748522D1A00020044C1D9 /* GoogleSignInModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GoogleSignInModule.swift; path = DondeBailarMX/GoogleSignInModule.swift; sourceTree = "<group>"; };
+		F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = GoogleSignInModuleBridge.m; path = DondeBailarMX/GoogleSignInModuleBridge.m; sourceTree = "<group>"; };
+		F11748542D1A00030044C1D9 /* NativeAuthTopViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeAuthTopViewController.swift; path = DondeBailarMX/NativeAuthTopViewController.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* DondeBailarMX-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DondeBailarMX-Bridging-Header.h"; path = "DondeBailarMX/DondeBailarMX-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -48,6 +58,11 @@
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
+				F11748502D1A00010044C1D9 /* AppleSignInModule.swift */,
+				F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */,
+				F11748522D1A00020044C1D9 /* GoogleSignInModule.swift */,
+				F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */,
+				F11748542D1A00030044C1D9 /* NativeAuthTopViewController.swift */,
 				F11748442D0722820044C1D9 /* DondeBailarMX-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -392,6 +407,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
+				F11748512D1A00010044C1D9 /* AppleSignInModule.swift in Sources */,
+				F11748612D1A00040044C1D9 /* AppleSignInModuleBridge.m in Sources */,
+				F11748532D1A00020044C1D9 /* GoogleSignInModule.swift in Sources */,
+				F11748632D1A00050044C1D9 /* GoogleSignInModuleBridge.m in Sources */,
+				F11748552D1A00030044C1D9 /* NativeAuthTopViewController.swift in Sources */,
 				C92C260A5C64FFAA012BEA84 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

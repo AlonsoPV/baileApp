@@ -48,6 +48,27 @@ export function useUnreadNotifications(userId?: string) {
       return undefined;
     }
 
+    // Avoid noisy WebSocket failures when:
+    // - device is offline
+    // - user is in onboarding (notifications are not critical there)
+    // - env explicitly disables realtime (recommended for some WebViews / networks)
+    const isOffline =
+      typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean' && navigator.onLine === false;
+    const locPath =
+      typeof window !== 'undefined' && typeof window.location?.pathname === 'string'
+        ? window.location.pathname
+        : '';
+    const locHash =
+      typeof window !== 'undefined' && typeof window.location?.hash === 'string'
+        ? window.location.hash
+        : '';
+    // Support different router/basename modes:
+    // - /onboarding/...
+    // - /app/onboarding/...
+    // - #/onboarding/... (hash routing)
+    const isOnboarding = /\/onboarding(\/|$)/.test(locPath) || /#\/onboarding(\/|$)/.test(locHash);
+    const disableRealtimeEffective = disableRealtime || isOffline || isOnboarding;
+
     const load = async () => {
       try {
         const { count, error } = await supabase
@@ -294,11 +315,28 @@ export function useUnreadNotifications(userId?: string) {
     };
 
     // Intentar suscribirse inicialmente
-    if (disableRealtime) {
+    if (disableRealtimeEffective) {
       // No abrir WebSocket, usar solo polling
       startPolling();
     } else {
       subscribeToRealtime();
+    }
+
+    const onOnline = () => {
+      if (!active) return;
+      // If we were offline and come back online, try realtime again (unless onboarding/env disabled)
+      if (!disableRealtime && !isOnboarding) {
+        subscribeToRealtime();
+      }
+    };
+    const onOffline = () => {
+      if (!active) return;
+      // If offline, stop trying realtime and rely on polling
+      startPolling();
+    };
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('online', onOnline);
+      window.addEventListener('offline', onOffline);
     }
 
     return () => {
@@ -327,6 +365,11 @@ export function useUnreadNotifications(userId?: string) {
             // No loggear para reducir ruido
           }
         }, 50); // Pequeño delay para permitir que el WebSocket se cierre correctamente
+      }
+
+      if (typeof window !== 'undefined' && window.removeEventListener) {
+        window.removeEventListener('online', onOnline);
+        window.removeEventListener('offline', onOffline);
       }
     };
   }, [userId, disableRealtime]);

@@ -12,6 +12,9 @@
     "preview:staging": "vite preview --mode staging --port 4173",
     "lint": "eslint --ext .ts,.tsx src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --max-old-space-size=8192 ./node_modules/vitest/vitest.mjs",
+    "test:run": "node --max-old-space-size=8192 ./node_modules/vitest/vitest.mjs run",
+    "test:no-infinite-loading": "tsx scripts/test-no-infinite-loading.ts",
     "check:auth": "powershell -Command \"if (Select-String -Path 'src\\**\\*.ts','src\\**\\*.tsx' -Pattern 'useAuth\\(\\)' | Select-String -Pattern '(utils|stores|services)') { Write-Host '❌ useAuth usado fuera de componentes'; exit 1 } else { Write-Host '✅ useAuth sólo en componentes' }\""
   },
   "dependencies": {
@@ -33,11 +36,17 @@
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^5.91.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/file-saver": "^2.0.7",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^26.1.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.0"
+    "vite": "^7.3.0",
+    "vitest": "^3.2.4"
   }
 }

@@ -209,15 +209,15 @@ const BulkRowItem = React.memo(function BulkRowItem({
           fontSize: dense ? 12 : 13,
         }}
       >
-        <option value="borrador">📝 borrador</option>
-        <option value="publicado">🌐 publicado</option>
+        <option value="borrador">{t('draft')}</option>
+        <option value="publicado">{t('published')}</option>
       </select>
 
       <input
         type="text"
         value={row.notas}
         onChange={(e) => onChange(row.id, { notas: e.target.value })}
-        placeholder="Notas (opcional)"
+        placeholder={t('optional_notes')}
         style={{
           width: '100%',
           padding: dense ? '7px 8px' : '8px 10px',
@@ -244,8 +244,8 @@ const BulkRowItem = React.memo(function BulkRowItem({
               cursor: 'pointer',
               fontWeight: 900,
             }}
-            title={`Editar fecha creada #${createdDateId}`}
-            aria-label={`Editar fecha creada ${createdDateId}`}
+            title={t('edit_created_date', { id: createdDateId })}
+            aria-label={t('edit_created_date', { id: createdDateId })}
           >
             ✏️
           </button>
@@ -262,8 +262,8 @@ const BulkRowItem = React.memo(function BulkRowItem({
             color: '#fff',
             cursor: 'pointer',
           }}
-          title="Eliminar fila"
-          aria-label="Eliminar fila"
+          title={t('remove_row')}
+          aria-label={t('remove_row')}
         >
           🗑️
         </button>
@@ -934,7 +934,7 @@ export default function OrganizerProfileEditor() {
       } catch (error) {
         console.error('[OrganizerProfileEditor] Video demasiado largo:', error);
         showToast(
-          error instanceof Error ? error.message : 'El video debe durar máximo 25 segundos',
+          error instanceof Error ? error.message : t('video_max_duration'),
           'error'
         );
         return;
@@ -1107,8 +1107,8 @@ export default function OrganizerProfileEditor() {
           // Crear evento padre por defecto
           const parentPayload: any = {
             organizer_id: profileId,
-            nombre: '🎉 Mi Primer Social',
-            descripcion: 'Crea tus eventos. Edita el nombre, descripción y agrega fechas desde el editor.',
+            nombre: t('my_first_social'),
+            descripcion: t('create_events_description'),
             ritmos_seleccionados: outSelected || [],
             zonas: validatedZonas
           };
@@ -1121,7 +1121,7 @@ export default function OrganizerProfileEditor() {
 
           if (parentErr) {
             console.error('❌ [OrganizerProfileEditor] Error creando social por defecto:', parentErr);
-            showToast('⚠️ Perfil creado, pero no se pudo crear el social por defecto', 'info');
+            showToast(t('profile_created_default_social_failed'), 'info');
           } else if (newParent) {
             // Crear fecha por defecto (para 7 días adelante)
             const fechaBase = new Date();
@@ -1130,8 +1130,8 @@ export default function OrganizerProfileEditor() {
 
             const datePayload = {
               parent_id: newParent.id,
-              nombre: '📅 Primera Fecha',
-              biografia: 'Configura la información de tu primera fecha: hora, lugar, precios y más.',
+              nombre: t('first_date'),
+              biografia: t('configure_first_date_description'),
               fecha: fechaStr,
               hora_inicio: '20:00',
               hora_fin: '02:00',
@@ -1183,20 +1183,20 @@ export default function OrganizerProfileEditor() {
   // Función para eliminar evento
   const handleDeleteEvent = async (parentId: string) => {
     try {
-      const confirmDelete = window.confirm('¿Seguro que deseas eliminar este social? Esta acción no se puede deshacer.');
+      const confirmDelete = window.confirm(t('delete_event_confirm'));
       if (!confirmDelete) return;
       await deleteParent.mutateAsync(Number(parentId));
-      showToast('Evento eliminado ✅', 'success');
+      showToast(t('event_deleted'), 'success');
     } catch (err: any) {
       console.error('Error deleting event:', err);
-      showToast('Error al eliminar evento', 'error');
+      showToast(t('error_deleting_event'), 'error');
     }
   };
 
   // Función para crear fecha
   const handleCreateDate = async () => {
     if (!dateForm.fecha) {
-      showToast('La fecha es obligatoria', 'error');
+      showToast(t('date_required'), 'error');
       return;
     }
 
@@ -1284,8 +1284,8 @@ export default function OrganizerProfileEditor() {
         
         showToast(
           count === 1 
-            ? 'Fecha creada ✅' 
-            : `${count} fechas creadas exitosamente ✅`,
+            ? t('date_created') 
+            : t('dates_created', { count }),
           'success'
         );
       } catch (createError: any) {
@@ -1327,7 +1327,7 @@ export default function OrganizerProfileEditor() {
       const errorMessage = err?.message || 'Error desconocido';
       
       showToast(
-        `Error al crear fecha: ${errorMessage}`,
+        t('error_creating_date', { message: errorMessage }),
         'error'
       );
     }
@@ -1336,13 +1336,13 @@ export default function OrganizerProfileEditor() {
   const handleBulkCreateDates = async () => {
     const selectedRows = bulkRows.filter((r) => r.selected);
     if (selectedRows.length === 0) {
-      showToast('Selecciona al menos una fila', 'info');
+      showToast(t('select_at_least_one'), 'info');
       return;
     }
 
     const errs = validateBulkRows(selectedRows);
     if (Object.keys(errs).length > 0) {
-      showToast('Revisa los errores en la tabla antes de guardar', 'error');
+      showToast(t('review_errors_before_save'), 'error');
       return;
     }
 
@@ -1489,16 +1489,16 @@ export default function OrganizerProfileEditor() {
         });
       }
 
-      showToast(`${createdDates.length} fechas creadas ✅ (en borrador)`, 'success');
+      showToast(t('dates_created_draft', { count: createdDates.length }), 'success');
     } catch (e: any) {
       console.error('[OrganizerProfileEditor] bulk create error:', e);
-      showToast(e?.message || 'Error al crear fechas en batch', 'error');
+      showToast(e?.message || t('error_creating_dates_batch'), 'error');
     }
   };
 
   const applyBulkGeneralFlyerToCreated = async (onlySelected: boolean) => {
     if (!bulkGeneralFlyerUrl) {
-      showToast('Primero sube/selecciona un flyer general', 'info');
+      showToast(t('upload_select_general_flyer'), 'info');
       return;
     }
     const rows = onlySelected ? bulkRows.filter((r) => r.selected) : bulkRows;
@@ -1507,7 +1507,7 @@ export default function OrganizerProfileEditor() {
       .filter((x) => !!x.id);
 
     if (withIds.length === 0) {
-      showToast('No hay fechas creadas a las que aplicar el flyer (guarda el batch primero)', 'info');
+      showToast(t('no_created_dates_for_flyer'), 'info');
       return;
     }
 
@@ -1525,10 +1525,10 @@ export default function OrganizerProfileEditor() {
       });
 
       queryClient.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
-      showToast(`Flyer aplicado a ${ids.length} fecha${ids.length !== 1 ? 's' : ''} ✅`, 'success');
+      showToast(t('flyer_saved'), 'success');
     } catch (e: any) {
       console.error('[OrganizerProfileEditor] apply bulk general flyer error:', e);
-      showToast(e?.message || 'Error aplicando flyer general', 'error');
+      showToast(e?.message || t('error_applying_general_flyer'), 'error');
     }
   };
 
@@ -1539,7 +1539,7 @@ export default function OrganizerProfileEditor() {
       .filter((x) => !!x.id);
 
     if (withIds.length === 0) {
-      showToast('No hay fechas creadas para publicar (primero guarda el batch)', 'info');
+      showToast(t('no_created_dates_to_publish'), 'info');
       return;
     }
 
@@ -1559,10 +1559,10 @@ export default function OrganizerProfileEditor() {
         queryClient.invalidateQueries({ queryKey: ["dates", selectedParentId] });
       }
 
-      showToast('Fechas publicadas ✅', 'success');
+      showToast(t('dates_published'), 'success');
     } catch (e: any) {
       console.error('[OrganizerProfileEditor] bulk publish error:', e);
-      showToast(e?.message || 'Error al publicar', 'error');
+      showToast(e?.message || t('error_publishing'), 'error');
     }
   };
 
@@ -1713,10 +1713,10 @@ export default function OrganizerProfileEditor() {
     if (!org) return null; // Si no hay perfil, no mostrar badge
 
     const badges: Record<string, { bg: string; text: string; icon: string }> = {
-      borrador: { bg: '#94A3B8', text: 'Borrador', icon: '📝' },
-      en_revision: { bg: colors.orange, text: 'En Revisión', icon: '⏳' },
-      aprobado: { bg: '#10B981', text: 'Verificado', icon: '✅' },
-      rechazado: { bg: colors.coral, text: 'Rechazado', icon: '❌' },
+      borrador: { bg: '#94A3B8', text: t('draft'), icon: '📝' },
+      en_revision: { bg: colors.orange, text: t('under_review'), icon: '⏳' },
+      aprobado: { bg: '#10B981', text: t('verified'), icon: '✅' },
+      rechazado: { bg: colors.coral, text: t('rejected'), icon: '❌' },
     };
 
     const estado = (org as any)?.estado_aprobacion;
@@ -4462,7 +4462,7 @@ export default function OrganizerProfileEditor() {
                                   value={String(loc.id)}
                                   style={{ color: '#FFFFFF', background: '#2b2b2b' }}
                                 >
-                                  {loc.nombre || loc.direccion || 'Ubicación'}
+                                  {loc.nombre || loc.direccion || t('location')}
                                 </option>
                               ))}
                             </select>
@@ -4543,7 +4543,7 @@ export default function OrganizerProfileEditor() {
                     {!selectedDateLocationId && (
                       <div style={{ marginTop: '16px' }}>
                         <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
-                          Zonas de la Ciudad
+                          {t('zones_city')}
                         </label>
                         <ZonaGroupedChips
                           selectedIds={dateForm.zonas || []}
@@ -4564,7 +4564,7 @@ export default function OrganizerProfileEditor() {
                   {/* Cronograma */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📅 Cronograma del Evento
+                      {t('event_schedule')}
                     </h3>
                     <ScheduleEditor
                       schedule={dateForm.cronograma || []}
@@ -4585,7 +4585,7 @@ export default function OrganizerProfileEditor() {
                   {/* Fecha y Hora (último paso) */}
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      📅 Fecha y Hora
+                      {t('date_and_time')}
                     </h3>
 
                     {/* Toggle Simple / Bulk */}
@@ -4612,7 +4612,7 @@ export default function OrganizerProfileEditor() {
                         }}
                         aria-pressed={!bulkMode}
                       >
-                        🧍 Único
+                        {t('unique_mode')}
                       </button>
                       <button
                         type="button"
@@ -4635,14 +4635,14 @@ export default function OrganizerProfileEditor() {
                         }}
                         aria-pressed={bulkMode}
                       >
-                        📋 Frecuentes
+                        {t('frequent_mode')}
                       </button>
                     </div>
 
                     <div className="org-date-form-grid">
                       <div>
                         <label className="org-editor-field">
-                          {bulkMode ? 'Fecha base (para generar)' : 'Fecha *'}
+                          {bulkMode ? t('base_date_generate') : t('date')}
                         </label>
                         <input
                           type="date"
@@ -4655,7 +4655,7 @@ export default function OrganizerProfileEditor() {
                       </div>
                       <div>
                         <label className="org-editor-field">
-                          Hora Inicio
+                          {t('start_time')}
                         </label>
                         <input
                           type="time"
@@ -4667,7 +4667,7 @@ export default function OrganizerProfileEditor() {
                       </div>
                       <div>
                         <label className="org-editor-field">
-                          Hora Fin
+                          {t('end_time')}
                         </label>
                         <input
                           type="time"
@@ -4681,9 +4681,9 @@ export default function OrganizerProfileEditor() {
 
                     {/* Banner Único (después de fecha y hora) */}
                     {!bulkMode && (
-                      <div style={{ marginTop: 14, padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', fontSize: 13, opacity: 0.92 }}>
-                        <b>Modo Único</b>: se crea <b>una sola fecha</b> (sin repetición semanal). Si necesitas varias fechas, usa <b>Frecuentes</b>.
-                      </div>
+                      <div style={{ marginTop: 14, padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', fontSize: 13, opacity: 0.92 }}
+                      dangerouslySetInnerHTML={{ __html: t('unique_mode_description') }}
+                      />
                     )}
 
                     {/* Acciones bulk rápidas */}
@@ -4703,14 +4703,14 @@ export default function OrganizerProfileEditor() {
                             cursor: 'pointer',
                             opacity: 1,
                           } as const;
-                          const tip = baseReady ? undefined : 'Configura la fecha base para habilitar acciones rápidas';
+                          const tip = baseReady ? undefined : t('configure_base_date_tooltip');
 
                           return (
                             <>
-                        <div style={{ fontWeight: 800, marginBottom: 8 }}>⚡ Acciones rápidas</div>
+                        <div style={{ fontWeight: 800, marginBottom: 8 }}>{t('quick_actions')}</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 12, opacity: 0.85 }}>Semanas:</span>
+                            <span style={{ fontSize: 12, opacity: 0.85 }}>{t('weeks')}</span>
                             <input
                               type="number"
                               min="1"
@@ -4736,7 +4736,7 @@ export default function OrganizerProfileEditor() {
                               ...(baseReady ? enabledStyle : disabledStyle),
                             }}
                           >
-                            ➕ Agregar fila
+                            {t('add_row')}
                           </button>
                           <button
                             type="button"
@@ -4753,7 +4753,7 @@ export default function OrganizerProfileEditor() {
                               ...(baseReady ? enabledStyle : disabledStyle),
                             }}
                           >
-                            🔁 Generar semanal ({Math.max(1, Math.min(52, dateForm.semanas_repetir || 1))})
+                            {t('generate_weekly', { weeks: Math.max(1, Math.min(52, dateForm.semanas_repetir || 1)) })}
                           </button>
                           <button
                             type="button"
@@ -4770,7 +4770,7 @@ export default function OrganizerProfileEditor() {
                               ...(baseReady ? enabledStyle : disabledStyle),
                             }}
                           >
-                            ✅ Seleccionar todo
+                            {t('select_all')}
                           </button>
                           <button
                             type="button"
@@ -4787,7 +4787,7 @@ export default function OrganizerProfileEditor() {
                               ...(baseReady ? enabledStyle : disabledStyle),
                             }}
                           >
-                            ⛔ Deseleccionar
+                            {t('deselect')}
                           </button>
                           <button
                             type="button"
@@ -4804,13 +4804,13 @@ export default function OrganizerProfileEditor() {
                               ...(baseReady ? enabledStyle : disabledStyle),
                             }}
                           >
-                            🧹 Limpiar bulk
+                            {t('clear_bulk')}
                           </button>
                         </div>
                         {!baseReady && (
-                          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85 }}>
-                            Configura la <b>Fecha base</b> para habilitar estas acciones.
-                          </div>
+                          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85 }}
+                          dangerouslySetInnerHTML={{ __html: t('configure_base_date') }}
+                          />
                         )}
                             </>
                           );
@@ -4820,16 +4820,11 @@ export default function OrganizerProfileEditor() {
                         {/* Planificador bulk (sheet) */}
                         <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
                           <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: 10, color: '#FFFFFF' }}>
-                            📋 Planificador (frecuentes)
+                            {t('planner_frequent')}
                           </h3>
-                          <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}>
-                            Seleccionadas: <b>{bulkSelectedCount}</b>
-                            {bulkPreview.count > 0 && (
-                              <>
-                                {' '}· Preview: <b>{bulkPreview.first}</b> → <b>{bulkPreview.last}</b>
-                              </>
-                            )}
-                          </div>
+                          <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}
+                          dangerouslySetInnerHTML={{ __html: t('selected', { count: bulkSelectedCount }) + (bulkPreview.count > 0 ? ` · ${t('preview', { first: bulkPreview.first, last: bulkPreview.last })}` : '') }}
+                          />
 
                           <div className="bulk-sheet" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
                             <div
@@ -4845,11 +4840,11 @@ export default function OrganizerProfileEditor() {
                               {/* Header */}
                               <div className="bulk-header" style={{ display: 'grid', gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 90px)', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
                                 <div></div>
-                                <div>Fecha</div>
-                                <div>Hora inicio</div>
-                                <div>Hora fin</div>
-                                <div>Estado</div>
-                                <div>Notas</div>
+                                <div>{t('date_header')}</div>
+                                <div>{t('start_time_header')}</div>
+                                <div>{t('end_time_header')}</div>
+                                <div>{t('status_header')}</div>
+                                <div>{t('notes_header')}</div>
                                 <div></div>
                               </div>
 
@@ -4892,7 +4887,7 @@ export default function OrganizerProfileEditor() {
                                 boxShadow: '0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset',
                               }}
                             >
-                              {createEventDate.isPending ? '⏳ Guardando batch...' : '✅ Guardar fechas'}
+                              {createEventDate.isPending ? t('saving_batch') : t('save_dates')}
                             </button>
 
                             <button
@@ -4912,7 +4907,7 @@ export default function OrganizerProfileEditor() {
                                 boxShadow: '0 10px 22px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.04) inset',
                               }}
                             >
-                              🌐 Publicar seleccionadas
+                              {t('publish_selected')}
                             </button>
 
                             <button
@@ -4932,16 +4927,16 @@ export default function OrganizerProfileEditor() {
                                 boxShadow: '0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05) inset',
                               }}
                             >
-                              🚀 Publicar todas
+                              {t('publish_all')}
                             </button>
                           </div>
                         </div>
 
                         <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
-                          <div style={{ fontWeight: 800, marginBottom: 8 }}>🖼️ Flyer general (opcional)</div>
-                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 10 }}>
-                            Si lo cargas aquí, se usará como flyer para <b>todas</b> las fechas del batch. Después puedes reemplazarlo por fecha en “Flyers pendientes”.
-                          </div>
+                          <div style={{ fontWeight: 800, marginBottom: 8 }}>{t('general_flyer_optional')}</div>
+                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 10 }}
+                          dangerouslySetInnerHTML={{ __html: t('general_flyer_description') }}
+                          />
                           <DateFlyerUploader
                             value={bulkGeneralFlyerUrl || null}
                             onChange={(url) => {
@@ -4970,7 +4965,7 @@ export default function OrganizerProfileEditor() {
                                 opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
                               }}
                             >
-                              🧩 Aplicar a seleccionadas (creadas)
+                              {t('apply_to_selected_created')}
                             </button>
                             <button
                               type="button"
@@ -4987,7 +4982,7 @@ export default function OrganizerProfileEditor() {
                                 opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
                               }}
                             >
-                              🧩 Aplicar a todas (creadas)
+                              {t('apply_to_all_created')}
                             </button>
                             <button
                               type="button"
@@ -5004,7 +4999,7 @@ export default function OrganizerProfileEditor() {
                                 opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
                               }}
                             >
-                              🧾 {showPendingFlyers ? 'Ocultar flyers individuales' : 'Abrir flyers individuales'}
+                              🧾 {showPendingFlyers ? t('hide_individual_flyers') : t('open_individual_flyers')}
                             </button>
                           </div>
                         </div>
@@ -5019,7 +5014,7 @@ export default function OrganizerProfileEditor() {
                   {!bulkMode && (
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      🖼️ Flyer del Evento
+                      {t('event_flyer')}
                     </h3>
                     <DateFlyerUploader
                       value={dateForm.flyer_url || null}
@@ -5034,7 +5029,7 @@ export default function OrganizerProfileEditor() {
                   {!bulkMode && (
                   <div className="org-editor-card">
                     <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      🌐 Estado de Publicación
+                      {t('publication_status')}
                     </h3>
                     <div className="org-date-form-radio-group">
                       <label className="org-date-form-checkbox">
@@ -5047,7 +5042,7 @@ export default function OrganizerProfileEditor() {
                           style={{ transform: 'scale(1.2)' }}
                         />
                         <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                          📝 Borrador (solo tú puedes verlo)
+                          {t('draft_only_you')}
                         </span>
                       </label>
                       <label className="org-date-form-checkbox">
@@ -5060,7 +5055,7 @@ export default function OrganizerProfileEditor() {
                           style={{ transform: 'scale(1.2)' }}
                         />
                         <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                          🌐 Público (visible para todos)
+                          {t('public_visible_all')}
                         </span>
                       </label>
                     </div>
@@ -5115,7 +5110,7 @@ export default function OrganizerProfileEditor() {
                         cursor: 'pointer'
                       }}
                     >
-                      ❌ Cancelar
+                      {t('cancel')}
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -5134,7 +5129,7 @@ export default function OrganizerProfileEditor() {
                         opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
                       }}
                     >
-                        {createEventDate.isPending ? '⏳ Creando...' : '✨ Crear'}
+                      {createEventDate.isPending ? t('creating') : t('create')}
                     </motion.button>
                   </div>
                   )}
@@ -5143,10 +5138,10 @@ export default function OrganizerProfileEditor() {
                   {bulkMode && showPendingFlyers && (
                     <div className="org-editor-card">
                       <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: '#FFFFFF' }}>
-                        🧾 Flyers pendientes
+                        {t('pending_flyers')}
                       </h3>
                       <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 12 }}>
-                        Sube flyers después del batch. No bloquea la creación. Puedes usar flyer general o reemplazar individualmente.
+                        {t('pending_flyers_description')}
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -5163,19 +5158,16 @@ export default function OrganizerProfileEditor() {
                             <>
                               {all.length > 0 && (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <div style={{ fontSize: 12, opacity: 0.85 }}>
-                                    Mostrando <b>{showing.length}</b> de <b>{all.length}</b>.
-                                    {!bulkShowAllFlyers && all.length !== showing.length && (
-                                      <> (las que ya tienen flyer no se muestran)</>
-                                    )}
-                                  </div>
+                                  <div style={{ fontSize: 12, opacity: 0.85 }}
+                                  dangerouslySetInnerHTML={{ __html: t('showing_count', { showing: showing.length, total: all.length }) + (!bulkShowAllFlyers && all.length !== showing.length ? ` (${t('already_have_flyer')})` : '') }}
+                                  />
                                   {all.length !== showing.length && (
                                     <button
                                       type="button"
                                       onClick={() => setBulkShowAllFlyers((v) => !v)}
                                       style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
                                     >
-                                      {bulkShowAllFlyers ? '🙈 Ocultar las que ya tienen flyer' : '👀 Mostrar todas (para reemplazar)'}
+                                      {bulkShowAllFlyers ? t('hide_with_flyer') : t('show_all_replace')}
                                     </button>
                                   )}
                                 </div>
@@ -5183,7 +5175,7 @@ export default function OrganizerProfileEditor() {
 
                               {showing.length === 0 && (
                                 <div style={{ fontSize: 13, opacity: 0.9 }}>
-                                  ✅ Todas las fechas ya tienen flyer. Si quieres reemplazar alguno, usa “Mostrar todas”.
+                                  {t('all_dates_have_flyer')}
                                 </div>
                               )}
 
@@ -5220,11 +5212,11 @@ export default function OrganizerProfileEditor() {
                                       try {
                                         await updateDate.mutateAsync({ id: Number(dateId), flyer_url: url || null });
                                         updateBulkRow(r.id, { flyer_url: url || null, flyer_status: url ? 'DONE' : 'PENDING' });
-                                        showToast('Flyer guardado ✅', 'success');
+                                        showToast(t('flyer_saved'), 'success');
                                       } catch (e: any) {
                                         console.error('[OrganizerProfileEditor] error updating flyer_url:', e);
                                         updateBulkRow(r.id, { flyer_status: 'ERROR' });
-                                        showToast(e?.message || 'Error guardando flyer', 'error');
+                                        showToast(e?.message || t('error_saving_flyer'), 'error');
                                       }
                                     }}
                                   />
@@ -5616,7 +5608,7 @@ export default function OrganizerProfileEditor() {
                     boxShadow: `0 4px 16px ${colors.blue}66`,
                   }}
                 >
-                  {submit.isPending ? '⏳ Enviando...' : '📤 Enviar para Revisión'}
+                  {submit.isPending ? t('sending') : t('submit_for_review')}
                 </motion.button>
               )}
             </div>

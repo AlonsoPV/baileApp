@@ -201,6 +201,7 @@ export function ProfileBasics() {
     }
 
     setIsLoading(true);
+    let __dbgDidNavigate = false;
 
     const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
     const isNetworkishMessage = (msg?: string) => {
@@ -391,6 +392,7 @@ export function ProfileBasics() {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         showToast('Perfil guardado exitosamente ✅', 'success');
+        __dbgDidNavigate = true;
         navigate('/onboarding/ritmos');
       } catch (updateError: any) {
         console.error('[ProfileBasics] Error en updateProfileFields:', updateError);

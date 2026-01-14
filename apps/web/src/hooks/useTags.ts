@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Tag } from '../types/db';
+import { withTimeout } from '../utils/withTimeout';
+
+const TAGS_QUERY_TIMEOUT_MS = 7_000;
 
 async function fetchTags(tipo?: 'ritmo' | 'zona'): Promise<Tag[]> {
   let query = supabase
@@ -12,12 +15,8 @@ async function fetchTags(tipo?: 'ritmo' | 'zona'): Promise<Tag[]> {
     query = query.eq('tipo', tipo);
   }
 
-  const { data, error } = await query;
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
+  const { data, error } = await withTimeout(query, TAGS_QUERY_TIMEOUT_MS, 'Load tags');
+  if (error) throw new Error(error.message);
   return data || [];
 }
 
