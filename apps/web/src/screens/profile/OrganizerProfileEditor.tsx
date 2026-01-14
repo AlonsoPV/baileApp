@@ -48,7 +48,7 @@ import { StripePayoutSettings } from "../../components/payments/StripePayoutSett
 import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
 import { useQueryClient } from "@tanstack/react-query";
 import EventDatesSheet from "../../components/events/EventDatesSheet";
-import EventDateDrawer from "../../components/events/EventDateDrawer";
+import EventDateFullDrawer from "../../components/events/EventDateFullDrawer";
 import PendingFlyersPanel from "../../components/events/PendingFlyersPanel";
 import { useEventDatesBulk } from "../../hooks/useEventDatesBulk";
 import { useUploadFlyerQueue } from "../../hooks/useUploadFlyerQueue";
@@ -106,12 +106,16 @@ const BulkRowItem = React.memo(function BulkRowItem({
   errors,
   onChange,
   onRemove,
+  createdDateId,
+  onEditCreatedDate,
   dense,
 }: {
   row: BulkRow;
   errors?: Record<string, string>;
   onChange: (rowId: string, patch: Partial<BulkRow>) => void;
   onRemove: (rowId: string) => void;
+  createdDateId?: number | null;
+  onEditCreatedDate?: (dateId: number) => void;
   dense?: boolean;
 }) {
   const rowErr = errors || {};
@@ -119,7 +123,7 @@ const BulkRowItem = React.memo(function BulkRowItem({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 44px)',
+        gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 90px)',
         gap: dense ? 8 : 10,
         alignItems: 'center',
         padding: dense ? '8px 8px' : '10px 10px',
@@ -224,31 +228,63 @@ const BulkRowItem = React.memo(function BulkRowItem({
         }}
       />
 
-      <button
-        type="button"
-        onClick={() => onRemove(row.id)}
-        style={{
-          width: dense ? 34 : 36,
-          height: dense ? 34 : 36,
-          borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.18)',
-          background: 'rgba(255,255,255,0.05)',
-          color: '#fff',
-          cursor: 'pointer',
-        }}
-        title="Eliminar fila"
-      >
-        🗑️
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        {typeof createdDateId === 'number' && createdDateId > 0 && (
+          <button
+            type="button"
+            onClick={() => onEditCreatedDate?.(createdDateId)}
+            style={{
+              width: dense ? 34 : 36,
+              height: dense ? 34 : 36,
+              borderRadius: 10,
+              border: '1px solid rgba(39,195,255,0.40)',
+              background: 'rgba(39,195,255,0.10)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 900,
+            }}
+            title={`Editar fecha creada #${createdDateId}`}
+            aria-label={`Editar fecha creada ${createdDateId}`}
+          >
+            ✏️
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onRemove(row.id)}
+          style={{
+            width: dense ? 34 : 36,
+            height: dense ? 34 : 36,
+            borderRadius: 10,
+            border: '1px solid rgba(255,255,255,0.18)',
+            background: 'rgba(255,255,255,0.05)',
+            color: '#fff',
+            cursor: 'pointer',
+          }}
+          title="Eliminar fila"
+          aria-label="Eliminar fila"
+        >
+          🗑️
+        </button>
+      </div>
     </div>
   );
 });
 
 // Componente para mostrar un social con sus fechas
-function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId, isMobile, orgLocations }: any) {
+function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId, isMobile, orgLocations, onOpenDateDrawer }: any) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: dates } = useDatesByParent(parent.id);
   const [expanded, setExpanded] = useState(false);
+
+  const startFrecuentesFromDate = (fromDateId: number) => {
+    const params = new URLSearchParams(location.search);
+    params.set('mode', 'frecuentes');
+    params.set('fromDateId', String(fromDateId));
+    navigate({ pathname: location.pathname, search: params.toString() });
+    setExpanded(true);
+  };
 
   const formatEsDate = (input?: string) => {
     try {
@@ -425,7 +461,12 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                           rows={availableDates.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                           variant="embedded"
                           showHeader={false}
-                          onOpenRow={(id) => navigate(`/social/fecha/${id}/edit`)}
+                          onOpenRow={(id) => {
+                            if (onOpenDateDrawer) {
+                              onOpenDateDrawer(Number(id));
+                            }
+                          }}
+                          onStartFrecuentes={(fromDateId) => startFrecuentesFromDate(fromDateId)}
                           onViewRow={(id) => navigate(`/social/fecha/${id}`)}
                           onDeleteRow={(row) => onDeleteDate(row as any)}
                           deletingRowId={deletingDateId as any}
@@ -454,7 +495,12 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                           rows={pastDates.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                           variant="embedded"
                           showHeader={false}
-                          onOpenRow={(id) => navigate(`/social/fecha/${id}/edit`)}
+                          onOpenRow={(id) => {
+                            if (onOpenDateDrawer) {
+                              onOpenDateDrawer(Number(id));
+                            }
+                          }}
+                          onStartFrecuentes={(fromDateId) => startFrecuentesFromDate(fromDateId)}
                           onViewRow={(id) => navigate(`/social/fecha/${id}`)}
                           onDeleteRow={(row) => onDeleteDate(row as any)}
                           deletingRowId={deletingDateId as any}
@@ -4751,12 +4797,12 @@ export default function OrganizerProfileEditor() {
                                 minWidth: isMobile ? 760 : 0,
                                 // CSS var para alinear header/filas en responsive
                                 ['--bulk-cols' as any]: isMobile
-                                  ? '38px 140px 110px 110px 130px 220px 44px'
-                                  : '44px 140px 120px 120px 140px 1fr 44px',
+                                  ? '38px 140px 110px 110px 130px 220px 84px'
+                                  : '44px 140px 120px 120px 140px 1fr 90px',
                               }}
                             >
                               {/* Header */}
-                              <div className="bulk-header" style={{ display: 'grid', gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 44px)', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
+                              <div className="bulk-header" style={{ display: 'grid', gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 90px)', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
                                 <div></div>
                                 <div>Fecha</div>
                                 <div>Hora inicio</div>
@@ -4774,6 +4820,11 @@ export default function OrganizerProfileEditor() {
                                     errors={bulkErrors[r.id]}
                                     onChange={updateBulkRow}
                                     onRemove={removeBulkRow}
+                                    createdDateId={createdDateIdByRow[r.id] || null}
+                                    onEditCreatedDate={(dateId) => {
+                                      setDrawerDateId(dateId);
+                                      setDrawerOpen(true);
+                                    }}
                                     dense={isMobile}
                                   />
                                 ))}
@@ -5147,8 +5198,8 @@ export default function OrganizerProfileEditor() {
                 </motion.div>
               )}
 
-              {/* Drawer edición individual (override flyer + ajustes puntuales) */}
-              <EventDateDrawer
+              {/* Drawer edición individual (form completo) */}
+              <EventDateFullDrawer
                 open={drawerOpen}
                 dateId={drawerDateId}
                 onClose={() => setDrawerOpen(false)}
@@ -5278,6 +5329,10 @@ export default function OrganizerProfileEditor() {
                               deletingDateId={deletingDateId}
                               isMobile={isMobile}
                               orgLocations={orgLocations}
+                              onOpenDateDrawer={(id: number) => {
+                                setDrawerDateId(id);
+                                setDrawerOpen(true);
+                              }}
                             />
                           </motion.div>
                         ))}
@@ -5310,6 +5365,12 @@ export default function OrganizerProfileEditor() {
                                     setDrawerDateId(Number(id));
                                     setDrawerOpen(true);
                                   }}
+                                  onStartFrecuentes={(fromDateId) => {
+                                    const params = new URLSearchParams(location.search);
+                                    params.set('mode', 'frecuentes');
+                                    params.set('fromDateId', String(fromDateId));
+                                    navigate({ pathname: location.pathname, search: params.toString() });
+                                  }}
                                   onViewRow={(id) => navigate(`/social/fecha/${id}`)}
                                   onDeleteRow={(row) => handleDeleteDate(row as any)}
                                   deletingRowId={deletingDateId as any}
@@ -5340,6 +5401,12 @@ export default function OrganizerProfileEditor() {
                                   onOpenRow={(id) => {
                                     setDrawerDateId(Number(id));
                                     setDrawerOpen(true);
+                                  }}
+                                  onStartFrecuentes={(fromDateId) => {
+                                    const params = new URLSearchParams(location.search);
+                                    params.set('mode', 'frecuentes');
+                                    params.set('fromDateId', String(fromDateId));
+                                    navigate({ pathname: location.pathname, search: params.toString() });
                                   }}
                                   onViewRow={(id) => navigate(`/social/fecha/${id}`)}
                                   onDeleteRow={(row) => handleDeleteDate(row as any)}

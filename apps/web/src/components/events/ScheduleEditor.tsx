@@ -114,9 +114,10 @@ const pill = (active: boolean): React.CSSProperties => ({
 });
 
 export default function ScheduleEditorPlus({
-  schedule,
+  // Defensive defaults: callers may pass undefined during first render / partial forms.
+  schedule = [],
   onChangeSchedule,
-  costos,
+  costos = [],
   onChangeCostos,
   ritmos = [],
   zonas = [],

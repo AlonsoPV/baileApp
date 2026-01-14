@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../Toast";
 import { useBulkUpdateEventDates } from "../../hooks/useBulkUpdateEventDates";
 import { uploadEventFlyer } from "../../lib/uploadEventFlyer";
@@ -46,6 +47,7 @@ type Props = {
   isLoading?: boolean;
   onOpenRow: (id: number) => void;
   onRowsPatched?: (ids: number[], patch: Record<string, any>) => void;
+  onStartFrecuentes?: (fromDateId: number) => void;
   title?: string;
   variant?: "card" | "embedded";
   showHeader?: boolean;
@@ -90,6 +92,9 @@ const Row = React.memo(function Row({
   selected,
   onToggle,
   onEdit,
+  onPrefetchRow,
+  onEditPointerDown,
+  onEditClick,
   onView,
   onDelete,
   deletingRowId,
@@ -115,6 +120,9 @@ const Row = React.memo(function Row({
   selected: boolean;
   onToggle: (id: number, next: boolean) => void;
   onEdit: (id: number) => void;
+  onPrefetchRow: (row: EventDateRow) => void;
+  onEditPointerDown: (id: number) => void;
+  onEditClick: (id: number) => void;
   onView?: (id: number) => void;
   onDelete?: (row: EventDateRow) => void;
   deletingRowId?: number | null;
@@ -138,12 +146,12 @@ const Row = React.memo(function Row({
 }) {
   const flyerTone = row.flyer_url ? "ok" : "warn";
   const pubTone = row.estado_publicacion === "publicado" ? "ok" : "muted";
+  const isRecurrent = (row as any)?.dia_semana !== null && (row as any)?.dia_semana !== undefined;
   return (
     <div
       className="eds-grid eds-row"
       style={{
         display: "grid",
-        gridTemplateColumns: "var(--eds-cols)",
         gap: 10,
         alignItems: "center",
         padding: "10px 10px",
@@ -166,12 +174,15 @@ const Row = React.memo(function Row({
           <button
             type="button"
             onClick={() => onStartEditFecha(row)}
-            disabled={!canEditFecha}
-            title={canEditFecha ? "Editar fecha" : "Fecha no editable (recurrente)"}
+            title={
+              isRecurrent
+                ? "Editar fecha (esto quitará la recurrencia semanal)"
+                : "Editar fecha"
+            }
             className={`eds-editableDate ${canEditFecha ? "" : "eds-editableDateDisabled"}`}
           >
-            <span style={{ opacity: canEditFecha ? 1 : 0.8 }}>{String(row.fecha).split("T")[0]}</span>
-            {canEditFecha && <span style={{ opacity: 0.9, fontSize: 12 }}>✎</span>}
+            <span style={{ opacity: 1 }}>{String(row.fecha).split("T")[0]}</span>
+            <span style={{ opacity: 0.9, fontSize: 12 }}>✎</span>
           </button>
         ) : (
           <>
@@ -211,7 +222,10 @@ const Row = React.memo(function Row({
       <div className="eds-place" style={{ color: "#fff", fontSize: 12, opacity: 0.9, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {row.lugar || "—"}
       </div>
-      <div title={flyerUploading ? "Subiendo flyer…" : flyerError ? "Error subiendo flyer" : (row.flyer_url ? "Flyer añadido (toca para cambiar)" : "Flyer pendiente (toca para añadir)")}>
+      <div
+        className="eds-cellFlyer"
+        title={flyerUploading ? "Subiendo flyer…" : flyerError ? "Error subiendo flyer" : (row.flyer_url ? "Flyer añadido (toca para cambiar)" : "Flyer pendiente (toca para añadir)")}
+      >
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -232,10 +246,10 @@ const Row = React.memo(function Row({
           </Badge>
         </motion.button>
       </div>
-      <div title={row.estado_publicacion === "publicado" ? "Publicado" : "Borrador"}>
+      <div className="eds-cellEstado" title={row.estado_publicacion === "publicado" ? "Publicado" : "Borrador"}>
         <Badge tone={pubTone}>{row.estado_publicacion === "publicado" ? "🌐" : "📝"}</Badge>
       </div>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div className="eds-cellActions" style={{ display: "flex", justifyContent: "flex-end" }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "nowrap", justifyContent: "flex-end" }}>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -261,7 +275,9 @@ const Row = React.memo(function Row({
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onEdit(row.id)}
+            onPointerEnter={() => onPrefetchRow(row)}
+            onPointerDown={() => onEditPointerDown(row.id)}
+            onClick={() => onEditClick(row.id)}
             className="eds-iconBtn eds-iconBtnPrimary"
             title="Editar"
           >
@@ -429,6 +445,7 @@ export default function EventDatesSheet({
   isLoading,
   onOpenRow,
   onRowsPatched,
+  onStartFrecuentes,
   title,
   variant = "card",
   showHeader = true,
@@ -438,6 +455,7 @@ export default function EventDatesSheet({
   locations = [],
 }: Props) {
   const { showToast } = useToast();
+  const qc = useQueryClient();
   const bulkUpdate = useBulkUpdateEventDates();
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -471,6 +489,50 @@ export default function EventDatesSheet({
 
   const selectedCount = selectedIds.size;
   const selectedList = useMemo(() => Array.from(selectedIds), [selectedIds]);
+  const lastPointerDownRef = useRef<{ id: number | null; ts: number }>({ id: null, ts: 0 });
+
+  const seedAndPrefetchDate = useCallback(
+    (row: EventDateRow) => {
+      const id = row?.id;
+      if (!id) return;
+      // 1) Seed cache immediately from already-rendered row (instant drawer render).
+      qc.setQueryData(["event", "date", id], (prev: any) => prev ?? row);
+      // 2) Prefetch in background to get any missing fields and ensure freshness.
+      void qc.prefetchQuery({
+        queryKey: ["event", "date", id],
+        queryFn: async () => {
+          const { data, error } = await supabase.from("events_date").select("*").eq("id", id).maybeSingle();
+          if (error) throw error;
+          return data;
+        },
+        staleTime: 1000 * 30,
+      });
+    },
+    [qc]
+  );
+
+  const openDrawerPointerDown = useCallback(
+    (id: number) => {
+      if (!id) return;
+      lastPointerDownRef.current = { id, ts: Date.now() };
+      onOpenRow(id);
+    },
+    [onOpenRow]
+  );
+
+  const openDrawerClick = useCallback(
+    (id: number) => {
+      if (!id) return;
+      const last = lastPointerDownRef.current;
+      // Avoid double-trigger (pointerdown -> click) for same id.
+      if (last?.id === id && Date.now() - (last?.ts || 0) < 800) {
+        lastPointerDownRef.current = { id: null, ts: 0 };
+        return;
+      }
+      onOpenRow(id);
+    },
+    [onOpenRow]
+  );
 
   const toggle = useCallback((id: number, next: boolean) => {
     setSelectedIds((prev) => {
@@ -520,9 +582,59 @@ export default function EventDatesSheet({
     [onRowsPatched, showToast]
   );
 
+  const makeDiaSemanaFromFecha = useCallback((fechaValue: any): number | null => {
+    try {
+      if (!fechaValue) return null;
+      const plain = String(fechaValue).split("T")[0];
+      const [y, m, d] = plain.split("-").map((n) => parseInt(n, 10));
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+      const dt = new Date(y, m - 1, d);
+      const day = dt.getDay(); // 0..6
+      return typeof day === "number" && day >= 0 && day <= 6 ? day : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const makeSelectedRecurrentWeekly = useCallback(async () => {
+    if (!canRun) return;
+    const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
+    if (!selectedRows.length) return;
+    const ok = window.confirm(
+      `¿Convertir ${selectedRows.length} fecha(s) a evento recurrente semanal?\n\nEsto marcará la(s) fecha(s) como recurrente (se bloqueará editar la fecha).`
+    );
+    if (!ok) return;
+
+    try {
+      let updated = 0;
+      let skipped = 0;
+      for (const r of selectedRows) {
+        const dia = makeDiaSemanaFromFecha((r as any)?.fecha);
+        if (dia === null) {
+          skipped += 1;
+          continue;
+        }
+        await updateRow(r.id, { dia_semana: dia });
+        updated += 1;
+      }
+      if (updated > 0) showToast(`Recurrentes ✅ (${updated})`, "success");
+      if (skipped > 0) showToast(`Algunas filas no tenían fecha válida (omitidas: ${skipped})`, "info");
+    } catch (e: any) {
+      showToast(e?.message || "Error convirtiendo a recurrente", "error");
+    }
+  }, [canRun, makeDiaSemanaFromFecha, selectedIds, sortedRows, updateRow, showToast]);
+
+  const startFrecuentesFromSelection = useCallback(() => {
+    if (!onStartFrecuentes) return;
+    if (!selectedList.length) return;
+    if (selectedList.length !== 1) {
+      showToast("Selecciona 1 fecha para usarla como plantilla de frecuentes", "info");
+      return;
+    }
+    onStartFrecuentes(selectedList[0]);
+  }, [onStartFrecuentes, selectedList, showToast]);
+
   const startEditFecha = useCallback((row: EventDateRow) => {
-    const isRecurrent = (row as any)?.dia_semana !== null && (row as any)?.dia_semana !== undefined;
-    if (isRecurrent) return;
     setEditingFechaId(row.id);
     setEditingFechaValue(String(row.fecha || "").split("T")[0]);
   }, []);
@@ -534,9 +646,19 @@ export default function EventDatesSheet({
       showToast("Fecha inválida (usa YYYY-MM-DD)", "error");
       return;
     }
-    await updateRow(editingFechaId, { fecha: value }, "Fecha guardada ✅");
+    const row = sortedRows.find((r) => r.id === editingFechaId);
+    const isRecurrent = (row as any)?.dia_semana !== null && (row as any)?.dia_semana !== undefined;
+    if (isRecurrent) {
+      const ok = window.confirm(
+        "Este evento es recurrente semanal. Para asignar una fecha específica, se quitará la recurrencia.\n\n¿Continuar?"
+      );
+      if (!ok) return;
+    }
+    const patch: Record<string, any> = { fecha: value };
+    if (isRecurrent) patch.dia_semana = null;
+    await updateRow(editingFechaId, patch, isRecurrent ? "Fecha guardada ✅ (recurrencia removida)" : "Fecha guardada ✅");
     setEditingFechaId(null);
-  }, [editingFechaId, editingFechaValue, showToast, updateRow]);
+  }, [editingFechaId, editingFechaValue, showToast, updateRow, sortedRows]);
 
   const cancelFecha = useCallback(() => {
     setEditingFechaId(null);
@@ -628,7 +750,23 @@ export default function EventDatesSheet({
           scrollbar-gutter: stable;
         }
         .eds-minWidth { min-width: 930px; }
-        .eds-grid { --eds-cols: 42px 220px 120px 72px 72px 1fr 64px 64px 140px; }
+        .eds-grid {
+          /* Column widths for header + rows */
+          --eds-flyer-col: 64px;
+          --eds-estado-col: 64px;
+          --eds-actions-col: 140px;
+          --eds-cols: 42px 220px 120px 72px 72px minmax(220px, 1fr) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col);
+        }
+        /* Explicit grid-template-columns per request */
+        .eds-grid.eds-row { grid-template-columns: var(--eds-cols); }
+        .eds-grid.eds-header { grid-template-columns: var(--eds-cols); }
+        /* Ensure Estado/Acciones never collapse */
+        .eds-cellFlyer { min-width: var(--eds-flyer-col); }
+        .eds-cellEstado { min-width: var(--eds-estado-col); }
+        .eds-cellActions { min-width: var(--eds-actions-col); }
+        .eds-hFlyer { min-width: var(--eds-flyer-col); }
+        .eds-hEstado { min-width: var(--eds-estado-col); }
+        .eds-hActions { min-width: var(--eds-actions-col); }
         .eds-header {
           position: sticky;
           top: 0;
@@ -683,16 +821,87 @@ export default function EventDatesSheet({
           border-color: rgba(255,255,255,0.14);
           background: rgba(255,255,255,0.05);
         }
+
+        /* Bulk actions (responsive) */
+        .eds-actionsBar{
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+          margin-bottom: 14px;
+          padding: 12px;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.10);
+          background: rgba(255,255,255,0.04);
+        }
+        .eds-actionsInputs{
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          align-items: end;
+        }
+        .eds-fieldLabel{
+          font-size: 12px;
+          opacity: 0.85;
+          color: #fff;
+          margin-bottom: 6px;
+          font-weight: 800;
+        }
+        .eds-timeInput{
+          width: 100%;
+          padding: 10px 12px;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.18);
+          background: rgba(0,0,0,0.25);
+          color: #fff;
+          min-height: 40px;
+        }
+        .eds-actionsBtns{
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          align-items: center;
+        }
+        .eds-actionBtn{
+          padding: 10px 12px;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.28);
+          background: rgba(255,255,255,0.06);
+          color: #fff;
+          cursor: pointer;
+          font-weight: 900;
+          min-height: 40px;
+          white-space: nowrap;
+        }
+        .eds-actionBtnPrimary{
+          border-color: rgba(39,195,255,0.55);
+          background: linear-gradient(135deg, rgba(39,195,255,0.22), rgba(30,136,229,0.22));
+        }
+        .eds-actionBtnDanger{
+          border-color: rgba(255,61,87,0.55);
+          background: rgba(255,61,87,0.12);
+        }
+        .eds-actionBtn:disabled{
+          opacity: .55;
+          cursor: not-allowed;
+        }
+        @media (max-width: 720px) {
+          .eds-actionsInputs{ grid-template-columns: 1fr 1fr; }
+          .eds-actionBtn{ flex: 1 1 auto; }
+        }
+        @media (max-width: 520px) {
+          .eds-actionsInputs{ grid-template-columns: 1fr; }
+          .eds-actionBtn{ width: 100%; justify-content: center; }
+        }
         @media (max-width: 720px) {
           .eds-minWidth { min-width: 780px; }
           /* Give more room to "Evento" on mobile */
-          .eds-grid { --eds-cols: 36px 220px 96px 64px 64px 1fr 56px 56px 120px; }
+          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-cols: 36px 220px 96px 64px 64px minmax(200px, 1fr) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
           .eds-iconBtn{ width: 36px; height: 36px; border-radius: 11px; }
         }
         @media (max-width: 520px) {
           .eds-minWidth { min-width: 620px; }
           .eds-place { display: none; }
-          .eds-grid { --eds-cols: 36px 1fr 110px 64px 64px 56px 56px 128px; }
+          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-cols: 36px minmax(180px, 1fr) 110px 64px 64px var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
           .eds-editableDate{ padding: 6px 8px; }
         }
       `}</style>
@@ -732,133 +941,135 @@ export default function EventDatesSheet({
       />
 
       {/* Bulk actions bar */}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 14 }}>
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.85, color: "#fff", marginBottom: 6 }}>Hora inicio</div>
-          <input
-            type="time"
-            value={bulkDraft.hora_inicio || ""}
-            onChange={(e) => setBulkDraft((p) => ({ ...p, hora_inicio: e.target.value }))}
-            style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.25)", color: "#fff" }}
-          />
+      <div className="eds-actionsBar">
+        <div className="eds-actionsInputs">
+          <div>
+            <div className="eds-fieldLabel">Hora inicio</div>
+            <input
+              className="eds-timeInput"
+              type="time"
+              value={bulkDraft.hora_inicio || ""}
+              onChange={(e) => setBulkDraft((p) => ({ ...p, hora_inicio: e.target.value }))}
+            />
+          </div>
+          <div>
+            <div className="eds-fieldLabel">Hora fin</div>
+            <input
+              className="eds-timeInput"
+              type="time"
+              value={bulkDraft.hora_fin || ""}
+              onChange={(e) => setBulkDraft((p) => ({ ...p, hora_fin: e.target.value }))}
+            />
+          </div>
         </div>
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.85, color: "#fff", marginBottom: 6 }}>Hora fin</div>
-          <input
-            type="time"
-            value={bulkDraft.hora_fin || ""}
-            onChange={(e) => setBulkDraft((p) => ({ ...p, hora_fin: e.target.value }))}
-            style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.25)", color: "#fff" }}
-          />
-        </div>
-        <button
-          type="button"
-          disabled={!canRun || (!bulkDraft.hora_inicio && !bulkDraft.hora_fin)}
-          onClick={() =>
-            applyPatch({
-              ...(bulkDraft.hora_inicio ? { hora_inicio: bulkDraft.hora_inicio } : {}),
-              ...(bulkDraft.hora_fin ? { hora_fin: bulkDraft.hora_fin } : {}),
-            })
-          }
-          style={{
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid rgba(39,195,255,0.55)",
-            background: canRun ? "linear-gradient(135deg, rgba(39,195,255,0.22), rgba(30,136,229,0.22))" : "rgba(255,255,255,0.08)",
-            color: "#fff",
-            cursor: canRun ? "pointer" : "not-allowed",
-            fontWeight: 900,
-          }}
-          title="Aplicar hora a seleccionadas"
-        >
-          {bulkUpdate.isPending ? "Aplicando…" : "Aplicar hora"}
-        </button>
 
-        <button
-          type="button"
-          disabled={!canRun}
-          onClick={() => applyPatch({ estado_publicacion: "publicado" })}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid rgba(255,255,255,0.28)",
-            background: "rgba(255,255,255,0.08)",
-            color: "#fff",
-            cursor: canRun ? "pointer" : "not-allowed",
-            fontWeight: 900,
-          }}
-        >
-          Publicar seleccionadas
-        </button>
-        <button
-          type="button"
-          disabled={!canRun}
-          onClick={() => applyPatch({ estado_publicacion: "borrador" })}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid rgba(255,255,255,0.28)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
-            cursor: canRun ? "pointer" : "not-allowed",
-            fontWeight: 900,
-          }}
-        >
-          Mover a borrador
-        </button>
-
-        <button
-          type="button"
-          disabled={!canRun || !onDeleteRow}
-          onClick={async () => {
-            if (!selectedList.length) return;
-            if (!onDeleteRow) return;
-            const ok = window.confirm(
-              `¿Eliminar ${selectedList.length} fecha(s) seleccionada(s)? Esta acción no se puede deshacer.`
-            );
-            if (!ok) return;
-            try {
-              setBulkDeleting(true);
-              const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
-              for (const r of selectedRows) {
-                await Promise.resolve(onDeleteRow(r));
-              }
-              setSelectedIds(new Set());
-              showToast("Eliminadas ✅", "success");
-            } catch (e: any) {
-              showToast(e?.message || "Error eliminando seleccionadas", "error");
-            } finally {
-              setBulkDeleting(false);
+        <div className="eds-actionsBtns">
+          <button
+            className="eds-actionBtn eds-actionBtnPrimary"
+            type="button"
+            disabled={!canRun || (!bulkDraft.hora_inicio && !bulkDraft.hora_fin)}
+            onClick={() =>
+              applyPatch({
+                ...(bulkDraft.hora_inicio ? { hora_inicio: bulkDraft.hora_inicio } : {}),
+                ...(bulkDraft.hora_fin ? { hora_fin: bulkDraft.hora_fin } : {}),
+              })
             }
-          }}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid rgba(255,61,87,0.55)",
-            background: "rgba(255,61,87,0.12)",
-            color: "#fff",
-            cursor: canRun && onDeleteRow ? "pointer" : "not-allowed",
-            fontWeight: 900,
-            opacity: canRun && onDeleteRow ? 1 : 0.6,
-          }}
-        >
-          {bulkDeleting ? "Eliminando…" : "Eliminar seleccionadas"}
-        </button>
+            title="Aplicar hora a seleccionadas"
+          >
+            {bulkUpdate.isPending ? "Aplicando…" : "Aplicar hora"}
+          </button>
+
+          <button
+            className="eds-actionBtn"
+            type="button"
+            disabled={!canRun}
+            onClick={() => applyPatch({ estado_publicacion: "publicado" })}
+          >
+            🌐 Publicar
+          </button>
+          <button
+            className="eds-actionBtn"
+            type="button"
+            disabled={!canRun}
+            onClick={() => applyPatch({ estado_publicacion: "borrador" })}
+          >
+            📝 Borrador
+          </button>
+
+          <button
+            className="eds-actionBtn"
+            type="button"
+            disabled={!canRun}
+            onClick={makeSelectedRecurrentWeekly}
+            title="Convierte las fechas seleccionadas a recurrente semanal (usa el día de la semana de cada fecha)"
+          >
+            🔁 Recurrente
+          </button>
+
+          <button
+            className="eds-actionBtn"
+            type="button"
+            disabled={!canRun}
+            onClick={() => applyPatch({ dia_semana: null })}
+            title="Quitar recurrencia semanal (dia_semana = null) en seleccionadas"
+          >
+            🚫 Quitar recurrencia
+          </button>
+
+          <button
+            className="eds-actionBtn eds-actionBtnPrimary"
+            type="button"
+            disabled={!canRun || !onStartFrecuentes}
+            onClick={startFrecuentesFromSelection}
+            title={onStartFrecuentes ? "Usar esta fecha como plantilla para planificador de frecuentes" : "No disponible aquí"}
+          >
+            📋 Frecuente
+          </button>
+
+          <button
+            className="eds-actionBtn eds-actionBtnDanger"
+            type="button"
+            disabled={!canRun || !onDeleteRow}
+            onClick={async () => {
+              if (!selectedList.length) return;
+              if (!onDeleteRow) return;
+              const ok = window.confirm(
+                `¿Eliminar ${selectedList.length} fecha(s) seleccionada(s)? Esta acción no se puede deshacer.`
+              );
+              if (!ok) return;
+              try {
+                setBulkDeleting(true);
+                const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
+                for (const r of selectedRows) {
+                  await Promise.resolve(onDeleteRow(r));
+                }
+                setSelectedIds(new Set());
+                showToast("Eliminadas ✅", "success");
+              } catch (e: any) {
+                showToast(e?.message || "Error eliminando seleccionadas", "error");
+              } finally {
+                setBulkDeleting(false);
+              }
+            }}
+          >
+            {bulkDeleting ? "Eliminando…" : "🗑️ Eliminar"}
+          </button>
+        </div>
       </div>
 
       {/* Table */}
       <div className="eds-scroll">
         <div className="eds-minWidth">
-          <div className="eds-grid eds-header" style={{ display: "grid", gridTemplateColumns: "var(--eds-cols)", gap: 10, opacity: 0.9, fontSize: 12, marginBottom: 8, color: "#fff" }}>
+          <div className="eds-grid eds-header" style={{ display: "grid", gap: 10, opacity: 0.9, fontSize: 12, marginBottom: 8, color: "#fff" }}>
             <div></div>
             <div>Evento</div>
             <div>Fecha</div>
             <div>Inicio</div>
             <div>Fin</div>
             <div className="eds-place">Lugar</div>
-            <div>Flyer</div>
-            <div>Estado</div>
-            <div>Acciones</div>
+            <div className="eds-hFlyer">Flyer</div>
+            <div className="eds-hEstado">Estado</div>
+            <div className="eds-hActions">Acciones</div>
           </div>
           {isLoading && (
             <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>Cargando…</div>
@@ -874,15 +1085,16 @@ export default function EventDatesSheet({
                 selected={selectedIds.has(r.id)}
                 onToggle={toggle}
                 onEdit={onOpenRow}
+                onPrefetchRow={seedAndPrefetchDate}
+                onEditPointerDown={openDrawerPointerDown}
+                onEditClick={openDrawerClick}
                 onView={onViewRow}
                 onDelete={onDeleteRow}
                 deletingRowId={deletingRowId}
                 onPickFlyer={pickFlyer}
                 flyerUploading={!!flyerUploadingById[r.id]}
                 flyerError={!!flyerErrorById[r.id]}
-                canEditFecha={
-                  !((r as any)?.dia_semana !== null && (r as any)?.dia_semana !== undefined)
-                }
+                canEditFecha={true}
                 isEditingFecha={editingFechaId === r.id}
                 editingFechaValue={editingFechaId === r.id ? editingFechaValue : String(r.fecha || "").split("T")[0]}
                 onStartEditFecha={startEditFecha}

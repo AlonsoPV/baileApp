@@ -27,35 +27,21 @@ export function useEventDate(dateId?: number) {
   return useQuery({
     queryKey: ["event", "date", dateId],
     queryFn: async () => {
-      console.log('[useEventDate] Fetching date with ID:', dateId);
-      if (!dateId) {
-        console.log('[useEventDate] No dateId provided, returning null');
-        return null;
-      }
-      
+      if (!dateId) return null;
       const { data, error } = await supabase
         .from("events_date")
         .select("*")
         .eq("id", dateId)
         .maybeSingle();
-        
-      console.log('[useEventDate] Supabase response:', { data, error });
-      
       if (error) {
-        console.error('[useEventDate] Supabase error:', error);
-        console.error('[useEventDate] Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
         throw error;
       }
-      
-      console.log('[useEventDate] Returning data:', data);
       return data;
     },
-    enabled: !!dateId
+    enabled: !!dateId,
+    // Reduce refetch churn when opening/closing the drawer.
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
   });
 }
 

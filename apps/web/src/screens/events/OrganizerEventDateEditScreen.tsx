@@ -53,6 +53,12 @@ type BulkRow = {
   selected: boolean;
   flyer_status: BulkFlyerStatus;
   flyer_url?: string | null;
+  // Campos de ubicación para edición masiva
+  lugar?: string | null;
+  direccion?: string | null;
+  ciudad?: string | null;
+  referencias?: string | null;
+  zona?: number | null;
 };
 
 const makeRowId = () => {
@@ -72,19 +78,21 @@ const BulkRowItem = React.memo(function BulkRowItem({
   onChange,
   onRemove,
   dense,
+  zonaTags,
 }: {
   row: BulkRow;
   errors?: Record<string, string>;
   onChange: (rowId: string, patch: Partial<BulkRow>) => void;
   onRemove: (rowId: string) => void;
   dense?: boolean;
+  zonaTags?: any[];
 }) {
   const rowErr = errors || {};
   return (
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 44px)',
+        gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 150px 150px 130px 1fr 44px)',
         gap: dense ? 8 : 10,
         alignItems: 'center',
         padding: dense ? '8px 8px' : '10px 10px',
@@ -173,11 +181,84 @@ const BulkRowItem = React.memo(function BulkRowItem({
         <option value="publicado">🌐 publicado</option>
       </select>
 
+      {/* Campos de ubicación */}
+      <input
+        type="text"
+        value={row.lugar || ''}
+        onChange={(e) => onChange(row.id, { lugar: e.target.value })}
+        placeholder="Lugar"
+        style={{
+          width: '100%',
+          padding: dense ? '7px 8px' : '8px 10px',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.18)',
+          background: 'rgba(0,0,0,0.25)',
+          color: '#fff',
+          fontSize: dense ? 12 : 13,
+        }}
+      />
+
+      <input
+        type="text"
+        value={row.ciudad || ''}
+        onChange={(e) => onChange(row.id, { ciudad: e.target.value })}
+        placeholder="Ciudad"
+        style={{
+          width: '100%',
+          padding: dense ? '7px 8px' : '8px 10px',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.18)',
+          background: 'rgba(0,0,0,0.25)',
+          color: '#fff',
+          fontSize: dense ? 12 : 13,
+        }}
+      />
+
+      <div style={{ position: 'relative' }}>
+        <select
+          value={row.zona || ''}
+          onChange={(e) => onChange(row.id, { zona: e.target.value ? Number(e.target.value) : null })}
+          style={{
+            width: '100%',
+            padding: dense ? '7px 8px' : '8px 10px',
+            paddingRight: '30px',
+            borderRadius: 10,
+            border: '1px solid rgba(255,255,255,0.18)',
+            background: '#2b2b2b',
+            color: '#fff',
+            fontSize: dense ? 12 : 13,
+            appearance: 'none',
+            WebkitAppearance: 'none',
+            MozAppearance: 'none',
+          }}
+        >
+          <option value="">Zona</option>
+          {(zonaTags || []).map((z: any) => (
+            <option key={z.id} value={z.id} style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+              {z.nombre}
+            </option>
+          ))}
+        </select>
+        <span
+          style={{
+            position: 'absolute',
+            right: '8px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+            color: 'rgba(255,255,255,0.6)',
+            fontSize: '0.7rem',
+          }}
+        >
+          ▼
+        </span>
+      </div>
+
       <input
         type="text"
         value={row.notas}
         onChange={(e) => onChange(row.id, { notas: e.target.value })}
-        placeholder="Notas (opcional)"
+        placeholder="Notas"
         style={{
           width: '100%',
           padding: dense ? '7px 8px' : '8px 10px',
@@ -227,6 +308,7 @@ export default function OrganizerEventDateEditScreen() {
   const queryClient = useQueryClient();
 
   const [statusMsg, setStatusMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   
   const [form, setForm] = useState({
     nombre: '',
@@ -430,10 +512,16 @@ export default function OrganizerEventDateEditScreen() {
         selected: true,
         flyer_status: bulkGeneralFlyerUrl ? 'DONE' : 'PENDING',
         flyer_url: bulkGeneralFlyerUrl || null,
+        // Incluir valores de ubicación del form
+        lugar: form.lugar || null,
+        direccion: form.direccion || null,
+        ciudad: form.ciudad || null,
+        referencias: form.referencias || null,
+        zona: typeof form.zona === 'number' ? form.zona : null,
       };
       return [...prevRows, row];
     });
-  }, [form.fecha, form.hora_inicio, form.hora_fin, form.estado_publicacion, bulkGeneralFlyerUrl]);
+  }, [form.fecha, form.hora_inicio, form.hora_fin, form.estado_publicacion, form.lugar, form.direccion, form.ciudad, form.referencias, form.zona, bulkGeneralFlyerUrl]);
 
   const updateBulkRow = useCallback((rowId: string, patch: Partial<BulkRow>) => {
     setBulkRows((prevRows) => prevRows.map((r) => (r.id === rowId ? { ...r, ...patch } : r)));
@@ -522,11 +610,17 @@ export default function OrganizerEventDateEditScreen() {
         selected: true,
         flyer_status: bulkGeneralFlyerUrl ? 'DONE' : 'PENDING',
         flyer_url: bulkGeneralFlyerUrl || null,
+        // Incluir valores de ubicación del form
+        lugar: form.lugar || null,
+        direccion: form.direccion || null,
+        ciudad: form.ciudad || null,
+        referencias: form.referencias || null,
+        zona: typeof form.zona === 'number' ? form.zona : null,
       });
     }
     setBulkRows((prev) => (prev.length ? [...prev, ...newRows] : newRows));
     showToast(`Generamos ${weeks} fila${weeks !== 1 ? 's' : ''} ✅`, 'success');
-  }, [form.fecha, form.hora_inicio, form.hora_fin, form.estado_publicacion, semanasRepetir, bulkGeneralFlyerUrl, showToast]);
+  }, [form.fecha, form.hora_inicio, form.hora_fin, form.estado_publicacion, form.lugar, form.direccion, form.ciudad, form.referencias, form.zona, semanasRepetir, bulkGeneralFlyerUrl, showToast]);
 
   const handleBulkCreateDates = useCallback(async () => {
     const selectedRows = bulkRows.filter((r) => r.selected);
@@ -550,10 +644,11 @@ export default function OrganizerEventDateEditScreen() {
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedLocationId)
         : undefined;
 
-      const resolvedLugar = (form.lugar || '').trim() || selectedOrganizerLocation?.nombre || null;
-      const resolvedDireccion = (form.direccion || '').trim() || selectedOrganizerLocation?.direccion || null;
-      const resolvedCiudad = (form.ciudad || '').trim() || selectedOrganizerLocation?.ciudad || null;
-      const resolvedReferencias = (form.referencias || '').trim() || selectedOrganizerLocation?.referencias || null;
+      const baseResolvedLugar = (form.lugar || '').trim() || selectedOrganizerLocation?.nombre || null;
+      const baseResolvedDireccion = (form.direccion || '').trim() || selectedOrganizerLocation?.direccion || null;
+      const baseResolvedCiudad = (form.ciudad || '').trim() || selectedOrganizerLocation?.ciudad || null;
+      const baseResolvedReferencias = (form.referencias || '').trim() || selectedOrganizerLocation?.referencias || null;
+      const baseZona = typeof form.zona === 'number' ? form.zona : null;
 
       const basePayload: any = {
         parent_id: parentIdToUse,
@@ -563,11 +658,6 @@ export default function OrganizerEventDateEditScreen() {
         djs: form.djs || null,
         telefono_contacto: form.telefono_contacto || null,
         mensaje_contacto: form.mensaje_contacto || null,
-        lugar: resolvedLugar,
-        direccion: resolvedDireccion,
-        ciudad: resolvedCiudad,
-        zona: typeof form.zona === 'number' ? form.zona : null,
-        referencias: resolvedReferencias,
         requisitos: form.requisitos || null,
         estilos: form.estilos || [],
         ritmos_seleccionados: form.ritmos_seleccionados || [],
@@ -576,15 +666,29 @@ export default function OrganizerEventDateEditScreen() {
         costos: form.costos || [],
       };
 
-      const payloads = selectedRows.map((r) => ({
-        ...basePayload,
-        fecha: r.fecha,
-        hora_inicio: r.hora_inicio || null,
-        hora_fin: r.hora_fin || null,
-        flyer_url: bulkGeneralFlyerUrl || null,
-        estado_publicacion: 'borrador' as const,
-        dia_semana: null,
-      }));
+      const payloads = selectedRows.map((r) => {
+        // Usar valores de ubicación del bulkRow si están presentes, o del form si no
+        const resolvedLugar = (r.lugar || '').trim() || baseResolvedLugar;
+        const resolvedDireccion = (r.direccion || '').trim() || baseResolvedDireccion;
+        const resolvedCiudad = (r.ciudad || '').trim() || baseResolvedCiudad;
+        const resolvedReferencias = (r.referencias || '').trim() || baseResolvedReferencias;
+        const resolvedZona = typeof r.zona === 'number' ? r.zona : baseZona;
+
+        return {
+          ...basePayload,
+          fecha: r.fecha,
+          hora_inicio: r.hora_inicio || null,
+          hora_fin: r.hora_fin || null,
+          lugar: resolvedLugar,
+          direccion: resolvedDireccion,
+          ciudad: resolvedCiudad,
+          zona: resolvedZona,
+          referencias: resolvedReferencias,
+          flyer_url: bulkGeneralFlyerUrl || null,
+          estado_publicacion: 'borrador' as const,
+          dia_semana: null,
+        };
+      });
 
       const { data: createdDates, error } = await supabase
         .from('events_date')
@@ -619,12 +723,15 @@ export default function OrganizerEventDateEditScreen() {
 
       const mapping: Record<string, number> = {};
       for (const row of selectedRows) {
+        // Usar valores de ubicación del bulkRow si están presentes, o del form si no
+        const rowLugar = (row.lugar || '').trim() || baseResolvedLugar;
+        const rowCiudad = (row.ciudad || '').trim() || baseResolvedCiudad;
         const key = makeKey({
           fecha: row.fecha,
           hora_inicio: row.hora_inicio || null,
           hora_fin: row.hora_fin || null,
-          lugar: resolvedLugar,
-          ciudad: resolvedCiudad,
+          lugar: rowLugar,
+          ciudad: rowCiudad,
           parent_id: parentIdToUse,
         });
         const arr = buckets.get(key) || [];
@@ -826,6 +933,79 @@ export default function OrganizerEventDateEditScreen() {
   // ====== UI con la estructura/diseño solicitados ======
   return (
     <>
+      <style>{`
+        .event-drawer-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.6);
+          z-index: 9998;
+          backdrop-filter: blur(4px);
+        }
+        
+        .event-drawer {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          width: 50%;
+          max-width: 800px;
+          min-width: 400px;
+          height: 100vh;
+          background: linear-gradient(135deg, ${colors.dark} 0%, #1a1a1a 50%, ${colors.dark} 100%);
+          box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+          z-index: 9999;
+          overflow-y: auto;
+          overflow-x: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .event-drawer-content {
+          padding: 24px;
+          color: ${colors.light};
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+        }
+        
+        .event-drawer-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .event-drawer-close-btn {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.1);
+          color: ${colors.light};
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          transition: all 0.2s ease;
+        }
+        
+        .event-drawer-close-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+          transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+          .event-drawer {
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+          }
+        }
+      `}</style>
       <style>{`
         .org-editor-card {
           margin-bottom: 2rem;
@@ -1085,112 +1265,98 @@ export default function OrganizerEventDateEditScreen() {
           }
         }
       `}</style>
-      <div style={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${colors.dark} 0%, #1a1a1a 50%, ${colors.dark} 100%)`,
-        padding: '24px 0',
-        color: colors.light,
-        position: 'relative',
-      }}>
-        {/* Cortina decorativa removida (causaba issues en responsive/scroll en mobile) */}
-        
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
-        {/* Header con título */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          style={{
-            marginBottom: '2rem',
-            paddingBottom: '1.5rem',
-            borderBottom: '2px solid rgba(255, 255, 255, 0.1)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <motion.button
-              whileHover={{ scale: 1.05, x: -4 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate(-1)}
+      {/* Overlay y Drawer - siempre renderizar para que las animaciones funcionen */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isDrawerOpen ? 1 : 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="event-drawer-overlay"
+        onClick={() => setIsDrawerOpen(false)}
+        style={{ pointerEvents: isDrawerOpen ? 'auto' : 'none' }}
+      />
+
+      {/* Drawer */}
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: isDrawerOpen ? 0 : '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="event-drawer"
+        style={{ pointerEvents: isDrawerOpen ? 'auto' : 'none' }}
+      >
+        <div className="event-drawer-content">
+          {/* Header del drawer */}
+          <div className="event-drawer-header">
+            <h1 style={{
+              fontSize: '1.75rem',
+              fontWeight: '800',
+              background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              margin: 0,
+              letterSpacing: '-0.02em',
+            }}>
+              📅 Editar Fecha de Evento
+            </h1>
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(false)}
+              className="event-drawer-close-btn"
+              aria-label="Cerrar formulario"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Mensaje de estado */}
+          {statusMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
               style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '10px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                background: 'rgba(255, 255, 255, 0.05)',
-                color: '#FFFFFF',
-                fontSize: '0.875rem',
+                marginBottom: '1.5rem',
+                padding: '1rem 1.5rem',
+                borderRadius: '12px',
+                border: statusMsg.type === 'ok' 
+                  ? '2px solid rgba(16,185,129,0.4)' 
+                  : '2px solid rgba(239,68,68,0.4)',
+                background: statusMsg.type === 'ok' 
+                  ? 'rgba(16,185,129,0.15)' 
+                  : 'rgba(239,68,68,0.15)',
+                color: '#fff',
+                fontSize: '1rem',
                 fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
+                textAlign: 'center',
+                boxShadow: statusMsg.type === 'ok' 
+                  ? '0 4px 12px rgba(16,185,129,0.2)' 
+                  : '0 4px 12px rgba(239,68,68,0.2)'
               }}
             >
-              ← Volver
-            </motion.button>
-          </div>
-          <h1 style={{
-            fontSize: '2rem',
-            fontWeight: '800',
-            background: `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            marginBottom: '0.5rem',
-            letterSpacing: '-0.02em',
-          }}>
-            📅 Editar Fecha de Evento
-          </h1>
-          <p style={{
-            fontSize: '1rem',
-            color: 'rgba(255, 255, 255, 0.7)',
-            margin: 0,
-          }}>
-            Modifica la información de esta fecha del evento
-          </p>
-        </motion.div>
+              {statusMsg.text}
+            </motion.div>
+          )}
 
-        {/* Mensaje de estado */}
-        {statusMsg && (
-          <motion.div
-          
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            style={{
-              marginBottom: '1.5rem',
-              padding: '1rem 1.5rem',
-              borderRadius: '12px',
-              border: statusMsg.type === 'ok' 
-                ? '2px solid rgba(16,185,129,0.4)' 
-                : '2px solid rgba(239,68,68,0.4)',
-              background: statusMsg.type === 'ok' 
-                ? 'rgba(16,185,129,0.15)' 
-                : 'rgba(239,68,68,0.15)',
-              color: '#fff',
-              fontSize: '1rem',
-              fontWeight: '600',
-              textAlign: 'center',
-              boxShadow: statusMsg.type === 'ok' 
-                ? '0 4px 12px rgba(16,185,129,0.2)' 
-                : '0 4px 12px rgba(239,68,68,0.2)'
-            }}
-          >
-            {statusMsg.text}
-          </motion.div>
-        )}
-
-        <div style={{
-          marginBottom: '2rem',
-          padding: 0,
-          borderRadius: '16px',
-          background: 'transparent',
-          border: 'none',
-          color: '#FFFFFF',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1.5rem'
-        }}>
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            minHeight: 0,
+            paddingRight: '8px',
+            marginRight: '-8px',
+          }}>
+            <div style={{
+              marginBottom: '2rem',
+              padding: 0,
+              borderRadius: '16px',
+              background: 'transparent',
+              border: 'none',
+              color: '#FFFFFF',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}>
 
                   {/* Información Básica */}
                   <div className="org-editor-card">
@@ -1654,18 +1820,21 @@ export default function OrganizerEventDateEditScreen() {
                             <div
                               className="bulk-sheet-inner"
                               style={{
-                                minWidth: isMobile ? 760 : 0,
+                                minWidth: isMobile ? 1200 : 0,
                                 ['--bulk-cols' as any]: isMobile
-                                  ? '38px 140px 110px 110px 130px 220px 44px'
-                                  : '44px 140px 120px 120px 140px 1fr 44px',
+                                  ? '38px 140px 110px 110px 130px 140px 140px 120px 180px 44px'
+                                  : '44px 140px 120px 120px 140px 150px 150px 130px 1fr 44px',
                               }}
                             >
-                              <div className="bulk-header" style={{ display: 'grid', gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 44px)', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
+                              <div className="bulk-header" style={{ display: 'grid', gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 150px 150px 130px 1fr 44px)', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
                                 <div></div>
                                 <div>Fecha</div>
                                 <div>Hora inicio</div>
                                 <div>Hora fin</div>
                                 <div>Estado</div>
+                                <div>Lugar</div>
+                                <div>Ciudad</div>
+                                <div>Zona</div>
                                 <div>Notas</div>
                                 <div></div>
                               </div>
@@ -1679,6 +1848,7 @@ export default function OrganizerEventDateEditScreen() {
                                     onChange={updateBulkRow}
                                     onRemove={removeBulkRow}
                                     dense={isMobile}
+                                    zonaTags={zonaTags}
                                   />
                                 ))}
                               </div>
@@ -1970,13 +2140,18 @@ export default function OrganizerEventDateEditScreen() {
                       </div>
                     </div>
               )}
-
+            </div>
+          </div>
+          
           {/* Botones */}
-          <div className="org-editor-card org-date-form-buttons">
+          <div className="org-editor-card org-date-form-buttons" style={{ flexShrink: 0, background: `linear-gradient(135deg, ${colors.dark} 0%, #1a1a1a 50%, ${colors.dark} 100%)`, paddingTop: '1.5rem', paddingBottom: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setTimeout(() => navigate(-1), 300);
+              }}
               style={{
                 padding: '12px 24px',
                 borderRadius: '12px',
@@ -2012,8 +2187,7 @@ export default function OrganizerEventDateEditScreen() {
             </motion.button>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
     </>
   );
 }
