@@ -12,6 +12,7 @@
 		7E4AEEDBEAE8F4BDFC6BF989 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1212778123739EDD65552D26 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		C92C260A5C64FFAA012BEA84 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6E8AC9391CDBA55090B34FC /* ExpoModulesProvider.swift */; };
+		E254DBAD2F18BE9E00252978 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E254DBAC2F18BE9E00252978 /* Assets.xcassets */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F11748512D1A00010044C1D9 /* AppleSignInModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748502D1A00010044C1D9 /* AppleSignInModule.swift */; };
 		F11748612D1A00040044C1D9 /* AppleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */; };
@@ -31,6 +32,7 @@
 		AA89DBAFB6ABFDEE14950A52 /* libPods-DondeBailarMX.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DondeBailarMX.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		C51258A13584F6DBE0312E32 /* Pods-DondeBailarMX.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DondeBailarMX.release.xcconfig"; path = "Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.release.xcconfig"; sourceTree = "<group>"; };
+		E254DBAC2F18BE9E00252978 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = DondeBailarMX/Assets.xcassets; sourceTree = "<group>"; };
 		E6E8AC9391CDBA55090B34FC /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DondeBailarMX/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DondeBailarMX/AppDelegate.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				E254DBAC2F18BE9E00252978 /* Assets.xcassets */,
 				13B07FAE1A68108700A75B9A /* DondeBailarMX */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
@@ -213,6 +216,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
+				E254DBAD2F18BE9E00252978 /* Assets.xcassets in Resources */,
 				7E4AEEDBEAE8F4BDFC6BF989 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -424,6 +428,7 @@
 			baseConfigurationReference = 42EFB767A23A8A6B8F193F46 /* Pods-DondeBailarMX.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DondeBailarMX/DondeBailarMX.entitlements;
 				CURRENT_PROJECT_VERSION = 113;
@@ -461,6 +466,7 @@
 			baseConfigurationReference = C51258A13584F6DBE0312E32 /* Pods-DondeBailarMX.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DondeBailarMX/DondeBailarMX.entitlements;
 				CURRENT_PROJECT_VERSION = 113;
@@ -542,7 +548,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/.pnpm/react-native@0.81.4_@babel+core@7.28.5_@types+react@19.2.7_react@19.2.3/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/.pnpm/react-native@0.81.4_@babel+core@7.28.5_@types+react@19.2.7_react@19.1.0/node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
@@ -596,7 +602,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/.pnpm/react-native@0.81.4_@babel+core@7.28.5_@types+react@19.2.7_react@19.2.3/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/.pnpm/react-native@0.81.4_@babel+core@7.28.5_@types+react@19.2.7_react@19.1.0/node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
