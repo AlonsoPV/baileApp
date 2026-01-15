@@ -55,14 +55,13 @@ if [ -d "$ICONSET_DIR" ] && [ -f "$SRC_ICON" ]; then
   echo "Using source icon: $SRC_ICON"
 
   # App Store Connect rejects app icons with alpha/transparency.
-  # Create an opaque 1024 PNG via a JPEG round-trip (JPEG has no alpha).
-  if [ ! -f "$OPAQUE_SRC" ]; then
-    TMP_JPG="$ICONSET_DIR/.tmp_appicon_opaque.jpg"
-    echo "Generating opaque base icon: $(basename "$OPAQUE_SRC")"
-    /usr/bin/sips -s format jpeg "$SRC_ICON" --out "$TMP_JPG" >/dev/null
-    /usr/bin/sips -s format png "$TMP_JPG" --out "$OPAQUE_SRC" >/dev/null
-    rm -f "$TMP_JPG" || true
-  fi
+  # Always (re)generate an opaque 1024 PNG via a JPEG round-trip (JPEG has no alpha).
+  # This avoids stale icons in CI caches causing "Missing app icon" / transparency rejections.
+  TMP_JPG="$ICONSET_DIR/.tmp_appicon_opaque.jpg"
+  echo "Generating opaque base icon (overwrite): $(basename "$OPAQUE_SRC")"
+  /usr/bin/sips -s format jpeg "$SRC_ICON" --out "$TMP_JPG" >/dev/null
+  /usr/bin/sips -s format png "$TMP_JPG" --out "$OPAQUE_SRC" >/dev/null
+  rm -f "$TMP_JPG" || true
 
   gen_icon() {
     local px="$1"

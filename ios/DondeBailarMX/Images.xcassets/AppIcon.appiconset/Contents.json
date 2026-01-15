@@ -104,13 +104,6 @@
     },
     {
       "size": "1024x1024",
-      "idiom": "universal",
-      "platform": "ios",
-      "scale": "1x",
-      "filename": "AppIcon-1024-opaque.png"
-    },
-    {
-      "size": "1024x1024",
       "idiom": "ios-marketing",
       "scale": "1x",
       "filename": "AppIcon-1024-opaque.png"
