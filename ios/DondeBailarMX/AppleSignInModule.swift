@@ -4,9 +4,9 @@ import CryptoKit
 import React
 
 @objc(AppleSignInModule)
-final class AppleSignInModule: NSObject, RCTBridgeModule, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
-  static func moduleName() -> String! { "AppleSignInModule" }
-  static func requiresMainQueueSetup() -> Bool { true }
+final class AppleSignInModule: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+  // Required by React Native bridge (via RCT_EXTERN_MODULE)
+  @objc static func requiresMainQueueSetup() -> Bool { true }
 
   private var currentNonce: String?
   private var resolve: RCTPromiseResolveBlock?

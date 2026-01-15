@@ -3,9 +3,9 @@ import React
 import GoogleSignIn
 
 @objc(GoogleSignInModule)
-final class GoogleSignInModule: NSObject, RCTBridgeModule {
-  static func moduleName() -> String! { "GoogleSignInModule" }
-  static func requiresMainQueueSetup() -> Bool { true }
+final class GoogleSignInModule: NSObject {
+  // Required by React Native bridge (via RCT_EXTERN_MODULE)
+  @objc static func requiresMainQueueSetup() -> Bool { true }
 
   @objc(signIn:resolver:rejecter:)
   func signIn(_ clientId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
@@ -28,7 +28,9 @@ final class GoogleSignInModule: NSObject, RCTBridgeModule {
         if let error = error {
           let nsError = error as NSError
           // User cancellation is common and should not crash/loop
-          if nsError.domain == kGIDSignInErrorDomain, nsError.code == kGIDSignInErrorCodeCanceled {
+          // GoogleSignIn uses error domain kGIDSignInErrorDomain; cancel code is -5.
+          // Some SDK versions do not expose kGIDSignInErrorCodeCanceled to Swift, so we check the numeric code.
+          if nsError.domain == kGIDSignInErrorDomain, nsError.code == -5 {
             reject("GOOGLE_CANCELED", "Inicio de sesión con Google cancelado.", nsError)
             return
           }
