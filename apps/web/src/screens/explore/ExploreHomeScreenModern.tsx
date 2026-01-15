@@ -85,69 +85,6 @@ function useLoadMoreOnDemand(query: InfiniteQueryLike<any, unknown> | null) {
   return { handleLoadMore, hasNextPage: query?.hasNextPage ?? false, isFetching: query?.isFetchingNextPage ?? false };
 }
 
-/**
- * FechaItem - Componente memoizado optimizado para scroll fluido
- * 
- * Optimizaciones:
- * - Memoización con comparación personalizada para evitar re-renders innecesarios
- * - Reducción de animaciones en mobile (solo primeras 10 cards en desktop)
- * - CSS contain para limitar repaints
- * - Aceleración de hardware con translateZ(0)
- * - Comparación por ID y recurrence_index para estabilidad
- */
-const FechaItem = React.memo(({ fechaEvento, idx, handlePreNavigate }: { fechaEvento: any; idx: number; handlePreNavigate: () => void }) => {
-  const uniqueKey = fechaEvento._recurrence_index !== undefined
-    ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}`
-    : (fechaEvento.id ?? `fecha_${idx}`);
-
-  // Reducir animaciones en mobile para mejor rendimiento
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const shouldAnimate = !isMobile && idx < 10; // Solo animar primeras 10 cards
-
-  return (
-    <div
-      key={uniqueKey}
-      onClickCapture={handlePreNavigate}
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 16,
-        padding: 0,
-        overflow: 'hidden',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
-        // Optimizaciones de rendimiento
-        transform: 'translateZ(0)',
-        willChange: 'auto',
-        contain: 'layout style paint',
-        // Mejorar rendimiento en mobile
-        WebkitTransform: 'translateZ(0)',
-        backfaceVisibility: 'hidden',
-        WebkitBackfaceVisibility: 'hidden'
-      }}
-    >
-      {shouldAnimate ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.05, duration: 0.3 }}
-          whileHover={{ y: -4, scale: 1.02 }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <EventCard item={fechaEvento} />
-        </motion.div>
-      ) : (
-        <EventCard item={fechaEvento} />
-      )}
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  // Comparación personalizada para evitar re-renders innecesarios
-  return prevProps.fechaEvento?.id === nextProps.fechaEvento?.id &&
-         prevProps.fechaEvento?._recurrence_index === nextProps.fechaEvento?._recurrence_index &&
-         prevProps.idx === nextProps.idx;
-});
-
-FechaItem.displayName = 'FechaItem';
 
 /**
  * ClaseItem - Componente memoizado optimizado para scroll fluido
@@ -1387,6 +1324,18 @@ export default function ExploreHomeScreen() {
     [isMobile]
   );
 
+  // ✅ Opción A (RECOMENDADA): autoColumns explícito SOLO para maestros en mobile
+  const maestrosSliderProps = React.useMemo(
+    () => ({
+      className: isMobile ? 'explore-slider explore-slider--mobile' : 'explore-slider',
+      // Ajusta el valor según lo que acepte tu HorizontalSlider:
+      // - si acepta string CSS: '80%' / 'min(320px, 85vw)'
+      // - si acepta número: 280 / 320
+      autoColumns: isMobile ? '80%' : undefined,
+    }),
+    [isMobile]
+  );
+
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -1562,19 +1511,6 @@ export default function ExploreHomeScreen() {
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
   }, []);
 
-  // Memoizar renderItem functions para evitar recrearlas en cada render
-  const renderFechaItem = React.useCallback((fechaEvento: any, idx: number) => {
-    return (
-      <FechaItem 
-        key={fechaEvento._recurrence_index !== undefined 
-          ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}` 
-          : (fechaEvento.id ?? `fecha_${idx}`)} 
-        fechaEvento={fechaEvento} 
-        idx={idx} 
-        handlePreNavigate={handlePreNavigate} 
-      />
-    );
-  }, [handlePreNavigate]);
 
   const renderClaseItem = React.useCallback((item: any, idx: number) => {
     if (item?.__isCTA) {
@@ -2577,7 +2513,24 @@ export default function ExploreHomeScreen() {
                     <HorizontalSlider
                       {...sliderProps}
                       items={filteredFechas}
-                      renderItem={renderFechaItem}
+                      renderItem={(fechaEvento: any, idx: number) => (
+                        <div
+                          key={fechaEvento._recurrence_index !== undefined
+                            ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}`
+                            : (fechaEvento.id ?? `fecha_${idx}`)}
+                          onClickCapture={handlePreNavigate}
+                          style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 0,
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
+                          <EventCard item={fechaEvento} />
+                        </div>
+                      )}
                     />
                   ) : (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
@@ -2666,7 +2619,7 @@ export default function ExploreHomeScreen() {
               ) : (
                 <>
                   <HorizontalSlider
-                    {...sliderProps}
+                    {...maestrosSliderProps}
                     items={maestrosDataWithCTA}
                     renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
