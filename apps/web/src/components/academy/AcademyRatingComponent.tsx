@@ -75,7 +75,7 @@ export default function AcademyRatingComponent({ academyId }: AcademyRatingCompo
     precio_valor: null,
   });
 
-  // Cargar datos del usuario si ya calificó
+  // Cargar datos del usuario si ya calificó 
   React.useEffect(() => {
     if (myRating) {
       setFormData({
