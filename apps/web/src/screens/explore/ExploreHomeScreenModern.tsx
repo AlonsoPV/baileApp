@@ -2671,12 +2671,8 @@ export default function ExploreHomeScreen() {
                     renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
                         return (
-                          <motion.div
+                          <div
                             key="cta-maestros"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05, duration: 0.3 }}
-                            whileHover={{ y: -4, scale: 1.02 }}
                             style={{
                               background: 'rgba(255,255,255,0.04)',
                               border: '1px solid rgba(255,255,255,0.08)',
@@ -2687,16 +2683,12 @@ export default function ExploreHomeScreen() {
                             }}
                           >
                             <CTACard text={t('cta_teachers')} sectionType="maestros" idx={idx} />
-                          </motion.div>
+                          </div>
                         );
                       }
                       return (
-                        <motion.div
+                        <div
                           key={item.id ?? idx}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                          whileHover={{ y: -4, scale: 1.02 }}
                           onClickCapture={handlePreNavigate}
                           style={{
                             background: 'rgba(255,255,255,0.04)',
@@ -2708,7 +2700,7 @@ export default function ExploreHomeScreen() {
                           }}
                         >
                           <TeacherCard item={item} />
-                        </motion.div>
+                        </div>
                       );
                     }}
                   />
@@ -2738,12 +2730,8 @@ export default function ExploreHomeScreen() {
                         {...sliderProps}
                         items={validUsuarios}
                         renderItem={(u: any, idx: number) => (
-                          <motion.div
+                          <div
                             key={u.user_id ?? idx}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05, duration: 0.3 }}
-                            whileHover={{ y: -4, scale: 1.02 }}
                             onClickCapture={handlePreNavigate}
                             style={{
                               background: 'rgba(255,255,255,0.04)',
@@ -2766,7 +2754,7 @@ export default function ExploreHomeScreen() {
                               ritmosSeleccionados: u.ritmos_seleccionados,
                               zonas: u.zonas
                             }} to={`/u/${encodeURIComponent(u.user_id)}`} />
-                          </motion.div>
+                          </div>
                         )}
                       />
                       {/* Mostrar indicador de carga mientras se cargan más usuarios automáticamente */}
@@ -2805,12 +2793,8 @@ export default function ExploreHomeScreen() {
                     renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
                         return (
-                          <motion.div
+                          <div
                             key="cta-organizadores"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05, duration: 0.3 }}
-                            whileHover={{ y: -4, scale: 1.02 }}
                             style={{
                               background: 'rgba(255,255,255,0.04)',
                               border: '1px solid rgba(255,255,255,0.08)',
@@ -2821,16 +2805,12 @@ export default function ExploreHomeScreen() {
                             }}
                           >
                             <CTACard text={t('cta_organizers')} sectionType="organizadores" idx={idx} />
-                          </motion.div>
+                          </div>
                         );
                       }
                       return (
-                        <motion.div
+                        <div
                           key={item.id ?? idx}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                          whileHover={{ y: -4, scale: 1.02 }}
                           onClickCapture={handlePreNavigate}
                           style={{
                             background: 'rgba(255,255,255,0.04)',
@@ -2842,7 +2822,7 @@ export default function ExploreHomeScreen() {
                           }}
                         >
                           <OrganizerCard item={item} />
-                        </motion.div>
+                        </div>
                       );
                     }}
                   />
@@ -2874,12 +2854,8 @@ export default function ExploreHomeScreen() {
                     renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
                         return (
-                          <motion.div
+                          <div
                             key="cta-marcas"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05, duration: 0.3 }}
-                            whileHover={{ y: -4, scale: 1.02 }}
                             style={{
                               background: 'rgba(255,255,255,0.04)',
                               border: '1px solid rgba(255,255,255,0.08)',
@@ -2890,16 +2866,12 @@ export default function ExploreHomeScreen() {
                             }}
                           >
                             <CTACard text={t('cta_brands')} sectionType="marcas" idx={idx} />
-                          </motion.div>
+                          </div>
                         );
                       }
                       return (
-                        <motion.div
+                        <div
                           key={item.id ?? idx}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05, duration: 0.3 }}
-                          whileHover={{ y: -4, scale: 1.02 }}
                           onClickCapture={handlePreNavigate}
                           style={{
                             background: 'rgba(255,255,255,0.04)',
@@ -2911,7 +2883,7 @@ export default function ExploreHomeScreen() {
                           }}
                         >
                           <BrandCard item={item} />
-                        </motion.div>
+                        </div>
                       );
                     }}
                   />

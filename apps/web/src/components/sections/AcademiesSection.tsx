@@ -3,7 +3,6 @@ import { useExploreQuery } from '../../hooks/useExploreQuery';
 import { GridSkeleton } from '../skeletons/GridSkeleton';
 import AcademyCard from '../explore/cards/AcademyCard';
 import HorizontalSlider from '../explore/HorizontalSlider';
-import { motion } from 'framer-motion';
 import type { ExploreFilters } from '../../state/exploreFilters';
 import { useSmartLoading } from '../../hooks/useSmartLoading';
 import { RefreshingIndicator } from '../loading/RefreshingIndicator';
@@ -64,14 +63,9 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
     return (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {itemsToShow.map((academia: any, idx: number) => (
-          <motion.div
-            key={academia.id || idx}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-          >
+          <div key={academia.id || idx}>
             <AcademyCard item={academia} />
-          </motion.div>
+          </div>
         ))}
       </div>
     );
@@ -83,15 +77,9 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
       <HorizontalSlider
         items={itemsToShow}
         renderItem={(item: any, idx: number) => (
-          <motion.div
-            key={item.id || idx}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            whileHover={{ y: -4, scale: 1.02 }}
-          >
+          <div key={item.id || idx}>
             <AcademyCard item={item} />
-          </motion.div>
+          </div>
         )}
       />
     </>

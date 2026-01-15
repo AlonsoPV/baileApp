@@ -38,19 +38,19 @@ if ! command -v pod >/dev/null 2>&1; then
 fi
 
 echo "==> Checking Pods vs npm versions (expo / expo-updates)"
-NPM_EXPO_VERSION="$(node -p \"require('expo/package.json').version\" 2>/dev/null || echo '')"
-NPM_UPDATES_VERSION="$(node -p \"require('expo-updates/package.json').version\" 2>/dev/null || echo '')"
+NPM_EXPO_VERSION="$(node -p 'require("expo/package.json").version' 2>/dev/null || echo '')"
+NPM_UPDATES_VERSION="$(node -p 'require("expo-updates/package.json").version' 2>/dev/null || echo '')"
 
-LOCK_EXPO_VERSION="$(ruby -e 's=File.exist?(\"Podfile.lock\") ? File.read(\"Podfile.lock\") : \"\"; m=s.match(/- Expo \\(([^\\)]+)\\):/); puts(m ? m[1] : \"\")' 2>/dev/null || echo '')"
-LOCK_UPDATES_VERSION="$(ruby -e 's=File.exist?(\"Podfile.lock\") ? File.read(\"Podfile.lock\") : \"\"; m=s.match(/- EXUpdates \\(([^\\)]+)\\):/); puts(m ? m[1] : \"\")' 2>/dev/null || echo '')"
+LOCK_EXPO_VERSION="$(ruby -e 's=File.exist?("Podfile.lock") ? File.read("Podfile.lock") : ""; m=s.match(/- Expo \(([^\)]+)\):/); puts(m ? m[1] : "")' 2>/dev/null || echo '')"
+LOCK_UPDATES_VERSION="$(ruby -e 's=File.exist?("Podfile.lock") ? File.read("Podfile.lock") : ""; m=s.match(/- EXUpdates \(([^\)]+)\):/); puts(m ? m[1] : "")' 2>/dev/null || echo '')"
 
-if [[ -n \"$NPM_EXPO_VERSION\" && -n \"$LOCK_EXPO_VERSION\" && \"$NPM_EXPO_VERSION\" != \"$LOCK_EXPO_VERSION\" ]]; then
-  echo \"==> Detected Expo version mismatch (npm=$NPM_EXPO_VERSION, pods=$LOCK_EXPO_VERSION). Cleaning Pods to resync.\"
+if [[ -n "$NPM_EXPO_VERSION" && -n "$LOCK_EXPO_VERSION" && "$NPM_EXPO_VERSION" != "$LOCK_EXPO_VERSION" ]]; then
+  echo "==> Detected Expo version mismatch (npm=$NPM_EXPO_VERSION, pods=$LOCK_EXPO_VERSION). Cleaning Pods to resync."
   rm -rf Pods Podfile.lock
 fi
 
-if [[ -n \"$NPM_UPDATES_VERSION\" && -n \"$LOCK_UPDATES_VERSION\" && \"$NPM_UPDATES_VERSION\" != \"$LOCK_UPDATES_VERSION\" ]]; then
-  echo \"==> Detected EXUpdates version mismatch (npm=$NPM_UPDATES_VERSION, pods=$LOCK_UPDATES_VERSION). Cleaning Pods to resync.\"
+if [[ -n "$NPM_UPDATES_VERSION" && -n "$LOCK_UPDATES_VERSION" && "$NPM_UPDATES_VERSION" != "$LOCK_UPDATES_VERSION" ]]; then
+  echo "==> Detected EXUpdates version mismatch (npm=$NPM_UPDATES_VERSION, pods=$LOCK_UPDATES_VERSION). Cleaning Pods to resync."
   rm -rf Pods Podfile.lock
 fi
 

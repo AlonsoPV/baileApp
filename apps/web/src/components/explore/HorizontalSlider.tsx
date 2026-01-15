@@ -34,24 +34,34 @@ export default function HorizontalSlider<T>({
   const viewportRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollLeftRef = useRef(0);
+  const suppressClickUntilRef = useRef(0);
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
 
-  // Permitir wheel/trackpad vertical para desplazar horizontalmente el slider (desktop)
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+  // Wheel/trackpad: attach NON-passive listener so preventDefault works (React onWheel can be passive)
+  const handleWheelNative = useCallback((e: WheelEvent) => {
     const el = viewportRef.current;
     if (!el) return;
-
-    // Solo interceptar si hay intención horizontal (shift) o si el deltaY domina
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (!delta) return;
 
     const maxScrollLeft = el.scrollWidth - el.clientWidth;
     if (maxScrollLeft <= 0) return;
 
-    // Si podemos desplazar horizontalmente, prevenir scroll vertical del page mientras el puntero está encima
+    // Prefer horizontal intent; fall back to vertical delta (trackpads often report deltaY)
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!delta) return;
+
+    const next = el.scrollLeft + delta;
+
+    // If we are already at an edge in that direction, allow page scroll.
+    if (delta < 0 && el.scrollLeft <= 0) return;
+    if (delta > 0 && el.scrollLeft >= maxScrollLeft) return;
+
+    // Keep scroll inside slider and prevent vertical page scroll while pointer is over slider.
     e.preventDefault();
-    el.scrollLeft += delta;
+    el.scrollLeft = Math.max(0, Math.min(maxScrollLeft, next));
   }, []);
 
   // Detectar cuando el scroll está activo para desactivar animaciones pesadas
@@ -77,6 +87,76 @@ export default function HorizontalSlider<T>({
     };
   }, [handleScroll]);
 
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    // Must be non-passive so we can preventDefault and keep scroll in the slider.
+    el.addEventListener("wheel", handleWheelNative, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", handleWheelNative as any);
+    };
+  }, [handleWheelNative]);
+
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    // Touch should use native overflow scrolling (better momentum); mouse/pen uses drag-to-scroll.
+    if (e.pointerType === "touch") return;
+
+    isDraggingRef.current = false;
+    dragStartXRef.current = e.clientX;
+    dragStartScrollLeftRef.current = el.scrollLeft;
+    try {
+      (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = viewportRef.current;
+    if (!el) return;
+    if (e.pointerType === "touch") return;
+    if (dragStartXRef.current === 0 && dragStartScrollLeftRef.current === 0 && el.scrollLeft === 0) {
+      // not started
+    }
+
+    const dx = e.clientX - dragStartXRef.current;
+    if (!isDraggingRef.current && Math.abs(dx) >= 6) {
+      isDraggingRef.current = true;
+    }
+    if (isDraggingRef.current) {
+      // Prevent text selection while dragging
+      e.preventDefault();
+      el.scrollLeft = dragStartScrollLeftRef.current - dx;
+    }
+  }, []);
+
+  const endPointerDrag = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "touch") return;
+    if (isDraggingRef.current) {
+      // Suppress click right after drag to avoid accidental navigation
+      suppressClickUntilRef.current = Date.now() + 300;
+    }
+    isDraggingRef.current = false;
+    dragStartXRef.current = 0;
+    dragStartScrollLeftRef.current = 0;
+    try {
+      (e.currentTarget as any).releasePointerCapture?.(e.pointerId);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const onClickCapture = useCallback((e: React.SyntheticEvent) => {
+    if (Date.now() < suppressClickUntilRef.current) {
+      e.preventDefault();
+      // @ts-ignore
+      e.stopPropagation?.();
+    }
+  }, []);
+
   const scrollByAmount = useCallback((dir: 1 | -1) => {
     const el = viewportRef.current;
     if (!el) return;
@@ -98,7 +178,12 @@ export default function HorizontalSlider<T>({
       <div
         ref={viewportRef}
         className={`horizontal-scroll ${isScrolling ? 'scrolling' : ''}`}
-        onWheel={handleWheel}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endPointerDrag}
+        onPointerCancel={endPointerDrag}
+        onPointerLeave={endPointerDrag}
+        onClickCapture={onClickCapture}
         style={{
           position: "relative",
           overflowX: "auto",
@@ -106,11 +191,14 @@ export default function HorizontalSlider<T>({
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           width: "100%",
-          padding: "0.5rem 0",
+          padding: "0.5rem 12px",
           // Optimizaciones de scroll para móvil
           WebkitOverflowScrolling: "touch",
           scrollBehavior: isScrolling ? "auto" : "smooth",
           overscrollBehaviorX: "contain",
+          // Better "slide" feel on mobile (snap to cards)
+          scrollSnapType: "x proximity",
+          scrollPadding: "0 12px",
           // ⚠️ Importante: NO aplicar transform al contenedor scrolleable.
           // En iOS/Safari, transform en un elemento con overflow puede romper el scroll/inercia.
           transform: "none",
@@ -120,6 +208,9 @@ export default function HorizontalSlider<T>({
           // Permitir scroll vertical del contenedor padre aunque el gesto inicie aquí,
           // manteniendo swipe horizontal dentro del slider.
           touchAction: "pan-x pan-y",
+          // Mouse drag UX
+          cursor: "grab",
+          userSelect: "none",
           // Mejorar rendimiento en mobile (sin tocar transform)
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden"
@@ -127,7 +218,14 @@ export default function HorizontalSlider<T>({
       >
         {/* Oculta scrollbar nativo en webkit */}
         <style>{`
-          div::-webkit-scrollbar { display: none; }
+          .horizontal-scroll::-webkit-scrollbar { display: none; }
+
+          /* Snap strongly on mobile for a consistent "slide" gesture */
+          @media (max-width: 768px) {
+            .horizontal-scroll {
+              scroll-snap-type: x mandatory;
+            }
+          }
         `}</style>
 
         <div
@@ -170,6 +268,7 @@ export default function HorizontalSlider<T>({
               contain: layout style paint;
               transform: translateZ(0);
               will-change: auto;
+              scroll-snap-align: start;
             }
             
             /* Reducir animaciones durante scroll activo */
