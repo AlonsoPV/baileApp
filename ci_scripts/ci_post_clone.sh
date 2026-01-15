@@ -145,6 +145,8 @@ echo "==> Setting up environment variables"
 # (las variables reales deben estar configuradas en Xcode Cloud)
 export EXPO_PUBLIC_SUPABASE_URL="${EXPO_PUBLIC_SUPABASE_URL:-}"
 export EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}"
+export EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}"
+export GOOGLE_REVERSED_CLIENT_ID="${GOOGLE_REVERSED_CLIENT_ID:-}"
 
 # ✅ Debug (safe): confirmar presencia sin exponer secretos completos
 echo "==> ENV CHECK (Xcode Cloud)"
@@ -160,6 +162,18 @@ else
   echo "EXPO_PUBLIC_SUPABASE_ANON_KEY: MISSING"
 fi
 
+if [ -n "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" ]; then
+  echo "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: present (len=${#EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID})"
+else
+  echo "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: MISSING"
+fi
+
+if [ -n "$GOOGLE_REVERSED_CLIENT_ID" ]; then
+  echo "GOOGLE_REVERSED_CLIENT_ID: present (len=${#GOOGLE_REVERSED_CLIENT_ID})"
+else
+  echo "GOOGLE_REVERSED_CLIENT_ID: MISSING"
+fi
+
 # Verificar si las variables están configuradas (solo warning, no fallar)
 if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ]; then
   echo "⚠️  WARNING: EXPO_PUBLIC_SUPABASE_URL not set. Configure it in Xcode Cloud environment variables."
@@ -167,6 +181,14 @@ fi
 
 if [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
   echo "⚠️  WARNING: EXPO_PUBLIC_SUPABASE_ANON_KEY not set. Configure it in Xcode Cloud environment variables."
+fi
+
+if [ -z "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" ]; then
+  echo "⚠️  WARNING: EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID not set. Google native sign-in will fail."
+fi
+
+if [ -z "$GOOGLE_REVERSED_CLIENT_ID" ]; then
+  echo "⚠️  WARNING: GOOGLE_REVERSED_CLIENT_ID not set. Google URL callback scheme may be missing."
 fi
 
 # -----------------------------

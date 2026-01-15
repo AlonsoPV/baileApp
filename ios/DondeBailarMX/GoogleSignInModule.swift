@@ -28,7 +28,7 @@ final class GoogleSignInModule: NSObject, RCTBridgeModule {
         if let error = error {
           let nsError = error as NSError
           // User cancellation is common and should not crash/loop
-          if nsError.domain == GIDSignInErrorDomain, nsError.code == GIDSignInError.canceled.rawValue {
+          if nsError.domain == kGIDSignInErrorDomain, nsError.code == kGIDSignInErrorCodeCanceled {
             reject("GOOGLE_CANCELED", "Inicio de sesión con Google cancelado.", nsError)
             return
           }
