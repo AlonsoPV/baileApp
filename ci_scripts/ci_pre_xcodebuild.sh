@@ -48,30 +48,46 @@ echo "==> Ensure iOS AppIcon asset has applicable content"
 # In this repo we keep a single 1024x1024 source PNG and generate all required
 # sizes at CI time to avoid committing many binary files.
 ICONSET_DIR="ios/DondeBailarMX/Images.xcassets/AppIcon.appiconset"
+# Source of truth for the app icon:
+# - Prefer repo-wide Expo icon at assets/adaptive-icon.png
+# - Fallback to the existing AppIcon source inside the asset catalog
+REPO_ICON_SRC="assets/adaptive-icon.png"
 SRC_ICON="$ICONSET_DIR/App-Icon-1024x1024@1x.png"
 OPAQUE_SRC="$ICONSET_DIR/AppIcon-1024-opaque.png"
 
-if [ -d "$ICONSET_DIR" ] && [ -f "$SRC_ICON" ]; then
-  echo "Using source icon: $SRC_ICON"
+if [ -d "$ICONSET_DIR" ]; then
+  # If the repo icon exists, copy/normalize it into the asset catalog source slot.
+  # This makes CI deterministic even if the repo has multiple icon files.
+  if [ -f "$REPO_ICON_SRC" ]; then
+    echo "Using repo icon source: $REPO_ICON_SRC"
+    echo "Normalizing to 1024x1024 into: $SRC_ICON"
+    # Ensure 1024x1024 PNG (sips will keep aspect ratio; for square icons it will be exact)
+    /usr/bin/sips -s format png -Z 1024 "$REPO_ICON_SRC" --out "$SRC_ICON" >/dev/null
+  fi
 
-  # App Store Connect rejects app icons with alpha/transparency.
-  # Always (re)generate an opaque 1024 PNG via a JPEG round-trip (JPEG has no alpha).
-  # This avoids stale icons in CI caches causing "Missing app icon" / transparency rejections.
-  TMP_JPG="$ICONSET_DIR/.tmp_appicon_opaque.jpg"
-  echo "Generating opaque base icon (overwrite): $(basename "$OPAQUE_SRC")"
-  /usr/bin/sips -s format jpeg "$SRC_ICON" --out "$TMP_JPG" >/dev/null
-  /usr/bin/sips -s format png "$TMP_JPG" --out "$OPAQUE_SRC" >/dev/null
-  rm -f "$TMP_JPG" || true
+  if [ ! -f "$SRC_ICON" ]; then
+    echo "WARN: AppIcon source not found at $SRC_ICON (and no $REPO_ICON_SRC). Skipping icon generation."
+  else
+    echo "Using source icon: $SRC_ICON"
 
-  gen_icon() {
-    local px="$1"
-    local out="$2"
-    if [ -f "$out" ]; then
-      return 0
-    fi
-    echo "Generating $(basename "$out") (${px}x${px})"
-    /usr/bin/sips -Z "$px" "$OPAQUE_SRC" --out "$out" >/dev/null
-  }
+    # App Store Connect rejects app icons with alpha/transparency.
+    # Always (re)generate an opaque 1024 PNG via a JPEG round-trip (JPEG has no alpha).
+    # This avoids stale icons in CI caches causing "Missing app icon" / transparency rejections.
+    TMP_JPG="$ICONSET_DIR/.tmp_appicon_opaque.jpg"
+    echo "Generating opaque base icon (overwrite): $(basename "$OPAQUE_SRC")"
+    /usr/bin/sips -s format jpeg "$SRC_ICON" --out "$TMP_JPG" >/dev/null
+    /usr/bin/sips -s format png "$TMP_JPG" --out "$OPAQUE_SRC" >/dev/null
+    rm -f "$TMP_JPG" || true
+
+    gen_icon() {
+      local px="$1"
+      local out="$2"
+      if [ -f "$out" ]; then
+        return 0
+      fi
+      echo "Generating $(basename "$out") (${px}x${px})"
+      /usr/bin/sips -Z "$px" "$OPAQUE_SRC" --out "$out" >/dev/null
+    }
 
   # iPad
   gen_icon 20  "$ICONSET_DIR/AppIcon-20@1x.png"
@@ -91,10 +107,9 @@ if [ -d "$ICONSET_DIR" ] && [ -f "$SRC_ICON" ]; then
   gen_icon 120 "$ICONSET_DIR/AppIcon-60@2x.png"
   gen_icon 180 "$ICONSET_DIR/AppIcon-60@3x.png"
 
-  echo "AppIcon generation done. Contents:"
-  ls -la "$ICONSET_DIR" || true
-else
-  echo "WARN: AppIcon source not found at $SRC_ICON (skipping icon generation)"
+    echo "AppIcon generation done. Contents:"
+    ls -la "$ICONSET_DIR" || true
+  fi
 fi
 
 echo "==> Check CocoaPods artifacts"
