@@ -37,6 +37,26 @@ if ! command -v pod >/dev/null 2>&1; then
   fi
 fi
 
+echo "==> Checking Podfile.lock local :path references (pnpm symlinks can change)"
+# With pnpm, CocoaPods may record local pod :path entries that include a specific
+# node_modules/.pnpm/... folder name. If JS deps changed and Pods weren't reinstalled,
+# those paths can go stale and Xcode fails with lstat(...PrivacyInfo.xcprivacy): No such file.
+if [[ -f "Podfile.lock" ]]; then
+  # If any local :path reference is missing on disk, force a clean install.
+  if grep -E '^[[:space:]]*:path:' Podfile.lock >/dev/null 2>&1; then
+    while IFS= read -r line; do
+      # Extract the quoted path value (YAML style): :path: "../node_modules/..."
+      p="$(echo "$line" | sed -E 's/^[[:space:]]*:path:[[:space:]]*"([^"]+)".*$/\1/')"
+      if [[ -n "$p" && ! -e "$p" ]]; then
+        echo "==> Missing local pod path referenced in Podfile.lock: $p"
+        echo "==> Cleaning Pods + Podfile.lock to regenerate with current node_modules layout"
+        rm -rf Pods Podfile.lock
+        break
+      fi
+    done < <(grep -E '^[[:space:]]*:path:' Podfile.lock || true)
+  fi
+fi
+
 echo "==> Checking Pods vs npm versions (expo / expo-updates)"
 NPM_EXPO_VERSION="$(node -p 'require("expo/package.json").version' 2>/dev/null || echo '')"
 NPM_UPDATES_VERSION="$(node -p 'require("expo-updates/package.json").version' 2>/dev/null || echo '')"
