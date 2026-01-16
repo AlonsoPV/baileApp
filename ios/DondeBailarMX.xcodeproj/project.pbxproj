@@ -15,10 +15,10 @@
 		E254DBAD2F18BE9E00252978 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E254DBAC2F18BE9E00252978 /* Assets.xcassets */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F11748512D1A00010044C1D9 /* AppleSignInModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748502D1A00010044C1D9 /* AppleSignInModule.swift */; };
-		F11748612D1A00040044C1D9 /* AppleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */; };
 		F11748532D1A00020044C1D9 /* GoogleSignInModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748522D1A00020044C1D9 /* GoogleSignInModule.swift */; };
-		F11748632D1A00050044C1D9 /* GoogleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */; };
 		F11748552D1A00030044C1D9 /* NativeAuthTopViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748542D1A00030044C1D9 /* NativeAuthTopViewController.swift */; };
+		F11748612D1A00040044C1D9 /* AppleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */; };
+		F11748632D1A00050044C1D9 /* GoogleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */; };
 		F689B9C1871C4D09B1607619 /* libPods-DondeBailarMX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA89DBAFB6ABFDEE14950A52 /* libPods-DondeBailarMX.a */; };
 /* End PBXBuildFile section */
 
@@ -36,12 +36,12 @@
 		E6E8AC9391CDBA55090B34FC /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DondeBailarMX/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DondeBailarMX/AppDelegate.swift; sourceTree = "<group>"; };
-		F11748502D1A00010044C1D9 /* AppleSignInModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppleSignInModule.swift; path = DondeBailarMX/AppleSignInModule.swift; sourceTree = "<group>"; };
-		F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AppleSignInModuleBridge.m; path = DondeBailarMX/AppleSignInModuleBridge.m; sourceTree = "<group>"; };
-		F11748522D1A00020044C1D9 /* GoogleSignInModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GoogleSignInModule.swift; path = DondeBailarMX/GoogleSignInModule.swift; sourceTree = "<group>"; };
-		F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = GoogleSignInModuleBridge.m; path = DondeBailarMX/GoogleSignInModuleBridge.m; sourceTree = "<group>"; };
-		F11748542D1A00030044C1D9 /* NativeAuthTopViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeAuthTopViewController.swift; path = DondeBailarMX/NativeAuthTopViewController.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* DondeBailarMX-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "DondeBailarMX-Bridging-Header.h"; path = "DondeBailarMX/DondeBailarMX-Bridging-Header.h"; sourceTree = "<group>"; };
+		F11748502D1A00010044C1D9 /* AppleSignInModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppleSignInModule.swift; path = DondeBailarMX/AppleSignInModule.swift; sourceTree = "<group>"; };
+		F11748522D1A00020044C1D9 /* GoogleSignInModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GoogleSignInModule.swift; path = DondeBailarMX/GoogleSignInModule.swift; sourceTree = "<group>"; };
+		F11748542D1A00030044C1D9 /* NativeAuthTopViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeAuthTopViewController.swift; path = DondeBailarMX/NativeAuthTopViewController.swift; sourceTree = "<group>"; };
+		F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AppleSignInModuleBridge.m; path = DondeBailarMX/AppleSignInModuleBridge.m; sourceTree = "<group>"; };
+		F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = GoogleSignInModuleBridge.m; path = DondeBailarMX/GoogleSignInModuleBridge.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -288,11 +288,18 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/AppAuth/AppAuthCore_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXUpdates/EXUpdates.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GTMAppAuth/GTMAppAuth_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher/GTMSessionFetcher_Core_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleSignIn/GoogleSignIn.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities/GoogleUtilities_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/PromisesObjC/FBLPromises_Privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ReachabilitySwift/ReachabilitySwift.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
@@ -301,11 +308,18 @@
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppAuthCore_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXUpdates.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMAppAuth_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMSessionFetcher_Core_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSignIn.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleUtilities_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FBLPromises_Privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ReachabilitySwift.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
@@ -315,6 +329,62 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		903A2D67070AD2D2DF906E9D /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/DondeBailarMX/DondeBailarMX.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-DondeBailarMX/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-DondeBailarMX/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DondeBailarMX/expo-configure-project.sh\"\n";
+		};
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* Generate Hermes dSYM */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework/hermes",
+			);
+			name = "Generate Hermes dSYM";
+			outputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/hermes.framework.dSYM",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\n\n# Generate Hermes dSYM to archive for symbolication\n# This ensures crash reports from Hermes can be symbolicated\n\n# Path of the Hermes binary that was linked into your app\nHERMES_BIN=\"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework/hermes\"\n\n# Where Xcode expects the dSYM for this build configuration\nHERMES_DSYM=\"${DWARF_DSYM_FOLDER_PATH}/hermes.framework.dSYM\"\n\n# Only run dsymutil if the binary exists and the dSYM isn't there yet\nif [ -f \"$HERMES_BIN\" ] && [ ! -d \"$HERMES_DSYM\" ]; then\n  echo \"[Hermes dSYM] Generating dSYM for Hermes from: $HERMES_BIN\"\n  \n  # Ensure the dSYM folder exists\n  mkdir -p \"${DWARF_DSYM_FOLDER_PATH}\"\n  \n  # Generate the dSYM using dsymutil\n  /usr/bin/dsymutil \"$HERMES_BIN\" -o \"$HERMES_DSYM\"\n  \n  if [ -d \"$HERMES_DSYM\" ]; then\n    echo \"[Hermes dSYM] Successfully generated at: $HERMES_DSYM\"\n  else\n    echo \"[Hermes dSYM] Warning: dSYM generation may have failed\"\n  fi\nelif [ -d \"$HERMES_DSYM\" ]; then\n  echo \"[Hermes dSYM] dSYM already exists at: $HERMES_DSYM\"\nelif [ ! -f \"$HERMES_BIN\" ]; then\n  echo \"[Hermes dSYM] Warning: Hermes binary not found at: $HERMES_BIN\"\nelse\n  echo \"[Hermes dSYM] Warning: DWARF_DSYM_FOLDER_PATH not set, skipping generation\"\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		B0C1A2B3C4D5E6F708090A0B /* Verify Privacy Usage Descriptions */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Verify Privacy Usage Descriptions";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\n\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n\necho \"[Privacy] Verifying usage descriptions in: ${PLIST}\"\n\nif [ ! -f \"${PLIST}\" ]; then\n  echo \"[Privacy] ERROR: Built Info.plist not found at: ${PLIST}\"\n  exit 1\nfi\n\nREQ_KEYS=(\n  NSCameraUsageDescription\n  NSPhotoLibraryUsageDescription\n  NSPhotoLibraryAddUsageDescription\n  NSMicrophoneUsageDescription\n)\n\nmissing=0\nfor key in \"${REQ_KEYS[@]}\"; do\n  value=$(/usr/libexec/PlistBuddy -c \"Print :${key}\" \"${PLIST}\" 2>/dev/null || true)\n  if [ -z \"${value}\" ]; then\n    echo \"[Privacy] ERROR: Missing or empty ${key} in built Info.plist.\"\n    missing=1\n  fi\ndone\n\nif [ \"${missing}\" -ne 0 ]; then\n  echo \"[Privacy] Build failed because required privacy usage descriptions are missing.\"\n  echo \"[Privacy] Fix: ensure ios/DondeBailarMX/Info.plist contains these keys with non-empty strings (or ensure Expo config injects them).\"\n  exit 1\nfi\n\necho \"[Privacy] OK: All required privacy usage descriptions are present.\"";
 			showEnvVarsInLog = 0;
 		};
 		D0B1E0A0A0A0A0A0A0A0A0A0 /* Generate App Icons */ = {
@@ -345,62 +415,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "set -euo pipefail\n\nICONSET_DIR=\"${SRCROOT}/DondeBailarMX/Images.xcassets/AppIcon.appiconset\"\nSRC_ICON=\"${ICONSET_DIR}/App-Icon-1024x1024@1x.png\"\nOPAQUE_SRC=\"${ICONSET_DIR}/AppIcon-1024-opaque.png\"\n\nif [ ! -f \"$SRC_ICON\" ]; then\n  echo \"[AppIcon] Source icon missing: $SRC_ICON\"\n  exit 0\nfi\n\n# App Store Connect rejects app icons with alpha/transparency.\n# Create an opaque 1024 PNG via a JPEG round-trip (JPEG has no alpha).\nif [ ! -f \"$OPAQUE_SRC\" ]; then\n  TMP_JPG=\"${ICONSET_DIR}/.tmp_appicon_opaque.jpg\"\n  echo \"[AppIcon] Generating opaque base icon: $(basename \"$OPAQUE_SRC\")\"\n  /usr/bin/sips -s format jpeg \"$SRC_ICON\" --out \"$TMP_JPG\" >/dev/null\n  /usr/bin/sips -s format png \"$TMP_JPG\" --out \"$OPAQUE_SRC\" >/dev/null\n  rm -f \"$TMP_JPG\" || true\nfi\n\ngen_icon() {\n  local px=\"$1\"\n  local out=\"$2\"\n  if [ -f \"$out\" ]; then\n    return 0\n  fi\n  echo \"[AppIcon] Generating $(basename \"$out\") (${px}x${px})\"\n  /usr/bin/sips -Z \"$px\" \"$OPAQUE_SRC\" --out \"$out\" >/dev/null\n}\n\n# iPad\n\ngen_icon 20  \"${ICONSET_DIR}/AppIcon-20@1x.png\"\ngen_icon 29  \"${ICONSET_DIR}/AppIcon-29@1x.png\"\ngen_icon 40  \"${ICONSET_DIR}/AppIcon-40@1x.png\"\ngen_icon 76  \"${ICONSET_DIR}/AppIcon-76@1x.png\"\ngen_icon 152 \"${ICONSET_DIR}/AppIcon-76@2x.png\"\ngen_icon 167 \"${ICONSET_DIR}/AppIcon-83.5@2x.png\"\n\n# iPhone / shared\n\ngen_icon 40  \"${ICONSET_DIR}/AppIcon-20@2x.png\"\ngen_icon 60  \"${ICONSET_DIR}/AppIcon-20@3x.png\"\ngen_icon 58  \"${ICONSET_DIR}/AppIcon-29@2x.png\"\ngen_icon 87  \"${ICONSET_DIR}/AppIcon-29@3x.png\"\ngen_icon 80  \"${ICONSET_DIR}/AppIcon-40@2x.png\"\ngen_icon 120 \"${ICONSET_DIR}/AppIcon-40@3x.png\"\ngen_icon 120 \"${ICONSET_DIR}/AppIcon-60@2x.png\"\ngen_icon 180 \"${ICONSET_DIR}/AppIcon-60@3x.png\"\n\necho \"[AppIcon] Done.\"\n";
-			showEnvVarsInLog = 0;
-		};
-		903A2D67070AD2D2DF906E9D /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/DondeBailarMX/DondeBailarMX.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-DondeBailarMX/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-DondeBailarMX/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DondeBailarMX/expo-configure-project.sh\"\n";
-		};
-		B0C1A2B3C4D5E6F708090A0B /* Verify Privacy Usage Descriptions */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Verify Privacy Usage Descriptions";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\n\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n\necho \"[Privacy] Verifying usage descriptions in: ${PLIST}\"\n\nif [ ! -f \"${PLIST}\" ]; then\n  echo \"[Privacy] ERROR: Built Info.plist not found at: ${PLIST}\"\n  exit 1\nfi\n\nREQ_KEYS=(\n  NSCameraUsageDescription\n  NSPhotoLibraryUsageDescription\n  NSPhotoLibraryAddUsageDescription\n  NSMicrophoneUsageDescription\n)\n\nmissing=0\nfor key in \"${REQ_KEYS[@]}\"; do\n  value=$(/usr/libexec/PlistBuddy -c \"Print :${key}\" \"${PLIST}\" 2>/dev/null || true)\n  if [ -z \"${value}\" ]; then\n    echo \"[Privacy] ERROR: Missing or empty ${key} in built Info.plist.\"\n    missing=1\n  fi\ndone\n\nif [ \"${missing}\" -ne 0 ]; then\n  echo \"[Privacy] Build failed because required privacy usage descriptions are missing.\"\n  echo \"[Privacy] Fix: ensure ios/DondeBailarMX/Info.plist contains these keys with non-empty strings (or ensure Expo config injects them).\"\n  exit 1\nfi\n\necho \"[Privacy] OK: All required privacy usage descriptions are present.\"";
-			showEnvVarsInLog = 0;
-		};
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* Generate Hermes dSYM */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework/hermes",
-			);
-			name = "Generate Hermes dSYM";
-			outputPaths = (
-				"${DWARF_DSYM_FOLDER_PATH}/hermes.framework.dSYM",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\n\n# Generate Hermes dSYM to archive for symbolication\n# This ensures crash reports from Hermes can be symbolicated\n\n# Path of the Hermes binary that was linked into your app\nHERMES_BIN=\"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework/hermes\"\n\n# Where Xcode expects the dSYM for this build configuration\nHERMES_DSYM=\"${DWARF_DSYM_FOLDER_PATH}/hermes.framework.dSYM\"\n\n# Only run dsymutil if the binary exists and the dSYM isn't there yet\nif [ -f \"$HERMES_BIN\" ] && [ ! -d \"$HERMES_DSYM\" ]; then\n  echo \"[Hermes dSYM] Generating dSYM for Hermes from: $HERMES_BIN\"\n  \n  # Ensure the dSYM folder exists\n  mkdir -p \"${DWARF_DSYM_FOLDER_PATH}\"\n  \n  # Generate the dSYM using dsymutil\n  /usr/bin/dsymutil \"$HERMES_BIN\" -o \"$HERMES_DSYM\"\n  \n  if [ -d \"$HERMES_DSYM\" ]; then\n    echo \"[Hermes dSYM] Successfully generated at: $HERMES_DSYM\"\n  else\n    echo \"[Hermes dSYM] Warning: dSYM generation may have failed\"\n  fi\nelif [ -d \"$HERMES_DSYM\" ]; then\n  echo \"[Hermes dSYM] dSYM already exists at: $HERMES_DSYM\"\nelif [ ! -f \"$HERMES_BIN\" ]; then\n  echo \"[Hermes dSYM] Warning: Hermes binary not found at: $HERMES_BIN\"\nelse\n  echo \"[Hermes dSYM] Warning: DWARF_DSYM_FOLDER_PATH not set, skipping generation\"\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

@@ -29,7 +29,6 @@
 			<array>
 				<string>dondebailarmx</string>
 				<string>com.tuorg.dondebailarmx</string>
-				<!-- Google Sign-In callback scheme (set this build setting / env var) -->
 				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
 			</array>
 		</dict>
@@ -49,6 +48,14 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos acceso a la cámara para tomar fotos de perfil y eventos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Necesitamos acceso al micrófono para grabar video cuando lo solicites.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Permite guardar fotos en tu galería cuando lo desees.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Necesitamos acceso a tu galería para seleccionar fotos de perfil y eventos.</string>
 	<key>RCTNewArchEnabled</key>
 	<false/>
 	<key>UILaunchStoryboardName</key>
@@ -77,13 +84,5 @@
 	<string>Automatic</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>NSCameraUsageDescription</key>
-	<string>Necesitamos acceso a la cámara para tomar fotos de perfil y eventos.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Necesitamos acceso al micrófono para grabar video cuando lo solicites.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Necesitamos acceso a tu galería para seleccionar fotos de perfil y eventos.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Permite guardar fotos en tu galería cuando lo desees.</string>
 </dict>
 </plist>
