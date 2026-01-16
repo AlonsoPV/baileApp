@@ -63,5 +63,59 @@ target 'DondeBailarMX' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # ✅ Force C++17 + libc++ for Hermes / React Native pods (fixes HermesExecutorFactory errors)
+    # These errors typically happen when some pods/targets compile with an older C++ dialect.
+    cxx_lang = 'gnu++17'
+    cxx_lib  = 'libc++'
+
+    # Pods project (all pod targets)
+    installer.pods_project.targets.each do |t|
+      t.build_configurations.each do |config|
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = cxx_lang
+        config.build_settings['CLANG_CXX_LIBRARY'] = cxx_lib
+        config.build_settings['GCC_ENABLE_CPP_EXCEPTIONS'] = 'YES'
+        config.build_settings['GCC_ENABLE_CPP_RTTI'] = 'YES'
+        # Optional belt-and-suspenders: enforce via flags if any pod overrides the dialect.
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] ||= ['$(inherited)']
+        flags = config.build_settings['OTHER_CPLUSPLUSFLAGS']
+        flags = [flags] if flags.is_a?(String)
+        unless flags.any? { |f| f.include?('-std=') }
+          flags << '-std=c++17'
+        end
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags
+      end
+    end
+
+    # User project(s) (app target + any aggregate targets that expose user_project)
+    if installer.respond_to?(:aggregate_targets)
+      installer.aggregate_targets.each do |aggregate|
+        user_project = aggregate.user_project
+        next unless user_project
+        targets =
+          if user_project.respond_to?(:native_targets)
+            user_project.native_targets
+          else
+            user_project.targets
+          end
+
+        targets.each do |t|
+          t.build_configurations.each do |config|
+            config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = cxx_lang
+            config.build_settings['CLANG_CXX_LIBRARY'] = cxx_lib
+            config.build_settings['GCC_ENABLE_CPP_EXCEPTIONS'] = 'YES'
+            config.build_settings['GCC_ENABLE_CPP_RTTI'] = 'YES'
+            config.build_settings['OTHER_CPLUSPLUSFLAGS'] ||= ['$(inherited)']
+            flags = config.build_settings['OTHER_CPLUSPLUSFLAGS']
+            flags = [flags] if flags.is_a?(String)
+            unless flags.any? { |f| f.include?('-std=') }
+              flags << '-std=c++17'
+            end
+            config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags
+          end
+        end
+        user_project.save
+      end
+    end
   end
 end

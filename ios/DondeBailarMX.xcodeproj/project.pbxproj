@@ -443,6 +443,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DondeBailarMX/DondeBailarMX.entitlements;
 				CURRENT_PROJECT_VERSION = 113;
@@ -459,6 +461,10 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.2;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-std=c++17",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -481,6 +487,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DondeBailarMX/DondeBailarMX.entitlements;
 				CURRENT_PROJECT_VERSION = 113;
@@ -492,6 +500,10 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.2;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(inherited)",
+					"-std=c++17",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
