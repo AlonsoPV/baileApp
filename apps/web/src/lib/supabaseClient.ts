@@ -16,7 +16,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // IMPORTANT (iPad/WKWebView): prevent "hung forever" network calls.
     // Use AbortSignal.timeout when available so the underlying fetch is actually aborted
     // (unlike Promise.race timeouts which don't cancel the request).
-    fetch: (input: RequestInfo | URL, init?: RequestInit) => {
+    fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
       const baseFetch = globalThis.fetch.bind(globalThis);
       // Keep this LOWER than app-level Promise timeouts, so we actually abort
       // the underlying request before UI timeouts fire (prevents "hung socket"
@@ -153,10 +153,53 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         }
       }
 
-      return baseFetch(input, {
+      const response = await baseFetch(input, {
         ...init,
         signal: combinedSignal,
       });
+
+      // 🔄 Manejar errores de refresh token inválido
+      // Si el refresh token es inválido, limpiar la sesión automáticamente
+      if (inputUrl.includes('/auth/v1/token') && response.status === 400) {
+        try {
+          const clonedResponse = response.clone();
+          const errorData = await clonedResponse.json().catch(() => null);
+          const errorMessage = errorData?.error_description || errorData?.error || errorData?.message || '';
+          const isRefreshTokenError = 
+            errorMessage.includes('Refresh Token Not Found') ||
+            errorMessage.includes('Invalid Refresh Token') ||
+            errorMessage.includes('refresh_token_not_found') ||
+            errorMessage.includes('refresh_token') && errorMessage.toLowerCase().includes('invalid');
+          
+          if (isRefreshTokenError) {
+            console.warn('[supabaseClient] Refresh token inválido detectado, limpiando sesión...');
+            // Limpiar sesión local sin hacer otra petición
+            try {
+              // Usar signOut con scope 'local' para evitar hacer otra petición al servidor
+              await supabase.auth.signOut({ scope: 'local' });
+            } catch (signOutError) {
+              // Si falla signOut, limpiar localStorage manualmente
+              try {
+                const storageKey = `sb-${supabaseUrl.split('//')[1]?.split('.')[0]}-auth-token`;
+                if (typeof localStorage !== 'undefined') {
+                  localStorage.removeItem(storageKey);
+                }
+              } catch {}
+            }
+            // Redirigir al login solo si estamos en el cliente y no estamos ya en login
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
+              // Usar setTimeout para evitar problemas de navegación durante el fetch
+              setTimeout(() => {
+                window.location.href = '/auth/login?reason=session_expired';
+              }, 100);
+            }
+          }
+        } catch {
+          // Si no podemos parsear el error, continuar normalmente
+        }
+      }
+
+      return response;
     },
     headers: {
       'x-client-info': 'baileapp-web',

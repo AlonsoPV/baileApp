@@ -181,8 +181,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (evt, sess) => {
       if (!mounted) return;
+      
+      // 🔄 Detectar errores de refresh token
+      if (evt === 'TOKEN_REFRESHED' && !sess) {
+        // Si el refresh falló y no hay sesión, limpiar estado
+        console.warn('[AuthProvider] Token refresh falló, limpiando sesión...');
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        useProfileMode.getState().setMode("usuario");
+        return;
+      }
       
       setSession(sess ?? null);
       setUser(sess?.user ?? null);

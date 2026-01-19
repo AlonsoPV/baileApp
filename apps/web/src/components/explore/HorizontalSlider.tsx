@@ -313,7 +313,7 @@ export default function HorizontalSlider<T>({
               borderRadius: 999,
               border: "1px solid rgba(240, 147, 251, 0.3)",
               background: "rgba(240, 147, 251, 0.08)",
-              color: "#fff",
+              color: "rgba(0, 0, 0, 0.7)",
               display: "grid",
               placeItems: "center",
               cursor: canScroll ? "pointer" : "not-allowed",
@@ -322,20 +322,20 @@ export default function HorizontalSlider<T>({
               fontSize: "1.1rem",
               fontWeight: 700,
               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "0 2px 8px rgba(240, 147, 251, 0.15)"
+              boxShadow: "none"
             }}
             onMouseEnter={(e) => {
               if (canScroll) {
                 e.currentTarget.style.background = "rgba(240, 147, 251, 0.15)";
                 e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.5)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(240, 147, 251, 0.25)";
+                e.currentTarget.style.boxShadow = "none";
               }
             }}
             onMouseLeave={(e) => {
               if (canScroll) {
                 e.currentTarget.style.background = "rgba(240, 147, 251, 0.08)";
                 e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.3)";
-                e.currentTarget.style.boxShadow = "0 2px 8px rgba(240, 147, 251, 0.15)";
+                e.currentTarget.style.boxShadow = "none";
               }
             }}
           >
@@ -355,7 +355,7 @@ export default function HorizontalSlider<T>({
               borderRadius: 999,
               border: "1px solid rgba(240, 147, 251, 0.3)",
               background: "rgba(240, 147, 251, 0.08)",
-              color: "#fff",
+              color: "rgba(0, 0, 0, 0.7)",
               display: "grid",
               placeItems: "center",
               cursor: canScroll ? "pointer" : "not-allowed",
@@ -364,20 +364,20 @@ export default function HorizontalSlider<T>({
               fontSize: "1.1rem",
               fontWeight: 700,
               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "0 2px 8px rgba(240, 147, 251, 0.15)"
+              boxShadow: "none"
             }}
             onMouseEnter={(e) => {
               if (canScroll) {
                 e.currentTarget.style.background = "rgba(240, 147, 251, 0.15)";
                 e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.5)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(240, 147, 251, 0.25)";
+                e.currentTarget.style.boxShadow = "none";
               }
             }}
             onMouseLeave={(e) => {
               if (canScroll) {
                 e.currentTarget.style.background = "rgba(240, 147, 251, 0.08)";
                 e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.3)";
-                e.currentTarget.style.boxShadow = "0 2px 8px rgba(240, 147, 251, 0.15)";
+                e.currentTarget.style.boxShadow = "none";
               }
             }}
           >

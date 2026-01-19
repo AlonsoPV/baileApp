@@ -337,7 +337,7 @@ const STYLES = `
   }
   .explore-container { 
     min-height: 100vh; 
-    background: #0b0d10; 
+    background: #ffffff; 
     color: ${colors.gray[50]}; 
     width: 100%;
     overflow-x: hidden;
@@ -479,7 +479,7 @@ const STYLES = `
     color: var(--text);
     padding: clamp(8px, 1.6vw, 12px);
     max-width: 960px;
-    margin: 1.5px auto;
+    margin: 5px auto 1.5px auto;
     display: grid;
     gap: var(--gap-2);
     font-family: system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif;
@@ -836,7 +836,7 @@ const STYLES = `
       max-width: 100% !important;
       padding: 12px 14px 14px !important;
       border-radius: 20px !important;
-      margin: 1.5px 0 2em 0 !important;
+      margin: 5px 0 2em 0 !important;
     }
     .filters-fav {
       padding: 10px 12px !important;
@@ -959,7 +959,7 @@ const STYLES = `
     .filters-panel {
       padding: 10px 12px 12px !important;
       border-radius: 18px !important;
-      margin: 1.5px 0 2em 0 !important;
+      margin: 5px 0 2em 0 !important;
     }
     .filters-fav {
       padding: 8px 10px !important;
@@ -1096,7 +1096,7 @@ const STYLES = `
     .filters-panel {
       padding: 9px 10px 11px !important;
       border-radius: 16px !important;
-      margin: 1.5px 0 2em 0 !important;
+      margin: 5px 0 2em 0 !important;
     }
     .filters-fav {
       padding: 7px 9px !important;
@@ -1216,7 +1216,7 @@ function Section({ title, toAll, children, count, sectionId }: { title: string; 
             fontWeight: 800,
             margin: 0,
             marginBottom: '0.25rem',
-            color: '#fff',
+            color: '#000',
             lineHeight: 1.2,
             display: 'flex',
             alignItems: 'center',
@@ -1232,11 +1232,11 @@ function Section({ title, toAll, children, count, sectionId }: { title: string; 
                 height: '28px',
                 padding: '0 8px',
                 borderRadius: '999px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(0, 0, 0, 0.2)',
+                background: 'rgba(0, 0, 0, 0.1)',
                 fontSize: '0.875rem',
                 fontWeight: 700,
-                color: '#fff',
+                color: '#000',
                 marginLeft: '0.25rem'
               }}>
                 {count}
@@ -1247,7 +1247,7 @@ function Section({ title, toAll, children, count, sectionId }: { title: string; 
             width: 60,
             height: 4,
             borderRadius: 2,
-            background: '#fff',
+            background: '#000',
             opacity: 0.8
           }} />
         </div>
@@ -2078,7 +2078,7 @@ export default function ExploreHomeScreen() {
 
       <div className="explore-container">
         <div className="wrap">
-          <section className="filters-panel" style={{ margin: `0 0 ${spacing[6]} 0` }}>
+          <section className="filters-panel" style={{ marginTop: '5px', marginBottom: spacing[6], marginLeft: 'auto', marginRight: 'auto' }}>
             {usingFavoriteFilters && user && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
