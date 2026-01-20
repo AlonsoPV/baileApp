@@ -236,10 +236,33 @@ export default function WebAppScreen() {
         setNativeAuthError(null);
         try {
           const clientId = getGoogleIosClientId();
+          
+          // Validar clientId antes de intentar sign-in
+          if (!clientId || clientId.trim().length === 0) {
+            const errorMsg = "Google Sign-In no está configurado. Falta Google iOS Client ID.";
+            setNativeAuthError(errorMsg);
+            injectWebAuthError(errorMsg);
+            setNativeAuthInProgress(false);
+            return;
+          }
+
           const tokens = await AuthCoordinator.signInWithGoogle(clientId);
           injectWebSetSession(tokens);
         } catch (e: any) {
-          const message = e?.message || "Error al iniciar sesión con Google.";
+          // Normalizar mensajes de error para mejor UX
+          let message = e?.message || "Error al iniciar sesión con Google.";
+          
+          // Mejorar mensajes de error específicos
+          if (e?.code === "GOOGLE_MISSING_CLIENT_ID" || message.includes("Client ID")) {
+            message = "Google Sign-In no está configurado. Contacta al soporte.";
+          } else if (e?.code === "GOOGLE_NO_PRESENTING_VC" || message.includes("ViewController") || message.includes("iPad")) {
+            message = "No se pudo mostrar la pantalla de Google. Intenta cerrar y reabrir la app.";
+          } else if (e?.code === "GOOGLE_CANCELED" || message.includes("cancelado")) {
+            message = "Inicio de sesión cancelado.";
+          } else if (message.includes("idToken") || message.includes("token")) {
+            message = "Error al obtener credenciales de Google. Intenta de nuevo.";
+          }
+          
           setNativeAuthError(message);
           injectWebAuthError(message);
         } finally {

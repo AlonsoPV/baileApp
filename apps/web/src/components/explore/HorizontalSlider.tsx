@@ -20,6 +20,8 @@ type Props<T = any> = {
   className?: string;
   style?: React.CSSProperties;
   autoColumns?: string | number | null; // permite sobreescribir grid-auto-columns
+  /** Si true, en escritorio deshabilita scroll por wheel/trackpad y drag con mouse (solo quedan flechas/botones) */
+  disableDesktopScroll?: boolean;
 };
 
 export default function HorizontalSlider<T>({
@@ -29,17 +31,24 @@ export default function HorizontalSlider<T>({
   scrollStep = 0.85,
   className,
   style,
-  autoColumns
+  autoColumns,
+  disableDesktopScroll = false,
 }: Props<T>) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isDraggingRef = useRef(false);
+  const isPointerDownRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
+  const isPointerCapturedRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragStartScrollLeftRef = useRef(0);
   const suppressClickUntilRef = useRef(0);
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
+  const isDesktop =
+    typeof window !== "undefined" ? window.matchMedia("(min-width: 769px)").matches : false;
+  const allowUserScroll = !(disableDesktopScroll && isDesktop);
 
   // Wheel/trackpad: attach NON-passive listener so preventDefault works (React onWheel can be passive)
   const handleWheelNative = useCallback((e: WheelEvent) => {
@@ -91,11 +100,12 @@ export default function HorizontalSlider<T>({
     const el = viewportRef.current;
     if (!el) return;
     // Must be non-passive so we can preventDefault and keep scroll in the slider.
+    if (!allowUserScroll) return;
     el.addEventListener("wheel", handleWheelNative, { passive: false });
     return () => {
       el.removeEventListener("wheel", handleWheelNative as any);
     };
-  }, [handleWheelNative]);
+  }, [handleWheelNative, allowUserScroll]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = viewportRef.current;
@@ -103,35 +113,51 @@ export default function HorizontalSlider<T>({
 
     // Touch should use native overflow scrolling (better momentum); mouse/pen uses drag-to-scroll.
     if (e.pointerType === "touch") return;
+    if (!allowUserScroll) return;
 
     isDraggingRef.current = false;
+    isPointerDownRef.current = true;
+    pointerIdRef.current = e.pointerId;
+    isPointerCapturedRef.current = false;
     dragStartXRef.current = e.clientX;
     dragStartScrollLeftRef.current = el.scrollLeft;
-    try {
-      (e.currentTarget as any).setPointerCapture?.(e.pointerId);
-    } catch {
-      // ignore
-    }
-  }, []);
+    // Important: DO NOT setPointerCapture on pointerdown.
+    // If we capture immediately, clicks on <a>/<Link> inside cards can stop navigating on desktop.
+    // We'll only capture after we detect an actual drag (see onPointerMove).
+  }, [allowUserScroll]);
 
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = viewportRef.current;
     if (!el) return;
     if (e.pointerType === "touch") return;
-    if (dragStartXRef.current === 0 && dragStartScrollLeftRef.current === 0 && el.scrollLeft === 0) {
-      // not started
-    }
+    if (!allowUserScroll) return;
+    // Only allow drag-to-scroll while the pointer is actually down (mouse button pressed / captured).
+    // Without this guard, simple mouse moves over the slider can be interpreted as a drag and suppress clicks.
+    if (!isPointerDownRef.current) return;
+    if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+    // `buttons` is reliable for mouse; if no button is pressed, don't treat it as a drag.
+    // (Some browsers can still deliver pointermove after capture; pointerup will reset the flag.)
+    if (typeof (e as any).buttons === 'number' && (e as any).buttons === 0) return;
 
     const dx = e.clientX - dragStartXRef.current;
-    if (!isDraggingRef.current && Math.abs(dx) >= 6) {
+    if (!isDraggingRef.current && Math.abs(dx) >= 8) {
       isDraggingRef.current = true;
+      // Capture only once we are sure it's a drag.
+      if (!isPointerCapturedRef.current) {
+        try {
+          (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+          isPointerCapturedRef.current = true;
+        } catch {
+          // ignore
+        }
+      }
     }
     if (isDraggingRef.current) {
       // Prevent text selection while dragging
       e.preventDefault();
       el.scrollLeft = dragStartScrollLeftRef.current - dx;
     }
-  }, []);
+  }, [allowUserScroll]);
 
   const endPointerDrag = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "touch") return;
@@ -140,8 +166,12 @@ export default function HorizontalSlider<T>({
       suppressClickUntilRef.current = Date.now() + 300;
     }
     isDraggingRef.current = false;
+    isPointerDownRef.current = false;
+    pointerIdRef.current = null;
+    isPointerCapturedRef.current = false;
     dragStartXRef.current = 0;
     dragStartScrollLeftRef.current = 0;
+    // Only release if we captured during drag (safe no-op otherwise).
     try {
       (e.currentTarget as any).releasePointerCapture?.(e.pointerId);
     } catch {
@@ -186,7 +216,7 @@ export default function HorizontalSlider<T>({
         onClickCapture={onClickCapture}
         style={{
           position: "relative",
-          overflowX: "auto",
+          overflowX: allowUserScroll ? "auto" : "hidden",
           overflowY: "visible",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -209,8 +239,8 @@ export default function HorizontalSlider<T>({
           // manteniendo swipe horizontal dentro del slider.
           touchAction: "pan-x pan-y",
           // Mouse drag UX
-          cursor: "grab",
-          userSelect: "none",
+          cursor: allowUserScroll ? "grab" : "default",
+          userSelect: allowUserScroll ? "none" : "auto",
           // Mejorar rendimiento en mobile (sin tocar transform)
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden"

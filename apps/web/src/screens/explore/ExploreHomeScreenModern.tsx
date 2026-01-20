@@ -114,7 +114,7 @@ const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; i
         borderRadius: 16,
         padding: 0,
         overflow: 'hidden',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+        boxShadow: 'none',
         // Optimizaciones de rendimiento
         transform: 'translateZ(0)',
         willChange: 'auto',
@@ -231,7 +231,7 @@ const CTACard = React.memo(({
           borderRadius: 16,
           padding: 0,
           overflow: 'hidden',
-          boxShadow: '0 4px 16px rgba(240, 147, 251, 0.3)',
+          boxShadow: 'none',
           cursor: 'pointer',
           position: 'relative',
           display: 'flex',
@@ -492,6 +492,7 @@ const STYLES = `
     .filters-panel {
       max-width: 100%;
       width: 100%;
+      margin-top: 15px;
     }
   }
   .filters-fav {
@@ -1319,7 +1320,9 @@ export default function ExploreHomeScreen() {
     () => ({
       className: isMobile ? 'explore-slider explore-slider--mobile' : 'explore-slider',
       // No pasar autoColumns en mobile - el componente HorizontalSlider ya tiene estilos CSS para mobile
-      autoColumns: undefined
+      autoColumns: undefined,
+      // En escritorio, deshabilitar scroll dentro del carrusel (evita que se “trabe” la interacción/scroll de la página)
+      disableDesktopScroll: true,
     }),
     [isMobile]
   );
@@ -1332,6 +1335,8 @@ export default function ExploreHomeScreen() {
       // - si acepta string CSS: '80%' / 'min(320px, 85vw)'
       // - si acepta número: 280 / 320
       autoColumns: isMobile ? '80%' : undefined,
+      // En escritorio, deshabilitar scroll dentro del carrusel (evita que se “trabe” la interacción/scroll de la página)
+      disableDesktopScroll: true,
     }),
     [isMobile]
   );
@@ -1527,7 +1532,7 @@ export default function ExploreHomeScreen() {
             borderRadius: 16,
             padding: 0,
             overflow: 'hidden',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+            boxShadow: 'none'
           }}
         >
           <CTACard text={t('cta_classes')} sectionType="clases" idx={idx} />
@@ -2525,7 +2530,7 @@ export default function ExploreHomeScreen() {
                             borderRadius: 16,
                             padding: 0,
                             overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                            boxShadow: 'none'
                           }}
                         >
                           <EventCard item={fechaEvento} />
@@ -2632,7 +2637,7 @@ export default function ExploreHomeScreen() {
                               borderRadius: 16,
                               padding: 0,
                               overflow: 'hidden',
-                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                              boxShadow: 'none'
                             }}
                           >
                             <CTACard text={t('cta_teachers')} sectionType="maestros" idx={idx} />
@@ -2649,7 +2654,7 @@ export default function ExploreHomeScreen() {
                             borderRadius: 16,
                             padding: 0,
                             overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                            boxShadow: 'none'
                           }}
                         >
                           <TeacherCard item={item} />
@@ -2692,7 +2697,7 @@ export default function ExploreHomeScreen() {
                               borderRadius: 16,
                               padding: 0,
                               overflow: 'hidden',
-                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                              boxShadow: 'none'
                             }}
                           >
                             <DancerCard item={{
@@ -2754,7 +2759,7 @@ export default function ExploreHomeScreen() {
                               borderRadius: 16,
                               padding: 0,
                               overflow: 'hidden',
-                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                              boxShadow: 'none'
                             }}
                           >
                             <CTACard text={t('cta_organizers')} sectionType="organizadores" idx={idx} />
@@ -2771,7 +2776,7 @@ export default function ExploreHomeScreen() {
                             borderRadius: 16,
                             padding: 0,
                             overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                            boxShadow: 'none'
                           }}
                         >
                           <OrganizerCard item={item} />
@@ -2815,7 +2820,7 @@ export default function ExploreHomeScreen() {
                               borderRadius: 16,
                               padding: 0,
                               overflow: 'hidden',
-                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                              boxShadow: 'none'
                             }}
                           >
                             <CTACard text={t('cta_brands')} sectionType="marcas" idx={idx} />
@@ -2832,7 +2837,7 @@ export default function ExploreHomeScreen() {
                             borderRadius: 16,
                             padding: 0,
                             overflow: 'hidden',
-                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+                            boxShadow: 'none'
                           }}
                         >
                           <BrandCard item={item} />

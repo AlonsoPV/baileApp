@@ -4,7 +4,7 @@ import { routes } from '@/routes/registry';
 import { useIsAdmin } from '../hooks/useRoleRequests';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
-import { SEO_ICON_URL } from '@/lib/seoConfig';
+const APP_LOGO_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/DB_LOGO150.webp';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDefaultProfile } from '@/hooks/useDefaultProfile';
 import { LanguageSwitcher } from './settings/LanguageSwitcher';
@@ -74,7 +74,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, rgba(229, 57, 53, 0.78) 0%, rgba(251, 140, 0, 0.72) 100%);
+          background: #297F96;
           border-bottom: 1px solid rgba(255, 255, 255, 0.18);
           box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
           backdrop-filter: blur(14px) saturate(140%);
@@ -85,8 +85,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           content: '';
           position: absolute;
           inset: 0;
-          background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.18), transparent 55%),
-                      radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.14), transparent 45%);
+          background: transparent;
           pointer-events: none;
         }
 
@@ -138,15 +137,15 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           background: rgba(0, 0, 0, 0.12);
           color: #fff;
           text-decoration: none;
-          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
-          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+          box-shadow: none;
         }
 
         .nav-icon:hover {
           background: rgba(255, 255, 255, 0.18);
           border-color: rgba(255, 255, 255, 0.35);
           transform: translateY(-1px);
-          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+          box-shadow: none;
         }
 
         .nav-icon:active {
@@ -156,7 +155,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         .nav-icon.active {
           background: rgba(255, 255, 255, 0.22);
           border-color: rgba(255, 255, 255, 0.55);
-          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18), 0 16px 34px rgba(0,0,0,0.24);
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
         }
 
         .nav-icon:focus-visible,
@@ -165,7 +164,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         .nav-hamburger:focus-visible,
         .nav-center-brand:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 4px rgba(255,255,255,0.28), 0 0 0 7px rgba(0,0,0,0.18);
+          box-shadow: 0 0 0 4px rgba(255,255,255,0.28);
         }
 
         .nav-hamburger {
@@ -178,8 +177,8 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
-          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+          box-shadow: none;
           padding: 0;
         }
 
@@ -187,7 +186,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           background: rgba(255,255,255,0.18);
           border-color: rgba(255,255,255,0.35);
           transform: translateY(-1px);
-          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+          box-shadow: none;
         }
 
         .nav-hamburger:active {
@@ -451,11 +450,11 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           color: #fff;
           font-weight: 700;
           cursor: pointer;
-          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
           overflow: hidden;
           box-sizing: border-box;
           flex-shrink: 0;
-          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+          box-shadow: none;
         }
         
         .nav-profile-button img {
@@ -476,7 +475,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           background: rgba(255,255,255,0.18);
           border-color: rgba(255,255,255,0.38);
           transform: translateY(-1px);
-          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+          box-shadow: none;
         }
 
         .nav-profile-button:active {
@@ -506,16 +505,16 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           font-weight: 700;
           font-size: 0.9rem;
           cursor: pointer;
-          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
           text-decoration: none;
-          box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+          box-shadow: none;
         }
 
         .nav-login-button:hover {
           background: rgba(255,255,255,0.18);
           border-color: rgba(255,255,255,0.38);
           transform: translateY(-1px);
-          box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+          box-shadow: none;
         }
 
         .nav-login-button:active {
@@ -603,7 +602,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
             }}
           >
             <img
-              src={SEO_ICON_URL}
+              src={APP_LOGO_URL}
               alt="Logo Dónde Bailar"
               className="nav-logo-img"
               loading="eager"

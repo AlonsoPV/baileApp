@@ -4,16 +4,66 @@ import UIKit
 // Used for presenting Google Sign-In UI.
 extension UIApplication {
   static func topMostViewController(base: UIViewController? = UIApplication.shared.activeRootViewController()) -> UIViewController? {
-    if let nav = base as? UINavigationController {
-      return topMostViewController(base: nav.visibleViewController)
+    // Obtener el ViewController base (intentar múltiples métodos)
+    var current = base
+    if current == nil {
+      current = UIApplication.shared.activeRootViewController()
     }
-    if let tab = base as? UITabBarController, let selected = tab.selectedViewController {
+    
+    // Si aún no hay, intentar desde el window principal directamente
+    if current == nil {
+      if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+        // Preferir key window, luego cualquier window
+        let targetWindow = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first
+        current = targetWindow?.rootViewController
+      }
+    }
+    
+    // Si aún no hay, intentar desde AppDelegate window (legacy) usando reflection
+    if current == nil {
+      if let appDelegate = UIApplication.shared.delegate,
+         let window = (appDelegate as AnyObject).value(forKey: "window") as? UIWindow {
+        current = window.rootViewController
+      }
+    }
+    
+    // Si aún no hay, usar el primer window scene disponible
+    if current == nil {
+      for scene in UIApplication.shared.connectedScenes {
+        if let windowScene = scene as? UIWindowScene,
+           let window = windowScene.windows.first {
+          current = window.rootViewController
+          break
+        }
+      }
+    }
+    
+    guard let baseVC = current else {
+      return nil
+    }
+    
+    // Recursivamente encontrar el VC más superior
+    if let nav = baseVC as? UINavigationController {
+      return topMostViewController(base: nav.visibleViewController ?? nav.topViewController)
+    }
+    if let tab = baseVC as? UITabBarController, let selected = tab.selectedViewController {
       return topMostViewController(base: selected)
     }
-    if let presented = base?.presentedViewController {
+    if let presented = baseVC.presentedViewController {
       return topMostViewController(base: presented)
     }
-    return base
+    
+    // iPad: si es un split view controller, usar el detail o master
+    if let split = baseVC as? UISplitViewController {
+      if let detail = split.viewControllers.last {
+        return topMostViewController(base: detail)
+      }
+      if let master = split.viewControllers.first {
+        return topMostViewController(base: master)
+      }
+    }
+    
+    return baseVC
   }
 
   private func activeRootViewController() -> UIViewController? {

@@ -16,7 +16,14 @@ final class GoogleSignInModule: NSObject {
       }
 
       guard let presentingVC = UIApplication.topMostViewController() else {
-        reject("GOOGLE_NO_PRESENTING_VC", "No se pudo determinar el ViewController para presentar Google Sign-In (iPad).", nil)
+        // Log para debugging
+        print("[GoogleSignInModule] ERROR: No se pudo encontrar topMostViewController")
+        print("[GoogleSignInModule] Window scenes: \(UIApplication.shared.connectedScenes.count)")
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+          print("[GoogleSignInModule] Windows count: \(windowScene.windows.count)")
+          print("[GoogleSignInModule] Key window: \(windowScene.windows.first(where: { $0.isKeyWindow }) != nil)")
+        }
+        reject("GOOGLE_NO_PRESENTING_VC", "No se pudo mostrar la pantalla de Google. Intenta cerrar y reabrir la app.", nil)
         return
       }
 

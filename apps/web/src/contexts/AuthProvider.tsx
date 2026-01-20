@@ -198,6 +198,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(sess ?? null);
       setUser(sess?.user ?? null);
       setLoading(false);
+
+      // 🔍 Identificar usuario en Hotjar cuando hay sesión (lazy loaded, no bloquea)
+      if (sess?.user && evt === 'SIGNED_IN') {
+        // Lazy load Hotjar identify (no bloquea el render)
+        import('../lib/hotjar').then(({ identifyUser }) => {
+          identifyUser(sess.user.id, {
+            email: sess.user.email,
+            created_at: sess.user.created_at,
+          });
+        }).catch(() => {
+          // Silently fail if Hotjar not loaded yet
+        });
+      }
       
       // 🔁 Invalidar todas las queries de perfiles cuando cambia el estado de autenticación
       if (sess?.user) {
