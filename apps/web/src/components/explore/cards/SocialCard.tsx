@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
+import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 
 type SocialItem = {
   id?: number | string;
@@ -53,9 +54,22 @@ export default function SocialCard({ item }: { item: SocialItem }) {
     .join(" • ");
 
   const ritmoNames: string[] = React.useMemo(() => {
-    const ids: number[] = (item?.estilos || []) as number[];
+    // 1) Preferir catálogo moderno si existe (ritmos_seleccionados)
+    try {
+      const selectedCatalog: string[] = Array.isArray((item as any)?.ritmos_seleccionados)
+        ? ((item as any).ritmos_seleccionados as string[])
+        : [];
+      if (selectedCatalog.length > 0) {
+        const labelByCatalogId = new Map<string, string>();
+        RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
+        return selectedCatalog.map((id) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
+      }
+    } catch {}
+
+    // 2) Fallback legacy: estilos/ritmos por ID numérico
+    const ids: number[] = ((item as any)?.estilos || (item as any)?.ritmos || []) as number[];
     if (!Array.isArray(allTags)) return [] as string[];
-    return ids
+    return (ids || [])
       .map((id) => allTags.find((t: any) => t.id === id && t.tipo === 'ritmo'))
       .filter(Boolean)
       .map((t: any) => t.nombre as string);

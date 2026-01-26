@@ -5,6 +5,19 @@
 
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 
+function getValidCatalogSlugSet() {
+  const valid = new Set<string>();
+  RITMOS_CATALOG.forEach((group) => group.items.forEach((item) => valid.add(item.id)));
+  return valid;
+}
+
+function normalizeCatalogSlug(input: any): string {
+  return String(input ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/-/g, "_");
+}
+
 /**
  * Mapeo de IDs numéricos de tags a slugs del catálogo
  * Actualiza este mapeo según tu tabla tags en Supabase
@@ -85,18 +98,28 @@ export function normalizeRitmosToSlugs(
   allTags?: Array<{ id: number; nombre: string; tipo: string }>
 ): string[] {
   const slugs: string[] = [];
+  const validCatalogSlugs = getValidCatalogSlugSet();
 
   // 1) Prioridad máxima: ritmos_seleccionados (ya son slugs)
   if (Array.isArray(profile?.ritmos_seleccionados) && profile.ritmos_seleccionados.length > 0) {
-    return profile.ritmos_seleccionados.filter((s: any) => typeof s === 'string');
+    return profile.ritmos_seleccionados
+      .filter((s: any) => typeof s === 'string')
+      .map((s: string) => normalizeCatalogSlug(s))
+      .filter((s: string) => validCatalogSlugs.has(s));
   }
+
+  const tagList: Array<{ id: number; nombre: string; tipo?: string; slug?: string }> = Array.isArray(allTags)
+    ? (allTags as any)
+    : [];
+  const tagListHasTipo = tagList.some((t) => typeof (t as any)?.tipo === 'string');
+  const ritmoTags = tagListHasTipo ? tagList.filter((t) => t.tipo === 'ritmo') : tagList;
 
   // 2) Si hay ritmos (IDs numéricos), mapear a slugs
   if (Array.isArray(profile?.ritmos) && profile.ritmos.length > 0) {
     profile.ritmos.forEach((id: any) => {
       const numId = typeof id === 'number' ? id : parseInt(id, 10);
       if (!isNaN(numId) && TAG_ID_TO_SLUG[numId]) {
-        slugs.push(TAG_ID_TO_SLUG[numId]);
+        slugs.push(normalizeCatalogSlug(TAG_ID_TO_SLUG[numId]));
       }
     });
   }
@@ -106,22 +129,34 @@ export function normalizeRitmosToSlugs(
     profile.estilos.forEach((id: any) => {
       const numId = typeof id === 'number' ? id : parseInt(id, 10);
       if (!isNaN(numId) && TAG_ID_TO_SLUG[numId]) {
-        slugs.push(TAG_ID_TO_SLUG[numId]);
+        slugs.push(normalizeCatalogSlug(TAG_ID_TO_SLUG[numId]));
       }
     });
   }
 
-  // 4) Si tenemos allTags y ritmos numéricos, intentar por nombre
-  if (slugs.length === 0 && allTags && Array.isArray(profile?.ritmos)) {
+  // 4) Si tenemos tags y ritmos numéricos, intentar por slug o nombre
+  if (slugs.length === 0 && Array.isArray(profile?.ritmos) && ritmoTags.length > 0) {
     profile.ritmos.forEach((id: any) => {
-      const tag = allTags.find(t => t.id === id && t.tipo === 'ritmo');
-      if (tag && TAG_NAME_TO_SLUG[tag.nombre]) {
-        slugs.push(TAG_NAME_TO_SLUG[tag.nombre]);
+      const numId = typeof id === 'number' ? id : parseInt(id, 10);
+      if (!Number.isFinite(numId)) return;
+      const tag = ritmoTags.find((t) => t.id === numId);
+      if (!tag) return;
+
+      // Preferir slug si existe y coincide con el catálogo
+      const slugCandidate = normalizeCatalogSlug((tag as any).slug);
+      if (slugCandidate && validCatalogSlugs.has(slugCandidate)) {
+        slugs.push(slugCandidate);
+        return;
+      }
+
+      const byName = TAG_NAME_TO_SLUG[(tag as any).nombre];
+      if (byName) {
+        slugs.push(normalizeCatalogSlug(byName));
       }
     });
   }
 
-  return [...new Set(slugs)]; // Eliminar duplicados
+  return [...new Set(slugs)].filter((s) => validCatalogSlugs.has(s)); // Eliminar duplicados y validar
 }
 
 /**

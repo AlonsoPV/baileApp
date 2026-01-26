@@ -5,6 +5,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { createUserScopedZustandStorage } from "@/storage/userScopedStorage";
 
 type DraftRecord = { 
   value: any; 
@@ -47,7 +48,7 @@ export const useDrafts = create<DraftsState>()(
     }),
     { 
       name: "baileapp:drafts:v1", 
-      storage: createJSONStorage(() => localStorage) 
+      storage: createJSONStorage(() => createUserScopedZustandStorage(localStorage))
     }
   )
 );

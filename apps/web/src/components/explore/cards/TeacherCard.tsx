@@ -6,6 +6,7 @@ import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
 import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
+import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 
 export default function TeacherCard({ item }: { item: any }) {
   const { data: allTags } = useTags() as any;
@@ -64,9 +65,25 @@ export default function TeacherCard({ item }: { item: any }) {
     const key = encodeURIComponent(String(bannerCacheKey ?? ''));
     return `${bannerUrl}${separator}_t=${key}`;
   }, [bannerUrl, bannerCacheKey]);
-  const ritmoNombres: string[] = (item.ritmos || [])
-    .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
-    .filter(Boolean);
+
+  // Mapear ritmos por catálogo (ritmos_seleccionados) o por ids numéricos (ritmos/estilos)
+  const ritmoNombres: string[] = (() => {
+    try {
+      const labelByCatalogId = new Map<string, string>();
+      RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
+      const selectedCatalog: string[] = Array.isArray(item?.ritmos_seleccionados) ? item.ritmos_seleccionados : [];
+      if (selectedCatalog.length > 0) {
+        return selectedCatalog.map((id: string) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
+      }
+      const ritmoIds: number[] = (item.ritmos && Array.isArray(item.ritmos) ? item.ritmos : (item.estilos && Array.isArray(item.estilos) ? item.estilos : []));
+      return (ritmoIds || [])
+        .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  })();
+
   const zonaNombres: string[] = (item.zonas || [])
     .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
     .filter(Boolean);

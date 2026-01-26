@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { userLocalStorage } from "@/storage/userScopedStorage";
 
 export type ExploreType = "all" | "fechas" | "sociales" | "clases" | "organizadores" | "maestros" | "academias" | "marcas" | "usuarios";
 
@@ -17,9 +18,11 @@ type Store = {
   filters: ExploreFilters;
   set: (patch: Partial<ExploreFilters>) => void;
   reset: () => void;
+  /** Load persisted filters for a specific user (called on auth change). */
+  rehydrateForUser: (userId: string) => void;
 };
 
-const KEY = "ba_explore_filters_v1";
+const STORAGE_PARTS = ["filters", "explore", "v1"] as const;
 
 const defaultFilters: ExploreFilters = {
   type: "all",
@@ -31,18 +34,13 @@ const defaultFilters: ExploreFilters = {
 };
 
 export const useExploreFilters = create<Store>((set, get) => ({
-  filters: (() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      return raw ? { ...defaultFilters, ...JSON.parse(raw) } : defaultFilters;
-    } catch {
-      return defaultFilters;
-    }
-  })(),
+  // IMPORTANT: do NOT read unscoped storage at module init.
+  // Rehydrate explicitly when userId is known.
+  filters: defaultFilters,
   set: (patch) => {
     const next = { ...get().filters, ...patch };
     try {
-      localStorage.setItem(KEY, JSON.stringify(next));
+      userLocalStorage.setItem([...STORAGE_PARTS], JSON.stringify(next));
     } catch (e) {
       console.warn('[ExploreFilters] Failed to save to localStorage:', e);
     }
@@ -50,11 +48,21 @@ export const useExploreFilters = create<Store>((set, get) => ({
   },
   reset: () => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(defaultFilters));
+      userLocalStorage.setItem([...STORAGE_PARTS], JSON.stringify(defaultFilters));
     } catch (e) {
       console.warn('[ExploreFilters] Failed to reset localStorage:', e);
     }
     set({ filters: defaultFilters });
+  },
+  rehydrateForUser: (userId) => {
+    try {
+      const raw = userLocalStorage.getItem([...STORAGE_PARTS], userId);
+      const parsed = raw ? JSON.parse(raw) : null;
+      set({ filters: parsed ? { ...defaultFilters, ...parsed } : defaultFilters });
+    } catch (e) {
+      console.warn("[ExploreFilters] Failed to rehydrate user filters:", e);
+      set({ filters: defaultFilters });
+    }
   },
 }));
 

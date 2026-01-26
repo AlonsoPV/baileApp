@@ -24,10 +24,11 @@ export function validateZonasAgainstCatalog(
     return [];
   }
 
-  // Si no hay tags, no podemos validar, retornar vacío para ser seguro
+  // Si no hay tags, no podemos validar contra catálogo.
+  // Importante: NO borrar selección del usuario por falta de tags (ej: tags aún cargando).
   if (!allTags || !Array.isArray(allTags)) {
-    console.warn('[validateZonasAgainstCatalog] No hay tags disponibles para validar zonas');
-    return [];
+    console.warn('[validateZonasAgainstCatalog] No hay tags disponibles; se omite validación de zonas');
+    return normalizedIds;
   }
 
   // Crear un mapa de tags de zona por ID

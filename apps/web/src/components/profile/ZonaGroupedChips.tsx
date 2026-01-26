@@ -68,20 +68,39 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const rafIdRef = React.useRef<number | null>(null);
 
+  const updateDropdownPosition = React.useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = typeof window !== 'undefined' ? window.innerWidth : rect.width;
+    const margin = 8;
+    const desiredWidth = Math.min(rect.width, Math.max(0, vw - margin * 2));
+    let left = rect.left;
+    if (left + desiredWidth > vw - margin) left = vw - margin - desiredWidth;
+    if (left < margin) left = margin;
+
+    // Si estamos muy abajo, intentar abrir hacia arriba (maxHeight aprox = 400)
+    const maxH = 400;
+    const vh = typeof window !== 'undefined' ? window.innerHeight : rect.bottom + maxH;
+    let top = rect.bottom + margin;
+    if (top + maxH > vh - margin) {
+      top = Math.max(margin, rect.top - margin - maxH);
+    }
+
+    const next = { top, left, width: desiredWidth };
+    setDropdownPosition((prev) => {
+      if (prev.top === next.top && prev.left === next.left && prev.width === next.width) return prev;
+      return next;
+    });
+  }, []);
+
   const scheduleDropdownPositionUpdate = React.useCallback(() => {
     if (rafIdRef.current !== null) return;
     rafIdRef.current = requestAnimationFrame(() => {
       rafIdRef.current = null;
-      const el = triggerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const next = { top: rect.bottom + 8, left: rect.left, width: rect.width };
-      setDropdownPosition((prev) => {
-        if (prev.top === next.top && prev.left === next.left && prev.width === next.width) return prev;
-        return next;
-      });
+      updateDropdownPosition();
     });
-  }, []);
+  }, [updateDropdownPosition]);
 
   // Este useMemo debe estar ANTES del return temprano para cumplir con las reglas de hooks
   const selectedCategoryGroup = React.useMemo(() => {
@@ -109,7 +128,8 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
   // Calcular posición del dropdown cuando se abre
   React.useEffect(() => {
     if (isDropdownOpen && triggerRef.current) {
-      scheduleDropdownPositionUpdate();
+      // Calcular inmediatamente al abrir para evitar “salto” a (0,0)
+      updateDropdownPosition();
       window.addEventListener('scroll', scheduleDropdownPositionUpdate, true);
       window.addEventListener('resize', scheduleDropdownPositionUpdate);
       
@@ -408,7 +428,16 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           ref={triggerRef}
           type="button"
           className={`zona-dropdown-trigger ${isDropdownOpen ? 'open' : ''}`}
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          onClick={() => {
+            if (!isDropdownOpen) {
+              // Calcular posición ANTES de abrir (evita render inicial desalineado)
+              updateDropdownPosition();
+              setIsDropdownOpen(true);
+              return;
+            }
+            setIsDropdownOpen(false);
+            setSelectedCategory(null);
+          }}
         >
           <span>
             {selectedCategoryGroup

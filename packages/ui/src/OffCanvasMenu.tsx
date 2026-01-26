@@ -90,53 +90,14 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
         <div
           className="offcanvas-menu-header"
           style={{
-            background: "linear-gradient(135deg, #E53935 0%, #FB8C00 100%)",
+            // Barra superior (brand color)
+            background: "#297F96",
             padding: "1.5rem",
             color: "#FFFFFF",
             position: "relative"
           }}
         >
-          {/* Botón de Logout en esquina superior derecha */}
-          <button
-            className="offcanvas-menu-logout-btn"
-            onClick={() => {
-              const logoutItem = menuItems.find(item => item.id === 'logout');
-              if (logoutItem) {
-                logoutItem.onClick();
-                onClose();
-              }
-            }}
-            style={{
-              position: "absolute",
-              top: "1rem",
-              right: "1rem",
-              background: "rgba(255, 255, 255, 0.2)",
-              border: "none",
-              borderRadius: "50%",
-              width: "36px",
-              height: "36px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              fontSize: "1.1rem",
-              transition: "all 0.2s",
-              color: "#FFF",
-              minWidth: "44px",
-              minHeight: "44px"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-            }}
-            title="Cerrar sesión"
-          >
-            🚪
-          </button>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", rowGap: 10 }}>
             <div
               className="offcanvas-menu-avatar"
               style={{
@@ -162,14 +123,18 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
               {!safeUserAvatar && (displayName || userName).charAt(0).toUpperCase()}
             </div>
             
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: "1 1 160px", minWidth: 0 }}>
               <div style={{ 
                 fontSize: "1.125rem", 
                 fontWeight: "600", 
                 marginBottom: "0.25rem",
-                whiteSpace: "nowrap",
+                // Evitar overflow: permitir 2 líneas si es necesario
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical" as any,
                 overflow: "hidden",
-                textOverflow: "ellipsis"
+                textOverflow: "ellipsis",
+                wordBreak: "break-word",
               }}>
                 {displayName || userName}
               </div>
@@ -177,9 +142,13 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
                 <div style={{ 
                   fontSize: "0.8rem", 
                   opacity: 0.9,
-                  whiteSpace: "nowrap",
+                  // Evitar overflow: permitir 2 líneas si es necesario
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical" as any,
                   overflow: "hidden",
-                  textOverflow: "ellipsis"
+                  textOverflow: "ellipsis",
+                  wordBreak: "break-word",
                 }}>
                   {userEmail}
                 </div>
@@ -353,16 +322,6 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
             font-size: 1.25rem !important;
           }
           
-          .offcanvas-menu-logout-btn {
-            width: 40px !important;
-            height: 40px !important;
-            min-width: 44px !important;
-            min-height: 44px !important;
-            top: 0.75rem !important;
-            right: 0.75rem !important;
-            font-size: 1rem !important;
-          }
-          
           .offcanvas-menu-items {
             padding: 0.75rem 0 !important;
           }
@@ -420,16 +379,6 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
           
           .offcanvas-menu-header > div > div:last-child > div:last-child {
             font-size: 0.75rem !important;
-          }
-          
-          .offcanvas-menu-logout-btn {
-            width: 38px !important;
-            height: 38px !important;
-            min-width: 44px !important;
-            min-height: 44px !important;
-            top: 0.625rem !important;
-            right: 0.625rem !important;
-            font-size: 0.95rem !important;
           }
           
           .offcanvas-menu-item {
@@ -494,12 +443,6 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
           .offcanvas-menu-item {
             min-height: 56px !important;
           }
-          
-          .offcanvas-menu-logout-btn {
-            min-width: 48px !important;
-            min-height: 48px !important;
-          }
-          
           .offcanvas-menu-footer button {
             min-height: 48px !important;
             padding: 0.5rem 0.75rem !important;
