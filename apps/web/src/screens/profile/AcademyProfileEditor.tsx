@@ -23,7 +23,7 @@ import { getDraftKey } from "../../utils/draftKeys";
 import { useDrafts } from "../../state/drafts";
 import { useRoleChange } from "../../hooks/useRoleChange";
 import { useAuth } from "@/contexts/AuthProvider";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
@@ -36,6 +36,10 @@ import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/u
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
 import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
 import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
+import ClassDatesSheet from "../../components/classes/ClassDatesSheet";
+import { type ClassItem } from "../../components/classes/ClassDatesSection";
+import { useToast } from "../../components/Toast";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 const colors = {
   primary: '#E53935',
@@ -58,14 +62,14 @@ const formatCurrency = (value?: number | string | null) => {
   if (numeric === 0) return 'Gratis';
   // Si es > 0, formatear como precio
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'MXN',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(numeric);
   } catch {
-    return `$${Number(numeric).toLocaleString('en-US')}`;
+    return `$${Number(numeric).toLocaleString('es-MX')}`;
   }
 };
 
@@ -113,6 +117,45 @@ const formatDateOrDay = (fecha?: string, diaSemana?: number | null, diasSemana?:
     return dayNames[diaSemana];
   }
   return null;
+};
+
+// Asistencia por rol (Lead/Follow/Ambos) por fecha (no acumulable)
+const ymd = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getMetricsDateKeyForClass = (it: any): string | null => {
+  if (it?.fecha) return String(it.fecha).split('T')[0] || null;
+  const hora = (it?.inicio ? String(it.inicio) : '20:00').split(':').slice(0, 2).join(':') || '20:00';
+
+  let diaNum: number | null = typeof it?.diaSemana === 'number' ? it.diaSemana : null;
+  if (diaNum === null && Array.isArray(it?.diasSemana) && it.diasSemana.length > 0) {
+    const first = it.diasSemana[0];
+    if (typeof first === 'number') diaNum = first;
+    else if (typeof first === 'string') {
+      const normalized = first.toLowerCase().trim();
+      const map: Record<string, number> = {
+        'domingo': 0, 'dom': 0,
+        'lunes': 1, 'lun': 1,
+        'martes': 2, 'mar': 2,
+        'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
+        'jueves': 4, 'jue': 4,
+        'viernes': 5, 'vie': 5,
+        'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+      };
+      diaNum = map[normalized] ?? null;
+    }
+  }
+
+  if (diaNum === null) return null;
+  try {
+    return ymd(calculateNextDateWithTime(diaNum, hora));
+  } catch {
+    return null;
+  }
 };
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
@@ -830,6 +873,8 @@ export default function AcademyProfileEditor() {
   const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [deletingIndex, setDeletingIndex] = React.useState<number | null>(null);
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
   const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
   const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
@@ -970,6 +1015,54 @@ export default function AcademyProfileEditor() {
 
   // Hooks para invitaciones
   const academyId = (academy as any)?.id;
+
+  // Asistencia por rol (lead/follow/ambos) por fecha (no acumulable)
+  const classDateKeyById = useMemo(() => {
+    const map = new Map<number, string>();
+    const crono = ((form as any)?.cronograma || []) as any[];
+    crono.forEach((it) => {
+      const idNum = Number(it?.id);
+      if (!Number.isFinite(idNum)) return;
+      const dk = getMetricsDateKeyForClass(it);
+      if (dk) map.set(idNum, dk);
+    });
+    return map;
+  }, [(form as any)?.cronograma]);
+
+  const attendanceQuery = useQuery({
+    queryKey: ["academy-class-attendance-by-date", academyId, (form as any)?.cronograma?.length || 0],
+    enabled: !!academyId,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_academy_class_reservations", { p_academy_id: Number(academyId) });
+      if (error) throw error;
+      return (data || []) as Array<{ class_id: number; role_baile: string | null; fecha_especifica: string | null }>;
+    },
+    select: (rows) => {
+      const out: Record<string, { lead: number; follow: number; ambos: number }> = {};
+      for (const r of rows) {
+        const classId = Number((r as any).class_id);
+        if (!Number.isFinite(classId)) continue;
+        const roleRaw = String((r as any).role_baile || "").toLowerCase();
+        const role =
+          roleRaw === "ambos"
+            ? "ambos"
+            : roleRaw === "lead" || roleRaw === "leader"
+            ? "lead"
+            : roleRaw === "follow" || roleRaw === "follower"
+            ? "follow"
+            : null;
+        if (!role) continue;
+
+        const fechaEsp = (r as any).fecha_especifica ? String((r as any).fecha_especifica).split("T")[0] : null;
+        const dk = fechaEsp || classDateKeyById.get(classId) || "sin-fecha";
+        const key = `${classId}|${dk}`;
+        out[key] ||= { lead: 0, follow: 0, ambos: 0 };
+        out[key][role] += 1;
+      }
+      return out;
+    },
+  });
   const { data: availableTeachers, isLoading: loadingTeachers, refetch: refetchAvailable } = useAvailableTeachers(academyId);
   const { data: acceptedTeachers, refetch: refetchAccepted } = useAcceptedTeachers(academyId);
   const sendInvitation = useSendInvitation();
@@ -1260,13 +1353,17 @@ export default function AcademyProfileEditor() {
     }
   }, [profileId, setField, upsert]);
 
+  // Actualización optimista: actualiza UI inmediatamente y luego persiste
   const autoSaveClasses = React.useCallback(
-    async (cronogramaItems: any[], costosItems: any[], successText: string) => {
+    async (cronogramaItems: any[], costosItems: any[], successText: string, rollbackData?: { cronograma: any[], costos: any[] }) => {
       if (!profileId) {
         setStatusMsg({ type: 'err', text: '💾 Guarda el perfil una vez para activar el guardado de clases' });
         setTimeout(() => setStatusMsg(null), 3200);
         return;
       }
+      
+      // Si hay rollback data, significa que ya actualizamos la UI optimistamente
+      // Solo necesitamos persistir en backend
       try {
         await upsert.mutateAsync({
           id: profileId,
@@ -1274,16 +1371,24 @@ export default function AcademyProfileEditor() {
           horarios: cronogramaItems,
           costos: costosItems,
         });
-        setStatusMsg({ type: 'ok', text: successText });
-        setTimeout(() => setStatusMsg(null), 2400);
+        // Solo mostrar mensaje si no es una actualización silenciosa
+        if (successText) {
+          showToast(successText, 'success');
+        }
       } catch (error) {
         console.error('[AcademyProfileEditor] Error guardando clases', error);
-        setStatusMsg({ type: 'err', text: '❌ No se pudieron guardar las clases' });
-        setTimeout(() => setStatusMsg(null), 3200);
+        
+        // Rollback si hay datos de respaldo
+        if (rollbackData) {
+          setField('cronograma' as any, rollbackData.cronograma as any);
+          setField('costos' as any, rollbackData.costos as any);
+        }
+        
+        showToast('❌ No se pudieron guardar los cambios. Intenta de nuevo.', 'error');
         throw error;
       }
     },
-    [profileId, setStatusMsg, upsert],
+    [profileId, setStatusMsg, upsert, setField, showToast],
   );
 
   const uploadFile = useCallback(async (file: File, slot: string) => {
@@ -2280,11 +2385,18 @@ export default function AcademyProfileEditor() {
                             };
                             currentCrono[editingIndex] = updatedItem;
 
+                            // Actualización optimista: actualizar UI inmediatamente
                             setField('cronograma' as any, currentCrono as any);
                             setField('costos' as any, currentCostos as any);
 
-                            const payload: any = { id: (form as any)?.id, cronograma: currentCrono, costos: currentCostos };
-                            return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada')
+                            // Guardar datos para rollback
+                            const rollbackData = {
+                              cronograma: [...((form as any).cronograma || [])],
+                              costos: [...((form as any).costos || [])],
+                            };
+
+                            // Persistir en backend (sin mostrar mensaje, el componente ya lo hace)
+                            return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada', rollbackData)
                               .then(() => {
                                 setEditingIndex(null);
                                 setEditInitial(undefined);
@@ -2351,165 +2463,170 @@ export default function AcademyProfileEditor() {
                               ubicacionId: c.ubicacionId || (match?.id || null)
                             }] as any);
                             const nextCostos = ([...currentCostos, newCosto] as any);
+                            
+                            // Actualización optimista: actualizar UI inmediatamente
                             setField('cronograma' as any, nextCrono as any);
                             setField('costos' as any, nextCostos as any);
 
-                            const payload: any = { id: (form as any)?.id, cronograma: nextCrono, costos: nextCostos };
-                            return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada');
+                            // Guardar datos para rollback
+                            const rollbackData = {
+                              cronograma: [...currentCrono],
+                              costos: [...currentCostos],
+                            };
+
+                            // Persistir en backend
+                            return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada', rollbackData);
                           }
                         }}
                       />
                     )}
 
-                    {academy && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (
-                      <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
-                        {(form as any).cronograma.map((it: any, idx: number) => {
-                          const costos = ((form as any)?.costos || []) as any[];
+                    {academy && (
+                      <div style={{ marginTop: 16 }}>
+                        <ClassDatesSheet
+                          showToast={showToast}
+                          attendanceByClassDateKey={attendanceQuery.data}
+                          classes={((form as any)?.cronograma || []).map((it: any, idx: number) => {
+                            const costos = ((form as any)?.costos || []) as any[];
+                            
+                            // Buscar costo por relación fuerte (id de clase / referenciaCosto)
+                            const classRef = it?.id ?? it?.referenciaCosto ?? null;
+                            let costo: any | undefined;
 
-                          // Buscar costo por relación fuerte (id de clase / referenciaCosto)
-                          const classRef = it?.id ?? it?.referenciaCosto ?? null;
-                          let costo: any | undefined;
+                            if (classRef !== null && classRef !== undefined) {
+                              const classRefStr = String(classRef);
+                              costo = costos.find((c: any) => {
+                                if (c?.classId && String(c.classId) === classRefStr) return true;
+                                if (c?.referenciaCosto && String(c.referenciaCosto) === classRefStr) return true;
+                                if (typeof c?.cronogramaIndex === 'number' && c.cronogramaIndex === idx) return true;
+                                return false;
+                              });
+                            }
 
-                          if (classRef !== null && classRef !== undefined) {
-                            const classRefStr = String(classRef);
-                            costo = costos.find((c: any) => {
-                              if (c?.classId && String(c.classId) === classRefStr) return true;
-                              if (c?.referenciaCosto && String(c.referenciaCosto) === classRefStr) return true;
-                              if (typeof c?.cronogramaIndex === 'number' && c.cronogramaIndex === idx) return true;
-                              return false;
+                            // Fallback antiguo: por nombre de la clase
+                            const refKey = ((it?.titulo || '') as string).trim().toLowerCase();
+                            if (!costo && refKey) {
+                              costo = costos.find((c: any) =>
+                                (c?.nombre || '').trim().toLowerCase() === refKey
+                              );
+                            }
+
+                            return {
+                              ...it,
+                              costo: costo ? {
+                                precio: costo.precio,
+                                tipo: costo.tipo,
+                                regla: costo.regla,
+                              } : undefined,
+                            } as ClassItem;
+                          })}
+                          isLoading={false}
+                          onEdit={(idx) => {
+                            const it = ((form as any)?.cronograma || [])[idx];
+                            const costos = ((form as any)?.costos || []) as any[];
+                            
+                            // Buscar costo
+                            const classRef = it?.id ?? it?.referenciaCosto ?? null;
+                            let costo: any | undefined;
+                            if (classRef !== null && classRef !== undefined) {
+                              const classRefStr = String(classRef);
+                              costo = costos.find((c: any) => {
+                                if (c?.classId && String(c.classId) === classRefStr) return true;
+                                if (c?.referenciaCosto && String(c.referenciaCosto) === classRefStr) return true;
+                                if (typeof c?.cronogramaIndex === 'number' && c.cronogramaIndex === idx) return true;
+                                return false;
+                              });
+                            }
+                            const refKey = ((it?.titulo || '') as string).trim().toLowerCase();
+                            if (!costo && refKey) {
+                              costo = costos.find((c: any) =>
+                                (c?.nombre || '').trim().toLowerCase() === refKey
+                              );
+                            }
+
+                            classFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            setEditingIndex(idx);
+                            setEditInitial({
+                              nombre: it.titulo || '',
+                              tipo: (costo?.tipo as any) || 'clases sueltas',
+                              precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
+                              regla: costo?.regla || '',
+                              nivel: (it as any)?.nivel ?? null,
+                              descripcion: (it as any)?.descripcion || '',
+                              fechaModo: (it as any)?.fechaModo || (it.fecha ? 'especifica' : ((it.diaSemana !== null && it.diaSemana !== undefined) || ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? 'semanal' : 'por_agendar')),
+                              fecha: it.fecha || '',
+                              diaSemana: (it as any)?.diaSemana ?? null,
+                              diasSemana: ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? (() => {
+                                const dayNameToNumber = (dayName: string | number): number | null => {
+                                  if (typeof dayName === 'number') return dayName;
+                                  const normalized = String(dayName).toLowerCase().trim();
+                                  const map: Record<string, number> = {
+                                    'domingo': 0, 'dom': 0, 'lunes': 1, 'lun': 1, 'martes': 2, 'mar': 2,
+                                    'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3, 'jueves': 4, 'jue': 4,
+                                    'viernes': 5, 'vie': 5, 'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
+                                  };
+                                  return map[normalized] ?? null;
+                                };
+                                return (it as any).diasSemana.map((d: string | number) => dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[];
+                              })() : ((it as any)?.diaSemana !== null && (it as any)?.diaSemana !== undefined ? [(it as any).diaSemana] : []),
+                              horarioModo: (it as any)?.horarioModo || ((it as any)?.fechaModo === 'por_agendar' ? 'duracion' : ((it as any)?.duracionHoras ? 'duracion' : 'especifica')),
+                              inicio: it.inicio || '',
+                              fin: it.fin || '',
+                              duracionHoras: (it as any)?.duracionHoras ?? null,
+                              ritmoId: it.ritmoId ?? null,
+                              ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
+                              zonaId: it.zonaId ?? null,
+                              ubicacion: it.ubicacion || '',
+                              ubicacionNombre: (it as any)?.ubicacionNombre || '',
+                              ubicacionDireccion: (it as any)?.ubicacionDireccion || it.ubicacion || '',
+                              ubicacionNotas: (it as any)?.ubicacionNotas || '',
+                              ubicacionId: (it as any)?.ubicacionId || null
                             });
-                          }
+                            setStatusMsg(null);
+                          }}
+                          onDelete={async (idx) => {
+                            // Actualización optimista: remover de UI inmediatamente
+                            const currentCrono = ([...((form as any).cronograma || [])] as any[]);
+                            const currentCostos = ([...((form as any).costos || [])] as any[]);
+                            const itemToDelete = currentCrono[idx];
+                            const refKey = ((itemToDelete?.titulo || '') as string).trim().toLowerCase();
 
-                          // Fallback antiguo: por nombre de la clase (para render y para borrado)
-                          const refKey = ((it?.titulo || '') as string).trim().toLowerCase();
-                          if (!costo && refKey) {
-                            costo = costos.find((c: any) =>
-                              (c?.nombre || '').trim().toLowerCase() === refKey
-                            );
-                          }
+                            // Guardar datos para rollback
+                            const rollbackData = {
+                              cronograma: [...currentCrono],
+                              costos: [...currentCostos],
+                            };
 
-                          const costoLabel = costo ? formatCurrency(costo.precio) : null;
-                          const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null, (it as any)?.diasSemana ?? null);
-                          return (
-                            <div key={idx} className="academy-class-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <strong style={{ color: '#fff' }}>{it.titulo || 'Clase'}</strong>
-                                <span style={{ fontSize: 12, opacity: 0.8 }}>🕒 {it.inicio || '—'} – {it.fin || '—'}</span>
-                                {(fechaLabel || costoLabel) && (
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                                    {fechaLabel && (
-                                      <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(240,147,251,0.15)', border: '1px solid rgba(240,147,251,0.28)' }}>
-                                        📅 {fechaLabel}
-                                      </span>
-                                    )}
-                                    {costoLabel && (
-                                      <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: 'rgba(30,136,229,0.15)', border: '1px solid rgba(30,136,229,0.28)' }}>
-                                        💰 {costoLabel === 'Gratis' ? 'Gratis' : costoLabel}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="academy-class-buttons" style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    classFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    setEditingIndex(idx);
-                                    setEditInitial({
-                                      nombre: it.titulo || '',
-                                      tipo: (costo?.tipo as any) || 'clases sueltas',
-                                      precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
-                                      regla: costo?.regla || '',
-                                      nivel: (it as any)?.nivel ?? null,
-                                      descripcion: (it as any)?.descripcion || '',
-                                      fechaModo: (it as any)?.fechaModo || (it.fecha ? 'especifica' : ((it.diaSemana !== null && it.diaSemana !== undefined) || ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? 'semanal' : 'por_agendar')),
-                                      fecha: it.fecha || '',
-                                      diaSemana: (it as any)?.diaSemana ?? null,
-                                      diasSemana: ((it as any)?.diasSemana && Array.isArray((it as any).diasSemana) && (it as any).diasSemana.length > 0) ? (() => {
-                                        // Convertir strings o números a números
-                                        const dayNameToNumber = (dayName: string | number): number | null => {
-                                          if (typeof dayName === 'number') return dayName;
-                                          const normalized = String(dayName).toLowerCase().trim();
-                                          const map: Record<string, number> = {
-                                            'domingo': 0, 'dom': 0, 'lunes': 1, 'lun': 1, 'martes': 2, 'mar': 2,
-                                            'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3, 'jueves': 4, 'jue': 4,
-                                            'viernes': 5, 'vie': 5, 'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
-                                          };
-                                          return map[normalized] ?? null;
-                                        };
-                                        return (it as any).diasSemana.map((d: string | number) => dayNameToNumber(d)).filter((d: number | null) => d !== null) as number[];
-                                      })() : ((it as any)?.diaSemana !== null && (it as any)?.diaSemana !== undefined ? [(it as any).diaSemana] : []),
-                                      horarioModo: (it as any)?.horarioModo || ((it as any)?.fechaModo === 'por_agendar' ? 'duracion' : ((it as any)?.duracionHoras ? 'duracion' : 'especifica')),
-                                      inicio: it.inicio || '',
-                                      fin: it.fin || '',
-                                      duracionHoras: (it as any)?.duracionHoras ?? null,
-                                      ritmoId: it.ritmoId ?? null,
-                                      ritmoIds: it.ritmoIds ?? (typeof it.ritmoId === 'number' ? [it.ritmoId] : []),
-                                      zonaId: it.zonaId ?? null,
-                                      // Texto completo de ubicación guardada
-                                      ubicacion: it.ubicacion || '',
-                                      // Campos desglosados para el formulario de edición
-                                      ubicacionNombre: (it as any)?.ubicacionNombre || '',
-                                      // Si no hay dirección desglosada, usar el texto completo como fallback
-                                      ubicacionDireccion: (it as any)?.ubicacionDireccion || it.ubicacion || '',
-                                      ubicacionNotas: (it as any)?.ubicacionNotas || '',
-                                      ubicacionId: (it as any)?.ubicacionId || null
-                                    });
-                                    setStatusMsg(null);
-                                  }}
-                                  style={{
-                                    padding: '8px 12px',
-                                    borderRadius: 10,
-                                    border: '1px solid rgba(255,255,255,0.15)',
-                                    background: 'rgba(255,255,255,0.06)',
-                                    color: '#fff',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Editar
-                                </button>
+                            // Actualizar UI optimistamente
+                            const nextCrono = currentCrono.filter((_: any, i: number) => i !== idx);
+                            const nextCostos = refKey
+                              ? currentCostos.filter((c: any) => (c?.nombre || '').trim().toLowerCase() !== refKey)
+                              : currentCostos;
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const ok = window.confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
-                                    if (!ok) return;
+                            setDeletingIndex(idx);
+                            setField('cronograma' as any, nextCrono as any);
+                            setField('costos' as any, nextCostos as any);
 
-                                    const currentCrono = ([...((form as any).cronograma || [])] as any[]);
-                                    const currentCostos = ([...((form as any).costos || [])] as any[]);
+                            // Si estaba editando esta clase, cancelar edición
+                            if (editingIndex !== null && editingIndex === idx) {
+                              setEditingIndex(null);
+                              setEditInitial(undefined);
+                            }
 
-                                    const nextCrono = currentCrono.filter((_: any, i: number) => i !== idx);
-                                    const nextCostos = refKey
-                                      ? currentCostos.filter((c: any) => (c?.nombre || '').trim().toLowerCase() !== refKey)
-                                      : currentCostos;
-
-                                    setField('cronograma' as any, nextCrono as any);
-                                    setField('costos' as any, nextCostos as any);
-
-                                    autoSaveClasses(nextCrono, nextCostos, '✅ Clase eliminada')
-                                      .then(() => {
-                                        if (editingIndex !== null && editingIndex === idx) {
-                                          setEditingIndex(null);
-                                          setEditInitial(undefined);
-                                        }
-                                      });
-                                  }}
-                                  style={{
-                                    padding: '8px 12px',
-                                    borderRadius: 10,
-                                    border: '1px solid rgba(229,57,53,0.35)',
-                                    background: 'rgba(229,57,53,0.12)',
-                                    color: '#fff',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Eliminar
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            try {
+                              // Persistir en backend
+                              await autoSaveClasses(nextCrono, nextCostos, '', rollbackData);
+                            } catch (error) {
+                              // Error ya manejado en autoSaveClasses con rollback
+                              throw error;
+                            } finally {
+                              setDeletingIndex(null);
+                            }
+                          }}
+                          deletingIndex={deletingIndex}
+                          formatDateOrDay={formatDateOrDay}
+                          formatCurrency={formatCurrency}
+                        />
                       </div>
                     )}
                   </div>
@@ -2544,6 +2661,80 @@ export default function AcademyProfileEditor() {
                   />
                 </div>
               )}
+
+              {/* Cuenta Bancaria */}
+              <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
+                    🏦 Cuenta Bancaria
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleSaveCuentaBancaria}
+                    disabled={sectionSaving['cuenta-bancaria']}
+                    style={{
+                      padding: '0.625rem 1.25rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      background: sectionSaving['cuenta-bancaria'] 
+                        ? 'rgba(16, 185, 129, 0.2)' 
+                        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: sectionSaving['cuenta-bancaria'] ? 'not-allowed' : 'pointer',
+                      opacity: sectionSaving['cuenta-bancaria'] ? 0.6 : 1,
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!sectionSaving['cuenta-bancaria']) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3))';
+                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!sectionSaving['cuenta-bancaria']) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))';
+                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                      }
+                    }}
+                  >
+                    {sectionSaving['cuenta-bancaria'] ? '⏳ Guardando...' : '💾 Guardar sección'}
+                  </button>
+                </div>
+                
+                {sectionStatus['cuenta-bancaria'] && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      marginBottom: '1rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      border: sectionStatus['cuenta-bancaria'].type === 'ok' 
+                        ? '1px solid rgba(16,185,129,0.4)' 
+                        : '1px solid rgba(239,68,68,0.4)',
+                      background: sectionStatus['cuenta-bancaria'].type === 'ok' 
+                        ? 'rgba(16,185,129,0.15)' 
+                        : 'rgba(239,68,68,0.15)',
+                      color: '#fff',
+                      fontSize: '0.875rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    {sectionStatus['cuenta-bancaria'].text}
+                  </motion.div>
+                )}
+                
+                <BankAccountEditor
+                  value={(form as any).cuenta_bancaria || {}}
+                  onChange={(v) => setField('cuenta_bancaria' as any, v as any)}
+                />
+              </div>
 
               {/* Maestros Invitados */}
               {academyId && (
@@ -3118,80 +3309,6 @@ export default function AcademyProfileEditor() {
                 <ReviewsEditor
                   value={(form as any).reseñas || []}
                   onChange={(v: any) => setField('reseñas' as any, v as any)}
-                />
-              </div>
-
-              {/* Cuenta Bancaria */}
-              <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
-                    🏦 Cuenta Bancaria
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={handleSaveCuentaBancaria}
-                    disabled={sectionSaving['cuenta-bancaria']}
-                    style={{
-                      padding: '0.625rem 1.25rem',
-                      borderRadius: '10px',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
-                      background: sectionSaving['cuenta-bancaria'] 
-                        ? 'rgba(16, 185, 129, 0.2)' 
-                        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))',
-                      color: '#fff',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      cursor: sectionSaving['cuenta-bancaria'] ? 'not-allowed' : 'pointer',
-                      opacity: sectionSaving['cuenta-bancaria'] ? 0.6 : 1,
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!sectionSaving['cuenta-bancaria']) {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3))';
-                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.6)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!sectionSaving['cuenta-bancaria']) {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))';
-                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-                      }
-                    }}
-                  >
-                    {sectionSaving['cuenta-bancaria'] ? '⏳ Guardando...' : '💾 Guardar sección'}
-                  </button>
-                </div>
-                
-                {sectionStatus['cuenta-bancaria'] && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    style={{
-                      marginBottom: '1rem',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '10px',
-                      border: sectionStatus['cuenta-bancaria'].type === 'ok' 
-                        ? '1px solid rgba(16,185,129,0.4)' 
-                        : '1px solid rgba(239,68,68,0.4)',
-                      background: sectionStatus['cuenta-bancaria'].type === 'ok' 
-                        ? 'rgba(16,185,129,0.15)' 
-                        : 'rgba(239,68,68,0.15)',
-                      color: '#fff',
-                      fontSize: '0.875rem',
-                      fontWeight: '500'
-                    }}
-                  >
-                    {sectionStatus['cuenta-bancaria'].text}
-                  </motion.div>
-                )}
-                
-                <BankAccountEditor
-                  value={(form as any).cuenta_bancaria || {}}
-                  onChange={(v) => setField('cuenta_bancaria' as any, v as any)}
                 />
               </div>
 

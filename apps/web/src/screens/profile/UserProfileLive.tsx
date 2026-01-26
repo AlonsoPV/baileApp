@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "../../hooks/useUserProfile";
@@ -21,10 +21,9 @@ import { useFollowLists } from "../../hooks/useFollowLists";
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import { useTranslation } from "react-i18next";
+import { useProfileSwitchMetrics } from "../../hooks/useProfileSwitchMetrics";
 
 const STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-  
   .profile-container {
     width: 100%;
     max-width: 900px;
@@ -549,6 +548,7 @@ export const UserProfileLive: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { markUIReady } = useProfileSwitchMetrics();
   const { profile, isLoading: profileLoading, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
   const { media, addMedia } = useUserMedia();
@@ -558,6 +558,18 @@ export const UserProfileLive: React.FC = () => {
   const [networkTab, setNetworkTab] = useState<"following" | "followers">("following");
   const networkList = networkTab === "following" ? following : followers;
   const networkIsEmpty = networkList.length === 0;
+  
+  // Mark UI as ready when profile is loaded and component has rendered
+  useEffect(() => {
+    if (!profileLoading && profile) {
+      // Use requestAnimationFrame to ensure DOM is painted
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          markUIReady('UserProfileLive');
+        });
+      });
+    }
+  }, [profileLoading, profile, markUIReady]);
   const goToProfile = useCallback((id?: string) => {
     if (id) {
       navigate(`/u/${id}`);

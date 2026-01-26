@@ -570,8 +570,6 @@ export default function ClassPublicScreen() {
         </div>
       )}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-        
         .date-public-root { padding: 24px 0; }
         .date-public-inner { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
         

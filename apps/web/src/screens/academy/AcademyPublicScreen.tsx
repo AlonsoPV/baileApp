@@ -611,8 +611,6 @@ const formatCurrency = (value?: number | string | null) => {
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
 const STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-  
   .academy-container { width: 100%; max-width: 900px; margin: 0 auto; }
   .academy-banner { width: 100%; max-width: 900px; margin: 0 auto; position: relative; }
   .glass-card-container {

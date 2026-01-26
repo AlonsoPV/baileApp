@@ -7,9 +7,21 @@ type Props = {
   dateId?: number;     // opcional para nombrado
   parentId?: number;   // opcional para nombrado
   onStatusChange?: (status: 'PENDING' | 'UPLOADING' | 'DONE' | 'ERROR', errorMessage?: string) => void;
+  /**
+   * Permite que el contenedor espere a que termine el upload antes de guardar (evita guardar sin flyer).
+   * Cuando hay upload en curso -> Promise<string>, cuando termina/limpia -> null.
+   */
+  onUploadPromiseChange?: (promise: Promise<string> | null) => void;
 };
 
-export default function DateFlyerUploader({ value, onChange, dateId, parentId, onStatusChange }: Props) {
+export default function DateFlyerUploader({
+  value,
+  onChange,
+  dateId,
+  parentId,
+  onStatusChange,
+  onUploadPromiseChange,
+}: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -20,8 +32,6 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId, o
     // Si la URL ya tiene query params, agregar el timestamp como otro param
     // Si no, agregarlo como el primer query param
     const separator = value.includes('?') ? '&' : '?';
-    // Usar un hash del valor para crear un timestamp estable que solo cambie cuando cambie la URL
-    const cacheKey = value.split('?')[0].split('#')[0].split('/').pop() || '';
     return `${value}${separator}_t=${Date.now()}`;
   }, [value]);
 
@@ -34,7 +44,9 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId, o
     setLoading(true);
     onStatusChange?.('UPLOADING');
     try {
-      const url = await uploadEventFlyer({ file, parentId, dateId });
+      const uploadPromise = uploadEventFlyer({ file, parentId, dateId });
+      onUploadPromiseChange?.(uploadPromise);
+      const url = await uploadPromise;
       onStatusChange?.('DONE');
       onChange(url || null);
     } catch (e: any) {
@@ -43,6 +55,7 @@ export default function DateFlyerUploader({ value, onChange, dateId, parentId, o
       setErr(msg);
       onStatusChange?.('ERROR', msg);
     } finally {
+      onUploadPromiseChange?.(null);
       setLoading(false);
     }
   };

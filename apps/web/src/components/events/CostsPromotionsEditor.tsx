@@ -220,7 +220,7 @@ export default function CostsPromotionsEditor({
         </motion.button>
       </div>
 
-      <div style={{ marginTop: "1.5rem", display: "grid", gap: "1rem" }}>
+      <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {value.length === 0 && mode === "idle" && (
           <div style={{
             padding: "1.25rem",
@@ -236,36 +236,101 @@ export default function CostsPromotionsEditor({
         )}
 
         {value.map((item, index) => (
-          <div key={`${item.id ?? index}-${item.nombre}`} style={{
-            borderRadius: 16,
-            border: `1px solid ${palette.border}`,
-            background: "rgba(28, 32, 42, 0.7)",
-            padding: "1.1rem 1.25rem",
-            display: "grid",
-            gap: "0.75rem",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" }}>
-                <span style={{
-                  padding: "0.4rem 0.8rem",
-                  borderRadius: 12,
-                  background: "rgba(240,147,251,0.15)",
-                  border: "1px solid rgba(240,147,251,0.35)",
-                  color: palette.accent,
-                  fontSize: "0.8rem",
-                  fontWeight: 700,
-                  textTransform: "capitalize",
+          <motion.div
+            key={`${item.id ?? index}-${item.nombre}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              borderRadius: 12,
+              border: `1px solid ${palette.border}`,
+              background: "rgba(28, 32, 42, 0.7)",
+              padding: "0.875rem 1rem",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0.75rem",
+              position: "relative",
+            }}
+          >
+            {/* Tipo badge compacto */}
+            <div style={{
+              padding: "0.35rem 0.6rem",
+              borderRadius: 8,
+              background: "rgba(240,147,251,0.15)",
+              border: "1px solid rgba(240,147,251,0.35)",
+              color: palette.accent,
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              textTransform: "capitalize",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}>
+              {typeOptions.find((opt) => opt.value === item.tipo)?.icon ?? "✨"}
+            </div>
+
+            {/* Contenido principal */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.5rem" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4 style={{ 
+                    margin: 0, 
+                    color: palette.text, 
+                    fontSize: "0.95rem", 
+                    fontWeight: 700,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical" as any,
+                    overflow: "hidden",
+                    lineHeight: 1.3,
+                  }}>
+                    {item.nombre}
+                  </h4>
+                  {item.descripcion && (
+                    <p style={{ 
+                      margin: "0.25rem 0 0", 
+                      color: "rgba(255,255,255,0.65)", 
+                      fontSize: "0.8rem", 
+                      lineHeight: 1.4,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical" as any,
+                      overflow: "hidden",
+                    }}>
+                      {item.descripcion}
+                    </p>
+                  )}
+                </div>
+
+                {/* Precio destacado */}
+                <div style={{
+                  padding: "0.4rem 0.75rem",
+                  borderRadius: 10,
+                  background: item.precio === null || item.precio === 0
+                    ? "rgba(16,185,129,0.15)"
+                    : "linear-gradient(135deg, rgba(30,136,229,0.2), rgba(124,77,255,0.15))",
+                  border: item.precio === null || item.precio === 0
+                    ? "1px solid rgba(16,185,129,0.4)"
+                    : "1px solid rgba(30,136,229,0.4)",
+                  color: item.precio === null || item.precio === 0 ? palette.success : palette.blue,
+                  fontWeight: 800,
+                  fontSize: "0.9rem",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  boxShadow: item.precio !== null && item.precio !== 0 ? "0 4px 12px rgba(30,136,229,0.2)" : "none",
                 }}>
-                  {typeOptions.find((opt) => opt.value === item.tipo)?.icon ?? "✨"} {item.tipo}
-                </span>
+                  {formatCurrency(item.precio)}
+                </div>
+              </div>
+
+              {/* Badges compactos en una línea */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center", marginTop: "0.4rem" }}>
                 {item.activo === false && (
                   <span style={{
-                    padding: "0.35rem 0.75rem",
-                    borderRadius: 999,
+                    padding: "0.25rem 0.5rem",
+                    borderRadius: 6,
                     background: "rgba(255,255,255,0.08)",
                     border: "1px solid rgba(255,255,255,0.18)",
-                    color: "rgba(255,255,255,0.75)",
-                    fontSize: "0.75rem",
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: "0.7rem",
                     fontWeight: 600,
                   }}>
                     Inactiva
@@ -273,102 +338,99 @@ export default function CostsPromotionsEditor({
                 )}
                 {item.codigo && (
                   <span style={{
-                    padding: "0.35rem 0.75rem",
-                    borderRadius: 999,
+                    padding: "0.25rem 0.5rem",
+                    borderRadius: 6,
                     background: "rgba(16,185,129,0.12)",
                     border: "1px solid rgba(16,185,129,0.4)",
                     color: palette.success,
-                    fontSize: "0.75rem",
+                    fontSize: "0.7rem",
                     fontWeight: 700,
                   }}>
-                    Código: {item.codigo.toUpperCase()}
+                    🎫 {item.codigo.toUpperCase()}
+                  </span>
+                )}
+                {item.condicion && (
+                  <span style={{
+                    padding: "0.25rem 0.5rem",
+                    borderRadius: 6,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: "0.7rem",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 1,
+                    WebkitBoxOrient: "vertical" as any,
+                    overflow: "hidden",
+                    maxWidth: "200px",
+                  }}>
+                    📋 {item.condicion}
+                  </span>
+                )}
+                {(item.validoDesde || item.validoHasta) && (
+                  <span style={{
+                    padding: "0.25rem 0.5rem",
+                    borderRadius: 6,
+                    background: "rgba(255,209,102,0.12)",
+                    border: "1px solid rgba(255,209,102,0.35)",
+                    color: palette.accentAlt,
+                    fontSize: "0.7rem",
+                    whiteSpace: "nowrap",
+                  }}>
+                    ⏰ {formatDate(item.validoDesde) ?? "hoy"}
+                    {item.validoHasta && ` - ${formatDate(item.validoHasta)}`}
                   </span>
                 )}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleStartEdit(index)}
-                  style={{
-                    padding: "0.45rem 0.75rem",
-                    borderRadius: 10,
-                    border: "1px solid rgba(255,255,255,0.18)",
-                    background: "rgba(255,255,255,0.08)",
-                    color: palette.text,
-                    cursor: "pointer",
-                  }}
-                >
-                  ✏️ Editar
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleRemove(index)}
-                  style={{
-                    padding: "0.45rem 0.75rem",
-                    borderRadius: 10,
-                    border: "1px solid rgba(255,61,87,0.4)",
-                    background: "rgba(255,61,87,0.12)",
-                    color: palette.danger,
-                    cursor: "pointer",
-                  }}
-                >
-                  🗑️ Eliminar
-                </motion.button>
-              </div>
             </div>
 
-            <div>
-              <h4 style={{ margin: 0, color: palette.text, fontSize: "1.1rem", fontWeight: 700 }}>
-                {item.nombre}
-              </h4>
-              {item.descripcion && (
-                <p style={{ margin: "0.25rem 0 0", color: "rgba(255,255,255,0.75)", fontSize: "0.9rem", lineHeight: 1.4 }}>
-                  {item.descripcion}
-                </p>
-              )}
-            </div>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", alignItems: "center" }}>
-              <span style={{
-                padding: "0.35rem 0.75rem",
-                borderRadius: 999,
-                background: "rgba(30,136,229,0.15)",
-                border: "1px solid rgba(30,136,229,0.35)",
-                color: palette.blue,
-                fontWeight: 700,
-                fontSize: "0.85rem",
-              }}>
-                {formatCurrency(item.precio)}
-              </span>
-              {item.condicion && (
-                <span style={{
-                  padding: "0.35rem 0.75rem",
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,0.08)",
+            {/* Botones de acción como iconos */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem", flexShrink: 0 }}>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => handleStartEdit(index)}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
                   border: "1px solid rgba(255,255,255,0.18)",
-                  color: "rgba(255,255,255,0.75)",
-                  fontSize: "0.82rem",
-                }}>
-                  📋 {item.condicion}
-                </span>
-              )}
-              {(item.validoDesde || item.validoHasta) && (
-                <span style={{
-                  padding: "0.35rem 0.75rem",
-                  borderRadius: 999,
-                  background: "rgba(255,209,102,0.14)",
-                  border: "1px solid rgba(255,209,102,0.35)",
-                  color: palette.accentAlt,
-                  fontSize: "0.82rem",
-                }}>
-                  ⏰ Vigente {formatDate(item.validoDesde) ?? "desde hoy"}
-                  {item.validoHasta && ` · hasta ${formatDate(item.validoHasta)}`}
-                </span>
-              )}
+                  background: "rgba(255,255,255,0.08)",
+                  color: palette.text,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.9rem",
+                  padding: 0,
+                }}
+                title="Editar"
+              >
+                ✏️
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => handleRemove(index)}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  border: "1px solid rgba(255,61,87,0.4)",
+                  background: "rgba(255,61,87,0.12)",
+                  color: palette.danger,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.9rem",
+                  padding: 0,
+                }}
+                title="Eliminar"
+              >
+                🗑️
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 

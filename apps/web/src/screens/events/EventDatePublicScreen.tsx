@@ -517,8 +517,6 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         padding: '8px 0 24px 0',
       }}>
         <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-        
         .date-public-root { 
           padding: 8px 0 24px 0; 
           font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

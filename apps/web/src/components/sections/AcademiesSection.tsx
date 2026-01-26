@@ -64,7 +64,7 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
         {itemsToShow.map((academia: any, idx: number) => (
           <div key={academia.id || idx}>
-            <AcademyCard item={academia} />
+            <AcademyCard item={academia} priority={idx === 0} />
           </div>
         ))}
       </div>
@@ -78,7 +78,7 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
         items={itemsToShow}
         renderItem={(item: any, idx: number) => (
           <div key={item.id || idx}>
-            <AcademyCard item={item} />
+            <AcademyCard item={item} priority={idx === 0} />
           </div>
         )}
       />

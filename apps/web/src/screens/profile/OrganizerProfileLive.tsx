@@ -24,8 +24,6 @@ import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
 const STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-  
   * {
     font-family: ${typography.fontFamily.primary};
   }

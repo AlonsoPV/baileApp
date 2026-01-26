@@ -89,7 +89,13 @@ export const EventDateEditor: React.FC = () => {
     if (isEditing && currentDate) {
       // Update existing date
       const payload = {
+        nombre: values.nombre || null,
+        biografia: values.biografia || null,
+        djs: values.djs || null,
+        telefono_contacto: values.telefono_contacto || null,
+        mensaje_contacto: values.mensaje_contacto || null,
         fecha: values.fecha,
+        dia_semana: typeof values.dia_semana === 'number' ? values.dia_semana : null,
         hora_inicio: values.hora_inicio || null,
         hora_fin: values.hora_fin || null,
         lugar: values.lugar || null,
@@ -97,19 +103,30 @@ export const EventDateEditor: React.FC = () => {
         ciudad: values.ciudad || null,
         zona: values.zona || null,
         estilos: values.estilos || [],
+        ritmos_seleccionados: values.ritmos_seleccionados || [],
+        zonas: values.zonas || [],
+        ubicaciones: values.ubicaciones || [],
         referencias: values.referencias || null,
         requisitos: values.requisitos || null,
         cronograma: values.cronograma || [],
         costos: values.costos || [],
         media: values.media || [],
+        flyer_url: values.flyer_url || null,
         estado_publicacion: values.estado_publicacion || 'borrador',
       };
       await updateMutation.mutateAsync({ id: currentDate.id, ...payload });
     } else {
       // Create new date
       const payload = {
+        organizer_id: organizer?.id ?? null,
         parent_id: parentIdNum,
+        nombre: values.nombre || null,
+        biografia: values.biografia || null,
+        djs: values.djs || null,
+        telefono_contacto: values.telefono_contacto || null,
+        mensaje_contacto: values.mensaje_contacto || null,
         fecha: values.fecha,
+        dia_semana: typeof values.dia_semana === 'number' ? values.dia_semana : null,
         hora_inicio: values.hora_inicio || null,
         hora_fin: values.hora_fin || null,
         lugar: values.lugar || null,
@@ -117,11 +134,15 @@ export const EventDateEditor: React.FC = () => {
         ciudad: values.ciudad || null,
         zona: values.zona || null,
         estilos: values.estilos || [],
+        ritmos_seleccionados: values.ritmos_seleccionados || [],
+        zonas: values.zonas || [],
+        ubicaciones: values.ubicaciones || [],
         referencias: values.referencias || null,
         requisitos: values.requisitos || null,
         cronograma: values.cronograma || [],
         costos: values.costos || [],
         media: values.media || [],
+        flyer_url: values.flyer_url || null,
         estado_publicacion: values.estado_publicacion || 'borrador',
       };
       await createMutation.mutateAsync(payload);

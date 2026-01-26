@@ -17,7 +17,14 @@ export default function ProfileHero({
     }}>
       <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: 'rgba(0,0,0,0.2)' }}>
         {bannerUrl && (
-          <img src={bannerUrl} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img
+            src={bannerUrl}
+            alt="Banner"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
         )}
       </div>
       <div style={{ padding: 16 }}>

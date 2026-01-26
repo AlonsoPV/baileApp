@@ -150,6 +150,61 @@ echo "==> Build settings (filtered)"
 xcodebuild -showBuildSettings -workspace "$WORKSPACE_PATH" -scheme DondeBailarMX 2>/dev/null | \
   egrep "PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM|CODE_SIGN_STYLE|CODE_SIGN_ENTITLEMENTS|PROVISIONING_PROFILE|PROVISIONING_PROFILE_SPECIFIER|MARKETING_VERSION|CURRENT_PROJECT_VERSION" || true
 
+echo "==> Injecting GOOGLE_REVERSED_CLIENT_ID into Info.plist (if available)"
+INFO_PLIST="ios/DondeBailarMX/Info.plist"
+if [ -f "$INFO_PLIST" ] && [ -n "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
+  echo "Injecting GOOGLE_REVERSED_CLIENT_ID: ${GOOGLE_REVERSED_CLIENT_ID:0:20}..."
+  
+  # Get the current schemes array as a list
+  SCHEMES_COUNT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$INFO_PLIST" 2>/dev/null | grep -c "string" || echo "0")
+  
+  # Find the index of the entry with $(GOOGLE_REVERSED_CLIENT_ID) placeholder
+  FOUND_INDEX=""
+  for i in $(seq 0 $((SCHEMES_COUNT - 1))); do
+    SCHEME_VALUE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes:$i" "$INFO_PLIST" 2>/dev/null || echo "")
+    if [ "$SCHEME_VALUE" = "\$(GOOGLE_REVERSED_CLIENT_ID)" ]; then
+      FOUND_INDEX=$i
+      break
+    fi
+  done
+  
+  if [ -n "$FOUND_INDEX" ]; then
+    echo "Found placeholder at index $FOUND_INDEX, replacing with actual value"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleURLTypes:0:CFBundleURLSchemes:$FOUND_INDEX $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST"
+    echo "✓ GOOGLE_REVERSED_CLIENT_ID replaced in Info.plist"
+  else
+    # Check if it's already there with the actual value
+    ALREADY_PRESENT=false
+    for i in $(seq 0 $((SCHEMES_COUNT - 1))); do
+      SCHEME_VALUE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes:$i" "$INFO_PLIST" 2>/dev/null || echo "")
+      if [ "$SCHEME_VALUE" = "$GOOGLE_REVERSED_CLIENT_ID" ]; then
+        ALREADY_PRESENT=true
+        break
+      fi
+    done
+    
+    if [ "$ALREADY_PRESENT" = "true" ]; then
+      echo "✓ GOOGLE_REVERSED_CLIENT_ID already present in Info.plist"
+    else
+      echo "Adding GOOGLE_REVERSED_CLIENT_ID to CFBundleURLSchemes"
+      /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes: string $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST" 2>/dev/null || true
+      echo "✓ GOOGLE_REVERSED_CLIENT_ID added to Info.plist"
+    fi
+  fi
+  
+  # Verify it was set correctly
+  VERIFY=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$INFO_PLIST" 2>/dev/null | grep -F "$GOOGLE_REVERSED_CLIENT_ID" || echo "")
+  if [ -n "$VERIFY" ]; then
+    echo "✓ Verified: GOOGLE_REVERSED_CLIENT_ID is in Info.plist"
+  else
+    echo "⚠️  WARN: Could not verify GOOGLE_REVERSED_CLIENT_ID in Info.plist"
+  fi
+elif [ ! -f "$INFO_PLIST" ]; then
+  echo "⚠️  WARN: Info.plist not found at $INFO_PLIST"
+elif [ -z "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
+  echo "⚠️  WARN: GOOGLE_REVERSED_CLIENT_ID environment variable not set. URL scheme will remain as \$(GOOGLE_REVERSED_CLIENT_ID)"
+fi
+
 echo "==> Pre-xcodebuild done"
 
 

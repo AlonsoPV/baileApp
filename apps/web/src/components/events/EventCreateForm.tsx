@@ -332,6 +332,8 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   }, [isParent, isActuallyEditing, hasExistingUbicaciones, orgLocations, values, setValue]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const flyerUploadPromiseRef = useRef<Promise<string> | null>(null);
+  const [isFlyerUploading, setIsFlyerUploading] = useState(false);
   // Simplificar la lógica de editMode - solo usar isActuallyEditing
 
   // Obtener tags para mapear ritmos
@@ -372,6 +374,17 @@ export default function EventCreateForm(props: EventCreateFormProps) {
 
     setIsSubmitting(true);
     try {
+      // Si hay un flyer subiendo, esperamos a que termine antes de guardar (evita guardar sin flyer).
+      const pendingFlyer = flyerUploadPromiseRef.current;
+      if (pendingFlyer) {
+        try {
+          await pendingFlyer;
+        } catch (e: any) {
+          showToast(e?.message || 'No se pudo subir el flyer. Intenta de nuevo.', 'error');
+          return;
+        }
+      }
+
       const result = await props.onSubmit(values);
 
       // Solo llamar reset si tenemos datos del servidor
@@ -1126,6 +1139,10 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     onChange={(url) => setValue('flyer_url', url)}
                     dateId={initialData?.id}
                     parentId={props.parentId}
+                    onUploadPromiseChange={(promise) => {
+                      flyerUploadPromiseRef.current = promise;
+                      setIsFlyerUploading(!!promise);
+                    }}
                   />
                 </div>
               )}
@@ -1218,7 +1235,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSubmit}
-                disabled={isSubmitting || !values?.nombre?.trim()}
+                disabled={isSubmitting || isFlyerUploading || !values?.nombre?.trim()}
                 style={{
                   padding: '12px 24px',
                   borderRadius: '25px',
@@ -1229,11 +1246,11 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   color: colors.light,
                   fontSize: '1rem',
                   fontWeight: '700',
-                  cursor: isSubmitting || !values?.nombre?.trim() ? 'not-allowed' : 'pointer',
-                  opacity: isSubmitting || !values?.nombre?.trim() ? 0.6 : 1,
+                  cursor: isSubmitting || isFlyerUploading || !values?.nombre?.trim() ? 'not-allowed' : 'pointer',
+                  opacity: isSubmitting || isFlyerUploading || !values?.nombre?.trim() ? 0.6 : 1,
                 }}
               >
-                {isSubmitting ? '⏳ Guardando...' : editMode ? '💾 Actualizar' : '✨ Crear'}
+                {isSubmitting ? '⏳ Guardando...' : isFlyerUploading ? 'Subiendo flyer...' : editMode ? '💾 Actualizar' : '✨ Crear'}
               </motion.button>
             </div>
           </div>

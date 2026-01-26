@@ -11,9 +11,11 @@ import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
 
 interface EventCardProps {
   item: any;
+  /** Si true, evita lazy-loading y eleva prioridad (LCP) */
+  priority?: boolean;
 }
 
-export default function EventCard({ item }: EventCardProps) {
+export default function EventCard({ item, priority = false }: EventCardProps) {
   // Si es una ocurrencia recurrente, usar el ID original para la navegación
   const eventId = item._original_id ?? item.id ?? item.event_date_id;
   const linkTo = eventId ? urls.eventDateLive(eventId) : '#';
@@ -133,8 +135,6 @@ export default function EventCard({ item }: EventCardProps) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-        
         .event-card-mobile {
           width: 100%;
         }
@@ -357,7 +357,8 @@ export default function EventCard({ item }: EventCardProps) {
           <div 
             className="media" 
           style={{ 
-              '--img': (flyerWithCacheBust || flyer) ? `url(${flyerWithCacheBust || flyer})` : undefined,
+              // Para LCP: evitar request extra por background-image; el <img> es el que debe cargar.
+              '--img': !priority && (flyerWithCacheBust || flyer) ? `url(${flyerWithCacheBust || flyer})` : undefined,
               '--overlay-opacity': flyer ? 0 : 1
             } as React.CSSProperties}
           >
@@ -365,7 +366,8 @@ export default function EventCard({ item }: EventCardProps) {
               <img
                 src={flyerWithCacheBust || flyer}
                 alt={`Poster del evento ${nombre}`}
-                loading="lazy"
+                loading={priority ? "eager" : "lazy"}
+                fetchPriority={priority ? "high" : "auto"}
                 decoding="async"
                 style={{
                   width: '100%',

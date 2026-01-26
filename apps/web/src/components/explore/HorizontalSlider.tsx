@@ -35,6 +35,11 @@ export default function HorizontalSlider<T>({
   disableDesktopScroll = false,
 }: Props<T>) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  // Cache geometry to avoid forced reflow in hot paths (wheel/drag).
+  const layoutRef = useRef<{ clientWidth: number; maxScrollLeft: number }>({
+    clientWidth: 0,
+    maxScrollLeft: 0,
+  });
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isDraggingRef = useRef(false);
@@ -50,12 +55,50 @@ export default function HorizontalSlider<T>({
     typeof window !== "undefined" ? window.matchMedia("(min-width: 769px)").matches : false;
   const allowUserScroll = !(disableDesktopScroll && isDesktop);
 
+  const updateLayoutMetrics = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    // These reads can force layout; do them rarely (resize / items change) rather than on every wheel.
+    const clientWidth = el.clientWidth;
+    const maxScrollLeft = Math.max(0, el.scrollWidth - clientWidth);
+    layoutRef.current.clientWidth = clientWidth;
+    layoutRef.current.maxScrollLeft = maxScrollLeft;
+  }, []);
+
+  useEffect(() => {
+    updateLayoutMetrics();
+    const el = viewportRef.current;
+    if (!el) return;
+
+    // ResizeObserver is the cheapest way to keep the cached values fresh.
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => {
+        updateLayoutMetrics();
+      });
+      ro.observe(el);
+      // Observe first child (grid) too: content size changes can affect scrollWidth.
+      if (el.firstElementChild) {
+        ro.observe(el.firstElementChild as Element);
+      }
+    }
+
+    const onWinResize = () => updateLayoutMetrics();
+    window.addEventListener("resize", onWinResize, { passive: true } as any);
+
+    return () => {
+      window.removeEventListener("resize", onWinResize as any);
+      ro?.disconnect();
+    };
+    // Include inputs that can change scrollWidth (items/gap/autoColumns).
+  }, [items?.length, gap, autoColumns, updateLayoutMetrics]);
+
   // Wheel/trackpad: attach NON-passive listener so preventDefault works (React onWheel can be passive)
   const handleWheelNative = useCallback((e: WheelEvent) => {
     const el = viewportRef.current;
     if (!el) return;
 
-    const maxScrollLeft = el.scrollWidth - el.clientWidth;
+    const maxScrollLeft = layoutRef.current.maxScrollLeft || Math.max(0, el.scrollWidth - el.clientWidth);
     if (maxScrollLeft <= 0) return;
 
     // Prefer horizontal intent; fall back to vertical delta (trackpads often report deltaY)
@@ -190,7 +233,8 @@ export default function HorizontalSlider<T>({
   const scrollByAmount = useCallback((dir: 1 | -1) => {
     const el = viewportRef.current;
     if (!el) return;
-    const amount = el.clientWidth * scrollStep * dir;
+    const width = layoutRef.current.clientWidth || el.clientWidth;
+    const amount = width * scrollStep * dir;
     el.scrollBy({ left: amount, behavior: "smooth" });
   }, [scrollStep]);
 

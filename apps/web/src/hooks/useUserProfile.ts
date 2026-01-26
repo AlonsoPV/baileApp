@@ -58,6 +58,7 @@ export function useUserProfile() {
     retryDelay: 500, // Reducir delay entre retries
     refetchOnWindowFocus: false, // No refetch automático en onboarding
     refetchOnMount: false, // Usar cache si está disponible
+    placeholderData: (previousData) => previousData, // Keep previous data during transitions
   });
 
   const updateFields = useMutation({

@@ -95,6 +95,22 @@ function RitrosChipsInternal({
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
   const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const rafIdRef = React.useRef<number | null>(null);
+
+  const scheduleDropdownPositionUpdate = React.useCallback(() => {
+    if (rafIdRef.current !== null) return;
+    rafIdRef.current = requestAnimationFrame(() => {
+      rafIdRef.current = null;
+      const el = triggerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const next = { top: rect.bottom + 8, left: rect.left, width: rect.width };
+      setDropdownPosition((prev) => {
+        if (prev.top === next.top && prev.left === next.left && prev.width === next.width) return prev;
+        return next;
+      });
+    });
+  }, []);
 
   React.useEffect(() => {
     if (isReadOnly && autoExpanded) {
@@ -127,27 +143,20 @@ function RitrosChipsInternal({
   // Calcular posición del dropdown cuando se abre
   React.useEffect(() => {
     if (isDropdownOpen && triggerRef.current) {
-      const updatePosition = () => {
-        if (triggerRef.current) {
-          const rect = triggerRef.current.getBoundingClientRect();
-          setDropdownPosition({
-            top: rect.bottom + 8,
-            left: rect.left,
-            width: rect.width,
-          });
-        }
-      };
-      
-      updatePosition();
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
+      scheduleDropdownPositionUpdate();
+      window.addEventListener('scroll', scheduleDropdownPositionUpdate, true);
+      window.addEventListener('resize', scheduleDropdownPositionUpdate);
       
       return () => {
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener('scroll', scheduleDropdownPositionUpdate, true);
+        window.removeEventListener('resize', scheduleDropdownPositionUpdate);
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
+        }
       };
     }
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, scheduleDropdownPositionUpdate]);
 
   // Cerrar dropdown al hacer clic fuera
   React.useEffect(() => {

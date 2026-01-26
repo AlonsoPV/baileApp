@@ -73,7 +73,7 @@ function EventsSectionContent({ filters, q, enabled = true, renderAs = 'slider',
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
           >
-            <EventCard item={fecha} />
+            <EventCard item={fecha} priority={idx === 0} />
           </motion.div>
         ))}
       </div>
@@ -93,7 +93,7 @@ function EventsSectionContent({ filters, q, enabled = true, renderAs = 'slider',
             transition={{ delay: idx * 0.05 }}
             whileHover={{ y: -4, scale: 1.02 }}
           >
-            <EventCard item={item} />
+            <EventCard item={item} priority={idx === 0} />
           </motion.div>
         )}
       />

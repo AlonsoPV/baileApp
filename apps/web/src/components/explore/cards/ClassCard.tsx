@@ -28,9 +28,11 @@ interface Props {
   item: ClaseItem;
   /** En sliders/grids, hace que el card llene la altura del item para igualar alturas con CTA cards */
   fillHeight?: boolean;
+  /** Si true, evita lazy-loading y eleva prioridad (LCP) */
+  priority?: boolean;
 }
 
-export default function ClassCard({ item, fillHeight = false }: Props) {
+export default function ClassCard({ item, fillHeight = false, priority = false }: Props) {
   const { t } = useTranslation();
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
   // Construir la ruta correcta: /clase/:type/:id
@@ -202,8 +204,6 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-        
         .class-card-mobile {
           width: 100%;
         }
@@ -430,14 +430,16 @@ export default function ClassCard({ item, fillHeight = false }: Props) {
           <div
             className="class-card-media"
             style={{
-              '--img': (bgWithCacheBust || bg) ? `url(${bgWithCacheBust || bg})` : undefined,
+              // Para LCP: evitar request extra por background-image; el <img> es el que debe cargar.
+              '--img': !priority && (bgWithCacheBust || bg) ? `url(${bgWithCacheBust || bg})` : undefined,
             } as React.CSSProperties}
           >
             {(bgWithCacheBust || bg) && (
               <img
                 src={bgWithCacheBust || bg}
                 alt={item.titulo || 'Clase'}
-                loading="lazy"
+                loading={priority ? "eager" : "lazy"}
+                fetchPriority={priority ? "high" : "auto"}
                 decoding="async"
                 style={{
                   objectFit: 'cover',

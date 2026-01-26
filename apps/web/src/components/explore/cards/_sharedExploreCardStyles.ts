@@ -1,7 +1,5 @@
 // Shared modern card frame styles (based on EventCard visual system)
 export const EXPLORE_CARD_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-  
   .explore-card-mobile {
     width: 100%;
   }

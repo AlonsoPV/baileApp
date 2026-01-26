@@ -166,8 +166,6 @@ export default function BrandProfileLive() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-        
         .profile-container h2,
         .profile-container h3 {
           color: #fff;

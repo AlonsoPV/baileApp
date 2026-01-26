@@ -46,6 +46,7 @@ export function useMyOrganizer() {
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch
     refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana para detectar aprobaciones
     refetchInterval: 30000, // Refrescar cada 30 segundos para detectar cambios de aprobación
+    placeholderData: (previousData) => previousData, // Keep previous data during transitions
     retry: (failureCount, error: any) => {
       // No reintentar si es error 406 o PGRST116
       if (error?.code === '406' || error?.code === 'PGRST116' || error?.status === 406) {

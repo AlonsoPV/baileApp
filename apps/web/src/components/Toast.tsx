@@ -56,6 +56,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       
       {/* Toast Container */}
       <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
         style={{
           position: 'fixed',
           top: '1rem',
@@ -72,6 +75,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div
               key={toast.id}
+              role="alert"
+              aria-live="polite"
               style={{
                 background: styles.bg,
                 border: `1px solid ${styles.border}`,
@@ -135,7 +140,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast must be used within ToastProvider');
+    // Fallback: retornar una función no-op si no hay provider
+    // Esto permite que el componente funcione aunque no esté dentro del provider
+    console.warn('useToast called outside ToastProvider, using no-op fallback');
+    return {
+      showToast: (message: string, type?: ToastType) => {
+        console.log(`[Toast fallback] ${type || 'info'}: ${message}`);
+      }
+    };
   }
   return context;
 }

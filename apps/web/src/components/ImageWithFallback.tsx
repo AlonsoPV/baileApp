@@ -45,6 +45,8 @@ export default function ImageWithFallback({
   const [err, setErr] = React.useState(false);
   const finalSrc = !src || err ? fallback : src;
   const resolvedLoading = priority ? "eager" : "lazy";
+  // Para mejorar LCP: si es imagen prioritaria, pedirla con mayor prioridad de red.
+  const resolvedFetchPriority = priority ? "high" : (rest as any).fetchPriority;
   const optimizedWebp = buildSupabaseOptimizedUrl(finalSrc, "webp", width);
   const optimizedAvif = buildSupabaseOptimizedUrl(finalSrc, "avif", width);
 
@@ -61,6 +63,8 @@ export default function ImageWithFallback({
         onError={() => setErr(true)}
         decoding="async"
         loading={resolvedLoading}
+        // React renderiza esto como `fetchpriority` en el DOM.
+        fetchPriority={resolvedFetchPriority}
         sizes={sizes}
         width={styleWidth ? width : undefined}
         height={styleHeight ? height : undefined}

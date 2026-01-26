@@ -9,6 +9,8 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDefaultProfile } from '@/hooks/useDefaultProfile';
 import { LanguageSwitcher } from './settings/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
+import { useRenderLogger } from '@/hooks/useRenderLogger';
+import { useProfilePrefetch } from '@/hooks/useProfilePrefetch';
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -23,6 +25,17 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
   const { hasUnread, markAllAsRead } = useUnreadNotifications(user?.id);
   const { profile } = useUserProfile();
   const { getDefaultRoute } = useDefaultProfile();
+  const { prefetchDefaultProfile } = useProfilePrefetch();
+  
+  // Performance: Log renders in development
+  useRenderLogger('Navbar', { userId: user?.id, hasUnread, isMenuOpen });
+
+  // Prefetch profile data on hover for faster navigation
+  const handleAvatarMouseEnter = React.useCallback(() => {
+    prefetchDefaultProfile().catch(() => {
+      // Silently fail - prefetch is just an optimization
+    });
+  }, [prefetchDefaultProfile]);
 
   const profileInitial = React.useMemo(
     () => user?.email?.[0]?.toUpperCase() ?? '👤',
@@ -37,10 +50,21 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
   );
 
   const handleAvatarClick = React.useCallback(() => {
+    // Performance instrumentation: mark start of profile switch
+    if (typeof performance !== 'undefined' && performance.mark) {
+      performance.mark('profile_switch_click');
+    }
+    
     const target = getDefaultRoute();
     if (process.env.NODE_ENV === 'development') {
       console.log('[Navbar] Navegando al perfil por defecto desde avatar', { target });
     }
+    
+    // Track navigation start
+    if (typeof performance !== 'undefined' && performance.mark) {
+      performance.mark('profile_switch_navigate_start');
+    }
+    
     navigate(target);
     markAllAsRead().catch(err => {
       if (process.env.NODE_ENV === 'development') {
@@ -654,6 +678,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
               className="nav-profile-button"
               aria-label={profileAriaLabel}
               onClick={handleAvatarClick}
+              onMouseEnter={handleAvatarMouseEnter}
             >
               {avatarUrl ? (
                 <img

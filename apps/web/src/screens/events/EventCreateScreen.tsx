@@ -76,6 +76,8 @@ export default function EventCreateScreen() {
 
       console.log('[EventCreateScreen] Parent created:', p);
       setParentId(p.id);
+      // Pasar el ID al form para que el uploader use parentId en el path (y quede consistente).
+      setParent((prev) => ({ ...(prev as any), id: p.id } as any));
       showToast('Evento creado ✅', 'success');
     } catch (err: any) {
       console.error('[EventCreateScreen] Error creating parent:', err);

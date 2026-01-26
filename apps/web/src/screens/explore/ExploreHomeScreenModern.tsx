@@ -133,10 +133,10 @@ const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; i
           whileHover={{ y: -4, scale: 1.02 }}
           style={{ width: '100%', height: '100%' }}
         >
-          <ClassCard item={clase} fillHeight />
+          <ClassCard item={clase} fillHeight priority={idx === 0} />
         </motion.div>
       ) : (
-        <ClassCard item={clase} fillHeight />
+        <ClassCard item={clase} fillHeight priority={idx === 0} />
       )}
     </div>
   );
@@ -201,8 +201,6 @@ const CTACard = React.memo(({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-        
         /* En escritorio, igualar ALTURA con las ClassCard (que ahora usan fillHeight en el slider).
            En mobile mantenemos la proporción 4/5 para que se vea consistente. */
         .cta-card-mobile {
@@ -2533,7 +2531,7 @@ export default function ExploreHomeScreen() {
                             boxShadow: 'none'
                           }}
                         >
-                          <EventCard item={fechaEvento} />
+                          <EventCard item={fechaEvento} priority={idx === 0} />
                         </div>
                       )}
                     />

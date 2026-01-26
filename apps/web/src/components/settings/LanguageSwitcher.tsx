@@ -11,6 +11,7 @@ function LanguageSwitcher() {
   const buttonRef = React.useRef<HTMLButtonElement>(null);
   const portalRef = React.useRef<HTMLDivElement>(null);
   const [anchorRect, setAnchorRect] = React.useState<DOMRect | null>(null);
+  const rafIdRef = React.useRef<number | null>(null);
 
   const handleLanguageChange = React.useCallback((lang: 'es' | 'en') => {
     if (import.meta.env.DEV) {
@@ -31,7 +32,26 @@ function LanguageSwitcher() {
   const updateAnchor = React.useCallback(() => {
     const el = buttonRef.current;
     if (!el) return;
-    setAnchorRect(el.getBoundingClientRect());
+    // Throttle to next animation frame to avoid forced reflow loops on scroll/resize.
+    if (rafIdRef.current !== null) return;
+    rafIdRef.current = requestAnimationFrame(() => {
+      rafIdRef.current = null;
+      const rect = el.getBoundingClientRect();
+      setAnchorRect((prev) => {
+        if (
+          prev &&
+          prev.top === rect.top &&
+          prev.left === rect.left &&
+          prev.right === rect.right &&
+          prev.bottom === rect.bottom &&
+          prev.width === rect.width &&
+          prev.height === rect.height
+        ) {
+          return prev;
+        }
+        return rect;
+      });
+    });
   }, []);
 
   // Recalcular posición del dropdown al abrir / resize / scroll
@@ -46,6 +66,10 @@ function LanguageSwitcher() {
     return () => {
       window.removeEventListener('resize', onWinChange);
       window.removeEventListener('scroll', onWinChange, true);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
     };
   }, [isOpen, updateAnchor]);
 

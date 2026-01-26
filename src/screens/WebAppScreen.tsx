@@ -577,9 +577,9 @@ export default function WebAppScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Usamos un color similar al de la barra superior de la web
-    // para que el espacio del notch/status bar se vea integrado.
-    backgroundColor: "#FF7A3C",
+    // Match the web navbar background so the iOS safe-area/top bar doesn't show orange.
+    // Web AppShell uses background: #0b0d10.
+    backgroundColor: "#0b0d10",
   },
   webview: {
     flex: 1,

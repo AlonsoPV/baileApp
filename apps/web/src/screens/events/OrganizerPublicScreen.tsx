@@ -520,7 +520,6 @@ export function OrganizerPublicScreen() {
         ].filter(Boolean) as string[]}
       />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
         * { font-family: ${typography.fontFamily.primary}; }
         .org-container { width: 100%; max-width: 900px; margin: 0 auto; }
         .org-banner { width: 100%; max-width: 900px; margin: auto !important; position: relative; overflow: hidden; }

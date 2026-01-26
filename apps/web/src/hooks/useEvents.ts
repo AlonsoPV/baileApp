@@ -94,7 +94,9 @@ export function useDatesByParent(parentId?: number, publishedOnly?: boolean) {
       
       let q = supabase
         .from("events_date")
-        .select("id, parent_id, nombre, biografia, fecha, dia_semana, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, zonas, cronograma, costos, media, flyer_url, estado_publicacion, created_at, updated_at")
+        // Importante: incluir TODOS los campos que el editor permite modificar,
+        // para no pisar valores con defaults vacíos al guardar.
+        .select("id, parent_id, organizer_id, nombre, biografia, djs, telefono_contacto, mensaje_contacto, fecha, dia_semana, hora_inicio, hora_fin, lugar, direccion, ciudad, zona, referencias, requisitos, estilos, ritmos_seleccionados, zonas, ubicaciones, cronograma, costos, media, flyer_url, estado_publicacion, created_at, updated_at")
         .eq("parent_id", parentId!);
       
       if (publishedOnly) q = q.eq("estado_publicacion", "publicado");

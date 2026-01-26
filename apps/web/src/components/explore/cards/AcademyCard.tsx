@@ -11,9 +11,11 @@ import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
 interface AcademyCardProps {
   item: any;
+  /** Si true, evita lazy-loading y eleva prioridad (LCP) */
+  priority?: boolean;
 }
 
-export default function AcademyCard({ item }: AcademyCardProps) {
+export default function AcademyCard({ item, priority = false }: AcademyCardProps) {
   const { data: allTags } = useTags() as any;
   const id = item.id;
   // Nombre robusto: aceptar múltiples campos antes de caer en el fallback
@@ -87,7 +89,8 @@ export default function AcademyCard({ item }: AcademyCardProps) {
           <div
             className="explore-card-media"
             style={{
-              '--img': (primaryAvatarWithCacheBust || primaryAvatar)
+              // Para LCP: evitar request extra por background-image; el <img> es el que debe cargar.
+              '--img': !priority && (primaryAvatarWithCacheBust || primaryAvatar)
                 ? `url(${primaryAvatarWithCacheBust || primaryAvatar})`
                 : undefined,
             } as React.CSSProperties}
@@ -96,7 +99,8 @@ export default function AcademyCard({ item }: AcademyCardProps) {
               <img
                 src={primaryAvatarWithCacheBust || primaryAvatar || undefined}
                 alt={`Imagen de ${nombre}`}
-                loading="lazy"
+                loading={priority ? "eager" : "lazy"}
+                fetchPriority={priority ? "high" : "auto"}
                 decoding="async"
                 style={{
                   objectFit: 'cover',

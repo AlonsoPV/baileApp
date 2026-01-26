@@ -89,6 +89,7 @@ const CarouselComponent: React.FC<{ photos: string[] }> = ({ photos }) => {
           <ImageWithFallback
             src={photos[currentIndex]}
             alt={`Imagen ${currentIndex + 1} de ${photos.length}`}
+            priority={currentIndex === 0}
             style={{
               width: '100%',
               height: '100%',
@@ -714,7 +715,6 @@ export default function EventParentPublicScreen() {
         ].filter(Boolean) as string[]}
       />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
         * { font-family: ${typography.fontFamily.primary}; }
         @media (prefers-reduced-motion: reduce) {
           * { animation: none !important; transition: none !important; }

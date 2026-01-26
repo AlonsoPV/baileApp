@@ -129,8 +129,6 @@ export default function RolesInfoScreen() {
       }} />
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-        
         @media (max-width: 768px) {
           .roles-wrapper {
             padding: 1.5rem !important;

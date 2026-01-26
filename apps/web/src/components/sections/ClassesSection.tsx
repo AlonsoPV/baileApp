@@ -129,7 +129,7 @@ function ClassesSectionContent({ filters, q, enabled = true, renderAs = 'slider'
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
           >
-            <ClassCard item={clase} />
+            <ClassCard item={clase} priority={idx === 0} />
           </motion.div>
         ))}
       </div>
@@ -149,7 +149,7 @@ function ClassesSectionContent({ filters, q, enabled = true, renderAs = 'slider'
             transition={{ delay: idx * 0.05 }}
             whileHover={{ y: -4, scale: 1.02 }}
           >
-            <ClassCard item={item} />
+            <ClassCard item={item} priority={idx === 0} />
           </motion.div>
         )}
       />

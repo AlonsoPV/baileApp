@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from './useUserProfile';
 import { useMyOrganizer } from './useOrganizer';
@@ -41,7 +41,7 @@ export function useDefaultProfile() {
     // Cargar inicialmente
     loadDefaultProfile();
 
-    // Escuchar cambios en localStorage (para cambios en la misma pestaña)
+    // Escuchar cambios en localStorage (para cambios en otras pestañas)
     const handleStorageChange = (e: StorageEvent) => {
       if (user?.id && e.key === `default_profile_${user.id}` && e.newValue) {
         if (['user', 'organizer', 'academy', 'teacher', 'brand'].includes(e.newValue)) {
@@ -52,34 +52,36 @@ export function useDefaultProfile() {
 
     window.addEventListener('storage', handleStorageChange);
 
-    // También verificar periódicamente (por si el cambio fue en la misma pestaña)
-    const interval = setInterval(() => {
-      if (user?.id) {
-        const saved = localStorage.getItem(`default_profile_${user.id}`);
-        if (saved && ['user', 'organizer', 'academy', 'teacher', 'brand'].includes(saved)) {
-          setDefaultProfile(prev => {
-            if (prev !== saved) {
-              return saved as ProfileType;
-            }
-            return prev;
-          });
+    // Para cambios en la misma pestaña, usar un custom event
+    // Esto es más eficiente que un interval
+    const handleCustomStorageChange = (e: CustomEvent) => {
+      if (user?.id && (e as any).detail?.key === `default_profile_${user.id}`) {
+        const newValue = (e as any).detail?.value;
+        if (['user', 'organizer', 'academy', 'teacher', 'brand'].includes(newValue)) {
+          setDefaultProfile(newValue as ProfileType);
         }
       }
-    }, 500);
+    };
+
+    window.addEventListener('defaultProfileChanged' as any, handleCustomStorageChange as EventListener);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
+      window.removeEventListener('defaultProfileChanged' as any, handleCustomStorageChange as EventListener);
     };
   }, [user?.id]);
 
   // Guardar perfil por defecto en localStorage
-  const updateDefaultProfile = (profileType: ProfileType) => {
+  const updateDefaultProfile = useCallback((profileType: ProfileType) => {
     if (user?.id) {
       localStorage.setItem(`default_profile_${user.id}`, profileType);
       setDefaultProfile(profileType);
+      // Dispatch custom event para notificar a otros componentes en la misma pestaña
+      window.dispatchEvent(new CustomEvent('defaultProfileChanged', {
+        detail: { key: `default_profile_${user.id}`, value: profileType }
+      }));
     }
-  };
+  }, [user?.id]);
 
   // Función para verificar si un perfil está realmente configurado
   const isUserProfileConfigured = (profile: any): boolean => {
@@ -103,17 +105,34 @@ export function useDefaultProfile() {
     return !!(profile.nombre_publico && profile.nombre_publico.trim().length > 0);
   };
 
-  // Obtener opciones de perfiles disponibles
-  const getProfileOptions = (): ProfileOption[] => {
+  // Memoizar funciones de verificación para evitar recálculos
+  const isUserProfileConfiguredMemo = useMemo(
+    () => isUserProfileConfigured(userProfile),
+    [userProfile]
+  );
+  const isOrganizerProfileConfiguredMemo = useMemo(
+    () => isOrganizerProfileConfigured(organizerProfile),
+    [organizerProfile]
+  );
+  const isAcademyProfileConfiguredMemo = useMemo(
+    () => isAcademyProfileConfigured(academyProfile),
+    [academyProfile]
+  );
+  const isTeacherProfileConfiguredMemo = useMemo(
+    () => isTeacherProfileConfigured(teacherProfile),
+    [teacherProfile]
+  );
+
+  // Obtener opciones de perfiles disponibles (memoizado)
+  const getProfileOptions = useCallback((): ProfileOption[] => {
     return [
       {
         id: 'user',
         name: 'Usuario',
         icon: '👤',
-        // Usar slug explícito para el live de usuario
         route: '/profile/user',
         available: true,
-        hasProfile: isUserProfileConfigured(userProfile)
+        hasProfile: isUserProfileConfiguredMemo
       },
       {
         id: 'organizer',
@@ -121,7 +140,7 @@ export function useDefaultProfile() {
         icon: '🎪',
         route: '/profile/organizer',
         available: true,
-        hasProfile: isOrganizerProfileConfigured(organizerProfile)
+        hasProfile: isOrganizerProfileConfiguredMemo
       },
       {
         id: 'academy',
@@ -129,7 +148,7 @@ export function useDefaultProfile() {
         icon: '🎓',
         route: '/profile/academy',
         available: true,
-        hasProfile: isAcademyProfileConfigured(academyProfile)
+        hasProfile: isAcademyProfileConfiguredMemo
       },
       {
         id: 'teacher',
@@ -137,7 +156,7 @@ export function useDefaultProfile() {
         icon: '👨‍🏫',
         route: '/profile/teacher',
         available: true,
-        hasProfile: isTeacherProfileConfigured(teacherProfile)
+        hasProfile: isTeacherProfileConfiguredMemo
       },
       {
         id: 'brand',
@@ -148,41 +167,41 @@ export function useDefaultProfile() {
         hasProfile: false
       }
     ];
-  };
+  }, [isUserProfileConfiguredMemo, isOrganizerProfileConfiguredMemo, isAcademyProfileConfiguredMemo, isTeacherProfileConfiguredMemo]);
 
-  // Obtener la ruta del perfil por defecto
-  const getDefaultRoute = (): string => {
-    const options = getProfileOptions();
-    const selectedOption = options.find(opt => opt.id === defaultProfile);
+  // Memoizar opciones para evitar recálculos
+  const profileOptions = useMemo(() => getProfileOptions(), [getProfileOptions]);
+
+  // Obtener la ruta del perfil por defecto (memoizado)
+  const getDefaultRoute = useCallback((): string => {
+    const selectedOption = profileOptions.find(opt => opt.id === defaultProfile);
     
     if (selectedOption?.hasProfile) {
       return selectedOption.route;
     }
     
     // Si el perfil por defecto no existe, buscar el primer perfil disponible
-    const availableProfile = options.find(opt => opt.hasProfile);
+    const availableProfile = profileOptions.find(opt => opt.hasProfile);
     return availableProfile?.route || '/profile';
-  };
+  }, [defaultProfile, profileOptions]);
 
-  // Obtener la ruta de edición del perfil por defecto
-  const getDefaultEditRoute = (): string => {
-    const options = getProfileOptions();
-    const selectedOption = options.find(opt => opt.id === defaultProfile);
+  // Obtener la ruta de edición del perfil por defecto (memoizado)
+  const getDefaultEditRoute = useCallback((): string => {
+    const selectedOption = profileOptions.find(opt => opt.id === defaultProfile);
     
     if (selectedOption?.hasProfile) {
       return `${selectedOption.route}/edit`;
     }
     
     // Si el perfil por defecto no existe, buscar el primer perfil disponible
-    const availableProfile = options.find(opt => opt.hasProfile);
+    const availableProfile = profileOptions.find(opt => opt.hasProfile);
     return availableProfile ? `${availableProfile.route}/edit` : '/profile/edit';
-  };
+  }, [defaultProfile, profileOptions]);
 
-  // Obtener información del perfil por defecto
-  const getDefaultProfileInfo = () => {
-    const options = getProfileOptions();
-    return options.find(opt => opt.id === defaultProfile);
-  };
+  // Obtener información del perfil por defecto (memoizado)
+  const getDefaultProfileInfo = useCallback(() => {
+    return profileOptions.find(opt => opt.id === defaultProfile);
+  }, [defaultProfile, profileOptions]);
 
   return {
     defaultProfile,

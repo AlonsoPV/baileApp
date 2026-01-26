@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { EventParent, EventDate, EventSchedule, EventPrice } from "../../types/events";
 import { useTags } from "../../hooks/useTags";
 import EventScheduleEditor from "../EventScheduleEditor";
@@ -25,6 +25,8 @@ export default function EventForm(props: Props) {
   const { ritmos, zonas } = useTags();
   const p = props.parent || {};
   const d = props.date || {};
+  const flyerUploadPromiseRef = useRef<Promise<string> | null>(null);
+  const [isFlyerUploading, setIsFlyerUploading] = useState(false);
 
   function toggleEstiloParent(id: number) {
     const arr = p.estilos ?? [];
@@ -37,6 +39,21 @@ export default function EventForm(props: Props) {
     const exists = arr.includes(id);
     props.onChangeDate({ zonas: exists ? arr.filter(x => x !== id) : [...arr, id] });
   }
+
+  const handleSaveDate = useCallback(async () => {
+    // Si el usuario seleccionó un flyer y aún se está subiendo,
+    // esperamos aquí para que la fecha se cree/guarde con `flyer_url`.
+    const pending = flyerUploadPromiseRef.current;
+    if (pending) {
+      try {
+        await pending;
+      } catch {
+        // El uploader ya muestra el error; no guardamos para evitar "guardar sin flyer" accidental.
+        return;
+      }
+    }
+    await props.onSaveDate();
+  }, [props]);
 
   return (
     <div style={{ maxWidth: '48rem', margin: '0 auto', padding: '1.5rem', color: 'white' }}>
@@ -292,6 +309,10 @@ export default function EventForm(props: Props) {
             onChange={(url)=> props.onChangeDate({ flyer_url: url } as any)}
             dateId={(props.dateId as any) || undefined}
             parentId={(p as any).id || undefined}
+            onUploadPromiseChange={(promise) => {
+              flyerUploadPromiseRef.current = promise;
+              setIsFlyerUploading(!!promise);
+            }}
           />
         </div>
 
@@ -360,8 +381,8 @@ export default function EventForm(props: Props) {
 
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
-            onClick={props.onSaveDate}
-            disabled={props.isLoading}
+            onClick={handleSaveDate}
+            disabled={props.isLoading || isFlyerUploading}
             style={{
               padding: '0.5rem 1rem',
               borderRadius: '0.5rem',
@@ -370,12 +391,12 @@ export default function EventForm(props: Props) {
                 ? 'rgba(115, 115, 115, 1)'
                 : 'linear-gradient(to right, rgb(59, 130, 246), rgb(236, 72, 153))',
               color: 'white',
-              cursor: props.isLoading ? 'not-allowed' : 'pointer',
+              cursor: props.isLoading || isFlyerUploading ? 'not-allowed' : 'pointer',
               fontWeight: '600',
-              opacity: props.isLoading ? 0.6 : 1
+              opacity: props.isLoading || isFlyerUploading ? 0.6 : 1
             }}
           >
-            {props.isLoading ? 'Guardando...' : 'Guardar edición'}
+            {props.isLoading ? 'Guardando...' : isFlyerUploading ? 'Subiendo flyer...' : 'Guardar edición'}
           </button>
         </div>
       </section>
