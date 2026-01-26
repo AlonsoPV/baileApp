@@ -230,6 +230,6 @@ export default function OnboardingGate() {
     return <Navigate to={routes.onboarding.basics} replace />;
   }
 
-  // 6) Estás en onboarding ⇒ renderiza la ruta de onboarding (sin verificar PIN)
+  // 6) Estás en onboardin g ⇒ renderiza la ruta de onboarding (sin verificar PIN)
   return <Outlet />;
 }
