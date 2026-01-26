@@ -145,6 +145,43 @@ else
   exit 1
 fi
 
+echo "==> Ensure build number increases for App Store Connect"
+# App Store Connect requires CFBundleVersion (build number) to be strictly increasing.
+# In this project, CFBundleVersion is driven by CURRENT_PROJECT_VERSION (apple-generic).
+#
+# Strategy:
+# - In Xcode Cloud, use CI_BUILD_NUMBER as the monotonically increasing run number.
+# - Add an offset (default: current repo build number) so that cloud builds don't start at 1
+#   and accidentally go below an already-uploaded build (e.g. 113).
+#
+# You can override the default behavior by setting:
+# - BUILD_NUMBER_OFFSET: integer offset to add to CI_BUILD_NUMBER
+if [ -n "${CI_BUILD_NUMBER:-}" ]; then
+  if [[ "${CI_BUILD_NUMBER}" =~ ^[0-9]+$ ]]; then
+    pushd ios >/dev/null
+
+    # Get current repo build number (terse output is usually a single integer).
+    REPO_BUILD_NUMBER="$(/usr/bin/xcrun agvtool what-version -terse 2>/dev/null | /usr/bin/tail -n 1 || true)"
+    OFFSET="${BUILD_NUMBER_OFFSET:-$REPO_BUILD_NUMBER}"
+
+    if [[ "${OFFSET}" =~ ^[0-9]+$ ]]; then
+      NEW_BUILD_NUMBER=$((OFFSET + CI_BUILD_NUMBER))
+      echo "Setting CURRENT_PROJECT_VERSION to ${NEW_BUILD_NUMBER} (offset=${OFFSET} + CI_BUILD_NUMBER=${CI_BUILD_NUMBER})"
+      /usr/bin/xcrun agvtool new-version -all "${NEW_BUILD_NUMBER}"
+    else
+      echo "WARN: Could not determine numeric offset (BUILD_NUMBER_OFFSET='${BUILD_NUMBER_OFFSET:-}', repo='${REPO_BUILD_NUMBER}')."
+      echo "Falling back to CURRENT_PROJECT_VERSION=CI_BUILD_NUMBER (${CI_BUILD_NUMBER})."
+      /usr/bin/xcrun agvtool new-version -all "${CI_BUILD_NUMBER}"
+    fi
+
+    popd >/dev/null
+  else
+    echo "WARN: CI_BUILD_NUMBER is not numeric: '${CI_BUILD_NUMBER}'. Skipping build number update."
+  fi
+else
+  echo "CI_BUILD_NUMBER not set. Skipping build number update."
+fi
+
 echo "==> Build settings (filtered)"
 # This does not build; it helps surface signing/team/bundle-id mismatches in logs.
 xcodebuild -showBuildSettings -workspace "$WORKSPACE_PATH" -scheme DondeBailarMX 2>/dev/null | \
