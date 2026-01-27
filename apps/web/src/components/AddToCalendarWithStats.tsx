@@ -18,7 +18,7 @@ type AddToCalendarProps = {
   end: string | Date;
   allDay?: boolean;
   showAsIcon?: boolean;
-  classId?: number;      // ID de clase (si es diferente de eventId)
+  classId?: number;      // ID de clase (si es  diferente de eventId)
   academyId?: number;    // ID de academia dueña de la clase
   teacherId?: number;    // ID de maestro dueño de la clase
   // Rol de baile del usuario:
