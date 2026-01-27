@@ -31,26 +31,30 @@ const PROFILE_UPDATE_TIMEOUT_MS = 7_000;
 export function useUserProfile() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const uid = user?.id;
+
+  async function fetchProfileByUserId(userId: string) {
+    const { data, error } = await withTimeout(
+      (supabase
+        .from("profiles_user")
+        .select("user_id, display_name, bio, avatar_url, rol_baile, ritmos_seleccionados, ritmos, zonas, respuestas, redes_sociales, updated_at, created_at")
+        .eq("user_id", userId)
+        .maybeSingle() as any),
+      PROFILE_QUERY_TIMEOUT_MS,
+      "Load profile"
+    );
+    if (error) throw error;
+    return data as ProfileUser | null;
+  }
 
   const profile = useQuery({
-    queryKey: KEY(user?.id),
-    enabled: !!user?.id && typeof user.id === 'string' && user.id.length > 0,
+    queryKey: KEY(uid),
+    enabled: !!uid && typeof uid === 'string' && uid.length > 0,
     queryFn: async () => {
-      if (!user?.id || typeof user.id !== 'string') {
+      if (!uid || typeof uid !== 'string') {
         throw new Error('Usuario sin ID válido');
       }
-      
-      const { data, error } = await withTimeout(
-        supabase
-          .from("profiles_user")
-          .select("user_id, display_name, bio, avatar_url, rol_baile, ritmos_seleccionados, ritmos, zonas, respuestas, redes_sociales, updated_at, created_at")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-        PROFILE_QUERY_TIMEOUT_MS,
-        "Load profile"
-      );
-      if (error) throw error;
-      return data as ProfileUser | null;
+      return fetchProfileByUserId(uid);
     },
     staleTime: 1000 * 30, // 30 segundos - perfil puede cambiar pero no tan frecuentemente
     gcTime: 1000 * 60 * 5, // 5 minutos en cache
@@ -63,7 +67,7 @@ export function useUserProfile() {
 
   const updateFields = useMutation({
     mutationFn: async (next: Partial<ProfileUser>) => {
-      if (!user?.id) throw new Error("No user");
+      if (!uid) throw new Error("No user");
       
       try {
         const prev = profile.data || {};
@@ -88,7 +92,7 @@ export function useUserProfile() {
 
         if (Object.keys(patch).length === 0) {
           console.log("[useUserProfile] No changes to save");
-          return;
+          return { patch: {} as Record<string, any> };
         }
 
         // Diagnóstico en desarrollo
@@ -101,10 +105,10 @@ export function useUserProfile() {
         let rpcError: any = null;
         try {
           const res = await withTimeout(
-            supabase.rpc("merge_profiles_user", {
-              p_user_id: user.id,
+            (supabase.rpc("merge_profiles_user", {
+              p_user_id: uid,
               p_patch: patch,
-            }),
+            }) as any),
             PROFILE_UPDATE_TIMEOUT_MS,
             "Save profile (RPC)"
           );
@@ -143,9 +147,9 @@ export function useUserProfile() {
           }
           
           const { error: upsertError } = await withTimeout(
-            supabase
+            (supabase
               .from("profiles_user")
-              .upsert({ user_id: user.id, ...cleanPatch }, { onConflict: 'user_id' }),
+              .upsert({ user_id: uid, ...cleanPatch }, { onConflict: 'user_id' }) as any),
             PROFILE_UPDATE_TIMEOUT_MS,
             "Save profile (upsert fallback)"
           );
@@ -161,18 +165,37 @@ export function useUserProfile() {
             throw error;
           }
         }
+        return { patch };
       } catch (e: any) {
         console.error("[useUserProfile] Caught error:", e);
         throw e;
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      const patch = (result as any)?.patch || {};
+      if (!uid) return;
+
+      // ✅ UX: aplicar patch al cache inmediatamente (sin esperar refetch / staleTime)
+      if (patch && Object.keys(patch).length > 0) {
+        const nowIso = new Date().toISOString();
+        qc.setQueryData(KEY(uid), (old: any) => {
+          if (!old) return old;
+          return { ...old, ...patch, updated_at: nowIso };
+        });
+        // Live/Public screen usa otra key
+        qc.setQueryData(["profile", "public", uid], (old: any) => {
+          if (!old) return old;
+          return { ...old, ...patch, updated_at: nowIso };
+        });
+      }
+
       // Invalidar queries en paralelo para mejor rendimiento (no bloquea la UI)
       Promise.all([
-        qc.invalidateQueries({ queryKey: KEY(user?.id) }),
-        qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] }),
-        qc.invalidateQueries({ queryKey: ["profile", "media", user?.id] }),
-      ]).catch(err => {
+        qc.invalidateQueries({ queryKey: KEY(uid) }),
+        qc.invalidateQueries({ queryKey: ["profile", "public", uid] }),
+        qc.invalidateQueries({ queryKey: ["onboarding-status", uid] }),
+        qc.invalidateQueries({ queryKey: ["profile", "media", uid] }),
+      ]).catch((err) => {
         if (import.meta.env.MODE === "development") {
           console.warn("[useUserProfile] Error invalidating queries:", err);
         }
@@ -181,7 +204,14 @@ export function useUserProfile() {
   });
 
   async function refetchProfile() {
-    return qc.fetchQuery({ queryKey: KEY(user?.id) });
+    if (!uid) return null;
+    // Force: mark stale + fetch from network even if staleTime window hasn't elapsed.
+    await qc.invalidateQueries({ queryKey: KEY(uid) });
+    return qc.fetchQuery({
+      queryKey: KEY(uid),
+      queryFn: () => fetchProfileByUserId(uid),
+      staleTime: 0,
+    });
   }
 
   return {

@@ -216,6 +216,7 @@ export default function SocialCard({ item }: { item: SocialItem }) {
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
       </motion.div>
     </LiveLink>
+    </>
   );
 }
 

@@ -64,9 +64,11 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [isPositionReady, setIsPositionReady] = React.useState(false);
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const rafIdRef = React.useRef<number | null>(null);
+  const openRafRef = React.useRef<number | null>(null);
 
   const updateDropdownPosition = React.useCallback(() => {
     const el = triggerRef.current;
@@ -139,6 +141,10 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
         if (rafIdRef.current !== null) {
           cancelAnimationFrame(rafIdRef.current);
           rafIdRef.current = null;
+        }
+        if (openRafRef.current !== null) {
+          cancelAnimationFrame(openRafRef.current);
+          openRafRef.current = null;
         }
       };
     }
@@ -214,11 +220,13 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           wrapperGap: "0.5rem",
           childPadding: "5px 10px",
           childFont: "0.72rem",
+          parentFont: "0.78rem",
         }
       : {
           wrapperGap: "0.75rem",
           childPadding: "5px 10px",
           childFont: "0.82rem",
+          parentFont: "0.9rem",
         };
 
   // Modo display: sólo chips elegidas (sin chips padre)
@@ -430,13 +438,22 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           className={`zona-dropdown-trigger ${isDropdownOpen ? 'open' : ''}`}
           onClick={() => {
             if (!isDropdownOpen) {
-              // Calcular posición ANTES de abrir (evita render inicial desalineado)
-              updateDropdownPosition();
+              // Evitar render del menú hasta que la posición esté lista (evita offsets raros en WebView)
+              setIsPositionReady(false);
               setIsDropdownOpen(true);
+              // Medir en el siguiente frame para asegurar layout estable
+              openRafRef.current = requestAnimationFrame(() => {
+                updateDropdownPosition();
+                openRafRef.current = requestAnimationFrame(() => {
+                  setIsPositionReady(true);
+                  openRafRef.current = null;
+                });
+              });
               return;
             }
             setIsDropdownOpen(false);
             setSelectedCategory(null);
+            setIsPositionReady(false);
           }}
         >
           <span>
@@ -451,7 +468,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
 
         {typeof document !== 'undefined' && document.body && createPortal(
           <AnimatePresence>
-            {isDropdownOpen && (
+            {isDropdownOpen && isPositionReady && (
               <motion.div
                 className="zona-dropdown-menu"
                 initial={{ opacity: 0, y: -10 }}

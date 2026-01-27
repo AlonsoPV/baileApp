@@ -93,9 +93,11 @@ function RitrosChipsInternal({
   const [expanded, setExpanded] = React.useState<string | null>(autoExpanded || null);
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [isPositionReady, setIsPositionReady] = React.useState(false);
   const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const rafIdRef = React.useRef<number | null>(null);
+  const openRafRef = React.useRef<number | null>(null);
 
   const updateDropdownPosition = React.useCallback(() => {
     const el = triggerRef.current;
@@ -162,7 +164,7 @@ function RitrosChipsInternal({
   // Calcular posición del dropdown cuando se abre
   React.useEffect(() => {
     if (isDropdownOpen && triggerRef.current) {
-      // Calcular inmediatamente al abrir para evitar “salto” a (0,0)
+      // Calcular inmediatamente al abrir
       updateDropdownPosition();
       window.addEventListener('scroll', scheduleDropdownPositionUpdate, true);
       window.addEventListener('resize', scheduleDropdownPositionUpdate);
@@ -173,6 +175,10 @@ function RitrosChipsInternal({
         if (rafIdRef.current !== null) {
           cancelAnimationFrame(rafIdRef.current);
           rafIdRef.current = null;
+        }
+        if (openRafRef.current !== null) {
+          cancelAnimationFrame(openRafRef.current);
+          openRafRef.current = null;
         }
       };
     }
@@ -390,13 +396,22 @@ function RitrosChipsInternal({
           className={`ritmos-dropdown-trigger ${isDropdownOpen ? 'open' : ''}`}
           onClick={() => {
             if (!isDropdownOpen) {
-              // Calcular posición ANTES de abrir (evita render inicial desalineado)
-              updateDropdownPosition();
+              // Evitar render del menú hasta que la posición esté lista (evita "saltos" y offsets raros en WebView)
+              setIsPositionReady(false);
               setIsDropdownOpen(true);
+              // Medir en el siguiente frame para asegurar layout estable
+              openRafRef.current = requestAnimationFrame(() => {
+                updateDropdownPosition();
+                openRafRef.current = requestAnimationFrame(() => {
+                  setIsPositionReady(true);
+                  openRafRef.current = null;
+                });
+              });
               return;
             }
             setIsDropdownOpen(false);
             setSelectedCategory(null);
+            setIsPositionReady(false);
           }}
           style={{ display: 'flex', visibility: 'visible', opacity: 1 }}
         >
@@ -412,7 +427,7 @@ function RitrosChipsInternal({
 
         {typeof document !== 'undefined' && document.body && createPortal(
           <AnimatePresence>
-            {isDropdownOpen && (
+            {isDropdownOpen && isPositionReady && (
               <motion.div
                 className="ritmos-dropdown-menu"
                 initial={{ opacity: 0, y: -10 }}
