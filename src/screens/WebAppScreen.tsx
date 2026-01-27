@@ -236,15 +236,6 @@ export default function WebAppScreen() {
         setNativeAuthError(null);
         try {
           const clientId = getGoogleIosClientId();
-          
-          // Validar clientId antes de intentar sign-in
-          if (!clientId || clientId.trim().length === 0) {
-            const errorMsg = "Google Sign-In no está configurado. Falta Google iOS Client ID.";
-            setNativeAuthError(errorMsg);
-            injectWebAuthError(errorMsg);
-            setNativeAuthInProgress(false);
-            return;
-          }
 
           const tokens = await AuthCoordinator.signInWithGoogle(clientId);
           injectWebSetSession(tokens);
