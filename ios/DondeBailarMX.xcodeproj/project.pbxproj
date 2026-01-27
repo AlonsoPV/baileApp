@@ -158,7 +158,6 @@
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
 				903A2D67070AD2D2DF906E9D /* [Expo] Configure project */,
-				A9C0F3E3D1B24C9E9A1B2C3D /* Inject Google reversed client ID */,
 				D0B1E0A0A0A0A0A0A0A0A0A0 /* Generate App Icons */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
