@@ -148,6 +148,45 @@ export EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}"
 export EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}"
 export GOOGLE_REVERSED_CLIENT_ID="${GOOGLE_REVERSED_CLIENT_ID:-}"
 
+# -----------------------------
+# 4.1) Google Sign-In (iOS) — derivar reversed scheme si falta
+# -----------------------------
+# En iOS, GoogleSignIn necesita que el URL scheme "reversed client id"
+# exista en Info.plist (CFBundleURLTypes) para poder regresar a la app.
+# En Xcode Cloud es común que GOOGLE_REVERSED_CLIENT_ID quede vacío.
+# Si falta, lo derivamos desde el iOS Client ID:
+#   <prefix>.apps.googleusercontent.com  ->  com.googleusercontent.apps.<prefix>
+if [ -z "$GOOGLE_REVERSED_CLIENT_ID" ] && [ -n "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" ]; then
+  PREFIX="${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID%%.apps.googleusercontent.com}"
+  if [ -n "$PREFIX" ] && [ "$PREFIX" != "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" ]; then
+    GOOGLE_REVERSED_CLIENT_ID="com.googleusercontent.apps.${PREFIX}"
+    export GOOGLE_REVERSED_CLIENT_ID
+    echo "==> Derived GOOGLE_REVERSED_CLIENT_ID from EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID"
+  fi
+fi
+
+# Aplicar el scheme al Info.plist de iOS (source) antes del build
+# (evita tocar el Info.plist del producto del archive)
+IOS_INFO_PLIST="$PWD/ios/DondeBailarMX/Info.plist"
+if [ -n "$GOOGLE_REVERSED_CLIENT_ID" ] && [ -f "$IOS_INFO_PLIST" ]; then
+  echo "==> Ensuring Google reversed URL scheme in Info.plist"
+
+  # Si el placeholder existe, reemplazarlo por el valor real
+  if /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$IOS_INFO_PLIST" 2>/dev/null | grep -Fq '$(GOOGLE_REVERSED_CLIENT_ID)'; then
+    # Asumimos que el placeholder está en el índice 2 (como en el repo)
+    /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes:0:CFBundleURLSchemes:2" "$IOS_INFO_PLIST" >/dev/null 2>&1 || true
+    /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:2 string $GOOGLE_REVERSED_CLIENT_ID" "$IOS_INFO_PLIST"
+  else
+    # Si no está el placeholder, asegurar que el scheme existe (si no, append)
+    if ! /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$IOS_INFO_PLIST" 2>/dev/null | grep -Fq "$GOOGLE_REVERSED_CLIENT_ID"; then
+      /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes: string $GOOGLE_REVERSED_CLIENT_ID" "$IOS_INFO_PLIST" || true
+    fi
+  fi
+
+  echo "==> Info.plist CFBundleURLSchemes:"
+  /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$IOS_INFO_PLIST" 2>/dev/null || true
+fi
+
 # ✅ Debug (safe): confirmar presencia sin exponer secretos completos
 echo "==> ENV CHECK (Xcode Cloud)"
 if [ -n "$EXPO_PUBLIC_SUPABASE_URL" ]; then
