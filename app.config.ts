@@ -164,6 +164,8 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.tuorg.dondebailarmx",
+    // ✅ App Store Connect: must be numeric and increase over last uploaded build (159)
+    buildNumber: "160",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false, // Usa cifrado estándar/exento (HTTPS)
       // ✅ Permisos de cámara y galería para selección de fotos
