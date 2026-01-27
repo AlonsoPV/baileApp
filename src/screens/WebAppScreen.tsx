@@ -252,6 +252,14 @@ export default function WebAppScreen() {
             message = "Inicio de sesión cancelado.";
           } else if (e?.code === "GOOGLE_MISSING_ID_TOKEN" || message.includes("idToken") || message.includes("id token")) {
             message = "Google no devolvió credenciales (idToken). Verifica que el Client ID sea el de iOS y que el bundle id sea correcto.";
+          } else if (
+            e?.code === "invalid_jwt" ||
+            e?.code === "bad_jwt" ||
+            /audience/i.test(message) ||
+            /invalid.*jwt/i.test(message)
+          ) {
+            message =
+              "Supabase rechazó el token de Google (audience/JWT). Verifica que en Supabase el Provider de Google use el Web Client ID y que en Xcode Cloud esté EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.";
           } else if (message.includes("token")) {
             message = "Error al obtener credenciales de Google. Intenta de nuevo.";
           }

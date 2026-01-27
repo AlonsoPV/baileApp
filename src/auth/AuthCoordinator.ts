@@ -21,6 +21,22 @@ function normalizeErrorMessage(e: unknown, fallback: string) {
   return fallback;
 }
 
+function preserveErrorDetails(original: unknown, msg: string) {
+  const err = new Error(msg);
+  try {
+    const anyOrig = original as any;
+    if (anyOrig?.code) (err as any).code = anyOrig.code;
+    if (anyOrig?.status) (err as any).status = anyOrig.status;
+    if (anyOrig?.name) (err as any).name = anyOrig.name;
+    if (anyOrig?.details) (err as any).details = anyOrig.details;
+    if (anyOrig?.message && !msg) (err as any).message = anyOrig.message;
+    (err as any).cause = original;
+  } catch {
+    // ignore
+  }
+  return err;
+}
+
 /**
  * Single coordinator for native auth flows.
  * - Apple: ASAuthorizationController (via iOS native module)
@@ -69,7 +85,7 @@ class AuthCoordinatorImpl {
     } catch (e) {
       const msg = normalizeErrorMessage(e, "Error al iniciar sesión con Apple.");
       this.setState({ status: "error", error: msg });
-      throw new Error(msg);
+      throw preserveErrorDetails(e, msg);
     }
   }
 
@@ -95,7 +111,7 @@ class AuthCoordinatorImpl {
     } catch (e) {
       const msg = normalizeErrorMessage(e, "Error al iniciar sesión con Google.");
       this.setState({ status: "error", error: msg });
-      throw new Error(msg);
+      throw preserveErrorDetails(e, msg);
     }
   }
 
@@ -112,7 +128,7 @@ class AuthCoordinatorImpl {
     } catch (e) {
       const msg = normalizeErrorMessage(e, "No se pudo cerrar sesión.");
       this.setState({ status: "error", error: msg });
-      throw new Error(msg);
+      throw preserveErrorDetails(e, msg);
     }
   }
 }
