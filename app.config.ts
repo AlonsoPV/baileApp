@@ -166,7 +166,7 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.tuorg.dondebailarmx",
     // ✅ App Store Connect: must be numeric and increase over last uploaded build.
     // Last uploaded reported: 181 → next safe default: 182 (EAS production also auto-increments).
-    buildNumber: "182",
+    buildNumber: "187",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false, // Usa cifrado estándar/exento (HTTPS)
       // ✅ Permisos de cámara y galería para selección de fotos
