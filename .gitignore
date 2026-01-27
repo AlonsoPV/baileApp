@@ -49,6 +49,11 @@ build/
 ios/Pods/
 !ios/Podfile.lock
 
+# iOS AppIcon sizes are generated in CI (`ci_scripts/ci_pre_xcodebuild.sh`)
+# Keep the committed 1024 source/opaque files, ignore generated sizes.
+ios/DondeBailarMX/Images.xcassets/AppIcon.appiconset/AppIcon-[0-9]*@*.png
+ios/DondeBailarMX/Images.xcassets/AppIcon.appiconset/AppIcon-83.5@*.png
+
 # generated native folders
 # NOTE: We commit `ios/` because Xcode Cloud needs a workspace present at clone time.
 # If you switch back to fully managed workflow (EAS-only), you can re-add `/ios`.

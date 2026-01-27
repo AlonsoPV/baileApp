@@ -242,6 +242,18 @@ elif [ -z "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
   echo "⚠️  WARN: GOOGLE_REVERSED_CLIENT_ID environment variable not set. URL scheme will remain as \$(GOOGLE_REVERSED_CLIENT_ID)"
 fi
 
+echo "==> App Store Connect guardrails (version/build)"
+MARKETING_VERSION="$(xcodebuild -showBuildSettings -workspace "$WORKSPACE_PATH" -scheme DondeBailarMX 2>/dev/null | awk -F' = ' '/MARKETING_VERSION/ {print $2; exit}')"
+CURRENT_PROJECT_VERSION="$(xcodebuild -showBuildSettings -workspace "$WORKSPACE_PATH" -scheme DondeBailarMX 2>/dev/null | awk -F' = ' '/CURRENT_PROJECT_VERSION/ {print $2; exit}')"
+echo "MARKETING_VERSION=$MARKETING_VERSION"
+echo "CURRENT_PROJECT_VERSION=$CURRENT_PROJECT_VERSION"
+
+# Fail early if the release train is still the closed one.
+if [[ "$MARKETING_VERSION" == "1.0.2" ]]; then
+  echo "ERROR: MARKETING_VERSION is still 1.0.2 (App Store Connect train is closed). Bump to 1.0.3+."
+  exit 1
+fi
+
 echo "==> Pre-xcodebuild done"
 
 
