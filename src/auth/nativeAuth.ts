@@ -48,13 +48,24 @@ export async function nativeSignInWithGoogleWithRequestId(
     throw new Error("GoogleSignInModule no está disponible (build iOS requerido).");
   }
   const rid = String(requestId || "");
-  const res = (await GoogleSignInModule.signIn(iosClientId, rid)) as GoogleResult;
-  if (!res?.idToken) {
-    const err: any = new Error("Google no devolvió idToken.");
-    err.requestId = rid;
-    throw err;
+  try {
+    const res = (await GoogleSignInModule.signIn(iosClientId, rid)) as any;
+    if (!res?.idToken) {
+      const err: any = new Error("Google no devolvió idToken.");
+      err.code = "GOOGLE_MISSING_ID_TOKEN";
+      err.requestId = rid;
+      throw err;
+    }
+    return res as GoogleResult;
+  } catch (e: any) {
+    // Preserve native error shape + attach requestId for correlation
+    if (rid) {
+      try {
+        (e as any).requestId = (e as any).requestId || rid;
+      } catch {}
+    }
+    throw e;
   }
-  return res;
 }
 
 export async function nativeGoogleSignOut(): Promise<void> {

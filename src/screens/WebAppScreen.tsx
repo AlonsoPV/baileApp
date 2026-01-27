@@ -249,6 +249,8 @@ export default function WebAppScreen() {
           // Mejorar mensajes de error específicos
           if (e?.code === "GOOGLE_MISSING_CLIENT_ID" || message.includes("Client ID")) {
             message = "Google Sign-In no está configurado. Contacta al soporte.";
+          } else if (e?.code === "GOOGLE_MISSING_WEB_CLIENT_ID") {
+            message = "Google Sign-In no está configurado para Supabase: falta el Web Client ID (GIDServerClientID).";
           } else if (e?.code === "GOOGLE_IOS_CLIENT_ID_IS_WEB") {
             message = "Google Sign-In está mal configurado: se está usando el Web Client ID como iOS Client ID.";
           } else if (e?.code === "GOOGLE_MISSING_URL_SCHEME") {
@@ -271,8 +273,13 @@ export default function WebAppScreen() {
             message = "Error al obtener credenciales de Google. Intenta de nuevo.";
           }
 
-          if (requestId) {
-            message = `${message} (req: ${requestId})`;
+          const code = String(e?.code || "");
+          if (requestId || code) {
+            const suffix = [
+              code ? `code: ${code}` : null,
+              requestId ? `req: ${requestId}` : null,
+            ].filter(Boolean).join(", ");
+            message = `${message} (${suffix})`;
           }
           
           setNativeAuthError(message);

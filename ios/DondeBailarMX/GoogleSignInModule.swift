@@ -98,6 +98,13 @@ final class GoogleSignInModule: NSObject {
       }
 
       let serverClientId = self.resolvedServerClientId()
+      if serverClientId.isEmpty {
+        if self.shouldLog() {
+          print("[GoogleSignInModule] ERROR: Missing GIDServerClientID (Web Client ID). requestId=\(requestId)")
+        }
+        reject("GOOGLE_MISSING_WEB_CLIENT_ID", "Falta GIDServerClientID (Web Client ID) en Info.plist. Es requerido para Supabase signInWithIdToken.", nil)
+        return
+      }
       if !serverClientId.isEmpty, serverClientId == effectiveClientId {
         if self.shouldLog() {
           print("[GoogleSignInModule] ERROR: iOS clientID equals server(web) clientID. requestId=\(requestId) clientID=\(self.mask(effectiveClientId))")

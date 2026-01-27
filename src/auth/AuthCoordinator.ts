@@ -113,7 +113,9 @@ class AuthCoordinatorImpl {
     } catch (e) {
       const msg = normalizeErrorMessage(e, "Error al iniciar sesión con Google.");
       this.setState({ status: "error", error: msg });
-      throw preserveErrorDetails(e, msg);
+      const err = preserveErrorDetails(e, msg) as any;
+      if (requestId) err.requestId = String((err as any).requestId || requestId);
+      throw err;
     }
   }
 
