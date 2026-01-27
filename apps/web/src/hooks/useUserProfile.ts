@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from '@/contexts/AuthProvider';
-import { buildSafePatch } from "../utils/safePatch";
+import { buildSafePatch, deepMerge } from "../utils/safePatch";
 import { normalizeSocialInput, normalizeQuestions } from "../utils/normalize";
 import { withTimeout } from "../utils/withTimeout";
 
@@ -26,12 +26,48 @@ const KEY = (uid?: string) => ["profile", "me", uid];
 const PROFILE_QUERY_TIMEOUT_MS = 15_000;
 // Keep this aligned with the global fetch abort (supabaseClient.ts)
 // so users don't sit on an endless-looking spinner.
-const PROFILE_UPDATE_TIMEOUT_MS = 7_000;
+// Increased timeout for profile updates to handle slow networks and complex patches
+const PROFILE_UPDATE_TIMEOUT_MS = 30_000;
 
 export function useUserProfile() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const uid = user?.id;
+
+  async function upsertFallback(patch: Record<string, any>, prev: any) {
+    // Limpiar valores undefined del patch antes del upsert
+    const cleanPatch: any = {};
+    for (const [key, value] of Object.entries(patch)) {
+      if (value !== undefined) {
+        cleanPatch[key] = value === null ? null : value;
+      }
+    }
+
+    // ✅ Importante: preservar JSON anidados al hacer upsert (evita pérdida si el backend no hace deep-merge)
+    if (cleanPatch.respuestas && typeof cleanPatch.respuestas === "object" && !Array.isArray(cleanPatch.respuestas)) {
+      cleanPatch.respuestas = deepMerge(prev?.respuestas ?? {}, cleanPatch.respuestas);
+    }
+    if (cleanPatch.redes_sociales && typeof cleanPatch.redes_sociales === "object" && !Array.isArray(cleanPatch.redes_sociales)) {
+      cleanPatch.redes_sociales = deepMerge(prev?.redes_sociales ?? {}, cleanPatch.redes_sociales);
+    }
+
+    const { error: upsertError } = await withTimeout(
+      (supabase
+        .from("profiles_user")
+        .upsert({ user_id: uid, ...cleanPatch }, { onConflict: "user_id" }) as any),
+      PROFILE_UPDATE_TIMEOUT_MS,
+      "Save profile (upsert fallback)"
+    );
+
+    if (upsertError) {
+      console.error("[useUserProfile] Upsert fallback failed:", upsertError);
+      const errorMessage = upsertError.message || "Error al guardar el perfil";
+      const error = new Error(errorMessage);
+      (error as any).code = upsertError.code;
+      (error as any).details = upsertError.details;
+      throw error;
+    }
+  }
 
   async function fetchProfileByUserId(userId: string) {
     const { data, error } = await withTimeout(
@@ -76,13 +112,16 @@ export function useUserProfile() {
         const { media, onboarding_complete, ...candidate } = next;
 
         // Normalizar datos antes del patch
+        // Nota: Si candidate.respuestas.redes ya viene normalizado desde UserProfileEditor,
+        // normalizarlo de nuevo no debería causar problemas (es idempotente)
         const normalizedCandidate = {
           ...candidate,
-          respuestas: {
+          respuestas: candidate.respuestas ? {
+            ...(prev.respuestas || {}), // Preservar respuestas existentes
             ...candidate.respuestas,
             redes: normalizeSocialInput(candidate.respuestas?.redes || {}),
             ...normalizeQuestions(candidate.respuestas || {})
-          }
+          } : undefined
         };
 
         // Usar buildSafePatch para merge inteligente
@@ -90,18 +129,20 @@ export function useUserProfile() {
           allowEmptyArrays: ["ritmos_seleccionados", "ritmos", "zonas"] as any 
         });
 
+        // Diagnóstico mejorado
+        if (import.meta.env.MODE === "development") {
+          console.log("[useUserProfile] PREV:", prev);
+          console.log("[useUserProfile] CANDIDATE:", candidate);
+          console.log("[useUserProfile] NORMALIZED:", normalizedCandidate);
+          console.log("[useUserProfile] PATCH:", patch);
+        }
+
         if (Object.keys(patch).length === 0) {
           console.log("[useUserProfile] No changes to save");
           return { patch: {} as Record<string, any> };
         }
 
-        // Diagnóstico en desarrollo
-        if (import.meta.env.MODE === "development") {
-          console.log("[useUserProfile] PATCH:", patch);
-        }
-
         // Usar RPC merge para actualizaciones seguras (ya hace upsert internamente)
-        const __rpcT0 = Date.now();
         let rpcError: any = null;
         try {
           const res = await withTimeout(
@@ -115,19 +156,19 @@ export function useUserProfile() {
           rpcError = (res as any)?.error ?? null;
         } catch (e: any) {
           // If the RPC hangs/times out (common on flaky networks/WebViews),
-          // IMPORTANT: if the network layer is hung, a follow-up upsert often hangs too.
-          // So for timeouts/aborts, fail fast (UI can show error + allow retry).
+          // try direct upsert as fallback (often succeeds when RPC endpoint is slow).
           const msg = String(e?.message ?? e ?? '');
           const isAbort = String(e?.name ?? '').toLowerCase().includes('abort') || msg.toLowerCase().includes('aborted');
           const isTimeout = msg.toLowerCase().includes('timed out') || msg.toLowerCase().includes('timeout');
-          if (!isTimeout && !isAbort) {
-            throw e;
+          if (!isTimeout && !isAbort) throw e;
+
+          if (import.meta.env.MODE === "development") {
+            console.warn("[useUserProfile] RPC timed out/aborted; trying upsert fallback...");
           }
 
-          // Throw a user-visible error; UI should stop loading + allow retry.
-          const err2 = new Error('La conexión está tardando demasiado. Intenta de nuevo.');
-          (err2 as any).code = 'NETWORK_TIMEOUT';
-          throw err2;
+          // Fallback: direct upsert with deep-merged JSON
+          await upsertFallback(patch, prev);
+          return { patch };
         }
         
         if (rpcError) {
@@ -137,33 +178,8 @@ export function useUserProfile() {
           if (import.meta.env.MODE === "development") {
             console.warn("[useUserProfile] RPC failed, trying direct upsert:", rpcError);
           }
-          
-          // Limpiar valores undefined del patch antes del upsert
-          const cleanPatch: any = {};
-          for (const [key, value] of Object.entries(patch)) {
-            if (value !== undefined) {
-              cleanPatch[key] = value === null ? null : value;
-            }
-          }
-          
-          const { error: upsertError } = await withTimeout(
-            (supabase
-              .from("profiles_user")
-              .upsert({ user_id: uid, ...cleanPatch }, { onConflict: 'user_id' }) as any),
-            PROFILE_UPDATE_TIMEOUT_MS,
-            "Save profile (upsert fallback)"
-          );
-            
-          if (upsertError) {
-            console.error("[useUserProfile] Upsert fallback failed:", upsertError);
-            
-            // Crear un error más descriptivo
-            const errorMessage = upsertError.message || 'Error al guardar el perfil';
-            const error = new Error(errorMessage);
-            (error as any).code = upsertError.code;
-            (error as any).details = upsertError.details;
-            throw error;
-          }
+
+          await upsertFallback(patch, prev);
         }
         return { patch };
       } catch (e: any) {
@@ -176,16 +192,21 @@ export function useUserProfile() {
       if (!uid) return;
 
       // ✅ UX: aplicar patch al cache inmediatamente (sin esperar refetch / staleTime)
+      // Usar deepMerge para preservar objetos anidados (respuestas.redes, etc.)
       if (patch && Object.keys(patch).length > 0) {
         const nowIso = new Date().toISOString();
         qc.setQueryData(KEY(uid), (old: any) => {
           if (!old) return old;
-          return { ...old, ...patch, updated_at: nowIso };
+          // Usar deepMerge para hacer merge profundo de objetos anidados
+          const merged = deepMerge(old, patch);
+          return { ...merged, updated_at: nowIso };
         });
         // Live/Public screen usa otra key
         qc.setQueryData(["profile", "public", uid], (old: any) => {
           if (!old) return old;
-          return { ...old, ...patch, updated_at: nowIso };
+          // Usar deepMerge para hacer merge profundo de objetos anidados
+          const merged = deepMerge(old, patch);
+          return { ...merged, updated_at: nowIso };
         });
       }
 

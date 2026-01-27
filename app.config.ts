@@ -167,7 +167,23 @@ const config: ExpoConfig = {
     // ✅ App Store Connect: must be numeric and increase over last uploaded build.
     // Last uploaded reported: 181 → next safe default: 182 (EAS production also auto-increments).
     buildNumber: "187",
-    infoPlist: {
+    infoPlist: (() => {
+      const googleIosClientId = required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', '168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com');
+      const googleWebClientId = required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', '168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com');
+      const reversed = (() => {
+        const v = String(googleIosClientId || '').trim();
+        if (!v || !v.includes('.apps.googleusercontent.com')) return '';
+        const prefix = v.split('.apps.googleusercontent.com')[0];
+        return prefix ? `com.googleusercontent.apps.${prefix}` : '';
+      })();
+
+      const schemes = [
+        'dondebailarmx',
+        'com.tuorg.dondebailarmx',
+        reversed,
+      ].filter(Boolean);
+
+      return {
       ITSAppUsesNonExemptEncryption: false, // Usa cifrado estándar/exento (HTTPS)
       // ✅ Permisos de cámara y galería para selección de fotos
       NSCameraUsageDescription: "Necesitamos acceso a la cámara para tomar fotos de perfil y eventos.",
@@ -175,11 +191,24 @@ const config: ExpoConfig = {
       NSMicrophoneUsageDescription: "Necesitamos acceso al micrófono para grabar video cuando lo solicites.",
       NSPhotoLibraryUsageDescription: "Necesitamos acceso a tu galería para seleccionar fotos de perfil y eventos.",
       NSPhotoLibraryAddUsageDescription: "Permite guardar fotos en tu galería cuando lo desees.",
+      // Native Google Sign-In (used by iOS module). Keeping these in Info.plist helps CI builds.
+      ...(googleIosClientId ? { GIDClientID: googleIosClientId } : {}),
+      ...(googleWebClientId ? { GIDServerClientID: googleWebClientId } : {}),
+      ...(schemes.length > 0
+        ? {
+            CFBundleURLTypes: [
+              {
+                CFBundleURLSchemes: schemes,
+              },
+            ],
+          }
+        : {}),
       // ✅ Configuración de Expo Updates (se genera automáticamente desde updates.url y runtimeVersion)
       // EXUpdatesURL se genera desde updates.url
       // EXUpdatesRuntimeVersion se genera desde runtimeVersion
       // EXUpdatesEnabled se genera automáticamente como true
-    },
+      };
+    })(),
   },
 
   android: {
@@ -227,6 +256,8 @@ const config: ExpoConfig = {
     // Native Google Sign-In (iOS) - required for in-app OAuth without Safari
     googleIosClientId: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
     EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
+    googleWebClientId: required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', ''),
+    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', ''),
     eas: {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },

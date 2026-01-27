@@ -90,7 +90,9 @@ export function buildSafePatch<T extends Record<string, any>>(
   for (const k of keys) {
     const a = (prev as any)?.[k];
     const b = (cleaned as any)?.[k];
-    const equal = JSON.stringify(a) === JSON.stringify(b);
+    
+    // Usar deepEqual para comparación más robusta de objetos anidados
+    const equal = deepEqual(a, b);
     
     if (!equal) {
       // Control arrays vacíos

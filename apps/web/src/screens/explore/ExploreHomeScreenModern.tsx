@@ -641,12 +641,12 @@ const STYLES = `
   .segment {
     display: inline-flex;
     gap: 0.25rem;
-    width: 100%;
     justify-content: space-evenly;
     padding: 0.2rem;
     background: hsl(235 25% 21% / .55);
     border: 1px solid var(--stroke);
     border-radius: 999px;
+    margin: auto;
   }
   .seg {
     display: inline-flex;
@@ -687,15 +687,13 @@ const STYLES = `
   .quick-row {
     display: flex;
     align-items: stretch;
-    justify-content: space-evenly;
     gap: var(--gap-2);
-    width: 100%;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x proximity;
     padding-bottom: 0.15rem;
-    margin-top: 0;
+    margin: auto;
   }
   .quick-row::-webkit-scrollbar {
     height: 6px;

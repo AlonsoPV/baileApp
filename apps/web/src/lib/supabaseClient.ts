@@ -18,10 +18,32 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // (unlike Promise.race timeouts which don't cancel the request).
     fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
       const baseFetch = globalThis.fetch.bind(globalThis);
-      // Keep this LOWER than app-level Promise timeouts, so we actually abort
-      // the underlying request before UI timeouts fire (prevents "hung socket"
-      // from blocking subsequent requests).
-      const timeoutMs = 7_000;
+      // Abort underlying requests (WKWebView / Android WebView can "hang").
+      //
+      // IMPORTANT:
+      // - Auth refresh (/auth/v1/token) can legitimately take longer on mobile networks.
+      //   If we abort too aggressively, Supabase may emit a refresh event with no session
+      //   and the app will "kick out" the user.
+      // - Keep non-auth requests reasonably tight to avoid endless spinners.
+      const inputUrl = (() => {
+        try {
+          if (typeof input === 'string') return input;
+          if (input instanceof URL) return input.toString();
+          // Request
+          // @ts-ignore
+          if (input?.url) return String(input.url);
+        } catch {}
+        return '';
+      })();
+
+      const isRpc = inputUrl.includes("/rest/v1/rpc/");
+      const isAuth = inputUrl.includes("/auth/v1/");
+
+      // Defaults:
+      // - auth: higher to prevent accidental logout on slow refresh
+      // - rpc: moderate (profile saves can take a bit)
+      // - other: moderate
+      const timeoutMs = isAuth ? 20_000 : isRpc ? 30_000 : 12_000;
 
       const timeoutSignal =
         // @ts-ignore - AbortSignal.timeout is not in all TS libs yet
@@ -40,21 +62,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
             (AbortSignal as any).any([userSignal, timeoutSignal].filter(Boolean))
           : userSignal ?? timeoutSignal;
 
-      const inputUrl = (() => {
-        try {
-          if (typeof input === 'string') return input;
-          if (input instanceof URL) return input.toString();
-          // Request
-          // @ts-ignore
-          if (input?.url) return String(input.url);
-        } catch {}
-        return '';
-      })();
-
       // DEV-only: simulate slow/hung backend to validate timeouts + UI.
       // Usage examples:
       // - Add `?dbgFetchTarget=rpc&dbgFetchDelayMs=30000` to the URL (dev only)
-      // - Or set localStorage keys: dbgFetchTarget="rpc", dbgFetchDelayMs="30000"
       // - For a hard hang: `?dbgFetchTarget=rpc&dbgFetchHang=1` (dev only)
       //
       // Targets:
@@ -67,9 +77,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
           const search = globalThis.location?.search ?? "";
           const sp = new URLSearchParams(search);
           const target =
-            (sp.get("dbgFetchTarget") ??
-              globalThis.localStorage?.getItem("dbgFetchTarget") ??
-              "rpc")
+            (sp.get("dbgFetchTarget") ?? "rpc")
               .toLowerCase()
               .trim();
 
@@ -91,8 +99,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
           }
 
           const hang =
-            sp.get("dbgFetchHang") === "1" ||
-            globalThis.localStorage?.getItem("dbgFetchHang") === "1";
+            sp.get("dbgFetchHang") === "1";
           if (hang) {
             // Simulate a request that "never responds", but still respects abort signals.
             // This is important so global AbortSignal.timeout can end the wait and the UI can recover.
@@ -113,9 +120,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
           }
 
           const rawDelay =
-            sp.get("dbgFetchDelayMs") ??
-            globalThis.localStorage?.getItem("dbgFetchDelayMs") ??
-            "0";
+            sp.get("dbgFetchDelayMs") ?? "0";
           const delayMs = Number(rawDelay);
           if (Number.isFinite(delayMs) && delayMs > 0) {
             return new Promise<Response>((resolve, reject) => {
@@ -186,13 +191,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
                 }
               } catch {}
             }
-            // Redirigir al login solo si estamos en el cliente y no estamos ya en login
-            if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
-              // Usar setTimeout para evitar problemas de navegación durante el fetch
-              setTimeout(() => {
-                window.location.href = '/auth/login?reason=session_expired';
-              }, 100);
-            }
+            // No forzar redirect aquí: puede causar "rebotes" en localhost.
+            // Dejamos que el router/guards reaccionen al estado de sesión nulo.
           }
         } catch {
           // Si no podemos parsear el error, continuar normalmente

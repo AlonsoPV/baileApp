@@ -4,6 +4,7 @@ import { useUserProfile } from './useUserProfile';
 import { useMyOrganizer } from './useOrganizer';
 import { useAcademyMy } from './useAcademyMy';
 import { useTeacherMy } from './useTeacher';
+import { userLocalStorage } from '@/storage/userScopedStorage';
 
 export type ProfileType = 'user' | 'organizer' | 'academy' | 'teacher' | 'brand';
 
@@ -22,15 +23,17 @@ export function useDefaultProfile() {
   const { data: organizerProfile } = useMyOrganizer();
   const { data: academyProfile } = useAcademyMy();
   const { data: teacherProfile } = useTeacherMy();
+  const uid = user?.id;
   
   const [defaultProfile, setDefaultProfile] = useState<ProfileType>('user');
   const [isLoading, setIsLoading] = useState(true);
+  const STORAGE_PARTS = useMemo(() => ['default_profile', 'v1'] as const, []);
 
   // Cargar perfil por defecto desde localStorage
   useEffect(() => {
     const loadDefaultProfile = () => {
-      if (user?.id) {
-        const saved = localStorage.getItem(`default_profile_${user.id}`);
+      if (uid) {
+        const saved = userLocalStorage.getItem([...STORAGE_PARTS], uid);
         if (saved && ['user', 'organizer', 'academy', 'teacher', 'brand'].includes(saved)) {
           setDefaultProfile(saved as ProfileType);
         }
@@ -43,7 +46,8 @@ export function useDefaultProfile() {
 
     // Escuchar cambios en localStorage (para cambios en otras pestañas)
     const handleStorageChange = (e: StorageEvent) => {
-      if (user?.id && e.key === `default_profile_${user.id}` && e.newValue) {
+      // Only react to user-scoped key updates.
+      if (uid && e.key && e.key === `u:${uid}:default_profile:v1` && e.newValue) {
         if (['user', 'organizer', 'academy', 'teacher', 'brand'].includes(e.newValue)) {
           setDefaultProfile(e.newValue as ProfileType);
         }
@@ -55,7 +59,7 @@ export function useDefaultProfile() {
     // Para cambios en la misma pestaña, usar un custom event
     // Esto es más eficiente que un interval
     const handleCustomStorageChange = (e: CustomEvent) => {
-      if (user?.id && (e as any).detail?.key === `default_profile_${user.id}`) {
+      if (uid && (e as any).detail?.key === `u:${uid}:default_profile:v1`) {
         const newValue = (e as any).detail?.value;
         if (['user', 'organizer', 'academy', 'teacher', 'brand'].includes(newValue)) {
           setDefaultProfile(newValue as ProfileType);
@@ -69,19 +73,19 @@ export function useDefaultProfile() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('defaultProfileChanged' as any, handleCustomStorageChange as EventListener);
     };
-  }, [user?.id]);
+  }, [uid, STORAGE_PARTS]);
 
   // Guardar perfil por defecto en localStorage
   const updateDefaultProfile = useCallback((profileType: ProfileType) => {
-    if (user?.id) {
-      localStorage.setItem(`default_profile_${user.id}`, profileType);
+    if (uid) {
+      userLocalStorage.setItem([...STORAGE_PARTS], profileType, uid);
       setDefaultProfile(profileType);
       // Dispatch custom event para notificar a otros componentes en la misma pestaña
       window.dispatchEvent(new CustomEvent('defaultProfileChanged', {
-        detail: { key: `default_profile_${user.id}`, value: profileType }
+        detail: { key: `u:${uid}:default_profile:v1`, value: profileType }
       }));
     }
-  }, [user?.id]);
+  }, [uid, STORAGE_PARTS]);
 
   // Función para verificar si un perfil está realmente configurado
   const isUserProfileConfigured = (profile: any): boolean => {

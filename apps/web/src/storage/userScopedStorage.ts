@@ -90,6 +90,15 @@ export function clearLegacyUnscopedWebKeys() {
     try { localStorage.removeItem("ba_explore_filters_v1"); } catch {}
     try { localStorage.removeItem("ba_profile_mode"); } catch {}
     try { localStorage.removeItem("db_language"); } catch {}
+    // Legacy default profile key pattern
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("default_profile_")) {
+          try { localStorage.removeItem(k); } catch {}
+        }
+      }
+    } catch {}
     try { localStorage.removeItem("@baileapp:hasSeenWelcomeCurtain"); } catch {}
     try { localStorage.removeItem("baileapp:drafts:v1"); } catch {}
     // Supabase session key is handled by supabase itself; do not delete here unless logging out.
@@ -98,6 +107,31 @@ export function clearLegacyUnscopedWebKeys() {
     try { sessionStorage.removeItem("@baileapp:appTerminated"); } catch {}
     try { sessionStorage.removeItem("ba_pin_verified_v1"); } catch {}
     try { sessionStorage.removeItem("ba_pin_needs_verify_v1"); } catch {}
+  }
+}
+
+/** Remove all persisted user-scoped keys for a given userId. */
+export function clearUserScopedWebStorage(userId: string) {
+  const prefix = `u:${String(userId)}:`;
+  if (typeof localStorage !== "undefined") {
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) {
+          try { localStorage.removeItem(k); } catch {}
+        }
+      }
+    } catch {}
+  }
+  if (typeof sessionStorage !== "undefined") {
+    try {
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const k = sessionStorage.key(i);
+        if (k && k.startsWith(prefix)) {
+          try { sessionStorage.removeItem(k); } catch {}
+        }
+      }
+    } catch {}
   }
 }
 

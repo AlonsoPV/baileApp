@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { clearOtherRoleDrafts } from '../utils/draftKeys';
+import { getOtherRoleDraftKeys } from '../utils/draftKeys';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useDrafts } from '@/state/drafts';
 
 /**
  * Hook para manejar el cambio de roles y limpiar drafts
@@ -8,6 +10,8 @@ import { clearOtherRoleDrafts } from '../utils/draftKeys';
  */
 export function useRoleChange() {
   const location = useLocation();
+  const { user } = useAuth();
+  const { clearDraft } = useDrafts();
 
   useEffect(() => {
     // Detectar cambio de rol basado en la URL
@@ -28,7 +32,8 @@ export function useRoleChange() {
       currentRole = 'user';
     }
 
-    // Limpiar drafts de otros roles
-    clearOtherRoleDrafts(undefined, currentRole);
-  }, [location.pathname]);
+    // Limpiar drafts de otros roles (user-scoped via draft key)
+    const keysToClear = getOtherRoleDraftKeys(user?.id, currentRole);
+    keysToClear.forEach((k) => clearDraft(k));
+  }, [location.pathname, user?.id, clearDraft]);
 }

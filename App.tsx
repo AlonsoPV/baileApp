@@ -3,6 +3,7 @@ import { RootNavigator } from "./src/navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
+import * as ExpoLinking from "expo-linking";
 import React from "react";
 import { Text, View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
@@ -161,6 +162,48 @@ function AppContent() {
       .catch(() => {
         markPerformance("crash_record_skipped");
       });
+  }, []);
+
+  // ✅ Dev-only diagnostics for Google Sign-In iOS CI issues
+  React.useEffect(() => {
+    if (!__DEV__) return;
+    try {
+      const extra =
+        (Constants.expoConfig as any)?.extra ??
+        (Constants as any)?.manifest?.extra ??
+        (Constants as any)?.manifest2?.extra ??
+        {};
+
+      const iosClientId =
+        (extra.googleIosClientId as string | undefined) ||
+        (extra.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID as string | undefined) ||
+        "";
+      const webClientId =
+        (extra.googleWebClientId as string | undefined) ||
+        (extra.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID as string | undefined) ||
+        "";
+
+      const mask = (v: string) => (v ? `${v.slice(0, 10)}...${v.slice(-8)}` : "(empty)");
+      const redirectUri = ExpoLinking.createURL("auth/callback");
+      const reversed =
+        iosClientId && iosClientId.includes(".apps.googleusercontent.com")
+          ? `com.googleusercontent.apps.${iosClientId.split(".apps.googleusercontent.com")[0]}`
+          : "(cannot-derive)";
+
+      // eslint-disable-next-line no-console
+      console.log("[GoogleAuth][dev] iosClientId:", mask(String(iosClientId)));
+      // eslint-disable-next-line no-console
+      console.log("[GoogleAuth][dev] webClientId:", mask(String(webClientId)));
+      // eslint-disable-next-line no-console
+      console.log("[GoogleAuth][dev] redirectUri:", redirectUri);
+      // eslint-disable-next-line no-console
+      console.log("[GoogleAuth][dev] reversedScheme:", reversed);
+      // eslint-disable-next-line no-console
+      console.log("[GoogleAuth][dev] appScheme:", (Constants.expoConfig as any)?.scheme);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log("[GoogleAuth][dev] failed to log diagnostics:", String(e));
+    }
   }, []);
 
   if (lastCrash) {

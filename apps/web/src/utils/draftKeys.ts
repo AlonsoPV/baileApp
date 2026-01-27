@@ -37,14 +37,8 @@ export function getAllRoleDraftKeys(userId: string | undefined): string[] {
  * @param userId - ID del usuario
  * @param currentRole - Rol actual (no se limpia)
  */
-export function clearOtherRoleDrafts(userId: string | undefined, currentRole: ProfileRole): void {
+export function getOtherRoleDraftKeys(userId: string | undefined, currentRole: ProfileRole): string[] {
   const allKeys = getAllRoleDraftKeys(userId);
   const currentKey = getDraftKey(userId, currentRole);
-  
-  // Limpiar todos los drafts excepto el actual
-  allKeys.forEach(key => {
-    if (key !== currentKey) {
-      localStorage.removeItem(key);
-    }
-  });
+  return allKeys.filter((k) => k !== currentKey);
 }

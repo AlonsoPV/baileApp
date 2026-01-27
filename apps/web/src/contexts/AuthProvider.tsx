@@ -5,7 +5,7 @@ import { useProfileMode } from '@/state/profileMode';
 import { clearAllPinVerified, setNeedsPinVerify } from '@/lib/pin';
 import { isMobileWebView } from '@/utils/authRedirect';
 import { setActiveUserId } from '@/storage/activeUser';
-import { clearLegacyUnscopedWebKeys } from '@/storage/userScopedStorage';
+import { clearLegacyUnscopedWebKeys, clearUserScopedWebStorage } from '@/storage/userScopedStorage';
 import { useExploreFilters } from '@/state/exploreFilters';
 import { useDrafts } from '@/state/drafts';
 
@@ -61,6 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } else {
       // Signed out: clear runtime-only views.
+      if (prevUserId) {
+        // Spec: on logout, remove ALL user-scoped persisted keys for the previous user.
+        clearUserScopedWebStorage(prevUserId);
+      }
       useExploreFilters.getState().reset();
       useProfileMode.getState().setMode('usuario');
       try {
@@ -301,6 +305,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    // ✅ Guardrail (localhost / WebViews):
+    // If there is a stale/corrupt local session, Supabase may immediately attempt a refresh
+    // and emit a "TOKEN_REFRESHED with null session" → the app looks like it logs in and instantly logs out.
+    // Clear local auth state before signing in.
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // ignore
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,

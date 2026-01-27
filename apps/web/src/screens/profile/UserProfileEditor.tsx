@@ -700,16 +700,10 @@ export default function UserProfileEditor() {
         },
       };
 
-      const patch = buildSafePatch(profile || {}, candidate, {
-        allowEmptyArrays: ["ritmos_seleccionados", "ritmos", "zonas"] as any
-      });
-
-      if (Object.keys(patch).length === 0) {
-        showToast('No hay cambios de información por guardar. Tus fotos y videos se guardan automáticamente ✅', 'info');
-        return;
-      }
-
-      await updateProfileFields(patch);
+      // Nota: updateProfileFields construye su propio patch usando buildSafePatch,
+      // así que pasamos el candidate directamente, no un patch pre-construido
+      // Esto asegura que los cambios en objetos anidados (respuestas.redes, etc.) se detecten correctamente
+      await updateProfileFields(candidate);
 
       const fresh = await refetchProfile();
       if (fresh) {

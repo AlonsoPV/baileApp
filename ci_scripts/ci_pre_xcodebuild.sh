@@ -187,59 +187,102 @@ echo "==> Build settings (filtered)"
 xcodebuild -showBuildSettings -workspace "$WORKSPACE_PATH" -scheme DondeBailarMX 2>/dev/null | \
   egrep "PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM|CODE_SIGN_STYLE|CODE_SIGN_ENTITLEMENTS|PROVISIONING_PROFILE|PROVISIONING_PROFILE_SPECIFIER|MARKETING_VERSION|CURRENT_PROJECT_VERSION" || true
 
-echo "==> Injecting GOOGLE_REVERSED_CLIENT_ID into Info.plist (if available)"
+echo "==> Google Sign-In (iOS) configuration guardrails"
+# Native Google Sign-In needs:
+# - iOS Client ID (xxxx.apps.googleusercontent.com) to configure the SDK
+# - Reversed scheme (com.googleusercontent.apps.xxxx) in CFBundleURLSchemes
+# - (Recommended for Supabase) Web Client ID as serverClientID so idToken audience matches Supabase config
 INFO_PLIST="ios/DondeBailarMX/Info.plist"
-if [ -f "$INFO_PLIST" ] && [ -n "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
-  echo "Injecting GOOGLE_REVERSED_CLIENT_ID: ${GOOGLE_REVERSED_CLIENT_ID:0:20}..."
-  
-  # Get the current schemes array as a list
-  SCHEMES_COUNT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$INFO_PLIST" 2>/dev/null | grep -c "string" || echo "0")
-  
-  # Find the index of the entry with $(GOOGLE_REVERSED_CLIENT_ID) placeholder
-  FOUND_INDEX=""
-  for i in $(seq 0 $((SCHEMES_COUNT - 1))); do
-    SCHEME_VALUE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes:$i" "$INFO_PLIST" 2>/dev/null || echo "")
-    if [ "$SCHEME_VALUE" = "\$(GOOGLE_REVERSED_CLIENT_ID)" ]; then
-      FOUND_INDEX=$i
-      break
-    fi
-  done
-  
-  if [ -n "$FOUND_INDEX" ]; then
-    echo "Found placeholder at index $FOUND_INDEX, replacing with actual value"
-    /usr/libexec/PlistBuddy -c "Set :CFBundleURLTypes:0:CFBundleURLSchemes:$FOUND_INDEX $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST"
-    echo "✓ GOOGLE_REVERSED_CLIENT_ID replaced in Info.plist"
-  else
-    # Check if it's already there with the actual value
-    ALREADY_PRESENT=false
-    for i in $(seq 0 $((SCHEMES_COUNT - 1))); do
-      SCHEME_VALUE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes:$i" "$INFO_PLIST" 2>/dev/null || echo "")
-      if [ "$SCHEME_VALUE" = "$GOOGLE_REVERSED_CLIENT_ID" ]; then
-        ALREADY_PRESENT=true
-        break
-      fi
-    done
-    
-    if [ "$ALREADY_PRESENT" = "true" ]; then
-      echo "✓ GOOGLE_REVERSED_CLIENT_ID already present in Info.plist"
-    else
-      echo "Adding GOOGLE_REVERSED_CLIENT_ID to CFBundleURLSchemes"
-      /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes: string $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST" 2>/dev/null || true
-      echo "✓ GOOGLE_REVERSED_CLIENT_ID added to Info.plist"
-    fi
+if [ ! -f "$INFO_PLIST" ]; then
+  echo "ERROR: Info.plist not found at $INFO_PLIST"
+  exit 1
+fi
+
+IOS_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-${GOOGLE_IOS_CLIENT_ID:-}}"
+WEB_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-${GOOGLE_WEB_CLIENT_ID:-}}"
+
+if [ -z "$IOS_CLIENT_ID" ]; then
+  echo "ERROR: Missing EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID (required for native Google Sign-In)."
+  exit 1
+fi
+
+if [[ "$IOS_CLIENT_ID" != *".apps.googleusercontent.com" ]]; then
+  echo "ERROR: EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID does not look like an iOS client id (*.apps.googleusercontent.com)."
+  echo "Got: $IOS_CLIENT_ID"
+  exit 1
+fi
+
+PREFIX="${IOS_CLIENT_ID%%.apps.googleusercontent.com}"
+DERIVED_REVERSED="com.googleusercontent.apps.${PREFIX}"
+
+# Prefer explicit GOOGLE_REVERSED_CLIENT_ID if provided; otherwise derive from iOS client id.
+GOOGLE_REVERSED_CLIENT_ID="${GOOGLE_REVERSED_CLIENT_ID:-$DERIVED_REVERSED}"
+export GOOGLE_REVERSED_CLIENT_ID
+
+if [ -z "$WEB_CLIENT_ID" ]; then
+  echo "ERROR: Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID."
+  echo "Supabase Google provider expects the Web Client ID as the token audience."
+  exit 1
+fi
+
+echo "iOS Client ID: ${IOS_CLIENT_ID:0:12}..."
+echo "Web Client ID: ${WEB_CLIENT_ID:0:12}..."
+echo "Reversed scheme: ${GOOGLE_REVERSED_CLIENT_ID}"
+
+echo "==> Ensuring GIDClientID / GIDServerClientID in Info.plist"
+/usr/libexec/PlistBuddy -c "Set :GIDClientID $IOS_CLIENT_ID" "$INFO_PLIST" 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Add :GIDClientID string $IOS_CLIENT_ID" "$INFO_PLIST"
+/usr/libexec/PlistBuddy -c "Set :GIDServerClientID $WEB_CLIENT_ID" "$INFO_PLIST" 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Add :GIDServerClientID string $WEB_CLIENT_ID" "$INFO_PLIST"
+
+echo "==> Ensuring GOOGLE_REVERSED_CLIENT_ID in CFBundleURLSchemes"
+# Get the current schemes array as a list
+SCHEMES_COUNT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$INFO_PLIST" 2>/dev/null | grep -c "string" || echo "0")
+
+# Find the index of the entry with $(GOOGLE_REVERSED_CLIENT_ID) placeholder
+FOUND_INDEX=""
+for i in $(seq 0 $((SCHEMES_COUNT - 1))); do
+  SCHEME_VALUE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes:$i" "$INFO_PLIST" 2>/dev/null || echo "")
+  if [ "$SCHEME_VALUE" = "\$(GOOGLE_REVERSED_CLIENT_ID)" ]; then
+    FOUND_INDEX=$i
+    break
   fi
-  
-  # Verify it was set correctly
+done
+
+if [ -n "$FOUND_INDEX" ]; then
+  echo "Found placeholder at index $FOUND_INDEX, replacing with actual value"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleURLTypes:0:CFBundleURLSchemes:$FOUND_INDEX $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST"
+else
+  # Add if missing
   VERIFY=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$INFO_PLIST" 2>/dev/null | grep -F "$GOOGLE_REVERSED_CLIENT_ID" || echo "")
-  if [ -n "$VERIFY" ]; then
-    echo "✓ Verified: GOOGLE_REVERSED_CLIENT_ID is in Info.plist"
-  else
-    echo "⚠️  WARN: Could not verify GOOGLE_REVERSED_CLIENT_ID in Info.plist"
+  if [ -z "$VERIFY" ]; then
+    echo "Adding reversed scheme to CFBundleURLSchemes"
+    /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes: string $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST" 2>/dev/null || true
   fi
-elif [ ! -f "$INFO_PLIST" ]; then
-  echo "⚠️  WARN: Info.plist not found at $INFO_PLIST"
-elif [ -z "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
-  echo "⚠️  WARN: GOOGLE_REVERSED_CLIENT_ID environment variable not set. URL scheme will remain as \$(GOOGLE_REVERSED_CLIENT_ID)"
+fi
+
+echo "==> Verifying Google Sign-In Info.plist contents"
+SCHEMES=$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$INFO_PLIST" 2>/dev/null || true)
+echo "$SCHEMES" | grep -F "$GOOGLE_REVERSED_CLIENT_ID" >/dev/null 2>&1 || {
+  echo "ERROR: Info.plist is missing Google reversed URL scheme: $GOOGLE_REVERSED_CLIENT_ID"
+  echo "Current CFBundleURLSchemes:"
+  echo "$SCHEMES"
+  exit 1
+}
+
+GID_CLIENT_ID=$(/usr/libexec/PlistBuddy -c "Print :GIDClientID" "$INFO_PLIST" 2>/dev/null || echo "")
+GID_SERVER_CLIENT_ID=$(/usr/libexec/PlistBuddy -c "Print :GIDServerClientID" "$INFO_PLIST" 2>/dev/null || echo "")
+if [ "$GID_CLIENT_ID" != "$IOS_CLIENT_ID" ]; then
+  echo "ERROR: GIDClientID mismatch in Info.plist."
+  echo "Expected: $IOS_CLIENT_ID"
+  echo "Found:    $GID_CLIENT_ID"
+  exit 1
+fi
+if [ "$GID_SERVER_CLIENT_ID" != "$WEB_CLIENT_ID" ]; then
+  echo "ERROR: GIDServerClientID mismatch in Info.plist."
+  echo "Expected: $WEB_CLIENT_ID"
+  echo "Found:    $GID_SERVER_CLIENT_ID"
+  exit 1
 fi
 
 echo "==> App Store Connect guardrails (version/build)"
