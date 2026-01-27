@@ -243,27 +243,53 @@ export default function WebAppScreen() {
           injectWebSetSession(tokens);
         } catch (e: any) {
           // Normalizar mensajes de error para mejor UX
-          let message = e?.message || "Error al iniciar sesión con Google.";
           const requestId = String(msg?.requestId || (e as any)?.requestId || "");
+          const rawMessage = String(e?.message ?? e ?? "Error al iniciar sesión con Google.");
+          const rawCode = String(e?.code ?? "");
+
+          if (__DEV__) {
+            try {
+              // eslint-disable-next-line no-console
+              console.log("[WebAppScreen] Google native auth error (raw)", {
+                requestId,
+                code: rawCode || "(none)",
+                message: rawMessage,
+                keys: e && typeof e === "object" ? Object.keys(e) : [],
+              });
+            } catch {}
+          }
+
+          // Derivar code si el bridge no lo provee (común en algunos builds/bridges)
+          const derivedCode = (() => {
+            if (rawCode) return rawCode;
+            if (/audience/i.test(rawMessage) || /invalid.*jwt/i.test(rawMessage) || /bad.*jwt/i.test(rawMessage)) return "invalid_jwt";
+            if (/GIDServerClientID/i.test(rawMessage) || /web client id/i.test(rawMessage)) return "GOOGLE_MISSING_WEB_CLIENT_ID";
+            if (/url scheme/i.test(rawMessage) || /CFBundleURLSchemes/i.test(rawMessage) || /com\.googleusercontent\.apps/i.test(rawMessage)) return "GOOGLE_MISSING_URL_SCHEME";
+            if (/idtoken/i.test(rawMessage) || /id token/i.test(rawMessage)) return "GOOGLE_MISSING_ID_TOKEN";
+            if (/client id/i.test(rawMessage)) return "GOOGLE_MISSING_CLIENT_ID";
+            return "";
+          })();
+
+          let message = rawMessage;
           
           // Mejorar mensajes de error específicos
-          if (e?.code === "GOOGLE_MISSING_CLIENT_ID" || message.includes("Client ID")) {
+          if (derivedCode === "GOOGLE_MISSING_CLIENT_ID" || message.includes("Client ID")) {
             message = "Google Sign-In no está configurado. Contacta al soporte.";
-          } else if (e?.code === "GOOGLE_MISSING_WEB_CLIENT_ID") {
+          } else if (derivedCode === "GOOGLE_MISSING_WEB_CLIENT_ID") {
             message = "Google Sign-In no está configurado para Supabase: falta el Web Client ID (GIDServerClientID).";
-          } else if (e?.code === "GOOGLE_IOS_CLIENT_ID_IS_WEB") {
+          } else if (derivedCode === "GOOGLE_IOS_CLIENT_ID_IS_WEB") {
             message = "Google Sign-In está mal configurado: se está usando el Web Client ID como iOS Client ID.";
-          } else if (e?.code === "GOOGLE_MISSING_URL_SCHEME") {
+          } else if (derivedCode === "GOOGLE_MISSING_URL_SCHEME") {
             message = "Google Sign-In no puede regresar a la app: falta el URL scheme com.googleusercontent.apps.* en Info.plist.";
-          } else if (e?.code === "GOOGLE_NO_PRESENTING_VC" || message.includes("ViewController") || message.includes("iPad")) {
+          } else if (derivedCode === "GOOGLE_NO_PRESENTING_VC" || message.includes("ViewController") || message.includes("iPad")) {
             message = "No se pudo mostrar la pantalla de Google. Intenta cerrar y reabrir la app.";
-          } else if (e?.code === "GOOGLE_CANCELED" || message.includes("cancelado")) {
+          } else if (derivedCode === "GOOGLE_CANCELED" || message.includes("cancelado")) {
             message = "Inicio de sesión cancelado.";
-          } else if (e?.code === "GOOGLE_MISSING_ID_TOKEN" || message.includes("idToken") || message.includes("id token")) {
+          } else if (derivedCode === "GOOGLE_MISSING_ID_TOKEN" || message.includes("idToken") || message.includes("id token")) {
             message = "Google no devolvió credenciales (idToken). Verifica que el Client ID sea el de iOS y que el bundle id sea correcto.";
           } else if (
-            e?.code === "invalid_jwt" ||
-            e?.code === "bad_jwt" ||
+            derivedCode === "invalid_jwt" ||
+            derivedCode === "bad_jwt" ||
             /audience/i.test(message) ||
             /invalid.*jwt/i.test(message)
           ) {
@@ -273,10 +299,9 @@ export default function WebAppScreen() {
             message = "Error al obtener credenciales de Google. Intenta de nuevo.";
           }
 
-          const code = String(e?.code || "");
-          if (requestId || code) {
+          if (requestId || derivedCode) {
             const suffix = [
-              code ? `code: ${code}` : null,
+              derivedCode ? `code: ${derivedCode}` : null,
               requestId ? `req: ${requestId}` : null,
             ].filter(Boolean).join(", ");
             message = `${message} (${suffix})`;
