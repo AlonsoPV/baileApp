@@ -133,6 +133,10 @@ export function clearUserScopedWebStorage(userId: string) {
       }
     } catch {}
   }
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log("[UserIsolation] cleared user-scoped storage for", userId);
+  }
 }
 
 /**

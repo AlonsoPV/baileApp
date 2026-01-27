@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import { nativeGoogleSignOut, nativeSignInWithApple, nativeSignInWithGoogle } from "./nativeAuth";
+import { nativeGoogleSignOut, nativeSignInWithApple, nativeSignInWithGoogleWithRequestId } from "./nativeAuth";
 
 export type AuthStatus = "loading" | "loggedOut" | "loggedIn" | "error";
 
@@ -89,10 +89,12 @@ class AuthCoordinatorImpl {
     }
   }
 
-  async signInWithGoogle(iosClientId: string): Promise<AuthSessionTokens> {
+  async signInWithGoogle(iosClientId: string, requestId: string = ""): Promise<AuthSessionTokens> {
     this.setState({ status: "loading", error: null });
     try {
-      const google = await nativeSignInWithGoogle(iosClientId);
+      const rid = String(requestId || "");
+      console.log("[AuthCoordinator] Google native sign-in start", { requestId: rid ? `${rid.slice(0, 8)}…` : "(none)" });
+      const google = await nativeSignInWithGoogleWithRequestId(iosClientId, rid);
       if (!supabase) throw new Error("Supabase no está configurado en la app.");
 
       const { data, error } = await supabase.auth.signInWithIdToken({

@@ -119,8 +119,13 @@ export function useUserProfile() {
           respuestas: candidate.respuestas ? {
             ...(prev.respuestas || {}), // Preservar respuestas existentes
             ...candidate.respuestas,
+            // Normalizar redes sociales (siempre usar las del candidate si están presentes)
             redes: normalizeSocialInput(candidate.respuestas?.redes || {}),
-            ...normalizeQuestions(candidate.respuestas || {})
+            // Normalizar preguntas (excluyendo redes que ya se normalizaron)
+            ...Object.fromEntries(
+              Object.entries(normalizeQuestions(candidate.respuestas || {}))
+                .filter(([key]) => key !== 'redes')
+            )
           } : undefined
         };
 

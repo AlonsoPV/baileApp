@@ -235,17 +235,24 @@ export default function WebAppScreen() {
         setNativeAuthInProgress(true);
         setNativeAuthError(null);
         try {
+          const requestId = String(msg?.requestId || "");
           const clientId = getGoogleIosClientId();
 
-          const tokens = await AuthCoordinator.signInWithGoogle(clientId);
+          console.log("[WebAppScreen] NATIVE_AUTH_GOOGLE requestId=", requestId || "(none)");
+          const tokens = await AuthCoordinator.signInWithGoogle(clientId, requestId);
           injectWebSetSession(tokens);
         } catch (e: any) {
           // Normalizar mensajes de error para mejor UX
           let message = e?.message || "Error al iniciar sesión con Google.";
+          const requestId = String(msg?.requestId || (e as any)?.requestId || "");
           
           // Mejorar mensajes de error específicos
           if (e?.code === "GOOGLE_MISSING_CLIENT_ID" || message.includes("Client ID")) {
             message = "Google Sign-In no está configurado. Contacta al soporte.";
+          } else if (e?.code === "GOOGLE_IOS_CLIENT_ID_IS_WEB") {
+            message = "Google Sign-In está mal configurado: se está usando el Web Client ID como iOS Client ID.";
+          } else if (e?.code === "GOOGLE_MISSING_URL_SCHEME") {
+            message = "Google Sign-In no puede regresar a la app: falta el URL scheme com.googleusercontent.apps.* en Info.plist.";
           } else if (e?.code === "GOOGLE_NO_PRESENTING_VC" || message.includes("ViewController") || message.includes("iPad")) {
             message = "No se pudo mostrar la pantalla de Google. Intenta cerrar y reabrir la app.";
           } else if (e?.code === "GOOGLE_CANCELED" || message.includes("cancelado")) {
@@ -262,6 +269,10 @@ export default function WebAppScreen() {
               "Supabase rechazó el token de Google (audience/JWT). Verifica que en Supabase el Provider de Google use el Web Client ID y que en Xcode Cloud esté EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.";
           } else if (message.includes("token")) {
             message = "Error al obtener credenciales de Google. Intenta de nuevo.";
+          }
+
+          if (requestId) {
+            message = `${message} (req: ${requestId})`;
           }
           
           setNativeAuthError(message);

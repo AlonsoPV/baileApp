@@ -1,5 +1,4 @@
 import React from "react";
-import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Chip } from "./Chip";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
@@ -64,45 +63,8 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [isPositionReady, setIsPositionReady] = React.useState(false);
-  const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
   const triggerRef = React.useRef<HTMLButtonElement>(null);
-  const rafIdRef = React.useRef<number | null>(null);
-  const openRafRef = React.useRef<number | null>(null);
-
-  const updateDropdownPosition = React.useCallback(() => {
-    const el = triggerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = typeof window !== 'undefined' ? window.innerWidth : rect.width;
-    const margin = 8;
-    const desiredWidth = Math.min(rect.width, Math.max(0, vw - margin * 2));
-    let left = rect.left;
-    if (left + desiredWidth > vw - margin) left = vw - margin - desiredWidth;
-    if (left < margin) left = margin;
-
-    // Si estamos muy abajo, intentar abrir hacia arriba (maxHeight aprox = 400)
-    const maxH = 400;
-    const vh = typeof window !== 'undefined' ? window.innerHeight : rect.bottom + maxH;
-    let top = rect.bottom + margin;
-    if (top + maxH > vh - margin) {
-      top = Math.max(margin, rect.top - margin - maxH);
-    }
-
-    const next = { top, left, width: desiredWidth };
-    setDropdownPosition((prev) => {
-      if (prev.top === next.top && prev.left === next.left && prev.width === next.width) return prev;
-      return next;
-    });
-  }, []);
-
-  const scheduleDropdownPositionUpdate = React.useCallback(() => {
-    if (rafIdRef.current !== null) return;
-    rafIdRef.current = requestAnimationFrame(() => {
-      rafIdRef.current = null;
-      updateDropdownPosition();
-    });
-  }, [updateDropdownPosition]);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Este useMemo debe estar ANTES del return temprano para cumplir con las reglas de hooks
   const selectedCategoryGroup = React.useMemo(() => {
@@ -127,36 +89,17 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
     }
   }, [relevantGroups, selectedSet, autoExpandSelectedParents, mode]);
 
-  // Calcular posición del dropdown cuando se abre
-  React.useEffect(() => {
-    if (isDropdownOpen && triggerRef.current) {
-      // Calcular inmediatamente al abrir para evitar “salto” a (0,0)
-      updateDropdownPosition();
-      window.addEventListener('scroll', scheduleDropdownPositionUpdate, true);
-      window.addEventListener('resize', scheduleDropdownPositionUpdate);
-      
-      return () => {
-        window.removeEventListener('scroll', scheduleDropdownPositionUpdate, true);
-        window.removeEventListener('resize', scheduleDropdownPositionUpdate);
-        if (rafIdRef.current !== null) {
-          cancelAnimationFrame(rafIdRef.current);
-          rafIdRef.current = null;
-        }
-        if (openRafRef.current !== null) {
-          cancelAnimationFrame(openRafRef.current);
-          openRafRef.current = null;
-        }
-      };
-    }
-  }, [isDropdownOpen, scheduleDropdownPositionUpdate]);
+  // Nota UX: el dropdown SIEMPRE abre hacia abajo (debajo del trigger),
+  // para evitar que en móvil "invada" secciones superiores.
 
   // Cerrar dropdown al hacer clic fuera
   React.useEffect(() => {
     if (!isDropdownOpen) return;
     
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.zona-dropdown-container') && !target.closest('.zona-dropdown-menu')) {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setIsDropdownOpen(false);
         setSelectedCategory(null);
       }
@@ -291,6 +234,10 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           position: relative;
           width: 100%;
           max-width: 500px;
+          /* Crear stacking context estable para que el menú no quede debajo de otros elementos */
+          isolation: isolate;
+          /* Muy alto para ganar contra otros stacking contexts del layout */
+          z-index: 2147483000;
         }
         .zona-dropdown-trigger {
           width: 100%;
@@ -316,17 +263,26 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           background: rgba(76, 173, 255, 0.1);
         }
         .zona-dropdown-menu {
-          position: fixed;
+          /* Layout normal: el contenedor se expande (NO overlay) */
+          position: relative;
           background: rgba(15, 23, 42, 1);
           border: 1px solid rgba(255, 255, 255, 0.2);
           border-radius: 12px;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.3);
           backdrop-filter: blur(20px);
-          z-index: 999999;
+          /* Por encima del trigger y de las chips */
+          z-index: 2147483647;
           max-height: 400px;
           overflow-y: auto;
           overflow-x: hidden;
           color: #fff;
+          pointer-events: auto;
+          margin-top: 8px;
+          width: 100%;
+        }
+        .zona-selected-chips {
+          position: relative;
+          z-index: 1;
         }
         .zona-dropdown-menu::-webkit-scrollbar {
           width: 6px;
@@ -431,29 +387,22 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           }
         }
       `}</style>
-      <div className={`zona-dropdown-container ${className || ''}`} style={style}>
+      <div
+        ref={containerRef}
+        className={`zona-dropdown-container ${className || ''}`}
+        style={style}
+      >
         <button
           ref={triggerRef}
           type="button"
           className={`zona-dropdown-trigger ${isDropdownOpen ? 'open' : ''}`}
           onClick={() => {
             if (!isDropdownOpen) {
-              // Evitar render del menú hasta que la posición esté lista (evita offsets raros en WebView)
-              setIsPositionReady(false);
               setIsDropdownOpen(true);
-              // Medir en el siguiente frame para asegurar layout estable
-              openRafRef.current = requestAnimationFrame(() => {
-                updateDropdownPosition();
-                openRafRef.current = requestAnimationFrame(() => {
-                  setIsPositionReady(true);
-                  openRafRef.current = null;
-                });
-              });
               return;
             }
             setIsDropdownOpen(false);
             setSelectedCategory(null);
-            setIsPositionReady(false);
           }}
         >
           <span>
@@ -466,21 +415,15 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           </span>
         </button>
 
-        {typeof document !== 'undefined' && document.body && createPortal(
-          <AnimatePresence>
-            {isDropdownOpen && isPositionReady && (
-              <motion.div
-                className="zona-dropdown-menu"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  top: `${dropdownPosition.top}px`,
-                  left: `${dropdownPosition.left}px`,
-                  width: `${dropdownPosition.width}px`,
-                }}
-              >
+        <AnimatePresence>
+          {isDropdownOpen && (
+            <motion.div
+              className="zona-dropdown-menu"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
               {!selectedCategory ? (
                 // Mostrar categorías primero
                 relevantGroups.map((group) => {
@@ -488,18 +431,18 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                   return (
                     <div
                       key={group.id}
-                      className={`zona-category-item ${hasActive ? 'selected' : ''}`}
+                      className={`zona-category-item ${hasActive ? "selected" : ""}`}
                       onClick={() => handleCategorySelect(group.id)}
                     >
                       <span>
                         {icon} {group.label}
                         {hasActive && (
-                          <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>
+                          <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem", opacity: 0.7 }}>
                             ({group.items.filter((i) => selectedSet.has(i.id)).length} seleccionados)
                           </span>
                         )}
                       </span>
-                      <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▸</span>
+                      <span style={{ fontSize: "0.8rem", opacity: 0.5 }}>▸</span>
                     </div>
                   );
                 })
@@ -511,8 +454,8 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                       className="zona-category-item"
                       onClick={() => setSelectedCategory(null)}
                       style={{
-                        background: 'rgba(76, 173, 255, 0.1)',
-                        borderLeft: '3px solid rgba(76, 173, 255, 0.65)',
+                        background: "rgba(76, 173, 255, 0.1)",
+                        borderLeft: "3px solid rgba(76, 173, 255, 0.65)",
                         fontWeight: 600,
                       }}
                     >
@@ -524,7 +467,7 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                         return (
                           <div
                             key={zona.id}
-                            className={`zona-zona-item ${isSelected ? 'selected' : ''}`}
+                            className={`zona-zona-item ${isSelected ? "selected" : ""}`}
                             onClick={() => handleChipClick(zona.id)}
                           >
                             <div className="zona-checkbox" />
@@ -536,15 +479,16 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                   </div>
                 )
               )}
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Mostrar zonas seleccionadas como chips debajo del dropdown */}
         {normalizedSelected.length > 0 && (
-          <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div
+            className="zona-selected-chips"
+            style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
+          >
             {relevantGroups.flatMap((g) => g.items)
               .filter((z) => selectedSet.has(z.id))
               .map((z) => (

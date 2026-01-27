@@ -3,6 +3,7 @@
 @interface RCT_EXTERN_MODULE(GoogleSignInModule, NSObject)
 
 RCT_EXTERN_METHOD(signIn:(NSString *)clientId
+                  requestId:(NSString *)requestId
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 

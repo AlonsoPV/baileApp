@@ -169,7 +169,12 @@ export function Login() {
         if (!rn?.postMessage) {
           console.warn('[Login] No native bridge for Google; falling back to web OAuth');
         } else {
-          rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_GOOGLE' }));
+          const requestId =
+            (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+              ? (crypto as any).randomUUID()
+              : `g_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+          console.log('[Login] NATIVE_AUTH_GOOGLE requestId=', requestId);
+          rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_GOOGLE', requestId }));
           return; // native will set web session + redirect
         }
       }

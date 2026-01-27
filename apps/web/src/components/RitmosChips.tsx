@@ -1,5 +1,4 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 import { Chip } from './profile/Chip';
@@ -93,45 +92,8 @@ function RitrosChipsInternal({
   const [expanded, setExpanded] = React.useState<string | null>(autoExpanded || null);
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [isPositionReady, setIsPositionReady] = React.useState(false);
-  const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
   const triggerRef = React.useRef<HTMLButtonElement>(null);
-  const rafIdRef = React.useRef<number | null>(null);
-  const openRafRef = React.useRef<number | null>(null);
-
-  const updateDropdownPosition = React.useCallback(() => {
-    const el = triggerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = typeof window !== 'undefined' ? window.innerWidth : rect.width;
-    const margin = 8;
-    const desiredWidth = Math.min(rect.width, Math.max(0, vw - margin * 2));
-    let left = rect.left;
-    if (left + desiredWidth > vw - margin) left = vw - margin - desiredWidth;
-    if (left < margin) left = margin;
-
-    // Si estamos muy abajo, intentar abrir hacia arriba (maxHeight aprox = 400)
-    const maxH = 400;
-    const vh = typeof window !== 'undefined' ? window.innerHeight : rect.bottom + maxH;
-    let top = rect.bottom + margin;
-    if (top + maxH > vh - margin) {
-      top = Math.max(margin, rect.top - margin - maxH);
-    }
-
-    const next = { top, left, width: desiredWidth };
-    setDropdownPosition((prev) => {
-      if (prev.top === next.top && prev.left === next.left && prev.width === next.width) return prev;
-      return next;
-    });
-  }, []);
-
-  const scheduleDropdownPositionUpdate = React.useCallback(() => {
-    if (rafIdRef.current !== null) return;
-    rafIdRef.current = requestAnimationFrame(() => {
-      rafIdRef.current = null;
-      updateDropdownPosition();
-    });
-  }, [updateDropdownPosition]);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (isReadOnly && autoExpanded) {
@@ -161,36 +123,17 @@ function RitrosChipsInternal({
     // No cerrar el dropdown, solo cambiar a la vista de ritmos anidados
   };
 
-  // Calcular posición del dropdown cuando se abre
-  React.useEffect(() => {
-    if (isDropdownOpen && triggerRef.current) {
-      // Calcular inmediatamente al abrir
-      updateDropdownPosition();
-      window.addEventListener('scroll', scheduleDropdownPositionUpdate, true);
-      window.addEventListener('resize', scheduleDropdownPositionUpdate);
-      
-      return () => {
-        window.removeEventListener('scroll', scheduleDropdownPositionUpdate, true);
-        window.removeEventListener('resize', scheduleDropdownPositionUpdate);
-        if (rafIdRef.current !== null) {
-          cancelAnimationFrame(rafIdRef.current);
-          rafIdRef.current = null;
-        }
-        if (openRafRef.current !== null) {
-          cancelAnimationFrame(openRafRef.current);
-          openRafRef.current = null;
-        }
-      };
-    }
-  }, [isDropdownOpen, scheduleDropdownPositionUpdate]);
+  // Nota UX: el dropdown SIEMPRE abre hacia abajo (debajo del trigger),
+  // para evitar que en móvil "invada" secciones superiores.
 
   // Cerrar dropdown al hacer clic fuera
   React.useEffect(() => {
     if (!isDropdownOpen) return;
     
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.ritmos-dropdown-container') && !target.closest('.ritmos-dropdown-menu')) {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setIsDropdownOpen(false);
         setSelectedCategory(null);
       }
@@ -249,6 +192,10 @@ function RitrosChipsInternal({
           position: relative;
           width: 100%;
           max-width: 500px;
+          /* Crear stacking context estable para que el menú no quede debajo de otros elementos */
+          isolation: isolate;
+          /* Muy alto para ganar contra otros stacking contexts del layout */
+          z-index: 2147483000;
         }
         .ritmos-dropdown-trigger {
           width: 100%;
@@ -274,17 +221,26 @@ function RitrosChipsInternal({
           background: rgba(245, 87, 108, 0.1);
         }
         .ritmos-dropdown-menu {
-          position: fixed;
+          /* Layout normal: el contenedor se expande (NO overlay) */
+          position: relative;
           background: rgba(15, 23, 42, 1);
           border: 1px solid rgba(255, 255, 255, 0.2);
           border-radius: 12px;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.3);
           backdrop-filter: blur(20px);
-          z-index: 999999;
+          /* Por encima del trigger y de las chips */
+          z-index: 2147483647;
           max-height: 400px;
           overflow-y: auto;
           overflow-x: hidden;
           color: #fff;
+          pointer-events: auto;
+          margin-top: 8px;
+          width: 100%;
+        }
+        .ritmos-selected-chips {
+          position: relative;
+          z-index: 1;
         }
         .ritmos-dropdown-menu::-webkit-scrollbar {
           width: 6px;
@@ -389,29 +345,22 @@ function RitrosChipsInternal({
           }
         }
       `}</style>
-      <div className="ritmos-dropdown-container" style={{ display: 'block', visibility: 'visible' }}>
+      <div
+        ref={containerRef}
+        className="ritmos-dropdown-container"
+        style={{ display: 'block', visibility: 'visible' }}
+      >
         <button
           ref={triggerRef}
           type="button"
           className={`ritmos-dropdown-trigger ${isDropdownOpen ? 'open' : ''}`}
           onClick={() => {
             if (!isDropdownOpen) {
-              // Evitar render del menú hasta que la posición esté lista (evita "saltos" y offsets raros en WebView)
-              setIsPositionReady(false);
               setIsDropdownOpen(true);
-              // Medir en el siguiente frame para asegurar layout estable
-              openRafRef.current = requestAnimationFrame(() => {
-                updateDropdownPosition();
-                openRafRef.current = requestAnimationFrame(() => {
-                  setIsPositionReady(true);
-                  openRafRef.current = null;
-                });
-              });
               return;
             }
             setIsDropdownOpen(false);
             setSelectedCategory(null);
-            setIsPositionReady(false);
           }}
           style={{ display: 'flex', visibility: 'visible', opacity: 1 }}
         >
@@ -425,85 +374,80 @@ function RitrosChipsInternal({
           </span>
         </button>
 
-        {typeof document !== 'undefined' && document.body && createPortal(
-          <AnimatePresence>
-            {isDropdownOpen && isPositionReady && (
-              <motion.div
-                className="ritmos-dropdown-menu"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  top: `${dropdownPosition.top}px`,
-                  left: `${dropdownPosition.left}px`,
-                  width: `${dropdownPosition.width}px`,
-                }}
-              >
-            {!selectedCategory ? (
-              // Mostrar categorías primero
-              filteredCatalog.map((group) => {
-                const hasActive = groupHasActive(group.id);
-                return (
-                  <div
-                    key={group.id}
-                    className={`ritmos-category-item ${hasActive ? 'selected' : ''}`}
-                    onClick={() => handleCategorySelect(group.id)}
-                  >
-                    <span>
-                      🎵 {group.label}
-                      {hasActive && (
-                        <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>
-                          ({group.items.filter((i) => selected.includes(i.id)).length} seleccionados)
-                        </span>
-                      )}
-                    </span>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▸</span>
+        <AnimatePresence>
+          {isDropdownOpen && (
+            <motion.div
+              className="ritmos-dropdown-menu"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {!selectedCategory ? (
+                // Mostrar categorías primero
+                filteredCatalog.map((group) => {
+                  const hasActive = groupHasActive(group.id);
+                  return (
+                    <div
+                      key={group.id}
+                      className={`ritmos-category-item ${hasActive ? 'selected' : ''}`}
+                      onClick={() => handleCategorySelect(group.id)}
+                    >
+                      <span>
+                        🎵 {group.label}
+                        {hasActive && (
+                          <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>
+                            ({group.items.filter((i) => selected.includes(i.id)).length} seleccionados)
+                          </span>
+                        )}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▸</span>
+                    </div>
+                  );
+                })
+              ) : (
+                // Mostrar ritmos de la categoría seleccionada
+                selectedCategoryGroup && (
+                  <div>
+                    <div
+                      className="ritmos-category-item"
+                      onClick={() => setSelectedCategory(null)}
+                      style={{
+                        background: 'rgba(245, 87, 108, 0.1)',
+                        borderLeft: '3px solid rgba(245, 87, 108, 0.65)',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span>← Volver a categorías</span>
+                    </div>
+                    <div className="ritmos-ritmos-list">
+                      {selectedCategoryGroup.items.map((ritmo) => {
+                        const isSelected = selected.includes(ritmo.id);
+                        return (
+                          <div
+                            key={ritmo.id}
+                            className={`ritmos-ritmo-item ${isSelected ? 'selected' : ''}`}
+                            onClick={() => toggleChild(ritmo.id)}
+                          >
+                            <div className="ritmos-checkbox" />
+                            <span>{ritmo.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                );
-              })
-            ) : (
-              // Mostrar ritmos de la categoría seleccionada
-              selectedCategoryGroup && (
-                <div>
-                  <div
-                    className="ritmos-category-item"
-                    onClick={() => setSelectedCategory(null)}
-                    style={{
-                      background: 'rgba(245, 87, 108, 0.1)',
-                      borderLeft: '3px solid rgba(245, 87, 108, 0.65)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <span>← Volver a categorías</span>
-                  </div>
-                  <div className="ritmos-ritmos-list">
-                    {selectedCategoryGroup.items.map((ritmo) => {
-                      const isSelected = selected.includes(ritmo.id);
-                      return (
-                        <div
-                          key={ritmo.id}
-                          className={`ritmos-ritmo-item ${isSelected ? 'selected' : ''}`}
-                          onClick={() => toggleChild(ritmo.id)}
-                        >
-                          <div className="ritmos-checkbox" />
-                          <span>{ritmo.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )
-            )}
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body
-        )}
+                )
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Mostrar ritmos seleccionados como chips debajo del dropdown */}
         {selected.length > 0 && (
-          <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div
+            className="ritmos-selected-chips"
+            style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
+          >
             {filteredCatalog.flatMap((g) => g.items)
               .filter((r) => selected.includes(r.id))
               .map((r) => (

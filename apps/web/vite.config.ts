@@ -13,6 +13,8 @@ export default defineConfig({
       "components/auth/RequireLogin.test.tsx",
       "hooks/useUserProfile.timeout.test.tsx",
       "screens/onboarding/PickZonas.loading.test.tsx",
+      // User data isolation guardrails (per-user storage namespacing)
+      "state/userIsolation.test.ts",
     ],
     environment: "jsdom",
     globals: true,

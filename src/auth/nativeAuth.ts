@@ -37,16 +37,22 @@ export async function nativeSignInWithApple(): Promise<AppleResult> {
   return res;
 }
 
-export async function nativeSignInWithGoogle(iosClientId: string): Promise<GoogleResult> {
+export async function nativeSignInWithGoogleWithRequestId(
+  iosClientId: string,
+  requestId: string
+): Promise<GoogleResult> {
   if (Platform.OS !== "ios") {
     throw new Error("Google Sign-In nativo solo está disponible en iOS en esta versión.");
   }
   if (!GoogleSignInModule?.signIn) {
     throw new Error("GoogleSignInModule no está disponible (build iOS requerido).");
   }
-  const res = (await GoogleSignInModule.signIn(iosClientId)) as GoogleResult;
+  const rid = String(requestId || "");
+  const res = (await GoogleSignInModule.signIn(iosClientId, rid)) as GoogleResult;
   if (!res?.idToken) {
-    throw new Error("Google no devolvió idToken.");
+    const err: any = new Error("Google no devolvió idToken.");
+    err.requestId = rid;
+    throw err;
   }
   return res;
 }

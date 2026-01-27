@@ -150,6 +150,8 @@ const STYLES = `
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    position: relative;
+    z-index: 1;
   }
   
   .row-top {
@@ -169,6 +171,8 @@ const STYLES = `
     gap: 0.75rem;
     justify-content: center;
     align-items: center;
+    position: relative;
+    z-index: 2;
   }
   .pill {
     position: relative;
@@ -233,6 +237,8 @@ const STYLES = `
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    position: relative;
+    z-index: 2;
   }
   .row-bottom-header {
     display: flex;
@@ -256,6 +262,8 @@ const STYLES = `
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    position: relative;
+    z-index: 3;
   }
   .field {
     display: flex;
@@ -332,6 +340,8 @@ const STYLES = `
     .rhythms-zones-two-columns {
       grid-template-columns: 1fr !important;
       gap: 1rem !important;
+      position: relative !important;
+      z-index: 1 !important;
     }
     .editor-container {
       padding: 0.75rem !important;
@@ -392,6 +402,16 @@ const STYLES = `
     .profile-section-compact {
       padding: 1rem !important;
       gap: 1rem !important;
+      position: relative !important;
+      z-index: 10 !important;
+    }
+    .row-top {
+      position: relative !important;
+      z-index: 11 !important;
+    }
+    .row-bottom {
+      position: relative !important;
+      z-index: 12 !important;
     }
     .row-top .title {
       font-size: 0.95rem !important;
@@ -401,6 +421,12 @@ const STYLES = `
     }
     .identity-pills {
       justify-content: center !important;
+      position: relative !important;
+      z-index: 11 !important;
+    }
+    .social-list {
+      position: relative !important;
+      z-index: 12 !important;
     }
     .pill {
       font-size: 0.8rem !important;
@@ -476,9 +502,17 @@ const STYLES = `
     .profile-section-compact {
       padding: 0.75rem !important;
       gap: 1rem !important;
+      position: relative !important;
+      z-index: 10 !important;
     }
     .row-top {
       gap: 0.5rem !important;
+      position: relative !important;
+      z-index: 11 !important;
+    }
+    .row-bottom {
+      position: relative !important;
+      z-index: 12 !important;
     }
     .row-top .title {
       font-size: 0.9rem !important;
@@ -492,6 +526,12 @@ const STYLES = `
     .identity-pills {
       gap: 0.5rem !important;
       justify-content: center !important;
+      position: relative !important;
+      z-index: 11 !important;
+    }
+    .social-list {
+      position: relative !important;
+      z-index: 12 !important;
     }
     .pill {
       font-size: 0.75rem !important;
@@ -686,6 +726,8 @@ export default function UserProfileEditor() {
 
       const validatedZonas = validateZonasAgainstCatalog(form.zonas, allTags);
 
+      // Preservar todas las propiedades existentes de respuestas
+      const prevRespuestas = profile?.respuestas || {};
       const candidate = {
         display_name: form.display_name,
         bio: form.bio,
@@ -694,6 +736,7 @@ export default function UserProfileEditor() {
         ritmos: form.ritmos,
         zonas: validatedZonas,
         respuestas: {
+          ...prevRespuestas, // Preservar todas las propiedades existentes
           redes,
           dato_curioso: form.respuestas?.dato_curioso || null,
           gusta_bailar: form.respuestas?.gusta_bailar || null
@@ -1148,11 +1191,11 @@ export default function UserProfileEditor() {
             </div>
           </div>
 
-          <div className="editor-section glass-card-container academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'hidden', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)' }} />
+          <div className="editor-section glass-card-container academy-editor-card" style={{ marginBottom: '3rem', position: 'relative', overflow: 'visible', borderRadius: 16, border: '1px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg, rgba(19,21,27,0.85), rgba(16,18,24,0.85))', zIndex: 0 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', zIndex: 1 }} />
 
-            <div className="rhythms-zones-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', padding: '1.25rem' }}>
-              <div>
+            <div className="rhythms-zones-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', padding: '1.25rem', position: 'relative', zIndex: 0 }}>
+              <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
                   <div>
@@ -1161,7 +1204,7 @@ export default function UserProfileEditor() {
                   </div>
                 </div>
 
-                <div>
+                <div style={{ position: 'relative' }}>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>Catálogo agrupado</div>
                   <RitmosSelectorEditor
                     selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
@@ -1171,7 +1214,7 @@ export default function UserProfileEditor() {
                 </div>
               </div>
 
-              <div>
+              <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
                   <div>
@@ -1180,7 +1223,7 @@ export default function UserProfileEditor() {
                   </div>
                 </div>
 
-                <div className="academy-chips-container">
+                <div className="academy-chips-container" style={{ position: 'relative' }}>
                   <ZonaGroupedChips
                     selectedIds={form.zonas}
                     allTags={allTags}
