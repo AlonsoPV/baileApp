@@ -259,7 +259,9 @@ export default function WebAppScreen() {
             message = "No se pudo mostrar la pantalla de Google. Intenta cerrar y reabrir la app.";
           } else if (e?.code === "GOOGLE_CANCELED" || message.includes("cancelado")) {
             message = "Inicio de sesión cancelado.";
-          } else if (message.includes("idToken") || message.includes("token")) {
+          } else if (e?.code === "GOOGLE_MISSING_ID_TOKEN" || message.includes("idToken") || message.includes("id token")) {
+            message = "Google no devolvió credenciales (idToken). Verifica que el Client ID sea el de iOS y que el bundle id sea correcto.";
+          } else if (message.includes("token")) {
             message = "Error al obtener credenciales de Google. Intenta de nuevo.";
           }
           
@@ -485,16 +487,20 @@ export default function WebAppScreen() {
 
             // OAuth: abrir sesión de autenticación in-app (no navegador externo “normal”)
             if (isSupabaseOAuth || isAppleOAuth || isGoogleOAuth) {
-              // ✅ Guideline 4.0: Do not open browser for auth.
-              // Web buttons should call native auth via postMessage.
-              const msg =
-                "Inicio de sesión: abre usando los botones nativos (Apple/Google). Si ves este error, actualiza la app.";
-              setNativeAuthError(msg);
-              injectWebAuthError(msg);
-              // Navigation cancelled: make sure we don't leave native loader stuck.
-              clearLoadWatchdog();
-              setLoading(false);
-              return false;
+              // iOS: for App Review compliance we keep auth in-app (native buttons).
+              // Android: allow web OAuth inside the WebView (no native modules yet).
+              if (Platform.OS === "android") {
+                return true;
+              } else {
+                const msg =
+                  "Inicio de sesión: abre usando los botones nativos (Apple/Google). Si ves este error, actualiza la app.";
+                setNativeAuthError(msg);
+                injectWebAuthError(msg);
+                // Navigation cancelled: make sure we don't leave native loader stuck.
+                clearLoadWatchdog();
+                setLoading(false);
+                return false;
+              }
             }
 
             // Protocolos y enlaces externos (redes sociales, maps, mail, tel, etc.)

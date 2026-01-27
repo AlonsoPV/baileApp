@@ -164,11 +164,14 @@ export function Login() {
       // ✅ Guideline 4.0: in-app auth inside React Native WebView (no browser OAuth)
       if (isMobileWebView()) {
         const rn = (window as any).ReactNativeWebView;
+        // En algunos builds (especialmente Android) puede no existir un bridge nativo.
+        // En ese caso, hacer fallback al OAuth web normal.
         if (!rn?.postMessage) {
-          throw new Error('No se detectó el bridge nativo para Google.');
+          console.warn('[Login] No native bridge for Google; falling back to web OAuth');
+        } else {
+          rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_GOOGLE' }));
+          return; // native will set web session + redirect
         }
-        rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_GOOGLE' }));
-        return; // native will set web session + redirect
       }
 
       const redirectTo = getAuthRedirectUrl();
@@ -212,11 +215,14 @@ export function Login() {
       // ✅ Guideline 4.0: in-app auth inside React Native WebView (no browser OAuth)
       if (isMobileWebView()) {
         const rn = (window as any).ReactNativeWebView;
+        // En algunos builds (especialmente Android) puede no existir un bridge nativo.
+        // En ese caso, hacer fallback al OAuth web normal.
         if (!rn?.postMessage) {
-          throw new Error('No se detectó el bridge nativo para Apple.');
+          console.warn('[Login] No native bridge for Apple; falling back to web OAuth');
+        } else {
+          rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_APPLE' }));
+          return; // native will set web session + redirect
         }
-        rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_APPLE' }));
-        return; // native will set web session + redirect
       }
 
       const redirectTo = getAuthRedirectUrl();
