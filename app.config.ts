@@ -190,6 +190,19 @@ const config: ExpoConfig = {
     },
     edgeToEdgeEnabled: true,
     intentFilters: [
+      // Deep link custom scheme para auth callbacks (Magic Link / OAuth redirect_to)
+      // dondebailarmx://auth/callback
+      {
+        action: "VIEW",
+        data: [
+          {
+            scheme: "dondebailarmx",
+            host: "auth",
+            pathPrefix: "/callback",
+          },
+        ],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
       {
         action: "VIEW",
         data: [

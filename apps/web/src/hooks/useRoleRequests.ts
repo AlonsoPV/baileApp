@@ -131,11 +131,11 @@ export function useApproveRoleRequest() {
             qc.invalidateQueries({ queryKey: ["organizer"] });
             break;
           case 'academia':
-            qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+            qc.invalidateQueries({ queryKey: ["academy", "mine", userId] });
             qc.invalidateQueries({ queryKey: ["academy"] });
             break;
           case 'maestro':
-            qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
+            qc.invalidateQueries({ queryKey: ["teacher", "mine", userId] });
             qc.invalidateQueries({ queryKey: ["teacher"] });
             break;
           case 'marca':

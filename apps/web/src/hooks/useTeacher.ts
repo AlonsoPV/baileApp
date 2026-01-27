@@ -59,19 +59,20 @@ function normalizeTeacherProfile(profile: TeacherProfile | null): TeacherProfile
 
 export function useTeacherMy() {
   const { user, loading: authLoading } = useAuth();
+  const uid = user?.id;
   
   return useQuery({
-    queryKey: ['teacher','mine'],
-    enabled: !authLoading && !!user?.id && typeof user.id === 'string' && user.id.length > 0,
+    queryKey: ['teacher','mine', uid],
+    enabled: !authLoading && !!uid && typeof uid === 'string' && uid.length > 0,
     queryFn: async (): Promise<TeacherProfile|null> => {
-      if (!user?.id || typeof user.id !== 'string') {
+      if (!uid || typeof uid !== 'string') {
         console.warn('[useTeacherMy] Usuario sin ID válido');
         return null;
       }
       const { data, error } = await supabase
         .from(TABLE)
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', uid)
         .limit(1)
         .maybeSingle();
       

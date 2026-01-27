@@ -1,9 +1,13 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useProfileMode } from '@/state/profileMode';
 import { clearAllPinVerified, setNeedsPinVerify } from '@/lib/pin';
 import { isMobileWebView } from '@/utils/authRedirect';
+import { setActiveUserId } from '@/storage/activeUser';
+import { clearLegacyUnscopedWebKeys } from '@/storage/userScopedStorage';
+import { useExploreFilters } from '@/state/exploreFilters';
+import { useDrafts } from '@/state/drafts';
 
 type AuthCtx = {
   session: import('@supabase/supabase-js').Session | null;
@@ -28,6 +32,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthCtx['user']>(null);
   const [loading, setLoading] = useState(true);
   const qc = useQueryClient();
+  const prevUserIdRef = useRef<string | null>(null);
+
+  const applyUserContext = async (nextUserId: string | null) => {
+    const prevUserId = prevUserIdRef.current;
+    if (prevUserId === nextUserId) return;
+
+    prevUserIdRef.current = nextUserId;
+
+    // Always clear legacy unscoped keys (ambiguous ownership → delete).
+    clearLegacyUnscopedWebKeys();
+
+    // Set active user for user-scoped storages (zustand persist, userLocalStorage, etc.)
+    setActiveUserId(nextUserId);
+
+    // Hard reset all runtime caches on user switch (prevents any cross-user reads).
+    qc.clear();
+
+    // Rehydrate per-user stores only when we have a userId.
+    if (nextUserId) {
+      useExploreFilters.getState().rehydrateForUser(nextUserId);
+      useProfileMode.getState().rehydrateForUser(nextUserId);
+      try {
+        // zustand persist does not rehydrate automatically after we change the storage namespace.
+        await (useDrafts as any).persist?.rehydrate?.();
+      } catch {
+        // ignore
+      }
+    } else {
+      // Signed out: clear runtime-only views.
+      useExploreFilters.getState().reset();
+      useProfileMode.getState().setMode('usuario');
+      try {
+        (useDrafts.getState() as any).clearAll?.();
+      } catch {}
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -149,6 +189,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           timeoutId = null;
         }
         
+        // Apply user isolation context
+        await applyUserContext(data?.session?.user?.id ?? null);
+
         // 🎭 Resetear a usuario si no hay sesión
         if (!data?.session?.user) {
           useProfileMode.getState().setMode("usuario");
@@ -198,6 +241,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(sess ?? null);
       setUser(sess?.user ?? null);
       setLoading(false);
+
+      // ✅ Single source of truth: on ANY userId change, fully reset + rehydrate.
+      await applyUserContext(sess?.user?.id ?? null);
 
       // 🔍 Identificar usuario en Hotjar cuando hay sesión (lazy loaded, no bloquea)
       if (sess?.user && evt === 'SIGNED_IN') {

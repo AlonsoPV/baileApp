@@ -35,12 +35,13 @@ export interface AcademyProfile {
 
 export function useAcademyMy() {
   const { user, loading: authLoading } = useAuth();
+  const uid = user?.id;
   
   return useQuery({
-    queryKey: ["academy", "my"],
-    enabled: !authLoading && !!user?.id && typeof user.id === 'string' && user.id.length > 0,
+    queryKey: ["academy", "my", uid],
+    enabled: !authLoading && !!uid && typeof uid === 'string' && uid.length > 0,
     queryFn: async (): Promise<AcademyProfile | null> => {
-      if (!user?.id || typeof user.id !== 'string') {
+      if (!uid || typeof uid !== 'string') {
         console.warn('[useAcademyMy] Usuario sin ID válido');
         return null;
       }
@@ -48,7 +49,7 @@ export function useAcademyMy() {
       const { data, error } = await supabase
         .from("profiles_academy")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", uid)
         .maybeSingle();
 
       if (error) {

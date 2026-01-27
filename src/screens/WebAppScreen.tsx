@@ -358,8 +358,11 @@ export default function WebAppScreen() {
           // Habilitar cookies compartidas para mejor funcionamiento de autenticación (Supabase, Google, etc.)
           sharedCookiesEnabled
           thirdPartyCookiesEnabled
-          // Deshabilitar caché para evitar problemas con actualizaciones
-          cacheEnabled={false}
+          // Android: habilitar caché mejora mucho la velocidad percibida del WebView (login y navegación)
+          // iOS: mantener comportamiento actual (WKWebView suele cachear de forma segura).
+          cacheEnabled={Platform.OS === "android"}
+          // @ts-ignore - prop solo aplica a Android en react-native-webview
+          cacheMode={Platform.OS === "android" ? "LOAD_DEFAULT" : undefined}
           // En Android: permitir contenido mixto (por si hay recursos http)
           mixedContentMode="always"
           // Evitar que target="_blank" intente abrir una nueva "ventana" nativa

@@ -270,6 +270,8 @@ export default function HorizontalSlider<T>({
           WebkitOverflowScrolling: "touch",
           scrollBehavior: isScrolling ? "auto" : "smooth",
           overscrollBehaviorX: "contain",
+          // Fix Android: permitir que el scroll vertical se propague al contenedor padre
+          overscrollBehaviorY: "auto",
           // Better "slide" feel on mobile (snap to cards)
           scrollSnapType: "x proximity",
           scrollPadding: "0 12px",
@@ -279,8 +281,8 @@ export default function HorizontalSlider<T>({
           WebkitTransform: "none",
           willChange: isScrolling ? "scroll-position" : "auto",
           // Touch actions
-          // Permitir scroll vertical del contenedor padre aunque el gesto inicie aquí,
-          // manteniendo swipe horizontal dentro del slider.
+          // Fix Android: permitir tanto scroll horizontal como vertical, pero con overscroll-behavior-y: auto
+          // el scroll vertical se propagará al contenedor padre cuando el gesto es principalmente vertical
           touchAction: "pan-x pan-y",
           // Mouse drag UX
           cursor: allowUserScroll ? "grab" : "default",
@@ -299,6 +301,12 @@ export default function HorizontalSlider<T>({
             .horizontal-scroll {
               scroll-snap-type: x mandatory;
             }
+          }
+
+          /* Fix Android: permitir que el scroll vertical se propague desde las cards */
+          .horizontal-scroll > * {
+            /* Asegurar que las cards no bloqueen el scroll vertical */
+            touch-action: auto;
           }
         `}</style>
 

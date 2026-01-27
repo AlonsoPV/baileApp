@@ -344,6 +344,8 @@ const STYLES = `
     /* Optimizaciones de scroll vertical */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
+    /* Fix Android: permitir scroll vertical desde cualquier parte de la página */
+    touch-action: pan-y;
     /* Nota: NO aplicar transform/backface aquí; puede romper position: fixed en iOS/WebView */
   }
   .filters { padding: ${spacing[6]}; }

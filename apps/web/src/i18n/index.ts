@@ -30,16 +30,12 @@ i18n
     },
 
     // Configuración del detector de idioma
+    // IMPORTANT: per-user language is stored via `useLanguage()` AFTER auth resolves.
+    // We deliberately avoid reading/writing language from localStorage here to prevent
+    // cross-user bleed inside the WebView.
     detection: {
-      // Orden de detección:
-      // 1. localStorage con clave 'db_language' (prioridad)
-      // 2. navigator.language (solo si no hay en localStorage)
-      // 3. fallback a 'es'
-      lookupLocalStorage: 'db_language',
-      caches: ['localStorage'],
-      order: ['localStorage', 'navigator'],
-      // No detectar automáticamente después de la inicialización
-      // Solo usar el valor guardado o el navegador en la primera carga
+      caches: [],
+      order: ['navigator'],
       checkWhitelist: false,
     },
 

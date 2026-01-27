@@ -146,6 +146,8 @@ echo "==> Setting up environment variables"
 export EXPO_PUBLIC_SUPABASE_URL="${EXPO_PUBLIC_SUPABASE_URL:-}"
 export EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}"
 export EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}"
+# Web client id (mismo que el configurado en Supabase Auth → Google). Se usa como serverClientID en iOS.
+export EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-${VITE_GOOGLE_CLIENT_ID:-}}"
 export GOOGLE_REVERSED_CLIENT_ID="${GOOGLE_REVERSED_CLIENT_ID:-}"
 
 # -----------------------------
@@ -187,6 +189,23 @@ if [ -n "$GOOGLE_REVERSED_CLIENT_ID" ] && [ -f "$IOS_INFO_PLIST" ]; then
   /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes" "$IOS_INFO_PLIST" 2>/dev/null || true
 fi
 
+# Inyectar client IDs al Info.plist (source) para que el módulo nativo pueda leerlos.
+# - GIDClientID: iOS client id (configuración del SDK)
+# - GIDServerClientID: web client id (audience del idToken esperado por Supabase)
+if [ -f "$IOS_INFO_PLIST" ] && [ -n "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" ]; then
+  echo "==> Ensuring GIDClientID in Info.plist"
+  /usr/libexec/PlistBuddy -c "Print :GIDClientID" "$IOS_INFO_PLIST" >/dev/null 2>&1 && \
+    /usr/libexec/PlistBuddy -c "Set :GIDClientID $EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" "$IOS_INFO_PLIST" || \
+    /usr/libexec/PlistBuddy -c "Add :GIDClientID string $EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" "$IOS_INFO_PLIST"
+fi
+
+if [ -f "$IOS_INFO_PLIST" ] && [ -n "$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID" ]; then
+  echo "==> Ensuring GIDServerClientID in Info.plist"
+  /usr/libexec/PlistBuddy -c "Print :GIDServerClientID" "$IOS_INFO_PLIST" >/dev/null 2>&1 && \
+    /usr/libexec/PlistBuddy -c "Set :GIDServerClientID $EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID" "$IOS_INFO_PLIST" || \
+    /usr/libexec/PlistBuddy -c "Add :GIDServerClientID string $EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID" "$IOS_INFO_PLIST"
+fi
+
 # ✅ Debug (safe): confirmar presencia sin exponer secretos completos
 echo "==> ENV CHECK (Xcode Cloud)"
 if [ -n "$EXPO_PUBLIC_SUPABASE_URL" ]; then
@@ -205,6 +224,12 @@ if [ -n "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" ]; then
   echo "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: present (len=${#EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID})"
 else
   echo "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: MISSING"
+fi
+
+if [ -n "$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID" ]; then
+  echo "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: present (len=${#EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID})"
+else
+  echo "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: MISSING (iOS may fail to mint Supabase session from idToken)"
 fi
 
 if [ -n "$GOOGLE_REVERSED_CLIENT_ID" ]; then

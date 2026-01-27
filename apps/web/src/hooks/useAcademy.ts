@@ -7,16 +7,17 @@ const TABLE = 'profiles_academy';
 
 export function useAcademyMy() {
   const { user, loading: authLoading } = useAuth();
+  const uid = user?.id;
   
   return useQuery({
-    queryKey: ['academy','mine'],
-    enabled: !authLoading && !!user?.id, // Solo ejecutar cuando hay usuario autenticado
+    queryKey: ['academy','mine', uid],
+    enabled: !authLoading && !!uid, // Solo ejecutar cuando hay usuario autenticado
     queryFn: async (): Promise<AcademyProfile|null> => {
-      if (!user?.id) return null;
+      if (!uid) return null;
       const { data, error } = await supabase
         .from(TABLE)
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', uid)
         .limit(1)
         .maybeSingle();
       if (error) throw error;

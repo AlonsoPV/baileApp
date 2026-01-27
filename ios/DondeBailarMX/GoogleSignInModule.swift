@@ -18,6 +18,16 @@ final class GoogleSignInModule: NSObject {
     return ""
   }
 
+  private func resolvedServerClientId() -> String {
+    // If provided, Google issues an idToken whose audience matches serverClientID
+    // (this is what Supabase expects when using signInWithIdToken for Google).
+    if let v = Bundle.main.object(forInfoDictionaryKey: "GIDServerClientID") as? String {
+      let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !t.isEmpty { return t }
+    }
+    return ""
+  }
+
   @objc(signIn:resolver:rejecter:)
   func signIn(_ clientId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
     DispatchQueue.main.async {
@@ -39,7 +49,10 @@ final class GoogleSignInModule: NSObject {
         return
       }
 
-      let config = GIDConfiguration(clientID: effectiveClientId)
+      let serverClientId = self.resolvedServerClientId()
+      let config = serverClientId.isEmpty
+        ? GIDConfiguration(clientID: effectiveClientId)
+        : GIDConfiguration(clientID: effectiveClientId, serverClientID: serverClientId)
       GIDSignIn.sharedInstance.configuration = config
 
       // Official in-app flow (does not open default Safari browser)

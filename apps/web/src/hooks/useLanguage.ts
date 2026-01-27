@@ -1,19 +1,36 @@
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import i18n from '../i18n';
+import { useAuth } from '@/contexts/AuthProvider';
+import { userLocalStorage } from '@/storage/userScopedStorage';
 
 export type Language = 'es' | 'en';
 
-const LANGUAGE_STORAGE_KEY = 'db_language';
+const STORAGE_PARTS = ['language', 'v1'] as const;
 
 export function useLanguage() {
   const { i18n: i18nInstance, ready } = useTranslation();
+  const { user } = useAuth();
+  const uid = user?.id;
   const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
-    // Obtener idioma inicial desde i18n o localStorage
-    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null;
+    // Obtener idioma inicial desde i18n (user-scoped storage is applied after auth resolves)
     const i18nLang = (i18nInstance.language?.split('-')[0] || 'es') as Language;
-    return stored || i18nLang;
+    return i18nLang;
   });
+
+  // Rehidratar preferencia por usuario cuando cambia uid
+  useEffect(() => {
+    if (!uid) return;
+    try {
+      const stored = userLocalStorage.getItem([...STORAGE_PARTS], uid) as Language | null;
+      const next = stored === 'en' || stored === 'es' ? stored : null;
+      if (next && next !== (i18nInstance.language?.split('-')[0] as any)) {
+        i18n.changeLanguage(next).catch(() => {});
+      }
+    } catch {
+      // ignore
+    }
+  }, [uid, i18nInstance.language]);
 
   // Sincronizar con cambios en i18n
   useEffect(() => {
@@ -45,12 +62,14 @@ export function useLanguage() {
       // Actualizar estado local inmediatamente para feedback visual
       setCurrentLanguage(lang);
       
-      // Guardar en localStorage
-      try {
-        localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          console.warn('[useLanguage] Error al guardar idioma en localStorage:', error);
+      // Guardar SOLO si hay usuario (regla: keys de preferencias deben ser user-scoped)
+      if (uid) {
+        try {
+          userLocalStorage.setItem([...STORAGE_PARTS], lang, uid);
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.warn('[useLanguage] Error al guardar idioma user-scoped:', error);
+          }
         }
       }
       
@@ -69,7 +88,7 @@ export function useLanguage() {
         setCurrentLanguage(currentLanguage);
       });
     },
-    [currentLanguage]
+    [currentLanguage, uid]
   );
 
   return {
