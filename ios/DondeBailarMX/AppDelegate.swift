@@ -10,6 +10,20 @@ public class AppDelegate: ExpoAppDelegate {
   var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
+  private func shouldGoogleLog() -> Bool {
+    #if DEBUG
+    return true
+    #else
+    if let v = Bundle.main.object(forInfoDictionaryKey: "BAILEAPP_GOOGLE_SIGNIN_DEBUG") as? Bool {
+      return v
+    }
+    if let s = Bundle.main.object(forInfoDictionaryKey: "BAILEAPP_GOOGLE_SIGNIN_DEBUG") as? String {
+      return s == "1" || s.lowercased() == "true"
+    }
+    return false
+    #endif
+  }
+
   public override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -39,8 +53,15 @@ public class AppDelegate: ExpoAppDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
+    if shouldGoogleLog() {
+      print("[AppDelegate] openURL url=\(url.absoluteString)")
+      print("[AppDelegate] openURL scheme=\(url.scheme ?? "(none)") host=\(url.host ?? "(none)") path=\(url.path)")
+    }
     // Google Sign-In callback handling (required for URL scheme redirects)
     let handledByGoogle = GIDSignIn.sharedInstance.handle(url)
+    if shouldGoogleLog() {
+      print("[AppDelegate] openURL handledByGoogle=\(handledByGoogle)")
+    }
     return handledByGoogle || super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
   }
 

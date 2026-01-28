@@ -170,6 +170,10 @@ const config: ExpoConfig = {
     infoPlist: (() => {
       const googleIosClientId = required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', '168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com');
       const googleWebClientId = required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', '168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com');
+      const googleDebugFlag = required('EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG', '');
+      const googleDebug =
+        String(googleDebugFlag || '').trim() === "1" ||
+        String(googleDebugFlag || '').trim().toLowerCase() === "true";
       const reversed = (() => {
         const v = String(googleIosClientId || '').trim();
         if (!v || !v.includes('.apps.googleusercontent.com')) return '';
@@ -194,6 +198,7 @@ const config: ExpoConfig = {
       // Native Google Sign-In (used by iOS module). Keeping these in Info.plist helps CI builds.
       ...(googleIosClientId ? { GIDClientID: googleIosClientId } : {}),
       ...(googleWebClientId ? { GIDServerClientID: googleWebClientId } : {}),
+      ...(googleDebug ? { BAILEAPP_GOOGLE_SIGNIN_DEBUG: true } : {}),
       ...(schemes.length > 0
         ? {
             CFBundleURLTypes: [
@@ -258,6 +263,7 @@ const config: ExpoConfig = {
     EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
     googleWebClientId: required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', ''),
     EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', ''),
+    googleSignInDebug: required('EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG', ''),
     eas: {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },

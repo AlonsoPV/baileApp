@@ -165,6 +165,13 @@ export default function WebAppScreen() {
     );
   }, []);
 
+  const mask = React.useCallback((v: string) => {
+    const t = String(v ?? "").trim();
+    if (!t) return "(empty)";
+    if (t.length <= 10) return `${t.slice(0, 2)}...${t.slice(-2)}`;
+    return `${t.slice(0, 6)}...${t.slice(-6)}`;
+  }, []);
+
   const injectWebAuthError = React.useCallback((message: string) => {
     const js = `
       try {
@@ -239,6 +246,20 @@ export default function WebAppScreen() {
           const clientId = getGoogleIosClientId();
 
           console.log("[WebAppScreen] NATIVE_AUTH_GOOGLE requestId=", requestId || "(none)");
+          if (__DEV__) {
+            // eslint-disable-next-line no-console
+            console.log("[WebAppScreen] Google client id (iOS) from Constants.extra:", {
+              requestId: requestId || "(none)",
+              clientId: mask(clientId),
+              len: clientId.length,
+            });
+          }
+          if (!clientId.trim()) {
+            const err: any = new Error("Falta Google iOS Client ID (EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID).");
+            err.code = "GOOGLE_MISSING_CLIENT_ID";
+            err.requestId = requestId;
+            throw err;
+          }
           const tokens = await AuthCoordinator.signInWithGoogle(clientId, requestId);
           injectWebSetSession(tokens);
         } catch (e: any) {

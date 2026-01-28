@@ -18,6 +18,18 @@ type GoogleResult = {
 
 const { AppleSignInModule, GoogleSignInModule } = NativeModules as any;
 
+function shouldLog(): boolean {
+  // @ts-ignore
+  return typeof __DEV__ !== "undefined" && !!__DEV__;
+}
+
+function mask(v: string): string {
+  const t = String(v ?? "").trim();
+  if (!t) return "(empty)";
+  if (t.length <= 10) return `${t.slice(0, 2)}...${t.slice(-2)}`;
+  return `${t.slice(0, 6)}...${t.slice(-6)}`;
+}
+
 export function isNativeAuthAvailable(): boolean {
   // iOS-only implementation for now
   return Platform.OS === "ios" && !!AppleSignInModule && !!GoogleSignInModule;
@@ -48,8 +60,25 @@ export async function nativeSignInWithGoogleWithRequestId(
     throw new Error("GoogleSignInModule no está disponible (build iOS requerido).");
   }
   const rid = String(requestId || "");
+  if (shouldLog()) {
+    // eslint-disable-next-line no-console
+    console.log("[nativeAuth] GoogleSignInModule.signIn start", {
+      requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+      iosClientId: mask(iosClientId),
+    });
+  }
   try {
     const res = (await GoogleSignInModule.signIn(iosClientId, rid)) as any;
+    if (shouldLog()) {
+      // eslint-disable-next-line no-console
+      console.log("[nativeAuth] GoogleSignInModule.signIn ok", {
+        requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+        hasIdToken: !!res?.idToken,
+        idToken: res?.idToken ? mask(String(res.idToken)) : "(none)",
+        email: res?.email ?? null,
+        userId: res?.userId ?? null,
+      });
+    }
     if (!res?.idToken) {
       const err: any = new Error("Google no devolvió idToken.");
       err.code = "GOOGLE_MISSING_ID_TOKEN";
@@ -63,6 +92,15 @@ export async function nativeSignInWithGoogleWithRequestId(
       try {
         (e as any).requestId = (e as any).requestId || rid;
       } catch {}
+    }
+    if (shouldLog()) {
+      // eslint-disable-next-line no-console
+      console.log("[nativeAuth] GoogleSignInModule.signIn error", {
+        requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+        code: String(e?.code ?? ""),
+        message: String(e?.message ?? e ?? ""),
+        keys: e && typeof e === "object" ? Object.keys(e) : [],
+      });
     }
     throw e;
   }

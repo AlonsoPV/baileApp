@@ -339,6 +339,7 @@ const STYLES = `
     color: ${colors.gray[50]}; 
     width: 100%;
     overflow-x: hidden;
+    overflow-y: visible;
     padding-top: 0;
     padding-bottom: env(safe-area-inset-bottom);
     /* Optimizaciones de scroll vertical */
@@ -347,6 +348,14 @@ const STYLES = `
     /* Fix Android: permitir scroll vertical desde cualquier parte de la página */
     touch-action: pan-y;
     /* Nota: NO aplicar transform/backface aquí; puede romper position: fixed en iOS/WebView */
+  }
+  @media (min-width: 769px) {
+    .explore-container {
+      /* En escritorio, asegurar que el scroll vertical funcione correctamente */
+      overflow-y: visible;
+      height: auto;
+      min-height: 100vh;
+    }
   }
   .filters { padding: ${spacing[6]}; }
   .card-skeleton { height: 260px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); display: grid; place-items: center; color: ${colors.gray[400]}; }

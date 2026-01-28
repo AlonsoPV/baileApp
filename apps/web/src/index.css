@@ -17,6 +17,8 @@ html {
   scroll-behavior: smooth;
   /* Prevenir scroll horizontal no deseado */
   overflow-x: hidden;
+  /* Asegurar scroll vertical en escritorio */
+  overflow-y: auto;
   /* Mejorar rendimiento de scroll - solo activar durante scroll activo */
   will-change: auto;
   /* Nota: NO usar transform en html; rompe position: fixed (se vuelve relativo al documento) */
@@ -36,6 +38,8 @@ body {
   /* Nota: NO usar transform en body; rompe position: fixed (se vuelve relativo al documento) */
   /* Prevenir scroll horizontal */
   overflow-x: hidden;
+  /* Asegurar scroll vertical en escritorio */
+  overflow-y: auto;
   /* Mejorar rendimiento - solo durante scroll activo */
   will-change: auto;
   /* Touch actions optimizadas */

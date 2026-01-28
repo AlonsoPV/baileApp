@@ -96,6 +96,15 @@ class AuthCoordinatorImpl {
       console.log("[AuthCoordinator] Google native sign-in start", { requestId: rid ? `${rid.slice(0, 8)}…` : "(none)" });
       const google = await nativeSignInWithGoogleWithRequestId(iosClientId, rid);
       if (!supabase) throw new Error("Supabase no está configurado en la app.");
+      // @ts-ignore
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[AuthCoordinator] Google token received; calling Supabase", {
+          requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+          hasIdToken: !!google?.idToken,
+          tokenLen: String(google?.idToken ?? "").length,
+        });
+      }
 
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "google",
@@ -107,14 +116,46 @@ class AuthCoordinatorImpl {
       if (!sess?.access_token || !sess?.refresh_token) {
         throw new Error("No se pudo obtener sesión de Supabase (Google).");
       }
+      // @ts-ignore
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[AuthCoordinator] Supabase session OK", {
+          requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+          hasAccess: !!sess?.access_token,
+          hasRefresh: !!sess?.refresh_token,
+        });
+      }
 
       this.setState({ status: "loggedIn", error: null });
       return { access_token: sess.access_token, refresh_token: sess.refresh_token };
     } catch (e) {
       const msg = normalizeErrorMessage(e, "Error al iniciar sesión con Google.");
       this.setState({ status: "error", error: msg });
+      const rid = String(requestId || "");
+      const anyE = e as any;
+      // @ts-ignore
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
+        try {
+          // eslint-disable-next-line no-console
+          console.log("[AuthCoordinator] Google sign-in error (raw)", {
+            requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+            code: String(anyE?.code ?? ""),
+            message: String(anyE?.message ?? anyE ?? ""),
+            keys: anyE && typeof anyE === "object" ? Object.keys(anyE) : [],
+          });
+        } catch {}
+      }
+
+      // Prefer throwing the original error if it already has a code (keeps native reject codes like GOOGLE_MISSING_ID_TOKEN).
+      if (anyE && (anyE.code || anyE.domain || anyE.status)) {
+        if (rid) {
+          try { anyE.requestId = anyE.requestId || rid; } catch {}
+        }
+        throw anyE;
+      }
+
       const err = preserveErrorDetails(e, msg) as any;
-      if (requestId) err.requestId = String((err as any).requestId || requestId);
+      if (rid) err.requestId = String((err as any).requestId || rid);
       throw err;
     }
   }
