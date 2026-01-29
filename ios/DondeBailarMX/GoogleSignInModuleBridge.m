@@ -1,3 +1,4 @@
+
 #import <React/RCTBridgeModule.h>
 
 @interface RCT_EXTERN_MODULE(GoogleSignInModule, NSObject)
@@ -11,4 +12,3 @@ RCT_EXTERN_METHOD(signOut:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 @end
-
