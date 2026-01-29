@@ -85,6 +85,8 @@ final class GoogleSignInModule: NSObject {
       let schemeOK = self.hasURLScheme(expectedScheme)
 
       if self.shouldLog() {
+        print("[GoogleSignInModule] expectedScheme=\(expectedScheme)")
+        print("[GoogleSignInModule] CFBundleURLTypes=\(Bundle.main.object(forInfoDictionaryKey: \"CFBundleURLTypes\") ?? \"nil\")")
         print("[GoogleSignInModule] requestId=\(requestId) clientID=\(effectiveClientId.prefix(18))... serverClientID=\(serverClientId.prefix(18))... expectedScheme=\(expectedScheme) schemeOK=\(schemeOK)")
       }
 
