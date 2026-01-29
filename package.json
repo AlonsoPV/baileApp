@@ -53,6 +53,7 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
+    "@types/react": "^19.0.0",
     "@types/node": "^25.0.9",
     "babel-preset-expo": "^54.0.9",
     "eas-cli": "16.28.0"
