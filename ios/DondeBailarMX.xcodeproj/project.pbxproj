@@ -19,6 +19,7 @@
 		F11748552D1A00030044C1D9 /* NativeAuthTopViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748542D1A00030044C1D9 /* NativeAuthTopViewController.swift */; };
 		F11748612D1A00040044C1D9 /* AppleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */; };
 		F11748632D1A00050044C1D9 /* GoogleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */; };
+		FE1C0A7B4C5C4A30A2D1C0A7 /* SafeUserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1C0A7A4C5C4A30A2D1C0A7 /* SafeUserDefaults.swift */; };
 		F689B9C1871C4D09B1607619 /* libPods-DondeBailarMX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA89DBAFB6ABFDEE14950A52 /* libPods-DondeBailarMX.a */; };
 /* End PBXBuildFile section */
 
@@ -42,6 +43,7 @@
 		F11748542D1A00030044C1D9 /* NativeAuthTopViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeAuthTopViewController.swift; path = DondeBailarMX/NativeAuthTopViewController.swift; sourceTree = "<group>"; };
 		F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AppleSignInModuleBridge.m; path = DondeBailarMX/AppleSignInModuleBridge.m; sourceTree = "<group>"; };
 		F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = GoogleSignInModuleBridge.m; path = DondeBailarMX/GoogleSignInModuleBridge.m; sourceTree = "<group>"; };
+		FE1C0A7A4C5C4A30A2D1C0A7 /* SafeUserDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SafeUserDefaults.swift; path = DondeBailarMX/Utils/SafeUserDefaults.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +62,7 @@
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
+				FE1C0A7A4C5C4A30A2D1C0A7 /* SafeUserDefaults.swift */,
 				F11748502D1A00010044C1D9 /* AppleSignInModule.swift */,
 				F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */,
 				F11748522D1A00020044C1D9 /* GoogleSignInModule.swift */,
@@ -167,6 +170,7 @@
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				12F47460C6E7BEFE804F3C66 /* [CP] Embed Pods Frameworks */,
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* Generate Hermes dSYM */,
+				E2819D532F2C06A800BBC8A0 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -261,18 +265,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		A9C0F3E3D1B24C9E9A1B2C3D /* Inject Google reversed client ID */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			name = "Inject Google reversed client ID";
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -e\n\n# Ensure Google Sign-In can return to the app by registering the reversed client ID URL scheme.\n# Inject Google keys into the *BUILT* Info.plist so runtime code can read them from Bundle.main.\n# Required: EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID\n# Optional: EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID (injects GIDServerClientID), EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG=1\n\nCLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}\"\nWEB_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-}\"\nDEBUG_GSI=\"${EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG:-}\"\n\nif [ -z \"$CLIENT_ID\" ]; then\n  echo \"[GoogleSignIn] ERROR: EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID not set; cannot configure Google Sign-In\"\n  # Fail Release/Archive builds so we do not ship a broken binary.\n  if [[ \"${CONFIGURATION:-}\" != *Debug* ]]; then\n    exit 1\n  fi\n  # Allow Debug builds to proceed (Google native sign-in will be disabled).\n  exit 0\nfi\n\nif [ \"$DEBUG_GSI\" = \"1\" ]; then\n  echo \"[GoogleSignIn] DEBUG: iOS client id present (len=${#CLIENT_ID})\"\n  if [ -n \"$WEB_CLIENT_ID\" ]; then\n    echo \"[GoogleSignIn] DEBUG: web client id present (len=${#WEB_CLIENT_ID})\"\n  else\n    echo \"[GoogleSignIn] DEBUG: web client id MISSING (GIDServerClientID will not be injected)\"\n  fi\nfi\n\n# Expected format: xxxxx-xxxxx.apps.googleusercontent.com\nPREFIX_FULL=\"${CLIENT_ID%%.apps.googleusercontent.com}\"\nPREFIX_NUM=\"${PREFIX_FULL%%-*}\"\nif [ \"$PREFIX_FULL\" = \"$CLIENT_ID\" ] || [ -z \"$PREFIX_FULL\" ]; then\n  echo \"[GoogleSignIn] Client ID does not look like an iOS client id (.apps.googleusercontent.com). Ensure you're using the iOS Client ID, not the Web Client ID. Skipping.\"\n  exit 0\nfi\n\n# Some tooling expects just the numeric prefix (before first '-'), others expect the full prefix.\nREVERSED_NUM=\"com.googleusercontent.apps.${PREFIX_NUM}\"\nREVERSED_FULL=\"com.googleusercontent.apps.${PREFIX_FULL}\"\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\nSRC_PLIST=\"$SRCROOT/DondeBailarMX/Info.plist\"\n\n# Apply to built + source plists (some build steps can overwrite built plist later)\nfor P in \"$SRC_PLIST\" \"$P\"; do\n  if [ ! -f \"$P\" ]; then\n    echo \"[GoogleSignIn] WARN: Info.plist not found at $P\"\n    continue\n  fi\n\n# Ensure CFBundleURLTypes[0].CFBundleURLSchemes exists\n/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$P\" >/dev/null 2>&1 || /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes array\" \"$P\"\n/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes:0\" \"$P\" >/dev/null 2>&1 || /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0 dict\" \"$P\"\n/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes:0:CFBundleURLSchemes\" \"$P\" >/dev/null 2>&1 || /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes array\" \"$P\"\n\n# Append reversed scheme(s) if missing\nif ! /usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes:0:CFBundleURLSchemes\" \"$P\" | grep -Fq \"$REVERSED_NUM\"; then\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes: string $REVERSED_NUM\" \"$P\" || true\nfi\nif [ -n \"$REVERSED_FULL\" ] && ! /usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes:0:CFBundleURLSchemes\" \"$P\" | grep -Fq \"$REVERSED_FULL\"; then\n  /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:0:CFBundleURLSchemes: string $REVERSED_FULL\" \"$P\" || true\nfi\n\n# Ensure GIDClientID exists (used by native module fallback)\n/usr/libexec/PlistBuddy -c \"Print :GIDClientID\" \"$P\" >/dev/null 2>&1 && \\\n  /usr/libexec/PlistBuddy -c \"Set :GIDClientID $CLIENT_ID\" \"$P\" || \\\n  /usr/libexec/PlistBuddy -c \"Add :GIDClientID string $CLIENT_ID\" \"$P\"\n\n# Ensure GIDServerClientID exists (Web client id; makes idToken audience match expected)\nif [ -n \"$WEB_CLIENT_ID\" ]; then\n  /usr/libexec/PlistBuddy -c \"Print :GIDServerClientID\" \"$P\" >/dev/null 2>&1 && \\\n    /usr/libexec/PlistBuddy -c \"Set :GIDServerClientID $WEB_CLIENT_ID\" \"$P\" || \\\n    /usr/libexec/PlistBuddy -c \"Add :GIDServerClientID string $WEB_CLIENT_ID\" \"$P\"\nfi\n\ndone\n\necho \"[GoogleSignIn] Ensured URL scheme(s) + GIDClientID (+ optional GIDServerClientID)\"\n";
 			showEnvVarsInLog = 0;
 		};
 		12F47460C6E7BEFE804F3C66 /* [CP] Embed Pods Frameworks */ = {
@@ -429,6 +421,24 @@
 			shellScript = "set -euo pipefail\n\nICONSET_DIR=\"${SRCROOT}/DondeBailarMX/Images.xcassets/AppIcon.appiconset\"\nSRC_ICON=\"${ICONSET_DIR}/App-Icon-1024x1024@1x.png\"\nOPAQUE_SRC=\"${ICONSET_DIR}/AppIcon-1024-opaque.png\"\n\nif [ ! -f \"$SRC_ICON\" ]; then\n  echo \"[AppIcon] Source icon missing: $SRC_ICON\"\n  exit 0\nfi\n\n# App Store Connect rejects app icons with alpha/transparency.\n# Create an opaque 1024 PNG via a JPEG round-trip (JPEG has no alpha).\nif [ ! -f \"$OPAQUE_SRC\" ]; then\n  TMP_JPG=\"${ICONSET_DIR}/.tmp_appicon_opaque.jpg\"\n  echo \"[AppIcon] Generating opaque base icon: $(basename \"$OPAQUE_SRC\")\"\n  /usr/bin/sips -s format jpeg \"$SRC_ICON\" --out \"$TMP_JPG\" >/dev/null\n  /usr/bin/sips -s format png \"$TMP_JPG\" --out \"$OPAQUE_SRC\" >/dev/null\n  rm -f \"$TMP_JPG\" || true\nfi\n\ngen_icon() {\n  local px=\"$1\"\n  local out=\"$2\"\n  if [ -f \"$out\" ]; then\n    return 0\n  fi\n  echo \"[AppIcon] Generating $(basename \"$out\") (${px}x${px})\"\n  /usr/bin/sips -Z \"$px\" \"$OPAQUE_SRC\" --out \"$out\" >/dev/null\n}\n\n# iPad\n\ngen_icon 20  \"${ICONSET_DIR}/AppIcon-20@1x.png\"\ngen_icon 29  \"${ICONSET_DIR}/AppIcon-29@1x.png\"\ngen_icon 40  \"${ICONSET_DIR}/AppIcon-40@1x.png\"\ngen_icon 76  \"${ICONSET_DIR}/AppIcon-76@1x.png\"\ngen_icon 152 \"${ICONSET_DIR}/AppIcon-76@2x.png\"\ngen_icon 167 \"${ICONSET_DIR}/AppIcon-83.5@2x.png\"\n\n# iPhone / shared\n\ngen_icon 40  \"${ICONSET_DIR}/AppIcon-20@2x.png\"\ngen_icon 60  \"${ICONSET_DIR}/AppIcon-20@3x.png\"\ngen_icon 58  \"${ICONSET_DIR}/AppIcon-29@2x.png\"\ngen_icon 87  \"${ICONSET_DIR}/AppIcon-29@3x.png\"\ngen_icon 80  \"${ICONSET_DIR}/AppIcon-40@2x.png\"\ngen_icon 120 \"${ICONSET_DIR}/AppIcon-40@3x.png\"\ngen_icon 120 \"${ICONSET_DIR}/AppIcon-60@2x.png\"\ngen_icon 180 \"${ICONSET_DIR}/AppIcon-60@3x.png\"\n\necho \"[AppIcon] Done.\"\n";
 			showEnvVarsInLog = 0;
 		};
+		E2819D532F2C06A800BBC8A0 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\nset -euo pipefail\n\n# IMPORTANT: In Archive, TARGET_BUILD_DIR may point to InstallationBuildProductsLocation (not ready yet).\n# BUILT_PRODUCTS_DIR points to the built .app folder that exists during build.\nPLIST=\"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n\necho \"🔧 [GoogleSignIn] Using Info.plist: $PLIST\"\n\nif [ ! -f \"$PLIST\" ]; then\n  echo \"❌ [GoogleSignIn] Info.plist not found at build time: $PLIST\"\n  echo \"   BUILT_PRODUCTS_DIR=$BUILT_PRODUCTS_DIR\"\n  echo \"   INFOPLIST_PATH=$INFOPLIST_PATH\"\n  exit 1\nfi\n\nread_plist_key () {\n  local key=\"$1\"\n  /usr/libexec/PlistBuddy -c \"Print :$key\" \"$PLIST\" 2>/dev/null | head -n 1 | tr -d '\\r' || true\n}\n\n# 1) Get iOS Client ID (env first, then plist)\nIOS_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}\"\nif [ -z \"${IOS_CLIENT_ID}\" ]; then\n  IOS_CLIENT_ID=\"$(read_plist_key \"GIDClientID\")\"\nfi\n\n# Validate expected format\nif [[ -z \"${IOS_CLIENT_ID}\" || \"${IOS_CLIENT_ID}\" != *\".apps.googleusercontent.com\" || \"${IOS_CLIENT_ID}\" != *\"-\"* ]]; then\n  echo \"❌ [GoogleSignIn] Missing/invalid iOS client id.\"\n  echo \"   Provide EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID or set GIDClientID in Target > Info.\"\n  echo \"   Current IOS_CLIENT_ID='${IOS_CLIENT_ID}'\"\n  exit 1\nfi\n\nPREFIX=\"${IOS_CLIENT_ID%%-*}\"\nSCHEME=\"com.googleusercontent.apps.${PREFIX}\"\n\necho \"✅ [GoogleSignIn] iOS client id: ${IOS_CLIENT_ID:0:14}...  => scheme: $SCHEME\"\n\n# 2) Ensure GIDClientID exists (keep consistent)\n /usr/libexec/PlistBuddy -c \"Set :GIDClientID $IOS_CLIENT_ID\" \"$PLIST\" 2>/dev/null || \\\n /usr/libexec/PlistBuddy -c \"Add :GIDClientID string $IOS_CLIENT_ID\" \"$PLIST\"\n\n# 3) Ensure GIDServerClientID (optional)\nWEB_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-}\"\nif [ -z \"${WEB_CLIENT_ID}\" ]; then\n  WEB_CLIENT_ID=\"$(read_plist_key \"GIDServerClientID\")\"\nfi\n\nif [[ -n \"${WEB_CLIENT_ID}\" && \"${WEB_CLIENT_ID}\" == *\".apps.googleusercontent.com\" ]]; then\n  /usr/libexec/PlistBuddy -c \"Set :GIDServerClientID $WEB_CLIENT_ID\" \"$PLIST\" 2>/dev/null || \\\n  /usr/libexec/PlistBuddy -c \"Add :GIDServerClientID string $WEB_CLIENT_ID\" \"$PLIST\"\n  echo \"✅ [GoogleSignIn] Web client id: ${WEB_CLIENT_ID:0:14}...\"\nelse\n  echo \"⚠️ [GoogleSignIn] Web client id not set (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID or GIDServerClientID).\"\nfi\n\n# 4) Ensure URL scheme exists (append entry)\n /usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" >/dev/null 2>&1 || \\\n /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes array\" \"$PLIST\"\n\nNEXT_INDEX=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" 2>/dev/null | grep -E \"Dict\" | wc -l | tr -d ' ')\nif [ -z \"$NEXT_INDEX\" ]; then NEXT_INDEX=0; fi\n\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$NEXT_INDEX dict\" \"$PLIST\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$NEXT_INDEX:CFBundleURLSchemes array\" \"$PLIST\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$NEXT_INDEX:CFBundleURLSchemes:0 string $SCHEME\" \"$PLIST\" 2>/dev/null || true\n\necho \"📌 [GoogleSignIn] URLTypes after injection:\"\n/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" || true\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -437,6 +447,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
+				FE1C0A7B4C5C4A30A2D1C0A7 /* SafeUserDefaults.swift in Sources */,
 				F11748512D1A00010044C1D9 /* AppleSignInModule.swift in Sources */,
 				F11748612D1A00040044C1D9 /* AppleSignInModuleBridge.m in Sources */,
 				F11748532D1A00020044C1D9 /* GoogleSignInModule.swift in Sources */,

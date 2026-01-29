@@ -28,6 +28,19 @@ public class AppDelegate: ExpoAppDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // Very early sanitization: remove any non-property-list values from UserDefaults.
+    // These can crash WebKit via WKUserDefaults + NSKeyedArchiver requiring secure coding.
+    let removed = SafeUserDefaults.sanitizeAll()
+    #if DEBUG
+    if !removed.isEmpty {
+      print("[SafeUserDefaults] sanitized removedKeys=\(removed)")
+    }
+    let offenders = SafeUserDefaults.audit()
+    if !offenders.isEmpty {
+      print("[SafeUserDefaults] audit offenders=\(offenders)")
+    }
+    #endif
+
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
