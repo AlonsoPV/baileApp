@@ -10,6 +10,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		7E4AEEDBEAE8F4BDFC6BF989 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1212778123739EDD65552D26 /* PrivacyInfo.xcprivacy */; };
+		867FFCBC9DFE7C006CCEE31C /* libPods-DondeBailarMX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 494F3A6E103A3EAAF86469CB /* libPods-DondeBailarMX.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		C92C260A5C64FFAA012BEA84 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6E8AC9391CDBA55090B34FC /* ExpoModulesProvider.swift */; };
 		E254DBAD2F18BE9E00252978 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E254DBAC2F18BE9E00252978 /* Assets.xcassets */; };
@@ -20,7 +21,6 @@
 		F11748612D1A00040044C1D9 /* AppleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748602D1A00040044C1D9 /* AppleSignInModuleBridge.m */; };
 		F11748632D1A00050044C1D9 /* GoogleSignInModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F11748622D1A00050044C1D9 /* GoogleSignInModuleBridge.m */; };
 		FE1C0A7B4C5C4A30A2D1C0A7 /* SafeUserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE1C0A7A4C5C4A30A2D1C0A7 /* SafeUserDefaults.swift */; };
-		F689B9C1871C4D09B1607619 /* libPods-DondeBailarMX.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA89DBAFB6ABFDEE14950A52 /* libPods-DondeBailarMX.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,11 +28,11 @@
 		13B07F961A680F5B00A75B9A /* DondeBailarMX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DondeBailarMX.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DondeBailarMX/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DondeBailarMX/Info.plist; sourceTree = "<group>"; };
-		42EFB767A23A8A6B8F193F46 /* Pods-DondeBailarMX.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DondeBailarMX.debug.xcconfig"; path = "Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.debug.xcconfig"; sourceTree = "<group>"; };
+		494F3A6E103A3EAAF86469CB /* libPods-DondeBailarMX.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DondeBailarMX.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F1804688637C8A8CBC73927 /* Pods-DondeBailarMX.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DondeBailarMX.debug.xcconfig"; path = "Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.debug.xcconfig"; sourceTree = "<group>"; };
+		60E1B2B1888BA6607DD8B5BC /* Pods-DondeBailarMX.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DondeBailarMX.release.xcconfig"; path = "Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DondeBailarMX/SplashScreen.storyboard; sourceTree = "<group>"; };
-		AA89DBAFB6ABFDEE14950A52 /* libPods-DondeBailarMX.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DondeBailarMX.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C51258A13584F6DBE0312E32 /* Pods-DondeBailarMX.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DondeBailarMX.release.xcconfig"; path = "Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX.release.xcconfig"; sourceTree = "<group>"; };
 		E254DBAC2F18BE9E00252978 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = DondeBailarMX/Assets.xcassets; sourceTree = "<group>"; };
 		E6E8AC9391CDBA55090B34FC /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DondeBailarMX/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -51,7 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F689B9C1871C4D09B1607619 /* libPods-DondeBailarMX.a in Frameworks */,
+				867FFCBC9DFE7C006CCEE31C /* libPods-DondeBailarMX.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -82,7 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				AA89DBAFB6ABFDEE14950A52 /* libPods-DondeBailarMX.a */,
+				494F3A6E103A3EAAF86469CB /* libPods-DondeBailarMX.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -98,8 +98,8 @@
 		8233C644C7BE8FE18F789B1D /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				42EFB767A23A8A6B8F193F46 /* Pods-DondeBailarMX.debug.xcconfig */,
-				C51258A13584F6DBE0312E32 /* Pods-DondeBailarMX.release.xcconfig */,
+				5F1804688637C8A8CBC73927 /* Pods-DondeBailarMX.debug.xcconfig */,
+				60E1B2B1888BA6607DD8B5BC /* Pods-DondeBailarMX.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -159,7 +159,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DondeBailarMX" */;
 			buildPhases = (
-				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
+				3029268FCFCE7319F8F8467B /* [CP] Check Pods Manifest.lock */,
 				903A2D67070AD2D2DF906E9D /* [Expo] Configure project */,
 				D0B1E0A0A0A0A0A0A0A0A0A0 /* Generate App Icons */,
 				13B07F871A680F5B00A75B9A /* Sources */,
@@ -167,10 +167,10 @@
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				B0C1A2B3C4D5E6F708090A0B /* Verify Privacy Usage Descriptions */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				12F47460C6E7BEFE804F3C66 /* [CP] Embed Pods Frameworks */,
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* Generate Hermes dSYM */,
 				E2819D532F2C06A800BBC8A0 /* ShellScript */,
+				DFCE99B43E1D8690A7FE2CAA /* [CP] Embed Pods Frameworks */,
+				0A751D20133743A921FDEFF7 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -245,47 +245,7 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-DondeBailarMX-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		12F47460C6E7BEFE804F3C66 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
+		0A751D20133743A921FDEFF7 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -333,6 +293,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		3029268FCFCE7319F8F8467B /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-DondeBailarMX-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		903A2D67070AD2D2DF906E9D /* [Expo] Configure project */ = {
@@ -421,6 +403,24 @@
 			shellScript = "set -euo pipefail\n\nICONSET_DIR=\"${SRCROOT}/DondeBailarMX/Images.xcassets/AppIcon.appiconset\"\nSRC_ICON=\"${ICONSET_DIR}/App-Icon-1024x1024@1x.png\"\nOPAQUE_SRC=\"${ICONSET_DIR}/AppIcon-1024-opaque.png\"\n\nif [ ! -f \"$SRC_ICON\" ]; then\n  echo \"[AppIcon] Source icon missing: $SRC_ICON\"\n  exit 0\nfi\n\n# App Store Connect rejects app icons with alpha/transparency.\n# Create an opaque 1024 PNG via a JPEG round-trip (JPEG has no alpha).\nif [ ! -f \"$OPAQUE_SRC\" ]; then\n  TMP_JPG=\"${ICONSET_DIR}/.tmp_appicon_opaque.jpg\"\n  echo \"[AppIcon] Generating opaque base icon: $(basename \"$OPAQUE_SRC\")\"\n  /usr/bin/sips -s format jpeg \"$SRC_ICON\" --out \"$TMP_JPG\" >/dev/null\n  /usr/bin/sips -s format png \"$TMP_JPG\" --out \"$OPAQUE_SRC\" >/dev/null\n  rm -f \"$TMP_JPG\" || true\nfi\n\ngen_icon() {\n  local px=\"$1\"\n  local out=\"$2\"\n  if [ -f \"$out\" ]; then\n    return 0\n  fi\n  echo \"[AppIcon] Generating $(basename \"$out\") (${px}x${px})\"\n  /usr/bin/sips -Z \"$px\" \"$OPAQUE_SRC\" --out \"$out\" >/dev/null\n}\n\n# iPad\n\ngen_icon 20  \"${ICONSET_DIR}/AppIcon-20@1x.png\"\ngen_icon 29  \"${ICONSET_DIR}/AppIcon-29@1x.png\"\ngen_icon 40  \"${ICONSET_DIR}/AppIcon-40@1x.png\"\ngen_icon 76  \"${ICONSET_DIR}/AppIcon-76@1x.png\"\ngen_icon 152 \"${ICONSET_DIR}/AppIcon-76@2x.png\"\ngen_icon 167 \"${ICONSET_DIR}/AppIcon-83.5@2x.png\"\n\n# iPhone / shared\n\ngen_icon 40  \"${ICONSET_DIR}/AppIcon-20@2x.png\"\ngen_icon 60  \"${ICONSET_DIR}/AppIcon-20@3x.png\"\ngen_icon 58  \"${ICONSET_DIR}/AppIcon-29@2x.png\"\ngen_icon 87  \"${ICONSET_DIR}/AppIcon-29@3x.png\"\ngen_icon 80  \"${ICONSET_DIR}/AppIcon-40@2x.png\"\ngen_icon 120 \"${ICONSET_DIR}/AppIcon-40@3x.png\"\ngen_icon 120 \"${ICONSET_DIR}/AppIcon-60@2x.png\"\ngen_icon 180 \"${ICONSET_DIR}/AppIcon-60@3x.png\"\n\necho \"[AppIcon] Done.\"\n";
 			showEnvVarsInLog = 0;
 		};
+		DFCE99B43E1D8690A7FE2CAA /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		E2819D532F2C06A800BBC8A0 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -437,7 +437,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\nset -euo pipefail\n\n# IMPORTANT: In Archive, TARGET_BUILD_DIR may point to InstallationBuildProductsLocation (not ready yet).\n# BUILT_PRODUCTS_DIR points to the built .app folder that exists during build.\nPLIST=\"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n\necho \"🔧 [GoogleSignIn] Using Info.plist: $PLIST\"\n\nif [ ! -f \"$PLIST\" ]; then\n  echo \"❌ [GoogleSignIn] Info.plist not found at build time: $PLIST\"\n  echo \"   BUILT_PRODUCTS_DIR=$BUILT_PRODUCTS_DIR\"\n  echo \"   INFOPLIST_PATH=$INFOPLIST_PATH\"\n  exit 1\nfi\n\nread_plist_key () {\n  local key=\"$1\"\n  /usr/libexec/PlistBuddy -c \"Print :$key\" \"$PLIST\" 2>/dev/null | head -n 1 | tr -d '\\r' || true\n}\n\n# 1) Get iOS Client ID (env first, then plist)\nIOS_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}\"\nif [ -z \"${IOS_CLIENT_ID}\" ]; then\n  IOS_CLIENT_ID=\"$(read_plist_key \"GIDClientID\")\"\nfi\n\n# Validate expected format\nif [[ -z \"${IOS_CLIENT_ID}\" || \"${IOS_CLIENT_ID}\" != *\".apps.googleusercontent.com\" || \"${IOS_CLIENT_ID}\" != *\"-\"* ]]; then\n  echo \"❌ [GoogleSignIn] Missing/invalid iOS client id.\"\n  echo \"   Provide EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID or set GIDClientID in Target > Info.\"\n  echo \"   Current IOS_CLIENT_ID='${IOS_CLIENT_ID}'\"\n  exit 1\nfi\n\nPREFIX=\"${IOS_CLIENT_ID%%-*}\"\nSCHEME=\"com.googleusercontent.apps.${PREFIX}\"\n\necho \"✅ [GoogleSignIn] iOS client id: ${IOS_CLIENT_ID:0:14}...  => scheme: $SCHEME\"\n\n# 2) Ensure GIDClientID exists (keep consistent)\n /usr/libexec/PlistBuddy -c \"Set :GIDClientID $IOS_CLIENT_ID\" \"$PLIST\" 2>/dev/null || \\\n /usr/libexec/PlistBuddy -c \"Add :GIDClientID string $IOS_CLIENT_ID\" \"$PLIST\"\n\n# 3) Ensure GIDServerClientID (optional)\nWEB_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-}\"\nif [ -z \"${WEB_CLIENT_ID}\" ]; then\n  WEB_CLIENT_ID=\"$(read_plist_key \"GIDServerClientID\")\"\nfi\n\nif [[ -n \"${WEB_CLIENT_ID}\" && \"${WEB_CLIENT_ID}\" == *\".apps.googleusercontent.com\" ]]; then\n  /usr/libexec/PlistBuddy -c \"Set :GIDServerClientID $WEB_CLIENT_ID\" \"$PLIST\" 2>/dev/null || \\\n  /usr/libexec/PlistBuddy -c \"Add :GIDServerClientID string $WEB_CLIENT_ID\" \"$PLIST\"\n  echo \"✅ [GoogleSignIn] Web client id: ${WEB_CLIENT_ID:0:14}...\"\nelse\n  echo \"⚠️ [GoogleSignIn] Web client id not set (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID or GIDServerClientID).\"\nfi\n\n# 4) Ensure URL scheme exists (append entry)\n /usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" >/dev/null 2>&1 || \\\n /usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes array\" \"$PLIST\"\n\nNEXT_INDEX=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" 2>/dev/null | grep -E \"Dict\" | wc -l | tr -d ' ')\nif [ -z \"$NEXT_INDEX\" ]; then NEXT_INDEX=0; fi\n\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$NEXT_INDEX dict\" \"$PLIST\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$NEXT_INDEX:CFBundleURLSchemes array\" \"$PLIST\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$NEXT_INDEX:CFBundleURLSchemes:0 string $SCHEME\" \"$PLIST\" 2>/dev/null || true\n\necho \"📌 [GoogleSignIn] URLTypes after injection:\"\n/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" || true\n";
+			shellScript = "\nset -euo pipefail\n\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\necho \"🔧 [GoogleSignIn] Using Info.plist: $PLIST\"\n\nstrip_quotes() {\n  local s=\"$1\"\n  s=${s#\\\"}\n  s=${s%\\\"}\n  printf \"%s\" \"$s\"\n}\n\nread_env_file() {\n  local file=\"$1\"\n  local key=\"$2\"\n  if [ -f \"$file\" ]; then\n    local line\n    line=$(grep -E \"^${key}=\" \"$file\" 2>/dev/null | head -n 1 | cut -d= -f2- | tr -d '\\r' || true)\n    strip_quotes \"$line\"\n  fi\n}\n\n# Prefer build env vars (CI/EAS/Xcode Cloud), but allow local Archive to load from repo env files.\n# SRCROOT is ios/ → repo root is $SRCROOT/..\nENV_FILE_LOCAL=\"${SRCROOT}/../config/local.env\"\nENV_FILE_DOTENV=\"${SRCROOT}/../.env\"\n\nIOS_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}\"\nif [ -z \"$IOS_CLIENT_ID\" ]; then\n  IOS_CLIENT_ID=\"$(read_env_file \"$ENV_FILE_LOCAL\" \"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID\")\"\nfi\nif [ -z \"$IOS_CLIENT_ID\" ]; then\n  IOS_CLIENT_ID=\"$(read_env_file \"$ENV_FILE_DOTENV\" \"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID\")\"\nfi\n\nif [ -z \"$IOS_CLIENT_ID\" ]; then\n  echo \"❌ [GoogleSignIn] EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID not set (and not found in config/local.env or .env).\"\n  # Fail Release/Archive builds so we do not ship a broken binary.\n  if echo \"${CONFIGURATION:-}\" | grep -qi \"Debug\"; then\n    exit 0\n  fi\n  exit 1\nfi\n\nPREFIX=\"${IOS_CLIENT_ID%%-*}\"\nSCHEME=\"com.googleusercontent.apps.${PREFIX}\"\n\necho \"✅ [GoogleSignIn] iOS client id present (len=${#IOS_CLIENT_ID}) => scheme: $SCHEME\"\n\n# Inject keys into built plist (create if missing)\n/usr/libexec/PlistBuddy -c \"Set :GIDClientID $IOS_CLIENT_ID\" \"$PLIST\" 2>/dev/null || \\\n/usr/libexec/PlistBuddy -c \"Add :GIDClientID string $IOS_CLIENT_ID\" \"$PLIST\"\n\nWEB_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-}\"\nif [ -z \"$WEB_CLIENT_ID\" ]; then\n  WEB_CLIENT_ID=\"$(read_env_file \"$ENV_FILE_LOCAL\" \"EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID\")\"\nfi\nif [ -z \"$WEB_CLIENT_ID\" ]; then\n  WEB_CLIENT_ID=\"$(read_env_file \"$ENV_FILE_DOTENV\" \"EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID\")\"\nfi\n\nif [ -n \"$WEB_CLIENT_ID\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :GIDServerClientID $WEB_CLIENT_ID\" \"$PLIST\" 2>/dev/null || \\\n  /usr/libexec/PlistBuddy -c \"Add :GIDServerClientID string $WEB_CLIENT_ID\" \"$PLIST\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" >/dev/null 2>&1 || \\\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes array\" \"$PLIST\"\n\n# Add scheme entry (idempotent-ish)\nINDEX=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" 2>/dev/null | grep -E \"Dict\" | wc -l | tr -d ' ')\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$INDEX dict\" \"$PLIST\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$INDEX:CFBundleURLSchemes array\" \"$PLIST\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$INDEX:CFBundleURLSchemes:0 string $SCHEME\" \"$PLIST\" 2>/dev/null || true\n\necho \"📌 [GoogleSignIn] Done.\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -462,7 +462,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 42EFB767A23A8A6B8F193F46 /* Pods-DondeBailarMX.debug.xcconfig */;
+			baseConfigurationReference = 5F1804688637C8A8CBC73927 /* Pods-DondeBailarMX.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
@@ -508,7 +508,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C51258A13584F6DBE0312E32 /* Pods-DondeBailarMX.release.xcconfig */;
+			baseConfigurationReference = 60E1B2B1888BA6607DD8B5BC /* Pods-DondeBailarMX.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
@@ -601,7 +601,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/.pnpm/react-native@0.81.4_@babel+core@7.28.5_@types+react@19.2.7_react@19.1.0/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
@@ -655,7 +655,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/.pnpm/react-native@0.81.4_@babel+core@7.28.5_@types+react@19.2.7_react@19.1.0/node_modules/react-native";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
