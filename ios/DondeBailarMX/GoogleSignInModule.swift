@@ -76,6 +76,10 @@ final class GoogleSignInModule: NSObject {
         return
       }
 
+      if self.shouldLog() {
+        print("[GoogleSignInModule] requestId=\(requestId) resolved clientID=\(effectiveClientId.prefix(10))...")
+      }
+
       let serverClientId = self.resolvedServerClientId()
       let expectedScheme = self.expectedGoogleScheme(from: effectiveClientId)
       let schemeOK = self.hasURLScheme(expectedScheme)
