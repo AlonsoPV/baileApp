@@ -61,16 +61,17 @@ final class GoogleSignInModule: NSObject {
     return false
   }
 
-  @objc(signIn:resolver:rejecter:)
+  @objc(signIn:requestId:resolver:rejecter:)
   func signIn(
     _ clientId: String,
+    requestId: String,
     resolver resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     DispatchQueue.main.async {
       let effectiveClientId = self.resolvedClientId(passed: clientId)
       guard !effectiveClientId.isEmpty else {
-        if self.shouldLog() { print("[GoogleSignInModule] Missing clientID") }
+        if self.shouldLog() { print("[GoogleSignInModule] Missing clientID. requestId=\(requestId)") }
         reject("GOOGLE_MISSING_CLIENT_ID", "Falta Google iOS Client ID (configuración).", nil)
         return
       }
@@ -80,7 +81,7 @@ final class GoogleSignInModule: NSObject {
       let schemeOK = self.hasURLScheme(expectedScheme)
 
       if self.shouldLog() {
-        print("[GoogleSignInModule] clientID=\(effectiveClientId.prefix(18))... serverClientID=\(serverClientId.prefix(18))... expectedScheme=\(expectedScheme) schemeOK=\(schemeOK)")
+        print("[GoogleSignInModule] requestId=\(requestId) clientID=\(effectiveClientId.prefix(18))... serverClientID=\(serverClientId.prefix(18))... expectedScheme=\(expectedScheme) schemeOK=\(schemeOK)")
       }
 
       if !schemeOK {
@@ -131,13 +132,25 @@ final class GoogleSignInModule: NSObject {
           }
 
           let accessToken = user.accessToken.tokenString
-          resolve([
+          // IMPORTANT: never include nil in payload (NSDictionary would crash with setObject:nil)
+          var payload: [String: Any] = [
             "idToken": idToken,
             "accessToken": accessToken,
-            "userId": user.userID as Any,
-            "email": user.profile?.email as Any,
-            "fullName": user.profile?.name as Any,
-          ])
+          ]
+
+          if let userId = user.userID { payload["userId"] = userId }
+          if let email = user.profile?.email { payload["email"] = email }
+          if let fullName = user.profile?.name { payload["fullName"] = fullName }
+
+          if self.shouldLog() {
+            let keys = payload.keys.sorted()
+            print("[GoogleSignInModule] requestId=\(requestId) payload.keys=\(keys)")
+            print("[GoogleSignInModule] requestId=\(requestId) missing: userId=\(user.userID == nil) email=\(user.profile?.email == nil) fullName=\(user.profile?.name == nil)")
+            // Safe token debug (prefix only)
+            print("[GoogleSignInModule] requestId=\(requestId) idToken.prefix=\(idToken.prefix(10)) accessToken.prefix=\(accessToken.prefix(10))")
+          }
+
+          resolve(payload)
         }
 
         // Sometimes idToken is nil right after sign-in; refresh once before failing.
