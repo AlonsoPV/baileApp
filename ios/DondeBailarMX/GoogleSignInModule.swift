@@ -215,7 +215,7 @@ final class GoogleSignInModule: NSObject {
 
           // Helps JS debug Supabase invalid_jwt (aud mismatch) without exposing secrets.
           if !serverClientId.isEmpty { payload["serverClientId"] = serverClientId }
-          // Needed for Supabase nonce validation (raw nonce used in the sign-in request).
+          // Needed for Supabase nonce valid sation (raw nonce used in the sign-in request).
           payload["rawNonce"] = rawNonce
           payload["rawNonceSHA256"] = rawNonceSHA256
 
