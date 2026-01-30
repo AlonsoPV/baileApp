@@ -165,6 +165,20 @@ export default function WebAppScreen() {
     );
   }, []);
 
+  const getGoogleWebClientId = React.useCallback((): string => {
+    const extra =
+      (Constants.expoConfig as any)?.extra ??
+      (Constants as any)?.manifest?.extra ??
+      (Constants as any)?.manifest2?.extra ??
+      {};
+    return (
+      extra.googleWebClientId ||
+      extra.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+      (process as any)?.env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+      ""
+    );
+  }, []);
+
   const mask = React.useCallback((v: string) => {
     const t = String(v ?? "").trim();
     if (!t) return "(empty)";
@@ -244,6 +258,7 @@ export default function WebAppScreen() {
         try {
           const requestId = String(msg?.requestId || "");
           const clientId = getGoogleIosClientId();
+          const webClientId = getGoogleWebClientId();
 
           console.log("[WebAppScreen] NATIVE_AUTH_GOOGLE requestId=", requestId || "(none)");
           if (__DEV__) {
@@ -253,16 +268,24 @@ export default function WebAppScreen() {
               clientId: mask(clientId),
               len: clientId.length,
             });
+            // eslint-disable-next-line no-console
+            console.log("[WebAppScreen] Google client id (Web) from Constants.extra:", {
+              requestId: requestId || "(none)",
+              webClientId: mask(webClientId),
+              len: webClientId.length,
+            });
           }
           // If Constants.extra is missing in prod, native module will fallback to GIDClientID in Info.plist (BUILT).
           // We still pass the best-effort value (may be empty) but do not hard-fail here.
-          const tokens = await AuthCoordinator.signInWithGoogle(String(clientId || ""), requestId);
+          const tokens = await AuthCoordinator.signInWithGoogle(String(clientId || ""), requestId, String(webClientId || ""));
           injectWebSetSession(tokens);
         } catch (e: any) {
           // Normalizar mensajes de error para mejor UX
           const requestId = String(msg?.requestId || (e as any)?.requestId || "");
           const rawMessage = String(e?.message ?? e ?? "Error al iniciar sesión con Google.");
           const rawCode = String(e?.code ?? "");
+          const rawStatus = String((e as any)?.status ?? (e as any)?.statusCode ?? "");
+          const rawName = String((e as any)?.name ?? "");
 
           if (__DEV__) {
             try {
@@ -270,6 +293,8 @@ export default function WebAppScreen() {
               console.log("[WebAppScreen] Google native auth error (raw)", {
                 requestId,
                 code: rawCode || "(none)",
+                status: rawStatus || "(none)",
+                name: rawName || "(none)",
                 message: rawMessage,
                 keys: e && typeof e === "object" ? Object.keys(e) : [],
               });
@@ -284,6 +309,9 @@ export default function WebAppScreen() {
             if (/url scheme/i.test(rawMessage) || /CFBundleURLSchemes/i.test(rawMessage) || /com\.googleusercontent\.apps/i.test(rawMessage)) return "GOOGLE_MISSING_URL_SCHEME";
             if (/idtoken/i.test(rawMessage) || /id token/i.test(rawMessage)) return "GOOGLE_MISSING_ID_TOKEN";
             if (/client id/i.test(rawMessage)) return "GOOGLE_MISSING_CLIENT_ID";
+            // Fallbacks last (so they don't mask the real semantic error)
+            if (rawStatus) return `HTTP_${rawStatus}`;
+            if (rawName) return rawName;
             return "";
           })();
 
@@ -312,13 +340,28 @@ export default function WebAppScreen() {
           ) {
             message =
               "Supabase rechazó el token de Google (audience/JWT). Verifica que en Supabase el Provider de Google use el Web Client ID y que en Xcode Cloud esté EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.";
-          } else if (message.includes("token")) {
-            message = "Error al obtener credenciales de Google. Intenta de nuevo.";
           }
 
-          if (requestId || derivedCode) {
+          // If we got an HTTP-ish error (Supabase), don't mislabel it as a Google credential issue.
+          if (!message) message = rawMessage;
+          // Only fallback to a generic Supabase message when the backend didn't provide anything useful.
+          // Otherwise keep the original error text so we can debug (e.g. invalid_jwt).
+          const isUnhelpful =
+            !rawMessage ||
+            rawMessage === "Error" ||
+            rawMessage === "AuthApiError" ||
+            rawMessage === "Bad Request" ||
+            rawMessage === "Request failed with status code 400";
+          if (isUnhelpful) {
+            if (rawStatus && (derivedCode.startsWith("HTTP_") || /Auth/i.test(rawName))) {
+              message = "Error al iniciar sesión: Supabase rechazó la solicitud. Intenta de nuevo.";
+            }
+          }
+
+          if (requestId || derivedCode || rawStatus) {
             const suffix = [
               derivedCode ? `code: ${derivedCode}` : null,
+              rawStatus ? `status: ${rawStatus}` : null,
               requestId ? `req: ${requestId}` : null,
             ].filter(Boolean).join(", ");
             message = `${message} (${suffix})`;
@@ -345,7 +388,7 @@ export default function WebAppScreen() {
         }
       }
     },
-    [getGoogleIosClientId, injectWebAuthError, injectWebSetSession, nativeAuthInProgress]
+    [getGoogleIosClientId, getGoogleWebClientId, injectWebAuthError, injectWebSetSession, nativeAuthInProgress]
   );
 
   const handleReload = () => {

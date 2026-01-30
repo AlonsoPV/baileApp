@@ -11,6 +11,9 @@ type AppleResult = {
 type GoogleResult = {
   idToken: string;
   accessToken?: string;
+  serverClientId?: string;
+  rawNonce?: string;
+  rawNonceSHA256?: string;
   userId?: string | null;
   email?: string | null;
   fullName?: string | null;
