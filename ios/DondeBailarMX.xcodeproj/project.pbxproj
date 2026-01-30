@@ -167,7 +167,6 @@
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				B0C1A2B3C4D5E6F708090A0B /* Verify Privacy Usage Descriptions */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				E2819D532F2C06A800BBC8A0 /* ShellScript */,
 				DFCE99B43E1D8690A7FE2CAA /* [CP] Embed Pods Frameworks */,
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* Generate Hermes dSYM */,
 				0A751D20133743A921FDEFF7 /* [CP] Copy Pods Resources */,
@@ -421,24 +420,6 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DondeBailarMX/Pods-DondeBailarMX-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
-		};
-		E2819D532F2C06A800BBC8A0 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\nset -euo pipefail\n\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\necho \"🔧 [GoogleSignIn] Using Info.plist: $PLIST\"\n\nstrip_quotes() {\n  local s=\"$1\"\n  s=${s#\\\"}\n  s=${s%\\\"}\n  printf \"%s\" \"$s\"\n}\n\nread_env_file() {\n  local file=\"$1\"\n  local key=\"$2\"\n  if [ -f \"$file\" ]; then\n    local line\n    line=$(grep -E \"^${key}=\" \"$file\" 2>/dev/null | head -n 1 | cut -d= -f2- | tr -d '\\r' || true)\n    strip_quotes \"$line\"\n  fi\n}\n\n# Prefer build env vars (CI/EAS/Xcode Cloud), but allow local Archive to load from repo env files.\n# SRCROOT is ios/ → repo root is $SRCROOT/..\nENV_FILE_LOCAL=\"${SRCROOT}/../config/local.env\"\nENV_FILE_DOTENV=\"${SRCROOT}/../.env\"\n\nIOS_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}\"\nif [ -z \"$IOS_CLIENT_ID\" ]; then\n  IOS_CLIENT_ID=\"$(read_env_file \"$ENV_FILE_LOCAL\" \"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID\")\"\nfi\nif [ -z \"$IOS_CLIENT_ID\" ]; then\n  IOS_CLIENT_ID=\"$(read_env_file \"$ENV_FILE_DOTENV\" \"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID\")\"\nfi\n\nif [ -z \"$IOS_CLIENT_ID\" ]; then\n  echo \"❌ [GoogleSignIn] EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID not set (and not found in config/local.env or .env).\"\n  # Fail Release/Archive builds so we do not ship a broken binary.\n  if echo \"${CONFIGURATION:-}\" | grep -qi \"Debug\"; then\n    exit 0\n  fi\n  exit 1\nfi\n\nPREFIX=\"${IOS_CLIENT_ID%%-*}\"\nSCHEME=\"com.googleusercontent.apps.${PREFIX}\"\n\necho \"✅ [GoogleSignIn] iOS client id present (len=${#IOS_CLIENT_ID}) => scheme: $SCHEME\"\n\n# Inject keys into built plist (create if missing)\n/usr/libexec/PlistBuddy -c \"Set :GIDClientID $IOS_CLIENT_ID\" \"$PLIST\" 2>/dev/null || \\\n/usr/libexec/PlistBuddy -c \"Add :GIDClientID string $IOS_CLIENT_ID\" \"$PLIST\"\n\nWEB_CLIENT_ID=\"${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-}\"\nif [ -z \"$WEB_CLIENT_ID\" ]; then\n  WEB_CLIENT_ID=\"$(read_env_file \"$ENV_FILE_LOCAL\" \"EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID\")\"\nfi\nif [ -z \"$WEB_CLIENT_ID\" ]; then\n  WEB_CLIENT_ID=\"$(read_env_file \"$ENV_FILE_DOTENV\" \"EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID\")\"\nfi\n\nif [ -n \"$WEB_CLIENT_ID\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :GIDServerClientID $WEB_CLIENT_ID\" \"$PLIST\" 2>/dev/null || \\\n  /usr/libexec/PlistBuddy -c \"Add :GIDServerClientID string $WEB_CLIENT_ID\" \"$PLIST\"\nfi\n\n/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" >/dev/null 2>&1 || \\\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes array\" \"$PLIST\"\n\n# Add scheme entry (idempotent-ish)\nINDEX=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleURLTypes\" \"$PLIST\" 2>/dev/null | grep -E \"Dict\" | wc -l | tr -d ' ')\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$INDEX dict\" \"$PLIST\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$INDEX:CFBundleURLSchemes array\" \"$PLIST\" 2>/dev/null || true\n/usr/libexec/PlistBuddy -c \"Add :CFBundleURLTypes:$INDEX:CFBundleURLSchemes:0 string $SCHEME\" \"$PLIST\" 2>/dev/null || true\n\necho \"📌 [GoogleSignIn] Done.\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

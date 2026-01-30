@@ -84,5 +84,14 @@
    <ArchiveAction
       buildConfiguration = "Release"
       revealArchiveInOrganizer = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;export EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=&quot;168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com&quot;&#10;export EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=&quot;TU_WEB_CLIENT_ID.apps.googleusercontent.com&quot;&#10;">
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
    </ArchiveAction>
 </Scheme>
