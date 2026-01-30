@@ -166,10 +166,12 @@ final class GoogleSignInModule: NSObject {
       )
       GIDSignIn.sharedInstance.configuration = config
 
-      // IMPORTANT: Supabase validates nonce against the nonce claim in the ID token.
-      // Canonical pattern (same as Apple flow):
-      // - Send SHA256(base64url) of the raw nonce to the IdP (Google)
-      // - Send the RAW nonce to Supabase
+      // IMPORTANT:
+      // Supabase validates `nonce` against the `nonce` claim in the ID token.
+      // For Google Sign-In, the SDK expects a *raw* nonce string, and the ID token nonce claim
+      // can be raw or derived depending on provider/implementation. We return both:
+      // - rawNonce: for Supabase `signInWithIdToken({ nonce })`
+      // - rawNonceSHA256: debug / fallback candidate
       let rawNonce = self.randomNonceString()
       let rawNonceSHA256 = self.sha256Base64URL(rawNonce)
 
@@ -177,7 +179,7 @@ final class GoogleSignInModule: NSObject {
         withPresenting: presentingVC,
         hint: nil,
         additionalScopes: ["openid", "email", "profile"],
-        nonce: rawNonceSHA256
+        nonce: rawNonce
       ) { result, error in
         if let error = error {
           let nsError = error as NSError

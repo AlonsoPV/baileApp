@@ -191,11 +191,12 @@ class AuthCoordinatorImpl {
       const rawNonce = String((google as any)?.rawNonce ?? "").trim();
       const rawNonceSHA256 = String((google as any)?.rawNonceSHA256 ?? "").trim();
 
-      // Canonical nonce pattern:
-      // - Google gets SHA256(base64url) nonce (we do that in Swift)
-      // - Supabase gets RAW nonce
-      if (!rawNonce) {
-        const err: any = new Error("La app no recibió rawNonce del módulo nativo (necesario para validar nonce en Supabase).");
+      // Supabase rule:
+      // - If id_token has nonce claim, request MUST include nonce.
+      // - If id_token has NO nonce claim, request MUST NOT include nonce.
+      const hasTokenNonce = !!tokenNonceTrimmed;
+      if (hasTokenNonce && !rawNonce) {
+        const err: any = new Error("Google idToken trae nonce pero la app no recibió rawNonce del módulo nativo.");
         err.code = "GOOGLE_NONCE_MISSING_RAW";
         err.status = 400;
         err.requestId = rid;
@@ -215,10 +216,67 @@ class AuthCoordinatorImpl {
         });
       }
 
-      const payloadForSupabase: any = { provider: "google", token: google.idToken };
-      if (rawNonce) payloadForSupabase.nonce = rawNonce;
+      const isNonceMismatchError = (e: any): boolean => {
+        const msg = String(e?.message ?? e ?? "");
+        return (
+          /nonces?\s+mismatch/i.test(msg) ||
+          /Passed nonce and nonce in id_token/i.test(msg) ||
+          /nonce/i.test(msg)
+        );
+      };
 
-      const { data, error } = await supabase.auth.signInWithIdToken(payloadForSupabase);
+      const makePayload = (nonce?: string) => {
+        const p: any = { provider: "google", token: google.idToken };
+        if (nonce) p.nonce = nonce;
+        return p;
+      };
+
+      // Choose nonce candidates deterministically.
+      // Some providers put raw nonce in the token, others put sha256(raw) in the token.
+      // We'll try the most likely candidate first, then fallback once if Supabase rejects with nonce mismatch.
+      const nonceCandidates: string[] = [];
+      if (hasTokenNonce) {
+        if (tokenNonceTrimmed === rawNonce && rawNonce) nonceCandidates.push(rawNonce);
+        if (tokenNonceTrimmed === rawNonceSHA256 && rawNonceSHA256) nonceCandidates.push(rawNonceSHA256);
+        if (rawNonce && !nonceCandidates.includes(rawNonce)) nonceCandidates.push(rawNonce);
+        if (rawNonceSHA256 && !nonceCandidates.includes(rawNonceSHA256)) nonceCandidates.push(rawNonceSHA256);
+      }
+
+      let data: any;
+      let error: any;
+      if (!hasTokenNonce) {
+        ({ data, error } = await supabase.auth.signInWithIdToken(makePayload(undefined)));
+      } else {
+        let lastErr: any = null;
+        for (let i = 0; i < nonceCandidates.length; i++) {
+          const candidate = nonceCandidates[i];
+          try {
+            // @ts-ignore
+            if (typeof __DEV__ !== "undefined" && __DEV__) {
+              // eslint-disable-next-line no-console
+              console.log("[AuthCoordinator] Supabase signInWithIdToken attempt", {
+                requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+                attempt: i + 1,
+                nonce: maskNonce(candidate),
+              });
+            }
+            ({ data, error } = await supabase.auth.signInWithIdToken(makePayload(candidate)));
+            if (!error) {
+              lastErr = null;
+              break;
+            }
+            throw error;
+          } catch (e: any) {
+            lastErr = e;
+            // Retry only for nonce mismatch-style errors and only if we have another candidate.
+            if (i + 1 < nonceCandidates.length && isNonceMismatchError(e)) {
+              continue;
+            }
+            throw e;
+          }
+        }
+        if (lastErr) throw lastErr;
+      }
 
       if (error) throw error;
       const sess = data.session;
