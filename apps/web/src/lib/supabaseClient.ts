@@ -44,23 +44,29 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       // - rpc: moderate (profile saves can take a bit)
       // - other: moderate
       const timeoutMs = isAuth ? 20_000 : isRpc ? 30_000 : 12_000;
-
-      const timeoutSignal =
-        // @ts-ignore - AbortSignal.timeout is not in all TS libs yet
-        typeof AbortSignal !== 'undefined' && typeof (AbortSignal as any).timeout === 'function'
-          // @ts-ignore
-          ? (AbortSignal as any).timeout(timeoutMs)
-          : undefined;
-
       const userSignal = init?.signal;
 
-      // Combine signals without setTimeout (debug-mode safe)
-      const combinedSignal =
-        // @ts-ignore - AbortSignal.any is not in all TS libs yet
-        typeof AbortSignal !== 'undefined' && typeof (AbortSignal as any).any === 'function'
-          ? // @ts-ignore
-            (AbortSignal as any).any([userSignal, timeoutSignal].filter(Boolean))
-          : userSignal ?? timeoutSignal;
+      // IMPORTANT: Don't rely on AbortSignal.timeout/any (not available everywhere, especially Safari).
+      // Always create a controller-based timeout so requests can't hang forever.
+      const controller = new AbortController();
+      const timeoutId = (globalThis.setTimeout ?? setTimeout)(() => {
+        try {
+          controller.abort();
+        } catch {}
+      }, timeoutMs);
+
+      // Forward user abort to our controller.
+      if (userSignal) {
+        const onAbort = () => {
+          try {
+            controller.abort();
+          } catch {}
+        };
+        if (userSignal.aborted) onAbort();
+        else userSignal.addEventListener('abort', onAbort, { once: true });
+      }
+
+      const combinedSignal = controller.signal;
 
       // DEV-only: simulate slow/hung backend to validate timeouts + UI.
       // Usage examples:
@@ -92,10 +98,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
             (target === "auth" && isAuth);
 
           if (!shouldApply) {
-            return baseFetch(input, {
-              ...init,
-              signal: combinedSignal,
-            });
+            try {
+              return await baseFetch(input, { ...init, signal: combinedSignal });
+            } finally {
+              (globalThis.clearTimeout ?? clearTimeout)(timeoutId);
+            }
           }
 
           const hang =
@@ -106,6 +113,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
             return new Promise<Response>((_resolve, reject) => {
               if (combinedSignal) {
                 const onAbort = () => {
+                  (globalThis.clearTimeout ?? clearTimeout)(timeoutId);
                   try {
                     reject(new DOMException("Aborted", "AbortError"));
                   } catch {
@@ -134,6 +142,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
                   );
                 } catch (e) {
                   reject(e);
+                } finally {
+                  (globalThis.clearTimeout ?? clearTimeout)(timeoutId);
                 }
               }, delayMs);
 
@@ -141,6 +151,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
                 // If request aborts while we're "simulating slowness", stop early.
                 const onAbort = () => {
                   (globalThis.clearTimeout ?? clearTimeout)(t);
+                  (globalThis.clearTimeout ?? clearTimeout)(timeoutId);
                   try {
                     // Best-effort AbortError; shape varies by runtime
                     reject(new DOMException("Aborted", "AbortError"));
@@ -158,10 +169,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         }
       }
 
-      const response = await baseFetch(input, {
-        ...init,
-        signal: combinedSignal,
-      });
+      let response: Response;
+      try {
+        response = await baseFetch(input, {
+          ...init,
+          signal: combinedSignal,
+        });
+      } finally {
+        (globalThis.clearTimeout ?? clearTimeout)(timeoutId);
+      }
 
       // 🔄 Manejar errores de refresh token inválido
       // Si el refresh token es inválido, limpiar la sesión automáticamente

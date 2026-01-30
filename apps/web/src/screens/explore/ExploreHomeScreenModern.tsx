@@ -85,6 +85,53 @@ function useLoadMoreOnDemand(query: InfiniteQueryLike<any, unknown> | null) {
   return { handleLoadMore, hasNextPage: query?.hasNextPage ?? false, isFetching: query?.isFetchingNextPage ?? false };
 }
 
+function InlineQueryError({
+  title,
+  error,
+  onRetry,
+}: {
+  title: string;
+  error: unknown;
+  onRetry?: () => void;
+}) {
+  const message =
+    typeof (error as any)?.message === 'string'
+      ? (error as any).message
+      : 'No se pudo cargar. Intenta de nuevo.';
+
+  return (
+    <div
+      style={{
+        border: '1px solid rgba(255,255,255,0.18)',
+        background: 'rgba(0,0,0,0.18)',
+        borderRadius: 14,
+        padding: '14px 16px',
+        color: '#fff',
+      }}
+    >
+      <div style={{ fontWeight: 800, marginBottom: 6 }}>{title}</div>
+      <div style={{ opacity: 0.9, fontSize: 13, lineHeight: 1.35 }}>{message}</div>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          style={{
+            marginTop: 10,
+            padding: '8px 12px',
+            borderRadius: 999,
+            border: '1px solid rgba(255,255,255,0.22)',
+            background: 'rgba(255,255,255,0.10)',
+            color: '#fff',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          Reintentar
+        </button>
+      )}
+    </div>
+  );
+}
+
 
 /**
  * ClaseItem - Componente memoizado optimizado para scroll fluido
@@ -1569,6 +1616,8 @@ export default function ExploreHomeScreen() {
   });
   const fechasLoadMore = useLoadMoreOnDemand(shouldLoadFechas ? fechasQuery : null);
   const fechasLoading = fechasQuery.isLoading;
+  const fechasError = (fechasQuery as any).isError;
+  const fechasErrObj = (fechasQuery as any).error;
   const fechasData = React.useMemo(() => {
     if (!shouldLoadFechas) return [];
     return flattenQueryData(fechasQuery.data);
@@ -1682,6 +1731,8 @@ export default function ExploreHomeScreen() {
   });
   const maestrosLoadMore = useLoadMoreOnDemand(shouldLoadMaestros ? maestrosQuery : null);
   const maestrosLoading = maestrosQuery.isLoading;
+  const maestrosError = (maestrosQuery as any).isError;
+  const maestrosErrObj = (maestrosQuery as any).error;
   const maestrosData = React.useMemo(() => {
     if (!shouldLoadMaestros) return [];
     return flattenQueryData(maestrosQuery.data);
@@ -1698,6 +1749,8 @@ export default function ExploreHomeScreen() {
   });
   const organizadoresLoadMore = useLoadMoreOnDemand(shouldLoadOrganizadores ? organizadoresQuery : null);
   const organizadoresLoading = organizadoresQuery.isLoading;
+  const organizadoresError = (organizadoresQuery as any).isError;
+  const organizadoresErrObj = (organizadoresQuery as any).error;
   const organizadoresData = React.useMemo(() => {
     if (!shouldLoadOrganizadores) return [];
     return flattenQueryData(organizadoresQuery.data);
@@ -1714,6 +1767,8 @@ export default function ExploreHomeScreen() {
   });
   const academiasLoadMore = useLoadMoreOnDemand(shouldLoadAcademias ? academiasQuery : null);
   const academiasLoading = academiasQuery.isLoading;
+  const academiasError = (academiasQuery as any).isError;
+  const academiasErrObj = (academiasQuery as any).error;
   const academiasData = React.useMemo(() => {
     if (!shouldLoadAcademias) return [];
     return flattenQueryData(academiasQuery.data);
@@ -2515,10 +2570,16 @@ export default function ExploreHomeScreen() {
             </nav>
           </section>
 
-          {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas) && (
+          {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas || fechasError) && (
             <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length} sectionId="fechas">
               {fechasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
+              ) : fechasError ? (
+                <InlineQueryError
+                  title="No se pudieron cargar los eventos"
+                  error={fechasErrObj}
+                  onRetry={() => (fechasQuery as any).refetch?.()}
+                />
               ) : (
                 <>
                   {filteredFechas.length > 0 ? (
@@ -2561,11 +2622,23 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'clases') && ((academiasLoading || maestrosLoading) || hasClases) && (
+          {(showAll || selectedType === 'clases') && ((academiasLoading || maestrosLoading) || hasClases || academiasError || maestrosError) && (
             <Section title={t('section_recommended_classes')} toAll="/explore/list?type=clases" count={classesList.length} sectionId="clases">
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>;
+                if (academiasError || maestrosError) {
+                  return (
+                    <InlineQueryError
+                      title="No se pudieron cargar las clases"
+                      error={academiasErrObj || maestrosErrObj}
+                      onRetry={() => {
+                        (academiasQuery as any).refetch?.();
+                        (maestrosQuery as any).refetch?.();
+                      }}
+                    />
+                  );
+                }
 
                 return (
                   <>
@@ -2624,10 +2697,16 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros) && (
+          {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros || maestrosError) && (
             <Section title={t('section_featured_teachers')} toAll="/explore/list?type=teacher" count={maestrosData.length} sectionId="maestros">
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
+              ) : maestrosError ? (
+                <InlineQueryError
+                  title="No se pudieron cargar los maestros"
+                  error={maestrosErrObj}
+                  onRetry={() => (maestrosQuery as any).refetch?.()}
+                />
               ) : (
                 <>
                   <HorizontalSlider
@@ -2740,7 +2819,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0) && (
+          {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0 || organizadoresError) && (
             <Section title={t('section_event_producers')} toAll="/explore/list?type=organizadores" count={organizadoresData.length} sectionId="organizadores">
               {organizadoresLoading ? (
                 <div className="cards-grid">
@@ -2750,6 +2829,12 @@ export default function ExploreHomeScreen() {
                     </div>
                   ))}
                 </div>
+              ) : organizadoresError ? (
+                <InlineQueryError
+                  title="No se pudieron cargar los organizadores"
+                  error={organizadoresErrObj}
+                  onRetry={() => (organizadoresQuery as any).refetch?.()}
+                />
               ) : organizadoresData.length > 0 ? (
                 <>
                   <HorizontalSlider
