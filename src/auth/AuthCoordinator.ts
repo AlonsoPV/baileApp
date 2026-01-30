@@ -147,7 +147,8 @@ class AuthCoordinatorImpl {
     try {
       console.log("[AuthCoordinator] Google native sign-in start", { requestId: rid ? `${rid.slice(0, 8)}…` : "(none)" });
       const google = await nativeSignInWithGoogleWithRequestId(iosClientId, rid);
-      if (!supabase) throw new Error("Supabase no está configurado en la app.");
+      const sb = supabase;
+      if (!sb) throw new Error("Supabase no está configurado en la app.");
       // @ts-ignore
       if (typeof __DEV__ !== "undefined" && __DEV__) {
         // eslint-disable-next-line no-console
@@ -216,13 +217,62 @@ class AuthCoordinatorImpl {
         });
       }
 
-      // Deterministic behavior:
-      // - If token has nonce claim -> send RAW nonce to Supabase
-      // - If token has no nonce claim -> do not send nonce
-      const payloadForSupabase: any = { provider: "google", token: google.idToken };
-      if (hasTokenNonce) payloadForSupabase.nonce = rawNonce;
+      const isNonceMismatchError = (e: any): boolean => {
+        const msg = String(e?.message ?? e ?? "");
+        return /nonces?\s+mismatch/i.test(msg) || /Passed nonce and nonce in id_token/i.test(msg);
+      };
 
-      const { data, error } = await supabase.auth.signInWithIdToken(payloadForSupabase);
+      const nonceDebugSuffix = () => {
+        const parts = [
+          `tokenNonce=${maskNonce(tokenNonceTrimmed)}`,
+          `rawNonce=${maskNonce(rawNonce)}`,
+          `rawNonceSHA256=${maskNonce(rawNonceSHA256)}`,
+          `eqRaw=${tokenNonceTrimmed && rawNonce ? String(tokenNonceTrimmed === rawNonce) : "n/a"}`,
+          `eqSHA=${tokenNonceTrimmed && rawNonceSHA256 ? String(tokenNonceTrimmed === rawNonceSHA256) : "n/a"}`,
+        ];
+        return parts.join(" ");
+      };
+
+      const callSupabase = async (nonceToSend: string | undefined) => {
+        const payloadForSupabase: any = { provider: "google", token: google.idToken };
+        if (nonceToSend) payloadForSupabase.nonce = nonceToSend;
+        return await sb.auth.signInWithIdToken(payloadForSupabase);
+      };
+
+      // Deterministic behavior + one safe fallback:
+      // - If token has nonce claim -> try RAW nonce first (Supabase canonical)
+      // - If Supabase reports nonce mismatch -> retry once with token's nonce claim (covers providers that expect direct compare)
+      // - If token has no nonce claim -> do not send nonce
+      let data: any;
+      let error: any;
+      try {
+        if (!hasTokenNonce) {
+          ({ data, error } = await callSupabase(undefined));
+        } else {
+          ({ data, error } = await callSupabase(rawNonce));
+        }
+        if (error) throw error;
+      } catch (e: any) {
+        if (hasTokenNonce && isNonceMismatchError(e) && tokenNonceTrimmed && tokenNonceTrimmed !== rawNonce) {
+          try {
+            ({ data, error } = await callSupabase(tokenNonceTrimmed));
+            if (error) throw error;
+          } catch (e2: any) {
+            const msg2 = normalizeErrorMessage(e2, "Error al iniciar sesión con Google (nonce).");
+            const err2: any = preserveErrorDetails(e2, `${msg2} (${nonceDebugSuffix()}, req: ${rid || "?"})`);
+            err2.code = String((e2 as any)?.code ?? "NONCE_MISMATCH");
+            err2.status = Number((e2 as any)?.status ?? (e2 as any)?.statusCode ?? 400);
+            err2.requestId = rid;
+            throw err2;
+          }
+        }
+        const msg = normalizeErrorMessage(e, "Error al iniciar sesión con Google (nonce).");
+        const err: any = preserveErrorDetails(e, `${msg} (${nonceDebugSuffix()}, req: ${rid || "?"})`);
+        err.code = String((e as any)?.code ?? "NONCE_MISMATCH");
+        err.status = Number((e as any)?.status ?? (e as any)?.statusCode ?? 400);
+        err.requestId = rid;
+        throw err;
+      }
 
       if (error) throw error;
       const sess = data.session;
