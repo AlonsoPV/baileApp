@@ -43,9 +43,23 @@ final class GoogleSignInModule: NSObject {
   }
 
   private func expectedGoogleScheme(from clientId: String) -> String {
-    // com.googleusercontent.apps.<prefix> where <prefix> = first segment of clientID
-    let prefix = clientId.split(separator: "-").first.map(String.init) ?? ""
-    return prefix.isEmpty ? "" : "com.googleusercontent.apps.\(prefix)"
+    // Google iOS callback scheme is:
+    //   com.googleusercontent.apps.<reversed_client_id>
+    // where <reversed_client_id> is everything before ".apps.googleusercontent.com"
+    // Example clientID:
+    //   168113490186-xxxx.apps.googleusercontent.com
+    // Expected scheme:
+    //   com.googleusercontent.apps.168113490186-xxxx
+    let t = clientId.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !t.isEmpty else { return "" }
+    let suffix = ".apps.googleusercontent.com"
+    let base: String
+    if let r = t.range(of: suffix) {
+      base = String(t[..<r.lowerBound])
+    } else {
+      base = t
+    }
+    return base.isEmpty ? "" : "com.googleusercontent.apps.\(base)"
   }
 
   private func hasURLScheme(_ scheme: String) -> Bool {
@@ -86,7 +100,7 @@ final class GoogleSignInModule: NSObject {
 
       if self.shouldLog() {
         print("[GoogleSignInModule] expectedScheme=\(expectedScheme)")
-        print("[GoogleSignInModule] CFBundleURLTypes=\(Bundle.main.object(forInfoDictionaryKey: \"CFBundleURLTypes\") ?? \"nil\")")
+        print("[GoogleSignInModule] CFBundleURLTypes=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") ?? "nil")")
         print("[GoogleSignInModule] requestId=\(requestId) clientID=\(effectiveClientId.prefix(18))... serverClientID=\(serverClientId.prefix(18))... expectedScheme=\(expectedScheme) schemeOK=\(schemeOK)")
       }
 
