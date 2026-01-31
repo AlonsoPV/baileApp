@@ -104,18 +104,19 @@ export default function FilterBar({ filters, onFiltersChange, className = '', sh
   const { usedRitmoIds, usedZonaIds, isLoading: loadingUsed, error: usedError } = useUsedFilterTags();
 
   const ritmos = React.useMemo(() => {
-    // Mientras la query carga o si falla, mostrar todos los ritmos (comportamiento anterior)
+    // Mientras la query carga o si falla, mostrar todos los ritmos del catálogo
     if (loadingUsed || usedError) return allRitmos;
     const set = new Set(usedRitmoIds);
-    // Si no hay ninguno usado, no mostrar chips (lista vacía)
-    if (set.size === 0) return [] as typeof allRitmos;
+    // Si el RPC no devolvió ninguno usado, mostrar todos los disponibles (catálogo) para que siempre aparezcan en filtros
+    if (set.size === 0) return allRitmos;
     return allRitmos.filter((r) => set.has(r.id));
   }, [allRitmos, usedRitmoIds, loadingUsed, usedError]);
 
   const zonas = React.useMemo(() => {
     if (loadingUsed || usedError) return allZonas;
     const set = new Set(usedZonaIds);
-    if (set.size === 0) return [] as typeof allZonas;
+    // Si el RPC no devolvió ninguna usada, mostrar todas las disponibles (catálogo)
+    if (set.size === 0) return allZonas;
     return allZonas.filter((z) => set.has(z.id));
   }, [allZonas, usedZonaIds, loadingUsed, usedError]);
 
