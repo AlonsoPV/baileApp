@@ -6,7 +6,9 @@
       "ES2020",
       "DOM"
     ],
-    "types": ["node"],
+    // Include React type declarations as well. Keeping "types" restricted to only "node"
+    // can make TS fail to resolve the 'react' module declarations in some setups.
+    "types": ["node", "react"],
     "moduleResolution": "bundler",
     "strict": true,
     "skipLibCheck": true,

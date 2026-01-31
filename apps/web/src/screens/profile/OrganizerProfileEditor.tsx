@@ -119,6 +119,7 @@ const BulkRowItem = React.memo(function BulkRowItem({
   onEditCreatedDate?: (dateId: number) => void;
   dense?: boolean;
 }) {
+  const { t } = useTranslation();
   const rowErr = errors || {};
   return (
     <div

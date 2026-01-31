@@ -254,13 +254,9 @@ export default function WebAppScreen() {
               len: clientId.length,
             });
           }
-          if (!clientId.trim()) {
-            const err: any = new Error("Falta Google iOS Client ID (EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID).");
-            err.code = "GOOGLE_MISSING_CLIENT_ID";
-            err.requestId = requestId;
-            throw err;
-          }
-          const tokens = await AuthCoordinator.signInWithGoogle(clientId, requestId);
+          // If Constants.extra is missing in prod, native module will fallback to GIDClientID in Info.plist (BUILT).
+          // We still pass the best-effort value (may be empty) but do not hard-fail here.
+          const tokens = await AuthCoordinator.signInWithGoogle(String(clientId || ""), requestId);
           injectWebSetSession(tokens);
         } catch (e: any) {
           // Normalizar mensajes de error para mejor UX

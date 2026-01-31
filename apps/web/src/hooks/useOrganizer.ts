@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from '@/contexts/AuthProvider';
 import type { Organizer } from "../types/events";
-import { buildSafePatch } from "../utils/safePatch";
+import { buildSafePatch, deepEqual, pruneEmptyDeep } from "../utils/safePatch";
 
 export function useMyOrganizer() {
   const { user } = useAuth();
@@ -98,6 +98,7 @@ export function useUpsertMyOrganizer() {
           ubicaciones,
           respuestas: nextRespuestas,
           redes_sociales: nextRedes,
+          cuenta_bancaria: nextCuentaBancaria,
           ...candidate
         } = next as any; // media va por otro hook, campos no existentes se filtran
         
@@ -146,6 +147,17 @@ export function useUpsertMyOrganizer() {
         const patch = buildSafePatch(prev, candidate, { 
           allowEmptyArrays: ["ritmos", "zonas", "estilos", "ritmos_seleccionados"] as any 
         });
+
+        // Cuenta bancaria (JSONB): debe comportarse como "replace" (no merge),
+        // para que cambios (incluyendo vaciar campos) se reflejen.
+        if (nextCuentaBancaria !== undefined) {
+          const prevBank = ((prev as any).cuenta_bancaria ?? {}) as any;
+          const cleanedBank = pruneEmptyDeep((nextCuentaBancaria ?? {}) as any);
+          if (!deepEqual(prevBank, cleanedBank)) {
+            (patch as any).cuenta_bancaria = cleanedBank;
+            console.log("✅ [useOrganizer] Agregando 'cuenta_bancaria' al patch:", cleanedBank);
+          }
+        }
         
         console.log("📦 [useOrganizer] Patch creado:", patch);
         console.log("📊 [useOrganizer] Claves del patch:", Object.keys(patch));
@@ -220,6 +232,9 @@ export function useUpsertMyOrganizer() {
             const needsDirect: any = {};
             if (Object.prototype.hasOwnProperty.call(patch, 'ritmos_seleccionados')) {
               (needsDirect as any).ritmos_seleccionados = (patch as any).ritmos_seleccionados;
+            }
+            if (Object.prototype.hasOwnProperty.call(patch, 'cuenta_bancaria')) {
+              (needsDirect as any).cuenta_bancaria = (patch as any).cuenta_bancaria;
             }
             if (Object.prototype.hasOwnProperty.call(patch, 'redes_sociales')) {
               (needsDirect as any).redes_sociales = (patch as any).redes_sociales;

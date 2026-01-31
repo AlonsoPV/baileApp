@@ -148,6 +148,7 @@ export EXPO_PUBLIC_SUPABASE_ANON_KEY="${EXPO_PUBLIC_SUPABASE_ANON_KEY:-}"
 export EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}"
 # Web client id (mismo que el configurado en Supabase Auth → Google). Se usa como serverClientID en iOS.
 export EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-${VITE_GOOGLE_CLIENT_ID:-}}"
+export EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG="${EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG:-}"
 export GOOGLE_REVERSED_CLIENT_ID="${GOOGLE_REVERSED_CLIENT_ID:-}"
 
 # -----------------------------
@@ -249,6 +250,10 @@ fi
 
 if [ -z "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" ]; then
   echo "⚠️  WARNING: EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID not set. Google native sign-in will fail."
+fi
+
+if [ -z "$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID" ]; then
+  echo "⚠️  WARNING: EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID not set. idToken audience may not match (Supabase may reject)."
 fi
 
 if [ -z "$GOOGLE_REVERSED_CLIENT_ID" ]; then

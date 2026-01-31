@@ -1,6 +1,7 @@
 import Foundation
 import React
 import GoogleSignIn
+import UIKit
 
 @objc(GoogleSignInModule)
 final class GoogleSignInModule: NSObject {
@@ -21,176 +22,147 @@ final class GoogleSignInModule: NSObject {
     #endif
   }
 
-  private func mask(_ v: String) -> String {
-    let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
-    if t.isEmpty { return "(empty)" }
-    if t.count <= 10 { return "\(t.prefix(2))...\(t.suffix(2))" }
-    return "\(t.prefix(6))...\(t.suffix(6))"
+  private func trimmed(_ s: String?) -> String {
+    (s ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  private func plistValue(_ key: String) -> String {
+    let v = Bundle.main.object(forInfoDictionaryKey: key) as? String
+    return trimmed(v)
   }
 
   private func resolvedClientId(passed clientId: String) -> String {
-    let trimmed = clientId.trimmingCharacters(in: .whitespacesAndNewlines)
-    if !trimmed.isEmpty { return trimmed }
-    // Fallback: read from Info.plist (injected at build time / Xcode settings)
-    if let v = Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String {
-      let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
-      if !t.isEmpty { return t }
-    }
-    return ""
+    let t = clientId.trimmingCharacters(in: .whitespacesAndNewlines)
+    if !t.isEmpty { return t }
+    return plistValue("GIDClientID")
   }
 
   private func resolvedServerClientId() -> String {
-    // If provided, Google issues an idToken whose audience matches serverClientID
-    // (this is what Supabase expects when using signInWithIdToken for Google).
-    if let v = Bundle.main.object(forInfoDictionaryKey: "GIDServerClientID") as? String {
-      let t = v.trimmingCharacters(in: .whitespacesAndNewlines)
-      if !t.isEmpty { return t }
-    }
-    return ""
+    // Web Client ID used as serverClientID (for idToken audience)
+    return plistValue("GIDServerClientID")
   }
 
-  private func allUrlSchemes() -> [String] {
-    guard
-      let urlTypes = Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]]
-    else { return [] }
-    var out: [String] = []
-    for dict in urlTypes {
-      if let schemes = dict["CFBundleURLSchemes"] as? [String] {
-        out.append(contentsOf: schemes)
+  private func expectedGoogleScheme(from clientId: String) -> String {
+    // com.googleusercontent.apps.<prefix> where <prefix> = first segment of clientID
+    let prefix = clientId.split(separator: "-").first.map(String.init) ?? ""
+    return prefix.isEmpty ? "" : "com.googleusercontent.apps.\(prefix)"
+  }
+
+  private func hasURLScheme(_ scheme: String) -> Bool {
+    guard !scheme.isEmpty else { return false }
+    guard let urlTypes = Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]] else {
+      return false
+    }
+    for t in urlTypes {
+      if let schemes = t["CFBundleURLSchemes"] as? [String], schemes.contains(scheme) {
+        return true
       }
     }
-    return out
+    return false
   }
 
   @objc(signIn:requestId:resolver:rejecter:)
-  func signIn(_ clientId: String, requestId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+  func signIn(
+    _ clientId: String,
+    requestId: String,
+    resolver resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
     DispatchQueue.main.async {
       let effectiveClientId = self.resolvedClientId(passed: clientId)
       guard !effectiveClientId.isEmpty else {
-        if self.shouldLog() {
-          print("[GoogleSignInModule] Missing clientID. requestId=\(requestId)")
-        }
+        if self.shouldLog() { print("[GoogleSignInModule] Missing clientID. requestId=\(requestId)") }
         reject("GOOGLE_MISSING_CLIENT_ID", "Falta Google iOS Client ID (configuración).", nil)
         return
       }
 
-      // Basic sanity check: client id should be a googleusercontent client id.
-      if !effectiveClientId.contains(".apps.googleusercontent.com") {
-        if self.shouldLog() {
-          print("[GoogleSignInModule] Suspicious clientID format. requestId=\(requestId) clientID=\(self.mask(effectiveClientId))")
-        }
+      if self.shouldLog() {
+        print("[GoogleSignInModule] requestId=\(requestId) resolved clientID=\(effectiveClientId.prefix(10))...")
+      }
+
+      let serverClientId = self.resolvedServerClientId()
+      let expectedScheme = self.expectedGoogleScheme(from: effectiveClientId)
+      let schemeOK = self.hasURLScheme(expectedScheme)
+
+      if self.shouldLog() {
+        print("[GoogleSignInModule] expectedScheme=\(expectedScheme)")
+        print("[GoogleSignInModule] CFBundleURLTypes=\(Bundle.main.object(forInfoDictionaryKey: \"CFBundleURLTypes\") ?? \"nil\")")
+        print("[GoogleSignInModule] requestId=\(requestId) clientID=\(effectiveClientId.prefix(18))... serverClientID=\(serverClientId.prefix(18))... expectedScheme=\(expectedScheme) schemeOK=\(schemeOK)")
+      }
+
+      if !schemeOK {
+        reject("GOOGLE_MISSING_URL_SCHEME", "Falta URL scheme de Google en Info.plist (com.googleusercontent.apps...).", nil)
+        return
       }
 
       guard let presentingVC = UIApplication.topMostViewController() else {
-        // Log para debugging
         if self.shouldLog() {
-          print("[GoogleSignInModule] ERROR: No se pudo encontrar topMostViewController requestId=\(requestId)")
+          print("[GoogleSignInModule] ERROR: No se pudo encontrar topMostViewController")
           print("[GoogleSignInModule] Window scenes: \(UIApplication.shared.connectedScenes.count)")
-        }
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-          if self.shouldLog() {
-            print("[GoogleSignInModule] Windows count: \(windowScene.windows.count)")
-            print("[GoogleSignInModule] Key window: \(windowScene.windows.first(where: { $0.isKeyWindow }) != nil)")
-          }
         }
         reject("GOOGLE_NO_PRESENTING_VC", "No se pudo mostrar la pantalla de Google. Intenta cerrar y reabrir la app.", nil)
         return
       }
 
-      let serverClientId = self.resolvedServerClientId()
-      if serverClientId.isEmpty {
-        if self.shouldLog() {
-          print("[GoogleSignInModule] ERROR: Missing GIDServerClientID (Web Client ID). requestId=\(requestId)")
-        }
-        reject("GOOGLE_MISSING_WEB_CLIENT_ID", "Falta GIDServerClientID (Web Client ID) en Info.plist. Es requerido para Supabase signInWithIdToken.", nil)
-        return
-      }
-      if !serverClientId.isEmpty, serverClientId == effectiveClientId {
-        if self.shouldLog() {
-          print("[GoogleSignInModule] ERROR: iOS clientID equals server(web) clientID. requestId=\(requestId) clientID=\(self.mask(effectiveClientId))")
-        }
-        reject("GOOGLE_IOS_CLIENT_ID_IS_WEB", "El iOS Client ID parece ser el Web Client ID. Usa el client id de tipo iOS.", nil)
-        return
-      }
-
-      // Validate URL scheme exists so the flow can return to the app.
-      // Expected: com.googleusercontent.apps.<prefix>
-      let expectedScheme: String = {
-        if let prefix = effectiveClientId.components(separatedBy: ".apps.googleusercontent.com").first, !prefix.isEmpty {
-          return "com.googleusercontent.apps.\(prefix)"
-        }
-        return ""
-      }()
-      if !expectedScheme.isEmpty {
-        let schemes = self.allUrlSchemes()
-        if self.shouldLog() {
-          print("[GoogleSignInModule] requestId=\(requestId) clientID=\(self.mask(effectiveClientId)) serverClientID=\(self.mask(serverClientId)) expectedScheme=\(expectedScheme)")
-        }
-        if !schemes.contains(expectedScheme) {
-          if self.shouldLog() {
-            print("[GoogleSignInModule] ERROR: Missing URL scheme \(expectedScheme). Current schemes: \(schemes)")
-          }
-          reject("GOOGLE_MISSING_URL_SCHEME", "Falta el URL scheme de Google en Info.plist: \(expectedScheme)", nil)
-          return
-        }
-      } else if self.shouldLog() {
-        print("[GoogleSignInModule] Could not derive expected scheme. requestId=\(requestId) clientID=\(self.mask(effectiveClientId))")
-      }
-
-      let config = serverClientId.isEmpty
-        ? GIDConfiguration(clientID: effectiveClientId)
-        : GIDConfiguration(clientID: effectiveClientId, serverClientID: serverClientId)
+      // IMPORTANT: serverClientID makes idToken audience match the Web Client ID (Supabase expects this).
+      let config = GIDConfiguration(
+        clientID: effectiveClientId,
+        serverClientID: serverClientId.isEmpty ? nil : serverClientId
+      )
       GIDSignIn.sharedInstance.configuration = config
 
-      // Official in-app flow (does not open default Safari browser)
-      // Request OpenID scopes explicitly to ensure idToken is available for Supabase.
-      GIDSignIn.sharedInstance.signIn(withPresenting: presentingVC, hint: nil, additionalScopes: ["openid", "email", "profile"]) { result, error in
+      GIDSignIn.sharedInstance.signIn(
+        withPresenting: presentingVC,
+        hint: nil,
+        additionalScopes: ["openid", "email", "profile"]
+      ) { result, error in
         if let error = error {
           let nsError = error as NSError
-          // User cancellation is common and should not crash/loop
-          // GoogleSignIn uses error domain kGIDSignInErrorDomain; cancel code is -5.
-          // Some SDK versions do not expose kGIDSignInErrorCodeCanceled to Swift, so we check the numeric code.
           if nsError.domain == kGIDSignInErrorDomain, nsError.code == -5 {
-            if self.shouldLog() { print("[GoogleSignInModule] CANCELED requestId=\(requestId)") }
             reject("GOOGLE_CANCELED", "Inicio de sesión con Google cancelado.", nsError)
             return
-          }
-          if self.shouldLog() {
-            print("[GoogleSignInModule] ERROR requestId=\(requestId) domain=\(nsError.domain) code=\(nsError.code) msg=\(nsError.localizedDescription)")
           }
           reject("GOOGLE_ERROR", "Error al iniciar sesión con Google.", nsError)
           return
         }
 
         guard let result = result else {
-          if self.shouldLog() { print("[GoogleSignInModule] NO_RESULT requestId=\(requestId)") }
           reject("GOOGLE_NO_RESULT", "Google Sign-In no devolvió resultado.", nil)
           return
         }
 
-        let finishResolve = { (user: GIDGoogleUser) in
+        let finishResolve: (GIDGoogleUser) -> Void = { user in
           guard let idToken = user.idToken?.tokenString, !idToken.isEmpty else {
-            if self.shouldLog() { print("[GoogleSignInModule] MISSING_ID_TOKEN requestId=\(requestId)") }
-            reject("GOOGLE_MISSING_ID_TOKEN", "Google no devolvió idToken.", nil)
+            reject("GOOGLE_MISSING_ID_TOKEN", "Google no devolvió idToken. Revisa GIDServerClientID (Web Client ID).", nil)
             return
           }
+
           let accessToken = user.accessToken.tokenString
-          resolve([
+          // IMPORTANT: never include nil in payload (NSDictionary would crash with setObject:nil)
+          var payload: [String: Any] = [
             "idToken": idToken,
             "accessToken": accessToken,
-            "userId": user.userID,
-            "email": user.profile?.email,
-            "fullName": user.profile?.name,
-            "requestId": requestId,
-          ])
+          ]
+
+          if let userId = user.userID { payload["userId"] = userId }
+          if let email = user.profile?.email { payload["email"] = email }
+          if let fullName = user.profile?.name { payload["fullName"] = fullName }
+
+          if self.shouldLog() {
+            let keys = payload.keys.sorted()
+            print("[GoogleSignInModule] requestId=\(requestId) payload.keys=\(keys)")
+            print("[GoogleSignInModule] requestId=\(requestId) missing: userId=\(user.userID == nil) email=\(user.profile?.email == nil) fullName=\(user.profile?.name == nil)")
+            // Safe token debug (prefix only)
+            print("[GoogleSignInModule] requestId=\(requestId) idToken.prefix=\(idToken.prefix(10)) accessToken.prefix=\(accessToken.prefix(10))")
+          }
+
+          resolve(payload)
         }
 
-        // Sometimes idToken can be nil right after sign-in; refresh tokens once before failing.
+        // Sometimes idToken is nil right after sign-in; refresh once before failing.
         if result.user.idToken == nil {
-          if self.shouldLog() { print("[GoogleSignInModule] idToken nil after signIn; refreshing tokens requestId=\(requestId)") }
           result.user.refreshTokensIfNeeded { refreshedUser, refreshError in
             if let refreshError = refreshError {
-              if self.shouldLog() { print("[GoogleSignInModule] refreshTokensIfNeeded failed requestId=\(requestId) msg=\(refreshError.localizedDescription)") }
               reject("GOOGLE_MISSING_ID_TOKEN", "Google no devolvió idToken.", refreshError as NSError)
               return
             }
@@ -205,9 +177,11 @@ final class GoogleSignInModule: NSObject {
   }
 
   @objc(signOut:rejecter:)
-  func signOut(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+  func signOut(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
     DispatchQueue.main.async {
-      // Best-effort; does not fail hard
       GIDSignIn.sharedInstance.signOut()
       resolve(true)
     }

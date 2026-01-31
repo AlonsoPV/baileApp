@@ -166,7 +166,7 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.tuorg.dondebailarmx",
     // ✅ App Store Connect: must be numeric and increase over last uploaded build.
     // Last uploaded reported: 181 → next safe default: 182 (EAS production also auto-increments).
-    buildNumber: "187",
+    buildNumber: "195",
     infoPlist: (() => {
       const googleIosClientId = required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', '168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com');
       const googleWebClientId = required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', '168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com');
@@ -261,9 +261,12 @@ const config: ExpoConfig = {
     // Native Google Sign-In (iOS) - required for in-app OAuth without Safari
     googleIosClientId: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
     EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
+    // Web Client ID (audience for idToken; used as GIDServerClientID)
     googleWebClientId: required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', ''),
     EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', ''),
+    // Optional debug flag (can be "1"/"true")
     googleSignInDebug: required('EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG', ''),
+    EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG: required('EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG', ''),
     eas: {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },

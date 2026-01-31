@@ -2,6 +2,8 @@ require File.join(File.dirname(`node --print "require.resolve('expo/package.json
 require File.join(File.dirname(`node --print "require.resolve('react-native/package.json')"`), "scripts/react_native_pods")
 
 require 'json'
+require 'open3'
+require 'pathname'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
 
 def ccache_enabled?(podfile_properties)
@@ -45,6 +47,34 @@ target 'DondeBailarMX' do
 
   config = use_native_modules!(config_command)
 
+  # Ensure CocoaPods/RN scripts always use the *real* React Native path in this repo.
+  # This prevents Archive failures where generated scripts reference a stale pnpm folder
+  # (e.g. react-native@..._@babel+core@X...) that no longer exists after dependency updates.
+  begin
+    rn_pkg_json, _ = Open3.capture2("node", "-p", "require.resolve('react-native/package.json')")
+    rn_path_abs = File.dirname(rn_pkg_json.strip)
+    # Prefer a stable symlinked path (doesn't encode peer dependency versions like pnpm store folders do)
+    rn_stable_rel = "../node_modules/react-native"
+    rn_stable_abs = File.expand_path(rn_stable_rel, __dir__)
+
+    rn_path_rel =
+      if File.exist?(File.join(rn_stable_abs, "package.json"))
+        rn_stable_rel
+      else
+        Pathname.new(rn_path_abs).relative_path_from(Pathname.new(__dir__)).to_s
+      end
+
+    if rn_path_rel && !rn_path_rel.empty?
+      # RN CocoaPods helpers expect a path relative to the ios/ directory.
+      ENV["REACT_NATIVE_PATH"] = rn_path_rel
+      # Also align the path we pass into use_react_native!/react_native_post_install
+      config[:reactNativePath] = rn_path_rel if config.is_a?(Hash)
+      puts "[Podfile] REACT_NATIVE_PATH=#{rn_path_rel} (resolvedAbs=#{File.expand_path(rn_path_rel, __dir__)})"
+    end
+  rescue => e
+    puts "[Podfile] WARN: failed to resolve react-native path via node: #{e}"
+  end
+
   use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
   use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
 
@@ -63,6 +93,30 @@ target 'DondeBailarMX' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # pnpm can encode peer deps into the folder name under node_modules/.pnpm, and some generated
+    # script phases hardcode that path. When peer deps change (e.g. @babel/core patch bump),
+    # Archive can fail with:
+    #   react-native/scripts/xcode/with-environment.sh: No such file or directory
+    #
+    # Force script phases to reference the stable symlinked path: ../node_modules/react-native
+    begin
+      stable_rn_dir = "$RCT_SCRIPT_POD_INSTALLATION_ROOT/../node_modules/react-native"
+      installer.pods_project.targets.each do |t|
+        t.build_phases.each do |phase|
+          next unless phase.respond_to?(:shell_script) && phase.shell_script
+          next unless phase.shell_script.include?("node_modules/.pnpm/react-native@")
+
+          phase.shell_script = phase.shell_script
+            .gsub(%r{\$RCT_SCRIPT_POD_INSTALLATION_ROOT/\.\./node_modules/\.pnpm/react-native@[^/]+/node_modules/react-native}, stable_rn_dir)
+            .gsub(%r{\.\./node_modules/\.pnpm/react-native@[^/]+/node_modules/react-native}, "../node_modules/react-native")
+        end
+      end
+      installer.pods_project.save
+      puts "[Podfile] Patched Pods script phases to use stable react-native path"
+    rescue => e
+      puts "[Podfile] WARN: failed to patch Pods script phases: #{e}"
+    end
 
     # ✅ Force C++17 + libc++ for Hermes / React Native pods (fixes HermesExecutorFactory errors)
     # These errors typically happen when some pods/targets compile with an older C++ dialect.
