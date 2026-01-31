@@ -53,6 +53,7 @@ type Props = {
   showHeader?: boolean;
   onViewRow?: (id: number) => void;
   onDeleteRow?: (row: EventDateRow) => void;
+  onDeleteRows?: (rows: EventDateRow[]) => Promise<void> | void;
   deletingRowId?: number | null;
   locations?: OrganizerLocationLite[];
 };
@@ -524,6 +525,7 @@ export default function EventDatesSheet({
   showHeader = true,
   onViewRow,
   onDeleteRow,
+  onDeleteRows,
   deletingRowId,
   locations = [],
 }: Props) {
@@ -1204,10 +1206,10 @@ export default function EventDatesSheet({
           <button
             className="eds-actionBtn eds-actionBtnDanger"
             type="button"
-            disabled={!canRun || !onDeleteRow}
+            disabled={!canRun || (!onDeleteRow && !onDeleteRows)}
             onClick={async () => {
               if (!selectedList.length) return;
-              if (!onDeleteRow) return;
+              if (!onDeleteRow && !onDeleteRows) return;
               const ok = window.confirm(
                 `¿Eliminar ${selectedList.length} fecha(s) seleccionada(s)? Esta acción no se puede deshacer.`
               );
@@ -1215,8 +1217,13 @@ export default function EventDatesSheet({
               try {
                 setBulkDeleting(true);
                 const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
-                for (const r of selectedRows) {
-                  await Promise.resolve(onDeleteRow(r));
+                // Prefer a dedicated bulk-delete callback when provided (avoids single-row modal flows).
+                if (onDeleteRows) {
+                  await Promise.resolve(onDeleteRows(selectedRows));
+                } else if (onDeleteRow) {
+                  for (const r of selectedRows) {
+                    await Promise.resolve(onDeleteRow(r));
+                  }
                 }
                 setSelectedIds(new Set());
                 showToast("Eliminadas ✅", "success");

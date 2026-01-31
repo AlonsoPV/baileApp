@@ -29,7 +29,10 @@ export default function EventCreateScreen() {
     ciudad: "",
     direccion: "",
     requisitos: "",
-    estado_publicacion: "borrador"
+    estado_publicacion: "borrador",
+    dia_semana: null,
+    cronograma: [],
+    costos: [],
   });
 
   const [parentId, setParentId] = useState<number | null>(null);
@@ -102,8 +105,7 @@ export default function EventCreateScreen() {
 
     setIsLoading(true);
     try {
-      console.log('[EventCreateScreen] Creating date with parentId:', parentId);
-      const d = await createDate.mutateAsync({
+      const payload: any = {
         parent_id: parentId,
         fecha: date.fecha,
         hora_inicio: date.hora_inicio || null,
@@ -116,11 +118,15 @@ export default function EventCreateScreen() {
         flyer_url: (date as any).flyer_url || null,
         zonas: (date as any).zonas || [],
         estilos: (date as any).estilos || parent.estilos || [],
-        estado_publicacion: date.estado_publicacion
-      });
+        estado_publicacion: date.estado_publicacion,
+        dia_semana: typeof (date as any).dia_semana === 'number' ? (date as any).dia_semana : null,
+        cronograma: Array.isArray((date as any).cronograma) ? (date as any).cronograma : [],
+        costos: Array.isArray((date as any).costos) ? (date as any).costos : [],
+      };
 
-      console.log('[EventCreateScreen] Date created:', d);
-      setDateId(d.id);
+      console.log('[EventCreateScreen] Creating date with parentId:', parentId, 'dia_semana:', payload.dia_semana);
+      const created = await createDate.mutateAsync(payload);
+      if ((created as any)?.id) setDateId((created as any).id);
       showToast('Fecha creada ✅', 'success');
     } catch (err: any) {
       console.error('[EventCreateScreen] Error creating date:', err);

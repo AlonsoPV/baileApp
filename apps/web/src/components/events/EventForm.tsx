@@ -1,10 +1,10 @@
 import React, { useCallback, useRef, useState } from "react";
 import { EventParent, EventDate, EventSchedule, EventPrice } from "../../types/events";
 import { useTags } from "../../hooks/useTags";
-import EventScheduleEditor from "../EventScheduleEditor";
-import EventPriceEditor from "../EventPriceEditor";
+import ScheduleEditor from "./ScheduleEditor";
 import { Chip } from "../profile/Chip";
 import DateFlyerUploader from "./DateFlyerUploader";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 type Props = {
   mode: "create" | "edit";
@@ -208,6 +208,7 @@ export default function EventForm(props: Props) {
               }}
               value={d.fecha || ""}
               onChange={(e) => props.onChangeDate({ fecha: e.target.value })}
+              disabled={typeof (d as any)?.dia_semana === 'number'}
             />
           </div>
 
@@ -245,6 +246,104 @@ export default function EventForm(props: Props) {
               value={d.hora_fin || ""}
               onChange={(e) => props.onChangeDate({ hora_fin: e.target.value })}
             />
+          </div>
+
+          {/* Recurrente semanal (dia_semana) */}
+          <div style={{ gridColumn: '1 / -1' }}>
+            {(() => {
+              const isRecurrentWeekly = typeof (d as any)?.dia_semana === 'number';
+              const dayLabels = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+              let nextYmd: string | null = null;
+              if (isRecurrentWeekly) {
+                try {
+                  const horaInicioStr = (d as any)?.hora_inicio || '20:00';
+                  const next = calculateNextDateWithTime((d as any).dia_semana, horaInicioStr);
+                  const y = next.getFullYear();
+                  const m = String(next.getMonth() + 1).padStart(2, '0');
+                  const dd = String(next.getDate()).padStart(2, '0');
+                  nextYmd = `${y}-${m}-${dd}`;
+                } catch {
+                  nextYmd = null;
+                }
+              }
+
+              const makeDiaSemanaFromFecha = (fechaValue: any): number | null => {
+                try {
+                  if (!fechaValue) return null;
+                  const plain = String(fechaValue).split('T')[0];
+                  const [y, m, dd] = plain.split('-').map((n) => parseInt(n, 10));
+                  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(dd)) return null;
+                  const dt = new Date(y, m - 1, dd);
+                  const day = dt.getDay();
+                  return typeof day === 'number' && day >= 0 && day <= 6 ? day : null;
+                } catch {
+                  return null;
+                }
+              };
+
+              return (
+                <div
+                  style={{
+                    padding: '0.85rem',
+                    borderRadius: '0.75rem',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    background: 'rgba(0,0,0,0.18)',
+                  }}
+                >
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'end' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={isRecurrentWeekly}
+                        onChange={(e) => {
+                          const next = e.target.checked;
+                          if (!next) {
+                            props.onChangeDate({ dia_semana: null } as any);
+                            return;
+                          }
+                          const fromFecha = makeDiaSemanaFromFecha((d as any)?.fecha);
+                          props.onChangeDate({ dia_semana: (fromFecha ?? 5) } as any);
+                        }}
+                        style={{ width: 18, height: 18 }}
+                      />
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>🔁 Recurrente semanal</span>
+                    </label>
+
+                    <label style={{ fontSize: '0.8rem', color: 'rgba(163, 163, 163, 1)', fontWeight: 700, opacity: isRecurrentWeekly ? 1 : 0.7 }}>
+                      Día (recurrente)
+                      <select
+                        disabled={!isRecurrentWeekly}
+                        value={isRecurrentWeekly ? String((d as any).dia_semana) : ''}
+                        onChange={(e) => props.onChangeDate({ dia_semana: parseInt(e.target.value, 10) } as any)}
+                        style={{
+                          width: '100%',
+                          marginTop: 6,
+                          background: 'rgba(38, 38, 38, 1)',
+                          borderRadius: '0.5rem',
+                          padding: '0.6rem 0.75rem',
+                          color: 'white',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          outline: 'none',
+                          opacity: isRecurrentWeekly ? 1 : 0.6,
+                          cursor: isRecurrentWeekly ? 'pointer' : 'not-allowed',
+                        }}
+                      >
+                        <option value="" disabled>Selecciona…</option>
+                        {dayLabels.map((lbl, idx) => (
+                          <option key={idx} value={String(idx)}>{lbl}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  {isRecurrentWeekly && (
+                    <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'rgba(163, 163, 163, 1)' }}>
+                      Próxima ocurrencia aprox.: <b style={{ color: '#fff' }}>{nextYmd || '—'}</b> · La fecha queda bloqueada; edita el día.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           <div>
@@ -401,37 +500,27 @@ export default function EventForm(props: Props) {
         </div>
       </section>
 
-      {/* BLOQUE: CRONOGRAMA */}
-      {props.dateId && (
-        <section style={{
-          marginBottom: '2rem',
-          borderRadius: '1rem',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          padding: '1rem',
-          background: 'rgba(23, 23, 23, 0.4)'
-        }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>
-            📅 Cronograma
-          </h2>
-          <EventScheduleEditor eventDateId={props.dateId} />
-        </section>
-      )}
-
-      {/* BLOQUE: PRECIOS */}
-      {props.dateId && (
-        <section style={{
-          marginBottom: '2rem',
-          borderRadius: '1rem',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          padding: '1rem',
-          background: 'rgba(23, 23, 23, 0.4)'
-        }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>
-            💰 Costos y Promociones
-          </h2>
-          <EventPriceEditor eventDateId={props.dateId} />
-        </section>
-      )}
+      {/* BLOQUE: CRONOGRAMA Y COSTOS (estado en date para que se guarden al crear/editar la fecha) */}
+      <section style={{
+        marginBottom: '2rem',
+        borderRadius: '1rem',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        padding: '1rem',
+        background: 'rgba(23, 23, 23, 0.4)'
+      }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>
+          📅 Cronograma y costos
+        </h2>
+        <ScheduleEditor
+          schedule={(d.cronograma as any) || []}
+          onChangeSchedule={(cronograma) => props.onChangeDate({ cronograma })}
+          costos={(d.costos as any) || []}
+          onChangeCostos={(costos) => props.onChangeDate({ costos })}
+          ritmos={ritmos}
+          zonas={zonas}
+          eventFecha={d.fecha || ''}
+        />
+      </section>
 
       {props.onFinish && (
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

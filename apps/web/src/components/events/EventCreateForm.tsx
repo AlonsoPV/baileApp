@@ -19,6 +19,7 @@ import ZonaGroupedChips from "../profile/ZonaGroupedChips";
 import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
 import type { AcademyLocation } from "../../types/academy";
 import OrganizerLocationPicker from "../locations/OrganizerLocationPicker";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 const colors = {
   coral: '#FF3D57',
@@ -133,7 +134,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
   if (!initialData && isEditing) {
     return (
       <div style={{
-        minHeight: '100vh',
         background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
         display: 'flex',
         alignItems: 'center',
@@ -178,10 +178,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
       flyer_url: null,
       estado_publicacion: 'borrador',
       ubicaciones: [] as any[],
-      // Repetición semanal
-      repetir_semanal: false,
-      semanas_repetir: 4,
-      fecha_fin_repetir: '',
+      dia_semana: null,
     }
   });
   const initialUbicaciones = React.useMemo(
@@ -431,7 +428,6 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     <React.Fragment>
       <style>{`
         .event-create-form-container {
-          min-height: 100vh;
           background: linear-gradient(135deg, ${colors.dark}, #1a1a1a);
           padding: 24px 0;
         }
@@ -807,6 +803,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                       type="date"
                       value={values?.fecha || ''}
                       onChange={(e) => setValue('fecha', e.target.value)}
+                      disabled={typeof (values as any)?.dia_semana === 'number'}
                       style={{
                         width: '100%',
                         padding: '12px 16px',
@@ -815,6 +812,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                         border: `2px solid ${colors.light}33`,
                         color: colors.light,
                         fontSize: '1rem',
+                        opacity: typeof (values as any)?.dia_semana === 'number' ? 0.6 : 1,
                       }}
                     />
                   </div>
@@ -872,59 +870,95 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                   </div>
                 </div>
 
-                {/* Repetición Semanal */}
-                <div style={{ marginTop: '24px', padding: '20px', background: `${colors.dark}44`, borderRadius: '12px', border: `1px solid ${colors.light}22` }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', marginBottom: (values as any)?.repetir_semanal ? '16px' : '0' }}>
-                    <input
-                      type="checkbox"
-                      checked={(values as any)?.repetir_semanal || false}
-                      onChange={(e) => setValue('repetir_semanal', e.target.checked)}
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        cursor: 'pointer',
-                      }}
-                    />
-                    <span style={{ fontSize: '1rem', fontWeight: '600', color: colors.light }}>
-                      🔁 Repetir semanalmente
-                    </span>
-                  </label>
+                {/* Recurrente semanal (dia_semana) */}
+                {(() => {
+                  const isRecurrentWeekly = typeof (values as any)?.dia_semana === 'number';
+                  const dayLabels = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+                  let nextYmd: string | null = null;
+                  if (isRecurrentWeekly) {
+                    try {
+                      const horaInicioStr = (values as any)?.hora_inicio || '20:00';
+                      const next = calculateNextDateWithTime((values as any).dia_semana, horaInicioStr);
+                      const y = next.getFullYear();
+                      const m = String(next.getMonth() + 1).padStart(2, '0');
+                      const d = String(next.getDate()).padStart(2, '0');
+                      nextYmd = `${y}-${m}-${d}`;
+                    } catch {
+                      nextYmd = null;
+                    }
+                  }
 
-                  {(values as any)?.repetir_semanal && (
-                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          marginBottom: '8px',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
-                          color: colors.light,
-                        }}>
-                          Número de semanas
+                  const makeDiaSemanaFromFecha = (fechaValue: any): number | null => {
+                    try {
+                      if (!fechaValue) return null;
+                      const plain = String(fechaValue).split('T')[0];
+                      const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
+                      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+                      const dt = new Date(y, m - 1, d);
+                      const day = dt.getDay();
+                      return typeof day === 'number' && day >= 0 && day <= 6 ? day : null;
+                    } catch {
+                      return null;
+                    }
+                  };
+
+                  return (
+                    <div style={{ marginTop: '24px', padding: '20px', background: `${colors.dark}44`, borderRadius: '12px', border: `1px solid ${colors.light}22` }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'end' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={isRecurrentWeekly}
+                            onChange={(e) => {
+                              const next = e.target.checked;
+                              if (!next) {
+                                setValue('dia_semana' as any, null as any);
+                                return;
+                              }
+                              const fromFecha = makeDiaSemanaFromFecha((values as any)?.fecha);
+                              setValue('dia_semana' as any, (fromFecha ?? 5) as any);
+                            }}
+                            style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                          />
+                          <span style={{ fontSize: '1rem', fontWeight: '600', color: colors.light }}>
+                            🔁 Recurrente semanal
+                          </span>
                         </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="52"
-                          value={(values as any)?.semanas_repetir || 4}
-                          onChange={(e) => setValue('semanas_repetir', parseInt(e.target.value) || 4)}
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            borderRadius: '12px',
-                            background: `${colors.dark}cc`,
-                            border: `2px solid ${colors.light}33`,
-                            color: colors.light,
-                            fontSize: '1rem',
-                          }}
-                        />
-                        <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px', color: colors.light }}>
-                          Se crearán fechas cada semana durante {((values as any)?.semanas_repetir || 4)} semana{((values as any)?.semanas_repetir || 4) !== 1 ? 's' : ''}
-                        </p>
+
+                        <label style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.light, opacity: isRecurrentWeekly ? 1 : 0.7 }}>
+                          Día (recurrente)
+                          <select
+                            disabled={!isRecurrentWeekly}
+                            value={isRecurrentWeekly ? String((values as any).dia_semana) : ''}
+                            onChange={(e) => setValue('dia_semana' as any, parseInt(e.target.value, 10) as any)}
+                            style={{
+                              width: '100%',
+                              marginTop: 8,
+                              padding: '12px 14px',
+                              borderRadius: 12,
+                              background: '#2b2b2b',
+                              border: `2px solid ${colors.light}33`,
+                              color: '#fff',
+                              cursor: isRecurrentWeekly ? 'pointer' : 'not-allowed',
+                              opacity: isRecurrentWeekly ? 1 : 0.6,
+                            }}
+                          >
+                            <option value="" disabled>Selecciona…</option>
+                            {dayLabels.map((lbl, idx) => (
+                              <option key={idx} value={String(idx)}>{lbl}</option>
+                            ))}
+                          </select>
+                        </label>
                       </div>
+
+                      {isRecurrentWeekly && (
+                        <div style={{ marginTop: 10, fontSize: '0.85rem', opacity: 0.8, color: colors.light }}>
+                          Próxima ocurrencia aprox.: <b>{nextYmd || '—'}</b> · La fecha específica queda bloqueada; edita el día.
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
 
               {/* Ubicación del Evento */}
@@ -1235,19 +1269,30 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSubmit}
-                disabled={isSubmitting || isFlyerUploading || !values?.nombre?.trim()}
+                disabled={
+                  isSubmitting ||
+                  isFlyerUploading ||
+                  (!isParent && !values?.fecha)
+                }
                 style={{
                   padding: '12px 24px',
                   borderRadius: '25px',
                   border: 'none',
-                  background: isSubmitting || !values?.nombre?.trim()
-                    ? `${colors.light}33`
-                    : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
+                  background:
+                    isSubmitting || (!isParent && !values?.fecha)
+                      ? `${colors.light}33`
+                      : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
                   color: colors.light,
                   fontSize: '1rem',
                   fontWeight: '700',
-                  cursor: isSubmitting || isFlyerUploading || !values?.nombre?.trim() ? 'not-allowed' : 'pointer',
-                  opacity: isSubmitting || isFlyerUploading || !values?.nombre?.trim() ? 0.6 : 1,
+                  cursor:
+                    isSubmitting || isFlyerUploading || (!isParent && !values?.fecha)
+                      ? 'not-allowed'
+                      : 'pointer',
+                  opacity:
+                    isSubmitting || isFlyerUploading || (!isParent && !values?.fecha)
+                      ? 0.6
+                      : 1,
                 }}
               >
                 {isSubmitting ? '⏳ Guardando...' : isFlyerUploading ? 'Subiendo flyer...' : editMode ? '💾 Actualizar' : '✨ Crear'}

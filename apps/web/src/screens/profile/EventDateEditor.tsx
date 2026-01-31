@@ -145,7 +145,7 @@ export const EventDateEditor: React.FC = () => {
         flyer_url: values.flyer_url || null,
         estado_publicacion: values.estado_publicacion || 'borrador',
       };
-      await createMutation.mutateAsync(payload);
+      await createMutation.mutateAsync(payload as any);
     }
   };
 

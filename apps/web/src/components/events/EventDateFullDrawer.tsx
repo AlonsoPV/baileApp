@@ -267,7 +267,7 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "min(860px, 92vw)",
-          height: "100vh",
+         /*  height: "100vh", */
           background: `linear-gradient(135deg, ${colors.dark} 0%, #1a1a1a 50%, ${colors.dark} 100%)`,
           borderLeft: "1px solid rgba(255,255,255,0.12)",
           boxShadow: "0 30px 90px rgba(0,0,0,0.55)",
@@ -300,10 +300,10 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: 18 }}>
-          <div className="org-editor-card" style={{ marginBottom: 16, padding: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 14, color: "#fff" }}>
+        {/*   <div className="org-editor-card" style={{ marginBottom: 16, padding: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 14, color: "#fff" }}>
             {isLoading && <div style={{ opacity: 0.85 }}>Cargando…</div>}
             {!isLoading && !date && <div style={{ opacity: 0.85 }}>No encontramos esta fecha.</div>}
-          </div>
+          </div> */}
 
           {!isLoading && !!date && (
             <>
@@ -365,10 +365,9 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
               <div className="org-editor-card" style={{ marginBottom: 16, padding: 14, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "#fff" }}>
                 <div style={{ fontWeight: 900, marginBottom: 12 }}>🎵 Ritmos</div>
                 <RitmosChips
-                  selectedCatalogIds={allowedCatalogIds}
+                  allowedIds={allowedCatalogIds}
                   selected={form.ritmos_seleccionados || []}
                   onChange={(ids) => setForm({ ...form, ritmos_seleccionados: ids })}
-                  catalog={ritmoTags}
                 />
               </div>
 
@@ -440,7 +439,7 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
 
                 <div style={{ marginTop: 12 }}>
                   <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 8 }}>Zonas</div>
-                  <ZonaGroupedChips zonas={zonaTags} selected={form.zonas || []} onToggle={toggleZona} />
+                  <ZonaGroupedChips allTags={zonaTags} selectedIds={form.zonas || []} onToggle={toggleZona} mode="edit" />
                 </div>
               </div>
 
@@ -605,7 +604,11 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
           </button>
           <button
             type="button"
-            onClick={handleSave}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleSave();
+            }}
             disabled={saving || isLoading || !dateId}
             style={{
               flex: 1,

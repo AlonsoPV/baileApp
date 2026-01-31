@@ -14,7 +14,6 @@ import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import type { AcademyLocation } from "../../types/academy";
 import { supabase } from "../../lib/supabase";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
-import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 const colors = {
   coral: '#FF3D57',
@@ -231,43 +230,25 @@ export default function OrganizerEventDateCreateScreen() {
         estado_publicacion: dateForm.estado_publicacion || 'borrador'
       };
 
-      // Calcular la fecha a guardar: si tiene repetición semanal, usar la próxima fecha y dia_semana
-      let fechaAGuardar = dateForm.fecha;
-      let diaSemanaAGuardar: number | null = null;
-      
-      if (dateForm.repetir_semanal && dateForm.fecha) {
-        // Calcular el día de la semana de la fecha inicial
-        const [year, month, day] = dateForm.fecha.split('-').map(Number);
-        const fechaInicio = new Date(year, month - 1, day);
-        const diaSemanaInicial = fechaInicio.getDay(); // 0 = domingo, 1 = lunes, etc.
-        diaSemanaAGuardar = diaSemanaInicial;
-        
-        // Calcular la próxima fecha basada en el día de la semana
-        try {
-          const horaInicioStr = dateForm.hora_inicio || '20:00';
-          const proximaFecha = calculateNextDateWithTime(diaSemanaInicial, horaInicioStr);
-          const yearStr = proximaFecha.getFullYear();
-          const monthStr = String(proximaFecha.getMonth() + 1).padStart(2, '0');
-          const dayStr = String(proximaFecha.getDate()).padStart(2, '0');
-          fechaAGuardar = `${yearStr}-${monthStr}-${dayStr}`;
-          console.log('[OrganizerEventDateCreateScreen] Fecha recurrente - próxima fecha:', fechaAGuardar, 'dia_semana:', diaSemanaAGuardar);
-        } catch (e) {
-          console.error('Error calculando próxima fecha:', e);
-          // Si falla el cálculo, usar la fecha original
-        }
-      }
-      
-      // Crear una sola fecha (con dia_semana si es recurrente)
-      const newDate = await createDate.mutateAsync({
+      const parseYMD = (s: string) => {
+        const [y, m, d] = String(s || '').split('-').map((x) => parseInt(x, 10));
+        if (!y || !m || !d) return null;
+        return new Date(y, m - 1, d);
+      };
+
+      const dt = parseYMD(dateForm.fecha);
+      const dia_semana = dateForm.repetir_semanal ? (dt ? dt.getDay() : null) : null;
+
+      const created = await createDate.mutateAsync({
         ...basePayload,
-        fecha: fechaAGuardar,
-        dia_semana: diaSemanaAGuardar,
-      });
-      
+        fecha: dateForm.fecha,
+        dia_semana,
+      } as any);
+
       showToast('Fecha creada ✅', 'success');
-      
-      if (newDate?.id) {
-        navigate(`/social/fecha/${newDate.id}`);
+
+      if ((created as any)?.id) {
+        navigate(`/social/fecha/${(created as any).id}`);
       } else {
         navigate(`/social/${parentIdNum}`);
       }

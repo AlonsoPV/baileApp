@@ -11,6 +11,17 @@ import { motion } from 'framer-motion';
 import { getAuthRedirectUrl, isMobileWebView } from '../../utils/authRedirect';
 
 export function Login() {
+  // Brand palette (requested): #297F96 + tonalidades
+  const brand = {
+    base: '#297F96',
+    dark: '#1B5C6E',
+    deep: '#0F3E4A',
+    light: '#43A9C1',
+    ice: '#7CE0F5',
+  } as const;
+  const brandGradientPrimary = `linear-gradient(135deg, ${brand.base} 0%, ${brand.light} 45%, ${brand.dark} 100%)`;
+  const brandGradientSecondary = `linear-gradient(135deg, ${brand.deep} 0%, ${brand.dark} 60%, ${brand.base} 140%)`;
+
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -347,7 +358,7 @@ export function Login() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${colors.dark[400]} 0%, ${colors.dark[300]} 100%)`,
+          background: `linear-gradient(135deg, ${brand.deep} 0%, ${brand.dark} 45%, ${brand.base} 100%)`,
           padding: spacing[4],
         }}
       >
@@ -375,7 +386,7 @@ export function Login() {
                 borderRadius: borderRadius.md,
                 border: 'none',
                 background: activeTab === 'login' 
-                  ? colors.gradients.primary 
+                  ? brandGradientPrimary
                   : 'transparent',
                 color: activeTab === 'login' ? '#fff' : colors.gray[400],
                 fontSize: '1rem',
@@ -395,7 +406,7 @@ export function Login() {
                 borderRadius: borderRadius.md,
                 border: 'none',
                 background: activeTab === 'signup' 
-                  ? colors.gradients.secondary 
+                  ? brandGradientSecondary
                   : 'transparent',
                 color: activeTab === 'signup' ? '#fff' : colors.gray[400],
                 fontSize: '1rem',
@@ -663,7 +674,7 @@ export function Login() {
                 style={{
                   width: '100%',
                   opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
-                  background: colors.gradients.primary,
+                  background: brandGradientPrimary,
                 }}
               >
                 {isLoading ? '⏳ Verificando...' : '🔓 Entrar con contraseña'}
@@ -676,7 +687,7 @@ export function Login() {
                 style={{
                   width: '100%',
                   opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
-                  background: colors.gradients.secondary,
+                  background: brandGradientSecondary,
                 }}
               >
                 {isLoading ? '⏳ Enviando...' : '📬 Enlace de inicio'}

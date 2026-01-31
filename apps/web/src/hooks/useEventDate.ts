@@ -142,6 +142,7 @@ export function useUpdateEventDate() {
       qc.invalidateQueries({ queryKey: ["event", "date", row.id] });
       qc.invalidateQueries({ queryKey: ["event", "dates", row.parent_id] });
       qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+      qc.invalidateQueries({ queryKey: ["event-dates", "bulk"] }); // Refrescar lista bulk (OrganizerProfileEditor)
       qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
       qc.invalidateQueries({ queryKey: ["parents"] }); // Refrescar lista de parents
     }

@@ -110,6 +110,7 @@ const BulkRowItem = React.memo(function BulkRowItem({
   createdDateId,
   onEditCreatedDate,
   dense,
+  t,
 }: {
   row: BulkRow;
   errors?: Record<string, string>;
@@ -118,8 +119,8 @@ const BulkRowItem = React.memo(function BulkRowItem({
   createdDateId?: number | null;
   onEditCreatedDate?: (dateId: number) => void;
   dense?: boolean;
+  t: (key: string, options?: any) => string;
 }) {
-  const { t } = useTranslation();
   const rowErr = errors || {};
   return (
     <div
@@ -274,7 +275,18 @@ const BulkRowItem = React.memo(function BulkRowItem({
 });
 
 // Componente para mostrar un social con sus fechas
-function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDeleteDate, deletingDateId, isMobile, orgLocations, onOpenDateDrawer }: any) {
+function EventParentCard({
+  parent,
+  onDelete,
+  isDeleting,
+  onDuplicateDate,
+  onDeleteDate,
+  onDeleteDatesBulk,
+  deletingDateId,
+  isMobile,
+  orgLocations,
+  onOpenDateDrawer,
+}: any) {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: dates } = useDatesByParent(parent.id);
@@ -471,6 +483,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                           onStartFrecuentes={(fromDateId) => startFrecuentesFromDate(fromDateId)}
                           onViewRow={(id) => navigate(`/social/fecha/${id}`)}
                           onDeleteRow={(row) => onDeleteDate(row as any)}
+                          onDeleteRows={onDeleteDatesBulk}
                           deletingRowId={deletingDateId as any}
                           locations={orgLocations || []}
                         />
@@ -505,6 +518,7 @@ function EventParentCard({ parent, onDelete, isDeleting, onDuplicateDate, onDele
                           onStartFrecuentes={(fromDateId) => startFrecuentesFromDate(fromDateId)}
                           onViewRow={(id) => navigate(`/social/fecha/${id}`)}
                           onDeleteRow={(row) => onDeleteDate(row as any)}
+                          onDeleteRows={onDeleteDatesBulk}
                           deletingRowId={deletingDateId as any}
                           locations={orgLocations || []}
                         />
@@ -625,6 +639,8 @@ export default function OrganizerProfileEditor() {
   const createEventDate = useCreateEventDate();
   const [deletingDateId, setDeletingDateId] = useState<number | null>(null);
   const [dateToDelete, setDateToDelete] = useState<{ id: number; nombre: string } | null>(null);
+  const [parentToDelete, setParentToDelete] = useState<{ id: number; nombre: string } | null>(null);
+  const [deletingParentId, setDeletingParentId] = useState<number | null>(null);
   const [selectedDateLocationId, setSelectedDateLocationId] = useState<string>('');
   const [dateForm, setDateForm] = useState({
     nombre: '',
@@ -650,7 +666,8 @@ export default function OrganizerProfileEditor() {
     flyer_url: null as string | null,
     estado_publicacion: 'borrador' as 'borrador' | 'publicado',
     repetir_semanal: false,
-    semanas_repetir: 4
+    semanas_repetir: 4,
+    dia_semana: null as number | null,
   });
 
   // Drawer para edición individual desde tabla bulk (override flyer + ajustes puntuales)
@@ -1184,13 +1201,37 @@ export default function OrganizerProfileEditor() {
   // Función para eliminar evento
   const handleDeleteEvent = async (parentId: string) => {
     try {
-      const confirmDelete = window.confirm(t('delete_event_confirm'));
-      if (!confirmDelete) return;
-      await deleteParent.mutateAsync(Number(parentId));
+      const id = Number(parentId);
+      const name =
+        (parents || []).find((p: any) => Number(p?.id) === id)?.nombre ||
+        'sin nombre';
+      setParentToDelete({ id, nombre: String(name) });
+    } catch (err: any) {
+      console.error('Error preparing event delete modal:', err);
+      showToast(t('error_deleting_event'), 'error');
+    }
+  };
+
+  const cancelDeleteParent = () => {
+    setParentToDelete(null);
+  };
+
+  const confirmDeleteParent = async () => {
+    if (!parentToDelete) return;
+    const id = parentToDelete.id;
+    const name = parentToDelete.nombre;
+    try {
+      setDeletingParentId(id);
+      setParentToDelete(null); // Cerrar modal inmediatamente
+      await deleteParent.mutateAsync(id);
       showToast(t('event_deleted'), 'success');
     } catch (err: any) {
       console.error('Error deleting event:', err);
-      showToast(t('error_deleting_event'), 'error');
+      showToast(err?.message || t('error_deleting_event'), 'error');
+      // Reabrir modal para reintentar
+      setParentToDelete({ id, nombre: name });
+    } finally {
+      setDeletingParentId(null);
     }
   };
 
@@ -1275,7 +1316,7 @@ export default function OrganizerProfileEditor() {
       const datesToCreate: any[] = [{
           ...basePayload,
           fecha: dateForm.fecha,
-          dia_semana: null,
+          dia_semana: typeof dateForm.dia_semana === 'number' ? dateForm.dia_semana : null,
         }];
       
       // Crear todas las fechas en una sola operación batch (mucho más rápido)
@@ -1319,7 +1360,8 @@ export default function OrganizerProfileEditor() {
         flyer_url: null,
         estado_publicacion: 'borrador',
         repetir_semanal: false,
-        semanas_repetir: 4
+        semanas_repetir: 4,
+        dia_semana: null,
       });
       setSelectedDateLocationId('');
       setSelectedParentId(null);
@@ -1513,11 +1555,12 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
+      const organizerId = (org as any)?.id ? Number((org as any).id) : undefined;
       const ids = withIds.map((x) => Number(x.id));
-      const { error } = await supabase
-        .from('events_date')
-        .update({ flyer_url: bulkGeneralFlyerUrl as any })
-        .in('id', ids);
+      let q: any = supabase.from('events_date').update({ flyer_url: bulkGeneralFlyerUrl as any }).in('id', ids);
+      // Extra guard: asegurar que sólo tocamos fechas del organizer actual (ayuda con RLS y evita updates cruzados)
+      if (organizerId) q = q.eq('organizer_id', organizerId as any);
+      const { error } = await q;
       if (error) throw error;
 
       // Estado local (para que el panel muestre DONE sin recargar)
@@ -1525,7 +1568,14 @@ export default function OrganizerProfileEditor() {
         updateBulkRow(row.id, { flyer_url: bulkGeneralFlyerUrl, flyer_status: 'DONE' });
       });
 
+      // Refrescar todas las listas relevantes (bulk + organizer)
+      queryClient.invalidateQueries({ queryKey: ["event-dates", "bulk"] });
       queryClient.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+      queryClient.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+      if (selectedParentId) {
+        queryClient.invalidateQueries({ queryKey: ["event", "dates", selectedParentId] });
+        queryClient.invalidateQueries({ queryKey: ["dates", selectedParentId] });
+      }
       showToast(t('flyer_saved'), 'success');
     } catch (e: any) {
       console.error('[OrganizerProfileEditor] apply bulk general flyer error:', e);
@@ -1545,14 +1595,21 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
+      const organizerId = (org as any)?.id ? Number((org as any).id) : undefined;
       const ids = withIds.map((x) => Number(x.id));
-      const { error } = await supabase
-        .from('events_date')
-        .update({ estado_publicacion: 'publicado' as any })
-        .in('id', ids);
+      let q: any = supabase.from('events_date').update({ estado_publicacion: 'publicado' as any }).in('id', ids);
+      // Extra guard: asegurar que sólo tocamos fechas del organizer actual (ayuda con RLS y evita updates cruzados)
+      if (organizerId) q = q.eq('organizer_id', organizerId as any);
+      const { error } = await q;
       if (error) throw error;
 
+      // Reflejar inmediatamente en el sheet (si no, parece que “no hizo nada”)
+      withIds.forEach(({ row }) => {
+        updateBulkRow(row.id, { estado_publicacion: 'publicado' });
+      });
+
       // refrescar listas (evita stale)
+      queryClient.invalidateQueries({ queryKey: ["event-dates", "bulk"] });
       queryClient.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
       queryClient.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
       if (selectedParentId) {
@@ -1627,6 +1684,64 @@ export default function OrganizerProfileEditor() {
     if (!date?.id) return;
     // Mostrar modal de confirmación en lugar de window.confirm
     setDateToDelete({ id: date.id, nombre: date.nombre || 'sin nombre' });
+  };
+
+  // Bulk delete for EventDatesSheet: must delete immediately (no modal per row),
+  // otherwise only the first selected row triggers the single-row modal.
+  const deleteDatesBulk = async (rows: any[]) => {
+    if (!rows?.length) return;
+    for (const r of rows) {
+      const dateId = Number(r?.id);
+      if (!Number.isFinite(dateId) || dateId <= 0) continue;
+
+      setDeletingDateId(dateId);
+
+      // Best-effort RSVP cleanup (non-blocking)
+      try {
+        await supabase.from('event_rsvp').delete().eq('event_date_id', dateId);
+      } catch (e) {
+        console.warn('[OrganizerProfileEditor] Limpieza de RSVPs omitida (bulk):', e);
+      }
+
+      await deleteDate.mutateAsync(dateId);
+
+      // Remove from local lists immediately (prevents "ghost rows" until refetch)
+      try {
+        const organizerId = (org as any)?.id ? Number((org as any).id) : undefined;
+        const rowAny =
+          ((bulkDates as any) || []).find((d: any) => Number(d?.id) === Number(dateId)) ||
+          ((allOrganizerDates as any) || []).find((d: any) => Number(d?.id) === Number(dateId)) ||
+          r ||
+          null;
+        const parentId = rowAny && rowAny.parent_id ? Number(rowAny.parent_id) : null;
+
+        if (organizerId) {
+          queryClient.setQueryData(["event-dates", "bulk", organizerId], (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.filter((x: any) => Number(x?.id) !== Number(dateId));
+          });
+          queryClient.setQueryData(["event-dates", "by-organizer", organizerId], (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.filter((x: any) => Number(x?.id) !== Number(dateId));
+          });
+        }
+
+        if (parentId) {
+          (queryClient as any).setQueriesData?.({ queryKey: ["dates", parentId] }, (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.filter((x: any) => Number(x?.id) !== Number(dateId));
+          });
+          (queryClient as any).setQueriesData?.({ queryKey: ["event", "dates", parentId] }, (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.filter((x: any) => Number(x?.id) !== Number(dateId));
+          });
+        }
+      } catch (e) {
+        console.warn('[OrganizerProfileEditor] Cache cleanup (bulk delete) failed:', e);
+      } finally {
+        setDeletingDateId(null);
+      }
+    }
   };
 
   const confirmDeleteDate = async () => {
@@ -1892,6 +2007,9 @@ export default function OrganizerProfileEditor() {
       <style>{`
         .org-editor-wrapper {
           padding: 2rem;
+          /* The web app has a fixed footer (AppShell). Add extra bottom padding so
+             the last sections (e.g. BankAccountEditor) remain clickable/editable. */
+          padding-bottom: calc(2rem + 140px);
         }
         
         .org-editor-container {
@@ -3118,6 +3236,7 @@ export default function OrganizerProfileEditor() {
           
           .org-editor-wrapper {
             padding: 1rem !important;
+            padding-bottom: calc(1rem + 160px) !important;
           }
           
           .org-editor-container {
@@ -3367,6 +3486,7 @@ export default function OrganizerProfileEditor() {
         @media (max-width: 480px) {
           .org-editor-wrapper {
             padding: 0.75rem !important;
+            padding-bottom: calc(0.75rem + 170px) !important;
           }
           
           .org-editor-container {
@@ -4596,7 +4716,7 @@ export default function OrganizerProfileEditor() {
                         onClick={() => {
                           setBulkMode(false);
                           setShowPendingFlyers(false);
-                          setDateForm((prev) => ({ ...prev, repetir_semanal: false }));
+                          setDateForm((prev) => ({ ...prev, repetir_semanal: false, dia_semana: null }));
                         }}
                         style={{
                           padding: '10px 14px',
@@ -4651,7 +4771,8 @@ export default function OrganizerProfileEditor() {
                           onChange={(e) => setDateForm({ ...dateForm, fecha: e.target.value })}
                           required
                           className="org-editor-input"
-                          style={{ color: '#FFFFFF' }}
+                          style={{ color: '#FFFFFF', opacity: !bulkMode && typeof dateForm.dia_semana === 'number' ? 0.6 : 1 }}
+                          disabled={!bulkMode && typeof dateForm.dia_semana === 'number'}
                         />
                       </div>
                       <div>
@@ -4679,6 +4800,90 @@ export default function OrganizerProfileEditor() {
                         />
                       </div>
                     </div>
+
+                    {/* Recurrente semanal (solo modo Único) */}
+                    {!bulkMode && (() => {
+                      const isRecurrentWeekly = typeof dateForm.dia_semana === 'number';
+                      const dayLabels = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                      let nextYmd: string | null = null;
+                      if (isRecurrentWeekly) {
+                        try {
+                          const horaInicioStr = dateForm.hora_inicio || '20:00';
+                          const next = calculateNextDateWithTime(dateForm.dia_semana!, horaInicioStr);
+                          const y = next.getFullYear();
+                          const m = String(next.getMonth() + 1).padStart(2, '0');
+                          const d = String(next.getDate()).padStart(2, '0');
+                          nextYmd = `${y}-${m}-${d}`;
+                        } catch {
+                          nextYmd = null;
+                        }
+                      }
+                      const makeDiaSemanaFromFecha = (fechaValue: string) => {
+                        try {
+                          if (!fechaValue) return null;
+                          const plain = String(fechaValue).split('T')[0];
+                          const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
+                          if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+                          const dt = new Date(y, m - 1, d);
+                          const day = dt.getDay();
+                          return typeof day === 'number' && day >= 0 && day <= 6 ? day : null;
+                        } catch {
+                          return null;
+                        }
+                      };
+                      return (
+                        <div style={{ marginTop: 14, padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'end' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontWeight: 700, color: '#fff' }}>
+                              <input
+                                type="checkbox"
+                                checked={isRecurrentWeekly}
+                                onChange={(e) => {
+                                  const next = e.target.checked;
+                                  if (!next) {
+                                    setDateForm((prev) => ({ ...prev, dia_semana: null }));
+                                    return;
+                                  }
+                                  const fromFecha = makeDiaSemanaFromFecha(dateForm.fecha);
+                                  setDateForm((prev) => ({ ...prev, dia_semana: fromFecha ?? 5 }));
+                                }}
+                                style={{ width: 20, height: 20, cursor: 'pointer' }}
+                              />
+                              🔁 Recurrente semanal
+                            </label>
+                            <label style={{ fontSize: 13, fontWeight: 700, color: '#fff', opacity: isRecurrentWeekly ? 1 : 0.7 }}>
+                              Día (recurrente)
+                              <select
+                                disabled={!isRecurrentWeekly}
+                                value={isRecurrentWeekly ? String(dateForm.dia_semana) : ''}
+                                onChange={(e) => setDateForm((prev) => ({ ...prev, dia_semana: parseInt(e.target.value, 10) }))}
+                                style={{
+                                  width: '100%',
+                                  marginTop: 6,
+                                  padding: '10px 12px',
+                                  borderRadius: 12,
+                                  background: '#2b2b2b',
+                                  border: '1px solid rgba(255,255,255,0.18)',
+                                  color: '#fff',
+                                  cursor: isRecurrentWeekly ? 'pointer' : 'not-allowed',
+                                  opacity: isRecurrentWeekly ? 1 : 0.6,
+                                }}
+                              >
+                                <option value="" disabled>Selecciona…</option>
+                                {dayLabels.map((lbl, idx) => (
+                                  <option key={idx} value={String(idx)}>{lbl}</option>
+                                ))}
+                              </select>
+                            </label>
+                          </div>
+                          {isRecurrentWeekly && (
+                            <div style={{ marginTop: 10, fontSize: 12, opacity: 0.9, color: '#fff' }}>
+                              Próxima ocurrencia aprox.: <b>{nextYmd || '—'}</b> · La fecha queda bloqueada; edita el día.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Banner Único (después de fecha y hora) */}
                     {!bulkMode && (
@@ -4863,6 +5068,7 @@ export default function OrganizerProfileEditor() {
                                       setDrawerOpen(true);
                                     }}
                                     dense={isMobile}
+                                    t={t}
                                   />
                                 ))}
                               </div>
@@ -5360,6 +5566,7 @@ export default function OrganizerProfileEditor() {
                               isDeleting={deleteParent.isPending}
                               onDuplicateDate={handleDuplicateDate}
                               onDeleteDate={handleDeleteDate}
+                              onDeleteDatesBulk={deleteDatesBulk}
                               deletingDateId={deletingDateId}
                               isMobile={isMobile}
                               orgLocations={orgLocations}
@@ -5407,6 +5614,7 @@ export default function OrganizerProfileEditor() {
                                   }}
                                   onViewRow={(id) => navigate(`/social/fecha/${id}`)}
                                   onDeleteRow={(row) => handleDeleteDate(row as any)}
+                                  onDeleteRows={deleteDatesBulk as any}
                                   deletingRowId={deletingDateId as any}
                                   locations={orgLocations}
                                 />
@@ -5444,6 +5652,7 @@ export default function OrganizerProfileEditor() {
                                   }}
                                   onViewRow={(id) => navigate(`/social/fecha/${id}`)}
                                   onDeleteRow={(row) => handleDeleteDate(row as any)}
+                                  onDeleteRows={deleteDatesBulk as any}
                                   deletingRowId={deletingDateId as any}
                                   locations={orgLocations}
                                 />
@@ -5720,6 +5929,113 @@ export default function OrganizerProfileEditor() {
                 }}
               >
                 {deletingDateId === dateToDelete.id ? '⏳ Eliminando...' : '🗑️ Eliminar'}
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Modal de confirmación para eliminar evento (Social/Parent) */}
+      {parentToDelete && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem',
+          }}
+          onClick={cancelDeleteParent}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(135deg, rgba(32, 38, 58, 0.98) 0%, rgba(21, 25, 39, 1) 100%)',
+              borderRadius: '20px',
+              border: '1.5px solid rgba(255, 61, 87, 0.45)',
+              padding: '2rem',
+              maxWidth: '420px',
+              width: '100%',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <h3
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: 'var(--text-main)',
+                marginBottom: '0.75rem',
+              }}
+            >
+              🗑️ {t('delete_event') || 'Eliminar evento'}
+            </h3>
+            <p
+              style={{
+                fontSize: '0.95rem',
+                color: 'var(--text-muted)',
+                marginBottom: '1.5rem',
+                lineHeight: 1.6,
+              }}
+            >
+              ¿Estás seguro de que deseas eliminar el evento{' '}
+              <strong style={{ color: 'var(--text-main)' }}>"{parentToDelete.nombre}"</strong>?
+              <br />
+              <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>Esta acción no se puede deshacer.</span>
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={cancelDeleteParent}
+                style={{
+                  padding: '0.625rem 1.25rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Cancelar
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={confirmDeleteParent}
+                disabled={deletingParentId === parentToDelete.id || deleteParent.isPending}
+                style={{
+                  padding: '0.625rem 1.25rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid rgba(255, 61, 87, 0.6)',
+                  background:
+                    deletingParentId === parentToDelete.id || deleteParent.isPending
+                      ? 'rgba(255, 61, 87, 0.18)'
+                      : 'linear-gradient(135deg, rgba(255, 61, 87, 0.9), rgba(255, 140, 66, 0.9))',
+                  color: '#fff',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  cursor: deletingParentId === parentToDelete.id || deleteParent.isPending ? 'not-allowed' : 'pointer',
+                  opacity: deletingParentId === parentToDelete.id || deleteParent.isPending ? 0.75 : 1,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {deletingParentId === parentToDelete.id || deleteParent.isPending ? '⏳ Eliminando...' : '🗑️ Eliminar'}
               </motion.button>
             </div>
           </motion.div>
