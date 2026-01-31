@@ -88,6 +88,7 @@ export default function AppShell() {
         }
         .app-shell-content {
           flex: 1;
+          min-height: 0; /* Permite que el flex item encoja y muestre scroll */
           /* Espacio mínimo bajo el header fijo (sin duplicar safe-area) */
           padding-top: 4.5rem;
           padding-bottom: 0.5rem;
@@ -100,6 +101,12 @@ export default function AppShell() {
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
           /* Nota: NO aplicar transform/contain aquí; rompe overlays fixed en iOS/WebView */
+        }
+        @media (min-width: 769px) {
+          .app-shell-content {
+            overflow-y: auto; /* En escritorio: scroll vertical dentro del contenido */
+            max-height: calc(100vh - 4.5rem); /* Altura máxima para que el scroll sea visible */
+          }
         }
         @media (max-width: 768px) {
           .app-shell-content {
