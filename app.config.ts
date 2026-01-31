@@ -138,11 +138,11 @@ const required = (key: string, defaultValue: string = ''): string => {
 const config: ExpoConfig = {
   name: "Donde Bailar MX",
   slug: "donde-bailar-mx",
-  version: "1.0.4",
+  version: "1.0.6",
 
   // ✅ para bare workflow / evita r e l error
   // (este archivo tiene prioridad sobre app. json)
-  runtimeVersion: "1.0.4",
+  runtimeVersion: "1.0.6",
 
   scheme: "dondebailarmx",
   orientation: "default", // Permite todas las orientaciones para compatibilidad con pantallas grandes (Android 16+)
@@ -166,7 +166,7 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.tuorg.dondebailarmx",
     // ✅ App Store Connect: must be numeric and increase over last uploaded build.
     // Last uploaded reported: 181 → next safe default: 182 (EAS production also auto-increments).
-    buildNumber: "195",
+    buildNumber: "215",
     infoPlist: (() => {
       const googleIosClientId = required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', '168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com');
       const googleWebClientId = required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', '168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com');

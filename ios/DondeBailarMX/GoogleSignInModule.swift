@@ -2,6 +2,8 @@ import Foundation
 import React
 import GoogleSignIn
 import UIKit
+import CryptoKit
+import Security
 
 @objc(GoogleSignInModule)
 final class GoogleSignInModule: NSObject {
@@ -43,9 +45,23 @@ final class GoogleSignInModule: NSObject {
   }
 
   private func expectedGoogleScheme(from clientId: String) -> String {
-    // com.googleusercontent.apps.<prefix> where <prefix> = first segment of clientID
-    let prefix = clientId.split(separator: "-").first.map(String.init) ?? ""
-    return prefix.isEmpty ? "" : "com.googleusercontent.apps.\(prefix)"
+    // Google iOS callback scheme is:
+    //   com.googleusercontent.apps.<reversed_client_id>
+    // where <reversed_client_id> is everything before ".apps.googleusercontent.com"
+    // Example clientID:
+    //   168113490186-xxxx.apps.googleusercontent.com
+    // Expected scheme:
+    //   com.googleusercontent.apps.168113490186-xxxx
+    let t = clientId.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !t.isEmpty else { return "" }
+    let suffix = ".apps.googleusercontent.com"
+    let base: String
+    if let r = t.range(of: suffix) {
+      base = String(t[..<r.lowerBound])
+    } else {
+      base = t
+    }
+    return base.isEmpty ? "" : "com.googleusercontent.apps.\(base)"
   }
 
   private func hasURLScheme(_ scheme: String) -> Bool {
@@ -59,6 +75,45 @@ final class GoogleSignInModule: NSObject {
       }
     }
     return false
+  }
+
+  // MARK: - Nonce helpers (Supabase validation)
+
+  private func randomNonceString(length: Int = 32) -> String {
+    precondition(length > 0)
+    let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+    var result = ""
+    result.reserveCapacity(length)
+
+    var remaining = length
+    while remaining > 0 {
+      var randomBytes = [UInt8](repeating: 0, count: 16)
+      let status = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
+      if status != errSecSuccess {
+        // Fallback (should be extremely rare)
+        let fallback = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+        return String(fallback.prefix(length))
+      }
+      for b in randomBytes {
+        if remaining == 0 { break }
+        let idx = Int(b) % charset.count
+        result.append(charset[idx])
+        remaining -= 1
+      }
+    }
+    return result
+  }
+
+  private func sha256Base64URL(_ input: String) -> String {
+    let data = Data(input.utf8)
+    let hash = SHA256.hash(data: data)
+    let hashedData = Data(hash)
+    let b64 = hashedData.base64EncodedString()
+    // base64url (RFC 4648)
+    return b64
+      .replacingOccurrences(of: "+", with: "-")
+      .replacingOccurrences(of: "/", with: "_")
+      .replacingOccurrences(of: "=", with: "")
   }
 
   @objc(signIn:requestId:resolver:rejecter:)
@@ -86,7 +141,7 @@ final class GoogleSignInModule: NSObject {
 
       if self.shouldLog() {
         print("[GoogleSignInModule] expectedScheme=\(expectedScheme)")
-        print("[GoogleSignInModule] CFBundleURLTypes=\(Bundle.main.object(forInfoDictionaryKey: \"CFBundleURLTypes\") ?? \"nil\")")
+        print("[GoogleSignInModule] CFBundleURLTypes=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") ?? "nil")")
         print("[GoogleSignInModule] requestId=\(requestId) clientID=\(effectiveClientId.prefix(18))... serverClientID=\(serverClientId.prefix(18))... expectedScheme=\(expectedScheme) schemeOK=\(schemeOK)")
       }
 
@@ -111,10 +166,18 @@ final class GoogleSignInModule: NSObject {
       )
       GIDSignIn.sharedInstance.configuration = config
 
+      // IMPORTANT:
+      // Deterministic pattern for Supabase nonce validation:
+      // - Send SHA256(base64url) nonce to Google (so idToken.nonce becomes hashed)
+      // - Send RAW nonce to Supabase (Supabase validates against token claim)
+      let rawNonce = self.randomNonceString()
+      let rawNonceSHA256 = self.sha256Base64URL(rawNonce)
+
       GIDSignIn.sharedInstance.signIn(
         withPresenting: presentingVC,
         hint: nil,
-        additionalScopes: ["openid", "email", "profile"]
+        additionalScopes: ["openid", "email", "profile"],
+        nonce: rawNonceSHA256
       ) { result, error in
         if let error = error {
           let nsError = error as NSError
@@ -122,7 +185,13 @@ final class GoogleSignInModule: NSObject {
             reject("GOOGLE_CANCELED", "Inicio de sesión con Google cancelado.", nsError)
             return
           }
-          reject("GOOGLE_ERROR", "Error al iniciar sesión con Google.", nsError)
+          // Include domain/code in the message so JS/CI logs can pinpoint the real failure cause.
+          // Avoid logging sensitive data; domain/code/description are safe.
+          reject(
+            "GOOGLE_ERROR",
+            "Error al iniciar sesión con Google. (domain=\(nsError.domain), code=\(nsError.code)) \(nsError.localizedDescription)",
+            nsError
+          )
           return
         }
 
@@ -143,6 +212,12 @@ final class GoogleSignInModule: NSObject {
             "idToken": idToken,
             "accessToken": accessToken,
           ]
+
+          // Helps JS debug Supabase invalid_jwt (aud mismatch) without exposing secrets.
+          if !serverClientId.isEmpty { payload["serverClientId"] = serverClientId }
+          // Needed for Supabase nonce valid sation (raw nonce used in the sign-in request).
+          payload["rawNonce"] = rawNonce
+          payload["rawNonceSHA256"] = rawNonceSHA256
 
           if let userId = user.userID { payload["userId"] = userId }
           if let email = user.profile?.email { payload["email"] = email }
