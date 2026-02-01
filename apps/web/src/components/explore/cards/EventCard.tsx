@@ -254,7 +254,7 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
         }
         .event-title {
           margin: 0 0 clamp(5px, 1vw, 8px);
-          font-size: clamp(14px, 2.2vw, 18px);
+          font-size: clamp(16px, 2.5vw, 20px);
           font-weight: 900;
           color: #fff;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
@@ -264,12 +264,29 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
         }
         .meta {
           display: flex;
+          flex-direction: column;
+          gap: clamp(6px, 1vw, 8px);
+          margin-bottom: clamp(8px, 1vw, 10px);
+        }
+        .meta-row--date {
+          width: 100%;
+        }
+        .meta-row--date .tag {
+          width: 100%;
+          box-sizing: border-box;
+          display: block;
+          text-align: center;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+        .meta-row--time-zone {
+          display: flex;
           gap: clamp(6px, 1vw, 8px);
           flex-wrap: wrap;
-          margin-bottom: clamp(8px, 1vw, 10px);
         }
         .meta .tag {
           font-size: clamp(10px, 1.6vw, 13px);
+          font-weight: 700;
           color: rgba(234, 240, 255, 0.85);
           background: rgba(17, 21, 32, 0.55);
           border: 1px solid rgba(255, 255, 255, 0.14);
@@ -284,6 +301,13 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           text-overflow: ellipsis;
           backdrop-filter: blur(8px);
           font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .meta .meta-row--date .tag {
+          display: block;
+          text-align: center;
+          text-transform: uppercase;
+          background: #297F96;
+          color: #fff;
         }
         .card-actions {
           position: absolute;
@@ -402,18 +426,20 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
         )}
 
             <div className="meta">
-              <div>
-            {fecha && (
+              {fecha && (
+                <div className="meta-row--date">
                   <div className="tag">📅 {fmtDate(fecha)}</div>
-            )}
-            {horaInicio && (
+                </div>
+              )}
+              <div className="meta-row--time-zone">
+                {horaInicio && (
                   <div className="tag">🕗 {formatHHMM(horaInicio)}</div>
                 )}
                 {lugar && (
                   <div className="tag">📍 {lugar}</div>
-            )}
-          </div>
-        </div>
+                )}
+              </div>
+            </div>
 
         {organizador && (
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>

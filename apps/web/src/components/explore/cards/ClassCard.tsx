@@ -348,13 +348,33 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
 
         .class-card-meta {
           display: flex;
+          flex-direction: column;
+          gap: clamp(6px, 1vw, 8px);
+          margin-bottom: clamp(8px, 1vw, 10px);
+        }
+
+        .class-card-meta-row--date {
+          width: 100%;
+        }
+
+        .class-card-meta-row--date .tag {
+          width: 100%;
+          box-sizing: border-box;
+          display: block;
+          text-align: center;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .class-card-meta-row--time-zone {
+          display: flex;
           gap: clamp(6px, 1vw, 8px);
           flex-wrap: wrap;
-          margin-bottom: clamp(8px, 1vw, 10px);
         }
 
         .class-card-meta .tag {
           font-size: clamp(10px, 1.6vw, 13px);
+          font-weight: 700;
           color: rgba(234, 240, 255, 0.85);
           background: rgba(17, 21, 32, 0.55);
           border: 1px solid rgba(255, 255, 255, 0.14);
@@ -369,6 +389,14 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           text-overflow: ellipsis;
           backdrop-filter: blur(8px);
           font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .class-card-meta .class-card-meta-row--date .tag {
+          display: block;
+          text-align: center;
+          text-transform: uppercase;
+          background: #297F96;
+          color: #fff;
         }
 
         .class-card-actions {
@@ -479,17 +507,21 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
 
             <div className="class-card-meta">
               {formattedDate && (
-                <div className="tag">🗓️ {formattedDate}</div>
+                <div className="class-card-meta-row--date">
+                  <div className="tag">🗓️ {formattedDate}</div>
+                </div>
               )}
-              {(item.inicio || item.fin) && (
-                <div className="tag">🕗 {item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}</div>
-              )}
-              {lugarNombre && (
-                <div className="tag">📍 {lugarNombre}</div>
-              )}
-              {ritmoNames.length > 0 && (
-                <div className="tag">🎵 {ritmoNames.slice(0, 2).join(', ')}</div>
-              )}
+              <div className="class-card-meta-row--time-zone">
+                {(item.inicio || item.fin) && (
+                  <div className="tag">🕗 {item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}</div>
+                )}
+                {lugarNombre && (
+                  <div className="tag">📍 {lugarNombre}</div>
+                )}
+                {ritmoNames.length > 0 && (
+                  <div className="tag">🎵 {ritmoNames.slice(0, 2).join(', ')}</div>
+                )}
+              </div>
             </div>
           </div>
         </motion.article>

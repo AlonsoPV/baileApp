@@ -386,20 +386,18 @@ const STYLES = `
     color: ${colors.gray[50]}; 
     width: 100%;
     overflow-x: hidden;
-    overflow-y: visible;
+    overflow-y: auto; /* Permitir scroll vertical cuando el contenido supera el viewport */
     padding-top: 0;
     padding-bottom: env(safe-area-inset-bottom);
     /* Optimizaciones de scroll vertical */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    /* Fix Android: permitir scroll vertical desde cualquier parte de la página */
     touch-action: pan-y;
-    /* Nota: NO aplicar transform/backface aquí; puede romper position: fixed en iOS/WebView */
+    /* No usar contain/transform aquí para no romper el scroll ni position: fixed */
   }
   @media (min-width: 769px) {
     .explore-container {
-      /* En escritorio, asegurar que el scroll vertical funcione correctamente */
-      overflow-y: visible;
+      overflow-y: auto;
       height: auto;
       min-height: 100vh;
     }
