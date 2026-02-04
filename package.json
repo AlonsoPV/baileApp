@@ -31,13 +31,13 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
-    "@react-navigation/bottom-tabs": "^7.10.0",
+    "@react-navigation/bottom-tabs": "^7.12.0",
     "@react-navigation/native": "^7.1.28",
-    "@react-navigation/native-stack": "^7.10.0",
-    "@supabase/supabase-js": "^2.90.1",
-    "@tanstack/react-query": "^5.90.19",
+    "@react-navigation/native-stack": "^7.12.0",
+    "@supabase/supabase-js": "^2.94.0",
+    "@tanstack/react-query": "^5.90.20",
     "dotenv": "^16.6.1",
-    "expo": "^54.0.31",
+    "expo": "^54.0.33",
     "expo-constants": "^18.0.13",
     "expo-file-system": "~19.0.21",
     "expo-linking": "^8.0.11",
@@ -53,9 +53,9 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@types/node": "^25.0.9",
-    "babel-preset-expo": "^54.0.9",
+    "@types/node": "^25.2.0",
+    "@types/react": "^19.2.10",
+    "babel-preset-expo": "^54.0.10",
     "eas-cli": "16.28.0"
   },
   "packageManager": "pnpm@10.24.0"
