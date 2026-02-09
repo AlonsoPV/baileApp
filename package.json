@@ -22,9 +22,9 @@
     "build:prod:ios": "eas build --profile production --platform ios",
     "submit:android": "eas submit --platform android --profile production",
     "submit:ios": "eas submit --platform ios --profile production",
-    "update": "eas update --branch main --message \"OTA\"",
-    "update:android": "eas update --branch main --message \"OTA\" --platform android",
-    "update:ios": "eas update --branch main --message \"OTA\" --platform ios",
+    "update": "eas update --branch production --message \"OTA\"",
+    "update:android": "eas update --branch production --message \"OTA\" --platform android",
+    "update:ios": "eas update --branch production --message \"OTA\" --platform ios",
     "fix:certificates": "powershell -ExecutionPolicy Bypass -File scripts/actualizar-certificados-nodejs.ps1",
     "android": "expo run:android",
     "ios": "expo run:ios"
