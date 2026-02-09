@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
 /**
@@ -8,13 +8,13 @@ import { supabase } from "../lib/supabase";
  * (Suspense maneja el loading state)
  */
 export function useEventParentSuspense(parentId: number) {
-  const query = useQuery({
+  if (!parentId) {
+    throw new Error('No parentId provided for useEventParentSuspense');
+  }
+
+  const query = useSuspenseQuery({
     queryKey: ["event", "parent", parentId, "suspense"],
     queryFn: async () => {
-      if (!parentId) {
-        throw new Error('No parentId provided for useEventParentSuspense');
-      }
-      
       let query = supabase
         .from("events_parent")
         .select("id, organizer_id, nombre, biografia, descripcion, estilos, zonas, sede_general, faq, media, ubicaciones, created_at, updated_at")
@@ -46,13 +46,11 @@ export function useEventParentSuspense(parentId: number) {
       
       return data;
     },
-    enabled: !!parentId,
-    suspense: true, // Activar Suspense
     staleTime: 1000 * 60, // 1 minuto
     gcTime: 1000 * 60 * 5, // 5 minutos
   });
 
   // Con Suspense, data siempre existe cuando se renderiza
-  return query.data!;
+  return query.data;
 }
 

@@ -173,18 +173,19 @@ async function fetchPage(params: QueryParams, page: number) {
       query = query.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX}`);
     }
     
-    // filtrar por estilos/ritmos - a nivel de fecha y de parent
+    // filtrar por estilos/ritmos (solo a nivel de fecha).
+    // NOTA: Intentar mezclar `events_parent.*` dentro del mismo `.or(...)` rompe el parser
+    // de PostgREST ("failed to parse logic tree"). `events_date` ya contiene los campos
+    // necesarios (`estilos`, `ritmos_seleccionados`) para filtrar correctamente.
     if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
       const parts: string[] = [];
       if ((ritmos?.length || 0) > 0) {
         const setTags = `{${(ritmos as number[]).join(',')}}`;
         parts.push(`estilos.ov.${setTags}`); // fecha.estilos
-        parts.push(`events_parent.estilos.ov.${setTags}`); // parent.estilos
       }
       if ((selectedCatalogIds?.length || 0) > 0) {
         const setCat = `{${selectedCatalogIds.join(',')}}`;
         parts.push(`ritmos_seleccionados.ov.${setCat}`); // fecha.ritmos_seleccionados
-        parts.push(`events_parent.ritmos_seleccionados.ov.${setCat}`); // parent.ritmos_seleccionados
       }
       if (parts.length > 0) query = query.or(parts.join(','));
     }
@@ -290,7 +291,9 @@ async function fetchPage(params: QueryParams, page: number) {
     throw error;
   }
 
-  let finalData = data || [];
+  // Supabase typed client may infer `GenericStringError[]` for complex selects.
+  // We normalize to `any[]` because downstream code operates dynamically by `type`.
+  let finalData: any[] = (data as any[]) || [];
 
   // Query adicional para eventos que coincidan solo con events_parent.nombre
   // (no se puede hacer con ilike en relaciones anidadas en la query principal)
@@ -365,12 +368,12 @@ async function fetchPage(params: QueryParams, page: number) {
         }
       }
       
-      const { data: parentMatches } = await parentQuery.order("fecha", { ascending: true });
+      const { data: parentMatches } = await (parentQuery as any).order("fecha", { ascending: true });
       
-      if (parentMatches && parentMatches.length > 0) {
+      if (Array.isArray(parentMatches) && parentMatches.length > 0) {
         // Combinar resultados, evitando duplicados
         const existingIds = new Set(finalData.map((r: any) => r.id));
-        const newMatches = parentMatches.filter((r: any) => !existingIds.has(r.id));
+        const newMatches = (parentMatches as any[]).filter((r: any) => !existingIds.has(r.id));
         finalData = [...finalData, ...newMatches];
       }
     } catch (error) {

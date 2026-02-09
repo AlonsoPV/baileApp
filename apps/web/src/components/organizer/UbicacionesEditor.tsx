@@ -22,11 +22,14 @@ const summaryBoxStyle: React.CSSProperties = {
   gap: spacing[2],
   padding: `${spacing[3]} ${spacing[3]}`,
   borderRadius: borderRadius.xl,
-  border: '1px solid rgba(255,255,255,0.12)',
+  // Avoid mixing shorthand `border` with `borderLeft*` on the same element.
+  borderWidth: 1,
+  borderStyle: 'solid',
+  borderColor: 'rgba(255,255,255,0.12)',
   background: 'rgba(0,0,0,0.55)',
   marginBottom: spacing[3],
   alignItems: 'center',
-  flexWrap: 'wrap'
+  flexWrap: 'wrap',
 };
 
 export default function OrganizerUbicacionesEditor({ organizerId }: { organizerId?: number }) {
@@ -350,7 +353,7 @@ export default function OrganizerUbicacionesEditor({ organizerId }: { organizerI
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[3] }}>
             <h4
               style={{
-                fontSize: typography.fontSize.md,
+                fontSize: typography.fontSize.lg,
                 fontWeight: typography.fontWeight.semibold,
                 color: colors.light,
                 margin: 0,
@@ -600,7 +603,9 @@ export default function OrganizerUbicacionesEditor({ organizerId }: { organizerI
                 ...summaryBoxStyle,
                 flexWrap: 'nowrap',
                 cursor: bulkMode ? 'default' : 'pointer',
-                borderLeft: `4px solid ${accent}`,
+                borderLeftWidth: 4,
+                borderLeftStyle: 'solid',
+                borderLeftColor: accent,
                 background:
                   'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.60) 100%)',
               }}
@@ -702,8 +707,13 @@ export default function OrganizerUbicacionesEditor({ organizerId }: { organizerI
             style={{
               padding: spacing[4],
               borderRadius: borderRadius.xl,
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              borderLeft: `4px solid ${accent}`,
+              // Avoid mixing shorthand `border` with `borderLeft*` on the same element.
+              borderWidth: 1,
+              borderStyle: 'solid',
+              borderColor: 'rgba(255, 255, 255, 0.15)',
+              borderLeftWidth: 4,
+              borderLeftStyle: 'solid',
+              borderLeftColor: accent,
               background: `linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 55%, rgba(0,0,0,0.15) 100%)`,
               marginBottom: spacing[3],
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',

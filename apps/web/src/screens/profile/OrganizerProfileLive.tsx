@@ -766,6 +766,7 @@ const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question
 // Componente Carousel para videos - memoizado y con callbacks
 const VideoCarouselComponent = React.memo<{ videos: string[] }>(({ videos }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { t } = useTranslation();
 
   const nextVideo = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % videos.length);

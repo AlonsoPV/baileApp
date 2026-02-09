@@ -51,7 +51,7 @@ export function useUserProfile() {
       cleanPatch.redes_sociales = deepMerge(prev?.redes_sociales ?? {}, cleanPatch.redes_sociales);
     }
 
-    const { error: upsertError } = await withTimeout(
+    const { error: upsertError } = await withTimeout<any>(
       (supabase
         .from("profiles_user")
         .upsert({ user_id: uid, ...cleanPatch }, { onConflict: "user_id" }) as any),
@@ -70,7 +70,7 @@ export function useUserProfile() {
   }
 
   async function fetchProfileByUserId(userId: string) {
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeout<any>(
       (supabase
         .from("profiles_user")
         .select("user_id, display_name, bio, avatar_url, rol_baile, ritmos_seleccionados, ritmos, zonas, respuestas, redes_sociales, updated_at, created_at")
@@ -83,7 +83,7 @@ export function useUserProfile() {
     return data as ProfileUser | null;
   }
 
-  const profile = useQuery({
+  const profile = useQuery<ProfileUser | null>({
     queryKey: KEY(uid),
     enabled: !!uid && typeof uid === 'string' && uid.length > 0,
     queryFn: async () => {
@@ -106,7 +106,7 @@ export function useUserProfile() {
       if (!uid) throw new Error("No user");
       
       try {
-        const prev = profile.data || {};
+        const prev = (profile.data || {}) as ProfileUser;
         
         // 🚫 Blindaje: JAMÁS mandar media ni onboarding_complete desde aquí
         const { media, onboarding_complete, ...candidate } = next;

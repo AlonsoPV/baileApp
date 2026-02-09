@@ -7,7 +7,7 @@ export type ProfileMode = "live" | "edit";
 
 export function useProfileSwitch() {
   const { user } = useAuth();
-  const { organizer } = useMyOrganizer();
+  const { data: organizer } = useMyOrganizer();
   const [activeRole, setActiveRole] = useState<ActiveRole>("usuario");
   const [mode, setMode] = useState<ProfileMode>("live");
 

@@ -11,8 +11,9 @@ export function useSmartLoading<TData, TError>(
   const { data, isLoading, isFetching, error } = query;
 
   // Para infinite queries, verificar si hay páginas con data
-  const hasData = query && 'pages' in query
-    ? !!(query as UseInfiniteQueryResult<TData, TError>).data?.pages?.some(page => (page as any)?.data?.length > 0)
+  const isInfinite = query && typeof query === 'object' && 'fetchNextPage' in query;
+  const hasData = isInfinite
+    ? !!(query as UseInfiniteQueryResult<any, TError>).data?.pages?.some((page: any) => (page as any)?.data?.length > 0)
     : !!data;
 
   // First load: no hay data y está cargando

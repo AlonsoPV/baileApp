@@ -70,6 +70,13 @@ export type GlobalFechaMetrics = {
   totalPurchases: number;
 };
 
+type OrganizerEventMetricsResult = {
+  global: GlobalFechaMetrics | null;
+  porFecha: FechaMetric[];
+  byDate: EventDateSummary[];
+  perRSVP: EventRSVPMetric[];
+};
+
 function getDateRange(filter: DateFilter, from?: string, to?: string): { from: string | null; to: string | null } {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -118,7 +125,7 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
   const dateFilter = filters?.dateFilter || "all";
   const dateRange = getDateRange(dateFilter, filters?.from, filters?.to);
   
-  const query = useQuery({
+  const query = useQuery<OrganizerEventMetricsResult>({
     queryKey: ["organizer-event-metrics", organizerId, filters],
     enabled: !!organizerId,
     queryFn: async () => {
@@ -154,6 +161,7 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
             zonas: [],
             ritmos: [],
             byZone: {},
+            totalPurchases: 0,
           },
           porFecha: [],
           byDate: [],
@@ -180,6 +188,7 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
             zonas: [],
             ritmos: [],
             byZone: {},
+            totalPurchases: 0,
           },
           porFecha: [],
           byDate: [],

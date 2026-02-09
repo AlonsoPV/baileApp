@@ -395,8 +395,9 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           display: block;
           text-align: center;
           text-transform: uppercase;
-          background: #297F96;
-          color: #fff;
+          background: linear-gradient(135deg, #FF6A1A, #E94E1B);
+          border-color: rgba(255,255,255,.18);
+          color: #111;
         }
 
         .class-card-actions {

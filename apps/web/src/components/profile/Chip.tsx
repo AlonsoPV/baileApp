@@ -8,6 +8,7 @@ interface ChipProps {
   onClick?: () => void;
   active?: boolean;
   style?: React.CSSProperties;
+  className?: string;
 }
 
 const baseColors = {
@@ -27,7 +28,7 @@ const variantColors = {
   custom: baseColors.orange,
 };
 
-export function Chip({ label, icon, variant = 'custom', color, onClick, active, style }: ChipProps) {
+export function Chip({ label, icon, variant = 'custom', color, onClick, active, style, className }: ChipProps) {
   const chipColor = color || variantColors[variant];
   const isZona = variant === 'zona';
 
@@ -57,6 +58,7 @@ export function Chip({ label, icon, variant = 'custom', color, onClick, active, 
 
   return (
     <motion.div
+      className={className}
       whileHover={{
         scale: 1.05,
         boxShadow: isZona

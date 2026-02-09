@@ -29,11 +29,11 @@ type OnboardingRow = {
 type OnboardingStatus = OnboardingRow & { onboarding_complete: boolean };
 
 // ---------- Helpers ----------
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
   // why: fail-fast para evitar esperas indefinidas
   return new Promise<T>((resolve, reject) => {
     const t = setTimeout(() => reject(new Error('Query timeout')), ms);
-    promise
+    Promise.resolve(promise)
       .then((v) => {
         clearTimeout(t);
         resolve(v);

@@ -17,6 +17,8 @@ export interface ProfileUser {
   avatar_url?: string;
   // Rol de baile del usuario (solo usuario final, no academias/organizadores)
   rol_baile?: 'lead' | 'follow' | 'ambos';
+  // Ritmos seleccionados como slugs del catálogo (compatibilidad onboarding/web)
+  ritmos_seleccionados?: string[];
   ritmos: number[];
   zonas: number[];
   premios: any[];

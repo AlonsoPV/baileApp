@@ -778,10 +778,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={() => handleGoogleAuth(true)}
-                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading}
+                  disabled={isSignUpLoading || isGoogleLoading || isAppleLoading}
                 style={{
                   width: '100%',
-                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                    opacity: isSignUpLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
                   background: '#FFFFFF',
                   color: '#1F2937',
                   border: '1px solid rgba(0,0,0,0.1)',
@@ -822,10 +822,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={() => handleAppleAuth(true)}
-                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading}
+                  disabled={isSignUpLoading || isGoogleLoading || isAppleLoading}
                 style={{
                   width: '100%',
-                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                    opacity: isSignUpLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
                   background: '#000000',
                   color: '#FFFFFF',
                   border: '1px solid rgba(255,255,255,0.18)',
@@ -866,11 +866,11 @@ export function Login() {
               <Button
                 type="button"
                 onClick={handleSignUpMagicLink}
-                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
+                  disabled={isSignUpLoading || isGoogleLoading}
                 style={{
                   width: '100%',
-                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
-                  background: colors.gradients.tertiary ?? colors.gradients.secondary,
+                    opacity: isSignUpLoading || isGoogleLoading ? 0.5 : 1,
+                    background: (colors.gradients as any).tertiary ?? colors.gradients.secondary,
                 }}
               >
                 {isSignUpLoading ? '⏳ Enviando...' : '✨ Enlace de registro'}

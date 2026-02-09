@@ -6,7 +6,7 @@
  * (common in WebViews / flaky networks).
  */
 export function withTimeout<T>(
-  promise: Promise<T>,
+  promise: PromiseLike<T>,
   ms: number,
   label: string = "Operation"
 ): Promise<T> {
@@ -20,7 +20,11 @@ export function withTimeout<T>(
     }, ms);
   });
 
-  return Promise.race([promise, timeout]).finally(() => {
+  // `promise` can be a thenable (e.g. Supabase PostgrestFilterBuilder).
+  // Normalize to a real Promise so TS/Promise.race behaves consistently.
+  const normalized = Promise.resolve(promise);
+
+  return Promise.race([normalized, timeout]).finally(() => {
     if (t) clearT(t);
   });
 }

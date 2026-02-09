@@ -55,7 +55,7 @@ import EventParentPublicScreenModern from './screens/events/EventParentPublicScr
 import { DateLiveScreen } from './screens/events/DateLiveScreen';
 
 // Sprint 3 - Explore/Search
-import ExploreHomeScreen from './screens/explore/ExploreHomeScreen';
+import ExploreHomeScreen from './screens/explore/ExploreHomeScreenModern';
 import ExploreListScreen from './screens/explore/ExploreListScreen';
 
 // Role Selection System

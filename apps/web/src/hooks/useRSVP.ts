@@ -9,6 +9,8 @@ export type RSVPStatus = 'interesado';
 export interface RSVPStats {
   interesado: number;
   total: number;
+  // Backwards compat: algunas RPCs/vistas devuelven `total_interesado`
+  total_interesado?: number;
 }
 
 export interface RSVPResponse {

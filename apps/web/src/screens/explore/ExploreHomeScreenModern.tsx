@@ -3,14 +3,18 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { useExploreFilters } from "../../state/exploreFilters";
+import { useExploreFilters, type DatePreset } from "../../state/exploreFilters";
 import { useExploreQuery } from "../../hooks/useExploreQuery";
+import { useUsedFilterTags } from "@/hooks/useUsedFilterTags";
+import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
+import { groupRitmos, zonaGroupsToTreeGroups } from "@/filters/exploreFilterGroups";
+import { MultiSelectTreeDropdown } from "@/components/explore/MultiSelectTreeDropdown";
+import { DateFilterDropdown } from "@/components/explore/DateFilterDropdown";
 import EventCard from "../../components/explore/cards/EventCard";
 import OrganizerCard from "../../components/explore/cards/OrganizerCard";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
-import FilterBar from "../../components/FilterBar";
 import BrandCard from "../../components/explore/cards/BrandCard";
 import ClassCard from "../../components/explore/cards/ClassCard";
 import SocialCard from "../../components/explore/cards/SocialCard";
@@ -24,6 +28,8 @@ import SeoHead from "@/components/SeoHead";
 import { EventsSection } from "../../components/sections/EventsSection";
 import { ClassesSection } from "../../components/sections/ClassesSection";
 import { AcademiesSection } from "../../components/sections/AcademiesSection";
+import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
+import { useToast } from "../../components/Toast";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -382,7 +388,8 @@ const STYLES = `
   }
   .explore-container { 
     min-height: 100vh; 
-    background: #ffffff; 
+    /* IMPORTANT: This screen is styled for a dark UI (cards/text assume dark background). */
+    background: #0b0d10; 
     color: ${colors.gray[50]}; 
     width: 100%;
     overflow-x: hidden;
@@ -469,6 +476,9 @@ const STYLES = `
     margin-bottom: 2rem;
     padding: 0 0.5rem;
   }
+  .section-header-link {
+    flex-shrink: 0;
+  }
   .section-title-text {
     font-size: 1.875rem;
     font-weight: 800;
@@ -524,29 +534,256 @@ const STYLES = `
     --fp-shadow: 0 14px 40px rgba(0,0,0,.55);
     --fp-grad: linear-gradient(90deg,#ff4b8b,#ff9b45);
   }
-  .filters-panel {
-    background: linear-gradient(180deg, var(--panel), var(--panel-2));
-    border: 1px solid var(--stroke);
+  /* Filters card (estructura nueva: header + pills + chips) */
+  .filters-card {
+    width: 100%;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 14px 14px 12px;
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-1);
-    backdrop-filter: blur(10px);
+    background: #000000;
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: 0 12px 28px rgba(0,0,0,.28);
     color: var(--text);
-    padding: clamp(8px, 1.6vw, 12px);
-    max-width: 960px;
-    margin: 5px auto 1.5px auto;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    backdrop-filter: blur(10px);
+  }
+  .filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  /* Header + búsqueda en la misma fila */
+  .filters-top-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .filters-top-row__title {
+    flex: 0 0 auto;
+  }
+  .filters-top-row__search {
+    flex: 1 1 320px;
+    min-width: 240px;
+  }
+  .filters-top-row__actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .filters-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    letter-spacing: .2px;
+  }
+  .filters-icon {
+    width: 28px;
+    height: 28px;
     display: grid;
-    gap: var(--gap-2);
-    font-family: system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif;
+    place-items: center;
+    border-radius: 10px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.12);
   }
-  .fxc__row2 {
-    margin-bottom: 0;
-    padding-bottom: 0;
+  .filters-clear {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.06);
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
   }
-  @media (min-width: 769px) {
-    .filters-panel {
-      max-width: 100%;
-      width: 100%;
-      margin-top: 15px;
+  .filters-clear:hover {
+    background: rgba(255,255,255,.10);
+    border-color: rgba(255,255,255,.22);
+    transform: translateY(-1px);
+  }
+  .filters-clear:active { transform: translateY(0); }
+  .filters-clear .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.35);
+  }
+  .filters-card__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  /* Mantener la fila de selectores en una sola fila (scroll si hace falta) */
+  .filters-card__row--selects {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(235 20% 28% / .6) transparent;
+    padding-bottom: 2px;
+  }
+  .filters-card__row--selects::-webkit-scrollbar {
+    height: 6px;
+  }
+  .filters-card__row--selects::-webkit-scrollbar-thumb {
+    background: hsl(235 20% 28% / .6);
+    border-radius: 999px;
+  }
+  .filter-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06);
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    outline: none;
+  }
+  .filter-pill .pill-text {
+    color: #f5f5ff;
+  }
+  .filter-pill:hover {
+    background: rgba(255,255,255,.10);
+    border-color: rgba(255,255,255,.22);
+    transform: translateY(-1px);
+  }
+  .filter-pill:active { transform: translateY(0); }
+  .filter-pill:focus-visible {
+    box-shadow: 0 0 0 3px rgba(255,106,26,.35);
+    border-color: rgba(255,106,26,.65);
+  }
+  .filter-pill .pill-icon {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+  }
+  .filter-pill.is-primary {
+    background: linear-gradient(135deg, rgba(255,106,26,.20), rgba(233,78,27,.12));
+    border-color: rgba(255,106,26,.35);
+  }
+  .filter-pill.is-danger {
+    background: rgba(239,68,68,.14);
+    border-color: rgba(239,68,68,0.35);
+    color: #fecaca;
+  }
+  .filter-pill.is-danger:hover {
+    background: rgba(239,68,68,.20);
+    border-color: rgba(239,68,68,0.55);
+  }
+  .filter-pill.filter-pill--active {
+    background: rgba(255,255,255,.12);
+    border-color: rgba(255,255,255,.22);
+  }
+  .filters-divider {
+    height: 1px;
+    background: rgba(255,255,255,.12);
+    margin: 12px 2px;
+  }
+  .filters-card__row.chips { gap: 8px; justify-content: center; }
+  .filters-card__row.chips .chip {
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.05);
+    color: #f5f5ff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  }
+  .filters-card__row.chips .chip:hover {
+    background: rgba(255,255,255,.10);
+    border-color: rgba(255,255,255,.22);
+    transform: translateY(-1px);
+  }
+  .filters-card__row.chips .chip.is-active {
+    background: linear-gradient(135deg, #FF6A1A, #E94E1B);
+    border-color: rgba(255,255,255,.18);
+    color: #111;
+    font-weight: 700;
+  }
+
+  /* Tabs de secciones (fila horizontal con scroll) */
+  .filters-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 2px 0 6px 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(235 20% 28% / .6) transparent;
+  }
+  .filters-tabs::-webkit-scrollbar {
+    height: 6px;
+  }
+  .filters-tabs::-webkit-scrollbar-thumb {
+    background: hsl(235 20% 28% / .6);
+    border-radius: 999px;
+  }
+  .tab {
+    flex: 0 0 auto;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06);
+    color: rgba(255,255,255,.92);
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    outline: none;
+  }
+  .tab:hover {
+    background: rgba(255,255,255,.10);
+    border-color: rgba(255,255,255,.22);
+    transform: translateY(-1px);
+  }
+  .tab:active { transform: translateY(0); }
+  .tab:focus-visible {
+    box-shadow: 0 0 0 3px rgba(255,106,26,.35);
+    border-color: rgba(255,106,26,.65);
+  }
+  .tab--active {
+    background: linear-gradient(135deg, #FF6A1A, #E94E1B);
+    border-color: rgba(255,255,255,.18);
+    color: #111;
+  }
+
+  /* FilterBar embebido: no sticky (para que el dropdown se vea aquí) */
+  .filterbar-inline {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+  }
+  @media (max-width: 420px) {
+    .filter-pill.is-primary {
+      flex: 1 1 100%;
+      justify-content: flex-start;
     }
   }
   .filters-fav {
@@ -1252,59 +1489,9 @@ function Section({ title, toAll, children, count, sectionId }: { title: string; 
       style={{
         marginBottom: '4rem',
         position: 'relative',
-        scrollMarginTop: '100px' // Espacio para el scroll cuando se navega
+        scrollMarginTop: '100px'
       }}
     >
-      <div className="section-header" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '2rem',
-        padding: '0 0.5rem',
-        position: 'relative'
-      }}>
-        <div>
-          <h2 className="section-title-text" style={{
-            fontSize: '1.875rem',
-            fontWeight: 800,
-            margin: 0,
-            marginBottom: '0.25rem',
-            color: '#000',
-            lineHeight: 1.2,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            {title}
-            {typeof count === 'number' && count > 0 && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '28px',
-                height: '28px',
-                padding: '0 8px',
-                borderRadius: '999px',
-                border: '1px solid rgba(0, 0, 0, 0.2)',
-                background: 'rgba(0, 0, 0, 0.1)',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                color: '#000',
-                marginLeft: '0.25rem'
-              }}>
-                {count}
-              </span>
-            )}
-          </h2>
-          <div className="section-title-underline" style={{
-            width: 60,
-            height: 4,
-            borderRadius: 2,
-            background: '#000',
-            opacity: 0.8
-          }} />
-        </div>
-      </div>
       {children}
     </motion.section>
   );
@@ -1317,6 +1504,18 @@ export default function ExploreHomeScreen() {
   const { filters, set } = useExploreFilters();
   const selectedType = filters.type;
   const showAll = !selectedType || selectedType === 'all';
+  // DEV-only instrumentation helper (safe in prod)
+  // Note: Vite does not define __DEV__ by default; we emulate it here.
+  const __DEV__ = import.meta.env.DEV;
+  const __DEV_LOG = React.useCallback((...args: any[]) => {
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log("[ExploreHome]", ...args);
+    }
+  }, [__DEV__]);
+  const ritmosPillRef = React.useRef<HTMLButtonElement | null>(null);
+  const zonasPillRef = React.useRef<HTMLButtonElement | null>(null);
+  const fechasPillRef = React.useRef<HTMLButtonElement | null>(null);
   const [isMobile, setIsMobile] = React.useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 768;
@@ -1324,9 +1523,8 @@ export default function ExploreHomeScreen() {
   const [hasAppliedDefaults, setHasAppliedDefaults] = React.useState(false);
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
-  const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
-  
+
   // Navegación entre secciones (solo móvil)
   const scrollToSection = React.useCallback((direction: 'up' | 'down') => {
     const sections = Array.from(document.querySelectorAll<HTMLElement>('.section-container'));
@@ -1358,7 +1556,40 @@ export default function ExploreHomeScreen() {
   }, []);
 
   const { data: allTags } = useTags();
+  const { usedRitmoIds, usedZonaIds } = useUsedFilterTags();
+  const { groups: zonaCatalogGroups } = useZonaCatalogGroups(
+    (allTags as any[])?.filter((t: any) => t?.tipo === "zona") ?? null,
+  );
+
+  const usedRitmos = React.useMemo(() => {
+    const ritmos = (allTags as any[])?.filter((t: any) => t?.tipo === "ritmo") ?? [];
+    if (!usedRitmoIds?.length) return ritmos;
+    const set = new Set(usedRitmoIds);
+    return ritmos.filter((r: any) => set.has(r.id));
+  }, [allTags, usedRitmoIds]);
+
+  const usedZonas = React.useMemo(() => {
+    const zonas = (allTags as any[])?.filter((t: any) => t?.tipo === "zona") ?? [];
+    if (!usedZonaIds?.length) return zonas;
+    const set = new Set(usedZonaIds);
+    return zonas.filter((z: any) => set.has(z.id));
+  }, [allTags, usedZonaIds]);
+
+  const ritmoTreeGroups = React.useMemo(
+    () => groupRitmos(usedRitmos.map((r: any) => ({ id: r.id, nombre: r.nombre, slug: r.slug }))),
+    [usedRitmos],
+  );
+
+  const zonaTreeGroups = React.useMemo(() => {
+    const usedSet = new Set(usedZonaIds);
+    const filtered = zonaCatalogGroups
+      .map((g) => ({ ...g, items: g.items.filter((it) => usedSet.has(it.id)) }))
+      .filter((g) => g.items.length > 0);
+    return usedZonaIds.length ? zonaGroupsToTreeGroups(filtered) : zonaGroupsToTreeGroups(zonaCatalogGroups);
+  }, [zonaCatalogGroups, usedZonaIds]);
+
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
+  const { showToast } = useToast();
 
   const qDebounced = useDebouncedValue(filters.q || '', 300);
   const qDeferred = React.useDeferredValue(qDebounced);
@@ -1375,6 +1606,8 @@ export default function ExploreHomeScreen() {
       autoColumns: undefined,
       // En escritorio, deshabilitar scroll dentro del carrusel (evita que se “trabe” la interacción/scroll de la página)
       disableDesktopScroll: true,
+      // Botones Anterior/Siguiente visibles en escritorio; en móvil los oculta el CSS del HorizontalSlider
+      showNavButtons: !isMobile,
     }),
     [isMobile]
   );
@@ -1389,6 +1622,8 @@ export default function ExploreHomeScreen() {
       autoColumns: isMobile ? '80%' : undefined,
       // En escritorio, deshabilitar scroll dentro del carrusel (evita que se “trabe” la interacción/scroll de la página)
       disableDesktopScroll: true,
+      // Botones Anterior/Siguiente visibles en escritorio
+      showNavButtons: !isMobile,
     }),
     [isMobile]
   );
@@ -1422,22 +1657,32 @@ export default function ExploreHomeScreen() {
   const shouldShowSectionNav =
     typeof window !== 'undefined' ? window.innerWidth < 769 : isMobile;
 
-  const computePresetRange = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
+  const computePresetRange = React.useCallback((preset: DatePreset) => {
     const todayCDMX = getTodayCDMX();
-    const todayDate = new Date(todayCDMX + 'T12:00:00');
+    const todayDate = new Date(todayCDMX + "T12:00:00");
 
-    if (preset === 'todos') {
-      return { from: undefined, to: undefined };
+    if (preset === "todos") return { from: undefined, to: undefined };
+    if (preset === "hoy") return { from: todayCDMX, to: todayCDMX };
+    if (preset === "manana") {
+      const manana = addDays(todayDate, 1).toISOString().slice(0, 10);
+      return { from: manana, to: manana };
     }
-    if (preset === 'hoy') {
-      return { from: todayCDMX, to: todayCDMX };
-    }
-    if (preset === 'semana') {
+    if (preset === "semana") {
       const from = todayCDMX;
       const to = addDays(todayDate, 6).toISOString().slice(0, 10);
       return { from, to };
     }
-    if (preset === 'siguientes') {
+    if (preset === "fin_de_semana") {
+      const day = todayDate.getDay();
+      const daysUntilSat = day <= 6 ? (6 - day + 7) % 7 : 0;
+      const sat = addDays(todayDate, daysUntilSat === 0 ? 7 : daysUntilSat);
+      const sun = addDays(sat, 1);
+      return {
+        from: sat.toISOString().slice(0, 10),
+        to: sun.toISOString().slice(0, 10),
+      };
+    }
+    if (preset === "siguientes") {
       const from = addDays(todayDate, 7).toISOString().slice(0, 10);
       return { from, to: undefined };
     }
@@ -1467,6 +1712,40 @@ export default function ExploreHomeScreen() {
 
   const stableRitmos = useStableArray(filters.ritmos);
   const stableZonas = useStableArray(filters.zonas);
+
+  const ritmoNameById = React.useMemo(() => {
+    const m = new Map<number, string>();
+    for (const t of (allTags || []) as any[]) {
+      if (t?.tipo === 'ritmo' && typeof t?.id === 'number') m.set(t.id, String(t?.nombre || `Ritmo #${t.id}`));
+    }
+    return m;
+  }, [allTags]);
+  const ritmoIdBySlug = React.useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of (allTags || []) as any[]) {
+      if (t?.tipo === 'ritmo' && typeof t?.id === 'number' && typeof t?.slug === 'string') {
+        m.set(String(t.slug).trim().toLowerCase(), t.id);
+      }
+    }
+    return m;
+  }, [allTags]);
+
+  const zonaNameById = React.useMemo(() => {
+    const m = new Map<number, string>();
+    for (const t of (allTags || []) as any[]) {
+      if (t?.tipo === 'zona' && typeof t?.id === 'number') m.set(t.id, String(t?.nombre || `Zona #${t.id}`));
+    }
+    return m;
+  }, [allTags]);
+  const zonaIdBySlug = React.useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of (allTags || []) as any[]) {
+      if (t?.tipo === 'zona' && typeof t?.id === 'number' && typeof t?.slug === 'string') {
+        m.set(String(t.slug).trim().toLowerCase(), t.id);
+      }
+    }
+    return m;
+  }, [allTags]);
 
   React.useEffect(() => {
     if (!hasAppliedDefaults) return;
@@ -1542,15 +1821,53 @@ export default function ExploreHomeScreen() {
 
   const todayYmd = React.useMemo(() => getTodayCDMX(), []);
 
-  const applyDatePreset = React.useCallback((preset: 'todos' | 'hoy' | 'semana' | 'siguientes') => {
-    if (filters.datePreset === preset) return;
+  const applyDatePreset = React.useCallback(
+    (preset: DatePreset) => {
+      if (filters.datePreset === preset) return;
+      startTransition(() => {
+        const { from, to } = computePresetRange(preset);
+        set({ datePreset: preset, dateFrom: from, dateTo: to });
+      });
+    },
+    [filters.datePreset, computePresetRange, set, startTransition],
+  );
 
-    startTransition(() => {
-      const { from, to } = computePresetRange(preset);
-      // Actualizar todo en una sola llamada para evitar renders duplicados
-      set({ datePreset: preset, dateFrom: from, dateTo: to });
-    });
-  }, [filters.datePreset, computePresetRange, set, startTransition]);
+  const applyDateFilter = React.useCallback(
+    (from: string | undefined, to: string | undefined) => {
+      startTransition(() => {
+        if (!from && !to) {
+          set({ datePreset: "todos", dateFrom: undefined, dateTo: undefined });
+        } else {
+          set({ datePreset: undefined, dateFrom: from, dateTo: to });
+        }
+      });
+    },
+    [set, startTransition],
+  );
+
+  const dateSummaryText = React.useMemo(() => {
+    const preset = filters.datePreset ?? "todos";
+    if (preset === "todos" && !filters.dateFrom && !filters.dateTo) return "Todos";
+    if (preset === "hoy") return "Hoy";
+    if (preset === "manana") return "Mañana";
+    if (preset === "semana") return "Esta semana";
+    if (preset === "fin_de_semana") return "Fin de semana";
+    if (preset === "siguientes") return "Siguientes";
+    if (filters.dateFrom && filters.dateTo) {
+      const from = filters.dateFrom;
+      const to = filters.dateTo;
+      if (from === to) return from;
+      const fmt = (s: string) => {
+        const [y, m, d] = s.split("-");
+        const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+        return `${Number(d)} ${months[Number(m) - 1]}`;
+      };
+      return `Del ${fmt(from)} al ${fmt(to)}`;
+    }
+    if (filters.dateFrom) return `Desde ${filters.dateFrom}`;
+    if (filters.dateTo) return `Hasta ${filters.dateTo}`;
+    return "Todos";
+  }, [filters.datePreset, filters.dateFrom, filters.dateTo]);
 
   const activeFiltersCount = React.useMemo(() => {
     let count = 0;
@@ -1570,6 +1887,9 @@ export default function ExploreHomeScreen() {
 
 
   const renderClaseItem = React.useCallback((item: any, idx: number) => {
+    if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+      __DEV_LOG("renderItem", { type: "clases", idx, ownerType: item?.ownerType, ownerId: item?.ownerId, titulo: item?.titulo });
+    }
     if (item?.__isCTA) {
       return (
         <motion.div
@@ -1599,7 +1919,7 @@ export default function ExploreHomeScreen() {
         handlePreNavigate={handlePreNavigate} 
       />
     );
-  }, [handlePreNavigate, t]);
+  }, [__DEV__, __DEV_LOG, handlePreNavigate, t]);
 
   const shouldLoadFechas = showAll || selectedType === 'fechas';
   const fechasQuery = useExploreQuery({
@@ -2060,7 +2380,72 @@ export default function ExploreHomeScreen() {
   const hasAcademias = academiasData.length > 0;
   const hasUsuarios = validUsuarios.length > 0;
   const hasMaestros = maestrosData.length > 0;
+  const hasOrganizadores = organizadoresData.length > 0;
   const hasMarcas = marcasData.length > 0;
+
+  const itemsForAvailableFilters = React.useMemo(() => {
+    // Contexto: “visible” según tipo actual (o all)
+    const type = filters.type;
+    if (!type || type === 'all') {
+      return [
+        ...filteredFechas,
+        ...classesList,
+        ...maestrosData,
+        ...academiasData,
+        ...validUsuarios,
+        ...organizadoresData,
+        ...marcasData,
+      ];
+    }
+    if (type === 'fechas') return filteredFechas;
+    if (type === 'clases') return classesList;
+    if (type === 'maestros') return maestrosData;
+    if (type === 'academias') return academiasData;
+    if (type === 'usuarios') return validUsuarios;
+    if (type === 'organizadores') return organizadoresData;
+    if (type === 'marcas') return marcasData;
+    return [];
+  }, [filters.type, filteredFechas, classesList, maestrosData, academiasData, validUsuarios, organizadoresData, marcasData]);
+
+  const availableFilters = React.useMemo(
+    () => buildAvailableFilters(itemsForAvailableFilters, { ritmoNameById, zonaNameById, ritmoIdBySlug, zonaIdBySlug }),
+    [itemsForAvailableFilters, ritmoNameById, zonaNameById, ritmoIdBySlug, zonaIdBySlug],
+  );
+
+  const prevContextRef = React.useRef<string>('');
+  const contextKey = React.useMemo(() => {
+    const qKey = String(qDeferred || '').trim().toLowerCase();
+    return [
+      filters.type,
+      filters.datePreset ?? '',
+      filters.dateFrom ?? '',
+      filters.dateTo ?? '',
+      qKey,
+    ].join('|');
+  }, [filters.type, filters.datePreset, filters.dateFrom, filters.dateTo, qDeferred]);
+
+  React.useEffect(() => {
+    // Solo ajustar automáticamente cuando cambia el “contexto base” (tipo/when/búsqueda),
+    // no cuando el usuario cambia ritmos/zonas directamente.
+    if (!prevContextRef.current) {
+      prevContextRef.current = contextKey;
+      return;
+    }
+    if (prevContextRef.current === contextKey) return;
+    prevContextRef.current = contextKey;
+
+    const nextRitmos = (filters.ritmos || []).filter((id) => availableFilters.ritmoIdSet.has(id));
+    const nextZonas = (filters.zonas || []).filter((id) => availableFilters.zonaIdSet.has(id));
+    const changed = nextRitmos.length !== (filters.ritmos || []).length || nextZonas.length !== (filters.zonas || []).length;
+    if (!changed) return;
+
+    set({ ritmos: nextRitmos, zonas: nextZonas });
+    try {
+      showToast?.('Filtros ajustados', 'info');
+    } catch {
+      // ignore
+    }
+  }, [contextKey, availableFilters.ritmoIdSet, availableFilters.zonaIdSet, filters.ritmos, filters.zonas, set, showToast]);
 
   // Calcular índices aleatorios estables para insertar CTAs
   const clasesCTIndex = useStableRandomIndex(classesList.length, 'clases');
@@ -2095,6 +2480,7 @@ export default function ExploreHomeScreen() {
     fechasLoading ||
     academiasLoading ||
     maestrosLoading ||
+    organizadoresLoading ||
     usuariosLoading ||
     marcasLoading;
 
@@ -2106,35 +2492,166 @@ export default function ExploreHomeScreen() {
     !hasAcademias &&
     !hasUsuarios &&
     !hasMaestros &&
+    !hasOrganizadores &&
     !hasMarcas;
 
   const handleFilterChange = (newFilters: typeof filters) => {
     set(newFilters);
   };
 
-  const renderDatePresetButtons = (mobile = false) => (
-    <>
-      {([
-        { id: 'todos', label: t('all') },
-        { id: 'hoy', label: t('today') },
-        { id: 'semana', label: t('this_week') },
-        { id: 'siguientes', label: t('next_week') },
-      ] as const).map((p) => {
-        const active = (filters.datePreset || 'todos') === p.id;
-        return (
-          <button
-            key={p.id}
-            onClick={() => applyDatePreset(p.id)}
-            className={`q ${active ? 'q--active' : ''}`}
-            disabled={isPending}
-            aria-pressed={active}
-          >
-            <span className="label">{p.label}</span>
-          </button>
-        );
-      })}
-    </>
-  );
+  const showQuickDateRanges = showAll || selectedType === 'fechas' || selectedType === 'clases';
+
+  // -----------------------------
+  // DEV instrumentation (runtime diagnosis)
+  // -----------------------------
+  const devSummary = React.useMemo(() => {
+    return {
+      userId: user?.id ?? null,
+      selectedType,
+      showAll,
+      filters: {
+        type: filters.type,
+        q: (filters.q || "").slice(0, 40),
+        ritmosCount: (filters.ritmos || []).length,
+        zonasCount: (filters.zonas || []).length,
+        datePreset: filters.datePreset ?? null,
+        dateFrom: filters.dateFrom ?? null,
+        dateTo: filters.dateTo ?? null,
+      },
+      enabled: {
+        fechas: shouldLoadFechas,
+        clases: (showAll || selectedType === 'clases'),
+        academias: shouldLoadAcademias,
+        maestros: shouldLoadMaestros,
+        organizadores: shouldLoadOrganizadores,
+        marcas: shouldLoadMarcas,
+        usuarios: shouldLoadUsuarios,
+      },
+      query: {
+        fechas: { isLoading: fechasQuery.isLoading, isError: (fechasQuery as any).isError, pages: fechasQuery.data?.pages?.length ?? 0 },
+        academias: { isLoading: academiasQuery.isLoading, isError: (academiasQuery as any).isError, pages: academiasQuery.data?.pages?.length ?? 0 },
+        maestros: { isLoading: maestrosQuery.isLoading, isError: (maestrosQuery as any).isError, pages: maestrosQuery.data?.pages?.length ?? 0 },
+        organizadores: { isLoading: organizadoresQuery.isLoading, isError: (organizadoresQuery as any).isError, pages: organizadoresQuery.data?.pages?.length ?? 0 },
+        marcas: { isLoading: marcasQuery.isLoading, isError: (marcasQuery as any).isError, pages: marcasQuery.data?.pages?.length ?? 0 },
+        usuarios: { isLoading: usuariosQuery.isLoading, isError: (usuariosQuery as any).isError, pages: usuariosQuery.data?.pages?.length ?? 0 },
+      },
+      counts: {
+        fechasRaw: fechasData.length,
+        fechasFiltered: filteredFechas.length,
+        academias: academiasData.length,
+        maestros: maestrosData.length,
+        organizadores: organizadoresData.length,
+        marcas: marcasData.length,
+        usuariosRaw: usuariosData.length,
+        usuariosValid: validUsuarios.length,
+        clases: classesList.length,
+      },
+      gates: {
+        anyLoading,
+        noResultsAllTypes,
+      },
+    };
+  }, [
+    user?.id,
+    selectedType,
+    showAll,
+    filters.type,
+    filters.q,
+    filters.ritmos,
+    filters.zonas,
+    filters.datePreset,
+    filters.dateFrom,
+    filters.dateTo,
+    shouldLoadFechas,
+    shouldLoadAcademias,
+    shouldLoadMaestros,
+    shouldLoadOrganizadores,
+    shouldLoadMarcas,
+    shouldLoadUsuarios,
+    fechasQuery.isLoading,
+    (fechasQuery as any).isError,
+    fechasQuery.data,
+    academiasQuery.isLoading,
+    (academiasQuery as any).isError,
+    academiasQuery.data,
+    maestrosQuery.isLoading,
+    (maestrosQuery as any).isError,
+    maestrosQuery.data,
+    organizadoresQuery.isLoading,
+    (organizadoresQuery as any).isError,
+    organizadoresQuery.data,
+    marcasQuery.isLoading,
+    (marcasQuery as any).isError,
+    marcasQuery.data,
+    usuariosQuery.isLoading,
+    (usuariosQuery as any).isError,
+    usuariosQuery.data,
+    fechasData.length,
+    filteredFechas.length,
+    academiasData.length,
+    maestrosData.length,
+    organizadoresData.length,
+    marcasData.length,
+    usuariosData.length,
+    validUsuarios.length,
+    classesList.length,
+    anyLoading,
+    noResultsAllTypes,
+  ]);
+
+  const devPrevRef = React.useRef<string>("");
+  React.useEffect(() => {
+    if (!__DEV__) return;
+    const key = JSON.stringify(devSummary);
+    if (devPrevRef.current === key) return;
+    devPrevRef.current = key;
+    __DEV_LOG("state", devSummary);
+  }, [__DEV__, __DEV_LOG, devSummary]);
+
+  // Log which conditional branch each section takes (DEV only).
+  const devBranches = React.useMemo(() => {
+    return {
+      fechas: fechasLoading ? "loading" : fechasError ? "error" : filteredFechas.length > 0 ? "render" : "empty",
+      clases:
+        (academiasLoading || maestrosLoading) ? "loading"
+        : (academiasError || maestrosError) ? "error"
+        : classesList.length > 0 ? "render"
+        : "empty",
+      academias: academiasLoading ? "loading" : academiasData.length > 0 ? "render" : "empty",
+      maestros: maestrosLoading ? "loading" : maestrosError ? "error" : maestrosData.length > 0 ? "render" : "empty",
+      usuarios: usuariosLoading ? "loading" : validUsuarios.length > 0 ? "render" : "empty",
+      organizadores: organizadoresLoading ? "loading" : organizadoresError ? "error" : organizadoresData.length > 0 ? "render" : "empty",
+      marcas: marcasLoading ? "loading" : marcasData.length > 0 ? "render" : "empty",
+    } as const;
+  }, [
+    fechasLoading,
+    fechasError,
+    filteredFechas.length,
+    academiasLoading,
+    maestrosLoading,
+    academiasError,
+    maestrosError,
+    classesList.length,
+    academiasData.length,
+    maestrosError,
+    maestrosData.length,
+    usuariosLoading,
+    validUsuarios.length,
+    organizadoresLoading,
+    organizadoresError,
+    organizadoresData.length,
+    marcasLoading,
+    marcasData.length,
+  ]);
+
+  const devPrevBranchesRef = React.useRef<string>("");
+  React.useEffect(() => {
+    if (!__DEV__) return;
+    const key = JSON.stringify(devBranches);
+    if (devPrevBranchesRef.current === key) return;
+    devPrevBranchesRef.current = key;
+    __DEV_LOG("branches", devBranches);
+  }, [__DEV__, __DEV_LOG, devBranches]);
 
   return (
     <>
@@ -2143,7 +2660,7 @@ export default function ExploreHomeScreen() {
 
       <div className="explore-container">
         <div className="wrap">
-          <section className="filters-panel" style={{ marginTop: '5px', marginBottom: spacing[6], marginLeft: 'auto', marginRight: 'auto' }}>
+          <section className="filters-panel" style={{ marginTop: '5px', marginBottom: spacing[6], marginLeft: 'auto', marginRight: 'auto' }} role="region" aria-label={t('filters')}>
             {usingFavoriteFilters && user && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -2181,355 +2698,55 @@ export default function ExploreHomeScreen() {
               </motion.div>
             )}
 
-            {/* Row 1: Título + estado + búsqueda colapsada */}
-            <div className="fxc__row1">
-              <div className="fxc__head">
-                <h2 className="fxc__title" id="fxc-title">
-                  <span aria-hidden="true">🧩</span> {t('filters')}
-                </h2>
-                <span className="fxc__state" aria-live="polite">
-                  {activeFiltersCount > 0
-                    ? (activeFiltersCount === 1
-                      ? t('active_filters', { count: activeFiltersCount })
-                      : t('active_filters_plural', { count: activeFiltersCount }))
-                    : t('no_filters')}
-                </span>
-                {activeFiltersCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleFilterChange({
-                        ...filters,
-                        type: 'all',
-                        q: '',
-                        ritmos: [],
-                        zonas: [],
-                        datePreset: 'todos',
-                        dateFrom: undefined,
-                        dateTo: undefined
-                      });
-                      setUsingFavoriteFilters(false);
-                      setOpenFilterDropdown(null);
-                      setIsSearchExpanded(false);
-                    }}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      padding: '0.35rem 0.7rem',
-                      borderRadius: '999px',
-                      border: '1px solid rgba(239,68,68,0.3)',
-                      background: 'rgba(239,68,68,.14)',
-                      color: '#fecaca',
-                      fontSize: '0.7rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      whiteSpace: 'nowrap',
-                      marginLeft: 'auto'
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,.2)';
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = '#f97373';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,.14)';
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.3)';
-                    }}
-                    aria-label={t('clear_all_filters')}
-                  >
-                    🗑️ {t('clear')}
-                  </button>
-                )}
-                </div>
-                  {!usingFavoriteFilters && user && preferences && (
-                    (preferences.ritmos && preferences.ritmos.length > 0) ||
-                    (preferences.zonas && preferences.zonas.length > 0) ||
-                    (preferences.date_range && preferences.date_range !== 'none')
-                  ) && (
-                      <button
-                        type="button"
-                        onClick={resetToFavoriteFilters}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          padding: '0.35rem 0.7rem',
-                          borderRadius: '999px',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          color: 'rgba(255, 255, 255, 0.75)',
-                          fontSize: '0.7rem',
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          whiteSpace: 'nowrap'
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.1)';
-                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                          (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.9)';
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255, 255, 255, 0.05)';
-                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                          (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.75)';
-                        }}
-                      >
-                        <span style={{ fontSize: '0.75rem' }}>⭐</span>
-                        <span>{t('activate_favorites')}</span>
-                      </button>
-                    )}
+            <div className="filters-card">
+              {/* Header + búsqueda en la misma fila */}
+              <div className="filters-top-row">
+                <div className="filters-title filters-top-row__title">
+                  <span className="filters-icon" aria-hidden="true">⚙️</span>
                 </div>
 
-            {/* Row 2: 4 chips en una fila */}
-            <div className="fxc__row2" role="toolbar" aria-label={t('controls')}>
-              <nav className="segment" aria-label={t('filter_type_aria')}>
-                <button
-                  className={`seg ${openFilterDropdown === 'tipos' ? 'seg--active' : ''}`}
-                  onClick={() => setOpenFilterDropdown(openFilterDropdown === 'tipos' ? null : 'tipos')}
-                  aria-pressed={openFilterDropdown === 'tipos'}
-                  role="button"
-                >
-                  👥 {t('what_are_you_looking_for')}
-                  {filters.type !== 'all' && (
-                    <span style={{
-                      display: 'inline-grid',
-                      placeItems: 'center',
-                      minWidth: '18px',
-                      height: '18px',
-                      padding: '0 6px',
-                      borderRadius: '999px',
-                      border: '1px solid var(--chip-stroke)',
-                      background: 'hsl(235 25% 24% / .9)',
-                      fontSize: '0.68rem',
-                      fontWeight: 900
-                    }}>1</span>
-                  )}
-                </button>
-                <button
-                  className={`seg ${openFilterDropdown === 'ritmos' ? 'seg--active' : ''}`}
-                  onClick={() => setOpenFilterDropdown(openFilterDropdown === 'ritmos' ? null : 'ritmos')}
-                  aria-pressed={openFilterDropdown === 'ritmos'}
-                  role="button"
-                >
-                  🎵 {t('rhythms')}
-                  {stableRitmos.length > 0 && (
-                    <span style={{
-                      display: 'inline-grid',
-                      placeItems: 'center',
-                      minWidth: '18px',
-                      height: '18px',
-                      padding: '0 6px',
-                      borderRadius: '999px',
-                      border: '1px solid var(--chip-stroke)',
-                      background: 'hsl(235 25% 24% / .9)',
-                      fontSize: '0.68rem',
-                      fontWeight: 900
-                    }}>{stableRitmos.length}</span>
-                  )}
-                </button>
-                <button
-                  className={`seg ${openFilterDropdown === 'zonas' ? 'seg--active' : ''}`}
-                  onClick={() => setOpenFilterDropdown(openFilterDropdown === 'zonas' ? null : 'zonas')}
-                  aria-pressed={openFilterDropdown === 'zonas'}
-                  role="button"
-                >
-                  📍 {t('zones')}
-                  {stableZonas.length > 0 && (
-                    <span style={{
-                      display: 'inline-grid',
-                      placeItems: 'center',
-                      minWidth: '18px',
-                      height: '18px',
-                      padding: '0 6px',
-                      borderRadius: '999px',
-                      border: '1px solid var(--chip-stroke)',
-                      background: 'hsl(235 25% 24% / .9)',
-                      fontSize: '0.68rem',
-                      fontWeight: 900
-                    }}>{stableZonas.length}</span>
-                  )}
-                </button>
-                <button
-                  className={`seg ${openFilterDropdown === 'fechas' ? 'seg--active' : ''}`}
-                  onClick={() => setOpenFilterDropdown(openFilterDropdown === 'fechas' ? null : 'fechas')}
-                  aria-pressed={openFilterDropdown === 'fechas'}
-                  role="button"
-                >
-                  🗓️ {t('dates')}
-                  {(filters.dateFrom || filters.dateTo) && (
-                    <span style={{
-                      display: 'inline-grid',
-                      placeItems: 'center',
-                      minWidth: '18px',
-                      height: '18px',
-                      padding: '0 6px',
-                      borderRadius: '999px',
-                      border: '1px solid var(--chip-stroke)',
-                      background: 'hsl(235 25% 24% / .9)',
-                      fontSize: '0.68rem',
-                      fontWeight: 900
-                    }}>1</span>
-                  )}
-                </button>
-                <button
-                  className={`seg ${isSearchExpanded || filters.q ? 'seg--active' : ''}`}
-                  onClick={() => setIsSearchExpanded(!isSearchExpanded)}
-                  aria-pressed={isSearchExpanded}
-                  role="button"
-                  style={{
-                    border: filters.q ? '2px solid rgba(240, 147, 251, 0.5)' : undefined,
-                    background: filters.q ? 'rgba(240, 147, 251, 0.12)' : undefined
-                  }}
-                >
-                  🔎 {t('search_action')}
-                  {filters.q && (
-                    <span style={{
-                      display: 'inline-grid',
-                      placeItems: 'center',
-                      minWidth: '18px',
-                      height: '18px',
-                      padding: '0 6px',
-                      borderRadius: '999px',
-                      border: '1px solid var(--chip-stroke)',
-                      background: '#f093fb',
-                      fontSize: '0.68rem',
-                      fontWeight: 900
-                    }}>1</span>
-                  )}
-                </button>
-                {activeFiltersCount > 0 && (
-                  <button
-                    className="seg"
-                    onClick={() => {
-                      handleFilterChange({
-                        ...filters,
-                        type: 'all',
-                        q: '',
-                        ritmos: [],
-                        zonas: [],
-                        datePreset: 'todos',
-                        dateFrom: undefined,
-                        dateTo: undefined
-                      });
-                      setUsingFavoriteFilters(false);
-                      setOpenFilterDropdown(null);
-                      setIsSearchExpanded(false);
-                    }}
+                <div className="filters-top-row__search">
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%', gap: 8 }}>
+                  <span
                     style={{
-                      background: 'rgba(239,68,68,.14)',
-                      borderColor: '#f97373',
-                      color: '#fecaca'
-                    }}
-                    role="button"
-                  >
-                    🗑️ {t('clear')} ({activeFiltersCount})
-                  </button>
-                )}
-              </nav>
-            </div>
-
-            <div style={{ marginTop: '4px', position: 'relative' }}>
-              <FilterBar
-                filters={filters}
-                onFiltersChange={(newFilters) => {
-                  handleFilterChange(newFilters);
-                }}
-                showTypeFilter={true}
-                initialOpenDropdown={openFilterDropdown}
-                hideButtons={true}
-              />
-            </div>
-
-            {/* Fila de búsqueda expandida */}
-            {isSearchExpanded && (
-              <div className="filters-search-expanded" style={{
-                marginTop: '4px',
-                padding: '8px 0',
-                animation: 'fadeIn 0.2s ease-in'
-              }}>
-                  <div style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                  width: '100%',
-                  gap: '8px'
-                  }}>
-                    <span style={{
                       position: 'absolute',
-                    left: '14px',
-                    fontSize: '16px',
+                      left: 14,
+                      fontSize: 16,
                       pointerEvents: 'none',
-                    zIndex: 1,
-                    color: 'rgba(255, 255, 255, 0.7)'
-                    }}>
-                      🔍
-                    </span>
-                    <input
-                      type="text"
+                      zIndex: 1,
+                      color: 'rgba(255, 255, 255, 0.7)',
+                    }}
+                  >
+                    🔍
+                  </span>
+                  <input
+                    type="text"
                     placeholder={t('search_placeholder_expanded')}
-                      value={filters.q || ''}
-                      onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
-                      style={{
-                        width: '100%',
+                    value={filters.q || ''}
+                    onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
+                    style={{
+                      width: '100%',
                       padding: '10px 14px 10px 42px',
-                        borderRadius: '999px',
+                      borderRadius: '999px',
                       border: filters.q ? '2px solid rgba(240, 147, 251, 0.6)' : '1px solid var(--fp-border-soft)',
                       background: filters.q ? 'rgba(240, 147, 251, 0.15)' : '#181b26',
-                        color: 'var(--fp-text)',
+                      color: 'var(--fp-text)',
                       fontSize: '13px',
-                        outline: 'none',
-                        transition: 'all 0.3s ease',
-                      boxShadow: filters.q 
-                        ? '0 0 0 3px rgba(240, 147, 251, 0.25), 0 4px 16px rgba(240, 147, 251, 0.25)' 
+                      outline: 'none',
+                      transition: 'all 0.3s ease',
+                      boxShadow: filters.q
+                        ? '0 0 0 3px rgba(240, 147, 251, 0.25), 0 4px 16px rgba(240, 147, 251, 0.25)'
                         : '0 2px 8px rgba(0, 0, 0, 0.2)',
-                      fontFamily: 'inherit'
-                      }}
-                      autoFocus
-                    />
-                    {filters.q && (
-                      <button
-                      onClick={() => {
-                        handleFilterChange({ ...filters, q: '' });
-                      }}
-                      className="filters-search-clear-btn"
-                        style={{
-                        padding: '10px 16px',
-                        borderRadius: '999px',
-                        border: '1px solid var(--fp-border-soft)',
-                        background: '#181b26',
-                        color: 'var(--fp-text)',
-                          cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                          display: 'flex',
-                          alignItems: 'center',
-                        justifyContent: 'center',
-                        whiteSpace: 'nowrap',
-                        transition: 'all 0.2s ease',
-                        flexShrink: 0,
-                        touchAction: 'manipulation',
-                        WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)'
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = '#1b2130';
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = '#4b5563';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = '#181b26';
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--fp-border-soft)';
-                        }}
-                        aria-label="Limpiar búsqueda"
-                      >
-                      {t('clear')}
-                      </button>
-                    )}
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                  {!!filters.q && (
                     <button
-                      onClick={() => setIsSearchExpanded(false)}
-                    className="filters-search-close-btn"
+                      type="button"
+                      onClick={() => handleFilterChange({ ...filters, q: '' })}
+                      className="filters-search-clear-btn"
                       style={{
-                      padding: '10px 16px',
+                        padding: '10px 16px',
                         borderRadius: '999px',
                         border: '1px solid var(--fp-border-soft)',
                         background: '#181b26',
@@ -2540,35 +2757,213 @@ export default function ExploreHomeScreen() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.2s ease',
-                      flexShrink: 0,
-                      touchAction: 'manipulation',
-                      WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)'
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = '#1b2130';
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = '#4b5563';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = '#181b26';
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--fp-border-soft)';
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.2s ease',
+                        flexShrink: 0,
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)',
                       }}
-                      aria-label={t('collapse_search')}
+                      aria-label={t('clear') || 'Limpiar'}
                     >
-                      ✖
+                      {t('clear')}
                     </button>
-                  </div>
-              </div>
-            )}
+                  )}
+                </div>
+                </div>
 
-            {/* Rangos rápidos: UNA fila + tamaño reducido */}
-            <nav className="quick-row" aria-label="Rangos rápidos">
-              {renderDatePresetButtons(false)}
-            </nav>
+                <div className="filters-top-row__actions">
+                  {!usingFavoriteFilters && user && preferences && (
+                    (preferences.ritmos && preferences.ritmos.length > 0) ||
+                    (preferences.zonas && preferences.zonas.length > 0) ||
+                    (preferences.date_range && preferences.date_range !== 'none')
+                  ) && (
+                    <button
+                      type="button"
+                      onClick={resetToFavoriteFilters}
+                      className="filters-clear"
+                      style={{ marginRight: activeFiltersCount > 0 ? 0 : undefined }}
+                    >
+                      <span style={{ fontSize: '0.75rem' }}>⭐</span>
+                      <span>{t('activate_favorites')}</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="filters-clear"
+                    onClick={() => {
+                      handleFilterChange({
+                        ...filters,
+                        type: 'all',
+                        q: '',
+                        ritmos: [],
+                        zonas: [],
+                        datePreset: 'todos',
+                        dateFrom: undefined,
+                        dateTo: undefined
+                      });
+                      setUsingFavoriteFilters(false);
+                      setOpenFilterDropdown(null);
+                    }}
+                    aria-label={t('clear_all_filters')}
+                  >
+                    <span className="dot" aria-hidden="true" />
+                    {activeFiltersCount > 0
+                      ? (activeFiltersCount === 1
+                        ? t('active_filters', { count: activeFiltersCount })
+                        : t('active_filters_plural', { count: activeFiltersCount }))
+                      : t('no_filters')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Row 2: Ritmos, Zonas, Fechas (dropdowns jerárquicos) */}
+              <div className="filters-card__row filters-card__row--selects" role="toolbar" aria-label={t("filter_type_aria")}>
+                <button
+                  ref={ritmosPillRef}
+                  type="button"
+                  className={`filter-pill ${openFilterDropdown === "ritmos" ? "filter-pill--active" : ""}`}
+                  onClick={() => setOpenFilterDropdown(openFilterDropdown === "ritmos" ? null : "ritmos")}
+                  aria-pressed={openFilterDropdown === "ritmos"}
+                  aria-expanded={openFilterDropdown === "ritmos"}
+                  style={{ minWidth: 140, justifyContent: "space-between" }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <span className="pill-icon" aria-hidden="true">🎵</span>
+                    <span className="pill-text">{t("rhythms")} ({stableRitmos.length})</span>
+                  </span>
+                  <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
+                </button>
+                <button
+                  ref={zonasPillRef}
+                  type="button"
+                  className={`filter-pill ${openFilterDropdown === "zonas" ? "filter-pill--active" : ""}`}
+                  onClick={() => setOpenFilterDropdown(openFilterDropdown === "zonas" ? null : "zonas")}
+                  aria-pressed={openFilterDropdown === "zonas"}
+                  aria-expanded={openFilterDropdown === "zonas"}
+                  style={{ minWidth: 140, justifyContent: "space-between" }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <span className="pill-icon" aria-hidden="true">📍</span>
+                    <span className="pill-text">{t("zones")} ({stableZonas.length})</span>
+                  </span>
+                  <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
+                </button>
+                <button
+                  ref={fechasPillRef}
+                  type="button"
+                  className={`filter-pill ${openFilterDropdown === "fechas" ? "filter-pill--active" : ""}`}
+                  onClick={() => setOpenFilterDropdown(openFilterDropdown === "fechas" ? null : "fechas")}
+                  aria-pressed={openFilterDropdown === "fechas"}
+                  aria-expanded={openFilterDropdown === "fechas"}
+                  style={{ minWidth: 140, justifyContent: "space-between" }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <span className="pill-icon" aria-hidden="true">🗓️</span>
+                    <span className="pill-text">Fechas: {dateSummaryText}</span>
+                  </span>
+                  <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
+                </button>
+              </div>
+
+              <MultiSelectTreeDropdown
+                label={t("rhythms")}
+                groups={ritmoTreeGroups}
+                selectedIds={stableRitmos}
+                onChange={(nextIds) => set({ ritmos: nextIds })}
+                search={true}
+                anchorEl={openFilterDropdown === "ritmos" ? ritmosPillRef.current : null}
+                open={openFilterDropdown === "ritmos"}
+                onClose={() => setOpenFilterDropdown(null)}
+                triggerRef={ritmosPillRef}
+              />
+              <MultiSelectTreeDropdown
+                label={t("zones")}
+                groups={zonaTreeGroups}
+                selectedIds={stableZonas}
+                onChange={(nextIds) => set({ zonas: nextIds })}
+                search={true}
+                anchorEl={openFilterDropdown === "zonas" ? zonasPillRef.current : null}
+                open={openFilterDropdown === "zonas"}
+                onClose={() => setOpenFilterDropdown(null)}
+                triggerRef={zonasPillRef}
+              />
+              <DateFilterDropdown
+                dateFrom={filters.dateFrom}
+                dateTo={filters.dateTo}
+                onApply={applyDateFilter}
+                anchorEl={openFilterDropdown === "fechas" ? fechasPillRef.current : null}
+                open={openFilterDropdown === "fechas"}
+                onClose={() => setOpenFilterDropdown(null)}
+                triggerRef={fechasPillRef}
+                summaryText={dateSummaryText}
+                t={t}
+              />
+
+              {/* Tabs de secciones */}
+              <div className="filters-tabs" role="tablist" aria-label="Secciones">
+                {([
+                  { id: 'fechas', label: 'Eventos' },
+                  { id: 'clases', label: 'Clases' },
+                  { id: 'academias', label: 'Academias' },
+                  { id: 'maestros', label: 'Maestros' },
+                  { id: 'usuarios', label: 'Bailarines' },
+                  { id: 'organizadores', label: 'Organizadores' },
+                  { id: 'marcas', label: 'Marcas' },
+                  { id: 'all', label: 'Todo' },
+                ] as const).map((tab) => {
+                  const active = (filters.type || 'all') === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={`tab ${active ? 'tab--active' : ''}`}
+                      aria-selected={active}
+                      role="tab"
+                      onClick={() => {
+                        set({ type: tab.id as any });
+                        setOpenFilterDropdown(null);
+                      }}
+                    >
+                      <span className="tab-label">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Rangos rápidos de fechas: visible al seleccionar Eventos, Clases o Todo */}
+              {showQuickDateRanges && (
+                <>
+                  <div className="filters-divider" />
+                  <div className="filters-card__row chips" aria-label={t('date_shortcuts')}>
+                    {([
+                      { id: 'todos' as const, labelKey: 'all' },
+                      { id: 'hoy' as const, labelKey: 'today' },
+                      { id: 'manana' as const, labelKey: 'tomorrow' },
+                      { id: 'semana' as const, labelKey: 'this_week' },
+                      { id: 'fin_de_semana' as const, labelKey: 'weekend' },
+                      { id: 'siguientes' as const, labelKey: 'next_week' },
+                    ]).map((p) => {
+                      const active = (filters.datePreset || 'todos') === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => applyDatePreset(p.id)}
+                          className={`chip ${active ? 'is-active' : ''}`}
+                          disabled={isPending}
+                          aria-pressed={active}
+                        >
+                          {t(p.labelKey)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </section>
 
-          {(showAll || selectedType === 'fechas') && (fechasLoading || hasFechas || fechasError) && (
+          {(((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
             <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length} sectionId="fechas">
               {fechasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
@@ -2584,24 +2979,63 @@ export default function ExploreHomeScreen() {
                     <HorizontalSlider
                       {...sliderProps}
                       items={filteredFechas}
-                      renderItem={(fechaEvento: any, idx: number) => (
-                        <div
-                          key={fechaEvento._recurrence_index !== undefined
-                            ? `${fechaEvento._original_id || fechaEvento.id}_${fechaEvento._recurrence_index}`
-                            : (fechaEvento.id ?? `fecha_${idx}`)}
-                          onClickCapture={handlePreNavigate}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: 'none'
-                          }}
-                        >
-                          <EventCard item={fechaEvento} priority={idx === 0} />
-                        </div>
-                      )}
+                      renderItem={(fechaEvento: any, idx: number) => {
+                        if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+                          __DEV_LOG("renderItem", {
+                            type: "fechas",
+                            idx,
+                            id: fechaEvento?.id,
+                            original: (fechaEvento as any)?._original_id,
+                            rec: (fechaEvento as any)?._recurrence_index,
+                          });
+                        }
+
+                        const key =
+                          (fechaEvento as any)?._recurrence_index !== undefined
+                            ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}`
+                            : (fechaEvento?.id ?? `fecha_${idx}`);
+
+                        if (__DEV__) {
+                          try {
+                            return (
+                              <div
+                                key={key}
+                                onClickCapture={handlePreNavigate}
+                                style={{
+                                  background: 'rgba(255,255,255,0.04)',
+                                  border: '1px solid rgba(255,255,255,0.08)',
+                                  borderRadius: 16,
+                                  padding: 0,
+                                  overflow: 'hidden',
+                                  boxShadow: 'none'
+                                }}
+                              >
+                                <EventCard item={fechaEvento} priority={idx === 0} />
+                              </div>
+                            );
+                          } catch (e) {
+                            __DEV_LOG("renderItem_error", { type: "fechas", idx, id: fechaEvento?.id, error: (e as any)?.message || e });
+                            return null;
+                          }
+                        }
+
+                        return (
+                          <div
+                            key={key}
+                            onClickCapture={handlePreNavigate}
+                            style={{
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              borderRadius: 16,
+                              padding: 0,
+                              overflow: 'hidden',
+                              boxShadow: 'none'
+                            }}
+                          >
+                            <EventCard item={fechaEvento} priority={idx === 0} />
+                          </div>
+                        );
+                      }}
                     />
                   ) : (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
@@ -2620,7 +3054,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'clases') && ((academiasLoading || maestrosLoading) || hasClases || academiasError || maestrosError) && (
+          {(((showAll && ((academiasLoading || maestrosLoading) || hasClases || academiasError || maestrosError)) || selectedType === 'clases')) && (
             <Section title={t('section_recommended_classes')} toAll="/explore/list?type=clases" count={classesList.length} sectionId="clases">
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
@@ -2636,6 +3070,9 @@ export default function ExploreHomeScreen() {
                       }}
                     />
                   );
+                }
+                if (classesList.length === 0) {
+                  return <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>;
                 }
 
                 return (
@@ -2663,7 +3100,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'academias') && (academiasLoading || hasAcademias) && (
+          {(((showAll && (academiasLoading || hasAcademias)) || selectedType === 'academias')) && (
             <Section title={t('section_best_academies_zone')} toAll="/explore/list?type=academias" count={academiasData.length} sectionId="academias">
               <AcademiesSection
                 filters={filters}
@@ -2671,6 +3108,9 @@ export default function ExploreHomeScreen() {
                 enabled={showAll || selectedType === 'academias'}
                 maxItems={12}
               />
+              {!academiasLoading && academiasData.length === 0 && (
+                <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
+              )}
               {/* Mantener botón de cargar más si es necesario */}
                   {academiasLoadMore.hasNextPage && (
                     <button
@@ -2695,8 +3135,8 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'maestros') && (maestrosLoading || hasMaestros || maestrosError) && (
-            <Section title={t('section_featured_teachers')} toAll="/explore/list?type=teacher" count={maestrosData.length} sectionId="maestros">
+          {(((showAll && (maestrosLoading || hasMaestros || maestrosError)) || selectedType === 'maestros')) && (
+            <Section title={t('section_featured_teachers')} toAll="/explore/list?type=maestros" count={maestrosData.length} sectionId="maestros">
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : maestrosError ? (
@@ -2707,6 +3147,9 @@ export default function ExploreHomeScreen() {
                 />
               ) : (
                 <>
+                  {maestrosData.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
+                  ) : (
                   <HorizontalSlider
                     {...maestrosSliderProps}
                     items={maestrosDataWithCTA}
@@ -2728,6 +3171,32 @@ export default function ExploreHomeScreen() {
                           </div>
                         );
                       }
+                      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+                        __DEV_LOG("renderItem", { type: "maestros", idx, id: item?.id, nombre: item?.nombre_publico });
+                      }
+                      if (__DEV__) {
+                        try {
+                          return (
+                            <div
+                              key={item.id ?? idx}
+                              onClickCapture={handlePreNavigate}
+                              style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                borderRadius: 16,
+                                padding: 0,
+                                overflow: 'hidden',
+                                boxShadow: 'none'
+                              }}
+                            >
+                              <TeacherCard item={item} />
+                            </div>
+                          );
+                        } catch (e) {
+                          __DEV_LOG("renderItem_error", { type: "maestros", idx, id: item?.id, error: (e as any)?.message || e });
+                          return null;
+                        }
+                      }
                       return (
                         <div
                           key={item.id ?? idx}
@@ -2746,6 +3215,7 @@ export default function ExploreHomeScreen() {
                       );
                     }}
                   />
+                  )}
                   {maestrosLoadMore.hasNextPage && (
                     <button
                       className="load-more-btn"
@@ -2760,7 +3230,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'usuarios') && (usuariosLoading || hasUsuarios) && (
+          {(((showAll && (usuariosLoading || hasUsuarios)) || selectedType === 'usuarios')) && (
             <Section title={t('section_dancers_near_you')} toAll="/explore/list?type=usuarios" count={validUsuarios.length} sectionId="usuarios">
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -2771,33 +3241,72 @@ export default function ExploreHomeScreen() {
                       <HorizontalSlider
                         {...sliderProps}
                         items={validUsuarios}
-                        renderItem={(u: any, idx: number) => (
-                          <div
-                            key={u.user_id ?? idx}
-                            onClickCapture={handlePreNavigate}
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              borderRadius: 16,
-                              padding: 0,
-                              overflow: 'hidden',
-                              boxShadow: 'none'
-                            }}
-                          >
-                            <DancerCard item={{
-                              id: u.user_id,
-                              display_name: u.display_name,
-                              bio: u.bio,
-                              avatar_url: u.avatar_url,
-                              banner_url: u.banner_url,
-                              portada_url: u.portada_url,
-                              media: u.media,
-                              ritmos: u.ritmos,
-                              ritmosSeleccionados: u.ritmos_seleccionados,
-                              zonas: u.zonas
-                            }} to={`/u/${encodeURIComponent(u.user_id)}`} />
-                          </div>
-                        )}
+                        renderItem={(u: any, idx: number) => {
+                          if (__DEV__ && (idx === 0 || idx % 30 === 0)) {
+                            __DEV_LOG("renderItem", { type: "usuarios", idx, user_id: u?.user_id, display_name: u?.display_name });
+                          }
+                          if (__DEV__) {
+                            try {
+                              return (
+                                <div
+                                  key={u.user_id ?? idx}
+                                  onClickCapture={handlePreNavigate}
+                                  style={{
+                                    background: 'rgba(255,255,255,0.04)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    borderRadius: 16,
+                                    padding: 0,
+                                    overflow: 'hidden',
+                                    boxShadow: 'none'
+                                  }}
+                                >
+                                  <DancerCard item={{
+                                    id: u.user_id,
+                                    display_name: u.display_name,
+                                    bio: u.bio,
+                                    avatar_url: u.avatar_url,
+                                    banner_url: u.banner_url,
+                                    portada_url: u.portada_url,
+                                    media: u.media,
+                                    ritmos: u.ritmos,
+                                    ritmosSeleccionados: u.ritmos_seleccionados,
+                                    zonas: u.zonas
+                                  }} to={`/u/${encodeURIComponent(u.user_id)}`} />
+                                </div>
+                              );
+                            } catch (e) {
+                              __DEV_LOG("renderItem_error", { type: "usuarios", idx, user_id: u?.user_id, error: (e as any)?.message || e });
+                              return null;
+                            }
+                          }
+                          return (
+                            <div
+                              key={u.user_id ?? idx}
+                              onClickCapture={handlePreNavigate}
+                              style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                borderRadius: 16,
+                                padding: 0,
+                                overflow: 'hidden',
+                                boxShadow: 'none'
+                              }}
+                            >
+                              <DancerCard item={{
+                                id: u.user_id,
+                                display_name: u.display_name,
+                                bio: u.bio,
+                                avatar_url: u.avatar_url,
+                                banner_url: u.banner_url,
+                                portada_url: u.portada_url,
+                                media: u.media,
+                                ritmos: u.ritmos,
+                                ritmosSeleccionados: u.ritmos_seleccionados,
+                                zonas: u.zonas
+                              }} to={`/u/${encodeURIComponent(u.user_id)}`} />
+                            </div>
+                          );
+                        }}
                       />
                       {/* Mostrar indicador de carga mientras se cargan más usuarios automáticamente */}
                       {usuariosQuery.isFetchingNextPage && (
@@ -2811,13 +3320,15 @@ export default function ExploreHomeScreen() {
                         </div>
                       )}
                     </>
-                  ) : null}
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
+                  )}
                 </>
               )}
             </Section>
           )}
 
-          {(showAll || selectedType === 'organizadores') && (organizadoresLoading || organizadoresData.length > 0 || organizadoresError) && (
+          {(((showAll && (organizadoresLoading || organizadoresData.length > 0 || organizadoresError)) || selectedType === 'organizadores')) && (
             <Section title={t('section_event_producers')} toAll="/explore/list?type=organizadores" count={organizadoresData.length} sectionId="organizadores">
               {organizadoresLoading ? (
                 <div className="cards-grid">
@@ -2856,6 +3367,32 @@ export default function ExploreHomeScreen() {
                           </div>
                         );
                       }
+                      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+                        __DEV_LOG("renderItem", { type: "organizadores", idx, id: item?.id, nombre: item?.nombre_publico || item?.nombre });
+                      }
+                      if (__DEV__) {
+                        try {
+                          return (
+                            <div
+                              key={item.id ?? idx}
+                              onClickCapture={handlePreNavigate}
+                              style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                borderRadius: 16,
+                                padding: 0,
+                                overflow: 'hidden',
+                                boxShadow: 'none'
+                              }}
+                            >
+                              <OrganizerCard item={item} />
+                            </div>
+                          );
+                        } catch (e) {
+                          __DEV_LOG("renderItem_error", { type: "organizadores", idx, id: item?.id, error: (e as any)?.message || e });
+                          return null;
+                        }
+                      }
                       return (
                         <div
                           key={item.id ?? idx}
@@ -2890,16 +3427,19 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(showAll || selectedType === 'marcas') && (marcasLoading || hasMarcas) && (
+          {(((showAll && (marcasLoading || hasMarcas)) || selectedType === 'marcas')) && (
             <Section title={t('section_specialized_brands')} toAll="/explore/list?type=marcas" count={marcasData.length} sectionId="marcas">
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
                 <>
-                  <HorizontalSlider
-                    {...sliderProps}
-                    items={marcasDataWithCTA}
-                    renderItem={(item: any, idx: number) => {
+                  {marcasData.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
+                  ) : (
+                    <HorizontalSlider
+                      {...sliderProps}
+                      items={marcasDataWithCTA}
+                      renderItem={(item: any, idx: number) => {
                       if (item?.__isCTA) {
                         return (
                           <div
@@ -2917,6 +3457,32 @@ export default function ExploreHomeScreen() {
                           </div>
                         );
                       }
+                      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+                        __DEV_LOG("renderItem", { type: "marcas", idx, id: item?.id, nombre: item?.nombre_publico || item?.nombre });
+                      }
+                      if (__DEV__) {
+                        try {
+                          return (
+                            <div
+                              key={item.id ?? idx}
+                              onClickCapture={handlePreNavigate}
+                              style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                borderRadius: 16,
+                                padding: 0,
+                                overflow: 'hidden',
+                                boxShadow: 'none'
+                              }}
+                            >
+                              <BrandCard item={item} />
+                            </div>
+                          );
+                        } catch (e) {
+                          __DEV_LOG("renderItem_error", { type: "marcas", idx, id: item?.id, error: (e as any)?.message || e });
+                          return null;
+                        }
+                      }
                       return (
                         <div
                           key={item.id ?? idx}
@@ -2933,8 +3499,9 @@ export default function ExploreHomeScreen() {
                           <BrandCard item={item} />
                         </div>
                       );
-                    }}
-                  />
+                      }}
+                    />
+                  )}
                   {marcasLoadMore.hasNextPage && (
                     <button
                       className="load-more-btn"

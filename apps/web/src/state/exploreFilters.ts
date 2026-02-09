@@ -3,6 +3,8 @@ import { userLocalStorage } from "@/storage/userScopedStorage";
 
 export type ExploreType = "all" | "fechas" | "sociales" | "clases" | "organizadores" | "maestros" | "academias" | "marcas" | "usuarios";
 
+export type DatePreset = 'todos' | 'hoy' | 'manana' | 'semana' | 'fin_de_semana' | 'siguientes';
+
 export type ExploreFilters = {
   type: ExploreType;
   q: string;           // texto libre
@@ -10,7 +12,7 @@ export type ExploreFilters = {
   zonas: number[];     // tags de tipo 'zona'
   dateFrom?: string;   // YYYY-MM-DD (solo eventos)
   dateTo?: string;     // YYYY-MM-DD (solo eventos)
-  datePreset?: 'todos' | 'hoy' | 'semana' | 'siguientes';
+  datePreset?: DatePreset; // undefined = rango personalizado
   pageSize: number;
 };
 
@@ -25,7 +27,7 @@ type Store = {
 const STORAGE_PARTS = ["filters", "explore", "v1"] as const;
 
 const defaultFilters: ExploreFilters = {
-  type: "all",
+  type: "fechas",
   q: "",
   ritmos: [],
   zonas: [],

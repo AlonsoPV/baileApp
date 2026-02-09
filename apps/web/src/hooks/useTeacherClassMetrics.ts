@@ -24,8 +24,13 @@ type GlobalMetrics = {
   totalPagados: number;
 };
 
+type TeacherClassMetricsResult = {
+  global: GlobalMetrics;
+  porClase: ClaseMetric[];
+};
+
 export function useTeacherClassMetrics(teacherId?: number) {
-  const query = useQuery({
+  const query = useQuery<TeacherClassMetricsResult>({
     queryKey: ["teacher-class-metrics", teacherId],
     enabled: !!teacherId,
     queryFn: async () => {
@@ -150,7 +155,7 @@ export function useTeacherClassMetrics(teacherId?: number) {
         console.log("[useTeacherClassMetrics] 📊 Total de registros en clase_asistencias para teacherId:", count);
         
         return {
-          global: { totalTentativos: 0, porRol: { leader: 0, follower: 0, ambos: 0, otros: 0 } },
+          global: { totalTentativos: 0, porRol: { leader: 0, follower: 0, ambos: 0, otros: 0 }, totalPagados: 0 },
           porClase: [],
         };
       }

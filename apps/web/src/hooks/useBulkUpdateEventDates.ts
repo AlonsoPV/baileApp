@@ -5,10 +5,10 @@ export type BulkValidationError = { id: number; field: string; message: string }
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const t = setTimeout(() => reject(new Error("Timeout: la operación tardó demasiado. Intenta de nuevo.")), ms);
-    promise
+    Promise.resolve(promise)
       .then((v) => {
         clearTimeout(t);
         resolve(v);

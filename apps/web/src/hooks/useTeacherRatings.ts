@@ -94,7 +94,7 @@ export function useTeacherRatingStats(teacherId?: number) {
         if (error) {
           // Error 406 = Not Acceptable (tabla/función no existe o problema de RLS)
           // Silenciar el error - puede ser que la tabla no exista aún
-          if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+          if (error.message?.includes('406') || error.code === '406' || (error as any).status === 406) {
             return getEmptyStats();
           }
           
@@ -139,7 +139,7 @@ async function calculateStatsManually(teacherId: number): Promise<TeacherRatingS
     if (error) {
       // Error 406 = Not Acceptable (tabla no existe o problema de RLS)
       // Silenciar el error - puede ser que la tabla no exista aún
-      if (error.message?.includes('406') || error.code === '406' || error.status === 406) {
+        if (error.message?.includes('406') || error.code === '406' || (error as any).status === 406) {
         return getEmptyStats();
       }
       // Solo mostrar otros errores inesperados

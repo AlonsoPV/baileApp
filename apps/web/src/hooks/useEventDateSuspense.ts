@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { EventDate } from "../types/events";
 
@@ -21,7 +21,12 @@ import type { EventDate } from "../types/events";
  * ```
  */
 export function useEventDateSuspense(dateId: number): EventDate {
-  const query = useQuery<EventDate>({
+  if (!dateId) {
+    // En modo Suspense, un id inválido es un error de programación / navegación
+    throw new Error('No dateId provided for useEventDateSuspense');
+  }
+
+  const query = useSuspenseQuery<EventDate>({
     queryKey: ["event", "date", dateId],
     queryFn: async (): Promise<EventDate> => {
       console.log('[useEventDateSuspense] Fetching date with ID:', dateId);
@@ -53,12 +58,10 @@ export function useEventDateSuspense(dateId: number): EventDate {
       console.log('[useEventDateSuspense] Returning data:', data);
       return data as EventDate;
     },
-    enabled: !!dateId,
-    suspense: true, // Activar Suspense para esta query
     staleTime: 1000 * 60, // 1 minuto - datos frescos
   });
 
   // Con Suspense, data siempre existe cuando se renderiza
-  return query.data!;
+  return query.data;
 }
 

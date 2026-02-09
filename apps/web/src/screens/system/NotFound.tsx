@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { colors, typography, spacing, borderRadius } from '@/theme/colors';
+import { colors as rawColors, typography, spacing, borderRadius } from '@/theme/colors';
 import { routes } from '@/routes/registry';
+
+const colors: any = rawColors;
 
 export default function NotFound() {
   const navigate = useNavigate();
@@ -235,9 +237,9 @@ export default function NotFound() {
               justifyContent: 'center'
             }}>
               {[
-                { label: 'Explorar', path: routes.explore.home, emoji: '🔍' },
-                { label: 'Eventos', path: routes.events.list, emoji: '📅' },
-                { label: 'Clases', path: routes.classes.list, emoji: '💃' }
+                { label: 'Explorar', path: routes.app.explore, emoji: '🔍' },
+                { label: 'Eventos', path: '/explore/list?type=fechas', emoji: '📅' },
+                { label: 'Clases', path: '/explore/list?type=clases', emoji: '💃' }
               ].map((link) => (
                 <button
                   key={link.path}

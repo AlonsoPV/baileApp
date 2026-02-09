@@ -5284,6 +5284,7 @@ export default function OrganizerProfileEditor() {
                           telefono_contacto: '',
                           mensaje_contacto: '',
                           fecha: '',
+                          dia_semana: null,
                           hora_inicio: '',
                           hora_fin: '',
                           lugar: '',

@@ -136,7 +136,7 @@ export function InterestCounter({ eventDateId }: { eventDateId: number }) {
     );
   }
 
-  const count = stats?.total_interesado || 0;
+  const count = stats?.total_interesado ?? stats?.interesado ?? 0;
 
   return (
     <motion.div

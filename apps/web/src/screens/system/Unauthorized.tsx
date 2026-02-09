@@ -1,7 +1,10 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { colors, typography, spacing, borderRadius, theme } from '@/theme/colors';
+import { colors as rawColors, typography, spacing, borderRadius, theme as rawTheme } from '@/theme/colors';
 import { routes } from '@/routes/registry';
+
+const colors: any = rawColors;
+const theme: any = rawTheme;
 
 export default function Unauthorized() {
   const navigate = useNavigate();

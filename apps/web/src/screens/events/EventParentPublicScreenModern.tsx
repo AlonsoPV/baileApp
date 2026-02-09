@@ -26,7 +26,7 @@ import { RefreshingIndicator } from "../../components/loading/RefreshingIndicato
 import { useSmartLoading } from "../../hooks/useSmartLoading";
 import { useEventParentSuspense } from "../../hooks/useEventParentSuspense";
 import { Suspense } from "react";
-import QueryErrorBoundaryWithReset from "../../components/errors/QueryErrorBoundary";
+import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
 
 /* ──────────────────────────────────────────────────────────────
    Carousel optimizado: accesible, ligero, lazy images, teclado

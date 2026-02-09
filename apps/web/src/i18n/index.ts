@@ -36,7 +36,6 @@ i18n
     detection: {
       caches: [],
       order: ['navigator'],
-      checkWhitelist: false,
     },
 
     // React ya escapa los valores, no necesitamos escapeValue

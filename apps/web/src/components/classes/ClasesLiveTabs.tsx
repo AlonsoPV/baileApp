@@ -321,6 +321,20 @@ export default function ClasesLiveTabs({
     );
   }
 
+  const clasesLiveCardStyles = `
+    .clases-live-card { width: 100%; min-width: 0; box-sizing: border-box; }
+    .clases-live-card h4 { word-wrap: break-word; overflow-wrap: break-word; min-width: 0; }
+    .clases-live-card-meta { overflow-wrap: break-word; word-break: break-word; min-width: 0; }
+    @media (max-width: 600px) {
+      .clases-live-card { padding: 0.75rem !important; border-radius: 12px !important; }
+      .clases-live-card h4 { font-size: 1rem !important; }
+      .clases-live-card-meta { font-size: 0.8rem !important; }
+    }
+    @media (min-width: 601px) {
+      .clases-live-card { padding: clamp(0.75rem, 1.5vw, 1.25rem) !important; }
+    }
+  `;
+
   // En móvil: mostrar lista vertical de días con sus clases
   if (isMobile) {
     return (
@@ -333,6 +347,7 @@ export default function ClasesLiveTabs({
           color: "#fff",
         }}
       >
+        <style>{clasesLiveCardStyles}</style>
         <div style={{ marginBottom: "1.5rem" }}>
           <div style={{ fontWeight: 900, fontSize: "1.25rem", marginBottom: ".5rem" }}>{title}</div>
           {subtitle && <div style={{ opacity: 0.8, fontSize: ".95rem" }}>{subtitle}</div>}
@@ -425,6 +440,7 @@ export default function ClasesLiveTabs({
                   return (
                     <motion.article
                       key={uniqueKey}
+                      className="clases-live-card"
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: .25 }}
@@ -500,7 +516,7 @@ export default function ClasesLiveTabs({
                           </div>
                         </div>
 
-                        <div style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", opacity: .95, fontSize: ".9rem" }}>
+                        <div className="clases-live-card-meta" style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", opacity: .95, fontSize: ".9rem" }}>
                           {c.fechaModo === 'por_agendar' ? (
                             // Si es por agendar, mostrar duración si está disponible
                             c.duracionHoras ? (
@@ -895,12 +911,14 @@ export default function ClasesLiveTabs({
         gap: "1.25rem",
         alignItems: "start",
         padding: "1.25rem",
+        minWidth: 0,
         borderRadius: 24,
         border: "1px solid rgba(255,255,255,0.12)",
         background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
         color: "#fff",
       }}
     >
+      <style>{clasesLiveCardStyles}</style>
       <div style={{ display: "contents" }}>
         {/* Sidebar / Tabs verticales */}
         <nav
@@ -963,7 +981,7 @@ export default function ClasesLiveTabs({
         <section
           role="tabpanel"
           aria-label={`Clases del día ${days[activeIdx]?.label}`}
-          style={{ display: "grid", gap: "1rem" }}
+          style={{ display: "grid", gap: "1rem", minWidth: 0 }}
         >
           {days[activeIdx]?.items.map((c, idx) => {
             const titulo = c.titulo || c.nombre || 'Clase';
@@ -983,13 +1001,13 @@ export default function ClasesLiveTabs({
             return (
               <motion.article
                 key={uniqueKey}
+                className="clases-live-card"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: .25 }}
                 onClick={() => handleClassClick(c)}
                 style={{
                   display: "grid",
-                  /* gridTemplateColumns: "140px 1fr", */
                   gap: "1rem",
                   padding: "1rem",
                   borderRadius: 16,
@@ -1059,7 +1077,7 @@ export default function ClasesLiveTabs({
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", opacity: .95 }}>
+                  <div className="clases-live-card-meta" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", opacity: .95 }}>
                     {c.fechaModo === 'por_agendar' ? (
                       // Si es por agendar, mostrar duración si está disponible
                       c.duracionHoras ? (

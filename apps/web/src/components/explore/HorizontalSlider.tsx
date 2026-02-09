@@ -22,6 +22,8 @@ type Props<T = any> = {
   autoColumns?: string | number | null; // permite sobreescribir grid-auto-columns
   /** Si true, en escritorio deshabilita scroll por wheel/trackpad y drag con mouse (solo quedan flechas/botones) */
   disableDesktopScroll?: boolean;
+  /** Si false, no se muestran los botones Anterior/Siguiente (por defecto true) */
+  showNavButtons?: boolean;
 };
 
 export default function HorizontalSlider<T>({
@@ -33,6 +35,7 @@ export default function HorizontalSlider<T>({
   style,
   autoColumns,
   disableDesktopScroll = false,
+  showNavButtons = true,
 }: Props<T>) {
   const viewportRef = useRef<HTMLDivElement>(null);
   // Cache geometry to avoid forced reflow in hot paths (wheel/drag).
@@ -362,8 +365,8 @@ export default function HorizontalSlider<T>({
         </div>
       </div>
 
-      {/* Botones de navegación debajo del viewport - Ocultos en móvil */}
-      {canScroll && (
+      {/* Botones de navegación debajo del viewport - Ocultos en móvil o si showNavButtons=false */}
+      {showNavButtons && canScroll && (
         <div
           style={{
             display: "flex",

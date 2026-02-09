@@ -6,6 +6,8 @@ import { resizeImageIfNeeded } from "../lib/imageResize";
 
 const BUCKET = "media"; // ✅ Bucket unificado
 
+type MediaItemWithSlot = MediaItem & { slot?: string };
+
 // Helper to upload to media bucket (organizer media)
 async function uploadOrgFile(orgId: number, file: File): Promise<MediaItem> {
   // Redimensionar imagen si es necesario (máximo 800px de ancho)
@@ -55,7 +57,7 @@ export function useOrganizerMedia() {
   const q = useQuery({
     queryKey: ["organizer", "media", orgId],
     enabled: !!orgId,
-    queryFn: async (): Promise<MediaItem[]> => {
+    queryFn: async (): Promise<MediaItemWithSlot[]> => {
       if (!orgId) return [];
       const { data, error } = await supabase
         .from("profiles_organizer")
@@ -63,13 +65,13 @@ export function useOrganizerMedia() {
         .eq("id", orgId)
         .maybeSingle();
       if (error) throw error;
-      return (data?.media as MediaItem[]) || [];
+      return ((data?.media as any[]) || []) as MediaItemWithSlot[];
     },
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch
     refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana
   });
 
-  const save = async (list: MediaItem[]) => {
+  const save = async (list: MediaItemWithSlot[]) => {
     if (!orgId) return;
     console.log('[useOrganizerMedia] Saving media array:', list.length, 'items');
     const { error } = await supabase
@@ -94,12 +96,12 @@ export function useOrganizerMedia() {
         console.log('[useOrganizerMedia] File uploaded successfully:', item);
         
         // Agregar el slot al item
-        const itemWithSlot = { ...item, slot };
+        const itemWithSlot: MediaItemWithSlot = { ...item, slot };
         console.log('[useOrganizerMedia] Item with slot:', itemWithSlot);
         
         // Reemplazar cualquier item existente en el mismo slot
-        const existingMedia = q.data || [];
-        const filteredMedia = existingMedia.filter(m => m.slot !== slot);
+        const existingMedia = (q.data || []) as MediaItemWithSlot[];
+        const filteredMedia = existingMedia.filter((m) => m.slot !== slot);
         const next = [itemWithSlot, ...filteredMedia];
         
         console.log('[useOrganizerMedia] Updating profile with media list:', next);

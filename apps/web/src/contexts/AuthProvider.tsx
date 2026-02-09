@@ -86,7 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         // Intentar obtener sesión del localStorage como fallback
         try {
-          const storedSession = localStorage.getItem('sb-' + supabase.supabaseUrl.split('//')[1]?.split('.')[0] + '-auth-token');
+          const url = (import.meta as any)?.env?.VITE_SUPABASE_URL as string | undefined;
+          const projectRef = url ? url.split('//')[1]?.split('.')[0] : undefined;
+          const storageKey = projectRef ? `sb-${projectRef}-auth-token` : null;
+          const storedSession = storageKey ? localStorage.getItem(storageKey) : null;
           if (!storedSession) {
             setSession(null);
             setUser(null);
