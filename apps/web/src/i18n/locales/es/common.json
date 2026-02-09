@@ -138,6 +138,7 @@
   "address": "Dirección",
   "city": "Ciudad",
   "references": "Referencias",
+  "copy": "Copiar",
   "copy_address": "📋 Copiar dirección",
   "no_location_info": "Sin información de ubicación.",
   "requirements": "📋 Requisitos",

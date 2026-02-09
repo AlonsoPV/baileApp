@@ -540,7 +540,7 @@ const STYLES = `
     max-width: 680px;
     margin-left: auto;
     margin-right: auto;
-    padding: 14px 14px 12px;
+    padding: 12px 8px 10px;
     border-radius: var(--radius-lg);
     background: #000000;
     border: 1px solid rgba(255,255,255,.14);
@@ -1127,12 +1127,12 @@ const STYLES = `
   @media (max-width: 768px) {
     .filters-panel {
       max-width: 100% !important;
-      padding: 12px 14px 14px !important;
+      padding: 10px 8px 12px !important;
       border-radius: 20px !important;
       margin: 5px 0 2em 0 !important;
     }
     .filters-card {
-      padding: 12px 12px 10px !important;
+      padding: 10px 8px 8px !important;
       border-radius: 18px !important;
       max-width: 100% !important;
     }
@@ -1318,12 +1318,12 @@ const STYLES = `
   }
   @media (max-width: 480px) {
     .filters-panel {
-      padding: 10px 12px 12px !important;
+      padding: 8px 6px 10px !important;
       border-radius: 18px !important;
       margin: 5px 0 2em 0 !important;
     }
     .filters-card {
-      padding: 10px 10px 8px !important;
+      padding: 8px 6px 6px !important;
       border-radius: 16px !important;
     }
     .filters-top-row {
@@ -1967,6 +1967,10 @@ export default function ExploreHomeScreen() {
     if (filters.dateTo) return `Hasta ${filters.dateTo}`;
     return "Todos";
   }, [filters.datePreset, filters.dateFrom, filters.dateTo]);
+
+  const hasDateFilterActive = Boolean(
+    (filters.datePreset && filters.datePreset !== "todos") || filters.dateFrom || filters.dateTo
+  );
 
   const activeFiltersCount = React.useMemo(() => {
     let count = 0;
@@ -2928,7 +2932,11 @@ export default function ExploreHomeScreen() {
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <span className="pill-icon" aria-hidden="true">🎵</span>
-                    <span className="pill-text">{t("rhythms")} ({stableRitmos.length})</span>
+                    <span className="pill-text">
+                      {stableRitmos.length > 0
+                        ? `${t("rhythms")} (${stableRitmos.length})`
+                        : t("rhythms")}
+                    </span>
                   </span>
                   <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
                 </button>
@@ -2943,7 +2951,11 @@ export default function ExploreHomeScreen() {
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <span className="pill-icon" aria-hidden="true">📍</span>
-                    <span className="pill-text">{t("zones")} ({stableZonas.length})</span>
+                    <span className="pill-text">
+                      {stableZonas.length > 0
+                        ? `${t("zones")} (${stableZonas.length})`
+                        : t("zones")}
+                    </span>
                   </span>
                   <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
                 </button>
@@ -2958,7 +2970,11 @@ export default function ExploreHomeScreen() {
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <span className="pill-icon" aria-hidden="true">🗓️</span>
-                    <span className="pill-text">Fechas: {dateSummaryText}</span>
+                    <span className="pill-text">
+                      {hasDateFilterActive
+                        ? `Fechas: ${dateSummaryText}`
+                        : "Fechas"}
+                    </span>
                   </span>
                   <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
                 </button>

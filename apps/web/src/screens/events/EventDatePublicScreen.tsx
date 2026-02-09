@@ -16,7 +16,6 @@ import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import RitmosChips from "../../components/RitmosChips";
-import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
@@ -390,6 +389,19 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     return organizerUserId === parentUserId;
   }, [user, myOrganizer, parent]);
 
+  const [addressCopied, setAddressCopied] = useState(false);
+  const fullAddress = `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim();
+  const handleCopyAddress = async () => {
+    if (!fullAddress) return;
+    try {
+      await navigator.clipboard.writeText(fullAddress);
+      setAddressCopied(true);
+      setTimeout(() => setAddressCopied(false), 2000);
+    } catch {
+      setAddressCopied(false);
+    }
+  };
+
   // Hook de RSVP
   const {
     userStatus,
@@ -705,9 +717,6 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       grid-template-columns: 1fr;
       gap: 1.25rem;
     }
-    @media (min-width: 768px) {
-       .social-header-grid { grid-template-columns: 1.3fr 1fr; }
-    }
     .event-title {
       margin: 0;
       font-size: clamp(2.5rem, 5vw, 4rem);
@@ -773,6 +782,122 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     .chip-link:hover {
       transform: translateY(-2px);
       box-shadow:0 10px 26px rgba(240,147,251,.28);
+    }
+    /* Tarjetas Fecha / Horario / Ubicación (diseño referencia) */
+    .date-info-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(0.75rem, 2vw, 1.25rem);
+      margin: 0;
+      width: 100%;
+    }
+    @media (max-width: 768px) {
+      .date-info-cards { grid-template-columns: 1fr; gap: 0.75rem; }
+    }
+    .date-info-card {
+      min-height: 0;
+      min-width: 0;
+      background: linear-gradient(145deg, rgba(38,43,58,0.97), rgba(28,32,48,0.97));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: clamp(12px, 2.5vw, 16px);
+      padding: clamp(0.85rem, 2vw, 1.15rem) clamp(1rem, 2.2vw, 1.25rem);
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .date-info-card:hover {
+      border-color: rgba(255,255,255,0.14);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .date-info-card--date {
+      border-left: 3px solid rgba(255,140,66,0.6);
+    }
+    .date-info-card--time {
+      border-left: 3px solid rgba(152,71,255,0.6);
+    }
+    .date-info-card--location {
+      border-left: 3px solid rgba(255,140,66,0.6);
+    }
+    .date-info-card__row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 26px;
+      flex-wrap: wrap;
+    }
+    .date-info-card__row--with-copy .date-info-card__copy {
+      margin-left: auto;
+    }
+    @media (max-width: 380px) {
+      .date-info-card__row--with-copy { gap: 0.4rem; }
+      .date-info-card__row--with-copy .date-info-card__copy { margin-left: 0; width: 100%; justify-content: center; }
+    }
+    .date-info-card__icon {
+      width: clamp(24px, 5.5vw, 28px);
+      height: clamp(24px, 5.5vw, 28px);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1rem, 2.2vw, 1.15rem);
+      line-height: 1;
+    }
+    .date-info-card--date .date-info-card__icon { color: #FF8C42; }
+    .date-info-card--time .date-info-card__icon { color: #9847FF; }
+    .date-info-card--location .date-info-card__icon { color: #FF8C42; }
+    .date-info-card__label {
+      font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.62);
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .date-info-card__value {
+      font-size: clamp(0.9rem, 2vw, 1.05rem);
+      font-weight: 700;
+      color: rgb(255,255,255);
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .date-info-card__value-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .date-info-card__copy {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: clamp(0.3rem, 1vw, 0.4rem) clamp(0.5rem, 1.5vw, 0.65rem);
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.92);
+      font-size: clamp(0.7rem, 1.6vw, 0.78rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .date-info-card__copy:hover {
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.28);
+    }
+    @media (max-width: 480px) {
+      .date-info-card { padding: 0.9rem 1rem; }
+      .date-info-card__value { font-size: 0.9rem; }
+    }
+    .social-header-card__share {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 2;
     }
     /* Event Cards - Diseño mejorado y más visual */
     .event-section-dance {
@@ -1403,10 +1528,22 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   `}</style>
 
             <div className="social-header-card">
+              <div className="social-header-card__share">
+                <ShareButton
+                  url={typeof window !== 'undefined' ? window.location.href : dateUrl}
+                  title={dateName}
+                  text={t('check_this_event', { name: dateName })}
+                  style={{
+                    padding: '.5rem .9rem',
+                    borderRadius: 999,
+                    fontSize: '.9rem',
+                  }}
+                />
+              </div>
               <div className="social-header-grid">
                 {/* Columna izquierda */}
                 <div style={{ display: 'grid', gap: '.85rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '.5rem', flexWrap: 'wrap' }}>
                     <button
                       onClick={() => navigate('/explore')}
                       style={{
@@ -1422,6 +1559,30 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                     >
                       {t('back_to_home')}
                     </button>
+                    {isOwner && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => navigate(`/social/fecha/${dateId}/edit`)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 999,
+                          border: '1px solid rgba(30,136,229,0.4)',
+                          background: 'linear-gradient(135deg, rgba(30,136,229,0.2), rgba(0,188,212,0.2))',
+                          color: '#1E88E5',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          boxShadow: '0 4px 12px rgba(30,136,229,0.2)',
+                          fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                        }}
+                      >
+                        ✏️ {t('edit')}
+                      </motion.button>
+                    )}
                   </div>
 
                   <h1 className="event-title" style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
@@ -1434,37 +1595,51 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                     </p>
                   )}
 
-                  <div style={{ display: 'flex', gap: '.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span className="chip chip-date">📅 {formatDate(date.fecha)}</span>
-                    {date.hora_inicio && (
-                      <span className="chip chip-time">
-                        🕐 {formatTime(date.hora_inicio)}{date.hora_fin ? ` — ${formatTime(date.hora_fin)}` : ''}
-                      </span>
-                    )}
-                    {date.lugar && (
-                      <a
-                        className="chip chip-location chip-link"
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                          `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        📍 {date.lugar}
-                      </a>
-                    )}
-                    {/* Chip de Zona - después de ubicación */}
-                    {Array.isArray(date.zonas) && date.zonas.length > 0 && zonas && (
-                      <ZonaGroupedChips
-                        mode="display"
-                        selectedIds={date.zonas as number[]}
-                        allTags={zonas as any}
-                        autoExpandSelectedParents={false}
-                      />
-                    )}
+                  <div className="date-info-cards">
+                    <div className="date-info-card date-info-card--date">
+                      <div className="date-info-card__row">
+                        <span className="date-info-card__icon" aria-hidden>📅</span>
+                        <span className="date-info-card__label">{t('date', 'Fecha')}</span>
+                      </div>
+                      <div className="date-info-card__value">
+                        {formatDate(date.fecha || (date as any).fecha_inicio || '') || '—'}
+                      </div>
+                    </div>
+                    <div className="date-info-card date-info-card--time">
+                      <div className="date-info-card__row">
+                        <span className="date-info-card__icon" aria-hidden>🕐</span>
+                        <span className="date-info-card__label">{t('time', 'Horario')}</span>
+                      </div>
+                      <div className="date-info-card__value">
+                        {date.hora_inicio
+                          ? `${formatTime(date.hora_inicio)}${date.hora_fin ? ` — ${formatTime(date.hora_fin)}` : ''}`
+                          : '—'}
+                      </div>
+                    </div>
+                    <div className="date-info-card date-info-card--location">
+                      <div className="date-info-card__row date-info-card__row--with-copy">
+                        <span className="date-info-card__icon" aria-hidden>📍</span>
+                        <span className="date-info-card__label">{t('location', 'Ubicación')}</span>
+                        {fullAddress && (
+                          <button
+                            type="button"
+                            className="date-info-card__copy"
+                            onClick={handleCopyAddress}
+                            aria-label={t('copy_address')}
+                          >
+                            <span aria-hidden>📋</span>
+                            <span>{addressCopied ? t('copied') : t('copy')}</span>
+                          </button>
+                        )}
+                      </div>
+                      <div className="date-info-card__value">
+                        {fullAddress || (Array.isArray(date.zonas) && date.zonas.length > 0 && zonas
+                          ? (date.zonas as number[]).map((id: number) => getZonaName(id)).join(' / ')
+                          : '—')}
+                      </div>
+                    </div>
                   </div>
-
-                  {/* Botones de acción: Maps, WhatsApp y Compartir (layout vertical tipo "call-to-action") */}
+                  {/* Botones de acción: Maps y WhatsApp (Compartir solo en esquina superior derecha) */}
                   {(hasLocation || date.telefono_contacto) && (
                     <div
                       style={{
@@ -1547,20 +1722,6 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                         </motion.a>
                         </RequireLogin>
                       )}
-
-                      {/* Botón Compartir */}
-                      <ShareButton
-                        url={typeof window !== 'undefined' ? window.location.href : dateUrl}
-                        title={dateName}
-                        text={t('check_this_event', { name: dateName })}
-                        style={{
-                          width: '100%',
-                          justifyContent: 'center',
-                          padding: '.8rem 1.2rem',
-                          borderRadius: 999,
-                          fontSize: '.95rem',
-                        }}
-                      />
                     </div>
                   )}
 
@@ -1575,165 +1736,147 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                     </div>
                   )}
                 </div>
-
-                {/* Columna derecha */}
-                <div style={{ display: 'grid', gap: '.85rem', alignContent: 'start' }}>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '.5rem', flexWrap: 'wrap' }}>
-                    {isOwner && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate(`/social/fecha/${dateId}/edit`)}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: 999,
-                          border: '1px solid rgba(30,136,229,0.4)',
-                          background: 'linear-gradient(135deg, rgba(30,136,229,0.2), rgba(0,188,212,0.2))',
-                          color: '#1E88E5',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          fontSize: '0.9rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          boxShadow: '0 4px 12px rgba(30,136,229,0.2)',
-                          fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                        }}
-                      >
-                        ✏️ {t('edit')}
-                      </motion.button>
-                    )}
-                  </div>
-
-                  <div className="event-section-dance">
-                    {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
-                      <motion.article 
-                        className="event-card event-card--schedule"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.1 }}
-                      >
-                        <header className="event-card__header">
-                          <div className="event-card__title">
-                            <span className="event-card__icon">🗓️</span>
-                            <div>
-                              <span>{t('schedule')}</span>
-                              <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
-                                {t('schedule_description')}
-                              </p>
-                            </div>
-                          </div>
-                        </header>
-                        <div className="event-card__body">
-                          {date.cronograma.slice(0, 4).map((it: any, i: number) => (
-                            <motion.div 
-                              key={i} 
-                              className="event-row"
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ duration: 0.3, delay: 0.2 + i * 0.05 }}
-                            >
-                              <div className="event-row__left">
-                                <div className="event-row__info">
-                                  <p className="event-row__title">{it.titulo || it.tipo}</p>
-                                  {it.instructor && (
-                                    <p className="event-row__subtitle">{t('by')} {it.instructor}</p>
-                                  )}
-                                  {(it.realizadoPor || it.realizado_por) && (
-                                    <p className="event-row__subtitle">
-                                      {t('conducted_by')} {it.realizadoPor || it.realizado_por}
-                                    </p>
-                                  )}
-                                  {it.nivel && (
-                                    <p className="event-row__subtitle">
-                                      {t('level')} {it.nivel}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="event-row__right">
-                                <span className="event-row__time" aria-label={t('schedule_time')}>
-                                  ⏱️ {it.inicio}{it.fin ? ` – ${it.fin}` : ''}
-                                </span>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </motion.article>
-                    )}
-
-                    {Array.isArray(date.costos) && date.costos.length > 0 && (
-                      <motion.article 
-                        className="event-card event-card--cost"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.2 }}
-                      >
-                        <header className="event-card__header">
-                          <div className="event-card__title">
-                            <span className="event-card__icon">💰</span>
-                            <div>
-                              <span>{t('costs')}</span>
-                              <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
-                                {t('costs_description')}
-                              </p>
-                            </div>
-                          </div>
-                        </header>
-                        <div className="event-card__body event-card__body--cost">
-                          {date.costos.slice(0, 4).map((c: any, i: number) => {
-                            const isFree = c.precio === 0 || c.precio === null || c.precio === undefined;
-                            const isHighlight = c.tipo === 'taquilla' || c.tipo === 'puerta' || c.nombre?.toLowerCase().includes('puerta');
-
-                            const numericPrice = typeof c.precio === 'number' ? c.precio : Number(c.precio);
-                            const formattedPrice = !isFree && Number.isFinite(numericPrice)
-                              ? new Intl.NumberFormat('es-MX', {
-                                  style: 'currency',
-                                  currency: 'MXN',
-                                  maximumFractionDigits: 0,
-                                }).format(numericPrice)
-                              : c.precio;
-
-                            return (
-                              <motion.div 
-                                key={i} 
-                                className={`cost-row ${isFree ? 'cost-row--free' : ''}`}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
-                              >
-                                <span className="cost-row__label">{c.nombre || c.tipo}</span>
-                                {isFree ? (
-                                  <span className="cost-row__pill cost-row__pill--free">✨ {t('free')}</span>
-                                ) : (
-                                  <span className={`cost-row__pill ${isHighlight ? 'cost-row__pill--highlight' : ''}`}>
-                                    <span className="cost-row__pill-tag">
-                                      {c.tipo === 'preventa' || c.tipo === 'online' ? t('price_online') : c.tipo === 'taquilla' || c.tipo === 'puerta' ? t('price_at_door') : c.tipo || t('price_general')}
-                                    </span>
-                                    <span className="cost-row__pill-price">
-                                      {typeof formattedPrice === 'string'
-                                        ? formattedPrice
-                                        : new Intl.NumberFormat(getLocaleFromI18n(), {
-                                            style: 'currency',
-                                            currency: 'MXN',
-                                            maximumFractionDigits: 0,
-                                          }).format(Number(formattedPrice ?? 0))}
-                                    </span>
-                                  </span>
-                                )}
-                              </motion.div>
-                            );
-                          })}
-                        </div>
-                        <p style={{ margin: '12px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', textAlign: 'right', fontStyle: 'italic' }}>
-                          {t('price_disclaimer')}
-                        </p>
-                      </motion.article>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
+
+            {/* Cronograma y costos en contenedor separado */}
+            {(Array.isArray(date.cronograma) && date.cronograma.length > 0) || (Array.isArray(date.costos) && date.costos.length > 0) ? (
+              <div
+                className="event-details-section"
+                style={{
+                  marginTop: '1.25rem',
+                  display: 'grid',
+                  gap: '1rem',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  alignContent: 'start',
+                }}
+              >
+                {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
+                  <motion.article
+                    className="event-card event-card--schedule"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                  >
+                    <header className="event-card__header">
+                      <div className="event-card__title">
+                        <span className="event-card__icon">🗓️</span>
+                        <div>
+                          <span>{t('schedule')}</span>
+                          <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+                            {t('schedule_description')}
+                          </p>
+                        </div>
+                      </div>
+                    </header>
+                    <div className="event-card__body">
+                      {date.cronograma.slice(0, 4).map((it: any, i: number) => (
+                        <motion.div
+                          key={i}
+                          className="event-row"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: 0.2 + i * 0.05 }}
+                        >
+                          <div className="event-row__left">
+                            <div className="event-row__info">
+                              <p className="event-row__title">{it.titulo || it.tipo}</p>
+                              {it.instructor && (
+                                <p className="event-row__subtitle">{t('by')} {it.instructor}</p>
+                              )}
+                              {(it.realizadoPor || it.realizado_por) && (
+                                <p className="event-row__subtitle">
+                                  {t('conducted_by')} {it.realizadoPor || it.realizado_por}
+                                </p>
+                              )}
+                              {it.nivel && (
+                                <p className="event-row__subtitle">
+                                  {t('level')} {it.nivel}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="event-row__right">
+                            <span className="event-row__time" aria-label={t('schedule_time')}>
+                              ⏱️ {it.inicio}{it.fin ? ` – ${it.fin}` : ''}
+                            </span>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.article>
+                )}
+
+                {Array.isArray(date.costos) && date.costos.length > 0 && (
+                  <motion.article
+                    className="event-card event-card--cost"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                  >
+                    <header className="event-card__header">
+                      <div className="event-card__title">
+                        <span className="event-card__icon">💰</span>
+                        <div>
+                          <span>{t('costs')}</span>
+                          <p style={{ margin: '6px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+                            {t('costs_description')}
+                          </p>
+                        </div>
+                      </div>
+                    </header>
+                    <div className="event-card__body event-card__body--cost">
+                      {date.costos.slice(0, 4).map((c: any, i: number) => {
+                        const isFree = c.precio === 0 || c.precio === null || c.precio === undefined;
+                        const isHighlight = c.tipo === 'taquilla' || c.tipo === 'puerta' || c.nombre?.toLowerCase().includes('puerta');
+
+                        const numericPrice = typeof c.precio === 'number' ? c.precio : Number(c.precio);
+                        const formattedPrice = !isFree && Number.isFinite(numericPrice)
+                          ? new Intl.NumberFormat('es-MX', {
+                              style: 'currency',
+                              currency: 'MXN',
+                              maximumFractionDigits: 0,
+                            }).format(numericPrice)
+                          : c.precio;
+
+                        return (
+                          <motion.div
+                            key={i}
+                            className={`cost-row ${isFree ? 'cost-row--free' : ''}`}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
+                          >
+                            <span className="cost-row__label">{c.nombre || c.tipo}</span>
+                            {isFree ? (
+                              <span className="cost-row__pill cost-row__pill--free">✨ {t('free')}</span>
+                            ) : (
+                              <span className={`cost-row__pill ${isHighlight ? 'cost-row__pill--highlight' : ''}`}>
+                                <span className="cost-row__pill-tag">
+                                  {c.tipo === 'preventa' || c.tipo === 'online' ? t('price_online') : c.tipo === 'taquilla' || c.tipo === 'puerta' ? t('price_at_door') : c.tipo || t('price_general')}
+                                </span>
+                                <span className="cost-row__pill-price">
+                                  {typeof formattedPrice === 'string'
+                                    ? formattedPrice
+                                    : new Intl.NumberFormat(getLocaleFromI18n(), {
+                                        style: 'currency',
+                                        currency: 'MXN',
+                                        maximumFractionDigits: 0,
+                                      }).format(Number(formattedPrice ?? 0))}
+                                </span>
+                              </span>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                    <p style={{ margin: '12px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)', textAlign: 'right', fontStyle: 'italic' }}>
+                      {t('price_disclaimer')}
+                    </p>
+                  </motion.article>
+                )}
+              </div>
+            ) : null}
           </motion.header>
 
           {/* RSVP Y CALENDARIO - Ahora primero con fondo CTA */}

@@ -8,6 +8,7 @@ import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { calculateNextDateWithTime } from "../../../utils/calculateRecurringDates";
 import { fmtDate } from "../../../utils/format";
 import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
+import { getMediaBySlot } from "../../../utils/mediaSlots";
 
 interface EventCardProps {
   item: any;
@@ -35,18 +36,23 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
     } catch {}
     return t;
   };
-  // Prioridad: avatar slot > avatar_url > portada_url > primer media
+  // Prioridad para el fondo de la card (flyer/cartel): flyer_url > slot p1 > avatar > portada/avatar_url > primer media
+  // Alineado con EventDatePublicScreen y OrganizerPublicScreen para que se use la imagen correcta.
   const flyer = (() => {
-    if (Array.isArray(item.media) && item.media.length > 0) {
-      const avatarSlot = item.media.find((m: any) => m?.slot === 'avatar');
-      if (avatarSlot?.url) return normalizeAndOptimizeUrl(avatarSlot.url);
-    }
+    if (item.flyer_url) return normalizeAndOptimizeUrl(item.flyer_url);
+    const mediaList = Array.isArray(item.media) ? (item.media as any[]) : [];
+    const p1 = getMediaBySlot(mediaList, 'p1') as any;
+    const p1Url = p1?.url ?? p1?.path;
+    if (p1Url) return normalizeAndOptimizeUrl(p1Url);
+    const avatarSlot = mediaList.find((m: any) => m?.slot === 'avatar');
+    const avatarUrl = avatarSlot?.url ?? (avatarSlot as any)?.path;
+    if (avatarUrl) return normalizeAndOptimizeUrl(avatarUrl);
     if (item.avatar_url) return normalizeAndOptimizeUrl(item.avatar_url);
     if (item.portada_url) return normalizeAndOptimizeUrl(item.portada_url);
-    if (item.flyer_url) return normalizeAndOptimizeUrl(item.flyer_url);
-    if (Array.isArray(item.media) && item.media.length > 0) {
-      const first = item.media[0];
-      return normalizeAndOptimizeUrl((first as any)?.url || (first as any)?.path || first);
+    if (mediaList.length > 0) {
+      const first = mediaList[0];
+      const url = (first as any)?.url ?? (first as any)?.path ?? (typeof first === 'string' ? first : '');
+      if (url) return normalizeAndOptimizeUrl(url);
     }
     return undefined;
   })();
