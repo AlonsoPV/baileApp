@@ -10,8 +10,10 @@ const PANEL_STYLE: React.CSSProperties = {
   position: "absolute",
   zIndex: 9999,
   minWidth: 280,
-  maxHeight: 320,
-  overflow: "auto",
+  maxHeight: "min(420px, calc(100vh - 120px))",
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
   background: "#101119",
   border: "1px solid #262a36",
   borderRadius: 12,
@@ -153,7 +155,7 @@ export function MultiSelectTreeDropdown({
       aria-label={label}
     >
       {search && (
-        <div style={{ padding: "0 0.75rem 0.5rem" }}>
+        <div style={{ padding: "0 0.75rem 0.5rem", flex: "0 0 auto" }}>
           <input
             type="search"
             placeholder="Buscar…"
@@ -171,7 +173,7 @@ export function MultiSelectTreeDropdown({
           />
         </div>
       )}
-      <div style={{ maxHeight: 240, overflowY: "auto" }}>
+      <div style={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto", overflowX: "hidden" }}>
         {filteredGroups.length === 0 ? (
           <div style={{ padding: "1rem 0.75rem", color: "rgba(255,255,255,0.6)" }}>
             Sin opciones
@@ -263,6 +265,7 @@ export function MultiSelectTreeDropdown({
       </div>
       <div
         style={{
+          flex: "0 0 auto",
           display: "flex",
           justifyContent: "flex-end",
           gap: 8,

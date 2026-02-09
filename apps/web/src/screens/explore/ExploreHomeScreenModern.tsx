@@ -720,9 +720,9 @@ const STYLES = `
     transform: translateY(-1px);
   }
   .filters-card__row.chips .chip.is-active {
-    background: linear-gradient(135deg, #FF6A1A, #E94E1B);
-    border-color: rgba(255,255,255,.18);
-    color: #111;
+    background: #297F96;
+    border-color: rgba(255,255,255,.2);
+    color: #fff;
     font-weight: 700;
   }
 
@@ -768,13 +768,13 @@ const STYLES = `
   }
   .tab:active { transform: translateY(0); }
   .tab:focus-visible {
-    box-shadow: 0 0 0 3px rgba(255,106,26,.35);
-    border-color: rgba(255,106,26,.65);
+    box-shadow: 0 0 0 3px rgba(41, 127, 150, .4);
+    border-color: rgba(41, 127, 150, .7);
   }
   .tab--active {
-    background: linear-gradient(135deg, #FF6A1A, #E94E1B);
-    border-color: rgba(255,255,255,.18);
-    color: #111;
+    background: #297F96;
+    border-color: rgba(255,255,255,.2);
+    color: #fff;
   }
 
   /* FilterBar embebido: no sticky (para que el dropdown se vea aquí) */
@@ -1136,17 +1136,22 @@ const STYLES = `
       border-radius: 18px !important;
       max-width: 100% !important;
     }
+    .filters-top-row__title {
+      display: none !important;
+    }
     .filters-top-row {
       gap: 8px !important;
       margin-bottom: 10px !important;
+      flex-wrap: nowrap !important;
+      min-width: 0 !important;
     }
     .filters-top-row__search {
-      flex: 1 1 100% !important;
+      flex: 1 1 auto !important;
       min-width: 0 !important;
     }
     .filters-top-row__actions {
-      flex: 1 1 100% !important;
-      justify-content: flex-start !important;
+      flex: 0 0 auto !important;
+      flex-wrap: nowrap !important;
     }
     .filters-card__row--selects {
       gap: 8px !important;
@@ -1164,8 +1169,23 @@ const STYLES = `
     }
     .filters-card__row.chips {
       gap: 6px !important;
-      flex-wrap: wrap !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      overscroll-behavior-x: contain !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: thin !important;
+      padding-bottom: 2px !important;
       justify-content: flex-start !important;
+    }
+    .filters-card__row.chips::-webkit-scrollbar {
+      height: 4px !important;
+    }
+    .filters-card__row.chips::-webkit-scrollbar-thumb {
+      background: hsl(235 20% 28% / .6) !important;
+      border-radius: 999px !important;
+    }
+    .filters-card__row.chips .chip {
+      flex: 0 0 auto !important;
     }
     .filters-card__row.chips .chip {
       padding: 7px 10px !important;
@@ -2866,32 +2886,32 @@ export default function ExploreHomeScreen() {
                       <span>{t('activate_favorites')}</span>
                     </button>
                   )}
-                  <button
-                    type="button"
-                    className="filters-clear"
-                    onClick={() => {
-                      handleFilterChange({
-                        ...filters,
-                        type: 'all',
-                        q: '',
-                        ritmos: [],
-                        zonas: [],
-                        datePreset: 'todos',
-                        dateFrom: undefined,
-                        dateTo: undefined
-                      });
-                      setUsingFavoriteFilters(false);
-                      setOpenFilterDropdown(null);
-                    }}
-                    aria-label={t('clear_all_filters')}
-                  >
-                    <span className="dot" aria-hidden="true" />
-                    {activeFiltersCount > 0
-                      ? (activeFiltersCount === 1
+                  {activeFiltersCount > 0 && (
+                    <button
+                      type="button"
+                      className="filters-clear"
+                      onClick={() => {
+                        handleFilterChange({
+                          ...filters,
+                          type: 'all',
+                          q: '',
+                          ritmos: [],
+                          zonas: [],
+                          datePreset: 'todos',
+                          dateFrom: undefined,
+                          dateTo: undefined
+                        });
+                        setUsingFavoriteFilters(false);
+                        setOpenFilterDropdown(null);
+                      }}
+                      aria-label={t('clear_all_filters')}
+                    >
+                      <span className="dot" aria-hidden="true" />
+                      {activeFiltersCount === 1
                         ? t('active_filters', { count: activeFiltersCount })
-                        : t('active_filters_plural', { count: activeFiltersCount }))
-                      : t('no_filters')}
-                  </button>
+                        : t('active_filters_plural', { count: activeFiltersCount })}
+                    </button>
+                  )}
                 </div>
               </div>
 
