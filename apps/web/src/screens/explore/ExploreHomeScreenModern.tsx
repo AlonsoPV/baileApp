@@ -548,6 +548,8 @@ const STYLES = `
     color: var(--text);
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     backdrop-filter: blur(10px);
+    min-width: 0;
+    box-sizing: border-box;
   }
   .filters-header {
     display: flex;
@@ -570,6 +572,7 @@ const STYLES = `
   .filters-top-row__search {
     flex: 1 1 320px;
     min-width: 240px;
+    max-width: 100%;
   }
   .filters-top-row__actions {
     flex: 0 0 auto;
@@ -1128,6 +1131,54 @@ const STYLES = `
       border-radius: 20px !important;
       margin: 5px 0 2em 0 !important;
     }
+    .filters-card {
+      padding: 12px 12px 10px !important;
+      border-radius: 18px !important;
+      max-width: 100% !important;
+    }
+    .filters-top-row {
+      gap: 8px !important;
+      margin-bottom: 10px !important;
+    }
+    .filters-top-row__search {
+      flex: 1 1 100% !important;
+      min-width: 0 !important;
+    }
+    .filters-top-row__actions {
+      flex: 1 1 100% !important;
+      justify-content: flex-start !important;
+    }
+    .filters-card__row--selects {
+      gap: 8px !important;
+      padding-bottom: 4px !important;
+      margin: 0 -2px !important;
+    }
+    .filters-card__row--selects .filter-pill {
+      min-width: 120px !important;
+      padding: 8px 10px !important;
+      font-size: 13px !important;
+    }
+    .filters-card__row--selects .filter-pill .pill-icon {
+      width: 22px !important;
+      height: 22px !important;
+    }
+    .filters-card__row.chips {
+      gap: 6px !important;
+      flex-wrap: wrap !important;
+      justify-content: flex-start !important;
+    }
+    .filters-card__row.chips .chip {
+      padding: 7px 10px !important;
+      font-size: 12px !important;
+    }
+    .filters-divider {
+      margin: 10px 2px !important;
+    }
+    .filters-card .filters-clear {
+      min-height: 40px !important;
+      touch-action: manipulation !important;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.08) !important;
+    }
     .filters-fav {
       padding: 10px 12px !important;
       flex-wrap: wrap !important;
@@ -1250,6 +1301,34 @@ const STYLES = `
       padding: 10px 12px 12px !important;
       border-radius: 18px !important;
       margin: 5px 0 2em 0 !important;
+    }
+    .filters-card {
+      padding: 10px 10px 8px !important;
+      border-radius: 16px !important;
+    }
+    .filters-top-row {
+      gap: 6px !important;
+      margin-bottom: 8px !important;
+    }
+    .filters-top-row__search {
+      flex: 1 1 100% !important;
+      min-width: 0 !important;
+    }
+    .filters-card__row--selects .filter-pill {
+      min-width: 100px !important;
+      padding: 7px 9px !important;
+      font-size: 12px !important;
+    }
+    .filters-card__row--selects .filter-pill .pill-text {
+      font-size: 12px !important;
+    }
+    .filters-card__row--selects .filter-pill .pill-icon {
+      width: 20px !important;
+      height: 20px !important;
+    }
+    .filters-card__row.chips .chip {
+      padding: 6px 9px !important;
+      font-size: 11px !important;
     }
     .filters-fav {
       padding: 8px 10px !important;
