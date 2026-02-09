@@ -1,70 +1,39 @@
 {
-  "cli": {
-    "version": ">= 16.0.0",
-    "appVersionSource": "local"
-  },
+  "cli": { "version": ">= 16.0.0", "appVersionSource": "local" },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
-      "ios": {
-        "simulator": true,
-        "env": {
-          "EXPO_NO_CAPABILITY_SYNC": "1"
-        }
-      }
+      "ios": { "simulator": true, "env": { "EXPO_NO_CAPABILITY_SYNC": "1" } }
     },
     "developmentClient": {
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
-      "ios": {
-        "simulator": true,
-        "env": {
-          "EXPO_NO_CAPABILITY_SYNC": "1"
-        }
-      }
+      "ios": { "simulator": true, "env": { "EXPO_NO_CAPABILITY_SYNC": "1" } }
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
-      "ios": {
-        "simulator": false,
-        "buildConfiguration": "Release",
-        "env": {
-          "EXPO_NO_CAPABILITY_SYNC": "1"
-        }
-      }
+      "ios": { "simulator": false, "buildConfiguration": "Release", "env": { "EXPO_NO_CAPABILITY_SYNC": "1" } }
     },
     "production": {
       "channel": "production",
-      "android": {
-        "image": "latest",
-        "node": "20.19.4",
-        "env": {
-          "YARN_IGNORE_ENGINES": "1"
-        }
-      },
+      "android": { "image": "latest", "node": "20.19.4", "env": { "YARN_IGNORE_ENGINES": "1" } },
       "ios": {
         "image": "latest",
         "node": "20.19.4",
         "buildConfiguration": "Release",
-        "env": {
-          "EXPO_NO_CAPABILITY_SYNC": "1"
-        }
+        "resourceClass": "m1-medium",
+        "env": { "EXPO_NO_CAPABILITY_SYNC": "1" }
       }
     }
   },
   "submit": {
     "production": {
-      "android": {
-        "serviceAccountKeyPath": "./google-service-account.json"
-      },
-      "ios": {
-        "appleId": "alpeva96@gmail.com"
-      }
+      "android": { "serviceAccountKeyPath": "./google-service-account.json" },
+      "ios": { "appleId": "alpeva96@gmail.com" }
     }
   }
 }
-

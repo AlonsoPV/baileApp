@@ -18,6 +18,10 @@ El build de iOS está tardando más de 45 minutos, que es el límite máximo de 
 
 ## ✅ Soluciones
 
+### Configuración aplicada: `resourceClass: "m1-medium"` (iOS)
+
+En `eas.json` el perfil **production** para iOS ya tiene `"resourceClass": "m1-medium"`. Eso usa máquinas M1 en EAS, que suelen reducir el tiempo de build ~40% frente a Intel. Si el build seguía en 45 min, vuelve a lanzar el build después de este cambio.
+
 ### Opción 1: Reintentar el Build (Recomendado)
 
 A veces es solo un problema temporal. Intenta de nuevo:
