@@ -710,15 +710,28 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 2.5rem 2rem;
-    border-radius: 24px;
+    padding: 2rem 1.5rem;
+    border-radius: 20px;
     background: var(--lb-bg2);
     border: 2px solid rgba(26, 26, 46, 0.08);
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
     transition: box-shadow 0.3s ease, transform 0.25s ease, border-color 0.25s ease;
     position: relative;
-    max-width: 20rem;
+    max-width: 100%;
     width: 100%;
+  }
+  @media (min-width: 640px) {
+    .landing-how-it-works__step {
+      padding: 2.25rem 1.75rem;
+      max-width: 18rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .landing-how-it-works__step {
+      padding: 2.5rem 2rem;
+      border-radius: 24px;
+      max-width: 20rem;
+    }
   }
   .landing-how-it-works__step:hover {
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
@@ -770,27 +783,40 @@
     opacity: 0.4;
   }
   .landing-how-it-works__step-icon-wrapper {
-    width: 72px;
-    height: 72px;
-    border-radius: 20px;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     flex-shrink: 0;
+  }
+  @media (min-width: 640px) {
+    .landing-how-it-works__step-icon-wrapper {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+    }
   }
   .landing-how-it-works__step-icon {
     flex-shrink: 0;
   }
   .landing-how-it-works__step-title {
-    font-size: 1.375rem;
+    font-size: clamp(1.125rem, 1.5vw, 1.375rem);
     font-weight: 700;
     color: var(--lb-text);
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.5rem;
     line-height: 1.3;
   }
+  @media (min-width: 640px) {
+    .landing-how-it-works__step-title {
+      margin-bottom: 0.75rem;
+    }
+  }
   .landing-how-it-works__step-description {
-    font-size: 1rem;
+    font-size: clamp(0.9375rem, 1vw, 1rem);
     line-height: 1.6;
     color: var(--lb-muted);
     margin: 0;
@@ -964,8 +990,14 @@
   .landing-factor-wow {
     background: var(--lb-bg);
     position: relative;
-    padding-top: 4.5rem;
-    padding-bottom: 4.5rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+  @media (min-width: 768px) {
+    .landing-factor-wow {
+      padding-top: 4.5rem;
+      padding-bottom: 4.5rem;
+    }
   }
   .landing-factor-wow__bar {
     position: absolute;
@@ -1005,21 +1037,32 @@
   }
   @media (min-width: 640px) {
     .landing-factor-wow__list {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .landing-factor-wow__list {
+      grid-template-columns: repeat(3, 1fr);
     }
   }
   .landing-factor-wow__pillar {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding: 1.75rem 1.5rem;
-    border-radius: 20px;
+    padding: 1.5rem 1.25rem;
+    border-radius: 18px;
     background: var(--lb-bg2);
     border: 1px solid rgba(26, 26, 46, 0.06);
     border-top: 3px solid var(--lb-accent);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     transition: box-shadow 0.25s ease, transform 0.2s ease;
+  }
+  @media (min-width: 640px) {
+    .landing-factor-wow__pillar {
+      padding: 1.75rem 1.5rem;
+      border-radius: 20px;
+    }
   }
   .landing-factor-wow__pillar:hover {
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.08);
@@ -1057,10 +1100,16 @@
   /* Decision (Para quien busca) */
   .landing-decision {
     background: linear-gradient(180deg, var(--lb-bg) 0%, var(--lb-bg2) 100%);
-    padding-top: 5rem;
-    padding-bottom: 5rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
     position: relative;
     overflow: hidden;
+  }
+  @media (min-width: 768px) {
+    .landing-decision {
+      padding-top: 5rem;
+      padding-bottom: 5rem;
+    }
   }
   .landing-decision__accent {
     position: absolute;
@@ -1073,7 +1122,12 @@
   .landing-decision__wrap {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 3rem;
+    gap: 2rem;
+  }
+  @media (min-width: 768px) {
+    .landing-decision__wrap {
+      gap: 2.5rem;
+    }
   }
   @media (min-width: 900px) {
     .landing-decision__wrap {
@@ -1101,30 +1155,46 @@
     border-radius: 6px;
   }
   .landing-decision__title {
-    font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
     font-weight: 900;
     line-height: 1.15;
     letter-spacing: -0.03em;
-    margin: 0 0 1rem;
+    margin: 0 0 0.75rem;
     color: var(--lb-text);
-    max-width: 12ch;
+    max-width: 100%;
+  }
+  @media (min-width: 640px) {
+    .landing-decision__title {
+      max-width: 14ch;
+    }
   }
   .landing-decision__subline {
-    font-size: 1.125rem;
+    font-size: clamp(1rem, 1.5vw, 1.125rem);
     line-height: 1.6;
     color: var(--lb-muted);
-    margin: 0 0 2rem;
-    max-width: 36ch;
+    margin: 0 0 1.5rem;
+    max-width: 100%;
+  }
+  @media (min-width: 640px) {
+    .landing-decision__subline {
+      margin-bottom: 2rem;
+      max-width: 36ch;
+    }
   }
   .landing-decision__closing-wrapper {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1.25rem;
     background: var(--lb-bg);
     border-radius: 16px;
     border: 2px solid rgba(39, 126, 146, 0.15);
     box-shadow: 0 4px 16px rgba(39, 126, 146, 0.08);
+  }
+  @media (min-width: 640px) {
+    .landing-decision__closing-wrapper {
+      padding: 1.25rem 1.5rem;
+    }
   }
   .landing-decision__closing {
     font-size: 1.0625rem;
@@ -1143,9 +1213,15 @@
     padding: 0;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1.25rem;
   }
   @media (min-width: 640px) {
+    .landing-decision__list {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
     .landing-decision__list {
       grid-template-columns: repeat(3, 1fr);
       gap: 1.75rem;
@@ -1154,13 +1230,25 @@
   .landing-decision__card {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    padding: 2rem 1.75rem;
-    border-radius: 24px;
+    gap: 1rem;
+    padding: 1.5rem 1.25rem;
+    border-radius: 20px;
     background: var(--lb-bg);
     border: 1px solid rgba(26, 26, 46, 0.08);
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
     transition: box-shadow 0.3s ease, transform 0.25s ease, border-color 0.25s ease;
+  }
+  @media (min-width: 640px) {
+    .landing-decision__card {
+      gap: 1.25rem;
+      padding: 1.75rem 1.5rem;
+      border-radius: 24px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .landing-decision__card {
+      padding: 2rem 1.75rem;
+    }
   }
   .landing-decision__card:hover {
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
@@ -1177,12 +1265,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
     background: linear-gradient(135deg, rgba(39, 126, 146, 0.16), rgba(39, 126, 146, 0.08));
     color: var(--lb-accent);
     flex-shrink: 0;
+  }
+  @media (min-width: 640px) {
+    .landing-decision__card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+    }
   }
   .landing-decision__card-number {
     font-size: 0.75rem;
@@ -1194,14 +1289,14 @@
   .landing-decision__card-body { flex: 1; }
   .landing-decision__card-label {
     display: block;
-    font-size: 1.125rem;
+    font-size: clamp(1rem, 1.2vw, 1.125rem);
     font-weight: 700;
     color: var(--lb-text);
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.4rem;
     line-height: 1.3;
   }
   .landing-decision__card-text {
-    font-size: 0.9375rem;
+    font-size: clamp(0.875rem, 1vw, 0.9375rem);
     line-height: 1.6;
     color: var(--lb-muted);
     margin: 0;
@@ -1213,8 +1308,14 @@
   /* Retention */
   .landing-retention {
     background: var(--lb-bg);
-    padding-top: 4.5rem;
-    padding-bottom: 4.5rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+  @media (min-width: 768px) {
+    .landing-retention {
+      padding-top: 4.5rem;
+      padding-bottom: 4.5rem;
+    }
   }
   .landing-retention__overline {
     font-size: 0.7rem;
@@ -1231,14 +1332,25 @@
     letter-spacing: -0.02em;
     margin: 0 0 0.5rem;
     color: var(--lb-text);
-    max-width: 14ch;
+    max-width: 100%;
+  }
+  @media (min-width: 640px) {
+    .landing-retention__title {
+      max-width: 14ch;
+    }
   }
   .landing-retention__subline {
-    font-size: 1.0625rem;
+    font-size: clamp(1rem, 1.2vw, 1.0625rem);
     line-height: 1.55;
     color: var(--lb-muted);
-    margin: 0 0 2rem;
-    max-width: 42ch;
+    margin: 0 0 1.5rem;
+    max-width: 100%;
+  }
+  @media (min-width: 640px) {
+    .landing-retention__subline {
+      margin-bottom: 2rem;
+      max-width: 42ch;
+    }
   }
   .landing-retention__grid {
     display: grid;
@@ -1247,21 +1359,32 @@
   }
   @media (min-width: 640px) {
     .landing-retention__grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .landing-retention__grid {
+      grid-template-columns: repeat(3, 1fr);
     }
   }
   .landing-retention__card {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding: 1.75rem 1.5rem;
-    border-radius: 20px;
+    padding: 1.5rem 1.25rem;
+    border-radius: 18px;
     background: var(--lb-bg2);
     border: 1px solid rgba(26, 26, 46, 0.06);
     border-left: 4px solid var(--lb-accent-3);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     transition: box-shadow 0.25s ease, transform 0.2s ease;
+  }
+  @media (min-width: 640px) {
+    .landing-retention__card {
+      padding: 1.75rem 1.5rem;
+      border-radius: 20px;
+    }
   }
   .landing-retention__card:hover {
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
@@ -1277,10 +1400,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
     flex-shrink: 0;
+  }
+  @media (min-width: 640px) {
+    .landing-retention__card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+    }
   }
   .landing-retention__card-body { flex: 1; }
   .landing-retention__card-label {
@@ -1299,8 +1429,14 @@
 
   /* Business case (academias y organizadores) */
   .landing-business-case {
-    padding-top: 4rem;
-    padding-bottom: 4rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+  @media (min-width: 768px) {
+    .landing-business-case {
+      padding-top: 4rem;
+      padding-bottom: 4rem;
+    }
   }
   .landing-business-case__overline {
     font-size: 0.7rem;
@@ -1317,15 +1453,26 @@
     letter-spacing: -0.02em;
     margin: 0 0 0.5rem;
     color: var(--lb-text);
-    max-width: 18ch;
+    max-width: 100%;
+  }
+  @media (min-width: 640px) {
+    .landing-business-case__title {
+      max-width: 18ch;
+    }
   }
   .landing-business-case__subline {
-    font-size: 1.0625rem;
+    font-size: clamp(1rem, 1.2vw, 1.0625rem);
     font-weight: 500;
     line-height: 1.55;
     color: var(--lb-muted);
-    margin: 0 0 2.25rem;
-    max-width: 44ch;
+    margin: 0 0 1.5rem;
+    max-width: 100%;
+  }
+  @media (min-width: 640px) {
+    .landing-business-case__subline {
+      margin-bottom: 2.25rem;
+      max-width: 44ch;
+    }
   }
   .landing-business-case__list {
     list-style: none;
@@ -1344,14 +1491,21 @@
   .landing-business-case__card {
     display: flex;
     align-items: flex-start;
-    gap: 1.25rem;
-    padding: 1.5rem 1.5rem 1.5rem 1.25rem;
-    border-radius: 20px;
+    gap: 1rem;
+    padding: 1.25rem 1.25rem 1.25rem 1rem;
+    border-radius: 18px;
     background: var(--lb-bg2);
     border: 1px solid rgba(26, 26, 46, 0.06);
     border-left: 4px solid var(--lb-accent);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     transition: box-shadow 0.25s ease, transform 0.2s ease;
+  }
+  @media (min-width: 640px) {
+    .landing-business-case__card {
+      gap: 1.25rem;
+      padding: 1.5rem 1.5rem 1.5rem 1.25rem;
+      border-radius: 20px;
+    }
   }
   .landing-business-case__card:hover {
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
@@ -1370,9 +1524,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+  @media (min-width: 640px) {
+    .landing-business-case__card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+    }
   }
   .landing-business-case__card-body {
     flex: 1;
