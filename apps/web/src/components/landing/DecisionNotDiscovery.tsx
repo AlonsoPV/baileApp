@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Database, GitCompare, CalendarCheck } from "lucide-react";
+import { Database, GitCompare, CalendarCheck, ArrowRight } from "lucide-react";
 import { landingContent } from "@/config/content";
 
 const POINT_ICONS = [Database, GitCompare, CalendarCheck];
@@ -18,6 +18,7 @@ export function DecisionNotDiscovery() {
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.35 }}
     >
+      <div className="landing-decision__accent" aria-hidden />
       <div className="landing-container landing-decision__wrap">
         <header className="landing-decision__header">
           <p className="landing-decision__overline">{overline}</p>
@@ -27,15 +28,24 @@ export function DecisionNotDiscovery() {
           {subline && (
             <p className="landing-decision__subline">{subline}</p>
           )}
+          <div className="landing-decision__closing-wrapper">
+            <p className="landing-decision__closing">{closing}</p>
+            <ArrowRight size={18} strokeWidth={2} className="landing-decision__closing-icon" aria-hidden />
+          </div>
         </header>
         <ul className="landing-decision__list">
           {points.map((point, i) => {
             const Icon = POINT_ICONS[i] ?? Database;
             return (
               <li key={i} className="landing-decision__card">
-                <span className="landing-decision__card-icon" aria-hidden>
-                  <Icon size={22} strokeWidth={2} />
-                </span>
+                <div className="landing-decision__card-header">
+                  <span className="landing-decision__card-icon" aria-hidden>
+                    <Icon size={24} strokeWidth={2} />
+                  </span>
+                  <span className="landing-decision__card-number" aria-hidden>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                </div>
                 <div className="landing-decision__card-body">
                   <strong className="landing-decision__card-label">
                     {point.label}
@@ -46,7 +56,6 @@ export function DecisionNotDiscovery() {
             );
           })}
         </ul>
-        <p className="landing-decision__closing">{closing}</p>
       </div>
     </motion.section>
   );

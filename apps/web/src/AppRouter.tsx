@@ -1,7 +1,8 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
 import { routes } from './routes/registry';
+import { isNativeApp } from './utils/isNativeApp';
 
 // Guards
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -108,6 +109,18 @@ import PaymentSuccess from './screens/payments/PaymentSuccess';
 import PaymentCanceled from './screens/payments/PaymentCanceled';
 import MyPurchasesScreen from './screens/payments/MyPurchasesScreen';
 
+function HomeEntry() {
+  const location = useLocation();
+  const native = isNativeApp(location.search);
+
+  if (native) {
+    // Preserve query params (e.g. ?source=app) in case downstream needs them.
+    return <Navigate to={{ pathname: '/explore', search: location.search }} replace />;
+  }
+
+  return <Landing />;
+}
+
 export default function AppRouter() {
   return (
     <Routes>
@@ -136,7 +149,7 @@ export default function AppRouter() {
       <Route path="//pago/cancelado" element={<Navigate to="/pago/cancelado" replace />} />
 
       {/* Landing pages (sin AppShell) - Home es la landing de conversión */}
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<HomeEntry />} />
       <Route path="/propuesta-academias" element={<AcademyProposalScreen />} />
       <Route path="/academias/propuesta" element={<AcademyProposalScreen />} />
 
