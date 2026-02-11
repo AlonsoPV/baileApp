@@ -5,7 +5,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 const PANEL_STYLE_BASE: React.CSSProperties = {
-  position: "absolute",
+  position: "fixed",
   zIndex: 9999,
   minWidth: 280,
   background: "#101119",
@@ -15,6 +15,7 @@ const PANEL_STYLE_BASE: React.CSSProperties = {
   boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
   color: "#f5f5ff",
   fontSize: 14,
+  overflow: "auto",
 };
 
 export type DateFilterDropdownProps = {
@@ -75,10 +76,37 @@ export function DateFilterDropdown({
   }, [open, onClose, anchorEl, triggerRef]);
 
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>(PANEL_STYLE_BASE);
+  const GAP = 6;
+  const PANEL_MIN_WIDTH = 280;
+  const PANEL_ESTIMATED_HEIGHT = 220;
+  const VIEWPORT_MARGIN = 8;
+
   useEffect(() => {
     if (!open || !anchorEl) return;
     const rect = anchorEl.getBoundingClientRect();
-    setPanelStyle({ ...PANEL_STYLE_BASE, top: rect.bottom + 6, left: rect.left });
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 768;
+
+    const maxLeft = vw - PANEL_MIN_WIDTH - VIEWPORT_MARGIN;
+    const left = Math.max(VIEWPORT_MARGIN, Math.min(rect.left, maxLeft));
+
+    const spaceBelow = vh - rect.bottom - GAP - VIEWPORT_MARGIN;
+    const spaceAbove = rect.top - GAP - VIEWPORT_MARGIN;
+    const showAbove = spaceBelow < PANEL_ESTIMATED_HEIGHT && spaceAbove > spaceBelow;
+
+    const top = showAbove
+      ? Math.max(VIEWPORT_MARGIN, rect.top - PANEL_ESTIMATED_HEIGHT - GAP)
+      : rect.bottom + GAP;
+    const maxHeight = showAbove
+      ? rect.top - GAP - VIEWPORT_MARGIN
+      : vh - (rect.bottom + GAP) - VIEWPORT_MARGIN;
+
+    setPanelStyle({
+      ...PANEL_STYLE_BASE,
+      top,
+      left,
+      maxHeight: Math.max(120, maxHeight),
+    });
   }, [open, anchorEl]);
 
   const handleApply = () => {

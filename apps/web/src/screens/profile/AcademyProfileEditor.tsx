@@ -1401,9 +1401,10 @@ export default function AcademyProfileEditor() {
 
   const removeFile = useCallback(async (slot: string) => {
     try {
-      const mediaItem = getMediaBySlot(media as unknown as MediaSlotItem[], slot);
-      if (mediaItem && 'id' in mediaItem) {
-        await remove.mutateAsync((mediaItem as any).id);
+      const mediaItem = getMediaBySlot(media as unknown as MediaSlotItem[], slot) as any;
+      const pathOrId = mediaItem?.id ?? mediaItem?.path;
+      if (pathOrId) {
+        await remove.mutateAsync(pathOrId);
       }
     } catch (error) {
       console.error('Error removing file:', error);
@@ -3537,10 +3538,10 @@ export default function AcademyProfileEditor() {
                 </div>
                 <div className="media-management-content">
                   <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                {/* Columna 1: Avatar / Foto Principal */}
+                {/* Columna 1: Avatar / Foto Principal — solo este slot muestra "Subiendo..." cuando se sube p1 */}
                 <PhotoManagementSection
                   media={media}
-                  uploading={{ p1: add.isPending }}
+                  uploading={{ p1: add.isPending && (add as any).variables?.slot === 'p1' }}
                   uploadFile={uploadFile}
                   removeFile={removeFile}
                       title="👤 Avatar / Foto Principal"
@@ -3552,7 +3553,7 @@ export default function AcademyProfileEditor() {
                 {/* Columna 2: Fotos Destacadas */}
                 <PhotoManagementSection
                   media={media}
-                  uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending]))}
+                  uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending && (add as any).variables?.slot === slot]))}
                   uploadFile={uploadFile}
                   removeFile={removeFile}
                       title="⭐ Fotos Destacadas"
@@ -3566,7 +3567,7 @@ export default function AcademyProfileEditor() {
               {/* Fotos Adicionales */}
               <PhotoManagementSection
                 media={media}
-                uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending]))}
+                uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending && (add as any).variables?.slot === slot]))}
                 uploadFile={uploadFile}
                 removeFile={removeFile}
                     title="📸 Fotos Adicionales"
@@ -3606,7 +3607,7 @@ export default function AcademyProfileEditor() {
                 <div className="media-management-content">
               <VideoManagementSection
                 media={media}
-                uploading={Object.fromEntries(VIDEO_SLOTS.map(slot => [slot, add.isPending]))}
+                uploading={Object.fromEntries(VIDEO_SLOTS.map(slot => [slot, add.isPending && (add as any).variables?.slot === slot]))}
                 uploadFile={uploadFile}
                 removeFile={removeFile}
                     title=""

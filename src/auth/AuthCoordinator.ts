@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabase";
 import { nativeGoogleSignOut, nativeSignInWithApple, nativeSignInWithGoogleWithRequestId } from "./nativeAuth";
+import Constants from "expo-constants";
 
 export type AuthStatus = "loading" | "loggedOut" | "loggedIn" | "error";
 
@@ -148,7 +149,27 @@ class AuthCoordinatorImpl {
       console.log("[AuthCoordinator] Google native sign-in start", { requestId: rid ? `${rid.slice(0, 8)}…` : "(none)" });
       const google = await nativeSignInWithGoogleWithRequestId(iosClientId, rid);
       const sb = supabase;
-      if (!sb) throw new Error("Supabase no está configurado en la app.");
+      if (!sb) {
+        // Diagnóstico detallado para ayudar a debuggear en producción
+        const extra = (Constants.expoConfig as any)?.extra ?? {};
+        const hasUrl = !!(extra.EXPO_PUBLIC_SUPABASE_URL || extra.supabaseUrl);
+        const hasKey = !!(extra.EXPO_PUBLIC_SUPABASE_ANON_KEY || extra.supabaseAnonKey);
+        const urlIsEmpty = extra.EXPO_PUBLIC_SUPABASE_URL === '' || extra.supabaseUrl === '';
+        const keyIsEmpty = extra.EXPO_PUBLIC_SUPABASE_ANON_KEY === '' || extra.supabaseAnonKey === '';
+        
+        console.error("[AuthCoordinator] Supabase client is null", {
+          hasUrl,
+          hasKey,
+          urlIsEmpty,
+          keyIsEmpty,
+          extraExists: !!Constants.expoConfig?.extra,
+        });
+        
+        if (urlIsEmpty || keyIsEmpty) {
+          throw new Error("Supabase no está configurado: las variables EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY deben estar configuradas en Xcode Cloud environment variables. Verifica que ci_post_clone.sh creó el archivo .env correctamente.");
+        }
+        throw new Error("Supabase no está configurado en la app.");
+      }
       // @ts-ignore
       if (typeof __DEV__ !== "undefined" && __DEV__) {
         // eslint-disable-next-line no-console

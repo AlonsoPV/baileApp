@@ -76,6 +76,9 @@ import { UserProfileLive as UserPublicScreen } from './screens/profile/UserPubli
 import NotFound from './screens/system/NotFound';
 import Unauthorized from './screens/system/Unauthorized';
 
+// Landing (home pública, sin AppShell)
+import Landing from './pages/Landing';
+
 // Additional Screens
 import InfoScreen from './screens/InfoScreen';
 import RoleSelectorScreen from './screens/profile/RoleSelectorScreen';
@@ -132,7 +135,8 @@ export default function AppRouter() {
       <Route path="//pago/exitoso" element={<Navigate to="/pago/exitoso" replace />} />
       <Route path="//pago/cancelado" element={<Navigate to="/pago/cancelado" replace />} />
 
-      {/* Landing pages (sin AppShell) */}
+      {/* Landing pages (sin AppShell) - Home es la landing de conversión */}
+      <Route path="/" element={<Landing />} />
       <Route path="/propuesta-academias" element={<AcademyProposalScreen />} />
       <Route path="/academias/propuesta" element={<AcademyProposalScreen />} />
 
@@ -221,8 +225,7 @@ export default function AppRouter() {
         <Route path="//stripe/onboarding/success" element={<Navigate to="/stripe/onboarding/success" replace />} />
         <Route path="//stripe/onboarding/refresh" element={<Navigate to="/stripe/onboarding/refresh" replace />} />
 
-        {/* Default and 404 */}
-        <Route path="/" element={<Navigate to="/explore" replace />} />
+        {/* Default and 404 (/) ya manejado por Landing fuera de AppShell) */}
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

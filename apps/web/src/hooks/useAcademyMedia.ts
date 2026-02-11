@@ -127,12 +127,12 @@ export function useAcademyMedia() {
       console.log('[useAcademyMedia] Invalidating queries...');
       // Actualizar cache inmediata del listado de media
       qc.setQueryData(["academy", "media", academyId], next);
-      // Invalidar queries de media y del perfil para forzar recarga
+      // Invalidar queries de media, perfil y vista pública para que fotos se reflejen en todas las pantallas
       qc.invalidateQueries({ queryKey: ["academy", "media", academyId] });
       qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+      qc.invalidateQueries({ queryKey: ["academy", "public", academyId] });
       qc.invalidateQueries({ queryKey: ["academy"] });
-      
-      // Forzar refetch inmediato para que las fotos aparezcan de inmediato
+
       qc.refetchQueries({ queryKey: ["academy", "media", academyId] });
     },
     onError: (error: any) => {
@@ -162,14 +162,12 @@ export function useAcademyMedia() {
     },
     onSuccess: (next) => {
       console.log('[useAcademyMedia] Invalidating queries after media removal');
-      // Reflejar cambios inmediatos
       qc.setQueryData(["academy", "media", academyId], next);
-      // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["academy", "media", academyId] });
       qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+      qc.invalidateQueries({ queryKey: ["academy", "public", academyId] });
       qc.invalidateQueries({ queryKey: ["academy"] });
-      
-      // Forzar refetch inmediato para que los cambios se reflejen de inmediato
+
       qc.refetchQueries({ queryKey: ["academy", "media", academyId] });
     },
     onError: (error: any) => {

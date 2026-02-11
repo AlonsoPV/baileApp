@@ -49,17 +49,23 @@ try {
 
   // ✅ Use ENV (from Constants.expoConfig.extra) as primary source
   // This is reliable in bare RN, process.env may be undefined in runtime
+  // ⚠️ IMPORTANT: Treat empty strings as missing (app.config.ts may return '' if vars not available at build-time)
+  const normalizeValue = (v: string | undefined | null): string | undefined => {
+    const s = String(v ?? '').trim();
+    return s.length > 0 ? s : undefined;
+  };
+
   supabaseUrl =
-    ENV.supabaseUrl ||
-    extra.supabaseUrl ||
-    extra.EXPO_PUBLIC_SUPABASE_URL ||
-    ENV_URL;
+    normalizeValue(ENV.supabaseUrl) ||
+    normalizeValue(extra.supabaseUrl) ||
+    normalizeValue(extra.EXPO_PUBLIC_SUPABASE_URL) ||
+    normalizeValue(ENV_URL);
 
   supabaseAnonKey =
-    ENV.supabaseAnonKey ||
-    extra.supabaseAnonKey ||
-    extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
-    ENV_KEY;
+    normalizeValue(ENV.supabaseAnonKey) ||
+    normalizeValue(extra.supabaseAnonKey) ||
+    normalizeValue(extra.EXPO_PUBLIC_SUPABASE_ANON_KEY) ||
+    normalizeValue(ENV_KEY);
 
   // ✅ En producción NO queremos crashear la app por config faltante
   // Retornamos null en lugar de un Proxy que puede fallar
@@ -115,14 +121,30 @@ if (!supabase) {
   const missingMsg = "[Supabase] ❌ Missing Supabase configuration. " +
     "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in Xcode Cloud environment variables or EAS.";
   
+  // Diagnóstico detallado para ayudar a debuggear en TestFlight
   console.warn(missingMsg);
-  console.warn("[Supabase] supabaseUrl:", supabaseUrl ? "✓" : "✗");
-  console.warn("[Supabase] supabaseAnonKey:", supabaseAnonKey ? "✓" : "✗");
+  console.warn("[Supabase] ===== Configuration Diagnostics =====");
+  console.warn("[Supabase] supabaseUrl:", supabaseUrl ? `✓ (len=${String(supabaseUrl).length})` : "✗ (missing or empty)");
+  console.warn("[Supabase] supabaseAnonKey:", supabaseAnonKey ? `✓ (len=${String(supabaseAnonKey).length})` : "✗ (missing or empty)");
   console.warn("[Supabase] Constants.expoConfig?.extra:", Constants.expoConfig?.extra ? "exists" : "missing");
+  if (Constants.expoConfig?.extra) {
+    const extraUrl = (Constants.expoConfig.extra as any)?.EXPO_PUBLIC_SUPABASE_URL ?? (Constants.expoConfig.extra as any)?.supabaseUrl;
+    const extraKey = (Constants.expoConfig.extra as any)?.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? (Constants.expoConfig.extra as any)?.supabaseAnonKey;
+    console.warn("[Supabase] extra.EXPO_PUBLIC_SUPABASE_URL:", extraUrl ? `present (len=${String(extraUrl).length})` : "missing");
+    console.warn("[Supabase] extra.EXPO_PUBLIC_SUPABASE_ANON_KEY:", extraKey ? `present (len=${String(extraKey).length})` : "missing");
+    // Si están presentes pero son strings vacíos, eso es el problema
+    if (extraUrl === '' || extraKey === '') {
+      console.warn("[Supabase] ⚠️  WARNING: Variables found but are empty strings. This means app.config.ts received empty values at build-time.");
+      console.warn("[Supabase] ⚠️  Ensure Xcode Cloud environment variables are set and ci_post_clone.sh creates .env BEFORE Metro runs.");
+    }
+  }
   console.warn("[Supabase] Constants.manifest?.extra:", (Constants as any)?.manifest?.extra ? "exists" : "missing");
   console.warn("[Supabase] Constants.manifest2?.extra:", (Constants as any)?.manifest2?.extra ? "exists" : "missing");
-  console.warn("[Supabase] ENV_URL:", ENV_URL ? "✓" : "✗");
-  console.warn("[Supabase] ENV_KEY:", ENV_KEY ? "✓" : "✗");
+  console.warn("[Supabase] ENV_URL (process.env):", ENV_URL ? `✓ (len=${String(ENV_URL).length})` : "✗ (not available in RN runtime)");
+  console.warn("[Supabase] ENV_KEY (process.env):", ENV_KEY ? `✓ (len=${String(ENV_KEY).length})` : "✗ (not available in RN runtime)");
+  console.warn("[Supabase] ENV.supabaseUrl:", ENV.supabaseUrl ? `✓ (len=${String(ENV.supabaseUrl).length})` : "✗");
+  console.warn("[Supabase] ENV.supabaseAnonKey:", ENV.supabaseAnonKey ? `✓ (len=${String(ENV.supabaseAnonKey).length})` : "✗");
+  console.warn("[Supabase] ======================================");
   
   // En desarrollo: mostrar error más visible pero NO crashear
   // @ts-ignore - __DEV__ is a React Native global
