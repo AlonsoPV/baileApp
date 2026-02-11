@@ -1,49 +1,66 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Download, Filter, Music } from "lucide-react";
+import { Download, Filter, Music, ArrowRight } from "lucide-react";
 import { landingContent } from "@/config/content";
 
-const icons = [Download, Filter, Music];
+const STEP_ICONS = [Download, Filter, Music];
+const STEP_ACCENTS = [
+  "landing-how-it-works__step--1",
+  "landing-how-it-works__step--2",
+  "landing-how-it-works__step--3",
+];
 
 export function HowItWorks() {
   const { title, steps } = landingContent.howItWorks;
 
   return (
     <motion.section
-      className="landing-section border-y border-[color:var(--lb-glass-border)]"
-      style={{ background: "var(--lb-bg)" }}
+      className="landing-section landing-how-it-works"
       aria-labelledby="how-heading"
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.35 }}
     >
-      <div className="landing-container max-w-4xl mx-auto">
-        <h2 id="how-heading" className="landing-h2 text-center mb-8 sm:mb-10">
-          {title}
-        </h2>
-        <div className="grid gap-6 sm:gap-8 sm:grid-cols-3">
-          {steps.map((s, i) => {
-            const Icon = icons[i];
+      <div className="landing-container">
+        <div className="landing-how-it-works__header">
+          <h2 id="how-heading" className="landing-how-it-works__title">
+            {title}
+          </h2>
+        </div>
+        <div className="landing-how-it-works__steps">
+          {steps.map((step, i) => {
+            const Icon = STEP_ICONS[i] ?? Download;
+            const stepClass = STEP_ACCENTS[i] ?? STEP_ACCENTS[0];
+            const isLast = i === steps.length - 1;
             return (
-              <div
-                key={s.step}
-                className="flex flex-col items-center text-center"
-              >
-                <div className="benefit-icon-wrap w-14 h-14 mb-3">
-                  <Icon className="w-7 h-7" aria-hidden />
-                </div>
-                <span
-                  className="text-xs font-bold uppercase tracking-wider"
-                  style={{ color: "var(--lb-accent)" }}
+              <React.Fragment key={step.step}>
+                <motion.div
+                  className={`landing-how-it-works__step ${stepClass}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
                 >
-                  Paso {s.step}
-                </span>
-                <h3 className="font-bold text-base mt-2">{s.title}</h3>
-                <p className="landing-muted text-sm mt-1 max-w-[220px] mx-auto leading-relaxed">
-                  {s.description}
-                </p>
-              </div>
+                  <div className="landing-how-it-works__step-number">
+                    {String(step.step).padStart(2, "0")}
+                  </div>
+                  <div className="landing-how-it-works__step-icon-wrapper">
+                    <Icon size={28} strokeWidth={2} className="landing-how-it-works__step-icon" />
+                  </div>
+                  <h3 className="landing-how-it-works__step-title">
+                    {step.title}
+                  </h3>
+                  <p className="landing-how-it-works__step-description">
+                    {step.description}
+                  </p>
+                </motion.div>
+                {!isLast && (
+                  <div className="landing-how-it-works__arrow" aria-hidden>
+                    <ArrowRight size={24} strokeWidth={2} />
+                  </div>
+                )}
+              </React.Fragment>
             );
           })}
         </div>

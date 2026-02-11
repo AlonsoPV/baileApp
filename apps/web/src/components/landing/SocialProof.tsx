@@ -7,7 +7,6 @@ export function SocialProof() {
   const {
     sectionTitle,
     testimonials,
-    metrics,
     alliesTitle,
     alliesPlaceholder,
   } = landingContent.socialProof;
@@ -39,18 +38,6 @@ export function SocialProof() {
                 <span className="landing-muted">{t.role}</span>
               </footer>
             </blockquote>
-          ))}
-        </div>
-
-        <div className="landing-social-proof__metrics">
-          {metrics.map((m, i) => (
-            <div key={i} className="landing-social-proof__metric">
-              <p className="landing-social-proof__metric-value">{m.value}</p>
-              <p className="landing-social-proof__metric-label">{m.label}</p>
-              {m.placeholder && (
-                <p className="sr-only">Métrica de ejemplo (placeholder)</p>
-              )}
-            </div>
           ))}
         </div>
 
