@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
-import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
+import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
@@ -66,6 +66,13 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
     return `${bannerUrl}${separator}_t=${key}`;
   }, [bannerUrl, bannerCacheKey]);
 
+  const [imageError, setImageError] = React.useState(false);
+  const imageUrlFinal = bannerUrlWithCacheBust || bannerUrl;
+  React.useEffect(() => setImageError(false), [imageUrlFinal]);
+  const showPlaceholder = !imageUrlFinal || imageError;
+  const placeholderReason = !bannerUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
+  logCardImage('organizador', item.id, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
+
   return (
     <>
       <style>{EXPLORE_CARD_STYLES}</style>
@@ -84,15 +91,28 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           <div
             className="explore-card-media"
             style={{
-              '--img': (bannerUrlWithCacheBust || bannerUrl) ? `url(${bannerUrlWithCacheBust || bannerUrl})` : undefined,
+              '--img': imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
             } as React.CSSProperties}
           >
-            {(bannerUrlWithCacheBust || bannerUrl) && (
+            {showPlaceholder && (
+              <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+                </svg>
+              </div>
+            )}
+            {imageUrlFinal && !imageError && (
               <img
-                src={bannerUrlWithCacheBust || bannerUrl}
+                src={imageUrlFinal}
                 alt={`Imagen de ${item?.nombre_publico || 'Organizador'}`}
                 loading="lazy"
                 decoding="async"
+                onLoad={() => { logCardImage('organizador', item.id, imageUrlFinal, true, 'load'); setImageError(false); }}
+                onError={(e) => {
+                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
+                  console.warn('[CardImageError] type=organizador id=', item.id, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
+                  setImageError(true);
+                }}
               />
             )}
 

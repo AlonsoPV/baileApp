@@ -113,26 +113,80 @@ export function optimizeSupabaseImageUrl(
 }
 
 /**
+ * Convierte una URL relativa (ej. "bucket/path") a absoluta usando la base de Supabase.
+ * Si no hay base o la URL es inválida, retorna null.
+ */
+export function ensureAbsoluteImageUrl(url?: string | null): string | null {
+  if (!url) return null;
+  const urlString = String(url).trim();
+  if (!urlString) return null;
+  if (/^https:\/\//i.test(urlString)) return urlString;
+  if (/^http:\/\//i.test(urlString)) {
+    if (typeof window !== "undefined" && window.location?.protocol === "https:") {
+      console.warn("[ensureAbsoluteImageUrl] HTTP bloqueado en página HTTPS:", urlString.slice(0, 80));
+      return null;
+    }
+    return urlString;
+  }
+  if (urlString.startsWith("/")) {
+    const base = getSupabaseUrl();
+    if (base) return `${base.replace(/\/$/, "")}${urlString}`;
+    if (typeof window !== "undefined") return `${window.location.origin}${urlString}`;
+    return null;
+  }
+  const base = getSupabaseUrl();
+  if (!base) {
+    console.warn("[ensureAbsoluteImageUrl] URL relativa sin base:", urlString.slice(0, 60));
+    return null;
+  }
+  const full = `${base.replace(/\/$/, "")}${SUPABASE_PUBLIC_PATH}${urlString}`;
+  return full;
+}
+
+/**
+ * Log de diagnóstico para imágenes de cards (solo en dev).
+ * Usar desde cada card: logCardImage('evento', id, imageUrl, !!imageUrl, reason).
+ */
+export function logCardImage(
+  type: string,
+  id: string | number | undefined,
+  imageUrl: string | undefined | null,
+  valid: boolean,
+  reason?: string
+): void {
+  if (import.meta.env.DEV && typeof console !== "undefined" && console.log) {
+    const uri = imageUrl ? String(imageUrl).slice(0, 80) : "";
+    console.log(
+      `[ExploreCard] type=${type} id=${id ?? "?"} imageUrl=${uri} valid=${valid}${reason ? ` reason=${reason}` : ""}`
+    );
+  }
+}
+
+/**
  * Normaliza una URL (compatibilidad con funciones normalizeUrl existentes)
- * y opcionalmente la optimiza si es de Supabase Storage
- * 
+ * y opcionalmente la optimiza si es de Supabase Storage.
+ * URLs relativas se convierten a absolutas con la base de Supabase; si no hay base, retorna undefined.
+ *
  * @param url - URL a normalizar
  * @param optimize - Si true, optimiza URLs de Supabase Storage (default: true)
- * @returns URL normalizada y/o optimizada
+ * @returns URL normalizada y/o optimizada, o undefined si es relativa sin base o http bloqueado
  */
 export function normalizeAndOptimizeUrl(
   url?: string | null,
   optimize: boolean = true
 ): string | undefined {
   if (!url) return undefined;
-  
+
   const urlString = String(url).trim();
-  
+  if (!urlString) return undefined;
+
   // Si ya es una URL HTTP/HTTPS o ruta absoluta, normalizarla
-  if (/^https?:\/\//i.test(urlString) || urlString.startsWith('/')) {
-    return optimize && optimizeSupabaseImageUrl(urlString) || urlString;
+  if (/^https?:\/\//i.test(urlString) || urlString.startsWith("/")) {
+    const absolute = ensureAbsoluteImageUrl(urlString);
+    if (!absolute) return undefined;
+    return optimize ? optimizeSupabaseImageUrl(absolute) || absolute : absolute;
   }
-  
+
   // Placeholder patterns
   if (/^\d+x\d+(\/.*)?$/i.test(urlString)) {
     return `https://via.placeholder.com/${urlString}`;
@@ -140,15 +194,14 @@ export function normalizeAndOptimizeUrl(
   if (/^[0-9A-Fa-f]{6}(\/|\?).*/.test(urlString)) {
     return `https://via.placeholder.com/800x400/${urlString}`;
   }
-  
-  // Si es una ruta relativa y queremos optimizar, intentar optimizarla
+
+  // Ruta relativa (ej. bucket/path): convertir a absoluta primero
+  const absolute = ensureAbsoluteImageUrl(urlString);
+  if (!absolute) return undefined;
   if (optimize) {
-    const optimized = optimizeSupabaseImageUrl(urlString);
-    if (optimized && optimized !== urlString) {
-      return optimized;
-    }
+    const optimized = optimizeSupabaseImageUrl(absolute);
+    return optimized || absolute;
   }
-  
-  return urlString;
+  return absolute;
 }
 

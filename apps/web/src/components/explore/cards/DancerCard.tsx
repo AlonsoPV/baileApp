@@ -4,7 +4,7 @@ import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
-import { normalizeAndOptimizeUrl, optimizeSupabaseImageUrl } from "../../../utils/imageOptimization";
+import { normalizeAndOptimizeUrl, optimizeSupabaseImageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 // no se usa urls.userLive, pedimos navegar a /app/profile con query
 
@@ -83,6 +83,13 @@ export default function DancerCard({ item, to }: Props) {
     return `${coverUrl}${separator}_t=${key}`;
   }, [coverUrl, coverCacheKey]);
 
+  const [imageError, setImageError] = React.useState(false);
+  const imageUrlFinal = coverUrlWithCacheBust || coverUrl;
+  React.useEffect(() => setImageError(false), [imageUrlFinal]);
+  const showPlaceholder = !imageUrlFinal || imageError;
+  const placeholderReason = !coverUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
+  logCardImage('dancer', item.id, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
+
   const name = item.display_name || "Dancer";
   const bio = item.bio || "";
 
@@ -139,15 +146,28 @@ export default function DancerCard({ item, to }: Props) {
           <div
             className="explore-card-media"
             style={{
-              '--img': (coverUrlWithCacheBust || coverUrl) ? `url(${coverUrlWithCacheBust || coverUrl})` : undefined,
+              '--img': imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
             } as React.CSSProperties}
           >
-            {(coverUrlWithCacheBust || coverUrl) && (
+            {showPlaceholder && (
+              <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+                </svg>
+              </div>
+            )}
+            {imageUrlFinal && !imageError && (
               <img
-                src={coverUrlWithCacheBust || coverUrl}
+                src={imageUrlFinal}
                 alt={`Imagen de ${name}`}
                 loading="lazy"
                 decoding="async"
+                onLoad={() => { logCardImage('dancer', item.id, imageUrlFinal, true, 'load'); setImageError(false); }}
+                onError={(e) => {
+                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
+                  console.warn('[CardImageError] type=dancer id=', item.id, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
+                  setImageError(true);
+                }}
               />
             )}
 

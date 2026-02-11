@@ -126,8 +126,11 @@ final class GoogleSignInModule: NSObject {
     DispatchQueue.main.async {
       let effectiveClientId = self.resolvedClientId(passed: clientId)
       guard !effectiveClientId.isEmpty else {
-        if self.shouldLog() { print("[GoogleSignInModule] Missing clientID. requestId=\(requestId)") }
-        reject("GOOGLE_MISSING_CLIENT_ID", "Falta Google iOS Client ID (configuración).", nil)
+        let fromPlist = self.plistValue("GIDClientID")
+        if self.shouldLog() {
+          print("[GoogleSignInModule] GOOGLE_MISSING_CLIENT_ID: passed=\(clientId.isEmpty ? "empty" : "non-empty"), plist GIDClientID=\(fromPlist.isEmpty ? "MISSING" : "present(\(fromPlist.prefix(20))...)"). requestId=\(requestId)")
+        }
+        reject("GOOGLE_MISSING_CLIENT_ID", "Falta Google iOS Client ID. Configura GIDClientID en Info.plist o EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID en EAS/Xcode Cloud.", nil)
         return
       }
 
@@ -141,12 +144,13 @@ final class GoogleSignInModule: NSObject {
 
       if self.shouldLog() {
         print("[GoogleSignInModule] expectedScheme=\(expectedScheme)")
+        print("[GoogleSignInModule] GIDServerClientID from plist=\(serverClientId.isEmpty ? "MISSING" : "present")")
         print("[GoogleSignInModule] CFBundleURLTypes=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") ?? "nil")")
         print("[GoogleSignInModule] requestId=\(requestId) clientID=\(effectiveClientId.prefix(18))... serverClientID=\(serverClientId.prefix(18))... expectedScheme=\(expectedScheme) schemeOK=\(schemeOK)")
       }
 
       if !schemeOK {
-        reject("GOOGLE_MISSING_URL_SCHEME", "Falta URL scheme de Google en Info.plist (com.googleusercontent.apps...).", nil)
+        reject("GOOGLE_MISSING_URL_SCHEME", "Falta URL scheme de Google en Info.plist. Añade com.googleusercontent.apps.XXX a CFBundleURLSchemes.", nil)
         return
       }
 

@@ -7,7 +7,7 @@ import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { calculateNextDateWithTime } from "../../../utils/calculateRecurringDates";
 import { fmtDate } from "../../../utils/format";
-import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
+import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
 
 interface EventCardProps {
@@ -73,6 +73,16 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
     const key = encodeURIComponent(String(flyerCacheKey ?? ''));
     return `${flyer}${separator}_t=${key}`;
   }, [flyer, flyerCacheKey]);
+
+  const [imageError, setImageError] = React.useState(false);
+  const imageUrlFinal = flyerWithCacheBust || flyer;
+  React.useEffect(() => {
+    setImageError(false);
+  }, [imageUrlFinal]);
+  const showPlaceholder = !imageUrlFinal || imageError;
+  const placeholderReason = !flyer ? "URL vacía" : imageError ? "Image load failed" : "";
+  logCardImage("evento", eventId, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
+
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
   const horaFin = item.hora_fin || item.evento_hora_fin;
@@ -226,6 +236,22 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           object-position: center center;
           filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
           z-index: 1;
+        }
+        .media-placeholder {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(145deg, rgba(40, 44, 62, 0.95) 0%, rgba(25, 28, 40, 0.98) 100%);
+          border: 1px dashed rgba(255, 255, 255, 0.12);
+        }
+        .media-placeholder svg {
+          width: 48px;
+          height: 48px;
+          opacity: 0.4;
+          color: rgba(255, 255, 255, 0.6);
         }
         .badges {
           position: absolute;
@@ -387,15 +413,27 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
         >
           <div 
             className="media" 
-          style={{ 
-              // Para LCP: evitar request extra por background-image; el <img> es el que debe cargar.
-              '--img': !priority && (flyerWithCacheBust || flyer) ? `url(${flyerWithCacheBust || flyer})` : undefined,
-              '--overlay-opacity': flyer ? 0 : 1
+          style={{
+              '--img': !priority && imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
+              '--overlay-opacity': flyer && !imageError ? 0 : 1
             } as React.CSSProperties}
           >
-            {(flyerWithCacheBust || flyer) && (
+            {showPlaceholder && (
+              <div
+                className="media-placeholder"
+                data-reason={placeholderReason}
+                aria-hidden
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
+                </svg>
+              </div>
+            )}
+            {imageUrlFinal && !imageError && (
               <img
-                src={flyerWithCacheBust || flyer}
+                src={imageUrlFinal}
                 alt={`Poster del evento ${nombre}`}
                 loading={priority ? "eager" : "lazy"}
                 fetchPriority={priority ? "high" : "auto"}
@@ -405,11 +443,19 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
                   height: '100%',
                   objectFit: 'cover',
                   objectPosition: 'center center',
-                  // Optimizaciones de rendimiento
                   transform: 'translateZ(0)',
                   willChange: 'auto',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden'
+                }}
+                onLoad={() => {
+                  logCardImage("evento", eventId, imageUrlFinal, true, "load");
+                  setImageError(false);
+                }}
+                onError={(e) => {
+                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? "Image load failed";
+                  console.warn("[CardImageError] type=evento id=", eventId, "uri=", imageUrlFinal?.slice(0, 80), "error=", msg);
+                  setImageError(true);
                 }}
               />
             )}

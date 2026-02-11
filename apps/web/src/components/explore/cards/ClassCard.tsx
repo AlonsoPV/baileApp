@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
-import { normalizeAndOptimizeUrl } from '../../../utils/imageOptimization';
+import { normalizeAndOptimizeUrl, logCardImage } from '../../../utils/imageOptimization';
 import { getLocaleFromI18n } from '../../../utils/locale';
 import { useTranslation } from 'react-i18next';
 
@@ -91,6 +91,13 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
     const key = encodeURIComponent(String(bgCacheKey ?? ''));
     return `${bg}${separator}_t=${key}`;
   }, [bg, bgCacheKey]);
+
+  const [imageError, setImageError] = React.useState(false);
+  const imageUrlFinal = bgWithCacheBust || bg;
+  React.useEffect(() => setImageError(false), [imageUrlFinal]);
+  const showPlaceholder = !imageUrlFinal || imageError;
+  const placeholderReason = !bg ? 'URL vacía' : imageError ? 'Image load failed' : '';
+  logCardImage('clase', item.ownerId ?? item.titulo, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
 
   // Extraer solo el nombre del lugar (similar a EventCard que usa `lugar`)
   // Si ubicacion contiene información adicional (dirección, ciudad, etc.), extraer solo el nombre
@@ -293,11 +300,26 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           object-position: center center;
           filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
           z-index: 1;
-          /* Optimizaciones de rendimiento */
           transform: translateZ(0);
           willChange: auto;
           backfaceVisibility: hidden;
           WebkitBackfaceVisibility: hidden;
+        }
+        .class-card-media-placeholder {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(145deg, rgba(40, 44, 62, 0.95) 0%, rgba(25, 28, 40, 0.98) 100%);
+          border: 1px dashed rgba(255, 255, 255, 0.12);
+        }
+        .class-card-media-placeholder svg {
+          width: 48px;
+          height: 48px;
+          opacity: 0.4;
+          color: rgba(255, 255, 255, 0.6);
         }
 
         .class-card-badges {
@@ -459,13 +481,19 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           <div
             className="class-card-media"
             style={{
-              // Para LCP: evitar request extra por background-image; el <img> es el que debe cargar.
-              '--img': !priority && (bgWithCacheBust || bg) ? `url(${bgWithCacheBust || bg})` : undefined,
+              '--img': !priority && imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
             } as React.CSSProperties}
           >
-            {(bgWithCacheBust || bg) && (
+            {showPlaceholder && (
+              <div className="class-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+                </svg>
+              </div>
+            )}
+            {imageUrlFinal && !imageError && (
               <img
-                src={bgWithCacheBust || bg}
+                src={imageUrlFinal}
                 alt={item.titulo || 'Clase'}
                 loading={priority ? "eager" : "lazy"}
                 fetchPriority={priority ? "high" : "auto"}
@@ -473,11 +501,16 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
                 style={{
                   objectFit: 'cover',
                   objectPosition: 'center center',
-                  // Optimizaciones de rendimiento
                   transform: 'translateZ(0)',
                   willChange: 'auto',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden'
+                }}
+                onLoad={() => { logCardImage('clase', item.ownerId ?? item.titulo, imageUrlFinal, true, 'load'); setImageError(false); }}
+                onError={(e) => {
+                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
+                  console.warn('[CardImageError] type=clase id=', item.ownerId ?? item.titulo, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
+                  setImageError(true);
                 }}
               />
             )}

@@ -12,6 +12,7 @@ import * as ExpoLinking from "expo-linking";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { AuthCoordinator } from "../auth/AuthCoordinator";
+import { assertGoogleAuthConfig } from "../auth/assertGoogleAuthConfig";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
 // Puedes ajustar esto a staging si lo necesitas.
@@ -260,23 +261,13 @@ export default function WebAppScreen() {
           const clientId = getGoogleIosClientId();
           const webClientId = getGoogleWebClientId();
 
-          console.log("[WebAppScreen] NATIVE_AUTH_GOOGLE requestId=", requestId || "(none)");
           if (__DEV__) {
             // eslint-disable-next-line no-console
-            console.log("[WebAppScreen] Google client id (iOS) from Constants.extra:", {
-              requestId: requestId || "(none)",
-              clientId: mask(clientId),
-              len: clientId.length,
-            });
-            // eslint-disable-next-line no-console
-            console.log("[WebAppScreen] Google client id (Web) from Constants.extra:", {
-              requestId: requestId || "(none)",
-              webClientId: mask(webClientId),
-              len: webClientId.length,
-            });
+            console.log("[WebAppScreen] NATIVE_AUTH_GOOGLE requestId=", requestId || "(none)", "iosClientIdLen=", clientId.length, "webClientIdLen=", webClientId.length);
           }
-          // If Constants.extra is missing in prod, native module will fallback to GIDClientID in Info.plist (BUILT).
-          // We still pass the best-effort value (may be empty) but do not hard-fail here.
+          // Self-check: falla rápido con mensaje accionable si falta config (evita "contacta a soporte" genérico).
+          assertGoogleAuthConfig({ getIosClientId: getGoogleIosClientId, getWebClientId: getGoogleWebClientId });
+
           const tokens = await AuthCoordinator.signInWithGoogle(String(clientId || ""), requestId, String(webClientId || ""));
           injectWebSetSession(tokens);
         } catch (e: any) {
@@ -317,15 +308,19 @@ export default function WebAppScreen() {
 
           let message = rawMessage;
           
-          // Mejorar mensajes de error específicos
+          // Mensajes accionables (sin "contactar a soporte" genérico).
           if (derivedCode === "GOOGLE_MISSING_CLIENT_ID" || message.includes("Client ID")) {
-            message = "Google Sign-In no está configurado. Contacta al soporte.";
+            message =
+              "Google Sign-In no está configurado: falta el iOS Client ID. Configura EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID en .env y en EAS/Xcode Cloud, o GIDClientID en Info.plist.";
           } else if (derivedCode === "GOOGLE_MISSING_WEB_CLIENT_ID") {
-            message = "Google Sign-In no está configurado para Supabase: falta el Web Client ID (GIDServerClientID).";
+            message =
+              "Google Sign-In no está configurado para Supabase: falta el Web Client ID. Añade GIDServerClientID en Info.plist o EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.";
           } else if (derivedCode === "GOOGLE_IOS_CLIENT_ID_IS_WEB") {
-            message = "Google Sign-In está mal configurado: se está usando el Web Client ID como iOS Client ID.";
+            message =
+              "Google Sign-In mal configurado: no uses el Web Client ID como iOS Client ID. En Google Cloud usa el cliente tipo iOS para GIDClientID.";
           } else if (derivedCode === "GOOGLE_MISSING_URL_SCHEME") {
-            message = "Google Sign-In no puede regresar a la app: falta el URL scheme com.googleusercontent.apps.* en Info.plist.";
+            message =
+              "Google Sign-In no puede regresar a la app: añade el scheme com.googleusercontent.apps.XXX a CFBundleURLSchemes en Info.plist.";
           } else if (derivedCode === "GOOGLE_NO_PRESENTING_VC" || message.includes("ViewController") || message.includes("iPad")) {
             message = "No se pudo mostrar la pantalla de Google. Intenta cerrar y reabrir la app.";
           } else if (derivedCode === "GOOGLE_CANCELED" || message.includes("cancelado")) {

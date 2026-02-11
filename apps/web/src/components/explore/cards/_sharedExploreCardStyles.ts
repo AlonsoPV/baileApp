@@ -84,6 +84,24 @@ export const EXPLORE_CARD_STYLES = `
     z-index: 1;
   }
 
+  /* Placeholder cuando no hay imagen o falla la carga (evita card vacía) */
+  .explore-card-media-placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, rgba(40, 44, 62, 0.95) 0%, rgba(25, 28, 40, 0.98) 100%);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+  }
+  .explore-card-media-placeholder svg {
+    width: 48px;
+    height: 48px;
+    opacity: 0.4;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
   .explore-card-content {
     position: absolute;
     bottom: 0;

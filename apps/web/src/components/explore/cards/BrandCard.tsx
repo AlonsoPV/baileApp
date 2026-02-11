@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
-import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
+import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 
@@ -53,6 +53,13 @@ export default function BrandCard({ item }: Props) {
     return `${cover}${separator}_t=${key}`;
   }, [cover, coverCacheKey]);
 
+  const [imageError, setImageError] = React.useState(false);
+  const imageUrlFinal = coverWithCacheBust || cover;
+  React.useEffect(() => setImageError(false), [imageUrlFinal]);
+  const showPlaceholder = !imageUrlFinal || imageError;
+  const placeholderReason = !cover ? 'URL vacía' : imageError ? 'Image load failed' : '';
+  logCardImage('marca', id, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
+
   return (
     <>
       <style>{EXPLORE_CARD_STYLES}</style>
@@ -67,15 +74,28 @@ export default function BrandCard({ item }: Props) {
           <div
             className="explore-card-media"
             style={{
-              '--img': (coverWithCacheBust || cover) ? `url(${coverWithCacheBust || cover})` : undefined,
+              '--img': imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
             } as React.CSSProperties}
           >
-            {(coverWithCacheBust || cover) && (
+            {showPlaceholder && (
+              <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+                </svg>
+              </div>
+            )}
+            {imageUrlFinal && !imageError && (
               <img
-                src={coverWithCacheBust || cover}
+                src={imageUrlFinal}
                 alt={`Imagen de ${nombre}`}
                 loading="lazy"
                 decoding="async"
+                onLoad={() => { logCardImage('marca', id, imageUrlFinal, true, 'load'); setImageError(false); }}
+                onError={(e) => {
+                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
+                  console.warn('[CardImageError] type=marca id=', id, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
+                  setImageError(true);
+                }}
               />
             )}
 
