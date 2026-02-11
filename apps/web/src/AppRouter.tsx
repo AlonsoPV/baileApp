@@ -109,15 +109,23 @@ import PaymentSuccess from './screens/payments/PaymentSuccess';
 import PaymentCanceled from './screens/payments/PaymentCanceled';
 import MyPurchasesScreen from './screens/payments/MyPurchasesScreen';
 
+/**
+ * HomeEntry - Determina qué mostrar en la ruta raíz (/)
+ * 
+ * - Si es app nativa (iOS/Android): redirige a /explore
+ * - Si es web normal: muestra la Landing page
+ */
 function HomeEntry() {
   const location = useLocation();
   const native = isNativeApp(location.search);
 
   if (native) {
+    // App nativa (iOS/Android): redirigir a /explore como inicio
     // Preserve query params (e.g. ?source=app) in case downstream needs them.
     return <Navigate to={{ pathname: '/explore', search: location.search }} replace />;
   }
 
+  // Web normal: mostrar Landing page
   return <Landing />;
 }
 

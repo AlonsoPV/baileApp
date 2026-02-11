@@ -46,6 +46,8 @@
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   @media (min-width: 640px) {
     .landing-container { padding-left: 1.5rem; padding-right: 1.5rem; }
@@ -56,6 +58,9 @@
   .landing-section {
     padding-top: 3.5rem;
     padding-bottom: 3.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
   @media (min-width: 768px) {
     .landing-section { padding-top: 5rem; padding-bottom: 5rem; }
@@ -663,9 +668,15 @@
   /* How It Works (En tres pasos) */
   .landing-how-it-works {
     background: var(--lb-bg);
-    padding-top: 4.5rem;
-    padding-bottom: 4.5rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
     position: relative;
+  }
+  @media (min-width: 768px) {
+    .landing-how-it-works {
+      padding-top: 4.5rem;
+      padding-bottom: 4.5rem;
+    }
   }
   .landing-how-it-works__header {
     text-align: center;
@@ -687,10 +698,17 @@
   .landing-how-it-works__steps {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 2rem;
+    align-items: stretch;
+    gap: 1.5rem;
     max-width: 56rem;
     margin: 0 auto;
+    width: 100%;
+  }
+  @media (min-width: 640px) {
+    .landing-how-it-works__steps {
+      align-items: center;
+      gap: 2rem;
+    }
   }
   @media (min-width: 768px) {
     .landing-how-it-works__steps {
@@ -958,12 +976,19 @@
     gap: 0.75rem;
     align-items: center;
     text-align: center;
+    flex-wrap: wrap;
   }
   @media (min-width: 640px) {
     .landing-footer__bottom {
       flex-direction: row;
       justify-content: space-between;
       text-align: left;
+    }
+  }
+  @media (max-width: 639px) {
+    .landing-footer__copy,
+    .landing-footer__social {
+      font-size: 0.75rem;
     }
   }
   .landing-footer__copy {
@@ -1084,10 +1109,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
     flex-shrink: 0;
+  }
+  @media (min-width: 640px) {
+    .landing-factor-wow__pillar-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+    }
   }
   .landing-factor-wow__pillar-text {
     font-size: 1rem;
