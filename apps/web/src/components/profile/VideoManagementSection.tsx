@@ -4,6 +4,7 @@ import { getMediaBySlot } from '../../utils/mediaSlots';
 interface VideoManagementSectionProps {
   media: any;
   uploading: Record<string, boolean>;
+  removing?: Record<string, boolean>;
   uploadFile: (file: File, slot: string, type: 'photo' | 'video') => void;
   removeFile: (slot: string) => void;
   title: string;
@@ -18,6 +19,7 @@ const colors = {
 export const VideoManagementSection: React.FC<VideoManagementSectionProps> = ({
   media,
   uploading,
+  removing = {},
   uploadFile,
   removeFile,
   title,
@@ -209,25 +211,29 @@ export const VideoManagementSection: React.FC<VideoManagementSectionProps> = ({
               </div>
               
               <div className="video-buttons">
-                <label className="video-button video-button-upload">
+                <label className="video-button video-button-upload" style={{ opacity: uploading[slot] ? 0.8 : 1, cursor: uploading[slot] ? 'not-allowed' : 'pointer' }}>
                   {uploading[slot] ? '⏳ Subiendo...' : '📤 Subir Video'}
                   <input
                     type="file"
                     accept="video/*"
                     style={{ display: 'none' }}
+                    disabled={uploading[slot]}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) uploadFile(file, slot, 'video');
+                      if (file && !uploading[slot]) uploadFile(file, slot, 'video');
                     }}
                   />
                 </label>
                 
                 {getMediaBySlot(media, slot) && (
                   <button
+                    type="button"
+                    disabled={!!removing[slot]}
                     onClick={() => removeFile(slot)}
                     className="video-button video-button-delete"
+                    style={{ opacity: removing[slot] ? 0.8 : 1, cursor: removing[slot] ? 'not-allowed' : 'pointer' }}
                   >
-                    🗑️ Eliminar
+                    {removing[slot] ? '⏳ Eliminando...' : '🗑️ Eliminar'}
                   </button>
                 )}
               </div>

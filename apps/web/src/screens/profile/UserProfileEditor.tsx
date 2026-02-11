@@ -624,6 +624,7 @@ export default function UserProfileEditor() {
   });
 
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
+  const [removing, setRemoving] = useState<{ [key: string]: boolean }>({});
   const [showFilterPreferences, setShowFilterPreferences] = useState(false);
 
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
@@ -690,12 +691,15 @@ export default function UserProfileEditor() {
   };
 
   const removeFile = async (slot: string) => {
+    setRemoving(prev => ({ ...prev, [slot]: true }));
     try {
       await removeFromSlot.mutateAsync(slot);
       showToast('Archivo eliminado', 'success');
     } catch (error) {
       console.error('Error removing file:', error);
       showToast('Error al eliminar el archivo', 'error');
+    } finally {
+      setRemoving(prev => ({ ...prev, [slot]: false }));
     }
   };
 
@@ -1313,17 +1317,20 @@ export default function UserProfileEditor() {
             <PhotoManagementSection
               media={mediaWithAvatarFallback}
               uploading={uploading}
+              removing={removing}
               uploadFile={uploadFile}
               removeFile={removeFile}
               title={`📷 ${t('photo_management')}`}
               description={`👤 ${t('avatar_main_photo')}`}
               slots={['p1']}
               isMainPhoto={true}
+              imageVersion={profile?.updated_at}
             />
 
             <PhotoManagementSection
               media={mediaWithAvatarFallback}
               uploading={uploading}
+              removing={removing}
               uploadFile={uploadFile}
               removeFile={removeFile}
               title={`📷 ${t('featured_photos')}`}
@@ -1331,23 +1338,27 @@ export default function UserProfileEditor() {
               slots={['p2', 'p3']}
               isMainPhoto={false}
               verticalLayout={true}
+              imageVersion={profile?.updated_at}
             />
           </div>
 
           <PhotoManagementSection
             media={mediaWithAvatarFallback}
             uploading={uploading}
+            removing={removing}
             uploadFile={uploadFile}
             removeFile={removeFile}
             title={`📷 ${t('additional_photos')}`}
             description={t('photos_gallery_description')}
             slots={['p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
             isMainPhoto={false}
+            imageVersion={profile?.updated_at}
           />
 
           <VideoManagementSection
             media={mediaWithAvatarFallback}
             uploading={uploading}
+            removing={removing}
             uploadFile={uploadFile}
             removeFile={removeFile}
             title={`🎥 ${t('video_management')}`}

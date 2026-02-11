@@ -1,10 +1,12 @@
 import React from 'react';
 import { PHOTO_SLOTS, getMediaBySlot } from '../../utils/mediaSlots';
 import ImageWithFallback from '../ImageWithFallback';
+import { getDisplayImageUrl } from '../../utils/storageUrl';
 
 interface PhotoManagementSectionProps {
   media: any;
   uploading: Record<string, boolean>;
+  removing?: Record<string, boolean>;
   uploadFile: (file: File, slot: string, type: 'photo' | 'video') => void;
   removeFile: (slot: string) => void;
   title: string;
@@ -12,6 +14,8 @@ interface PhotoManagementSectionProps {
   slots: string[];
   isMainPhoto?: boolean;
   verticalLayout?: boolean;
+  /** Cache-busting: profile.updated_at o similar para evitar imagen vieja tras replace */
+  imageVersion?: string | number;
 }
 
 const colors = {
@@ -21,13 +25,15 @@ const colors = {
 export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
   media,
   uploading,
+  removing = {},
   uploadFile,
   removeFile,
   title,
   description,
   slots,
   isMainPhoto = false,
-  verticalLayout = false
+  verticalLayout = false,
+  imageVersion,
 }) => {
   return (
     <>
@@ -319,7 +325,7 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
               <div 
                 className={`photo-container ${isMainPhoto ? 'photo-container-main' : ''} ${verticalLayout ? 'photo-container-vertical' : ''}`}
                 style={isMainPhoto && mediaItem ? {
-                  backgroundImage: `url(${mediaItem.url})`,
+                  backgroundImage: `url(${getDisplayImageUrl(mediaItem.url, imageVersion)})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center top',
                   backgroundRepeat: 'no-repeat'
@@ -331,7 +337,7 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
                   null
                 ) : (
                 <ImageWithFallback
-                    src={mediaItem.url}
+                    src={getDisplayImageUrl(mediaItem.url, imageVersion)}
                     alt={`Foto ${slot}`}
                   style={{
                     width: '100%',
@@ -362,45 +368,50 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <label style={{
                   padding: '0.5rem 1rem',
-                  background: '#4CAF50',
+                  background: uploading[targetSlot] ? 'rgba(255,255,255,0.3)' : '#4CAF50',
                   color: 'white',
                   borderRadius: '8px',
-                  cursor: 'pointer',
+                  cursor: uploading[targetSlot] ? 'not-allowed' : 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: '600',
                   flex: '1 1 auto',
                   minWidth: '120px',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  opacity: uploading[targetSlot] ? 0.9 : 1,
                 }}>
                   {uploading[targetSlot] ? '⏳ Subiendo...' : (isMainPhoto ? '📤 Subir Foto' : '📤 Subir')}
                   <input
                     type="file"
                     accept="image/*"
                     style={{ display: 'none' }}
+                    disabled={uploading[targetSlot]}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) uploadFile(file, targetSlot, 'photo');
+                      if (file && !uploading[targetSlot]) uploadFile(file, targetSlot, 'photo');
                     }}
                   />
                 </label>
                 
                 {mediaItem && (
                   <button
+                    type="button"
+                    disabled={!!removing[targetSlot]}
                     onClick={() => removeFile(targetSlot)}
                     style={{
                       padding: '0.5rem 1rem',
-                      background: '#f44336',
+                      background: removing[targetSlot] ? 'rgba(200,100,100,0.7)' : '#f44336',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
-                      cursor: 'pointer',
+                      cursor: removing[targetSlot] ? 'not-allowed' : 'pointer',
                       fontSize: '0.875rem',
                       fontWeight: '600',
                       flex: '1 1 auto',
-                      minWidth: '120px'
+                      minWidth: '120px',
+                      opacity: removing[targetSlot] ? 0.8 : 1,
                     }}
                   >
-                    {isMainPhoto ? '🗑️ Eliminar' : '🗑️'}
+                    {removing[targetSlot] ? '⏳ Eliminando...' : (isMainPhoto ? '🗑️ Eliminar' : '🗑️')}
                   </button>
                 )}
               </div>

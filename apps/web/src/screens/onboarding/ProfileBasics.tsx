@@ -278,7 +278,7 @@ export function ProfileBasics() {
         const contentType = fileToUpload.type || `image/${ext === 'jpg' ? 'jpeg' : ext}`;
         
         if (import.meta.env.MODE === 'development') {
-          console.log('[ProfileBasics] Subiendo avatar:', { fileName, contentType, size: fileToUpload.size });
+          console.log('[ProfileBasics] Subiendo avatar:', { bucket: 'media', path: fileName, contentType, size: fileToUpload.size });
         }
 
         // Nota: NO usar navigator.onLine como hard-block (en iPad/WKWebView puede dar falsos negativos).
@@ -332,7 +332,7 @@ export function ProfileBasics() {
           throw new Error('Error al subir la imagen. No se recibió confirmación del servidor.');
         }
 
-        // Usa helper centralizado (cache-control consistente)
+        // Bucket media, carpeta avatars: path = avatars/{user_id}.{ext}
         avatarUrl = getBucketPublicUrl('media', fileName);
         
         // Validar que la URL se generó correctamente
