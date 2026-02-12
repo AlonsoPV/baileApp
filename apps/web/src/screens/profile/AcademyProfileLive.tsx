@@ -5,6 +5,7 @@ import { useAcademyMy } from "../../hooks/useAcademy";
 import { useAcademyMedia } from "../../hooks/useAcademyMedia";
 import { useTags } from "../../hooks/useTags";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
@@ -1613,21 +1614,23 @@ export default function AcademyProfileLive() {
   const carouselPhotos = useMemo(() => 
     PHOTO_SLOTS
       .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-      .filter(Boolean) as string[],
+      .filter(Boolean)
+      .map(u => toDirectPublicStorageUrl(u) || u) as string[],
     [media]
   );
 
   const primaryAvatarUrl = useMemo(() => {
     const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
     const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
-    return p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
+    const raw = p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
+    return raw ? (toDirectPublicStorageUrl(raw) ?? raw) : null;
   }, [media, academy]);
 
-  // Memoizar videos
   const videos = useMemo(() =>
     VIDEO_SLOTS
       .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-      .filter(Boolean) as string[],
+      .filter(Boolean)
+      .map(u => toDirectPublicStorageUrl(u) || u) as string[],
     [media]
   );
 

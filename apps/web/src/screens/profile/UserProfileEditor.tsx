@@ -5,6 +5,7 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import { useUserMediaSlots } from '../../hooks/useUserMediaSlots';
 import { useHydratedForm } from '../../hooks/useHydratedForm';
 import { supabase } from '../../lib/supabase';
+import { toDirectPublicStorageUrl } from '../../utils/imageOptimization';
 import { getMediaBySlot, type MediaItem } from '../../utils/mediaSlots';
 import { useToast } from '../../components/Toast';
 import RitmosSelectorEditor from '@/components/profile/RitmosSelectorEditor';
@@ -648,7 +649,7 @@ export default function UserProfileEditor() {
     const base = Array.isArray(media) ? media.slice() : [];
     const hasP1 = !!getMediaBySlot(base as any, 'p1');
     if (!hasP1 && profile?.avatar_url) {
-      const url = toSupabasePublicUrl(profile.avatar_url);
+      const url = toDirectPublicStorageUrl(toSupabasePublicUrl(profile.avatar_url)) ?? toSupabasePublicUrl(profile.avatar_url);
       if (url) {
         base.push({
           slot: 'p1',

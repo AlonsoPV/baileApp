@@ -8,7 +8,8 @@ import NotFound from '@/screens/system/NotFound';
 import ImageWithFallback from "../../components/ImageWithFallback";
 import RitmosChips from "../../components/RitmosChips";
 import { Chip } from '../../components/profile/Chip';
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
@@ -140,9 +141,15 @@ export function OrganizerPublicScreen() {
   const { data: parents = [] } = useEventParentsByOrganizer((org as any)?.id);
   const { data: eventDates = [] } = useEventDatesByOrganizer((org as any)?.id);
 
-  const media = (org as any)?.media || [];
-  const carouselPhotos = PHOTO_SLOTS.map(slot => getMediaBySlot(media as any, slot)?.url).filter(Boolean) as string[];
-  const videos = VIDEO_SLOTS.map(slot => getMediaBySlot(media as any, slot)?.url).filter(Boolean) as string[];
+  const media = normalizeMediaArray((org as any)?.media);
+  const carouselPhotos = PHOTO_SLOTS
+    .map(slot => getMediaBySlot(media as any, slot)?.url)
+    .filter(Boolean)
+    .map(u => toDirectPublicStorageUrl(u) || u) as string[];
+  const videos = VIDEO_SLOTS
+    .map(slot => getMediaBySlot(media as any, slot)?.url)
+    .filter(Boolean)
+    .map(u => toDirectPublicStorageUrl(u) || u) as string[];
 
   const getRitmoNombres = () => {
     const names: string[] = [];
@@ -326,8 +333,14 @@ export function OrganizerPublicScreen() {
         time: horaFormateada,
         place: date.lugar || date.ciudad || '',
         href: `/social/fecha/${date._original_id || date.id}`,
-        cover: Array.isArray(date.media) && date.media.length > 0 ? (date.media[0] as any)?.url || date.media[0] : undefined,
-        flyer: (date as any).flyer_url || (Array.isArray(date.media) && date.media.length > 0 ? (date.media[0] as any)?.url || date.media[0] : undefined),
+        cover: (() => {
+          const raw = Array.isArray(date.media) && date.media.length > 0 ? (date.media[0] as any)?.url || date.media[0] : undefined;
+          return raw ? (toDirectPublicStorageUrl(raw) || raw) : undefined;
+        })(),
+        flyer: (() => {
+          const raw = (date as any).flyer_url || (Array.isArray(date.media) && date.media.length > 0 ? (date.media[0] as any)?.url || date.media[0] : undefined);
+          return raw ? (toDirectPublicStorageUrl(raw) || raw) : undefined;
+        })(),
         price: (() => {
           const costos = (date as any)?.costos;
           if (Array.isArray(costos) && costos.length) {
@@ -393,7 +406,7 @@ export function OrganizerPublicScreen() {
           <div style={{ width: 350, maxWidth: '80vw' }}>
             <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.3)' }}>
               {ev.flyer && (
-                <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+                <img src={toDirectPublicStorageUrl(ev.flyer) || ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
               )}
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing[4], background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
                 <div style={{ 
@@ -496,11 +509,12 @@ export function OrganizerPublicScreen() {
   const organizerDescription =
     (org as any)?.bio ||
     `Conoce a ${organizerName}, organizador de sociales y eventos de baile en ${organizerCity} con ritmos como ${organizerRitmos || 'salsa y bachata'}.`;
-  const organizerImage =
+  const organizerImageRaw =
     getMediaBySlot(media as any, 'p1')?.url ||
     getMediaBySlot(media as any, 'cover')?.url ||
     carouselPhotos[0] ||
     SEO_LOGO_URL;
+  const organizerImage = organizerImageRaw === SEO_LOGO_URL ? SEO_LOGO_URL : (toDirectPublicStorageUrl(organizerImageRaw) || organizerImageRaw);
   const organizerUrl = `${SEO_BASE_URL}/organizer/${routeId}`;
 
   return (
@@ -931,13 +945,17 @@ export function OrganizerPublicScreen() {
             {/* Avatar */}
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 10, position: 'relative' }}>
               <div id="organizer-avatar" data-test-id="organizer-avatar" className="org-banner-avatar" style={{ width: 250, height: 250, borderRadius: '50%', overflow: 'hidden', border: `4px solid ${colors.glass.strong}`, boxShadow: `${colors.shadows.glow}, 0 20px 40px rgba(0,0,0,0.3)`, background: colors.gradients.primary, position: 'relative' }}>
-                {getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url ? (
-                  <img src={getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || ''} alt="Logo del organizador" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <div className="org-banner-avatar-fallback" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem', fontWeight: typography.fontWeight.black, color: colors.light }}>
-                    {(org as any)?.nombre_publico?.[0]?.toUpperCase() || '🎤'}
-                  </div>
-                )}
+                {(() => {
+                  const raw = getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || '';
+                  const src = raw ? (toDirectPublicStorageUrl(raw) || raw) : '';
+                  return src ? (
+                    <img src={src} alt="Logo del organizador" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div className="org-banner-avatar-fallback" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem', fontWeight: typography.fontWeight.black, color: colors.light }}>
+                      {(org as any)?.nombre_publico?.[0]?.toUpperCase() || '🎤'}
+                    </div>
+                  );
+                })()}
                 <div className="shimmer-effect" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: '50%' }} />
               </div>
               {/* Badge de verificación y botón de compartir inline debajo del avatar */}
@@ -1312,7 +1330,7 @@ export function OrganizerPublicScreen() {
                   zIndex: 2
                 }}>
                   <VideoPlayerWithPiP
-                    src={getMediaBySlot(media as any, 'v1')!.url}
+                    src={toDirectPublicStorageUrl(getMediaBySlot(media as any, 'v1')!.url) || getMediaBySlot(media as any, 'v1')!.url}
                     controls
                     preload="metadata"
                     controlsList="nodownload noplaybackrate"

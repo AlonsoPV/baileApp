@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
@@ -802,13 +803,13 @@ export const UserProfileLive: React.FC = () => {
   }, []);
 
   const avatarUrl = React.useMemo(() => {
-    // Priorizar avatar_url del perfil (profiles_user / v_user_public); luego p1/avatar de media
+    const toUrl = (u: string | undefined) => (u ? (toDirectPublicStorageUrl(u) ?? u) : undefined);
     const fromProfile = profile?.avatar_url ? toSupabasePublicUrl(profile.avatar_url) : undefined;
     const p1 = getMediaBySlot(effectiveMedia as any, 'p1');
     const fromP1 = p1?.url ? p1.url : undefined;
     const avatar = getMediaBySlot(effectiveMedia as any, 'avatar');
     const fromAvatarSlot = avatar?.url ? avatar.url : undefined;
-    return fromProfile || fromP1 || fromAvatarSlot;
+    return toUrl(fromProfile || fromP1 || fromAvatarSlot) ?? fromProfile ?? fromP1 ?? fromAvatarSlot;
   }, [effectiveMedia, profile?.avatar_url, toSupabasePublicUrl]);
 
   const carouselPhotos = React.useMemo(() => {
@@ -818,7 +819,7 @@ export const UserProfileLive: React.FC = () => {
     return PHOTO_SLOTS
       .map(slot => getMediaBySlot(effectiveMedia as any, slot))
       .filter(item => item && item.kind === 'photo' && item.url && typeof item.url === 'string' && item.url.trim() !== '')
-      .map(item => item!.url);
+      .map(item => toDirectPublicStorageUrl(item!.url) || item!.url);
   }, [effectiveMedia]);
 
   const { counts, setCounts, refetch: refetchCounts } = useFollowerCounts(profileUserId);
@@ -1525,7 +1526,7 @@ export const UserProfileLive: React.FC = () => {
                             }}
                           >
                             <ImageWithFallback
-                              src={person.avatar_url || ''}
+                              src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
                               alt={person.display_name || t('profile')}
                               style={{
                                 width: '100%',
@@ -1655,7 +1656,7 @@ export const UserProfileLive: React.FC = () => {
               }}>
                     {fotoP2 ? (
                   <ImageWithFallback
-                        src={fotoP2.url}
+                        src={toDirectPublicStorageUrl(fotoP2.url) || fotoP2.url}
                     alt={t('personal_photo')}
                     style={{
                       width: '100%',
@@ -1745,7 +1746,7 @@ export const UserProfileLive: React.FC = () => {
               }}>
                     {fotoP3 ? (
                   <ImageWithFallback
-                        src={fotoP3.url}
+                        src={toDirectPublicStorageUrl(fotoP3.url) || fotoP3.url}
                     alt={t('dance_photo')}
                     style={{
                       width: '100%',
@@ -1955,7 +1956,7 @@ export const UserProfileLive: React.FC = () => {
                     zIndex: 2
                   }}>
                     <VideoPlayerWithPiP
-                    src={videoV1.url}
+                    src={toDirectPublicStorageUrl(videoV1.url) || videoV1.url}
                     controls
                     preload="metadata"
                     controlsList="nodownload noplaybackrate"

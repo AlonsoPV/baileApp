@@ -12,6 +12,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { urls } from '@/lib/urls';
 import SeoHead from '@/components/SeoHead';
 import { SEO_BASE_URL, SEO_LOGO_URL } from '@/lib/seoConfig';
+import { toDirectPublicStorageUrl } from '@/utils/imageOptimization';
 import { getMediaBySlot, normalizeMediaArray } from '@/utils/mediaSlots';
 import { calculateNextDateWithTime } from '@/utils/calculateRecurringDates';
 import { FaWhatsapp } from 'react-icons/fa';
@@ -514,12 +515,13 @@ export default function ClassPublicScreen() {
     () => normalizeMediaArray((profile as any)?.media),
     [(profile as any)?.media],
   );
-  const seoImage =
+  const seoImageRaw =
     getMediaBySlot(mediaList, 'p1')?.url ||
     getMediaBySlot(mediaList, 'cover')?.url ||
     profile?.avatar_url ||
     profile?.banner_url ||
     SEO_LOGO_URL;
+  const seoImage = seoImageRaw === SEO_LOGO_URL ? SEO_LOGO_URL : (toDirectPublicStorageUrl(seoImageRaw) || seoImageRaw);
   const classUrl = `${SEO_BASE_URL}/clase/${isTeacher ? 'teacher' : 'academy'}/${idNum}${classIndexParam ? `?i=${classIndexParam}` : classIdParam ? `?classId=${classIdParam}` : ''}`;
 
   return (

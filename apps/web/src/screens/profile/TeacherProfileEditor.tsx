@@ -9,6 +9,7 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
 import { Chip } from "../../components/profile/Chip";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
@@ -920,7 +921,7 @@ const InvitationItem = React.memo<{
         height: '60px',
         borderRadius: '50%',
         background: academy.avatar_url 
-          ? `url(${academy.avatar_url}) center/cover`
+          ? `url(${toDirectPublicStorageUrl(academy.avatar_url) || academy.avatar_url}) center/cover`
           : 'linear-gradient(135deg, #E53935, #FB8C00)',
         display: 'flex',
         alignItems: 'center',
