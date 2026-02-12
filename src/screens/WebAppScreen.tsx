@@ -180,6 +180,18 @@ export default function WebAppScreen() {
     );
   }, []);
 
+  const shouldGoogleSignInDebug = React.useCallback((): boolean => {
+    const extra =
+      (Constants.expoConfig as any)?.extra ??
+      (Constants as any)?.manifest?.extra ??
+      (Constants as any)?.manifest2?.extra ??
+      {};
+    const v = extra.BAILEAPP_GOOGLE_SIGNIN_DEBUG ?? (process as any)?.env?.BAILEAPP_GOOGLE_SIGNIN_DEBUG;
+    if (typeof v === "boolean") return v;
+    const s = String(v ?? "").trim().toLowerCase();
+    return s === "1" || s === "true" || s === "yes";
+  }, []);
+
   const mask = React.useCallback((v: string) => {
     const t = String(v ?? "").trim();
     if (!t) return "(empty)";
@@ -261,9 +273,20 @@ export default function WebAppScreen() {
           const clientId = getGoogleIosClientId();
           const webClientId = getGoogleWebClientId();
 
-          if (__DEV__) {
+          if (__DEV__ || shouldGoogleSignInDebug()) {
             // eslint-disable-next-line no-console
-            console.log("[WebAppScreen] NATIVE_AUTH_GOOGLE requestId=", requestId || "(none)", "iosClientIdLen=", clientId.length, "webClientIdLen=", webClientId.length);
+            console.log("[WebAppScreen] NATIVE_AUTH_GOOGLE", {
+              platform: Platform.OS,
+              requestId: requestId || "(none)",
+              iosClientId: mask(clientId),
+              webClientId: mask(webClientId),
+              iosClientIdEmpty: !String(clientId || "").trim(),
+              webClientIdEmpty: !String(webClientId || "").trim(),
+              note:
+                Platform.OS === "ios" && !String(clientId || "").trim()
+                  ? "iosClientId missing in JS; relying on Info.plist fallback"
+                  : undefined,
+            });
           }
           // Self-check: falla rápido con mensaje accionable si falta config (evita "contacta a soporte" genérico).
           assertGoogleAuthConfig({ getIosClientId: getGoogleIosClientId, getWebClientId: getGoogleWebClientId });

@@ -153,6 +153,7 @@ export EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}"
 # Web client id (mismo que el configurado en Supabase Auth → Google). Se usa como serverClientID en iOS.
 export EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID="${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-${VITE_GOOGLE_CLIENT_ID:-}}"
 export EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG="${EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG:-}"
+export BAILEAPP_GOOGLE_SIGNIN_DEBUG="${BAILEAPP_GOOGLE_SIGNIN_DEBUG:-${EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG:-}}"
 export GOOGLE_REVERSED_CLIENT_ID="${GOOGLE_REVERSED_CLIENT_ID:-}"
 
 # ✅ CRÍTICO: Crear archivo .env temporal para que app.config.ts pueda leer las variables
@@ -186,12 +187,19 @@ fi
   [ -n "$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" ] && echo "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" || echo "# EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID is missing"
   [ -n "$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID" ] && echo "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID" || echo "# EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID is missing"
   [ -n "$EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG" ] && echo "EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG=$EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG" || echo "# EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG is missing"
+  [ -n "$BAILEAPP_GOOGLE_SIGNIN_DEBUG" ] && echo "BAILEAPP_GOOGLE_SIGNIN_DEBUG=$BAILEAPP_GOOGLE_SIGNIN_DEBUG" || echo "# BAILEAPP_GOOGLE_SIGNIN_DEBUG is missing"
 } > "$ENV_FILE"
 echo "==> Created .env file at $ENV_FILE"
 if [ -f "$ENV_FILE" ]; then
+  echo "==> .env file listing:"
+  ls -la "$ENV_FILE" || true
   echo "==> .env file size: $(wc -l < "$ENV_FILE") lines"
   echo "==> .env file contains (masked):"
   sed 's/=.*/=***/' "$ENV_FILE" || true
+  echo "==> .env grep counts (safe):"
+  echo "   - EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID lines: $(grep -c "^EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=" "$ENV_FILE" 2>/dev/null || echo "0")"
+  echo "   - EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID lines: $(grep -c "^EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=" "$ENV_FILE" 2>/dev/null || echo "0")"
+  echo "   - BAILEAPP_GOOGLE_SIGNIN_DEBUG lines: $(grep -c "^BAILEAPP_GOOGLE_SIGNIN_DEBUG=" "$ENV_FILE" 2>/dev/null || echo "0")"
   echo "==> Verifying .env file has non-empty values:"
   URL_PRESENT=false
   KEY_PRESENT=false

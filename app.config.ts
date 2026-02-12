@@ -111,6 +111,19 @@ const logEnvPresence = () => {
 
 logEnvPresence();
 
+// Google Sign-In (production defaults)
+// These are NOT secrets; they are OAuth client identifiers.
+// Keeping non-empty defaults prevents "not configured" false-positives when app.config.ts
+// is evaluated in a context without .env (common in CI).
+const GOOGLE_IOS_CLIENT_ID_PROD =
+  "168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com";
+const GOOGLE_WEB_CLIENT_ID_PROD =
+  "168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com";
+
+// Debug flag (JS + Native): keep compatibility with older env key.
+const GOOGLE_SIGNIN_DEBUG_FLAG =
+  required("BAILEAPP_GOOGLE_SIGNIN_DEBUG", "") || required("EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG", "");
+
 // ✅ NUNCA throw en producción - siempre retornar valor por defecto
 // ⚠️ Durante el build de Xcode Cloud, las variables pueden no estar disponibles inmediatamente
 // En runtime (TestFlight), nunca debemos crashear por falta de env vars
@@ -168,12 +181,11 @@ const config: ExpoConfig = {
     // Last uploaded reported: 181 → next safe default: 182 (EAS production also auto-increments).
     buildNumber: "215",
     infoPlist: (() => {
-      const googleIosClientId = required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', '168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com');
-      const googleWebClientId = required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', '168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com');
-      const googleDebugFlag = required('EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG', '');
+      const googleIosClientId = required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD);
+      const googleWebClientId = required("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID", GOOGLE_WEB_CLIENT_ID_PROD);
       const googleDebug =
-        String(googleDebugFlag || '').trim() === "1" ||
-        String(googleDebugFlag || '').trim().toLowerCase() === "true";
+        String(GOOGLE_SIGNIN_DEBUG_FLAG || "").trim() === "1" ||
+        String(GOOGLE_SIGNIN_DEBUG_FLAG || "").trim().toLowerCase() === "true";
       const reversed = (() => {
         const v = String(googleIosClientId || '').trim();
         if (!v || !v.includes('.apps.googleusercontent.com')) return '';
@@ -253,6 +265,7 @@ const config: ExpoConfig = {
     ],
   },
 
+  // Defaults for Google Sign-In (same as infoPlist) so production works when app.config is evaluated without .env (e.g. Xcode Cloud). See docs/auth/ios-google-signin-config.md.
   extra: {
     // Supabase config - durante el build, permitir valores vacíos si no están disponibles
     // Las variables se inyectarán en  runtime desde las variables de entorno de Xcode Cloud
@@ -261,15 +274,16 @@ const config: ExpoConfig = {
     // Keep EXPO_PUBLIC_* for backwards compatibility
     EXPO_PUBLIC_SUPABASE_URL: required('EXPO_PUBLIC_SUPABASE_URL', ''),
     EXPO_PUBLIC_SUPABASE_ANON_KEY: required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
-    // Native Google Sign-In (iOS) - required for in-app OAuth without Safari
-    googleIosClientId: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
-    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', ''),
+    // Native Google Sign-In (iOS). Fallback = production defaults so JS never blocks iOS for missing extra.
+    googleIosClientId: required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD),
+    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD),
     // Web Client ID (audience for idToken; used as GIDServerClientID)
-    googleWebClientId: required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', ''),
-    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: required('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID', ''),
-    // Optional debug flag (can be "1"/"true")
-    googleSignInDebug: required('EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG', ''),
-    EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG: required('EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG', ''),
+    googleWebClientId: required("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID", GOOGLE_WEB_CLIENT_ID_PROD),
+    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: required("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID", GOOGLE_WEB_CLIENT_ID_PROD),
+    // Optional debug flag (can be "1"/"true") — keep both keys for compatibility.
+    BAILEAPP_GOOGLE_SIGNIN_DEBUG: GOOGLE_SIGNIN_DEBUG_FLAG,
+    googleSignInDebug: GOOGLE_SIGNIN_DEBUG_FLAG,
+    EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG: required("EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG", ""),
     eas: {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },
