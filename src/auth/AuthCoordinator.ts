@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabase";
 import { nativeGoogleSignOut, nativeSignInWithApple, nativeSignInWithGoogleWithRequestId } from "./nativeAuth";
 import Constants from "expo-constants";
+import { logAuth, mask as maskValue } from "../utils/authDebug";
 
 export type AuthStatus = "loading" | "loggedOut" | "loggedIn" | "error";
 
@@ -255,9 +256,31 @@ class AuthCoordinatorImpl {
       };
 
       const callSupabase = async (nonceToSend: string | undefined) => {
+        logAuth("signInWithIdToken start", {
+          provider: "google",
+          requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+          hasNonce: !!nonceToSend,
+          tokenLength: String(google.idToken ?? "").length,
+        });
         const payloadForSupabase: any = { provider: "google", token: google.idToken };
         if (nonceToSend) payloadForSupabase.nonce = nonceToSend;
-        return await sb.auth.signInWithIdToken(payloadForSupabase);
+        try {
+          const result = await sb.auth.signInWithIdToken(payloadForSupabase);
+          logAuth("signInWithIdToken success", {
+            requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+            hasSession: !!result?.data?.session,
+            userId: result?.data?.user?.id ?? null,
+          });
+          return result;
+        } catch (e: any) {
+          logAuth("signInWithIdToken error", {
+            requestId: rid ? `${rid.slice(0, 8)}…` : "(none)",
+            name: String(e?.name ?? ""),
+            message: String(e?.message ?? ""),
+            status: String(e?.status ?? e?.statusCode ?? ""),
+          });
+          throw e;
+        }
       };
 
       // Deterministic behavior + one safe fallback:

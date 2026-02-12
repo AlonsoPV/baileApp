@@ -14,6 +14,14 @@ final class GoogleSignInModule: NSObject {
     #if DEBUG
     return true
     #else
+    // Check general auth debug flag first (BAILEAPP_AUTH_DEBUG)
+    if let v = Bundle.main.object(forInfoDictionaryKey: "BAILEAPP_AUTH_DEBUG") as? Bool {
+      return v
+    }
+    if let s = Bundle.main.object(forInfoDictionaryKey: "BAILEAPP_AUTH_DEBUG") as? String {
+      return s == "1" || s.lowercased() == "true"
+    }
+    // Fallback to Google-specific debug flag (BAILEAPP_GOOGLE_SIGNIN_DEBUG) for compatibility
     if let v = Bundle.main.object(forInfoDictionaryKey: "BAILEAPP_GOOGLE_SIGNIN_DEBUG") as? Bool {
       return v
     }
@@ -124,25 +132,31 @@ final class GoogleSignInModule: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     DispatchQueue.main.async {
+      if self.shouldLog() {
+        print("[NATIVE] signIn start requestId=\(requestId)")
+      }
+      
       let effectiveClientId = self.resolvedClientId(passed: clientId)
       guard !effectiveClientId.isEmpty else {
         let fromPlist = self.plistValue("GIDClientID")
         if self.shouldLog() {
+          print("[NATIVE] GOOGLE_MISSING_CLIENT_ID: passed=\(clientId.isEmpty ? "empty" : "non-empty"), plist GIDClientID=\(fromPlist.isEmpty ? "MISSING" : "present(\(fromPlist.prefix(20))...)"). requestId=\(requestId)")
           print("[GoogleSignInModule] GOOGLE_MISSING_CLIENT_ID: passed=\(clientId.isEmpty ? "empty" : "non-empty"), plist GIDClientID=\(fromPlist.isEmpty ? "MISSING" : "present(\(fromPlist.prefix(20))...)"). requestId=\(requestId)")
         }
         reject("GOOGLE_MISSING_CLIENT_ID", "Falta Google iOS Client ID. Configura GIDClientID en Info.plist o EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID en EAS/Xcode Cloud.", nil)
         return
       }
 
-      if self.shouldLog() {
-        print("[GoogleSignInModule] requestId=\(requestId) resolved clientID=\(effectiveClientId.prefix(10))...")
-      }
-
       let serverClientId = self.resolvedServerClientId()
       let expectedScheme = self.expectedGoogleScheme(from: effectiveClientId)
       let schemeOK = self.hasURLScheme(expectedScheme)
+      
+      let bundleId = Bundle.main.bundleIdentifier ?? "(none)"
+      let clientIdSource = clientId.isEmpty ? "plist" : "passed"
 
       if self.shouldLog() {
+        print("[NATIVE] config bundleId=\(bundleId) clientIdSource=\(clientIdSource) clientId=\(effectiveClientId.prefix(10))... serverClientId=\(serverClientId.isEmpty ? "MISSING" : "present(\(serverClientId.prefix(10))...)") schemeOK=\(schemeOK)")
+        print("[GoogleSignInModule] requestId=\(requestId) resolved clientID=\(effectiveClientId.prefix(10))...")
         print("[GoogleSignInModule] expectedScheme=\(expectedScheme)")
         print("[GoogleSignInModule] GIDServerClientID from plist=\(serverClientId.isEmpty ? "MISSING" : "present")")
         print("[GoogleSignInModule] CFBundleURLTypes=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") ?? "nil")")
@@ -185,6 +199,9 @@ final class GoogleSignInModule: NSObject {
       ) { result, error in
         if let error = error {
           let nsError = error as NSError
+          if self.shouldLog() {
+            print("[NATIVE] error code=\(nsError.code) domain=\(nsError.domain) message=\(nsError.localizedDescription) requestId=\(requestId)")
+          }
           if nsError.domain == kGIDSignInErrorDomain, nsError.code == -5 {
             reject("GOOGLE_CANCELED", "Inicio de sesión con Google cancelado.", nsError)
             return
@@ -200,12 +217,18 @@ final class GoogleSignInModule: NSObject {
         }
 
         guard let result = result else {
+          if self.shouldLog() {
+            print("[NATIVE] error: no result from Google Sign-In requestId=\(requestId)")
+          }
           reject("GOOGLE_NO_RESULT", "Google Sign-In no devolvió resultado.", nil)
           return
         }
 
         let finishResolve: (GIDGoogleUser) -> Void = { user in
           guard let idToken = user.idToken?.tokenString, !idToken.isEmpty else {
+            if self.shouldLog() {
+              print("[NATIVE] error: missing idToken requestId=\(requestId)")
+            }
             reject("GOOGLE_MISSING_ID_TOKEN", "Google no devolvió idToken. Revisa GIDServerClientID (Web Client ID).", nil)
             return
           }
@@ -228,6 +251,7 @@ final class GoogleSignInModule: NSObject {
           if let fullName = user.profile?.name { payload["fullName"] = fullName }
 
           if self.shouldLog() {
+            print("[NATIVE] success token length=\(idToken.count) requestId=\(requestId)")
             let keys = payload.keys.sorted()
             print("[GoogleSignInModule] requestId=\(requestId) payload.keys=\(keys)")
             print("[GoogleSignInModule] requestId=\(requestId) missing: userId=\(user.userID == nil) email=\(user.profile?.email == nil) fullName=\(user.profile?.name == nil)")

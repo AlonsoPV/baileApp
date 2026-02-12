@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '@/contexts/AuthProvider';
 import { motion } from 'framer-motion';
 import { getAuthRedirectUrl, isMobileWebView } from '../../utils/authRedirect';
+import { logWeb, mask } from '../../utils/authDebug';
 
 export function Login() {
   // Brand palette (requested): #297F96 + tonalidades
@@ -174,18 +175,22 @@ export function Login() {
     try {
       // ✅ Guideline 4.0: in-app auth inside React Native WebView (no browser OAuth)
       if (isMobileWebView()) {
+        logWeb('click Google');
         const rn = (window as any).ReactNativeWebView;
         // En algunos builds (especialmente Android) puede no existir un bridge nativo.
         // En ese caso, hacer fallback al OAuth web normal.
         if (!rn?.postMessage) {
+          logWeb('No native bridge for Google; falling back to web OAuth');
           console.warn('[Login] No native bridge for Google; falling back to web OAuth');
         } else {
           const requestId =
             (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
               ? (crypto as any).randomUUID()
               : `g_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+          const payload = { type: 'NATIVE_AUTH_GOOGLE', requestId };
+          logWeb('postMessage NATIVE_AUTH_GOOGLE', { requestId, payloadType: payload.type });
           console.log('[Login] NATIVE_AUTH_GOOGLE requestId=', requestId);
-          rn.postMessage(JSON.stringify({ type: 'NATIVE_AUTH_GOOGLE', requestId }));
+          rn.postMessage(JSON.stringify(payload));
           return; // native will set web session + redirect
         }
       }

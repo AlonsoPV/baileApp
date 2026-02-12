@@ -124,6 +124,10 @@ const GOOGLE_WEB_CLIENT_ID_PROD =
 const GOOGLE_SIGNIN_DEBUG_FLAG =
   required("BAILEAPP_GOOGLE_SIGNIN_DEBUG", "") || required("EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG", "");
 
+// Auth debug flag (general auth debugging, includes Google Sign-In)
+const AUTH_DEBUG_FLAG =
+  required("BAILEAPP_AUTH_DEBUG", "") || GOOGLE_SIGNIN_DEBUG_FLAG || required("EXPO_PUBLIC_AUTH_DEBUG", "");
+
 // ✅ NUNCA throw en producción - siempre retornar valor por defecto
 // ⚠️ Durante el build de Xcode Cloud, las variables pueden no estar disponibles inmediatamente
 // En runtime (TestFlight), nunca debemos crashear por falta de env vars
@@ -186,6 +190,11 @@ const config: ExpoConfig = {
       const googleDebug =
         String(GOOGLE_SIGNIN_DEBUG_FLAG || "").trim() === "1" ||
         String(GOOGLE_SIGNIN_DEBUG_FLAG || "").trim().toLowerCase() === "true";
+      
+      const authDebug =
+        String(AUTH_DEBUG_FLAG || "").trim() === "1" ||
+        String(AUTH_DEBUG_FLAG || "").trim().toLowerCase() === "true" ||
+        googleDebug;
       const reversed = (() => {
         const v = String(googleIosClientId || '').trim();
         if (!v || !v.includes('.apps.googleusercontent.com')) return '';
@@ -211,6 +220,8 @@ const config: ExpoConfig = {
       ...(googleIosClientId ? { GIDClientID: googleIosClientId } : {}),
       ...(googleWebClientId ? { GIDServerClientID: googleWebClientId } : {}),
       ...(googleDebug ? { BAILEAPP_GOOGLE_SIGNIN_DEBUG: true } : {}),
+      // General auth debug flag (for structured logs [WEB]/[HOST]/[NATIVE]/[AUTH])
+      ...(authDebug ? { BAILEAPP_AUTH_DEBUG: true } : {}),
       ...(schemes.length > 0
         ? {
             CFBundleURLTypes: [
@@ -284,6 +295,9 @@ const config: ExpoConfig = {
     BAILEAPP_GOOGLE_SIGNIN_DEBUG: GOOGLE_SIGNIN_DEBUG_FLAG,
     googleSignInDebug: GOOGLE_SIGNIN_DEBUG_FLAG,
     EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG: required("EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG", ""),
+    // General auth debug flag (for structured logs [WEB]/[HOST]/[NATIVE]/[AUTH])
+    BAILEAPP_AUTH_DEBUG: AUTH_DEBUG_FLAG,
+    EXPO_PUBLIC_AUTH_DEBUG: required("EXPO_PUBLIC_AUTH_DEBUG", ""),
     eas: {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },

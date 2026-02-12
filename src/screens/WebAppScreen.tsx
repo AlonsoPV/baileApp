@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { AuthCoordinator } from "../auth/AuthCoordinator";
 import { assertGoogleAuthConfig } from "../auth/assertGoogleAuthConfig";
+import { logHost, shouldAuthDebug } from "../utils/authDebug";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
 // Puedes ajustar esto a staging si lo necesitas.
@@ -241,10 +242,18 @@ export default function WebAppScreen() {
     async (event: any) => {
       const raw = event?.nativeEvent?.data;
       if (!raw) return;
+      
+      if (shouldAuthDebug()) {
+        logHost("onMessage raw", { rawLength: raw?.length, rawPreview: String(raw).slice(0, 100) });
+      }
+      
       let msg: any = null;
       try {
         msg = JSON.parse(raw);
       } catch {
+        if (shouldAuthDebug()) {
+          logHost("onMessage parse failed", { raw });
+        }
         return;
       }
 
@@ -270,6 +279,8 @@ export default function WebAppScreen() {
         setNativeAuthError(null);
         try {
           const requestId = String(msg?.requestId || "");
+          logHost("action=NATIVE_AUTH_GOOGLE", { requestId, platform: Platform.OS });
+          
           const clientId = getGoogleIosClientId();
           const webClientId = getGoogleWebClientId();
 
@@ -288,6 +299,15 @@ export default function WebAppScreen() {
                   : undefined,
             });
           }
+          
+          logHost("calling native GoogleSignIn", {
+            requestId,
+            iosClientId: mask(clientId),
+            webClientId: mask(webClientId),
+            iosClientIdEmpty: !String(clientId || "").trim(),
+            webClientIdEmpty: !String(webClientId || "").trim(),
+          });
+          
           // Self-check: falla rápido con mensaje accionable si falta config (evita "contacta a soporte" genérico).
           assertGoogleAuthConfig({ getIosClientId: getGoogleIosClientId, getWebClientId: getGoogleWebClientId });
 
