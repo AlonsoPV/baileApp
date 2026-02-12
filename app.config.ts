@@ -177,7 +177,7 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.tuorg.dondebailarmx",
     // ✅ App Store Connect: must be numeric and increase over last uploaded build.
     // Last uploaded reported: 181 → next safe default: 182 (EAS production also auto-increments).
-    buildNumber: "250",
+    buildNumber: "252",
     infoPlist: (() => {
       const googleIosClientId = required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD);
       const googleWebClientId = required("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID", GOOGLE_WEB_CLIENT_ID_PROD);
