@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ImageWithFallback from "../../components/ImageWithFallback";
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { useLiveClasses } from "@/hooks/useLiveClasses";
 import { supabase } from "../../lib/supabase";
@@ -451,7 +451,10 @@ export default function TeacherProfileLive() {
     setLoadingTimedOut(false);
   }, [isLoading, teacherId]);
 
-  const media = (teacher as PublicTeacher)?.media || [];
+  const media = useMemo(
+    () => normalizeMediaArray((teacher as PublicTeacher)?.media),
+    [(teacher as PublicTeacher)?.media],
+  );
   const teacherIdNum = useMemo(() => {
     if (!teacherId) return undefined;
     const num = Number(teacherId);
@@ -691,9 +694,9 @@ export default function TeacherProfileLive() {
               gap: '1rem'
             }}>
               <div className="teacher-banner-avatar">
-                {getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url ? (
+                {(getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || (teacher as any)?.avatar_url || (teacher as any)?.portada_url) ? (
                   <img
-                    src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || ''}
+                    src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || (teacher as any)?.avatar_url || (teacher as any)?.portada_url || ''}
                     alt={t('personal_photo')}
                     loading="lazy"
                     decoding="async"

@@ -4,7 +4,7 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
-import { getMediaBySlot } from "../../../utils/mediaSlots";
+import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../../utils/mediaSlots";
 import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
@@ -28,7 +28,7 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
     item.name ||
     "Academia";
   const bio = item.bio || "";
-  const mediaList = Array.isArray(item?.media) ? (item.media as MediaSlotItem[]) : [];
+  const mediaList = normalizeMediaArray(item?.media);
   const primaryAvatar =
     normalizeAndOptimizeUrl(
       getMediaBySlot(mediaList, 'p1')?.url ||

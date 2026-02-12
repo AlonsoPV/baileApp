@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 import { useTeacherMy } from "./useTeacher";
 import { resizeImageIfNeeded } from "../lib/imageResize";
+import { normalizeMediaArray } from "../utils/mediaSlots";
 
 // Bucket para archivos de maestro - usa el bucket 'media' con prefijo 'teacher/'
 const BUCKET = "media";
@@ -53,7 +54,7 @@ export function useTeacherMedia() {
         .eq("id", teacherId)
         .maybeSingle();
       if (error) throw error;
-      return (data?.media as MediaItem[]) || [];
+      return normalizeMediaArray(data?.media);
     },
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
     refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana

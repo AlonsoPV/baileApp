@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 import { useAcademyMy } from "./useAcademy";
 import { resizeImageIfNeeded } from "../lib/imageResize";
+import { normalizeMediaArray } from "../utils/mediaSlots";
 
 type MediaItemWithSlot = MediaItem & { slot?: string };
 
@@ -73,7 +74,7 @@ export function useAcademyMedia() {
         .eq("id", academyId)
         .maybeSingle();
       if (error) throw error;
-      return (data?.media as MediaItem[]) || [];
+      return normalizeMediaArray(data?.media);
     },
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch cuando se invalida
     refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana

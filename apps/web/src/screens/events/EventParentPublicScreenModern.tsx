@@ -7,7 +7,7 @@ import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { motion } from "framer-motion";
 import ShareButton from "../../components/events/ShareButton";
 import ImageWithFallback from "../../components/ImageWithFallback";
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
@@ -593,17 +593,21 @@ export default function EventParentPublicScreen() {
     );
   }
 
-  // Medios
+  const parentMedia = React.useMemo(
+    () => normalizeMediaArray((parent as any)?.media),
+    [(parent as any)?.media],
+  );
+
   const carouselPhotos = PHOTO_SLOTS
-    .map(slot => getMediaBySlot(parent.media as any, slot)?.url)
+    .map(slot => getMediaBySlot(parentMedia, slot)?.url)
     .filter(Boolean) as string[];
 
   const videos = VIDEO_SLOTS
-    .map(slot => getMediaBySlot(parent.media as any, slot)?.url)
+    .map(slot => getMediaBySlot(parentMedia, slot)?.url)
     .filter(Boolean) as string[];
 
   const avatarUrl =
-    getMediaBySlot(parent.media as any, 'avatar')?.url ||
+    getMediaBySlot(parentMedia, 'avatar')?.url ||
     (parent as any).avatar_url ||
     (parent as any).portada_url ||
     carouselPhotos[0];
@@ -629,7 +633,8 @@ export default function EventParentPublicScreen() {
     const hora = d.hora_inicio && d.hora_fin
       ? `${d.hora_inicio} - ${d.hora_fin}`
       : (d.hora_inicio ? d.hora_inicio : undefined);
-    const flyer = (d as any).flyer_url || (Array.isArray(d.media) && d.media.length > 0 ? ((d.media[0] as any)?.url || d.media[0]) : undefined);
+    const dMedia = normalizeMediaArray((d as any)?.media);
+    const flyer = (d as any).flyer_url || (dMedia.length > 0 ? (dMedia[0]?.url || (dMedia[0] as any)?.path) : undefined);
     const price = (() => {
       const costos = (d as any)?.costos;
       if (Array.isArray(costos) && costos.length) {

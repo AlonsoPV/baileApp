@@ -14,6 +14,28 @@ export type MediaItem = {
   title?: string;
 };
 
+/** Normaliza media: si viene como string JSON desde la API, lo parsea a array. */
+export function normalizeMediaArray(raw: unknown): MediaItem[] {
+  if (Array.isArray(raw)) {
+    return raw.map((m: any) => ({
+      slot: m?.slot ?? '',
+      kind: (m?.kind ?? (m?.type === 'video' ? 'video' : 'photo')) as 'photo' | 'video',
+      url: typeof m?.url === 'string' ? m.url : '',
+      thumb: typeof m?.thumb === 'string' ? m.thumb : undefined,
+      title: typeof m?.title === 'string' ? m.title : undefined,
+    })).filter((m: MediaItem) => m.slot && m.url);
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      return normalizeMediaArray(parsed);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 export function getMediaBySlot(list: MediaItem[] = [], slot: string) {
   return list.find(m => m.slot === slot);
 }

@@ -14,7 +14,7 @@ import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import RitmosChips from "../../components/RitmosChips";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
@@ -378,6 +378,9 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const { data: ritmos } = useTags('ritmo');
   const { data: zonas } = useTags('zona');
 
+  const dateMedia = React.useMemo(() => normalizeMediaArray((date as any)?.media), [(date as any)?.media]);
+  const parentMedia = React.useMemo(() => normalizeMediaArray((parent as any)?.media), [(parent as any)?.media]);
+
   // Verificar si el usuario es propietario
   const isOwner = React.useMemo(() => {
     if (!user || !myOrganizer || !parent) return false;
@@ -501,8 +504,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
   const seoImage =
     baseFlyerUrl ||
-    getMediaBySlot(date.media as any, 'p1')?.url ||
-    getMediaBySlot(parent?.media as any, 'p1')?.url ||
+    getMediaBySlot(dateMedia, 'p1')?.url ||
+    getMediaBySlot(parentMedia, 'p1')?.url ||
     SEO_LOGO_URL;
   const dateUrl = `${SEO_BASE_URL}/social/fecha/${dateIdParam ?? date.id}`;
 
@@ -2688,7 +2691,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           {(() => {
             // Obtener fotos del carrusel usando los media slots
             const carouselPhotos = PHOTO_SLOTS
-              .map(slot => getMediaBySlot(date.media as any, slot)?.url)
+              .map(slot => getMediaBySlot(dateMedia, slot)?.url)
               .filter(Boolean) as string[];
 
             return carouselPhotos.length > 0 && (
@@ -2780,7 +2783,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           {(() => {
             // Obtener videos
             const videos = VIDEO_SLOTS
-              .map(slot => getMediaBySlot(date.media as any, slot)?.url)
+              .map(slot => getMediaBySlot(dateMedia, slot)?.url)
               .filter(Boolean) as string[];
 
             return videos.length > 0 && (

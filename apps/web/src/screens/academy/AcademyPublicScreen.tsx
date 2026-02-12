@@ -5,7 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAcademyPublic } from "../../hooks/useAcademy";
 import { useTags } from "../../hooks/useTags";
 import ImageWithFallback from "../../components/ImageWithFallback";
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 // ❌ Toggle removido para vista pública
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
@@ -1340,7 +1340,10 @@ export default function AcademyPublicScreen() {
   // Obtener grupos de competencia de la academia
   const { data: competitionGroups, isLoading: loadingGroups } = useCompetitionGroupsByAcademy(id);
 
-  const media = (academy as any)?.media || [];
+  const media = useMemo(
+    () => normalizeMediaArray((academy as any)?.media),
+    [(academy as any)?.media],
+  );
   const carouselPhotos = useMemo(() => PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
     .filter(Boolean) as string[], [media]);

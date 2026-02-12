@@ -12,7 +12,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { urls } from '@/lib/urls';
 import SeoHead from '@/components/SeoHead';
 import { SEO_BASE_URL, SEO_LOGO_URL } from '@/lib/seoConfig';
-import { getMediaBySlot } from '@/utils/mediaSlots';
+import { getMediaBySlot, normalizeMediaArray } from '@/utils/mediaSlots';
 import { calculateNextDateWithTime } from '@/utils/calculateRecurringDates';
 import { FaWhatsapp } from 'react-icons/fa';
 import { useAuth } from '@/contexts/AuthProvider';
@@ -510,7 +510,10 @@ export default function ClassPublicScreen() {
   const locationName = locationLabel || ubicacion?.ciudad || profile?.ciudad || t('mexico');
   const classTimes = scheduleLabel ? ` · Horario: ${scheduleLabel}` : '';
   const seoDescription = `${classTitle} con ${creatorName} en ${locationName}${classTimes}${ritmosLabel ? ` · Ritmos: ${ritmosLabel}` : ''}.`;
-  const mediaList = (profile as any)?.media || [];
+  const mediaList = React.useMemo(
+    () => normalizeMediaArray((profile as any)?.media),
+    [(profile as any)?.media],
+  );
   const seoImage =
     getMediaBySlot(mediaList, 'p1')?.url ||
     getMediaBySlot(mediaList, 'cover')?.url ||

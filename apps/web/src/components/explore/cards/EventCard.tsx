@@ -8,7 +8,7 @@ import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { calculateNextDateWithTime } from "../../../utils/calculateRecurringDates";
 import { fmtDate } from "../../../utils/format";
 import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
-import { getMediaBySlot } from "../../../utils/mediaSlots";
+import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 
 interface EventCardProps {
   item: any;
@@ -40,7 +40,7 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
   // Alineado con EventDatePublicScreen y OrganizerPublicScreen para que se use la imagen correcta.
   const flyer = (() => {
     if (item.flyer_url) return normalizeAndOptimizeUrl(item.flyer_url);
-    const mediaList = Array.isArray(item.media) ? (item.media as any[]) : [];
+    const mediaList = normalizeMediaArray(item.media);
     const p1 = getMediaBySlot(mediaList, 'p1') as any;
     const p1Url = p1?.url ?? p1?.path;
     if (p1Url) return normalizeAndOptimizeUrl(p1Url);

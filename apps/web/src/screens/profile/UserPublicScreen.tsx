@@ -19,6 +19,20 @@ import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import { useTranslation } from "react-i18next";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 
+/** Normaliza media: si viene como string JSON desde la API, lo parsea a array. */
+function normalizeMediaArray(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 const STYLES = `
   .profile-container {
     width: 100%;
@@ -706,20 +720,19 @@ export const UserProfileLive: React.FC = () => {
 
   const safeMedia = React.useMemo(() => {
     const viewMedia = (profile as any)?.media;
+    const arr = normalizeMediaArray(viewMedia);
 
     // Debug: verificar datos del perfil (vista pública)
     if (process.env.NODE_ENV === 'development' && profile) {
       console.log('[UserPublicScreen] Profile data (from view):', {
         hasMedia: !!(profile as any).media,
-        mediaLength: Array.isArray(viewMedia) ? viewMedia.length : 0,
-        mediaSample: Array.isArray(viewMedia) ? viewMedia.slice(0, 3) : viewMedia,
+        mediaLength: arr.length,
         mediaType: Array.isArray(viewMedia) ? 'array' : typeof viewMedia,
         hasRespuestas: !!(profile as any).respuestas,
-        respuestas: (profile as any).respuestas,
       });
     }
 
-    return Array.isArray(viewMedia) ? viewMedia : [];
+    return arr;
   }, [profile]);
 
   const profileUserId = profile?.user_id || profile?.id;
@@ -745,7 +758,7 @@ export const UserProfileLive: React.FC = () => {
 
   const mediaFromTable = React.useMemo(() => {
     const raw = (profileFromTable as any)?.media;
-    return Array.isArray(raw) ? raw : [];
+    return normalizeMediaArray(raw);
   }, [profileFromTable]);
 
   const respuestasFromTable = React.useMemo(() => {
@@ -785,12 +798,13 @@ export const UserProfileLive: React.FC = () => {
   }, []);
 
   const avatarUrl = React.useMemo(() => {
+    // Priorizar avatar_url del perfil (profiles_user / v_user_public); luego p1/avatar de media
+    const fromProfile = profile?.avatar_url ? toSupabasePublicUrl(profile.avatar_url) : undefined;
     const p1 = getMediaBySlot(effectiveMedia as any, 'p1');
-    if (p1?.url) return p1.url;
-    if (profile?.avatar_url) return toSupabasePublicUrl(profile.avatar_url);
+    const fromP1 = p1?.url ? p1.url : undefined;
     const avatar = getMediaBySlot(effectiveMedia as any, 'avatar');
-    if (avatar?.url) return avatar.url;
-    return undefined;
+    const fromAvatarSlot = avatar?.url ? avatar.url : undefined;
+    return fromProfile || fromP1 || fromAvatarSlot;
   }, [effectiveMedia, profile?.avatar_url, toSupabasePublicUrl]);
 
   const carouselPhotos = React.useMemo(() => {
