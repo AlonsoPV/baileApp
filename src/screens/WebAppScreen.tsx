@@ -338,11 +338,13 @@ export default function WebAppScreen() {
           // Derivar code si el bridge no lo provee (común en algunos builds/bridges)
           const derivedCode = (() => {
             if (rawCode) return rawCode;
+            if (/network\s+request\s+failed/i.test(rawMessage) || /No hay conexión/i.test(rawMessage) || /fetch\s+failed/i.test(rawMessage)) return "NETWORK_ERROR";
             if (/audience/i.test(rawMessage) || /invalid.*jwt/i.test(rawMessage) || /bad.*jwt/i.test(rawMessage)) return "invalid_jwt";
             if (/GIDServerClientID/i.test(rawMessage) || /web client id/i.test(rawMessage)) return "GOOGLE_MISSING_WEB_CLIENT_ID";
             if (/url scheme/i.test(rawMessage) || /CFBundleURLSchemes/i.test(rawMessage) || /com\.googleusercontent\.apps/i.test(rawMessage)) return "GOOGLE_MISSING_URL_SCHEME";
             if (/idtoken/i.test(rawMessage) || /id token/i.test(rawMessage)) return "GOOGLE_MISSING_ID_TOKEN";
             if (/client id/i.test(rawMessage)) return "GOOGLE_MISSING_CLIENT_ID";
+            if (/nonce/i.test(rawMessage) && /mismatch/i.test(rawMessage)) return "NONCE_MISMATCH";
             // Fallbacks last (so they don't mask the real semantic error)
             if (rawStatus) return `HTTP_${rawStatus}`;
             if (rawName) return rawName;
@@ -370,6 +372,12 @@ export default function WebAppScreen() {
             message = "Inicio de sesión cancelado.";
           } else if (derivedCode === "GOOGLE_MISSING_ID_TOKEN" || message.includes("idToken") || message.includes("id token")) {
             message = "Google no devolvió credenciales (idToken). Verifica que el Client ID sea el de iOS y que el bundle id sea correcto.";
+          } else if (derivedCode === "NETWORK_ERROR") {
+            message =
+              "No hay conexión o el servidor no responde. Revisa tu red e intenta de nuevo.";
+          } else if (derivedCode === "NONCE_MISMATCH") {
+            message =
+              "Error de validación al iniciar sesión con Google. Intenta de nuevo.";
           } else if (
             derivedCode === "invalid_jwt" ||
             derivedCode === "bad_jwt" ||
