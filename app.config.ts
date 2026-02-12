@@ -280,6 +280,9 @@ const config: ExpoConfig = {
     supabaseAnonKey: required('SUPABASE_ANON_KEY', '') || required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
     EXPO_PUBLIC_SUPABASE_URL: required('SUPABASE_URL', '') || required('EXPO_PUBLIC_SUPABASE_URL', ''),
     EXPO_PUBLIC_SUPABASE_ANON_KEY: required('SUPABASE_ANON_KEY', '') || required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
+    // Debug overlay for TestFlight (enable via EAS/Xcode Cloud env var SHOW_CONFIG_DEBUG=1)
+    showConfigDebug: required("SHOW_CONFIG_DEBUG", ""),
+    SHOW_CONFIG_DEBUG: required("SHOW_CONFIG_DEBUG", ""),
     // Native Google Sign-In (iOS). Fallback = production defaults so JS never blocks iOS for missing extra.
     googleIosClientId: required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD),
     EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD),

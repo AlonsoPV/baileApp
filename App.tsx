@@ -5,7 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import * as ExpoLinking from "expo-linking";
 import React from "react";
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
 import { assertEnv, ENV } from "./src/lib/env";
 import { envReport } from "./src/lib/envReport";
@@ -53,6 +53,10 @@ function ConfigDebug() {
     (Constants as any)?.manifest?.extra ??
     (Constants as any)?.manifest2?.extra;
 
+  const supabaseUrl = String(ENV.supabaseUrl ?? "").trim();
+  const supabaseAnonKey = String(ENV.supabaseAnonKey ?? "").trim();
+  const maskUrl = (v: string) => (v ? (v.length > 80 ? `${v.slice(0, 60)}…${v.slice(-12)}` : v) : "(empty)");
+
   return (
     <View style={styles.debugContainer}>
       <Text style={styles.debugText}>🔍 Config Debug</Text>
@@ -60,6 +64,28 @@ function ConfigDebug() {
       <Text style={styles.debugText}>supabaseUrl: {extra?.supabaseUrl ? "YES" : "NO"}</Text>
       <Text style={styles.debugText}>anonKey: {extra?.supabaseAnonKey ? "YES" : "NO"}</Text>
       <Text style={styles.debugText}>EXPO_PUBLIC_SUPABASE_URL: {extra?.EXPO_PUBLIC_SUPABASE_URL ? "YES" : "NO"}</Text>
+      <Text style={styles.debugText}>SUPABASE_URL: {extra?.SUPABASE_URL ? "YES" : "NO"}</Text>
+      <Text style={styles.debugText}>ENV.supabaseUrl: {maskUrl(supabaseUrl)}</Text>
+      <Text style={styles.debugText}>ENV.anon length: {supabaseAnonKey ? String(supabaseAnonKey.length) : "0"}</Text>
+
+      <TouchableOpacity
+        style={[styles.crashButton, { marginTop: 12, backgroundColor: "#16a34a" }]}
+        onPress={async () => {
+          const url = String(ENV.supabaseUrl ?? "").trim();
+          if (!url) {
+            Alert.alert("Supabase health", "SUPABASE_URL está vacío.");
+            return;
+          }
+          try {
+            const r = await fetch(`${url}/auth/v1/health`);
+            Alert.alert("Supabase health", `status: ${r.status}`);
+          } catch (e: any) {
+            Alert.alert("Supabase health FAIL", String(e?.message ?? e));
+          }
+        }}
+      >
+        <Text style={styles.crashButtonText}>Health check Supabase</Text>
+      </TouchableOpacity>
     </View>
   );
 }
