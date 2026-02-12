@@ -118,47 +118,73 @@ target 'DondeBailarMX' do
       puts "[Podfile] WARN: failed to patch Pods script phases: #{e}"
     end
 
-    # ✅ CRÍTICO: Parchear scripts de CocoaPods que tienen paths hardcodeados de Node
-    # Los scripts generados por hermes-engine y otros pods pueden tener paths como:
-    #   /opt/homebrew/Cellar/node/25.5.0/bin/node
-    # Estos paths no existen en Xcode Cloud, causando fallos silenciosos.
-    # Reemplazamos cualquier path hardcodeado de Node con la carga de .xcode.env
+    # ✅ CRÍTICO: Parchear scripts de CocoaPods que usan Node para asegurar NODE_BINARY dinámico
+    # Los scripts generados por hermes-engine, React-runtimescheduler y otros pods pueden tener:
+    # 1. Paths hardcodeados como /opt/homebrew/Cellar/node/25.5.0/bin/node (no existen en Xcode Cloud)
+    # 2. Referencias a NODE_BINARY sin asegurar que esté definido
+    # Esto causa fallos silenciosos: "never received target ended message"
+    # Solución: Agregar loader de .xcode.env a TODOS los scripts que usan Node
     begin
       xcode_env_loader = <<~SCRIPT
-        # Load .xcode.env to get NODE_BINARY dynamically
+        # Load .xcode.env to get NODE_BINARY dynamically (required for Xcode Cloud)
         if [[ -f "$PODS_ROOT/../.xcode.env" ]]; then
           source "$PODS_ROOT/../.xcode.env"
         fi
         if [[ -z "${NODE_BINARY:-}" ]]; then
           export NODE_BINARY=$(command -v node)
         fi
+        if [[ -z "${NODE_BINARY:-}" ]]; then
+          echo "ERROR: NODE_BINARY not found. Ensure Node.js is installed and in PATH."
+          exit 1
+        fi
       SCRIPT
 
+      patched_count = 0
       installer.pods_project.targets.each do |t|
         t.build_phases.each do |phase|
           next unless phase.respond_to?(:shell_script) && phase.shell_script
           
           script = phase.shell_script
-          # Buscar paths hardcodeados de Node (comunes en Homebrew: /opt/homebrew/Cellar/node/* o /usr/local/Cellar/node/*)
-          if script.match?(%r{/opt/homebrew/Cellar/node/[\d.]+/bin/node|/usr/local/Cellar/node/[\d.]+/bin/node})
-            # Reemplazar el path hardcodeado con NODE_BINARY (que se carga desde .xcode.env)
+          original_script = script.dup
+          
+          # Detectar si el script usa Node (buscar referencias a node, NODE_BINARY, o paths de Node)
+          uses_node = script.match?(/\bnode\b|NODE_BINARY|/opt/homebrew.*node|/usr/local.*node|\.xcode\.env/)
+          
+          if uses_node
+            # 1. Reemplazar paths hardcodeados de Node con NODE_BINARY dinámico
             script = script.gsub(%r{/opt/homebrew/Cellar/node/[\d.]+/bin/node}, '${NODE_BINARY:-$(command -v node)}')
             script = script.gsub(%r{/usr/local/Cellar/node/[\d.]+/bin/node}, '${NODE_BINARY:-$(command -v node)}')
+            script = script.gsub(%r{/usr/local/bin/node}, '${NODE_BINARY:-$(command -v node)}')
+            script = script.gsub(%r{/opt/homebrew/bin/node}, '${NODE_BINARY:-$(command -v node)}')
             
-            # Agregar el loader de .xcode.env al inicio del script si no está presente
-            unless script.include?(".xcode.env")
+            # 2. Reemplazar referencias directas a 'node' con ${NODE_BINARY} cuando están en contextos de ejecución
+            # (pero evitar reemplazar en strings/comentarios)
+            script = script.gsub(/\$\(([^)]*)\bnode\b([^)]*)\)/, '$(\\1${NODE_BINARY:-$(command -v node)}\\2)')
+            script = script.gsub(/\`([^`]*)\bnode\b([^`]*)\`/, '`\\1${NODE_BINARY:-$(command -v node)}\\2`')
+            
+            # 3. Agregar el loader de .xcode.env al inicio si no está presente
+            unless script.include?(".xcode.env") || script.include?("NODE_BINARY")
               script = xcode_env_loader + "\n" + script
             end
             
-            phase.shell_script = script
-            puts "[Podfile] Patched hardcoded Node path in #{t.name} build phase"
+            if script != original_script
+              phase.shell_script = script
+              patched_count += 1
+              puts "[Podfile] Patched Node usage in #{t.name} build phase"
+            end
           end
         end
       end
-      installer.pods_project.save
-      puts "[Podfile] Patched Pods scripts to use dynamic NODE_BINARY"
+      
+      if patched_count > 0
+        installer.pods_project.save
+        puts "[Podfile] Patched #{patched_count} Pods script(s) to use dynamic NODE_BINARY"
+      else
+        puts "[Podfile] No Pods scripts needed Node path patching"
+      end
     rescue => e
       puts "[Podfile] WARN: failed to patch Node paths in Pods scripts: #{e}"
+      puts "[Podfile] Error details: #{e.backtrace.first(3).join("\n")}"
     end
 
     # ✅ Force C++17 + libc++ for Hermes / React Native pods (fixes HermesExecutorFactory errors)
