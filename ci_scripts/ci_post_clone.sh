@@ -52,6 +52,113 @@ echo "==> Node path: $(which node)"
 echo "==> npm path: $(which npm)"
 
 # -----------------------------
+# 2.1) Ensure .xcode.env exists with valid NODE_BINARY (required for Archive builds)
+# -----------------------------
+echo "==> Ensuring .xcode.env exists with valid NODE_BINARY"
+
+# Debug: show PATH and Node location (no secrets)
+echo "==> CI PATH=$PATH"
+echo "==> which node: $(which node || echo '<not found>')"
+echo "==> node -v: $(node -v 2>&1 || echo '<failed>')"
+
+IOS_XCODE_ENV="$ROOT_DIR/ios/.xcode.env"
+NODE_PATH=$(command -v node)
+
+# If Node not found, try common locations
+if [ -z "$NODE_PATH" ]; then
+  echo "==> Node not in PATH, trying common locations..."
+  for CAND in \
+    /opt/homebrew/bin/node \
+    /usr/local/bin/node \
+    /usr/bin/node \
+    /bin/node
+  do
+    if [ -x "$CAND" ]; then
+      NODE_PATH="$CAND"
+      echo "==> Found Node at: $NODE_PATH"
+      break
+    fi
+  done
+fi
+
+# If still not found, try adding common paths to PATH and retry
+if [ -z "$NODE_PATH" ]; then
+  export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+  NODE_PATH=$(command -v node)
+  if [ -n "$NODE_PATH" ]; then
+    echo "==> Found Node after PATH update: $NODE_PATH"
+  fi
+fi
+
+# Final check: if Node still not found, this is a critical error
+if [ -z "$NODE_PATH" ]; then
+  echo "ERROR: Node.js not found. Cannot create .xcode.env"
+  echo "ERROR: PATH=$PATH"
+  echo "ERROR: Please ensure Node.js is installed in CI environment"
+  exit 1
+fi
+
+# Create or update .xcode.env with robust fallbacks
+# Use the same content as the versioned file to ensure consistency
+cat > "$IOS_XCODE_ENV" <<'EOF'
+# This `.xcode.env` file is versioned and is used to source the environment
+# used when running script phases inside Xcode.
+# To customize your local environment, you can create an `.xcode.env.local`
+# file that is not versioned.
+
+# NODE_BINARY variable contains the PATH to the node executable.
+# React Native reads this file and expects NODE_BINARY to be exported.
+# Using 'command -v node' ensures it works in both local and CI environments.
+export NODE_BINARY="$(command -v node)"
+
+# Fallbacks for Xcode environments that don't load shell profiles (nvm/zshrc)
+# Xcode build scripts run in a minimal environment that may not have PATH set correctly
+if [ -z "$NODE_BINARY" ]; then
+  for CAND in \
+    /opt/homebrew/bin/node \
+    /usr/local/bin/node \
+    /usr/bin/node \
+    /bin/node
+  do
+    if [ -x "$CAND" ]; then
+      NODE_BINARY="$CAND"
+      break
+    fi
+  done
+fi
+
+# Optional: add common PATH locations then retry
+if [ -z "$NODE_BINARY" ]; then
+  export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+  NODE_BINARY="$(command -v node)"
+fi
+
+# Final validation: ensure NODE_BINARY is not empty
+if [ -z "$NODE_BINARY" ]; then
+  echo "ERROR: NODE_BINARY is empty. Node not found in PATH." >&2
+  echo "PATH=$PATH" >&2
+  exit 1
+fi
+
+# Additional validation: ensure the binary exists and is executable
+if [ ! -x "$NODE_BINARY" ]; then
+  echo "ERROR: NODE_BINARY is not executable: $NODE_BINARY" >&2
+  exit 1
+fi
+
+export NODE_BINARY
+EOF
+
+# Verify the file was created and has content
+if [ ! -f "$IOS_XCODE_ENV" ]; then
+  echo "ERROR: Failed to create .xcode.env at $IOS_XCODE_ENV"
+  exit 1
+fi
+
+echo "==> .xcode.env created/updated at $IOS_XCODE_ENV"
+echo "==> NODE_BINARY will resolve to: $NODE_PATH"
+
+# -----------------------------
 # 2) pnpm (corepack o npm fallback)
 # -----------------------------
 echo "==> Setting up pnpm"
