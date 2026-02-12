@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { ENV } from "../lib/env";
 import { nativeGoogleSignOut, nativeSignInWithApple, nativeSignInWithGoogleWithRequestId } from "./nativeAuth";
 import Constants from "expo-constants";
 import { logAuth, mask as maskValue } from "../utils/authDebug";
@@ -137,6 +138,10 @@ class AuthCoordinatorImpl {
     webClientId: string = ""
   ): Promise<AuthSessionTokens> {
     const rid = String(requestId || "");
+    const supabaseUrl = ENV.supabaseUrl ?? "";
+    const supabaseAnonKey = ENV.supabaseAnonKey ?? "";
+    console.log("SUPABASE_URL:", supabaseUrl);
+    console.log("ANON length:", supabaseAnonKey?.length);
     if (this.googleSignInInFlight) {
       const err: any = new Error("Google Sign-In ya está en progreso. Evita tocar el botón dos veces.");
       err.code = "GOOGLE_IN_PROGRESS";
