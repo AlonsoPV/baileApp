@@ -7,6 +7,7 @@ import { useTags } from "../../hooks/useTags";
 import RitmosChips from "@/components/RitmosChips";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
@@ -2936,7 +2937,7 @@ export default function AcademyProfileEditor() {
                                   height: '50px',
                                   borderRadius: '50%',
                                   background: teacher.avatar_url
-                                    ? `url(${teacher.avatar_url}) center/cover`
+                                    ? `url(${toDirectPublicStorageUrl(teacher.avatar_url) || teacher.avatar_url}) center/cover`
                                     : 'linear-gradient(135deg, #E53935, #FB8C00)',
                                   display: 'flex',
                                   alignItems: 'center',
@@ -3392,7 +3393,7 @@ export default function AcademyProfileEditor() {
                                   alignItems: 'center'
                                 }}>
                                   <img
-                                    src={fotoAbout.url}
+                                    src={toDirectPublicStorageUrl(fotoAbout.url) || fotoAbout.url}
                                     alt="Preview foto about"
                                     style={{
                                       width: '150px',

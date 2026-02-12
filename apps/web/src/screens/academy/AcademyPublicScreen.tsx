@@ -5,6 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAcademyPublic } from "../../hooks/useAcademy";
 import { useTags } from "../../hooks/useTags";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 // ❌ Toggle removido para vista pública
@@ -1346,11 +1347,13 @@ export default function AcademyPublicScreen() {
   );
   const carouselPhotos = useMemo(() => PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-    .filter(Boolean) as string[], [media]);
+    .filter(Boolean)
+    .map(u => toDirectPublicStorageUrl(u) || u) as string[], [media]);
 
   const videos = useMemo(() => VIDEO_SLOTS
     .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-    .filter(Boolean) as string[], [media]);
+    .filter(Boolean)
+    .map(u => toDirectPublicStorageUrl(u) || u) as string[], [media]);
 
   // Obtener datos de "Un poco más de nosotros"
   const fotoAbout = getMediaBySlot(media as unknown as MediaSlotItem[], 'about');
@@ -1363,7 +1366,8 @@ export default function AcademyPublicScreen() {
   const primaryAvatarUrl = useMemo(() => {
     const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
     const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
-    return p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
+    const raw = p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
+    return raw ? (toDirectPublicStorageUrl(raw) ?? raw) : null;
   }, [media, academy]);
 
   const getRitmoNombres = useMemo(() => {

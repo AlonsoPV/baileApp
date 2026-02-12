@@ -7,6 +7,7 @@ import { useUserMedia } from "../../hooks/useUserMedia";
 import { useUserRSVPEvents } from "../../hooks/useRSVP";
 import { useAuth } from '@/contexts/AuthProvider';
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import EventCard from "../../components/explore/cards/EventCard";
@@ -633,10 +634,10 @@ export const UserProfileLive: React.FC = () => {
 
   const avatarUrl = React.useMemo(() => {
     const p1 = getMediaBySlot(safeMedia as any, 'p1');
-    if (p1?.url) return p1.url;
-    if (profile?.avatar_url) return toSupabasePublicUrl(profile.avatar_url);
+    if (p1?.url) return toDirectPublicStorageUrl(p1.url) ?? p1.url;
+    if (profile?.avatar_url) return toDirectPublicStorageUrl(toSupabasePublicUrl(profile.avatar_url)) ?? toSupabasePublicUrl(profile.avatar_url);
     const avatar = getMediaBySlot(safeMedia as any, 'avatar');
-    if (avatar?.url) return avatar.url;
+    if (avatar?.url) return toDirectPublicStorageUrl(avatar.url) ?? avatar.url;
     return undefined;
   }, [safeMedia, profile?.avatar_url, toSupabasePublicUrl]);
 
@@ -716,7 +717,7 @@ export const UserProfileLive: React.FC = () => {
     return PHOTO_SLOTS
       .map(slot => getMediaBySlot(safeMedia as any, slot))
       .filter(item => item && item.kind === 'photo' && item.url && item.url.trim() !== '')
-      .map(item => item!.url);
+      .map(item => toDirectPublicStorageUrl(item!.url) || item!.url);
   }, [safeMedia]);
 
   if (profileLoading) {
@@ -1276,7 +1277,7 @@ export const UserProfileLive: React.FC = () => {
                             }}
                           >
                             <ImageWithFallback
-                              src={person.avatar_url || ''}
+                              src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
                               alt={person.display_name || 'Perfil'}
                               style={{
                                 width: '100%',
@@ -1354,7 +1355,7 @@ export const UserProfileLive: React.FC = () => {
                 }}>
                   {getMediaBySlot(safeMedia as any, 'p2') ? (
                     <ImageWithFallback
-                      src={getMediaBySlot(safeMedia as any, 'p2')!.url}
+                      src={toDirectPublicStorageUrl(getMediaBySlot(safeMedia as any, 'p2')!.url) || getMediaBySlot(safeMedia as any, 'p2')!.url}
                       alt={t('personal_photo')}
                       style={{
                         width: '100%',
@@ -1432,7 +1433,7 @@ export const UserProfileLive: React.FC = () => {
                 }}>
                   {getMediaBySlot(safeMedia as any, 'p3') ? (
                     <ImageWithFallback
-                      src={getMediaBySlot(safeMedia as any, 'p3')!.url}
+                      src={toDirectPublicStorageUrl(getMediaBySlot(safeMedia as any, 'p3')!.url) || getMediaBySlot(safeMedia as any, 'p3')!.url}
                       alt={t('dance_photo')}
                       style={{
                         width: '100%',
@@ -1631,7 +1632,7 @@ export const UserProfileLive: React.FC = () => {
                       zIndex: 2
                     }}>
                       <video
-                        src={getMediaBySlot(safeMedia as any, 'v1')!.url}
+                        src={toDirectPublicStorageUrl(getMediaBySlot(safeMedia as any, 'v1')!.url) || getMediaBySlot(safeMedia as any, 'v1')!.url}
                         controls
                         style={{
                           width: '100%',

@@ -14,6 +14,7 @@ import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import RitmosChips from "../../components/RitmosChips";
 import SeoHead from "@/components/SeoHead";
@@ -435,8 +436,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   // }, [stats]);
   const interestedCount = undefined; // Contador comentado
 
-  // Cache-busting para el flyer: importante porque en storage se usa upsert con misma ruta
-  const baseFlyerUrl = date.flyer_url || undefined;
+  const baseFlyerUrl = date.flyer_url ? (toDirectPublicStorageUrl(date.flyer_url) || date.flyer_url) : undefined;
   const flyerCacheKey =
     ((date as any)?.updated_at as string | undefined) ||
     (date.created_at as string | undefined) ||
@@ -502,11 +502,12 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     : '';
   const seoDescription = `${dateName} el ${formattedDate}${locationName ? ` en ${locationName}` : ''}${ritmosList ? ` · Ritmos: ${ritmosList}` : ''}.`;
 
-  const seoImage =
+  const seoImageRaw =
     baseFlyerUrl ||
     getMediaBySlot(dateMedia, 'p1')?.url ||
     getMediaBySlot(parentMedia, 'p1')?.url ||
     SEO_LOGO_URL;
+  const seoImage = seoImageRaw === SEO_LOGO_URL ? SEO_LOGO_URL : (toDirectPublicStorageUrl(seoImageRaw) || seoImageRaw);
   const dateUrl = `${SEO_BASE_URL}/social/fecha/${dateIdParam ?? date.id}`;
 
   return (
@@ -2663,7 +2664,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                   alignItems: 'center'
                 }}>
                   <img
-                    src={flyerUrlCacheBusted || date.flyer_url}
+                    src={flyerUrlCacheBusted || (date.flyer_url ? (toDirectPublicStorageUrl(date.flyer_url) || date.flyer_url) : '')}
                     alt={`Flyer de ${date.nombre || parent?.nombre || "Social"}`}
                     style={{
                       width: '100%',
@@ -2692,7 +2693,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
             // Obtener fotos del carrusel usando los media slots
             const carouselPhotos = PHOTO_SLOTS
               .map(slot => getMediaBySlot(dateMedia, slot)?.url)
-              .filter(Boolean) as string[];
+              .filter(Boolean)
+              .map(u => toDirectPublicStorageUrl(u) || u) as string[];
 
             return carouselPhotos.length > 0 && (
               <motion.section
@@ -2784,7 +2786,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
             // Obtener videos
             const videos = VIDEO_SLOTS
               .map(slot => getMediaBySlot(dateMedia, slot)?.url)
-              .filter(Boolean) as string[];
+              .filter(Boolean)
+              .map(u => toDirectPublicStorageUrl(u) || u) as string[];
 
             return videos.length > 0 && (
               <motion.section

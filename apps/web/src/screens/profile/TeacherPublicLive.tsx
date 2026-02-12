@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { useLiveClasses } from "@/hooks/useLiveClasses";
@@ -491,14 +492,15 @@ export default function TeacherProfileLive() {
   const carouselPhotos = useMemo(() => (
     PHOTO_SLOTS
       .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-      .filter(Boolean) as string[]
+      .filter(Boolean)
+      .map(u => toDirectPublicStorageUrl(u) || u) as string[]
   ), [media]);
 
-  // Memoizar videos
   const videos = useMemo(() => (
     VIDEO_SLOTS
       .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-      .filter(Boolean) as string[]
+      .filter(Boolean)
+      .map(u => toDirectPublicStorageUrl(u) || u) as string[]
   ), [media]);
 
   // Memoizar ritmo nombres
@@ -694,9 +696,12 @@ export default function TeacherProfileLive() {
               gap: '1rem'
             }}>
               <div className="teacher-banner-avatar">
-                {(getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || (teacher as any)?.avatar_url || (teacher as any)?.portada_url) ? (
+                {(() => {
+                  const raw = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || (teacher as any)?.avatar_url || (teacher as any)?.portada_url || '';
+                  const src = raw ? (toDirectPublicStorageUrl(raw) || raw) : '';
+                  return src ? (
                   <img
-                    src={getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || (teacher as any)?.avatar_url || (teacher as any)?.portada_url || ''}
+                    src={src}
                     alt={t('personal_photo')}
                     loading="lazy"
                     decoding="async"
@@ -720,7 +725,8 @@ export default function TeacherProfileLive() {
                   }}>
                     {((teacher as PublicTeacher)?.nombre_publico?.[0]?.toUpperCase()) || '🎓'}
                   </div>
-                )}
+                );
+                })()}
               </div>
               {/* Badge de verificación y botón de compartir inline */}
               <div style={{
@@ -1458,7 +1464,7 @@ export default function TeacherProfileLive() {
                   zIndex: 2
                 }}>
                   <VideoPlayerWithPiP
-                    src={getMediaBySlot(media as unknown as MediaSlotItem[], 'v1')!.url}
+                    src={toDirectPublicStorageUrl(getMediaBySlot(media as unknown as MediaSlotItem[], 'v1')!.url) || getMediaBySlot(media as unknown as MediaSlotItem[], 'v1')!.url}
                     controls
                     preload="metadata"
                     controlsList="nodownload noplaybackrate"

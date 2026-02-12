@@ -352,25 +352,32 @@ export default function WebAppScreen() {
           })();
 
           let message = rawMessage;
-          
-          // Mensajes accionables (sin "contactar a soporte" genérico).
-          if (derivedCode === "GOOGLE_MISSING_CLIENT_ID" || message.includes("Client ID")) {
+
+          // Nunca mostrar "contacta a soporte" genérico; siempre dar causa accionable.
+          const isGenericSupport = /contacta\s*(al?)?\s*soporte|contacte\s*(al?)?\s*soporte/i.test(message);
+          if (isGenericSupport) {
+            message = "";
+          }
+
+          // Mensajes accionables por código o por texto del error (usar rawMessage si message se vació por genérico).
+          const text = message || rawMessage;
+          if (derivedCode === "GOOGLE_MISSING_CLIENT_ID" || /client id|clientid|GIDClientID/i.test(text) || (/no está configurado|not configured|falta.*client id/i.test(text) && !/web client|GIDServerClientID/i.test(text))) {
             message =
               "Google Sign-In no está configurado: falta el iOS Client ID. Configura EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID en .env y en EAS/Xcode Cloud, o GIDClientID en Info.plist.";
-          } else if (derivedCode === "GOOGLE_MISSING_WEB_CLIENT_ID") {
+          } else if (derivedCode === "GOOGLE_MISSING_WEB_CLIENT_ID" || /GIDServerClientID|web client id/i.test(text) || /no está configurado.*supabase|falta.*web client/i.test(text)) {
             message =
               "Google Sign-In no está configurado para Supabase: falta el Web Client ID. Añade GIDServerClientID en Info.plist o EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.";
           } else if (derivedCode === "GOOGLE_IOS_CLIENT_ID_IS_WEB") {
             message =
               "Google Sign-In mal configurado: no uses el Web Client ID como iOS Client ID. En Google Cloud usa el cliente tipo iOS para GIDClientID.";
-          } else if (derivedCode === "GOOGLE_MISSING_URL_SCHEME") {
+          } else if (derivedCode === "GOOGLE_MISSING_URL_SCHEME" || /url scheme|CFBundleURLSchemes|com\.googleusercontent\.apps/i.test(text)) {
             message =
               "Google Sign-In no puede regresar a la app: añade el scheme com.googleusercontent.apps.XXX a CFBundleURLSchemes en Info.plist.";
-          } else if (derivedCode === "GOOGLE_NO_PRESENTING_VC" || message.includes("ViewController") || message.includes("iPad")) {
+          } else if (derivedCode === "GOOGLE_NO_PRESENTING_VC" || /ViewController|iPad/i.test(text)) {
             message = "No se pudo mostrar la pantalla de Google. Intenta cerrar y reabrir la app.";
-          } else if (derivedCode === "GOOGLE_CANCELED" || message.includes("cancelado")) {
+          } else if (derivedCode === "GOOGLE_CANCELED" || /cancelado/i.test(text)) {
             message = "Inicio de sesión cancelado.";
-          } else if (derivedCode === "GOOGLE_MISSING_ID_TOKEN" || message.includes("idToken") || message.includes("id token")) {
+          } else if (derivedCode === "GOOGLE_MISSING_ID_TOKEN" || /idtoken|id token/i.test(text)) {
             message = "Google no devolvió credenciales (idToken). Verifica que el Client ID sea el de iOS y que el bundle id sea correcto.";
           } else if (derivedCode === "NETWORK_ERROR") {
             message =
@@ -381,17 +388,14 @@ export default function WebAppScreen() {
           } else if (
             derivedCode === "invalid_jwt" ||
             derivedCode === "bad_jwt" ||
-            /audience/i.test(message) ||
-            /invalid.*jwt/i.test(message)
+            /audience/i.test(text) ||
+            /invalid.*jwt/i.test(text)
           ) {
             message =
               "Supabase rechazó el token de Google (audience/JWT). Verifica que en Supabase el Provider de Google use el Web Client ID y que en Xcode Cloud esté EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.";
           }
 
-          // If we got an HTTP-ish error (Supabase), don't mislabel it as a Google credential issue.
           if (!message) message = rawMessage;
-          // Only fallback to a generic Supabase message when the backend didn't provide anything useful.
-          // Otherwise keep the original error text so we can debug (e.g. invalid_jwt).
           const isUnhelpful =
             !rawMessage ||
             rawMessage === "Error" ||
@@ -401,7 +405,16 @@ export default function WebAppScreen() {
           if (isUnhelpful) {
             if (rawStatus && (derivedCode.startsWith("HTTP_") || /Auth/i.test(rawName))) {
               message = "Error al iniciar sesión: Supabase rechazó la solicitud. Intenta de nuevo.";
+            } else if (!message || isGenericSupport) {
+              message =
+                "Error al iniciar sesión con Google. Revisa GIDClientID, GIDServerClientID y CFBundleURLSchemes en Info.plist o las variables EXPO_PUBLIC_GOOGLE_* en EAS/Xcode Cloud.";
             }
+          }
+
+          // Fallback final: si el mensaje sigue siendo genérico, dar instrucciones accionables (nunca solo "contacta a soporte").
+          if (!message || isGenericSupport || /contacta\s*(al?)?\s*soporte|contacte\s*(al?)?\s*soporte/i.test(message)) {
+            message =
+              "Error de configuración de Google Sign-In. Revisa GIDClientID y GIDServerClientID en Info.plist o EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID y EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID en EAS/Xcode Cloud.";
           }
 
           if (requestId || derivedCode || rawStatus) {

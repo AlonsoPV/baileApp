@@ -7,6 +7,7 @@ import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { motion } from "framer-motion";
 import ShareButton from "../../components/events/ShareButton";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import UbicacionesLive from "../../components/locations/UbicacionesLive";
@@ -372,8 +373,8 @@ const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }
         <div style={{ width: '100%', maxWidth: 420, margin: '0 auto' }}>
           <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'linear-gradient(135deg, rgba(30,136,229,0.18) 0%, rgba(255,61,87,0.18) 100%)' }}>
             {ev.flyer ? (
-              <img
-                src={ev.flyer}
+                <img
+                src={toDirectPublicStorageUrl(ev.flyer) || ev.flyer}
                 alt={`Flyer de ${ev.nombre}`}
                 loading="lazy"
                 decoding="async"
@@ -600,17 +601,20 @@ export default function EventParentPublicScreen() {
 
   const carouselPhotos = PHOTO_SLOTS
     .map(slot => getMediaBySlot(parentMedia, slot)?.url)
-    .filter(Boolean) as string[];
+    .filter(Boolean)
+    .map(u => toDirectPublicStorageUrl(u) || u) as string[];
 
   const videos = VIDEO_SLOTS
     .map(slot => getMediaBySlot(parentMedia, slot)?.url)
-    .filter(Boolean) as string[];
+    .filter(Boolean)
+    .map(u => toDirectPublicStorageUrl(u) || u) as string[];
 
-  const avatarUrl =
+  const avatarUrlRaw =
     getMediaBySlot(parentMedia, 'avatar')?.url ||
     (parent as any).avatar_url ||
     (parent as any).portada_url ||
     carouselPhotos[0];
+  const avatarUrl = avatarUrlRaw ? (toDirectPublicStorageUrl(avatarUrlRaw) || avatarUrlRaw) : undefined;
 
   // Ritmos seleccionados
   let selectedCatalogIds: string[] = Array.isArray((parent as any)?.ritmos_seleccionados)
@@ -634,7 +638,8 @@ export default function EventParentPublicScreen() {
       ? `${d.hora_inicio} - ${d.hora_fin}`
       : (d.hora_inicio ? d.hora_inicio : undefined);
     const dMedia = normalizeMediaArray((d as any)?.media);
-    const flyer = (d as any).flyer_url || (dMedia.length > 0 ? (dMedia[0]?.url || (dMedia[0] as any)?.path) : undefined);
+    const flyerRaw = (d as any).flyer_url || (dMedia.length > 0 ? (dMedia[0]?.url || (dMedia[0] as any)?.path) : undefined);
+    const flyer = flyerRaw ? (toDirectPublicStorageUrl(flyerRaw) || flyerRaw) : undefined;
     const price = (() => {
       const costos = (d as any)?.costos;
       if (Array.isArray(costos) && costos.length) {
@@ -700,6 +705,7 @@ export default function EventParentPublicScreen() {
     (parent as any)?.descripcion ||
     `Descubre ${parentName}, social de baile en ${parentCity} con ritmos como ${ritmosDescription || 'salsa y bachata'}.`;
   const parentImage = avatarUrl || carouselPhotos[0] || SEO_LOGO_URL;
+  const parentImageDirect = parentImage !== SEO_LOGO_URL ? (toDirectPublicStorageUrl(parentImage) || parentImage) : parentImage;
   const parentUrl = `${SEO_BASE_URL}/social/${parentIdParam ?? parent.id}`;
 
   return (
@@ -709,7 +715,7 @@ export default function EventParentPublicScreen() {
         section="event"
         title={`${parentName} | Social de baile`}
         description={parentDescription}
-        image={parentImage}
+        image={parentImageDirect}
         url={parentUrl}
         keywords={[
           parentName,
