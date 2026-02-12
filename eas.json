@@ -26,7 +26,11 @@
         "node": "20.19.4",
         "buildConfiguration": "Release",
         "resourceClass": "m1-medium",
-        "env": { "EXPO_NO_CAPABILITY_SYNC": "1" }
+        "env": {
+          "EXPO_NO_CAPABILITY_SYNC": "1",
+          "SUPABASE_URL": "https://xjagwppplovcqmztcymd.supabase.co",
+          "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqYWd3cHBwbG92Y3FtenRjeW1kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5MzU3MzMsImV4cCI6MjA3NjUxMTczM30.zPvdVaknTp5yAT7mwdUWHxa8EkhLBxK4S0SAsQegtYY"
+        }
       }
     }
   },

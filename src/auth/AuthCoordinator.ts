@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { ENV } from "../lib/env";
 import { nativeGoogleSignOut, nativeSignInWithApple, nativeSignInWithGoogleWithRequestId } from "./nativeAuth";
 import Constants from "expo-constants";
 import { logAuth, mask as maskValue } from "../utils/authDebug";
@@ -137,6 +138,10 @@ class AuthCoordinatorImpl {
     webClientId: string = ""
   ): Promise<AuthSessionTokens> {
     const rid = String(requestId || "");
+    const supabaseUrl = ENV.supabaseUrl ?? "";
+    const supabaseAnonKey = ENV.supabaseAnonKey ?? "";
+    console.log("SUPABASE_URL:", supabaseUrl);
+    console.log("ANON length:", supabaseAnonKey?.length);
     if (this.googleSignInInFlight) {
       const err: any = new Error("Google Sign-In ya está en progreso. Evita tocar el botón dos veces.");
       err.code = "GOOGLE_IN_PROGRESS";
@@ -244,6 +249,11 @@ class AuthCoordinatorImpl {
         return /nonces?\s+mismatch/i.test(msg) || /Passed nonce and nonce in id_token/i.test(msg);
       };
 
+      const isNetworkError = (e: any): boolean => {
+        const msg = String(e?.message ?? e ?? "");
+        return /network\s+request\s+failed/i.test(msg) || /fetch\s+failed/i.test(msg) || /Failed to fetch/i.test(msg) || /NetworkError/i.test(msg);
+      };
+
       const nonceDebugSuffix = () => {
         const parts = [
           `tokenNonce=${maskNonce(tokenNonceTrimmed)}`,
@@ -304,7 +314,7 @@ class AuthCoordinatorImpl {
           } catch (e2: any) {
             const msg2 = normalizeErrorMessage(e2, "Error al iniciar sesión con Google (nonce).");
             const err2: any = preserveErrorDetails(e2, `${msg2} (${nonceDebugSuffix()}, req: ${rid || "?"})`);
-            err2.code = String((e2 as any)?.code ?? "NONCE_MISMATCH");
+            err2.code = isNonceMismatchError(e2) ? String((e2 as any)?.code ?? "NONCE_MISMATCH") : String((e2 as any)?.code ?? "GOOGLE_SIGNIN_ERROR");
             err2.status = Number((e2 as any)?.status ?? (e2 as any)?.statusCode ?? 400);
             err2.requestId = rid;
             throw err2;
@@ -312,8 +322,16 @@ class AuthCoordinatorImpl {
         }
         const msg = normalizeErrorMessage(e, "Error al iniciar sesión con Google (nonce).");
         const err: any = preserveErrorDetails(e, `${msg} (${nonceDebugSuffix()}, req: ${rid || "?"})`);
-        err.code = String((e as any)?.code ?? "NONCE_MISMATCH");
-        err.status = Number((e as any)?.status ?? (e as any)?.statusCode ?? 400);
+        // Only use NONCE_MISMATCH when Supabase actually reported nonce mismatch; avoid masking network errors
+        if (isNonceMismatchError(e)) {
+          err.code = String((e as any)?.code ?? "NONCE_MISMATCH");
+        } else if (isNetworkError(e)) {
+          err.code = String((e as any)?.code ?? "NETWORK_ERROR");
+          err.message = "No hay conexión o el servidor no responde. Revisa tu red e intenta de nuevo.";
+        } else {
+          err.code = String((e as any)?.code ?? "GOOGLE_SIGNIN_ERROR");
+        }
+        err.status = Number((e as any)?.status ?? (e as any)?.statusCode ?? 0);
         err.requestId = rid;
         throw err;
       }

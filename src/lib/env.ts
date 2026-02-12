@@ -27,15 +27,15 @@ function readExtra() {
 
 /**
  * Centralized environment configuration
- * 
- * ✅ Use this instead of process.env.EXPO_PUBLIC_* in runtime
- * This reads from Constants.expoConfig.extra which is reliable in bare RN.
+ *
+ * ✅ Runtime-safe: lee SIEMPRE desde Constants.expoConfig.extra (no process.env en el dispositivo).
+ * app.config.ts inyecta SUPABASE_URL/SUPABASE_ANON_KEY desde process.env al build; aquí solo leemos extra.
  */
 export const ENV = (() => {
   const extra = readExtra();
   return {
-    supabaseUrl: extra.EXPO_PUBLIC_SUPABASE_URL ?? extra.supabaseUrl ?? null,
-    supabaseAnonKey: extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra.supabaseAnonKey ?? null,
+    supabaseUrl: (extra.SUPABASE_URL ?? extra.EXPO_PUBLIC_SUPABASE_URL ?? extra.supabaseUrl ?? null) as string | null,
+    supabaseAnonKey: (extra.SUPABASE_ANON_KEY ?? extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra.supabaseAnonKey ?? null) as string | null,
   };
 })();
 

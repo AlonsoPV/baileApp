@@ -177,7 +177,7 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.tuorg.dondebailarmx",
     // ✅ App Store Connect: must be numeric and increase over last uploaded build.
     // Last uploaded reported: 181 → next safe default: 182 (EAS production also auto-increments).
-    buildNumber: "215",
+    buildNumber: "252",
     infoPlist: (() => {
       const googleIosClientId = required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD);
       const googleWebClientId = required("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID", GOOGLE_WEB_CLIENT_ID_PROD);
@@ -271,14 +271,18 @@ const config: ExpoConfig = {
   },
 
   // Defaults for Google Sign-In (same as infoPlist) so production works when app.config is evaluated without .env (e.g. Xcode Cloud). See docs/auth/ios-google-signin-config.md.
+  // ✅ Forma correcta Expo/TestFlight: inyectar en extra desde process.env (build-time); en runtime la app lee solo Constants.expoConfig.extra.
   extra: {
-    // Supabase config - durante el build, permitir valores vacíos si no están disponibles
-    // Las variables se inyectarán en  runtime desde las variables de entorno de Xcode Cloud
-    supabaseUrl: required('EXPO_PUBLIC_SUPABASE_URL', ''),
-    supabaseAnonKey: required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
-    // Keep EXPO_PUBLIC_* for backwards compatibility
-    EXPO_PUBLIC_SUPABASE_URL: required('EXPO_PUBLIC_SUPABASE_URL', ''),
-    EXPO_PUBLIC_SUPABASE_ANON_KEY: required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
+    // Supabase: EAS/TestFlight usa SUPABASE_URL / SUPABASE_ANON_KEY; local .env puede usar EXPO_PUBLIC_*
+    SUPABASE_URL: required('SUPABASE_URL', '') || required('EXPO_PUBLIC_SUPABASE_URL', ''),
+    SUPABASE_ANON_KEY: required('SUPABASE_ANON_KEY', '') || required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
+    supabaseUrl: required('SUPABASE_URL', '') || required('EXPO_PUBLIC_SUPABASE_URL', ''),
+    supabaseAnonKey: required('SUPABASE_ANON_KEY', '') || required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
+    EXPO_PUBLIC_SUPABASE_URL: required('SUPABASE_URL', '') || required('EXPO_PUBLIC_SUPABASE_URL', ''),
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: required('SUPABASE_ANON_KEY', '') || required('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
+    // Debug overlay for TestFlight (enable via EAS/Xcode Cloud env var SHOW_CONFIG_DEBUG=1)
+    showConfigDebug: required("SHOW_CONFIG_DEBUG", ""),
+    SHOW_CONFIG_DEBUG: required("SHOW_CONFIG_DEBUG", ""),
     // Native Google Sign-In (iOS). Fallback = production defaults so JS never blocks iOS for missing extra.
     googleIosClientId: required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD),
     EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD),

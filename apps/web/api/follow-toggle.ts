@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { createClient } from '@supabase/supabase-js';
 
-// parsear body en Node
+// parsear body e n Node
 async function readBody<T = any>(req: IncomingMessage): Promise<T | null> {
   return await new Promise((resolve, reject) => {
     let raw = '';

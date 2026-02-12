@@ -420,6 +420,10 @@ fi
 echo "==> CocoaPods install"
 cd ios
 
+# CocoaPods requires UTF-8 (avoids "Unicode Normalization not appropriate for ASCII-8BIT")
+export LANG="${LANG:-en_US.UTF-8}"
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+
 export COCOAPODS_DISABLE_STATS=1
 export COCOAPODS_SKIP_STATS=1
 
