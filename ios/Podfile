@@ -157,10 +157,11 @@ target 'DondeBailarMX' do
             script = script.gsub(%r{/usr/local/bin/node}, '${NODE_BINARY:-$(command -v node)}')
             script = script.gsub(%r{/opt/homebrew/bin/node}, '${NODE_BINARY:-$(command -v node)}')
             
-            # 2. Reemplazar referencias directas a 'node' con ${NODE_BINARY} cuando están en contextos de ejecución
-            # (pero evitar reemplazar en strings/comentarios)
-            script = script.gsub(/\$\(([^)]*)\bnode\b([^)]*)\)/, '$(\\1${NODE_BINARY:-$(command -v node)}\\2)')
-            script = script.gsub(/\`([^`]*)\bnode\b([^`]*)\`/, '`\\1${NODE_BINARY:-$(command -v node)}\\2`')
+            # 2. Reemplazar referencias directas a 'node' en comandos de ejecución (más conservador)
+            # Solo reemplazar cuando 'node' aparece como comando standalone o en contextos claros de ejecución
+            # Evitar reemplazar en strings, comentarios, o nombres de variables
+            script = script.gsub(/\$\{([^}]*)\bnode\b([^}]*)\}/, '${NODE_BINARY:-$(command -v node)}')
+            script = script.gsub(/\$\(command -v node\)/, '${NODE_BINARY:-$(command -v node)}')
             
             # 3. Agregar el loader de .xcode.env al inicio si no está presente
             unless script.include?(".xcode.env") || script.include?("NODE_BINARY")
