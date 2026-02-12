@@ -52,6 +52,16 @@ echo "==> Node path: $(which node)"
 echo "==> npm path: $(which npm)"
 
 # -----------------------------
+# 1b) Preflight: Expo config evaluation (fail fast before Hermes/Archive)
+# -----------------------------
+echo "==> Running iOS preflight (Node, NODE_ENV, app.config.ts)"
+if [ -f "ios/scripts/preflight_expo_config.sh" ]; then
+  bash ios/scripts/preflight_expo_config.sh
+else
+  echo "WARN: ios/scripts/preflight_expo_config.sh not found; skipping preflight"
+fi
+
+# -----------------------------
 # 2) pnpm (corepack o npm fallback)
 # -----------------------------
 echo "==> Setting up pnpm"

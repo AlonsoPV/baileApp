@@ -6,30 +6,47 @@ import type { ExpoConfig } from "expo/config";
 // In some Expo config evaluation contexts, mutating process.env can be unreliable.
 // We'll parse the local env file into an object and use it as the source of truth.
 const LOCAL_ENV: Record<string, string> = {};
+
+function getConfigDebug(): boolean {
+  return (typeof process !== "undefined" && process.env?.BAILEAPP_CONFIG_DEBUG === "1");
+}
+
+function required(key: string, defaultValue: string = ""): string {
+  const value =
+    (LOCAL_ENV[key] as string | undefined) ??
+    (typeof process !== "undefined" && process.env ? (process.env[key] as string | undefined) : undefined);
+  if (value != null && value !== "") return value;
+  if (typeof console !== "undefined" && console.warn) {
+    console.warn(`[app.config] Using default/empty value for ${key} (should be set in Xcode Cloud environment variables or EAS)`);
+  }
+  return defaultValue;
+}
+
 function loadLocalEnvFile(filePath: string) {
   try {
     const raw = fs.readFileSync(filePath, "utf8");
-    // Safe diagnostics (no secrets): verify Node is reading the expected content.
     const urlMatch = raw.match(/^EXPO_PUBLIC_SUPABASE_URL=(.*)$/m);
     const keyMatch = raw.match(/^EXPO_PUBLIC_SUPABASE_ANON_KEY=(.*)$/m);
-    // eslint-disable-next-line no-console
-    console.log("[app.config] local.env diagnostics:", {
-      filePath,
-      rawLen: raw.length,
-      hasHttps: raw.includes("https://"),
-      hasJwtPrefix: raw.includes("eyJ"),
-      urlLineLen: urlMatch?.[1]?.trim()?.length ?? 0,
-      anonLineLen: keyMatch?.[1]?.trim()?.length ?? 0,
-    });
-
+    if (getConfigDebug()) {
+      // eslint-disable-next-line no-console
+      console.log("[app.config] local.env diagnostics:", {
+        filePath,
+        rawLen: raw.length,
+        hasHttps: raw.includes("https://"),
+        hasJwtPrefix: raw.includes("eyJ"),
+        urlLineLen: urlMatch?.[1]?.trim()?.length ?? 0,
+        anonLineLen: keyMatch?.[1]?.trim()?.length ?? 0,
+      });
+    }
     const parsed = dotenv.parse(raw);
     for (const [k, v] of Object.entries(parsed)) {
-      // Remove potential UTF-8 BOM on the first key
       const cleanKey = k.replace(/^\uFEFF/, "");
       LOCAL_ENV[cleanKey] = v;
     }
-    // eslint-disable-next-line no-console
-    console.log("[app.config] LOCAL_ENV parsed keys:", Object.keys(LOCAL_ENV));
+    if (getConfigDebug()) {
+      // eslint-disable-next-line no-console
+      console.log("[app.config] LOCAL_ENV parsed keys:", Object.keys(LOCAL_ENV));
+    }
   } catch {
     // ignore
   }
@@ -46,15 +63,17 @@ try {
   const hasLocal = fs.existsSync(localEnvPath);
   const hasDefault = fs.existsSync(defaultEnvPath);
 
-  // eslint-disable-next-line no-console
-  console.log("[app.config] dotenv cwd:", cwd);
-  // eslint-disable-next-line no-console
-  console.log("[app.config] dotenv files:", {
-    localEnvPath,
-    hasLocal,
-    defaultEnvPath,
-    hasDefault,
-  });
+  if (getConfigDebug()) {
+    // eslint-disable-next-line no-console
+    console.log("[app.config] dotenv cwd:", cwd);
+    // eslint-disable-next-line no-console
+    console.log("[app.config] dotenv files:", {
+      localEnvPath,
+      hasLocal,
+      defaultEnvPath,
+      hasDefault,
+    });
+  }
 
   const chosenPath = hasLocal ? localEnvPath : defaultEnvPath;
   const fileExists = hasLocal || hasDefault;
@@ -70,29 +89,33 @@ try {
     ? dotenv.config({ path: chosenPath, override: true })
     : { error: null, parsed: {} };
 
-  // eslint-disable-next-line no-console
-  console.log("[app.config] dotenv loaded:", {
-    used: hasLocal ? "config/local.env" : hasDefault ? ".env" : "(none found - using Xcode Cloud env vars)",
-    error: result.error ? String(result.error) : null,
-  });
-
-  // eslint-disable-next-line no-console
-  console.log("[app.config] LOCAL_ENV presence:", {
-    hasUrl: (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_URL ?? "").length > 0,
-    urlLen: (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_URL ?? "").length,
-    hasAnonKey: (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "").length > 0,
-    anonKeyLen: (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "").length,
-    anonKeyPrefix: LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY
-      ? `${LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY.slice(0, 12)}...`
-      : "",
-  });
+  if (getConfigDebug()) {
+    // eslint-disable-next-line no-console
+    console.log("[app.config] dotenv loaded:", {
+      used: hasLocal ? "config/local.env" : hasDefault ? ".env" : "(none found - using Xcode Cloud env vars)",
+      error: result.error ? String(result.error) : null,
+    });
+    // eslint-disable-next-line no-console
+    console.log("[app.config] LOCAL_ENV presence:", {
+      hasUrl: (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_URL ?? "").length > 0,
+      urlLen: (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_URL ?? "").length,
+      hasAnonKey: (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "").length > 0,
+      anonKeyLen: (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "").length,
+      anonKeyPrefix: LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY
+        ? `${LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY.slice(0, 12)}...`
+        : "",
+    });
+  }
 } catch (e) {
-  // eslint-disable-next-line no-console
-  console.log("[app.config] dotenv load failed:", String(e));
+  if (getConfigDebug()) {
+    // eslint-disable-next-line no-console
+    console.log("[app.config] dotenv load failed:", String(e));
+  }
 }
 
-// Debug helper (prints in `expo start` logs) — no secrets, only presence/length.
+// Debug helper — only when BAILEAPP_CONFIG_DEBUG=1; no secrets, only presence/length.
 const logEnvPresence = () => {
+  if (!getConfigDebug()) return;
   try {
     const url = (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? "") as string;
     const key = (LOCAL_ENV.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "") as string;
@@ -111,46 +134,17 @@ const logEnvPresence = () => {
 
 logEnvPresence();
 
-// Google Sign-In (production defaults)
-// These are NOT secrets; they are OAuth client identifiers.
-// Keeping non-empty defaults prevents "not configured" false-positives when app.config.ts
-// is evaluated in a context without .env (common in CI).
+// Google Sign-In (production defaults) — OAuth client identifiers, not secrets.
 const GOOGLE_IOS_CLIENT_ID_PROD =
   "168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com";
 const GOOGLE_WEB_CLIENT_ID_PROD =
   "168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com";
 
-// Debug flag (JS + Native): keep compatibility with older env key.
+// Debug flags (required is hoisted above)
 const GOOGLE_SIGNIN_DEBUG_FLAG =
   required("BAILEAPP_GOOGLE_SIGNIN_DEBUG", "") || required("EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG", "");
-
-// Auth debug flag (general auth debugging, includes Google Sign-In)
 const AUTH_DEBUG_FLAG =
   required("BAILEAPP_AUTH_DEBUG", "") || GOOGLE_SIGNIN_DEBUG_FLAG || required("EXPO_PUBLIC_AUTH_DEBUG", "");
-
-// ✅ NUNCA throw en producción - siempre retornar valor por defecto
-// ⚠️ Durante el build de Xcode Cloud, las variables pueden no estar disponibles inmediatamente
-// En runtime (TestFlight), nunca debemos crashear por falta de env vars
-// Las variables se inyectarán desde Xcode Cloud environment variables o EAS
-const required = (key: string, defaultValue: string = ''): string => {
-  // @ts-ignore - process.env is available at build time
-  const value =
-    (LOCAL_ENV[key] as string | undefined) ||
-    (typeof process !== "undefined" && process.env ? (process.env[key] as string | undefined) : undefined);
-  
-  // Si hay un valor, usarlo
-  if (value) {
-    return value;
-  }
-  
-  // ✅ SIEMPRE retornar defaultValue si no hay valor
-  // NUNCA throw en producción - esto previene crashes en TestFlight
-  // Solo mostrar warning si no estamos en un contexto silencioso
-  if (typeof console !== 'undefined' && console.warn) {
-    console.warn(`[app.config] Using default/empty value for ${key} (should be set in Xcode Cloud environment variables or EAS)`);
-  }
-  return defaultValue;
-};
 
 const config: ExpoConfig = {
   name: "Donde Bailar MX",
