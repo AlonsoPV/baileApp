@@ -111,28 +111,13 @@ const logEnvPresence = () => {
 
 logEnvPresence();
 
-// Google Sign-In (production defaults)
-// These are NOT secrets; they are OAuth client identifiers.
-// Keeping non-empty defaults prevents "not configured" false-positives when app.config.ts
-// is evaluated in a context without .env (common in CI).
-const GOOGLE_IOS_CLIENT_ID_PROD =
-  "168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com";
-const GOOGLE_WEB_CLIENT_ID_PROD =
-  "168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com";
-
-// Debug flag (JS + Native): keep compatibility with older env key.
-const GOOGLE_SIGNIN_DEBUG_FLAG =
-  required("BAILEAPP_GOOGLE_SIGNIN_DEBUG", "") || required("EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG", "");
-
-// Auth debug flag (general auth debugging, includes Google Sign-In)
-const AUTH_DEBUG_FLAG =
-  required("BAILEAPP_AUTH_DEBUG", "") || GOOGLE_SIGNIN_DEBUG_FLAG || required("EXPO_PUBLIC_AUTH_DEBUG", "");
-
 // ✅ NUNCA throw en producción - siempre retornar valor por defecto
 // ⚠️ Durante el build de Xcode Cloud, las variables pueden no estar disponibles inmediatamente
 // En runtime (TestFlight), nunca debemos crashear por falta de env vars
 // Las variables se inyectarán desde Xcode Cloud environment variables o EAS
-const required = (key: string, defaultValue: string = ''): string => {
+// IMPORTANTE: Declarar como function (hoisted) para evitar Temporal Dead Zone errors
+// cuando se usa antes de esta declaración (líneas 125, 129, etc.)
+function required(key: string, defaultValue: string = ''): string {
   // @ts-ignore - process.env is available at build time
   const value =
     (LOCAL_ENV[key] as string | undefined) ||
@@ -150,7 +135,24 @@ const required = (key: string, defaultValue: string = ''): string => {
     console.warn(`[app.config] Using default/empty value for ${key} (should be set in Xcode Cloud environment variables or EAS)`);
   }
   return defaultValue;
-};
+}
+
+// Google Sign-In (production defaults)
+// These are NOT secrets; they are OAuth client identifiers.
+// Keeping non-empty defaults prevents "not configured" false-positives when app.config.ts
+// is evaluated in a context without .env (common in CI).
+const GOOGLE_IOS_CLIENT_ID_PROD =
+  "168113490186-cv9q1lfu1gfucfa01vvdr6vbfghj23lf.apps.googleusercontent.com";
+const GOOGLE_WEB_CLIENT_ID_PROD =
+  "168113490186-26aectjk20ju91tao4phqb2fta2mrk5u.apps.googleusercontent.com";
+
+// Debug flag (JS + Native): keep compatibility with older env key.
+const GOOGLE_SIGNIN_DEBUG_FLAG =
+  required("BAILEAPP_GOOGLE_SIGNIN_DEBUG", "") || required("EXPO_PUBLIC_GOOGLE_SIGNIN_DEBUG", "");
+
+// Auth debug flag (general auth debugging, includes Google Sign-In)
+const AUTH_DEBUG_FLAG =
+  required("BAILEAPP_AUTH_DEBUG", "") || GOOGLE_SIGNIN_DEBUG_FLAG || required("EXPO_PUBLIC_AUTH_DEBUG", "");
 
 const config: ExpoConfig = {
   name: "Donde Bailar MX",
