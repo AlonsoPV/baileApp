@@ -118,6 +118,81 @@ target 'DondeBailarMX' do
       puts "[Podfile] WARN: failed to patch Pods script phases: #{e}"
     end
 
+    # ✅ CRÍTICO: Parchear scripts de CocoaPods que usan Node para asegurar NODE_BINARY dinámico
+    # Los scripts generados por hermes-engine, React-runtimescheduler, React-rendererdebug,
+    # React-runtimeexecutor y otros pods pueden tener:
+    # 1. Paths hardcodeados como /opt/homebrew/Cellar/node/25.5.0/bin/node (no existen en Xcode Cloud)
+    # 2. Referencias a NODE_BINARY sin asegurar que esté definido
+    # 3. Scripts que fallan silenciosamente si Node no está disponible
+    # Esto causa fallos silenciosos: "never received target ended message"
+    # Solución: Agregar loader de .xcode.env a TODOS los scripts que usan Node (detección más amplia)
+    begin
+      xcode_env_loader = <<~SCRIPT
+        # Load .xcode.env to get NODE_BINARY dynamically (required for Xcode Cloud)
+        if [[ -f "$PODS_ROOT/../.xcode.env" ]]; then
+          source "$PODS_ROOT/../.xcode.env"
+        fi
+        if [[ -z "${NODE_BINARY:-}" ]]; then
+          export NODE_BINARY=$(command -v node)
+        fi
+        if [[ -z "${NODE_BINARY:-}" ]]; then
+          echo "ERROR: NODE_BINARY not found. Ensure Node.js is installed and in PATH."
+          exit 1
+        fi
+      SCRIPT
+
+      patched_count = 0
+      installer.pods_project.targets.each do |t|
+        t.build_phases.each do |phase|
+          next unless phase.respond_to?(:shell_script) && phase.shell_script
+          
+          script = phase.shell_script
+          original_script = script.dup
+          
+          # Detección conservadora: solo buscar paths hardcodeados o referencias explícitas a NODE_BINARY
+          # NO intentar detectar uso genérico de 'node' para evitar falsos positivos
+          has_hardcoded_path = script.match?(%r{/opt/homebrew/Cellar/node/[\d.]+/bin/node|/usr/local/Cellar/node/[\d.]+/bin/node|/usr/local/bin/node|/opt/homebrew/bin/node})
+          uses_node_binary = script.match?(/\bNODE_BINARY\b/)
+          has_xcode_env = script.match?(/\.xcode\.env/)
+          
+          # Solo parchear si hay paths hardcodeados O si el script ya usa NODE_BINARY pero no carga .xcode.env
+          if has_hardcoded_path || (uses_node_binary && !has_xcode_env)
+            # 1. Reemplazar paths hardcodeados de Node con NODE_BINARY dinámico
+            script = script.gsub(%r{/opt/homebrew/Cellar/node/[\d.]+/bin/node}, '${NODE_BINARY:-$(command -v node)}')
+            script = script.gsub(%r{/usr/local/Cellar/node/[\d.]+/bin/node}, '${NODE_BINARY:-$(command -v node)}')
+            script = script.gsub(%r{/usr/local/bin/node}, '${NODE_BINARY:-$(command -v node)}')
+            script = script.gsub(%r{/opt/homebrew/bin/node}, '${NODE_BINARY:-$(command -v node)}')
+            
+            # 2. Agregar el loader de .xcode.env al inicio si no está presente
+            # Verificar múltiples formas de que el loader ya esté presente
+            has_loader = script.include?(".xcode.env") || 
+                        script.match?(/source.*\.xcode\.env/) ||
+                        script.match?(/if.*-f.*\.xcode\.env/)
+            
+            unless has_loader
+              script = xcode_env_loader + "\n" + script
+            end
+            
+            if script != original_script
+              phase.shell_script = script
+              patched_count += 1
+              puts "[Podfile] Patched Node path in #{t.name} build phase"
+            end
+          end
+        end
+      end
+      
+      if patched_count > 0
+        installer.pods_project.save
+        puts "[Podfile] Patched #{patched_count} Pods script(s) to use dynamic NODE_BINARY"
+      else
+        puts "[Podfile] No Pods scripts needed Node path patching"
+      end
+    rescue => e
+      puts "[Podfile] WARN: failed to patch Node paths in Pods scripts: #{e}"
+      puts "[Podfile] Error details: #{e.backtrace.first(3).join("\n")}"
+    end
+
     # ✅ Force C++17 + libc++ for Hermes / React Native pods (fixes HermesExecutorFactory errors)
     # These errors typically happen when some pods/targets compile with an older C++ dialect.
     cxx_lang = 'gnu++20'

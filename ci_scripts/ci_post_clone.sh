@@ -62,6 +62,48 @@ else
 fi
 
 # -----------------------------
+# 2.1) Ensure .xcode.env exists with valid NODE_BINARY (required for Archive builds)
+# -----------------------------
+echo "==> Ensuring .xcode.env exists with valid NODE_BINARY"
+echo "==> CI PATH=$PATH"
+echo "==> which node: $(which node || echo '<not found>')"
+echo "==> node -v: $(node -v 2>&1 || echo '<failed>')"
+
+IOS_XCODE_ENV="$ROOT_DIR/ios/.xcode.env"
+NODE_PATH=$(command -v node)
+
+if [ -z "$NODE_PATH" ]; then
+  echo "==> Node not in PATH, trying common locations..."
+  for CAND in /opt/homebrew/bin/node /usr/local/bin/node /usr/bin/node /bin/node; do
+    if [ -x "$CAND" ]; then
+      NODE_PATH="$CAND"
+      echo "==> Found Node at: $NODE_PATH"
+      break
+    fi
+  done
+fi
+
+if [ -z "$NODE_PATH" ]; then
+  export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+  NODE_PATH=$(command -v node)
+  [ -n "$NODE_PATH" ] && echo "==> Found Node after PATH update: $NODE_PATH"
+fi
+
+if [ -z "$NODE_PATH" ]; then
+  echo "ERROR: Node.js not found. Cannot create .xcode.env"
+  echo "ERROR: PATH=$PATH"
+  exit 1
+fi
+
+# Sync .xcode.env with versioned content (so CI and local match)
+cp "$ROOT_DIR/ios/.xcode.env" "$IOS_XCODE_ENV" 2>/dev/null || true
+if [ ! -f "$IOS_XCODE_ENV" ] || [ ! -s "$IOS_XCODE_ENV" ]; then
+  echo "WARN: ios/.xcode.env missing or empty; CI will use versioned file on next clone"
+fi
+echo "==> .xcode.env at $IOS_XCODE_ENV"
+echo "==> NODE_BINARY will resolve to: $NODE_PATH"
+
+# -----------------------------
 # 2) pnpm (corepack o npm fallback)
 # -----------------------------
 echo "==> Setting up pnpm"
