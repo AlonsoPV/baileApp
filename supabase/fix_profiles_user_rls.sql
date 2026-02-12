@@ -7,10 +7,11 @@ DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles_user;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles_user;
 DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles_user;
 
--- SELECT: Usuario puede ver su propio perfil
+-- SELECT: Cualquiera puede ver cualquier perfil (perfiles públicos: avatar, bio, etc.)
+-- El dueño sigue pudiendo ver el suyo; además, otros usuarios pueden cargar el perfil público para ver avatar_url, display_name, etc.
 CREATE POLICY "Users can view own profile"
 ON public.profiles_user FOR SELECT
-USING (user_id = auth.uid());
+USING (true);
 
 -- INSERT: Usuario puede crear su propio perfil
 CREATE POLICY "Users can insert own profile"
@@ -101,9 +102,10 @@ BEGIN
   VALUES (
     p_user_id,
     COALESCE((p_patch->>'email')::text, auth.email()),
-    (p_patch->>'display_name')::text,
-    (p_patch->>'bio')::text,
-    (p_patch->>'avatar_url')::text,
+    -- Evitar borrar nombre/bio/avatar: vacío o ausente → NULL → COALESCE conserva el valor existente
+    NULLIF(TRIM((p_patch->>'display_name')::text), ''),
+    NULLIF(TRIM((p_patch->>'bio')::text), ''),
+    NULLIF(TRIM((p_patch->>'avatar_url')::text), ''),
     CASE 
       WHEN p_patch ? 'rol_baile' THEN NULLIF((p_patch->>'rol_baile')::text, '')
       ELSE NULL
@@ -123,6 +125,7 @@ BEGIN
         (SELECT ARRAY(SELECT jsonb_array_elements_text(p_patch->'zonas'))::integer[])
       ELSE NULL 
     END,
+    -- Nuevos usuarios: false si no se envía. En UPDATE se respeta existente si la clave no viene en el patch (ver SET más abajo).
     COALESCE((p_patch->>'onboarding_complete')::boolean, false),
     COALESCE(p_patch->'media', '[]'::jsonb),
     COALESCE(p_patch->'redes_sociales', '{}'::jsonb),
@@ -141,7 +144,8 @@ BEGIN
     ritmos = COALESCE(EXCLUDED.ritmos, profiles_user.ritmos),
     ritmos_seleccionados = COALESCE(EXCLUDED.ritmos_seleccionados, profiles_user.ritmos_seleccionados),
     zonas = COALESCE(EXCLUDED.zonas, profiles_user.zonas),
-    onboarding_complete = COALESCE(EXCLUDED.onboarding_complete, profiles_user.onboarding_complete),
+    -- Solo actualizar onboarding_complete si viene en el patch; si no, conservar el valor existente (evita resetear a false en cada merge).
+    onboarding_complete = CASE WHEN p_patch ? 'onboarding_complete' THEN COALESCE(EXCLUDED.onboarding_complete, profiles_user.onboarding_complete) ELSE profiles_user.onboarding_complete END,
     media = profiles_user.media || EXCLUDED.media, -- Merge JSONB
     redes_sociales = profiles_user.redes_sociales || EXCLUDED.redes_sociales,
     -- ✅ Fix: usar merge profundo para respuestas (preserva campos anidados como dato_curioso, gusta_bailar)

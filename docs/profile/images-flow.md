@@ -57,6 +57,20 @@ Es un **upload** al mismo slot: mismo path, `upsert: true`, por tanto el archivo
 - **profiles_user.avatar_url:** URL pública completa (p. ej. `https://xxx.supabase.co/storage/v1/object/public/media/avatars/{uuid}.jpg`). Solo se escribe desde onboarding o desde la pantalla App Profile; el editor de perfil no escribe este campo al subir a p1.
 - **profiles_user.media:** array de objetos `{ slot, kind, url, title }`. `url` es siempre la **URL pública** de Supabase Storage (no path relativo ni signed URL).
 
+### Preservación de datos en merge_profiles_user (RPC)
+
+Para evitar que se borren `display_name`, `bio`, `avatar_url` o que se resetee `onboarding_complete` en cada actualización:
+
+- En el RPC **merge_profiles_user** (migración `20260212_merge_profiles_user_preserve_fields.sql`):
+  - **display_name, bio, avatar_url:** se insertan con `NULLIF(TRIM(...), '')`; si el patch envía vacío o no envía la clave, EXCLUDED es NULL y `COALESCE(EXCLUDED.x, profiles_user.x)` conserva el valor existente.
+  - **onboarding_complete:** solo se actualiza si la clave viene en el patch (`CASE WHEN p_patch ? 'onboarding_complete' THEN ... ELSE profiles_user.onboarding_complete END`). Así, los merges que no envían este campo no resetean a false.
+
+### Visualización del avatar en la app
+
+- **Navbar / AppShell:** se usa `profile.avatar_url` (o slot p1 si existe); no se transforma la URL si ya es `https://`.
+- **UserProfileLive / UserProfilePublic:** se usa `toSupabasePublicUrl(profile.avatar_url)`; si la URL ya es absoluta, se devuelve tal cual.
+- **Explore cards (DancerCard, etc.):** se usa `normalizeAndOptimizeUrl(avatar_url)`; URLs completas `https://` pasan por `ensureAbsoluteImageUrl` y se devuelven (u optimizadas); no se pierden. Si un avatar no se muestra, la causa habitual es que `avatar_url` en BD esté NULL por un merge anterior que lo sobrescribió (corregido con el RPC anterior).
+
 ### Caché
 
 - **React Query:** `["profile","media-slots", userId]` para el array de media; `["profile","me", userId]` para el perfil completo.

@@ -53,9 +53,9 @@ export default function DancerCard({ item, to }: Props) {
     return v;
   };
 
-  // Resolver imagen de portada del usuario (prioriza banner/portada, luego avatar, luego media[0])
+  // Resolver imagen: priorizar avatar_url de profiles, luego banner/portada, luego media
   const coverUrl: string | undefined = (() => {
-    const direct = item.banner_url || item.portada_url || item.avatar_url;
+    const direct = item.avatar_url || item.banner_url || item.portada_url;
     if (direct) return toSupabasePublicUrl(normalizeAndOptimizeUrl(direct as string) as string);
     const media = Array.isArray(item.media) ? item.media : [];
     if (media.length) {
