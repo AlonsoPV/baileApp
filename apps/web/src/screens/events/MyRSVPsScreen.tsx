@@ -20,21 +20,24 @@ export function MyRSVPsScreen() {
 
   const isAvailableEventDate = React.useCallback((evento: any) => {
     if (!evento) return false;
-    // Si tiene dia_semana, es un evento recurrente y siempre está disponible
-    if (typeof (evento as any).dia_semana === 'number') return true;
+    // Si tiene fecha, verificar que sea hoy o futura (incluye recurrentes con fecha específica)
     const raw = (evento as any).fecha;
-    if (!raw) return false;
-    try {
-      const base = String(raw).split('T')[0];
-      const [y, m, d] = base.split('-').map((n: string) => parseInt(n, 10));
-      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return true;
-      const dt = new Date(y, m - 1, d);
-      dt.setHours(0, 0, 0, 0);
-      // >= hoy (incluye eventos de hoy)
-      return dt >= today;
-    } catch {
-      return true;
+    if (raw) {
+      try {
+        const base = String(raw).split('T')[0];
+        const [y, m, d] = base.split('-').map((n: string) => parseInt(n, 10));
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return true;
+        const dt = new Date(y, m - 1, d);
+        dt.setHours(0, 0, 0, 0);
+        // >= hoy (incluye eventos de hoy)
+        return dt >= today;
+      } catch {
+        return true;
+      }
     }
+    // Sin fecha: slot recurrente (dia_semana) sin fecha específica - mantener visible
+    if (typeof (evento as any).dia_semana === 'number') return true;
+    return false;
   }, [today]);
 
   const availableRsvpEvents = React.useMemo(() => {

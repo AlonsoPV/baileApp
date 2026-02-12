@@ -177,6 +177,9 @@ export function useUpdateRSVP() {
       queryClient.invalidateQueries({ queryKey: ["event", "date", variables.eventDateId] });
       queryClient.invalidateQueries({ queryKey: ["event", "parent"] });
       
+      // Invalidar perfil público (UserPublicScreen usa ['user-rsvps', userId])
+      queryClient.invalidateQueries({ queryKey: ["user-rsvps"] });
+      
       console.log('[useUpdateRSVP] Cache invalidation completed');
     }
   });
@@ -216,6 +219,9 @@ export function useRemoveRSVP() {
       // Forzar refetch de las queries específicas
       queryClient.refetchQueries({ queryKey: ["rsvp", "user", variables] });
       queryClient.refetchQueries({ queryKey: ["rsvp", "stats", variables] });
+      
+      // Invalidar perfil público (UserPublicScreen usa ['user-rsvps', userId])
+      queryClient.invalidateQueries({ queryKey: ["user-rsvps"] });
     }
   });
 }

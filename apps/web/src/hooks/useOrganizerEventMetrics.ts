@@ -70,11 +70,19 @@ export type GlobalFechaMetrics = {
   totalPurchases: number;
 };
 
+export type SeriesDay = {
+  date: string;
+  rsvps: number;
+  purchases: number;
+};
+
 type OrganizerEventMetricsResult = {
   global: GlobalFechaMetrics | null;
   porFecha: FechaMetric[];
   byDate: EventDateSummary[];
   perRSVP: EventRSVPMetric[];
+  series: SeriesDay[];
+  items: EventDateSummary[];
 };
 
 function getDateRange(filter: DateFilter, from?: string, to?: string): { from: string | null; to: string | null } {
@@ -135,6 +143,8 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
           porFecha: [] as FechaMetric[],
           byDate: [] as EventDateSummary[],
           perRSVP: [] as EventRSVPMetric[],
+          series: [] as SeriesDay[],
+          items: [] as EventDateSummary[],
         };
       }
 
@@ -166,13 +176,25 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
           porFecha: [],
           byDate: [],
           perRSVP: [],
+          series: [],
+          items: [],
         };
       }
 
-      const { data: eventDates, error: datesError } = await supabase
+      // Obtener fechas del organizador; filtrar por fecha del EVENTO (no por created_at del RSVP)
+      let datesQuery = supabase
         .from("events_date")
         .select("id, nombre, fecha, parent_id")
         .in("parent_id", parentIds);
+
+      if (dateRange.from) {
+        datesQuery = datesQuery.gte("fecha", dateRange.from);
+      }
+      if (dateRange.to) {
+        datesQuery = datesQuery.lte("fecha", dateRange.to);
+      }
+
+      const { data: eventDates, error: datesError } = await datesQuery;
 
       if (datesError) {
         console.error("[useOrganizerEventMetrics] Error obteniendo fechas:", datesError);
@@ -193,25 +215,17 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
           porFecha: [],
           byDate: [],
           perRSVP: [],
+          series: [],
+          items: [],
         };
       }
 
-      // Obtener todos los RSVPs para estas fechas
-      let rsvpQuery = supabase
+      // Obtener RSVPs para las instancias en el rango (ya filtrado por events_date.fecha)
+      const { data: rsvps, error: rsvpError } = await supabase
         .from("event_rsvp")
         .select("id, event_date_id, user_id, created_at")
         .in("event_date_id", eventDateIds)
         .eq("status", "interesado");
-
-      // Aplicar filtros de fecha si existen
-      if (dateRange.from) {
-        rsvpQuery = rsvpQuery.gte("created_at", `${dateRange.from}T00:00:00.000Z`);
-      }
-      if (dateRange.to) {
-        rsvpQuery = rsvpQuery.lte("created_at", `${dateRange.to}T23:59:59.999Z`);
-      }
-
-      const { data: rsvps, error: rsvpError } = await rsvpQuery;
 
       if (rsvpError) {
         console.error("[useOrganizerEventMetrics] Error obteniendo RSVPs:", rsvpError);
@@ -221,21 +235,12 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
       const rsvpData = rsvps || [];
       console.log("[useOrganizerEventMetrics] 📊 RSVPs encontrados:", rsvpData.length);
 
-      // Obtener compras (status = 'pagado') para las mismas fechas
-      let purchasesQuery = supabase
+      // Obtener compras (status = 'pagado') para las instancias en el rango
+      const { data: purchaseRows, error: purchaseError } = await supabase
         .from("event_rsvp")
         .select("id, event_date_id, created_at")
         .in("event_date_id", eventDateIds)
         .eq("status", "pagado");
-
-      if (dateRange.from) {
-        purchasesQuery = purchasesQuery.gte("created_at", `${dateRange.from}T00:00:00.000Z`);
-      }
-      if (dateRange.to) {
-        purchasesQuery = purchasesQuery.lte("created_at", `${dateRange.to}T23:59:59.999Z`);
-      }
-
-      const { data: purchaseRows, error: purchaseError } = await purchasesQuery;
       if (purchaseError) {
         console.error("[useOrganizerEventMetrics] Error obteniendo compras (event_rsvp):", purchaseError);
       }
@@ -421,7 +426,30 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
         ritmos: [],
       }));
 
-      return { global, porFecha, byDate, perRSVP };
+      // Modo A: serie diaria (agregado por date(events_date.fecha))
+      const seriesByDay = new Map<string, { rsvps: number; purchases: number }>();
+      (eventDates || []).forEach((ed: any) => {
+        const fd = ed.fecha ? String(ed.fecha).split("T")[0] : "sin-fecha";
+        if (!seriesByDay.has(fd)) seriesByDay.set(fd, { rsvps: 0, purchases: 0 });
+        const entry = seriesByDay.get(fd)!;
+        const summary = byDate.find((s) => s.eventDateId === ed.id);
+        if (summary) {
+          entry.rsvps += summary.totalRsvps;
+        }
+        const purch = purchasesByDateId.get(ed.id) || 0;
+        entry.purchases += purch;
+      });
+      const series: SeriesDay[] = Array.from(seriesByDay.entries())
+        .filter(([d]) => d !== "sin-fecha")
+        .map(([date, v]) => ({ date, rsvps: v.rsvps, purchases: v.purchases }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      // Modo B: items cuando es fecha específica (un solo día)
+      const isSingleDay =
+        dateRange.from && dateRange.to && dateRange.from === dateRange.to;
+      const items = isSingleDay ? byDate : [];
+
+      return { global, porFecha, byDate, perRSVP, series, items };
     },
     refetchInterval: 5000,
     staleTime: 0,
@@ -433,6 +461,8 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
     porFecha: query.data?.porFecha || [],
     byDate: query.data?.byDate || [],
     perRSVP: query.data?.perRSVP || [],
+    series: query.data?.series || [],
+    items: query.data?.items || [],
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
