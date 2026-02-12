@@ -34,8 +34,10 @@ function ConfigMissingScreen() {
         La aplicación no puede iniciar porque faltan variables de entorno.
       </Text>
       <Text style={styles.fallbackText}>
-        Por favor, configura EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY
-        en Xcode Cloud environment variables.
+        Configura SUPABASE_URL y SUPABASE_ANON_KEY en EAS (Dashboard → Project → Environment variables) o en Xcode Cloud (workflow env vars).
+      </Text>
+      <Text style={styles.fallbackText}>
+        También puedes usar EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY en .env o config/local.env para builds locales.
       </Text>
       <Text style={styles.fallbackSubtext}>
         Revisa los logs para más detalles.
