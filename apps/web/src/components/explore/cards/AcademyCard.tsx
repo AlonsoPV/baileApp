@@ -6,7 +6,7 @@ import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../../utils/mediaSlots";
-import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
+import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
 interface AcademyCardProps {
@@ -30,7 +30,7 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
   const bio = item.bio || "";
   const mediaList = normalizeMediaArray(item?.media);
   const primaryAvatar =
-    normalizeAndOptimizeUrl(
+    toDirectPublicStorageUrl(
       getMediaBySlot(mediaList, 'p1')?.url ||
       getMediaBySlot(mediaList, 'cover')?.url ||
       item.avatar_url ||

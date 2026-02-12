@@ -4,7 +4,7 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
-import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
+import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 
@@ -19,35 +19,21 @@ export default function TeacherCard({ item }: { item: any }) {
     item.name ||
     "Maestr@";
 
-  // Resolver una URL de imagen robusta (avatar/banner/primer media o por slot)
+  // Resolver una URL de imagen robusta (avatar/banner/primer media o por slot). URL pública directa, sin render.
   const bannerUrl: string | undefined = (() => {
-    
+    const toUrl = (u: string | undefined) => u ? toDirectPublicStorageUrl(u) : undefined;
     const mediaList = Array.isArray(item?.media) ? item.media : [];
     const slotP1 = getMediaBySlot(mediaList as any, 'p1');
-    if (slotP1?.url) {
-      return normalizeAndOptimizeUrl(slotP1.url as string) as string;
-    }
-    // Intentar múltiples claves comunes
+    if (slotP1?.url) return toUrl(slotP1.url as string) ?? undefined;
     const direct = item?.avatar_url || item?.banner_url || item?.portada_url || item?.avatar || item?.portada || item?.banner;
-    
-    if (direct) {
-      return normalizeAndOptimizeUrl(direct as string) as string;
-    }
-   
+    if (direct) return toUrl(direct as string) ?? undefined;
     if (mediaList.length) {
-      // Buscar por slot común
       const bySlot = mediaList.find((m: any) => m?.slot === 'cover' || m?.slot === 'avatar');
-      
-      if (bySlot?.url) {
-        return normalizeAndOptimizeUrl(bySlot.url as string) as string;
-      }
-      if (bySlot?.path) {
-        return normalizeAndOptimizeUrl(bySlot.path as string) as string;
-      }
+      if (bySlot?.url) return toUrl(bySlot.url as string) ?? undefined;
+      if (bySlot?.path) return toUrl(bySlot.path as string) ?? undefined;
       const first = mediaList[0];
-      return normalizeAndOptimizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined;
+      return toUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) ?? undefined;
     }
-    
     return undefined;
   })();
 

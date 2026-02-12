@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
-import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
+import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 
@@ -14,9 +14,11 @@ export default function BrandCard({ item }: Props) {
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Marca";
   const bio = item.bio || "";
-  const cover = normalizeAndOptimizeUrl((item.portada_url)
+  const cover = toDirectPublicStorageUrl(
+    item.portada_url
     || (Array.isArray(item.media) ? ((item.media[0] as any)?.url || (item.media[0] as any)?.path || (item.media[0] as any)) : undefined)
-    || item.avatar_url || undefined) as string | undefined;
+    || item.avatar_url
+  ) ?? undefined;
   // Mapear ritmos por catálogo (ritmos_seleccionados) o por ids numéricos (ritmos/estilos)
   const ritmoNombres: string[] = (() => {
     try {

@@ -4,7 +4,7 @@ import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
-import { normalizeAndOptimizeUrl, optimizeSupabaseImageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 // no se usa urls.userLive, pedimos navegar a /app/profile con query
 
@@ -29,13 +29,12 @@ interface Props {
 export default function DancerCard({ item, to }: Props) {
   const { data: allTags } = useTags() as any;
 
-  // Convierte rutas tipo "bucket/path/to/file" a URL pública de Supabase y luego la optimiza
+  // URL pública directa (sin render/Image Transformation para evitar fallos en cards)
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
     if (!maybePath) return undefined;
     const v = String(maybePath).trim();
     if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) {
-      // Si ya es una URL completa, optimizarla directamente
-      return optimizeSupabaseImageUrl(v) || v;
+      return ensureAbsoluteImageUrl(v) || v;
     }
     const slash = v.indexOf('/');
     if (slash > 0) {
@@ -43,9 +42,7 @@ export default function DancerCard({ item, to }: Props) {
       const path = v.slice(slash + 1);
       try {
         const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-        const publicUrl = data.publicUrl || v;
-        // Optimizar la URL pública
-        return optimizeSupabaseImageUrl(publicUrl) || publicUrl;
+        return data.publicUrl || v;
       } catch {
         return v;
       }
@@ -53,17 +50,18 @@ export default function DancerCard({ item, to }: Props) {
     return v;
   };
 
-  // Resolver imagen: priorizar avatar_url de profiles, luego banner/portada, luego media
+  // Resolver imagen: priorizar avatar_url de profiles, luego banner/portada, luego media (URL pública directa, sin render)
   const coverUrl: string | undefined = (() => {
     const direct = item.avatar_url || item.banner_url || item.portada_url;
-    if (direct) return toSupabasePublicUrl(normalizeAndOptimizeUrl(direct as string) as string);
+    if (direct) return toSupabasePublicUrl(ensureAbsoluteImageUrl(direct as string) ?? direct);
     const media = Array.isArray(item.media) ? item.media : [];
     if (media.length) {
       const bySlot: any = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
-      if (bySlot?.url) return toSupabasePublicUrl(normalizeAndOptimizeUrl(bySlot.url as string) as string);
-      if (bySlot?.path) return toSupabasePublicUrl(normalizeAndOptimizeUrl(bySlot.path as string) as string);
+      if (bySlot?.url) return toSupabasePublicUrl(ensureAbsoluteImageUrl(bySlot.url) ?? bySlot.url);
+      if (bySlot?.path) return toSupabasePublicUrl(ensureAbsoluteImageUrl(bySlot.path) ?? bySlot.path);
       const first = media[0] as any;
-      return toSupabasePublicUrl(normalizeAndOptimizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined)) as string | undefined);
+      const firstUrl = first?.url || first?.path || (typeof first === 'string' ? first : undefined);
+      if (firstUrl) return toSupabasePublicUrl(ensureAbsoluteImageUrl(firstUrl) ?? firstUrl);
     }
     return undefined;
   })();
@@ -76,15 +74,16 @@ export default function DancerCard({ item, to }: Props) {
     (item.display_name as string | undefined) ||
     '';
 
+  const coverUrlDirect = toDirectPublicStorageUrl(coverUrl) ?? coverUrl;
   const coverUrlWithCacheBust = React.useMemo(() => {
-    if (!coverUrl) return undefined;
-    const separator = String(coverUrl).includes('?') ? '&' : '?';
+    if (!coverUrlDirect) return undefined;
+    const separator = String(coverUrlDirect).includes('?') ? '&' : '?';
     const key = encodeURIComponent(String(coverCacheKey ?? ''));
-    return `${coverUrl}${separator}_t=${key}`;
-  }, [coverUrl, coverCacheKey]);
+    return `${coverUrlDirect}${separator}_t=${key}`;
+  }, [coverUrlDirect, coverCacheKey]);
 
   const [imageError, setImageError] = React.useState(false);
-  const imageUrlFinal = coverUrlWithCacheBust || coverUrl;
+  const imageUrlFinal = coverUrlWithCacheBust || coverUrlDirect;
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
   const placeholderReason = !coverUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';

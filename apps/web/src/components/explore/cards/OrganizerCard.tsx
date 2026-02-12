@@ -1,8 +1,8 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
-import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
-import { getMediaBySlot } from "../../../utils/mediaSlots";
+import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
 interface OrganizerCardProps {
@@ -10,46 +10,15 @@ interface OrganizerCardProps {
 }
 
 export default function OrganizerCard({ item }: OrganizerCardProps) {
-  // Priorizar foto 1 de avatar (slot 'p1'), luego slot 'avatar', luego avatar_url, luego portada, luego cover
-  const bannerUrl: string | undefined = (() => {
-    const mediaList = Array.isArray(item?.media) ? item.media : [];
-    
-    // 1. Prioridad: slot 'p1' (foto 1 de avatar)
-    const slotP1 = getMediaBySlot(mediaList as any, 'p1');
-    if (slotP1?.url) {
-      return normalizeAndOptimizeUrl(slotP1.url as string) as string;
-    }
-    
-    // 2. Slot 'avatar'
-    const slotAvatar = getMediaBySlot(mediaList as any, 'avatar');
-    if (slotAvatar?.url) {
-      return normalizeAndOptimizeUrl(slotAvatar.url as string) as string;
-    }
-    
-    // 3. avatar_url directo
-    if (item?.avatar_url) {
-      return normalizeAndOptimizeUrl(item.avatar_url);
-    }
-    
-    // 4. portada_url
-    if (item?.portada_url) {
-      return normalizeAndOptimizeUrl(item.portada_url);
-    }
-    
-    // 5. Slot 'cover'
-    const slotCover = getMediaBySlot(mediaList as any, 'cover');
-    if (slotCover?.url) {
-      return normalizeAndOptimizeUrl(slotCover.url as string) as string;
-    }
-    
-    // 6. Fallback: primer media
-    if (mediaList.length > 0) {
-      const first = mediaList[0];
-      return normalizeAndOptimizeUrl(first?.url || first?.path || (typeof first === 'string' ? first : undefined));
-    }
-    
-    return undefined;
-  })();
+  const toUrl = (u: string | undefined) => u ? toDirectPublicStorageUrl(u) : undefined;
+  const mediaList = normalizeMediaArray(item?.media);
+  const bannerUrl: string | undefined =
+    toUrl(getMediaBySlot(mediaList, 'p1')?.url) ??
+    toUrl(getMediaBySlot(mediaList, 'avatar')?.url) ??
+    toUrl(item?.avatar_url) ??
+    toUrl(item?.portada_url) ??
+    toUrl(getMediaBySlot(mediaList, 'cover')?.url) ??
+    (mediaList.length > 0 ? toUrl((mediaList[0] as any)?.url || (mediaList[0] as any)?.path) : undefined);
 
   // Cache-busting para la imagen del organizador
   const bannerCacheKey =

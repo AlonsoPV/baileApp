@@ -7,7 +7,7 @@ import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { calculateNextDateWithTime } from "../../../utils/calculateRecurringDates";
 import { fmtDate } from "../../../utils/format";
-import { normalizeAndOptimizeUrl, logCardImage } from "../../../utils/imageOptimization";
+import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 
 interface EventCardProps {
@@ -37,22 +37,23 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
     return t;
   };
   // Prioridad para el fondo de la card (flyer/cartel): flyer_url > slot p1 > avatar > portada/avatar_url > primer media
-  // Alineado con EventDatePublicScreen y OrganizerPublicScreen para que se use la imagen correcta.
+  // URL pública directa (sin render/Image Transformation para evitar fallos en cards)
   const flyer = (() => {
-    if (item.flyer_url) return normalizeAndOptimizeUrl(item.flyer_url);
+    const toUrl = (u: string | null | undefined) => (u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined);
+    if (item.flyer_url) return toUrl(item.flyer_url);
     const mediaList = normalizeMediaArray(item.media);
     const p1 = getMediaBySlot(mediaList, 'p1') as any;
     const p1Url = p1?.url ?? p1?.path;
-    if (p1Url) return normalizeAndOptimizeUrl(p1Url);
+    if (p1Url) return toUrl(p1Url);
     const avatarSlot = mediaList.find((m: any) => m?.slot === 'avatar');
     const avatarUrl = avatarSlot?.url ?? (avatarSlot as any)?.path;
-    if (avatarUrl) return normalizeAndOptimizeUrl(avatarUrl);
-    if (item.avatar_url) return normalizeAndOptimizeUrl(item.avatar_url);
-    if (item.portada_url) return normalizeAndOptimizeUrl(item.portada_url);
+    if (avatarUrl) return toUrl(avatarUrl);
+    if (item.avatar_url) return toUrl(item.avatar_url);
+    if (item.portada_url) return toUrl(item.portada_url);
     if (mediaList.length > 0) {
       const first = mediaList[0];
       const url = (first as any)?.url ?? (first as any)?.path ?? (typeof first === 'string' ? first : '');
-      if (url) return normalizeAndOptimizeUrl(url);
+      if (url) return toUrl(url);
     }
     return undefined;
   })();

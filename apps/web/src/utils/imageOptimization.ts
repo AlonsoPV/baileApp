@@ -7,6 +7,29 @@ const SUPABASE_PUBLIC_PATH = "/storage/v1/object/public/";
 const SUPABASE_RENDER_PATH = "/storage/v1/render/image/public/";
 
 /**
+ * Convierte una URL de Supabase render (/render/image/public/...) a URL pública directa
+ * (/object/public/...). Evita fallos cuando Image Transformation no está disponible.
+ * Si la URL no es de render, devuelve la URL absoluta normalizada.
+ */
+export function toDirectPublicStorageUrl(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  const u = String(url).trim();
+  if (!u) return undefined;
+  try {
+    if (u.includes(SUPABASE_RENDER_PATH)) {
+      const pathPart = u.split(SUPABASE_RENDER_PATH)[1]?.split("?")[0];
+      if (pathPart) {
+        const origin = u.startsWith("http") ? new URL(u).origin : getSupabaseUrl();
+        return `${origin}${SUPABASE_PUBLIC_PATH}${pathPart}`;
+      }
+    }
+    return ensureAbsoluteImageUrl(u) ?? u;
+  } catch {
+    return u;
+  }
+}
+
+/**
  * Obtiene la URL base de Supabase desde las variables de entorno
  * Si no está disponible, intenta extraerla de una URL existente
  */

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
-import { normalizeAndOptimizeUrl, logCardImage } from '../../../utils/imageOptimization';
+import { toDirectPublicStorageUrl, logCardImage } from '../../../utils/imageOptimization';
 import { getLocaleFromI18n } from '../../../utils/locale';
 import { useTranslation } from 'react-i18next';
 
@@ -74,7 +74,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
     const route = `/clase?type=${item.ownerType || 'teacher'}`;
     return route;
   }, [item.ownerType, item.ownerId, item.cronogramaIndex, item.diaSemana]);
-  const bg = normalizeAndOptimizeUrl(item.ownerCoverUrl as any);
+  const bg = toDirectPublicStorageUrl(item.ownerCoverUrl as any) ?? undefined;
   const { data: allTags } = useTags() as any;
 
   // Cache-busting para la portada de la clase (owner cover)
