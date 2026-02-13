@@ -10,9 +10,11 @@ import { ErrorBoundary } from "./src/components/ErrorBoundary";
 import { assertEnv, ENV } from "./src/lib/env";
 import { envReport } from "./src/lib/envReport";
 // import { useOTAUpdates } from "./src/hooks/useOTAUpdates"; // Temporarily disabled to prevent crash
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { clearLastCrash, readLastCrash, type CrashRecord } from "./src/lib/crashRecorder";
 import { markPerformance, logPerformanceReport } from "./src/lib/performance";
 import { WelcomeCurtain } from "./src/components/WelcomeCurtain";
+import { AuthCoordinator } from "./src/auth/AuthCoordinator";
 
 // ✅ Generate ENV report at startup (logs to console for debugging)
 markPerformance("app_config_start");
@@ -71,14 +73,24 @@ function ConfigDebug() {
       <TouchableOpacity
         style={[styles.crashButton, { marginTop: 12, backgroundColor: "#16a34a" }]}
         onPress={async () => {
-          const url = String(ENV.supabaseUrl ?? "").trim();
-          if (!url) {
-            Alert.alert("Supabase health", "SUPABASE_URL está vacío.");
+          const baseUrl = String(ENV.supabaseUrl ?? "").trim().replace(/\/$/, "");
+          const anonKey = String(ENV.supabaseAnonKey ?? "").trim();
+          if (!baseUrl || !anonKey) {
+            Alert.alert("Supabase health", "SUPABASE_URL o SUPABASE_ANON_KEY vacío.");
             return;
           }
           try {
-            const r = await fetch(`${url}/auth/v1/health`);
-            Alert.alert("Supabase health", `status: ${r.status}`);
+            // GET rest/v1/ con anon key devuelve 200 y confirma conectividad (401 en /auth/v1/health es normal si está protegido).
+            const r = await fetch(`${baseUrl}/rest/v1/`, {
+              method: "GET",
+              headers: {
+                apikey: anonKey,
+                Authorization: `Bearer ${anonKey}`,
+              },
+            });
+            const body = await r.text();
+            const preview = body.length > 80 ? `${body.slice(0, 80)}…` : body;
+            Alert.alert("Supabase health", `status: ${r.status}\n${preview ? `body: ${preview}` : ""}`);
           } catch (e: any) {
             Alert.alert("Supabase health FAIL", String(e?.message ?? e));
           }
@@ -283,6 +295,33 @@ function AppContent() {
 
   React.useEffect(() => {
     markPerformance("providers_rendered");
+  }, []);
+
+  // ✅ Keychain/build change: TestFlight puede preservar tokens en Keychain al actualizar build;
+  // si el nuevo build tiene distinta config (o keychain group), Google puede devolver "no configurado".
+  // Al detectar cambio de build, hacemos signOut para forzar login fresco y evitar estado inconsistente.
+  const BUILD_STORAGE_KEY = "@baileapp/last_build";
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const currentBuild =
+          (Constants.expoConfig as any)?.ios?.buildNumber ??
+          (Constants.manifest as any)?.ios?.buildNumber ??
+          "0";
+        const lastBuild = (await AsyncStorage.getItem(BUILD_STORAGE_KEY)) ?? "";
+        if (lastBuild !== "" && lastBuild !== currentBuild) {
+          if (!cancelled) {
+            console.log("[App] Build changed", lastBuild, "->", currentBuild, "; signing out to avoid keychain/config mismatch.");
+            await AuthCoordinator.signOut();
+          }
+        }
+        if (!cancelled) await AsyncStorage.setItem(BUILD_STORAGE_KEY, currentBuild);
+      } catch (e) {
+        if (!cancelled) console.warn("[App] Build-change cleanup failed:", e);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   return (

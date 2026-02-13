@@ -132,11 +132,19 @@ final class GoogleSignInModule: NSObject {
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
     DispatchQueue.main.async {
+      // ✅ Siempre log en Release para diagnóstico TestFlight (buscar "[GoogleSignInModule] Release:" en Console).
+      let plistGID = self.plistValue("GIDClientID")
+      let plistServer = self.plistValue("GIDServerClientID")
+      let effectiveClientId = self.resolvedClientId(passed: clientId)
+      let expectedScheme = self.expectedGoogleScheme(from: effectiveClientId)
+      let schemeOK = self.hasURLScheme(expectedScheme)
+      let bundleId = Bundle.main.bundleIdentifier ?? "(none)"
+      let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+      print("[GoogleSignInModule] Release: bundleId=\(bundleId) build=\(buildVersion) GIDClientID_plist=\(plistGID.isEmpty ? "MISSING" : "present(\(plistGID.prefix(18))...)") GIDServer_plist=\(plistServer.isEmpty ? "MISSING" : "present") effectiveClientId=\(effectiveClientId.isEmpty ? "empty" : "present") expectedScheme=\(expectedScheme) schemeOK=\(schemeOK)")
       if self.shouldLog() {
         print("[NATIVE] signIn start requestId=\(requestId)")
       }
       
-      let effectiveClientId = self.resolvedClientId(passed: clientId)
       guard !effectiveClientId.isEmpty else {
         let fromPlist = self.plistValue("GIDClientID")
         if self.shouldLog() {
@@ -148,10 +156,6 @@ final class GoogleSignInModule: NSObject {
       }
 
       let serverClientId = self.resolvedServerClientId()
-      let expectedScheme = self.expectedGoogleScheme(from: effectiveClientId)
-      let schemeOK = self.hasURLScheme(expectedScheme)
-      
-      let bundleId = Bundle.main.bundleIdentifier ?? "(none)"
       let clientIdSource = clientId.isEmpty ? "plist" : "passed"
 
       if self.shouldLog() {
