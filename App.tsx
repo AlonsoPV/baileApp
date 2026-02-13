@@ -6,7 +6,7 @@ import Constants from "expo-constants";
 import * as ExpoLinking from "expo-linking";
 import * as Updates from "expo-updates";
 import React from "react";
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from "react-native";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
 import { assertEnv, ENV } from "./src/lib/env";
 import { envReport } from "./src/lib/envReport";
@@ -67,9 +67,16 @@ function ConfigDebug() {
   const fp = getConfigFingerprint();
   const fpText = formatFingerprint(fp);
 
+  const showReason =
+    Platform.OS === "ios" && typeof __DEV__ !== "undefined" && !__DEV__
+      ? "iOS Release (TestFlight/App Store)"
+      : cfg.debug.showConfigDebug
+        ? "SHOW_CONFIG_DEBUG=1"
+        : "dev mode";
   return (
     <View style={styles.debugContainer}>
       <Text style={styles.debugText}>🔍 Config Debug</Text>
+      <Text style={[styles.debugText, { opacity: 0.9 }]}>Visible: {showReason}</Text>
       <Text style={styles.debugText}>--- fingerprint (comparar 253 vs 254/255) ---</Text>
       <Text style={[styles.debugText, { fontFamily: "monospace", fontSize: 11 }]}>{fpText}</Text>
       <Text style={styles.debugText}>--- expo-updates ---</Text>
@@ -311,12 +318,12 @@ function AppContent() {
   // Only show the debug overlay when explicitly enabled.
   // @ts-ignore - __DEV__ is a React Native global
   const cfg = getRuntimeConfig();
+  const isIosRelease = Platform.OS === "ios" && typeof __DEV__ !== "undefined" && !__DEV__;
   const shouldShowDebug =
-    // Always show in iOS standalone installs (TestFlight/App Store) to compare fingerprints across builds.
+    // iOS Release (TestFlight/App Store): siempre mostrar para comparar fingerprints (appOwnership puede ser null en bare).
+    isIosRelease ||
     cfg.debug.isLikelyTestFlight ||
-    // also show in dev
     (typeof __DEV__ !== "undefined" && __DEV__) ||
-    // and keep manual override
     Boolean(cfg.debug.showConfigDebug);
 
   React.useEffect(() => {
