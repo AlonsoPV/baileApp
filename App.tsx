@@ -323,14 +323,9 @@ function AppContent() {
   // Verificar y descargar actualizaciones OTA automáticamente
   // useOTAUpdates(); // Temporarily disabled to prevent crash
 
-  // Only show the debug overlay when explicitly enabled.
-  // @ts-ignore - __DEV__ is a React Native global
+  // Overlay solo en desarrollo o si activas SHOW_CONFIG_DEBUG=1 en EAS/Xcode Cloud.
   const cfg = getRuntimeConfig();
-  const isIosRelease = Platform.OS === "ios" && typeof __DEV__ !== "undefined" && !__DEV__;
   const shouldShowDebug =
-    // iOS Release (TestFlight/App Store): siempre mostrar para comparar fingerprints (appOwnership puede ser null en bare).
-    isIosRelease ||
-    cfg.debug.isLikelyTestFlight ||
     (typeof __DEV__ !== "undefined" && __DEV__) ||
     Boolean(cfg.debug.showConfigDebug);
 
