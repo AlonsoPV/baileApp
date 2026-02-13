@@ -73,9 +73,17 @@ function ConfigDebug() {
       : cfg.debug.showConfigDebug
         ? "SHOW_CONFIG_DEBUG=1"
         : "dev mode";
+  const isPlaceholder =
+    (supabaseUrl && (supabaseUrl.includes("TU_PROYECTO") || supabaseUrl.includes("TU_ANON"))) ||
+    (supabaseAnonKey && supabaseAnonKey.length < 30);
   return (
     <View style={styles.debugContainer}>
       <Text style={styles.debugText}>🔍 Config Debug</Text>
+      {isPlaceholder ? (
+        <Text style={[styles.debugText, { color: "#fbbf24", fontWeight: "700", marginVertical: 4 }]}>
+          ⚠️ Supabase con placeholder o key corta. Configura SUPABASE_URL y SUPABASE_ANON_KEY en Xcode Cloud / EAS y haz un build nuevo.
+        </Text>
+      ) : null}
       <Text style={[styles.debugText, { opacity: 0.9 }]}>Visible: {showReason}</Text>
       <Text style={styles.debugText}>--- fingerprint (comparar 253 vs 254/255) ---</Text>
       <Text style={[styles.debugText, { fontFamily: "monospace", fontSize: 11 }]}>{fpText}</Text>

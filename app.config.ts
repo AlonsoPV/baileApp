@@ -52,8 +52,9 @@ function loadLocalEnvFile(filePath: string) {
   }
 }
 
-// Load local env file for Expo Go / simulator runs (does NOT affect Xcode Cloud)
-// Prefer config/local.env if it exists (we'll gitignore it), otherwise fall back to .env behavior.
+// Load local env file for Expo Go / simulator runs.
+// ✅ Prefer .env over config/local.env so CI wins: ci_post_clone.sh creates .env with real values;
+//    if we preferred config/local.env, placeholder TU_PROYECTO would be used and health check fails.
 try {
   // Use process.cwd() (more reliable than __dirname if this file is loaded as ESM).
   const cwd = process.cwd();
@@ -75,8 +76,8 @@ try {
     });
   }
 
-  const chosenPath = hasLocal ? localEnvPath : defaultEnvPath;
-  const fileExists = hasLocal || hasDefault;
+  const chosenPath = hasDefault ? defaultEnvPath : localEnvPath;
+  const fileExists = hasDefault || hasLocal;
 
   // Load into LOCAL_ENV first (reliable)
   if (fileExists) {
