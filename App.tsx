@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import * as ExpoLinking from "expo-linking";
+import * as Updates from "expo-updates";
 import React from "react";
 import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
@@ -15,6 +16,7 @@ import { clearLastCrash, readLastCrash, type CrashRecord } from "./src/lib/crash
 import { markPerformance, logPerformanceReport } from "./src/lib/performance";
 import { WelcomeCurtain } from "./src/components/WelcomeCurtain";
 import { AuthCoordinator } from "./src/auth/AuthCoordinator";
+import { formatFingerprint, getConfigFingerprint, getNativeGoogleConfigStatus, getRuntimeConfig } from "./src/config/runtimeConfig";
 
 // ✅ Generate ENV report at startup (logs to console for debugging)
 markPerformance("app_config_start");
@@ -50,18 +52,41 @@ function ConfigMissingScreen() {
 
 // ✅ Temporary debug component to verify extra config in TestFlight
 function ConfigDebug() {
-  const extra =
-    (Constants.expoConfig as any)?.extra ??
-    (Constants as any)?.manifest?.extra ??
-    (Constants as any)?.manifest2?.extra;
+  const cfg = getRuntimeConfig();
+  const extra = cfg.extra;
 
-  const supabaseUrl = String(ENV.supabaseUrl ?? "").trim();
-  const supabaseAnonKey = String(ENV.supabaseAnonKey ?? "").trim();
+  const supabaseUrl = String(cfg.supabase.url ?? "").trim();
+  const supabaseAnonKey = String(cfg.supabase.anonKey ?? "").trim();
   const maskUrl = (v: string) => (v ? (v.length > 80 ? `${v.slice(0, 60)}…${v.slice(-12)}` : v) : "(empty)");
+  const [nativeGoogleStatus, setNativeGoogleStatus] = React.useState<any | null>(null);
+
+  React.useEffect(() => {
+    getNativeGoogleConfigStatus().then(setNativeGoogleStatus).catch(() => setNativeGoogleStatus(null));
+  }, []);
+
+  const fp = getConfigFingerprint();
+  const fpText = formatFingerprint(fp);
 
   return (
     <View style={styles.debugContainer}>
       <Text style={styles.debugText}>🔍 Config Debug</Text>
+      <Text style={styles.debugText}>--- fingerprint (comparar 253 vs 254/255) ---</Text>
+      <Text style={[styles.debugText, { fontFamily: "monospace", fontSize: 11 }]}>{fpText}</Text>
+      <Text style={styles.debugText}>--- expo-updates ---</Text>
+      <Text style={styles.debugText}>Updates.isEnabled: {String(Updates.isEnabled)}</Text>
+      <Text style={styles.debugText}>Updates.isEmbeddedLaunch: {String((Updates as any)?.isEmbeddedLaunch)}</Text>
+      <Text style={styles.debugText}>Updates.channel: {String((Updates as any)?.channel ?? "(none)")}</Text>
+      <Text style={styles.debugText}>Updates.runtimeVersion: {String((Updates as any)?.runtimeVersion ?? "(none)")}</Text>
+      <Text style={styles.debugText}>Updates.updateId: {String((Updates as any)?.updateId ?? "(none)")}</Text>
+      <Text style={styles.debugText}>--- google native ---</Text>
+      <Text style={styles.debugText}>
+        native.isTestFlight: {nativeGoogleStatus ? String(!!nativeGoogleStatus.isTestFlight) : "(loading)"}
+      </Text>
+      <Text style={styles.debugText}>
+        native.configured: {nativeGoogleStatus ? String(!!nativeGoogleStatus.configured) : "(loading)"}{" "}
+        schemeOK: {nativeGoogleStatus ? String(!!nativeGoogleStatus.schemeOK) : "(loading)"}{" "}
+        gidHash12: {nativeGoogleStatus ? String(nativeGoogleStatus.gidClientIdHash12 ?? "") : "(loading)"}
+      </Text>
       <Text style={styles.debugText}>extra exists: {extra ? "YES" : "NO"}</Text>
       <Text style={styles.debugText}>supabaseUrl: {extra?.supabaseUrl ? "YES" : "NO"}</Text>
       <Text style={styles.debugText}>anonKey: {extra?.supabaseAnonKey ? "YES" : "NO"}</Text>
@@ -73,8 +98,8 @@ function ConfigDebug() {
       <TouchableOpacity
         style={[styles.crashButton, { marginTop: 12, backgroundColor: "#16a34a" }]}
         onPress={async () => {
-          const baseUrl = String(ENV.supabaseUrl ?? "").trim().replace(/\/$/, "");
-          const anonKey = String(ENV.supabaseAnonKey ?? "").trim();
+          const baseUrl = String(cfg.supabase.url ?? "").trim().replace(/\/$/, "");
+          const anonKey = String(cfg.supabase.anonKey ?? "").trim();
           if (!baseUrl || !anonKey) {
             Alert.alert("Supabase health", "SUPABASE_URL o SUPABASE_ANON_KEY vacío.");
             return;
@@ -285,13 +310,14 @@ function AppContent() {
 
   // Only show the debug overlay when explicitly enabled.
   // @ts-ignore - __DEV__ is a React Native global
+  const cfg = getRuntimeConfig();
   const shouldShowDebug =
+    // Always show in iOS standalone installs (TestFlight/App Store) to compare fingerprints across builds.
+    cfg.debug.isLikelyTestFlight ||
+    // also show in dev
     (typeof __DEV__ !== "undefined" && __DEV__) ||
-    Boolean(
-      (Constants.expoConfig as any)?.extra?.showConfigDebug ??
-        (Constants as any)?.manifest?.extra?.showConfigDebug ??
-        (Constants as any)?.manifest2?.extra?.showConfigDebug
-    );
+    // and keep manual override
+    Boolean(cfg.debug.showConfigDebug);
 
   React.useEffect(() => {
     markPerformance("providers_rendered");

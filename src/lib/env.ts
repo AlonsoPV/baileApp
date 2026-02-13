@@ -9,6 +9,7 @@
  */
 
 import Constants from "expo-constants";
+import { getRuntimeConfig } from "../config/runtimeConfig";
 
 /**
  * Read extra config from Constants (defensive)
@@ -32,10 +33,11 @@ function readExtra() {
  * app.config.ts inyecta SUPABASE_URL/SUPABASE_ANON_KEY desde process.env al build; aquí solo leemos extra.
  */
 export const ENV = (() => {
-  const extra = readExtra();
+  // ✅ Single source of truth
+  const cfg = getRuntimeConfig();
   return {
-    supabaseUrl: (extra.SUPABASE_URL ?? extra.EXPO_PUBLIC_SUPABASE_URL ?? extra.supabaseUrl ?? null) as string | null,
-    supabaseAnonKey: (extra.SUPABASE_ANON_KEY ?? extra.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra.supabaseAnonKey ?? null) as string | null,
+    supabaseUrl: (cfg.supabase.url ?? null) as string | null,
+    supabaseAnonKey: (cfg.supabase.anonKey ?? null) as string | null,
   };
 })();
 

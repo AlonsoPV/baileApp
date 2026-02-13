@@ -302,7 +302,17 @@ const config: ExpoConfig = {
   },
 
   updates: {
-    enabled: true, // ✅ Habilitado - Nota: Requiere plan de Expo con límites adecuados
+    // ⚠️ Debugging builds 254/255 vs 253:
+    // Si sospechas que el build está cargando OTRO JS bundle vía OTA (overlay no aparece),
+    // puedes deshabilitar Updates temporalmente seteando DISABLE_EXPO_UPDATES=1 en CI/EAS.
+    enabled: !(
+      String(LOCAL_ENV.DISABLE_EXPO_UPDATES ?? (typeof process !== "undefined" ? process.env?.DISABLE_EXPO_UPDATES : "") ?? "")
+        .trim()
+        .toLowerCase() === "1" ||
+      String(LOCAL_ENV.DISABLE_EXPO_UPDATES ?? (typeof process !== "undefined" ? process.env?.DISABLE_EXPO_UPDATES : "") ?? "")
+        .trim()
+        .toLowerCase() === "true"
+    ),
     // ⚠️ Si alcanzas el límite del plan gratuito, las actualizaciones OTA no funcionarán
     // En ese caso, usa builds completos: pnpm build:prod:ios → pnpm submit:ios
     url: "https://u.expo.dev/8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",

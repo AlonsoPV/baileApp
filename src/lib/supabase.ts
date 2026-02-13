@@ -1,19 +1,16 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ENV } from "./env";
+import { getRuntimeConfig } from "../config/runtimeConfig";
 import { markPerformance } from "./performance";
 
 /**
- * ✅ FIX CRÍTICO: Acceso estático a process.env para que Metro pueda inlinear
- * 
- * Metro solo puede inlinear variables EXPO_PUBLIC_* cuando se acceden de forma estática:
- * ✅ process.env.EXPO_PUBLIC_SUPABASE_URL
- * ❌ process.env[key] (NO funciona en runtime)
- * 
- * En TestFlight, el acceso dinámico devuelve undefined y causa crash fatal.
- * 
- * REGLA: supabase debe ser null o un cliente válido. Nunca Proxy que lanza.
+ * Runtime Supabase init
+ *
+ * ✅ Regla: en iOS/TestFlight NO se lee `process.env` en runtime.
+ * Solo se leen valores desde `Constants.expoConfig.extra` (vía `runtimeConfig`).
+ *
+ * REGLA: `supabase` debe ser null o un cliente válido. Nunca Proxy que lanza.
  */
 
 function readExtra() {
@@ -32,20 +29,13 @@ function readExtra() {
   }
 }
 
-let extra: any = {};
-let ENV_URL: string | undefined;
-let ENV_KEY: string | undefined;
 let supabaseUrl: string | undefined;
 let supabaseAnonKey: string | undefined;
 let supabase: SupabaseClient | null = null;
 
 try {
-  extra = readExtra();
-
-  // ⚠️ acceso estático (no dinámico) para que Metro inlinee
-  // Esto es crítico: Metro necesita ver la referencia literal a la variable
-  ENV_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
-  ENV_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  const cfg = getRuntimeConfig();
+  const extra = cfg.extra;
 
   // ✅ Use ENV (from Constants.expoConfig.extra) as primary source
   // This is reliable in bare RN, process.env may be undefined in runtime
@@ -55,17 +45,12 @@ try {
     return s.length > 0 ? s : undefined;
   };
 
-  supabaseUrl =
-    normalizeValue(ENV.supabaseUrl) ||
-    normalizeValue(extra.supabaseUrl) ||
-    normalizeValue(extra.EXPO_PUBLIC_SUPABASE_URL) ||
-    normalizeValue(ENV_URL);
+  supabaseUrl = normalizeValue(cfg.supabase.url) || normalizeValue(extra.supabaseUrl) || normalizeValue(extra.EXPO_PUBLIC_SUPABASE_URL);
 
   supabaseAnonKey =
-    normalizeValue(ENV.supabaseAnonKey) ||
+    normalizeValue(cfg.supabase.anonKey) ||
     normalizeValue(extra.supabaseAnonKey) ||
-    normalizeValue(extra.EXPO_PUBLIC_SUPABASE_ANON_KEY) ||
-    normalizeValue(ENV_KEY);
+    normalizeValue(extra.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
   // ✅ En producción NO queremos crashear la app por config faltante
   // Retornamos null en lugar de un Proxy que puede fallar
@@ -140,10 +125,9 @@ if (!supabase) {
   }
   console.warn("[Supabase] Constants.manifest?.extra:", (Constants as any)?.manifest?.extra ? "exists" : "missing");
   console.warn("[Supabase] Constants.manifest2?.extra:", (Constants as any)?.manifest2?.extra ? "exists" : "missing");
-  console.warn("[Supabase] ENV_URL (process.env):", ENV_URL ? `✓ (len=${String(ENV_URL).length})` : "✗ (not available in RN runtime)");
-  console.warn("[Supabase] ENV_KEY (process.env):", ENV_KEY ? `✓ (len=${String(ENV_KEY).length})` : "✗ (not available in RN runtime)");
-  console.warn("[Supabase] ENV.supabaseUrl:", ENV.supabaseUrl ? `✓ (len=${String(ENV.supabaseUrl).length})` : "✗");
-  console.warn("[Supabase] ENV.supabaseAnonKey:", ENV.supabaseAnonKey ? `✓ (len=${String(ENV.supabaseAnonKey).length})` : "✗");
+  const cfg = getRuntimeConfig();
+  console.warn("[Supabase] runtimeConfig.supabase.url:", cfg.supabase.url ? `✓ (len=${String(cfg.supabase.url).length})` : "✗");
+  console.warn("[Supabase] runtimeConfig.supabase.anonKey:", cfg.supabase.anonKey ? `✓ (len=${String(cfg.supabase.anonKey).length})` : "✗");
   console.warn("[Supabase] ======================================");
   
   // En desarrollo: mostrar error más visible pero NO crashear

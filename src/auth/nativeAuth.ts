@@ -62,6 +62,29 @@ export async function nativeSignInWithGoogleWithRequestId(
   if (!GoogleSignInModule?.signIn) {
     throw new Error("GoogleSignInModule no está disponible (build iOS requerido).");
   }
+
+  // ✅ Preflight: preguntar al nativo si está configurado (Info.plist + URL scheme).
+  // Esto evita el mensaje ambiguo y nos da diagnóstico cuando un build trae otro Info.plist o un OTA distinto.
+  if (GoogleSignInModule?.getConfigStatus) {
+    try {
+      const status = await GoogleSignInModule.getConfigStatus();
+      if (!status?.configured) {
+        const err: any = new Error(
+          `Google no configurado (nativo). configured=${String(status?.configured)} ` +
+            `schemeOK=${String(status?.schemeOK)} gidPresent=${String(status?.gidClientIdPresent)} ` +
+            `bundleId=${String(status?.bundleId)} build=${String(status?.build)} ` +
+            `gidHash12=${String(status?.gidClientIdHash12)}`
+        );
+        err.code = "GOOGLE_NOT_CONFIGURED_NATIVE";
+        err.nativeStatus = status;
+        throw err;
+      }
+    } catch (e) {
+      // If preflight throws, prefer that error (it’s more actionable than later NETWORK_ERROR).
+      throw e;
+    }
+  }
+
   const rid = String(requestId || "");
   if (shouldLog()) {
     // eslint-disable-next-line no-console
