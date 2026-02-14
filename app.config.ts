@@ -52,8 +52,9 @@ function loadLocalEnvFile(filePath: string) {
   }
 }
 
-// Load local env file for Expo Go / simulator runs (does NOT affect Xcode Cloud)
-// Prefer config/local.env if it exists (we'll gitignore it), otherwise fall back to .env behavior.
+// Load local env file for Expo Go / simulator runs.
+// ✅ Prefer .env over config/local.env so CI wins: ci_post_clone.sh creates .env with real values;
+//    if we preferred config/local.env, placeholder TU_PROYECTO would be used and health check fails.
 try {
   // Use process.cwd() (more reliable than __dirname if this file is loaded as ESM).
   const cwd = process.cwd();
@@ -75,8 +76,8 @@ try {
     });
   }
 
-  const chosenPath = hasLocal ? localEnvPath : defaultEnvPath;
-  const fileExists = hasLocal || hasDefault;
+  const chosenPath = hasDefault ? defaultEnvPath : localEnvPath;
+  const fileExists = hasDefault || hasLocal;
 
   // Load into LOCAL_ENV first (reliable)
   if (fileExists) {
@@ -177,7 +178,7 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.tuorg.dondebailarmx",
     // ✅ App Store Connect: must be numeric and increase over last uploaded build.
     // Last uploaded reported: 181 → next safe default: 182 (EAS production also auto-increments).
-    buildNumber: "252",
+    buildNumber: "254",
     infoPlist: (() => {
       const googleIosClientId = required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD);
       const googleWebClientId = required("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID", GOOGLE_WEB_CLIENT_ID_PROD);
@@ -302,7 +303,17 @@ const config: ExpoConfig = {
   },
 
   updates: {
-    enabled: true, // ✅ Habilitado - Nota: Requiere plan de Expo con límites adecuados
+    // ⚠️ Debugging builds 254/255 vs 253:
+    // Si sospechas que el build está cargando OTRO JS bundle vía OTA (overlay no aparece),
+    // puedes deshabilitar Updates temporalmente seteando DISABLE_EXPO_UPDATES=1 en CI/EAS.
+    enabled: !(
+      String(LOCAL_ENV.DISABLE_EXPO_UPDATES ?? (typeof process !== "undefined" ? process.env?.DISABLE_EXPO_UPDATES : "") ?? "")
+        .trim()
+        .toLowerCase() === "1" ||
+      String(LOCAL_ENV.DISABLE_EXPO_UPDATES ?? (typeof process !== "undefined" ? process.env?.DISABLE_EXPO_UPDATES : "") ?? "")
+        .trim()
+        .toLowerCase() === "true"
+    ),
     // ⚠️ Si alcanzas el límite del plan gratuito, las actualizaciones OTA no funcionarán
     // En ese caso, usa builds completos: pnpm build:prod:ios → pnpm submit:ios
     url: "https://u.expo.dev/8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",

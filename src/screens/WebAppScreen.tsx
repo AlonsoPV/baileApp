@@ -13,6 +13,7 @@ import {
 import * as ExpoLinking from "expo-linking";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Constants from "expo-constants";
+import { getRuntimeConfig } from "../config/runtimeConfig";
 import { AuthCoordinator } from "../auth/AuthCoordinator";
 import { assertGoogleAuthConfig } from "../auth/assertGoogleAuthConfig";
 import { logHost, shouldAuthDebug } from "../utils/authDebug";
@@ -164,41 +165,19 @@ export default function WebAppScreen() {
   }, [handleIncomingUrl]);
 
   const getGoogleIosClientId = React.useCallback((): string => {
-    // Prefer Expo extra (recommended for Xcode Cloud / EAS)
-    const extra = (Constants.expoConfig as any)?.extra ?? (Constants as any)?.manifest?.extra ?? (Constants as any)?.manifest2?.extra ?? {};
-    return (
-      extra.googleIosClientId ||
-      extra.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
-      // build-time env fallback (may be undefined at runtime)
-      (process as any)?.env?.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
-      ""
-    );
+    // ✅ Runtime-only: no process.env. Source of truth is Constants.extra (via runtimeConfig).
+    const cfg = getRuntimeConfig();
+    return String(cfg.google.iosClientId ?? "");
   }, []);
 
   const getGoogleWebClientId = React.useCallback((): string => {
-    const extra =
-      (Constants.expoConfig as any)?.extra ??
-      (Constants as any)?.manifest?.extra ??
-      (Constants as any)?.manifest2?.extra ??
-      {};
-    return (
-      extra.googleWebClientId ||
-      extra.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
-      (process as any)?.env?.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
-      ""
-    );
+    const cfg = getRuntimeConfig();
+    return String(cfg.google.webClientId ?? "");
   }, []);
 
   const shouldGoogleSignInDebug = React.useCallback((): boolean => {
-    const extra =
-      (Constants.expoConfig as any)?.extra ??
-      (Constants as any)?.manifest?.extra ??
-      (Constants as any)?.manifest2?.extra ??
-      {};
-    const v = extra.BAILEAPP_GOOGLE_SIGNIN_DEBUG ?? (process as any)?.env?.BAILEAPP_GOOGLE_SIGNIN_DEBUG;
-    if (typeof v === "boolean") return v;
-    const s = String(v ?? "").trim().toLowerCase();
-    return s === "1" || s === "true" || s === "yes";
+    const cfg = getRuntimeConfig();
+    return cfg.debug.googleDebug;
   }, []);
 
   const mask = React.useCallback((v: string) => {

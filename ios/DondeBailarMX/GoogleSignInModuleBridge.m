@@ -11,4 +11,7 @@ RCT_EXTERN_METHOD(signIn:(NSString *)clientId
 RCT_EXTERN_METHOD(signOut:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(getConfigStatus:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 @end

@@ -1,5 +1,5 @@
 #!/bin/bash
 set -euo pipefail
 
-# Wrapper: some Xcode Cloud setups look for scripts in repo root.
+# Wrapper: some Xcode Cloud setups  look for scripts in repo roo t.
 exec "$(dirname "$0")/ci_scripts/ci_post_clone.sh"

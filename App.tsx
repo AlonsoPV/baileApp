@@ -4,15 +4,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import * as ExpoLinking from "expo-linking";
+import * as Updates from "expo-updates";
 import React from "react";
-import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { Text, View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from "react-native";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
 import { assertEnv, ENV } from "./src/lib/env";
 import { envReport } from "./src/lib/envReport";
 // import { useOTAUpdates } from "./src/hooks/useOTAUpdates"; // Temporarily disabled to prevent crash
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { clearLastCrash, readLastCrash, type CrashRecord } from "./src/lib/crashRecorder";
 import { markPerformance, logPerformanceReport } from "./src/lib/performance";
 import { WelcomeCurtain } from "./src/components/WelcomeCurtain";
+import { AuthCoordinator } from "./src/auth/AuthCoordinator";
+import { formatFingerprint, getConfigFingerprint, getNativeGoogleConfigStatus, getRuntimeConfig } from "./src/config/runtimeConfig";
 
 // ✅ Generate ENV report at startup (logs to console for debugging)
 markPerformance("app_config_start");
@@ -48,18 +52,56 @@ function ConfigMissingScreen() {
 
 // ✅ Temporary debug component to verify extra config in TestFlight
 function ConfigDebug() {
-  const extra =
-    (Constants.expoConfig as any)?.extra ??
-    (Constants as any)?.manifest?.extra ??
-    (Constants as any)?.manifest2?.extra;
+  const cfg = getRuntimeConfig();
+  const extra = cfg.extra;
 
-  const supabaseUrl = String(ENV.supabaseUrl ?? "").trim();
-  const supabaseAnonKey = String(ENV.supabaseAnonKey ?? "").trim();
+  const supabaseUrl = String(cfg.supabase.url ?? "").trim();
+  const supabaseAnonKey = String(cfg.supabase.anonKey ?? "").trim();
   const maskUrl = (v: string) => (v ? (v.length > 80 ? `${v.slice(0, 60)}…${v.slice(-12)}` : v) : "(empty)");
+  const [nativeGoogleStatus, setNativeGoogleStatus] = React.useState<any | null>(null);
 
+  React.useEffect(() => {
+    getNativeGoogleConfigStatus().then(setNativeGoogleStatus).catch(() => setNativeGoogleStatus(null));
+  }, []);
+
+  const fp = getConfigFingerprint();
+  const fpText = formatFingerprint(fp);
+
+  const showReason =
+    Platform.OS === "ios" && typeof __DEV__ !== "undefined" && !__DEV__
+      ? "iOS Release (TestFlight/App Store)"
+      : cfg.debug.showConfigDebug
+        ? "SHOW_CONFIG_DEBUG=1"
+        : "dev mode";
+  const isPlaceholder =
+    (supabaseUrl && (supabaseUrl.includes("TU_PROYECTO") || supabaseUrl.includes("TU_ANON"))) ||
+    (supabaseAnonKey && supabaseAnonKey.length < 30);
   return (
     <View style={styles.debugContainer}>
       <Text style={styles.debugText}>🔍 Config Debug</Text>
+      {isPlaceholder ? (
+        <Text style={[styles.debugText, { color: "#fbbf24", fontWeight: "700", marginVertical: 4 }]}>
+          ⚠️ Supabase con placeholder o key corta. Configura SUPABASE_URL y SUPABASE_ANON_KEY en Xcode Cloud / EAS y haz un build nuevo.
+        </Text>
+      ) : null}
+      <Text style={[styles.debugText, { opacity: 0.9 }]}>Visible: {showReason}</Text>
+      <Text style={styles.debugText}>--- fingerprint (comparar 253 vs 254/255) ---</Text>
+      <Text style={[styles.debugText, { fontFamily: "monospace", fontSize: 11 }]}>{fpText}</Text>
+      <Text style={styles.debugText}>--- expo-updates ---</Text>
+      <Text style={styles.debugText}>Updates.isEnabled: {String(Updates.isEnabled)}</Text>
+      <Text style={styles.debugText}>Updates.isEmbeddedLaunch: {String((Updates as any)?.isEmbeddedLaunch)}</Text>
+      <Text style={styles.debugText}>Updates.channel: {String((Updates as any)?.channel ?? "(none)")}</Text>
+      <Text style={styles.debugText}>Updates.runtimeVersion: {String((Updates as any)?.runtimeVersion ?? "(none)")}</Text>
+      <Text style={styles.debugText}>Updates.updateId: {String((Updates as any)?.updateId ?? "(none)")}</Text>
+      <Text style={styles.debugText}>--- google native ---</Text>
+      <Text style={styles.debugText}>
+        native.isTestFlight: {nativeGoogleStatus ? String(!!nativeGoogleStatus.isTestFlight) : "(loading)"}
+      </Text>
+      <Text style={styles.debugText}>
+        native.configured: {nativeGoogleStatus ? String(!!nativeGoogleStatus.configured) : "(loading)"}{" "}
+        schemeOK: {nativeGoogleStatus ? String(!!nativeGoogleStatus.schemeOK) : "(loading)"}{" "}
+        gidHash12: {nativeGoogleStatus ? String(nativeGoogleStatus.gidClientIdHash12 ?? "") : "(loading)"}
+      </Text>
       <Text style={styles.debugText}>extra exists: {extra ? "YES" : "NO"}</Text>
       <Text style={styles.debugText}>supabaseUrl: {extra?.supabaseUrl ? "YES" : "NO"}</Text>
       <Text style={styles.debugText}>anonKey: {extra?.supabaseAnonKey ? "YES" : "NO"}</Text>
@@ -71,14 +113,24 @@ function ConfigDebug() {
       <TouchableOpacity
         style={[styles.crashButton, { marginTop: 12, backgroundColor: "#16a34a" }]}
         onPress={async () => {
-          const url = String(ENV.supabaseUrl ?? "").trim();
-          if (!url) {
-            Alert.alert("Supabase health", "SUPABASE_URL está vacío.");
+          const baseUrl = String(cfg.supabase.url ?? "").trim().replace(/\/$/, "");
+          const anonKey = String(cfg.supabase.anonKey ?? "").trim();
+          if (!baseUrl || !anonKey) {
+            Alert.alert("Supabase health", "SUPABASE_URL o SUPABASE_ANON_KEY vacío.");
             return;
           }
           try {
-            const r = await fetch(`${url}/auth/v1/health`);
-            Alert.alert("Supabase health", `status: ${r.status}`);
+            // GET rest/v1/ con anon key devuelve 200 y confirma conectividad (401 en /auth/v1/health es normal si está protegido).
+            const r = await fetch(`${baseUrl}/rest/v1/`, {
+              method: "GET",
+              headers: {
+                apikey: anonKey,
+                Authorization: `Bearer ${anonKey}`,
+              },
+            });
+            const body = await r.text();
+            const preview = body.length > 80 ? `${body.slice(0, 80)}…` : body;
+            Alert.alert("Supabase health", `status: ${r.status}\n${preview ? `body: ${preview}` : ""}`);
           } catch (e: any) {
             Alert.alert("Supabase health FAIL", String(e?.message ?? e));
           }
@@ -271,18 +323,41 @@ function AppContent() {
   // Verificar y descargar actualizaciones OTA automáticamente
   // useOTAUpdates(); // Temporarily disabled to prevent crash
 
-  // Only show the debug overlay when explicitly enabled.
-  // @ts-ignore - __DEV__ is a React Native global
+  // Overlay solo en desarrollo o si activas SHOW_CONFIG_DEBUG=1 en EAS/Xcode Cloud.
+  const cfg = getRuntimeConfig();
   const shouldShowDebug =
     (typeof __DEV__ !== "undefined" && __DEV__) ||
-    Boolean(
-      (Constants.expoConfig as any)?.extra?.showConfigDebug ??
-        (Constants as any)?.manifest?.extra?.showConfigDebug ??
-        (Constants as any)?.manifest2?.extra?.showConfigDebug
-    );
+    Boolean(cfg.debug.showConfigDebug);
 
   React.useEffect(() => {
     markPerformance("providers_rendered");
+  }, []);
+
+  // ✅ Keychain/build change: TestFlight puede preservar tokens en Keychain al actualizar build;
+  // si el nuevo build tiene distinta config (o keychain group), Google puede devolver "no configurado".
+  // Al detectar cambio de build, hacemos signOut para forzar login fresco y evitar estado inconsistente.
+  const BUILD_STORAGE_KEY = "@baileapp/last_build";
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const currentBuild =
+          (Constants.expoConfig as any)?.ios?.buildNumber ??
+          (Constants.manifest as any)?.ios?.buildNumber ??
+          "0";
+        const lastBuild = (await AsyncStorage.getItem(BUILD_STORAGE_KEY)) ?? "";
+        if (lastBuild !== "" && lastBuild !== currentBuild) {
+          if (!cancelled) {
+            console.log("[App] Build changed", lastBuild, "->", currentBuild, "; signing out to avoid keychain/config mismatch.");
+            await AuthCoordinator.signOut();
+          }
+        }
+        if (!cancelled) await AsyncStorage.setItem(BUILD_STORAGE_KEY, currentBuild);
+      } catch (e) {
+        if (!cancelled) console.warn("[App] Build-change cleanup failed:", e);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   return (
