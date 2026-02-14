@@ -19,7 +19,7 @@ import { assertGoogleAuthConfig } from "../auth/assertGoogleAuthConfig";
 import { logHost, shouldAuthDebug } from "../utils/authDebug";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
-// Puedes ajustar esto a staging si lo necesitas.
+// Puedes ajustar esto a staging si  lo necesitas.
 const WEB_APP_URL = "https://dondebailar.com.mx";
 
 // Icono de la app (mismo que en la web) para la pantalla de carga.
