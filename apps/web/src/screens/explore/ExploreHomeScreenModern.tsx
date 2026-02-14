@@ -662,30 +662,6 @@ const STYLES = `
     border-radius: 999px;
     background: rgba(255,255,255,.35);
   }
-  .filters-contact-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 9px 16px;
-    border-radius: 999px;
-    border: 1px solid rgba(41, 127, 150, .45);
-    background: linear-gradient(180deg, rgba(41, 127, 150, .22) 0%, rgba(41, 127, 150, .12) 100%);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 700;
-    text-decoration: none;
-    cursor: pointer;
-    transition: transform .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
-    white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(41, 127, 150, .2);
-  }
-  .filters-contact-btn:hover {
-    background: linear-gradient(180deg, rgba(41, 127, 150, .35) 0%, rgba(41, 127, 150, .2) 100%);
-    border-color: rgba(41, 127, 150, .6);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(41, 127, 150, .3);
-  }
-  .filters-contact-btn:active { transform: translateY(0); }
   .filters-card__row {
     display: flex;
     flex-wrap: wrap;
@@ -2959,10 +2935,6 @@ export default function ExploreHomeScreen() {
                 </div>
 
                 <div className="filters-top-row__actions">
-                  <Link to="/soporte" className="filters-contact-btn" aria-label={t('privacy_contact_us') || 'Contáctanos'}>
-                    <span aria-hidden>📬</span>
-                    <span>Contáctanos</span>
-                  </Link>
                   {!usingFavoriteFilters && user && preferences && (
                     (preferences.ritmos && preferences.ritmos.length > 0) ||
                     (preferences.zonas && preferences.zonas.length > 0) ||
