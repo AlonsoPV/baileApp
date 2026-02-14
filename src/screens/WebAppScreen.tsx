@@ -1,12 +1,14 @@
 import React from "react";
 import {
   View,
+  Image,
   ActivityIndicator,
   StyleSheet,
   Platform,
   Text,
   TouchableOpacity,
   Linking,
+  KeyboardAvoidingView,
 } from "react-native";
 import * as ExpoLinking from "expo-linking";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +20,12 @@ import { logHost, shouldAuthDebug } from "../utils/authDebug";
 // URL principal de la web que quieres mostrar dentro de la app móvil.
 // Puedes ajustar esto a staging si lo necesitas.
 const WEB_APP_URL = "https://dondebailar.com.mx";
+
+// Icono de la app (mismo que en la web) para la pantalla de carga.
+const APP_ICON_URL =
+  "https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/icon.png";
+
+const NAVBAR_TEAL = "#297F96";
 
 export default function WebAppScreen() {
   const [loading, setLoading] = React.useState(true);
@@ -482,23 +490,35 @@ export default function WebAppScreen() {
   const WebView = webViewModule?.WebView;
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: Platform.OS === "ios" ? insets.top + 4 : 0,
-        },
-      ]}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={[styles.container, { flex: 1 }]}
     >
-      {WebView ? (
-        <WebView
-          ref={webviewRef}
-          source={{ uri: WEB_APP_URL }}
-          style={styles.webview}
-          originWhitelist={["*"]}
-          onMessage={handleWebMessage}
-          // Mostrar loader inicial
-          startInLoadingState
+      <View
+        style={[
+          styles.container,
+          {
+            paddingTop: Platform.OS === "ios" ? insets.top + 4 : 0,
+            flex: 1,
+          },
+        ]}
+      >
+        {WebView ? (
+          <WebView
+            ref={webviewRef}
+            source={{ uri: WEB_APP_URL }}
+            style={styles.webview}
+            originWhitelist={["*"]}
+            onMessage={handleWebMessage}
+            startInLoadingState
+            scalesPageToFit={false}
+            setBuiltInZoomControls={false}
+            setDisplayZoomControls={false}
+            bounces={false}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            automaticallyAdjustContentInsets={false}
+            contentInsetAdjustmentBehavior="never"
           onLoadStart={() => {
             setHasError(false);
             setLoading(true);
@@ -693,63 +713,63 @@ export default function WebAppScreen() {
             setLoading(false);
             return false;
           }}
-          // Mejores gestos de navegación en iOS
           allowsBackForwardNavigationGestures
-          // Evitar problemas con teclado en algunos dispositivos
-          automaticallyAdjustContentInsets={false}
         />
-      ) : (
-        <View style={styles.loaderOverlay}>
-          <ActivityIndicator size="large" color="#f093fb" />
-        </View>
-      )}
+        ) : (
+          <View style={styles.loaderOverlay}>
+            <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        )}
 
-      {loading && !hasError && (
-        <View style={styles.loaderOverlay}>
-          <ActivityIndicator size="large" color="#f093fb" />
-        </View>
-      )}
+        {loading && !hasError && (
+          <View style={styles.loaderOverlay}>
+            <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />
+            <ActivityIndicator size="large" color="#ffffff" />
+          </View>
+        )}
 
-      {nativeAuthInProgress && (
-        <View style={styles.loaderOverlay}>
-          <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={{ color: "#fff", marginTop: 12, fontWeight: "600" }}>
-            Conectando…
-          </Text>
-        </View>
-      )}
+        {nativeAuthInProgress && (
+          <View style={styles.loaderOverlay}>
+            <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />
+            <ActivityIndicator size="large" color="#ffffff" />
+            <Text style={{ color: "#fff", marginTop: 12, fontWeight: "600" }}>
+              Conectando…
+            </Text>
+          </View>
+        )}
 
-      {nativeAuthError && !nativeAuthInProgress && (
-        <View style={styles.authErrorOverlay}>
-          <Text style={styles.errorTitle}>No se pudo iniciar sesión</Text>
-          <Text style={styles.errorText}>{nativeAuthError}</Text>
-          <TouchableOpacity style={styles.button} onPress={() => setNativeAuthError(null)}>
-            <Text style={styles.buttonText}>Cerrar</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        {nativeAuthError && !nativeAuthInProgress && (
+          <View style={styles.authErrorOverlay}>
+            <Text style={styles.errorTitle}>No se pudo iniciar sesión</Text>
+            <Text style={styles.errorText}>{nativeAuthError}</Text>
+            <TouchableOpacity style={styles.button} onPress={() => setNativeAuthError(null)}>
+              <Text style={styles.buttonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-      {hasError && (
-        <View style={styles.errorOverlay}>
-          <Text style={styles.errorTitle}>No se pudo cargar la página</Text>
-          <Text style={styles.errorText}>
-            Puede ser un problema de red, DNS o SSL. Intenta de nuevo o revisa tu conexión.
-          </Text>
-          <TouchableOpacity style={styles.button} onPress={handleReload}>
-            <Text style={styles.buttonText}>Reintentar</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+        {hasError && (
+          <View style={styles.errorOverlay}>
+            <Text style={styles.errorTitle}>No se pudo cargar la página</Text>
+            <Text style={styles.errorText}>
+              Puede ser un problema de red, DNS o SSL. Intenta de nuevo o revisa tu conexión.
+            </Text>
+            <TouchableOpacity style={styles.button} onPress={handleReload}>
+              <Text style={styles.buttonText}>Reintentar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Match the web navbar background so the iOS safe-area/top bar doesn't show orange.
-    // Web AppShell uses background: #0b0d10.
-    backgroundColor: "#0b0d10",
+    // Mismo color que la navbar de la web para la pantalla de carga inicial.
+    backgroundColor: NAVBAR_TEAL,
   },
   webview: {
     flex: 1,
@@ -764,7 +784,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.2)",
+    backgroundColor: NAVBAR_TEAL,
+  },
+  loaderIcon: {
+    width: 80,
+    height: 80,
+    marginBottom: 20,
+    borderRadius: 18,
   },
   errorOverlay: {
     position: "absolute",

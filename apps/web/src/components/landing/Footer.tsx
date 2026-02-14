@@ -1,10 +1,21 @@
 import React from "react";
-import { Smartphone, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  MapPin,
+  Instagram,
+  Mail,
+  FileText,
+  HelpCircle,
+  Download,
+  Building2,
+} from "lucide-react";
 import { landingContent } from "@/config/content";
 import { WHATSAPP_URL } from "@/config/links";
 import { track, LANDING_EVENTS } from "@/lib/track";
 
 const { footer } = landingContent;
+
+const INSTAGRAM_URL = "https://instagram.com/dondebailarmx";
 
 export function Footer({
   onDownloadClick,
@@ -20,77 +31,132 @@ export function Footer({
 
   return (
     <footer
-      className="landing-section landing-footer"
+      className="landing-footer db-footer"
       role="contentinfo"
+      aria-label="Footer Donde Bailar MX"
     >
-      <div className="landing-footer__bar" aria-hidden />
-      <div className="landing-container">
-        <div className="landing-footer__content">
-          <div className="landing-footer__brand">
-            <h3 className="landing-footer__brand-title">Donde Bailar MX</h3>
-            <p className="landing-footer__brand-tagline">
-              La plataforma donde la comunidad del baile se encuentra.
-            </p>
-          </div>
-          
-          <nav className="landing-footer__nav" aria-label="Enlaces legales y contacto">
-            <div className="landing-footer__nav-group">
-              <span className="landing-footer__nav-label">Legal</span>
-              <a href="/aviso-de-privacidad" className="landing-footer__link">
-                {footer.privacy}
-              </a>
-              <a href="/legal" className="landing-footer__link">
-                {footer.terms}
-              </a>
+      <div className="landing-footer__topline db-footer__topline" aria-hidden />
+
+      <div className="landing-footer__wrap db-footer__wrap">
+        {/* Brand */}
+        <section className="landing-footer__brand brand" aria-label="Marca">
+          <div className="brand__name">
+            <div className="brand__mark" aria-hidden>
+              <MapPin size={18} strokeWidth={2} />
             </div>
-            <div className="landing-footer__nav-group">
-              <span className="landing-footer__nav-label">Contacto</span>
+            <span>Donde Bailar MX</span>
+          </div>
+          <p className="brand__tagline">
+            {footer.tagline}
+          </p>
+          <div className="brand__social social" aria-label="Redes sociales">
+            <a
+              className="pillLink"
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+            >
+              <Instagram size={16} strokeWidth={2} aria-hidden />
+              Instagram
+            </a>
+            <a
+              className="pillLink"
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Contacto"
+            >
+              <Mail size={16} strokeWidth={2} aria-hidden />
+              {footer.contact}
+            </a>
+          </div>
+        </section>
+
+        {/* Links columns */}
+        <nav className="landing-footer__cols cols" aria-label="Enlaces">
+          <div className="col">
+            <div className="col__title">
+              <FileText size={14} strokeWidth={2} aria-hidden />
+              {footer.legalTitle}
+            </div>
+            <div className="col__links">
+              <Link className="link" to="/aviso-de-privacidad">
+                <span>{footer.privacy}</span>
+                <span className="link__meta">Política</span>
+              </Link>
+              <Link className="link" to="/legal">
+                <span>{footer.terms}</span>
+                <span className="link__meta">Uso</span>
+              </Link>
+            </div>
+          </div>
+          <div className="col">
+            <div className="col__title">
+              <HelpCircle size={14} strokeWidth={2} aria-hidden />
+              {footer.supportTitle}
+            </div>
+            <div className="col__links">
+              <Link className="link" to="/soporte">
+                <span>{footer.helpCenter}</span>
+                <span className="link__meta">FAQ</span>
+              </Link>
               <a
+                className="link"
                 href={WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="landing-footer__link landing-footer__link--external"
               >
-                {footer.contact}
-                <ExternalLink size={14} strokeWidth={2} aria-hidden />
+                <span>{footer.contact}</span>
+                <span className="link__meta">↗</span>
               </a>
             </div>
-          </nav>
+          </div>
+        </nav>
 
-          <div className="landing-footer__ctas">
-            <button 
-              type="button" 
-              onClick={handleDownload} 
-              className="btn btn-primary landing-footer__btn landing-footer__btn--primary"
+        {/* CTA */}
+        <aside className="landing-footer__cta cta" aria-label="Acciones">
+          <div className="cta__card">
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={handleDownload}
             >
-              <Smartphone size={18} strokeWidth={2} aria-hidden />
+              <Download size={18} strokeWidth={2} aria-hidden />
               {footer.ctaCopy}
             </button>
-            <button 
-              type="button" 
-              onClick={onB2BClick} 
-              className="btn btn-ghost landing-footer__btn landing-footer__btn--secondary"
+            <Link
+              to="/soporte"
+              className="btn btn--ghost"
             >
-              Soy academia o maestro
-            </button>
+              <Building2 size={18} strokeWidth={2} aria-hidden />
+              Contáctanos
+            </Link>
+            <div className="cta__micro">
+              <span className="chip">Pro</span>
+              <span>{footer.ctaPro}</span>
+            </div>
           </div>
-        </div>
-        
-        <div className="landing-footer__bottom">
-          <p className="landing-footer__copy">
-            © {new Date().getFullYear()} Donde Bailar MX. Todos los derechos reservados.
-          </p>
-          <p className="landing-footer__social">
+        </aside>
+      </div>
+
+      <div className="landing-footer__bottom db-footer__bottom">
+        <div className="db-footer__bottomWrap">
+          <div>
+            © {new Date().getFullYear()} Donde Bailar MX. Todos los derechos
+            reservados.
+          </div>
+          <div>
             {footer.socialLabel} —{" "}
-            <a 
-              href="https://instagram.com/dondebailarmx" 
-              target="_blank" 
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
               rel="noopener noreferrer"
-              className="landing-footer__social-link"
+              className="db-footer__bottomLink"
             >
               Instagram
             </a>
-          </p>
+          </div>
         </div>
       </div>
     </footer>

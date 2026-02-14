@@ -15,39 +15,36 @@
 }
 
 html {
-  /* Optimizaciones de scroll para móvil */
+  width: 100%;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  /* Prevenir scroll horizontal no deseado */
   overflow-x: hidden;
-  /* Asegurar scroll vertical en escritorio */
   overflow-y: auto;
-  /* Mejorar rendimiento de scroll - solo activar durante scroll activo */
   will-change: auto;
-  /* Nota: NO usar transform en html; rompe position: fixed (se vuelve relativo al documento) */
+  touch-action: manipulation;
 }
 
 body {
   margin: 0;
+  width: 100%;
   min-height: 100vh;
-  /* Safe areas support for mobile */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
-  /* Optimizaciones de scroll para móvil */
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  /* Nota: NO usar transform en body; rompe position: fixed (se vuelve relativo al documento) */
-  /* Prevenir scroll horizontal */
   overflow-x: hidden;
-  /* Asegurar scroll vertical en escritorio */
   overflow-y: auto;
-  /* Mejorar rendimiento - solo durante scroll activo */
   will-change: auto;
-  /* Touch actions optimizadas */
-  touch-action: pan-y;
-  /* Importante: no aplicar contain/transform globales al body; afectan fixed/sticky */
+  touch-action: manipulation;
+}
+
+/* iOS: evita zoom automático al hacer focus (zoom si font-size < 16px) */
+input,
+select,
+textarea {
+  font-size: 16px !important;
 }
 
 /* Overlay root: capa fija global (no afecta layout, no bloquea scroll) */

@@ -134,35 +134,35 @@ export default function AppShell() {
         .app-footer {
           margin-top: auto;
           padding: 1rem 1.5rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-          background: linear-gradient(180deg, rgba(11, 13, 16, 0.95) 0%, rgba(8, 10, 14, 0.98) 100%);
-          backdrop-filter: blur(20px);
-          /* Footer fijo en la parte inferior, siempre visible */
+          border-top: none;
+          background: linear-gradient(180deg, rgba(12, 18, 24, 0.97) 0%, rgba(8, 12, 18, 0.99) 100%);
+          backdrop-filter: blur(24px) saturate(1.2);
+          -webkit-backdrop-filter: blur(24px) saturate(1.2);
+          /* Footer fijo en la parte inferior */
           position: fixed;
           left: 0;
           right: 0;
           bottom: 0;
           overflow: hidden;
-          /* Safe area bottom support */
-          padding-bottom: calc(2rem + env(safe-area-inset-bottom));
-          /* Asegurar que el footer esté por encima del contenido pero debajo de modales */
+          padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
           z-index: 10;
+          box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25), 0 -1px 0 rgba(255, 255, 255, 0.04) inset;
         }
-        /* Estilos para escritorio: footer más compacto */
+        /* Escritorio: footer compacto y moderno */
         @media (min-width: 769px) {
           .app-footer {
             padding: 0.75rem 1.5rem;
             padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
           }
           .app-footer-content {
-            gap: 1.5rem;
+            gap: 1rem;
           }
           .app-footer-link {
             font-size: 0.8125rem;
-            padding: 0.4rem 0.85rem;
+            padding: 0.45rem 0.9rem;
           }
           .footer-separator {
-            height: 20px;
+            height: 22px;
           }
           .join-cta-button {
             display: none;
@@ -184,12 +184,12 @@ export default function AppShell() {
           top: 0;
           left: 0;
           right: 0;
-          height: 1px;
+          height: 2px;
           background: linear-gradient(90deg, 
             transparent 0%, 
-            rgba(229, 57, 53, 0.3) 20%, 
-            rgba(251, 140, 0, 0.3) 50%, 
-            rgba(229, 57, 53, 0.3) 80%, 
+            rgba(41, 127, 150, 0.5) 25%, 
+            rgba(41, 127, 150, 0.75) 50%, 
+            rgba(41, 127, 150, 0.5) 75%, 
             transparent 100%);
         }
         .app-footer-content {
@@ -199,7 +199,7 @@ export default function AppShell() {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 1rem;
+          gap: 0.75rem;
           flex-wrap: nowrap;
           position: relative;
           z-index: 1;
@@ -210,65 +210,60 @@ export default function AppShell() {
           flex-shrink: 0;
         }
         .app-footer-link {
-          color: rgba(255, 255, 255, 0.65);
+          color: rgba(255, 255, 255, 0.8);
           text-decoration: none;
-          font-size: 0.875rem;
-          font-weight: 500;
+          font-size: 0.8125rem;
+          font-weight: 600;
           padding: 0.5rem 1rem;
-          border-radius: 8px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.04);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
           white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         
         .footer-link-text {
           display: inline;
         }
-        .app-footer-link::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 8px;
-          background: linear-gradient(135deg, rgba(229, 57, 53, 0.1), rgba(251, 140, 0, 0.1));
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
         .app-footer-link:hover {
-          color: rgba(255, 255, 255, 0.95);
+          color: #fff;
+          background: rgba(41, 127, 150, 0.2);
+          border-color: rgba(41, 127, 150, 0.4);
           transform: translateY(-2px);
           text-decoration: none;
-        }
-        .app-footer-link:hover::before {
-          opacity: 1;
+          box-shadow: 0 4px 16px rgba(41, 127, 150, 0.2);
         }
         .footer-separator {
           width: 1px;
-          height: 24px;
+          height: 20px;
           background: linear-gradient(180deg, 
             transparent 0%, 
-            rgba(255, 255, 255, 0.2) 50%, 
+            rgba(41, 127, 150, 0.35) 50%, 
             transparent 100%);
-          opacity: 0.3;
+          opacity: 0.6;
+          flex-shrink: 0;
         }
         .join-cta-button {
           display: none !important;
         }
         @media (max-width: 768px) {
           .app-footer {
-            padding: 1rem 0.75rem;
+            padding: 0.875rem 0.75rem;
           }
           .app-footer-content {
-            gap: 0.75rem;
+            gap: 0.6rem;
             flex-wrap: nowrap;
             justify-content: center;
             padding: 0;
           }
           .app-footer-link {
             font-size: 0.75rem;
-            padding: 0.4rem 0.7rem;
+            padding: 0.4rem 0.75rem;
             white-space: nowrap;
           }
           .app-footer-link span:last-child {
@@ -284,7 +279,7 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-footer {
-            padding: 0.875rem 0.5rem;
+            padding: 0.75rem 0.5rem;
           }
           .app-footer-content {
             gap: 0.5rem;
@@ -292,7 +287,7 @@ export default function AppShell() {
           }
           .app-footer-link {
             font-size: 0.7rem;
-            padding: 0.35rem 0.6rem;
+            padding: 0.35rem 0.65rem;
             white-space: nowrap;
           }
           .app-footer-link span:last-child {
@@ -300,7 +295,7 @@ export default function AppShell() {
           }
           .footer-separator {
             height: 16px;
-            opacity: 0.2;
+            opacity: 0.5;
             flex-shrink: 0;
             width: 1px;
           }

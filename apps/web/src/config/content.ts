@@ -255,6 +255,11 @@ export const landingContent = {
     contact: "Contacto",
     ctaCopy: "Descarga gratis",
     socialLabel: "Síguenos",
+    helpCenter: "Centro de ayuda",
+    legalTitle: "Legal",
+    supportTitle: "Soporte",
+    tagline: "La plataforma donde la comunidad del baile se encuentra. Descubre eventos, clases y perfiles en un solo lugar.",
+    ctaPro: "Publica clases y eventos, recibe leads y crece tu comunidad desde un solo lugar.",
   },
 } as const;
 
