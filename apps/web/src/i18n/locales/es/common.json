@@ -101,6 +101,11 @@
   "search_placeholder_filters": "Buscar por nombre, lugar, ciudad...",
   "from": "Desde",
   "to": "Hasta",
+  "date_quick_range": "Rango rápido",
+  "date_to_determine": "Fecha a determinar",
+  "date_range_from_to": "Del {{from}} al {{to}}",
+  "explore_type_sociales": "Sociales",
+  "dancers": "Bailarines",
 
   "share_section": "Comparte",
   "share_db_title": "Comparte Dónde Bailar",

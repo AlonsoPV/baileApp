@@ -1,27 +1,36 @@
 /**
- * Dropdown de fechas para Explore: solo rango personalizado (Desde/Hasta) con resumen en el botón.
+ * Dropdown de fechas para Explore: rangos rápidos (Hoy, Esta semana, etc.) + fecha a determinar (Desde/Hasta).
  */
 import React, { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import type { DatePreset } from "@/state/exploreFilters";
 
 const PANEL_STYLE_BASE: React.CSSProperties = {
   position: "fixed",
   zIndex: 9999,
-  minWidth: 280,
-  background: "#101119",
-  border: "1px solid #262a36",
-  borderRadius: 12,
-  padding: "0.75rem",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+  minWidth: 300,
+  background: "linear-gradient(180deg, #141922 0%, #0f1218 100%)",
+  border: "1px solid rgba(41, 127, 150, 0.25)",
+  borderRadius: 16,
+  padding: "1rem",
+  boxShadow: "0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset",
   color: "#f5f5ff",
   fontSize: 14,
   overflow: "auto",
 };
 
+const DATE_PRESETS: { id: DatePreset; labelKey: string }[] = [
+  { id: "todos", labelKey: "all" },
+  { id: "hoy", labelKey: "today" },
+  { id: "semana", labelKey: "this_week" },
+];
+
 export type DateFilterDropdownProps = {
   dateFrom: string | undefined;
   dateTo: string | undefined;
+  datePreset?: DatePreset;
   onApply: (from: string | undefined, to: string | undefined) => void;
+  onPresetSelect?: (preset: DatePreset) => void;
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
@@ -33,7 +42,9 @@ export type DateFilterDropdownProps = {
 export function DateFilterDropdown({
   dateFrom,
   dateTo,
+  datePreset,
   onApply,
+  onPresetSelect,
   anchorEl,
   open,
   onClose,
@@ -78,7 +89,7 @@ export function DateFilterDropdown({
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>(PANEL_STYLE_BASE);
   const GAP = 6;
   const PANEL_MIN_WIDTH = 280;
-  const PANEL_ESTIMATED_HEIGHT = 220;
+  const PANEL_ESTIMATED_HEIGHT = 280;
   const VIEWPORT_MARGIN = 8;
 
   useEffect(() => {
@@ -119,78 +130,125 @@ export function DateFilterDropdown({
     onClose();
   };
 
+  const handlePreset = (preset: DatePreset) => {
+    onPresetSelect?.(preset);
+    onClose();
+  };
+
   if (!open) return null;
 
   const body = (
-    <div ref={panelRef} style={panelStyle} className="date-filter-dropdown" role="dialog" aria-label="Fechas">
-      <div style={{ marginBottom: 8 }}>
-        <label style={{ display: "block", marginBottom: 4, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
-          Desde
-        </label>
-        <input
-          type="date"
-          value={rangeFrom}
-          onChange={(e) => setRangeFrom(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "8px",
-            borderRadius: 8,
-            border: "1px solid #343947",
-            background: "#181b26",
-            color: "#f5f5ff",
-          }}
-        />
+    <div ref={panelRef} style={panelStyle} className="date-filter-dropdown" role="dialog" aria-label={t("dates")}>
+      <div className="date-filter-dropdown__presets">
+        <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
+          {t("date_quick_range")}
+        </span>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {DATE_PRESETS.map((p) => {
+            const active = datePreset === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                aria-selected={active}
+                onClick={() => handlePreset(p.id)}
+                style={{
+                  padding: "10px 16px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: `1px solid ${active ? "rgba(41, 127, 150, 0.7)" : "rgba(255,255,255,0.15)"}`,
+                  background: active ? "rgba(41, 127, 150, 0.28)" : "rgba(255,255,255,0.05)",
+                  color: active ? "#99e5ff" : "rgba(255,255,255,0.88)",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  transition: "background 0.15s ease, border-color 0.15s ease, color 0.15s ease",
+                }}
+              >
+                {t(p.labelKey)}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <div style={{ marginBottom: 10 }}>
-        <label style={{ display: "block", marginBottom: 4, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
-          Hasta
-        </label>
-        <input
-          type="date"
-          value={rangeTo}
-          onChange={(e) => setRangeTo(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "8px",
-            borderRadius: 8,
-            border: "1px solid #343947",
-            background: "#181b26",
-            color: "#f5f5ff",
-          }}
-        />
-      </div>
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-        <button
-          type="button"
-          onClick={handleClear}
-          style={{
-            padding: "6px 12px",
-            fontSize: 13,
-            border: "1px solid rgba(255,255,255,0.2)",
-            background: "transparent",
-            color: "rgba(255,255,255,0.9)",
-            borderRadius: 8,
-            cursor: "pointer",
-          }}
-        >
-          {t("clear") || "Limpiar"}
-        </button>
-        <button
-          type="button"
-          onClick={handleApply}
-          style={{
-            padding: "6px 14px",
-            fontSize: 13,
-            border: "none",
-            background: "linear-gradient(135deg, #FF6A1A, #E94E1B)",
-            color: "#fff",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          {t("apply") || "Aplicar"}
-        </button>
+      <div className="date-filter-dropdown__custom" style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: 14, paddingTop: 14 }}>
+        <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
+          Fecha a determinar
+        </span>
+        <div className="date-filter-dropdown__range" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+          <div>
+            <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
+              Desde
+            </label>
+            <input
+              type="date"
+              value={rangeFrom}
+              onChange={(e) => setRangeFrom(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(0,0,0,0.25)",
+                color: "#f5f5ff",
+                fontSize: 14,
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
+              {t("to")}
+            </label>
+            <input
+              type="date"
+              value={rangeTo}
+              onChange={(e) => setRangeTo(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(0,0,0,0.25)",
+                color: "#f5f5ff",
+                fontSize: 14,
+              }}
+            />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={handleClear}
+            style={{
+              padding: "9px 16px",
+              fontSize: 13,
+              fontWeight: 600,
+              border: "1px solid rgba(255,255,255,0.2)",
+              background: "transparent",
+              color: "rgba(255,255,255,0.9)",
+              borderRadius: 12,
+              cursor: "pointer",
+            }}
+          >
+            {t("clear") || "Limpiar"}
+          </button>
+          <button
+            type="button"
+            onClick={handleApply}
+            style={{
+              padding: "9px 18px",
+              fontSize: 13,
+              fontWeight: 600,
+              border: "none",
+              background: "linear-gradient(135deg, #297F96, #1e5f72)",
+              color: "#fff",
+              borderRadius: 12,
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(41, 127, 150, 0.35)",
+            }}
+          >
+            {t("apply")}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { useExploreFilters, type DatePreset } from "../../state/exploreFilters";
+import { useExploreFilters, type DatePreset, type ExploreType } from "../../state/exploreFilters";
 import { useExploreQuery } from "../../hooks/useExploreQuery";
 import { useUsedFilterTags } from "@/hooks/useUsedFilterTags";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
@@ -556,28 +556,23 @@ const STYLES = `
     background: linear-gradient(90deg, transparent, rgba(41, 127, 150, .6), transparent);
     opacity: .9;
   }
-  /* Filters card (barra principal) */
+  /* Filters card (barra principal) — diseño contenedor oscuro con borde claro */
   .filters-card {
     width: 100%;
     max-width: 680px;
     margin-left: auto;
     margin-right: auto;
-    padding: 18px 16px 16px;
-    border-radius: 24px;
-    background: linear-gradient(160deg, rgba(18, 22, 28, .97) 0%, rgba(10, 13, 18, .98) 100%);
-    border: 1px solid rgba(255,255,255,.08);
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,.03) inset,
-      0 4px 6px -1px rgba(0,0,0,.2),
-      0 12px 40px -8px rgba(0,0,0,.4),
-      0 0 80px -20px rgba(41, 127, 150, .12);
-    color: var(--text);
+    padding: 16px 14px 14px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #1c1f28 0%, #14171e 100%);
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 0 0 1px rgba(0,0,0,.2) inset, 0 4px 16px rgba(0,0,0,.3);
+    color: #fff;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    backdrop-filter: blur(16px) saturate(1.1);
     min-width: 0;
     box-sizing: border-box;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
   }
   .filters-card::after {
     content: '';
@@ -586,8 +581,9 @@ const STYLES = `
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(41, 127, 150, .35) 50%, transparent 100%);
-    opacity: .8;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+    opacity: .9;
+    border-radius: 20px 20px 0 0;
   }
   .filters-header {
     display: flex;
@@ -596,13 +592,14 @@ const STYLES = `
     gap: 12px;
     margin-bottom: 12px;
   }
-  /* Header + búsqueda en la misma fila */
   .filters-top-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    min-height: 36px;
   }
   .filters-top-row__title {
     flex: 0 0 auto;
@@ -626,6 +623,7 @@ const STYLES = `
     gap: 10px;
     font-weight: 700;
     letter-spacing: .2px;
+    color: #fff;
   }
   .filters-icon {
     width: 28px;
@@ -644,7 +642,7 @@ const STYLES = `
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,.14);
     background: rgba(255,255,255,.06);
-    color: var(--muted);
+    color: #fff;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -662,10 +660,145 @@ const STYLES = `
     border-radius: 999px;
     background: rgba(255,255,255,.35);
   }
+  .filters-card__top-action.filters-clear {
+    background: linear-gradient(135deg, #297F96 0%, #7c3aed 100%);
+    border: 1px solid rgba(41, 127, 150, 0.6);
+    box-shadow: 0 0 12px rgba(41, 127, 150, 0.35);
+    color: #fff;
+  }
+  .filters-card__top-action.filters-clear:hover {
+    box-shadow: 0 0 16px rgba(41, 127, 150, 0.45);
+    filter: brightness(1.05);
+  }
+  .filters-card__top-action .filters-badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(124, 58, 237, 0.9);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
   .filters-card__row {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+  .filters-card__row--top {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: stretch;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .filters-card__row--top-left {
+    min-width: 0;
+  }
+  .filters-card__row--top-left.filters-card__cell--span2 {
+    grid-column: 1 / span 2;
+  }
+  .filters-card__row--top-left .filter-pill {
+    width: 100%;
+    min-width: 0;
+  }
+  .filters-card__row--dates-wrap {
+    min-width: 0;
+  }
+  .filters-card__row--dates-wrap .filter-pill {
+    width: 100%;
+    min-width: 0;
+  }
+  .filters-card__top-action {
+    min-width: 0;
+  }
+  @media (max-width: 380px) {
+    .filters-card__row--top {
+      grid-template-columns: 1fr;
+    }
+    .filters-card__row--top-left.filters-card__cell--span2 {
+      grid-column: 1;
+    }
+    .filters-card__row--mid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .filters-card__row--mid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 0;
+  }
+  .filters-card__row--mid .filter-pill { min-width: 0; }
+  .filters-search-toggle { flex-shrink: 0; }
+  .filters-search-input { color: #fff; }
+  .filters-search-close { color: #fff; }
+  .filters-card__row--search {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-top: 0;
+  }
+  .filters-card__row--search.filters-card__row--search-open {
+    max-height: 80px;
+    opacity: 1;
+    margin-top: 8px;
+  }
+  .filters-search-input {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+  }
+  .filters-search-input::placeholder { color: rgba(255,255,255,.5); }
+  .filters-search-input:focus {
+    border-color: rgba(41, 127, 150, .5);
+    box-shadow: 0 0 0 2px rgba(41, 127, 150, .2);
+  }
+  .filters-search-close {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .filters-search-close:hover {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(255,255,255,.2);
+  }
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
   /* Mantener la fila de selectores en una sola fila (scroll si hace falta) */
   .filters-card__row--selects {
@@ -690,9 +823,9 @@ const STYLES = `
     gap: 8px;
     padding: 10px 14px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: rgba(255,255,255,.06);
-    color: var(--text);
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.07);
+    color: #fff;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -701,13 +834,13 @@ const STYLES = `
     outline: none;
   }
   .filter-pill .pill-text {
-    color: #f5f5ff;
+    color: #fff;
   }
   .filter-pill:hover {
-    background: rgba(255,255,255,.1);
+    background: rgba(255,255,255,.12);
     border-color: rgba(255,255,255,.2);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,.18);
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
   }
   .filter-pill:active { transform: translateY(0); }
   .filter-pill:focus-visible {
@@ -715,12 +848,13 @@ const STYLES = `
     border-color: rgba(41, 127, 150, .6);
   }
   .filter-pill .pill-icon {
-    width: 26px;
-    height: 26px;
-    display: grid;
-    place-items: center;
-    border-radius: 999px;
-    background: rgba(255,255,255,.08);
+    width: auto;
+    height: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border-radius: 0;
   }
   .filter-pill.is-primary {
     background: linear-gradient(135deg, rgba(255,106,26,.20), rgba(233,78,27,.12));
@@ -729,7 +863,7 @@ const STYLES = `
   .filter-pill.is-danger {
     background: rgba(239,68,68,.14);
     border-color: rgba(239,68,68,0.35);
-    color: #fecaca;
+    color: #fff;
   }
   .filter-pill.is-danger:hover {
     background: rgba(239,68,68,.20);
@@ -738,7 +872,28 @@ const STYLES = `
   .filter-pill.filter-pill--active {
     background: rgba(255,255,255,.12);
     border-color: rgba(255,255,255,.22);
-    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .filters-search-toggle {
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, rgba(41, 127, 150, 0.25) 0%, rgba(236, 72, 153, 0.2) 100%);
+    border: 1px solid rgba(41, 127, 150, 0.4);
+    box-shadow: 0 0 10px rgba(41, 127, 150, 0.2);
+  }
+  .filters-search-toggle.filter-pill--active {
+    background: linear-gradient(135deg, rgba(41, 127, 150, 0.35) 0%, rgba(236, 72, 153, 0.3) 100%);
+    border-color: rgba(41, 127, 150, 0.6);
+    box-shadow: 0 0 14px rgba(41, 127, 150, 0.35);
+  }
+  .filters-type-dropdown-panel button:hover {
+    background: rgba(255,255,255,.08) !important;
+    border-color: rgba(255,255,255,.15) !important;
+  }
+  .filters-type-dropdown-panel button[aria-selected="true"]:hover {
+    background: rgba(41, 127, 150, 0.28) !important;
+    border-color: rgba(41, 127, 150, 0.75) !important;
   }
   .filters-divider {
     height: 1px;
@@ -864,12 +1019,13 @@ const STYLES = `
     margin: 0;
     font-size: 14px;
     font-weight: 600;
+    color: #fff;
   }
   .filters-fav__btn {
     border-radius: var(--fp-pill);
     border: 1px solid var(--fp-border-soft);
     background: #1b1f2a;
-    color: var(--fp-text);
+    color: #fff;
     font-size: 12px;
     padding: 6px 12px;
     display: flex;
@@ -1659,7 +1815,7 @@ function Section({ title, toAll, children, count, sectionId }: { title: string; 
 export default function ExploreHomeScreen() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { filters, set } = useExploreFilters();
   const selectedType = filters.type;
   const showAll = !selectedType || selectedType === 'all';
@@ -1675,6 +1831,9 @@ export default function ExploreHomeScreen() {
   const ritmosPillRef = React.useRef<HTMLButtonElement | null>(null);
   const zonasPillRef = React.useRef<HTMLButtonElement | null>(null);
   const fechasPillRef = React.useRef<HTMLButtonElement | null>(null);
+  const typePillRef = React.useRef<HTMLButtonElement | null>(null);
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isMobile, setIsMobile] = React.useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 768;
@@ -1683,6 +1842,34 @@ export default function ExploreHomeScreen() {
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
+
+  React.useEffect(() => {
+    if (openFilterDropdown !== "type") return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (typePillRef.current?.contains(target)) return;
+      const panel = document.querySelector('.filters-type-dropdown-panel');
+      if (panel?.contains(target)) return;
+      setOpenFilterDropdown(null);
+    };
+    document.addEventListener("mousedown", handleClick, true);
+    return () => document.removeEventListener("mousedown", handleClick, true);
+  }, [openFilterDropdown]);
+
+  // Cerrar dropdowns de tipo y fechas al hacer scroll (que no sigan fijos en pantalla)
+  React.useEffect(() => {
+    if (!openFilterDropdown) return;
+    const closeOnScroll = () => setOpenFilterDropdown(null);
+    window.addEventListener("scroll", closeOnScroll, { passive: true, capture: true });
+    const container = document.querySelector(".explore-container");
+    if (container) {
+      container.addEventListener("scroll", closeOnScroll, { passive: true, capture: true });
+    }
+    return () => {
+      window.removeEventListener("scroll", closeOnScroll, { capture: true });
+      container?.removeEventListener("scroll", closeOnScroll, { capture: true });
+    };
+  }, [openFilterDropdown]);
 
   // Navegación entre secciones (solo móvil)
   const scrollToSection = React.useCallback((direction: 'up' | 'down') => {
@@ -1983,12 +2170,10 @@ export default function ExploreHomeScreen() {
   const applyDatePreset = React.useCallback(
     (preset: DatePreset) => {
       if (filters.datePreset === preset) return;
-      startTransition(() => {
-        const { from, to } = computePresetRange(preset);
-        set({ datePreset: preset, dateFrom: from, dateTo: to });
-      });
+      const { from, to } = computePresetRange(preset);
+      set({ datePreset: preset, dateFrom: from, dateTo: to });
     },
-    [filters.datePreset, computePresetRange, set, startTransition],
+    [filters.datePreset, computePresetRange, set],
   );
 
   const applyDateFilter = React.useCallback(
@@ -2006,27 +2191,27 @@ export default function ExploreHomeScreen() {
 
   const dateSummaryText = React.useMemo(() => {
     const preset = filters.datePreset ?? "todos";
-    if (preset === "todos" && !filters.dateFrom && !filters.dateTo) return "Todos";
-    if (preset === "hoy") return "Hoy";
-    if (preset === "manana") return "Mañana";
-    if (preset === "semana") return "Esta semana";
-    if (preset === "fin_de_semana") return "Fin de semana";
-    if (preset === "siguientes") return "Siguientes";
+    if (preset === "todos" && !filters.dateFrom && !filters.dateTo) return t("all");
+    if (preset === "hoy") return t("today");
+    if (preset === "manana") return t("tomorrow");
+    if (preset === "semana") return t("this_week");
+    if (preset === "fin_de_semana") return t("weekend");
+    if (preset === "siguientes") return t("next_week");
     if (filters.dateFrom && filters.dateTo) {
       const from = filters.dateFrom;
       const to = filters.dateTo;
       if (from === to) return from;
+      const locale = i18n.language?.startsWith("es") ? "es-MX" : "en";
       const fmt = (s: string) => {
-        const [y, m, d] = s.split("-");
-        const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-        return `${Number(d)} ${months[Number(m) - 1]}`;
+        const [y, m, d] = s.split("-").map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString(locale, { day: "numeric", month: "short" });
       };
-      return `Del ${fmt(from)} al ${fmt(to)}`;
+      return t("date_range_from_to", { from: fmt(from), to: fmt(to) });
     }
-    if (filters.dateFrom) return `Desde ${filters.dateFrom}`;
-    if (filters.dateTo) return `Hasta ${filters.dateTo}`;
-    return "Todos";
-  }, [filters.datePreset, filters.dateFrom, filters.dateTo]);
+    if (filters.dateFrom) return `${t("from")} ${filters.dateFrom}`;
+    if (filters.dateTo) return `${t("to")} ${filters.dateTo}`;
+    return t("all");
+  }, [t, i18n.language, filters.datePreset, filters.dateFrom, filters.dateTo]);
 
   const hasDateFilterActive = Boolean(
     (filters.datePreset && filters.datePreset !== "todos") || filters.dateFrom || filters.dateTo
@@ -2662,7 +2847,32 @@ export default function ExploreHomeScreen() {
     set(newFilters);
   };
 
-  const showQuickDateRanges = showAll || selectedType === 'fechas' || selectedType === 'clases';
+  /** Fechas dropdown solo visible cuando Tipo es Sociales (fechas) o Clases. Oculta y resetea fechas para otros tipos. */
+  const showDatesDropdown = selectedType === 'fechas' || selectedType === 'clases' || selectedType === 'all';
+
+  const TYPE_OPTIONS = [
+    { id: 'fechas' as const, labelKey: 'explore_type_sociales' },
+    { id: 'clases', labelKey: 'classes' },
+    { id: 'academias', labelKey: 'academies' },
+    { id: 'maestros', labelKey: 'teachers' },
+    { id: 'usuarios', labelKey: 'dancers' },
+    { id: 'organizadores', labelKey: 'organizers' },
+    { id: 'marcas', labelKey: 'brands' },
+    { id: 'all', labelKey: 'all' },
+  ];
+
+  const setTypeAndClearDatesIfNeeded = React.useCallback(
+    (typeId: typeof TYPE_OPTIONS[number]['id']) => {
+      const exploreType = typeId as ExploreType;
+      if (typeId !== 'fechas' && typeId !== 'clases') {
+        set({ type: exploreType, datePreset: 'todos', dateFrom: undefined, dateTo: undefined });
+      } else {
+        set({ type: exploreType });
+      }
+      setOpenFilterDropdown(null);
+    },
+    [set],
+  );
 
   // -----------------------------
   // DEV instrumentation (runtime diagnosis)
@@ -2862,125 +3072,138 @@ export default function ExploreHomeScreen() {
             )}
 
             <div className="filters-card">
-              {/* Header + búsqueda en la misma fila */}
-              <div className="filters-top-row">
-                <div className="filters-title filters-top-row__title">
-                  <span className="filters-icon" aria-hidden="true">⚙️</span>
-                </div>
-
-                <div className="filters-top-row__search">
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%', gap: 8 }}>
-                  <span
-                    style={{
-                      position: 'absolute',
-                      left: 14,
-                      fontSize: 16,
-                      pointerEvents: 'none',
-                      zIndex: 1,
-                      color: 'rgba(255, 255, 255, 0.7)',
-                    }}
+              {/* Fila 1: Tipo + Fechas (si aplica) + Filtros activos — misma cuadrícula que fila 2 para alinear anchos */}
+              <div
+                className={`filters-card__row filters-card__row--top ${showDatesDropdown ? 'filters-card__row--top-with-dates' : ''} ${activeFiltersCount > 0 ? 'filters-card__row--top-with-actions' : ''}`}
+                role="toolbar"
+                aria-label={t("filter_type_aria")}
+              >
+                <div className={`filters-card__row chips filters-card__row--top-left ${!showDatesDropdown ? 'filters-card__cell--span2' : ''}`}>
+                  <button
+                    ref={typePillRef}
+                    type="button"
+                    className={`filter-pill ${openFilterDropdown === "type" ? "filter-pill--active" : ""}`}
+                    onClick={() => setOpenFilterDropdown(openFilterDropdown === "type" ? null : "type")}
+                    aria-haspopup="listbox"
+                    aria-expanded={openFilterDropdown === "type"}
+                    aria-controls="filters-type-listbox"
+                    id="filters-type-trigger"
+                    style={{ minWidth: 120, justifyContent: "space-between" }}
                   >
-                    🔍
-                  </span>
-                  <input
-                    type="text"
-                    placeholder={t('search_placeholder_expanded')}
-                    value={filters.q || ''}
-                    onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px 10px 42px',
-                      borderRadius: '999px',
-                      border: filters.q ? '2px solid rgba(240, 147, 251, 0.6)' : '1px solid var(--fp-border-soft)',
-                      background: filters.q ? 'rgba(240, 147, 251, 0.15)' : '#181b26',
-                      color: 'var(--fp-text)',
-                      fontSize: '16px',
-                      outline: 'none',
-                      transition: 'all 0.3s ease',
-                      boxShadow: filters.q
-                        ? '0 0 0 3px rgba(240, 147, 251, 0.25), 0 4px 16px rgba(240, 147, 251, 0.25)'
-                        : '0 2px 8px rgba(0, 0, 0, 0.2)',
-                      fontFamily: 'inherit',
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <span className="pill-icon" aria-hidden="true">📂</span>
+                      <span className="pill-text">
+                        {t(TYPE_OPTIONS.find((o) => o.id === (filters.type || 'fechas'))?.labelKey ?? 'explore_type_sociales')}
+                      </span>
+                    </span>
+                    <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
+                  </button>
+                </div>
+                {showDatesDropdown && (
+                  <div className="filters-card__row chips filters-card__row--dates-wrap">
+                    <button
+                      ref={fechasPillRef}
+                      type="button"
+                      className={`filter-pill ${openFilterDropdown === "fechas" ? "filter-pill--active" : ""}`}
+                      onClick={() => setOpenFilterDropdown(openFilterDropdown === "fechas" ? null : "fechas")}
+                      aria-pressed={openFilterDropdown === "fechas"}
+                      aria-expanded={openFilterDropdown === "fechas"}
+                      aria-controls="filters-fechas-panel"
+                      style={{ minWidth: 120, justifyContent: "space-between" }}
+                    >
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <span className="pill-icon" aria-hidden="true">🗓️</span>
+                        <span className="pill-text">
+                          {dateSummaryText}
+                        </span>
+                      </span>
+                      <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
+                    </button>
+                  </div>
+                )}
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    className="filters-clear filters-card__top-action"
+                    onClick={() => {
+                      handleFilterChange({
+                        ...filters,
+                        type: 'all',
+                        q: '',
+                        ritmos: [],
+                        zonas: [],
+                        datePreset: 'todos',
+                        dateFrom: undefined,
+                        dateTo: undefined
+                      });
+                      setUsingFavoriteFilters(false);
+                      setOpenFilterDropdown(null);
+                      setSearchOpen(false);
                     }}
-                  />
-                  {!!filters.q && (
-                    <button
-                      type="button"
-                      onClick={() => handleFilterChange({ ...filters, q: '' })}
-                      className="filters-search-clear-btn"
-                      style={{
-                        padding: '10px 16px',
-                        borderRadius: '999px',
-                        border: '1px solid var(--fp-border-soft)',
-                        background: '#181b26',
-                        color: 'var(--fp-text)',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        whiteSpace: 'nowrap',
-                        transition: 'all 0.2s ease',
-                        flexShrink: 0,
-                        touchAction: 'manipulation',
-                        WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.1)',
-                      }}
-                      aria-label={t('clear') || 'Limpiar'}
-                    >
-                      {t('clear')}
-                    </button>
-                  )}
-                </div>
-                </div>
-
-                <div className="filters-top-row__actions">
-                  {!usingFavoriteFilters && user && preferences && (
-                    (preferences.ritmos && preferences.ritmos.length > 0) ||
-                    (preferences.zonas && preferences.zonas.length > 0) ||
-                    (preferences.date_range && preferences.date_range !== 'none')
-                  ) && (
-                    <button
-                      type="button"
-                      onClick={resetToFavoriteFilters}
-                      className="filters-clear"
-                      style={{ marginRight: activeFiltersCount > 0 ? 0 : undefined }}
-                    >
-                      <span style={{ fontSize: '0.75rem' }}>⭐</span>
-                      <span>{t('activate_favorites')}</span>
-                    </button>
-                  )}
-                  {activeFiltersCount > 0 && (
-                    <button
-                      type="button"
-                      className="filters-clear"
-                      onClick={() => {
-                        handleFilterChange({
-                          ...filters,
-                          type: 'all',
-                          q: '',
-                          ritmos: [],
-                          zonas: [],
-                          datePreset: 'todos',
-                          dateFrom: undefined,
-                          dateTo: undefined
-                        });
-                        setUsingFavoriteFilters(false);
-                        setOpenFilterDropdown(null);
-                      }}
-                      aria-label={t('clear_all_filters')}
-                    >
-                      <span className="dot" aria-hidden="true" />
-                      {activeFiltersCount === 1
-                        ? t('active_filters', { count: activeFiltersCount })
-                        : t('active_filters_plural', { count: activeFiltersCount })}
-                    </button>
-                  )}
-                </div>
+                    aria-label={t('clear_all_filters')}
+                  >
+                    <span className="filters-badge" aria-hidden="true">{activeFiltersCount}</span>
+                    <span>{t('filters') || 'Filtros'}</span>
+                  </button>
+                )}
               </div>
 
-              {/* Row 2: Ritmos, Zonas, Fechas (dropdowns jerárquicos) */}
-              <div className="filters-card__row filters-card__row--selects" role="toolbar" aria-label={t("filter_type_aria")}>
+              {/* Tipo dropdown panel (portal) */}
+              {openFilterDropdown === "type" && typePillRef.current && typeof document !== "undefined" && createPortal(
+                <div
+                  role="listbox"
+                  id="filters-type-listbox"
+                  aria-labelledby="filters-type-trigger"
+                  className="filters-type-dropdown-panel"
+                  style={{
+                    position: 'fixed',
+                    zIndex: 9999,
+                    minWidth: Math.max(240, typePillRef.current.getBoundingClientRect().width),
+                    background: 'linear-gradient(180deg, #161b24 0%, #0f1218 100%)',
+                    border: '1px solid rgba(41, 127, 150, 0.3)',
+                    borderRadius: 16,
+                    padding: '12px 10px',
+                    boxShadow: '0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.05) inset',
+                    top: typePillRef.current.getBoundingClientRect().bottom + 8,
+                    left: typePillRef.current.getBoundingClientRect().left,
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {TYPE_OPTIONS.map((opt) => {
+                      const active = (filters.type || 'fechas') === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          role="option"
+                          aria-selected={active}
+                          onClick={() => setTypeAndClearDatesIfNeeded(opt.id)}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: 12,
+                            border: `1px solid ${active ? 'rgba(41, 127, 150, 0.65)' : 'rgba(255,255,255,0.08)'}`,
+                            background: active ? 'rgba(41, 127, 150, 0.2)' : 'rgba(255,255,255,0.03)',
+                            color: active ? '#99e5ff' : '#fff',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease',
+                          }}
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
+                          {t(opt.labelKey)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>,
+                document.body
+              )}
+
+              {/* Fila 2: Ritmos, Zonas, Lupa (búsqueda colapsada) */}
+              <div className="filters-card__row filters-card__row--mid" role="toolbar" aria-label={t("filter_type_aria")}>
                 <button
                   ref={ritmosPillRef}
                   type="button"
@@ -2988,14 +3211,13 @@ export default function ExploreHomeScreen() {
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === "ritmos" ? null : "ritmos")}
                   aria-pressed={openFilterDropdown === "ritmos"}
                   aria-expanded={openFilterDropdown === "ritmos"}
-                  style={{ minWidth: 140, justifyContent: "space-between" }}
+                  aria-controls="filters-ritmos-panel"
+                  style={{ flex: '1 1 0', minWidth: 0, justifyContent: "space-between" }}
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <span className="pill-icon" aria-hidden="true">🎵</span>
                     <span className="pill-text">
-                      {stableRitmos.length > 0
-                        ? `${t("rhythms")} (${stableRitmos.length})`
-                        : t("rhythms")}
+                      {stableRitmos.length > 0 ? `${t("rhythms")} (${stableRitmos.length})` : t("rhythms")}
                     </span>
                   </span>
                   <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
@@ -3007,36 +3229,27 @@ export default function ExploreHomeScreen() {
                   onClick={() => setOpenFilterDropdown(openFilterDropdown === "zonas" ? null : "zonas")}
                   aria-pressed={openFilterDropdown === "zonas"}
                   aria-expanded={openFilterDropdown === "zonas"}
-                  style={{ minWidth: 140, justifyContent: "space-between" }}
+                  aria-controls="filters-zonas-panel"
+                  style={{ flex: '1 1 0', minWidth: 0, justifyContent: "space-between" }}
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <span className="pill-icon" aria-hidden="true">📍</span>
                     <span className="pill-text">
-                      {stableZonas.length > 0
-                        ? `${t("zones")} (${stableZonas.length})`
-                        : t("zones")}
+                      {stableZonas.length > 0 ? `${t("zones")} (${stableZonas.length})` : t("zones")}
                     </span>
                   </span>
                   <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
                 </button>
                 <button
-                  ref={fechasPillRef}
                   type="button"
-                  className={`filter-pill ${openFilterDropdown === "fechas" ? "filter-pill--active" : ""}`}
-                  onClick={() => setOpenFilterDropdown(openFilterDropdown === "fechas" ? null : "fechas")}
-                  aria-pressed={openFilterDropdown === "fechas"}
-                  aria-expanded={openFilterDropdown === "fechas"}
-                  style={{ minWidth: 140, justifyContent: "space-between" }}
+                  className={`filter-pill filters-search-toggle ${searchOpen ? "filter-pill--active" : ""}`}
+                  onClick={() => setSearchOpen((v) => !v)}
+                  aria-label={t('search') || 'Buscar'}
+                  aria-expanded={searchOpen}
+                  aria-controls="filters-search-row"
+                  style={{ flex: '0 0 auto', width: 44, height: 44, padding: 0, justifyContent: 'center' }}
                 >
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <span className="pill-icon" aria-hidden="true">🗓️</span>
-                    <span className="pill-text">
-                      {hasDateFilterActive
-                        ? `Fechas: ${dateSummaryText}`
-                        : "Fechas"}
-                    </span>
-                  </span>
-                  <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
+                  <span aria-hidden>🔍</span>
                 </button>
               </div>
 
@@ -3065,7 +3278,9 @@ export default function ExploreHomeScreen() {
               <DateFilterDropdown
                 dateFrom={filters.dateFrom}
                 dateTo={filters.dateTo}
+                datePreset={filters.datePreset}
                 onApply={applyDateFilter}
+                onPresetSelect={applyDatePreset}
                 anchorEl={openFilterDropdown === "fechas" ? fechasPillRef.current : null}
                 open={openFilterDropdown === "fechas"}
                 onClose={() => setOpenFilterDropdown(null)}
@@ -3074,67 +3289,41 @@ export default function ExploreHomeScreen() {
                 t={t}
               />
 
-              {/* Tabs de secciones */}
-              <div className="filters-tabs" role="tablist" aria-label="Secciones">
-                {([
-                  { id: 'fechas', label: 'Eventos' },
-                  { id: 'clases', label: 'Clases' },
-                  { id: 'academias', label: 'Academias' },
-                  { id: 'maestros', label: 'Maestros' },
-                  { id: 'usuarios', label: 'Bailarines' },
-                  { id: 'organizadores', label: 'Organizadores' },
-                  { id: 'marcas', label: 'Marcas' },
-                  { id: 'all', label: 'Todo' },
-                ] as const).map((tab) => {
-                  const active = (filters.type || 'all') === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      className={`tab ${active ? 'tab--active' : ''}`}
-                      aria-selected={active}
-                      role="tab"
-                      onClick={() => {
-                        set({ type: tab.id as any });
-                        setOpenFilterDropdown(null);
-                      }}
-                    >
-                      <span className="tab-label">{tab.label}</span>
-                    </button>
-                  );
-                })}
+              {/* Fila 3: Búsqueda colapsada. Evitar zoom: input font-size 16px (iOS no hace zoom al focus), transición max-height/opacity sin transform/scale, sin scrollIntoView. */}
+              <div
+                id="filters-search-row"
+                className={`filters-card__row filters-card__row--search ${searchOpen ? 'filters-card__row--search-open' : ''}`}
+                aria-hidden={!searchOpen}
+              >
+                <label className="visually-hidden" htmlFor="filters-search-input">
+                  {t('search_placeholder_expanded') || 'Buscar (evento, lugar, maestro...)'}
+                </label>
+                <input
+                  ref={searchInputRef}
+                  id="filters-search-input"
+                  type="text"
+                  placeholder={t('search_placeholder_expanded') || 'Buscar (evento, lugar, maestro...)'}
+                  value={filters.q || ''}
+                  onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
+                  className="filters-search-input"
+                  autoComplete="off"
+                  style={{
+                    fontSize: 16,
+                    lineHeight: 1.2,
+                    height: 44,
+                    minHeight: 44,
+                  }}
+                />
+                <button
+                  type="button"
+                  className="filters-search-close"
+                  onClick={() => setSearchOpen(false)}
+                  aria-label={t('close') || 'Cerrar'}
+                >
+                  ✕
+                </button>
               </div>
 
-              {/* Rangos rápidos de fechas: visible al seleccionar Eventos, Clases o Todo */}
-              {showQuickDateRanges && (
-                <>
-                  <div className="filters-divider" />
-                  <div className="filters-card__row chips" aria-label={t('date_shortcuts')}>
-                    {([
-                      { id: 'todos' as const, labelKey: 'all' },
-                      { id: 'hoy' as const, labelKey: 'today' },
-                      { id: 'manana' as const, labelKey: 'tomorrow' },
-                      { id: 'semana' as const, labelKey: 'this_week' },
-                      { id: 'fin_de_semana' as const, labelKey: 'weekend' },
-                      { id: 'siguientes' as const, labelKey: 'next_week' },
-                    ]).map((p) => {
-                      const active = (filters.datePreset || 'todos') === p.id;
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => applyDatePreset(p.id)}
-                          className={`tab ${active ? 'tab--active' : ''}`}
-                          disabled={isPending}
-                          aria-pressed={active}
-                        >
-                          {t(p.labelKey)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
             </div>
           </section>
 

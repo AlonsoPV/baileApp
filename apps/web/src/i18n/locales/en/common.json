@@ -101,6 +101,11 @@
   "search_placeholder_filters": "Search by name, place, city...",
   "from": "From",
   "to": "To",
+  "date_quick_range": "Quick range",
+  "date_to_determine": "Date to be determined",
+  "date_range_from_to": "From {{from}} to {{to}}",
+  "explore_type_sociales": "Events",
+  "dancers": "Dancers",
 
   "share_section": "Share",
   "share_db_title": "Share Dónde Bailar",

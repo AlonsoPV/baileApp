@@ -238,7 +238,7 @@ export default function NotFound() {
             }}>
               {[
                 { label: 'Explorar', path: routes.app.explore, emoji: '🔍' },
-                { label: 'Eventos', path: '/explore/list?type=fechas', emoji: '📅' },
+                { label: 'Sociales', path: '/explore/list?type=fechas', emoji: '📅' },
                 { label: 'Clases', path: '/explore/list?type=clases', emoji: '💃' }
               ].map((link) => (
                 <button
