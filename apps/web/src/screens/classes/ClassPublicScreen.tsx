@@ -84,6 +84,12 @@ export default function ClassPublicScreen() {
   const loading = isTeacher ? teacherQ.isLoading : academyQ.isLoading;
   const profile: any = isTeacher ? teacherQ.data : academyQ.data;
 
+  // Hooks must run before any conditional return (Rules of Hooks)
+  const mediaList = React.useMemo(
+    () => normalizeMediaArray((profile as any)?.media),
+    [(profile as any)?.media],
+  );
+
   if (!rawId || Number.isNaN(idNum)) {
     return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>{t('missing_id')}</div>;
   }
@@ -511,10 +517,6 @@ export default function ClassPublicScreen() {
   const locationName = locationLabel || ubicacion?.ciudad || profile?.ciudad || t('mexico');
   const classTimes = scheduleLabel ? ` · Horario: ${scheduleLabel}` : '';
   const seoDescription = `${classTitle} con ${creatorName} en ${locationName}${classTimes}${ritmosLabel ? ` · Ritmos: ${ritmosLabel}` : ''}.`;
-  const mediaList = React.useMemo(
-    () => normalizeMediaArray((profile as any)?.media),
-    [(profile as any)?.media],
-  );
   const seoImageRaw =
     getMediaBySlot(mediaList, 'p1')?.url ||
     getMediaBySlot(mediaList, 'cover')?.url ||

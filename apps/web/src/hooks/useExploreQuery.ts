@@ -486,12 +486,10 @@ async function fetchPage(params: QueryParams, page: number) {
           
           // Verificar rango de fechas si está disponible en params
           if (params.dateFrom || params.dateTo) {
-            // ✅ CORRECCIÓN: Comparar strings YYYY-MM-DD directamente para evitar problemas de zona horaria
-            // Esto asegura que eventos del 7, 8, 9 y 10 de febrero se incluyan si el rango es 7-10
-            // fechaStr ya está en formato YYYY-MM-DD
-            
-            // Incluir eventos que estén dentro del rango (>= dateFrom Y <= dateTo)
-            // No importa la hora de inicio o fin, si el evento es de un día dentro del rango, se incluye
+            // Regla por día: se usa solo la fecha de INICIO del evento (fecha).
+            // - "Hoy": se muestran todos los eventos que EMPIEZAN hoy, aunque ya haya pasado la hora de inicio
+            //   (ej. empieza 7pm sábado, son las 10pm sábado → se sigue viendo en Hoy).
+            // - Un evento que empieza sábado 7pm y termina domingo 2am NO se muestra en Domingo.
             if (params.dateFrom && fechaStr < params.dateFrom) {
               shouldInclude = false;
             }

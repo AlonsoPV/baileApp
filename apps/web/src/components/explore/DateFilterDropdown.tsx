@@ -8,7 +8,6 @@ import type { DatePreset } from "@/state/exploreFilters";
 const PANEL_STYLE_BASE: React.CSSProperties = {
   position: "fixed",
   zIndex: 9999,
-  minWidth: 300,
   background: "linear-gradient(180deg, #141922 0%, #0f1218 100%)",
   border: "1px solid rgba(41, 127, 150, 0.25)",
   borderRadius: 16,
@@ -17,6 +16,7 @@ const PANEL_STYLE_BASE: React.CSSProperties = {
   color: "#f5f5ff",
   fontSize: 14,
   overflow: "auto",
+  boxSizing: "border-box",
 };
 
 const DATE_PRESETS: { id: DatePreset; labelKey: string }[] = [
@@ -88,34 +88,40 @@ export function DateFilterDropdown({
 
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>(PANEL_STYLE_BASE);
   const GAP = 6;
-  const PANEL_MIN_WIDTH = 280;
   const PANEL_ESTIMATED_HEIGHT = 280;
-  const VIEWPORT_MARGIN = 8;
 
   useEffect(() => {
     if (!open || !anchorEl) return;
     const rect = anchorEl.getBoundingClientRect();
     const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
     const vh = typeof window !== "undefined" ? window.innerHeight : 768;
+    const isNarrow = vw < 400;
+    const viewportMargin = isNarrow ? 12 : 8;
+    const panelMinWidth = isNarrow ? 260 : 280;
+    const panelMaxWidth = Math.min(360, vw - 2 * viewportMargin);
+    const panelWidth = Math.max(panelMinWidth, Math.min(panelMaxWidth, rect.width * 1.1));
 
-    const maxLeft = vw - PANEL_MIN_WIDTH - VIEWPORT_MARGIN;
-    const left = Math.max(VIEWPORT_MARGIN, Math.min(rect.left, maxLeft));
+    const maxLeft = vw - panelWidth - viewportMargin;
+    const left = Math.max(viewportMargin, Math.min(rect.left, maxLeft));
 
-    const spaceBelow = vh - rect.bottom - GAP - VIEWPORT_MARGIN;
-    const spaceAbove = rect.top - GAP - VIEWPORT_MARGIN;
+    const spaceBelow = vh - rect.bottom - GAP - viewportMargin;
+    const spaceAbove = rect.top - GAP - viewportMargin;
     const showAbove = spaceBelow < PANEL_ESTIMATED_HEIGHT && spaceAbove > spaceBelow;
 
     const top = showAbove
-      ? Math.max(VIEWPORT_MARGIN, rect.top - PANEL_ESTIMATED_HEIGHT - GAP)
+      ? Math.max(viewportMargin, rect.top - PANEL_ESTIMATED_HEIGHT - GAP)
       : rect.bottom + GAP;
     const maxHeight = showAbove
-      ? rect.top - GAP - VIEWPORT_MARGIN
-      : vh - (rect.bottom + GAP) - VIEWPORT_MARGIN;
+      ? rect.top - GAP - viewportMargin
+      : vh - (rect.bottom + GAP) - viewportMargin;
 
     setPanelStyle({
       ...PANEL_STYLE_BASE,
       top,
       left,
+      width: panelWidth,
+      minWidth: panelMinWidth,
+      maxWidth: vw - 2 * viewportMargin,
       maxHeight: Math.max(120, maxHeight),
     });
   }, [open, anchorEl]);
@@ -172,12 +178,12 @@ export function DateFilterDropdown({
       </div>
       <div className="date-filter-dropdown__custom" style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginTop: 14, paddingTop: 14 }}>
         <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
-          Fecha a determinar
+          {t("date_to_determine")}
         </span>
         <div className="date-filter-dropdown__range" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
           <div>
             <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
-              Desde
+              {t("from")}
             </label>
             <input
               type="date"

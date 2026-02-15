@@ -9,7 +9,9 @@ import { useEffect } from "react";
 function getOverflowingElements(root: HTMLElement): HTMLElement[] {
   const out: HTMLElement[] = [];
   const walk = (el: HTMLElement) => {
-    if (el.scrollWidth > el.clientWidth) {
+    const style = window.getComputedStyle(el);
+    const clipsOverflow = style.overflowX === "hidden" || style.overflowX === "clip" || style.overflow === "hidden";
+    if (el.scrollWidth > el.clientWidth && !clipsOverflow) {
       out.push(el);
     }
     for (let i = 0; i < el.children.length; i++) {

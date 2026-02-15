@@ -542,6 +542,8 @@ const STYLES = `
     margin-right: auto;
     padding: 6px 0;
     position: relative;
+    box-sizing: border-box;
+    min-width: 0;
   }
   .filters-panel::before {
     content: '';
@@ -573,6 +575,76 @@ const STYLES = `
     box-sizing: border-box;
     position: relative;
     overflow: visible;
+  }
+  /* Dropdown de fechas — responsivo */
+  .date-filter-dropdown {
+    max-width: calc(100vw - 24px);
+  }
+  .date-filter-dropdown__presets {
+    min-width: 0;
+  }
+  .date-filter-dropdown__presets button {
+    min-width: 0;
+  }
+  .date-filter-dropdown__range {
+    min-width: 0;
+  }
+  .date-filter-dropdown__range input {
+    min-width: 0;
+    font-size: 16px;
+  }
+  @media (max-width: 400px) {
+    .date-filter-dropdown {
+      padding: 12px !important;
+      border-radius: 14px !important;
+      font-size: 13px !important;
+    }
+    .date-filter-dropdown__presets span {
+      font-size: 9px !important;
+      margin-bottom: 6px !important;
+    }
+    .date-filter-dropdown__presets button {
+      padding: 8px 12px !important;
+      font-size: 12px !important;
+    }
+    .date-filter-dropdown__custom span {
+      font-size: 9px !important;
+      margin-bottom: 8px !important;
+    }
+    .date-filter-dropdown__range {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+      margin-bottom: 10px !important;
+    }
+    .date-filter-dropdown__range label {
+      font-size: 11px !important;
+    }
+    .date-filter-dropdown__range input {
+      padding: 8px 10px !important;
+      font-size: 16px !important;
+    }
+    .date-filter-dropdown__custom > div:last-of-type {
+      gap: 8px !important;
+    }
+    .date-filter-dropdown__custom button {
+      padding: 8px 14px !important;
+      font-size: 12px !important;
+    }
+  }
+  /* Dropdown de tipo — responsivo */
+  .filters-type-dropdown-panel {
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+  }
+  @media (max-width: 400px) {
+    .filters-type-dropdown-panel {
+      padding: 10px 8px !important;
+      border-radius: 14px !important;
+    }
+    .filters-type-dropdown-panel button {
+      padding: 10px 12px !important;
+      font-size: 13px !important;
+    }
   }
   .filters-card::after {
     content: '';
@@ -715,15 +787,50 @@ const STYLES = `
   .filters-card__top-action {
     min-width: 0;
   }
+  /* Texto de pills que no desborde en pantallas pequeñas */
+  .filters-card__row--top .pill-text,
+  .filters-card__row--mid .pill-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   @media (max-width: 380px) {
     .filters-card__row--top {
       grid-template-columns: 1fr;
+      gap: 6px;
     }
     .filters-card__row--top-left.filters-card__cell--span2 {
       grid-column: 1;
     }
     .filters-card__row--mid {
       grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .filters-card__row--top .filter-pill,
+    .filters-card__row--dates-wrap .filter-pill {
+      min-width: 0 !important;
+      padding: 9px 12px !important;
+      font-size: 13px !important;
+    }
+    .filters-card__top-action.filters-clear {
+      justify-content: center;
+      min-width: 0;
+    }
+  }
+  @media (max-width: 420px) {
+    .filters-card__row--top {
+      gap: 6px;
+    }
+    .filters-card__row--top .filter-pill,
+    .filters-card__row--dates-wrap .filter-pill {
+      min-width: 0 !important;
+      padding: 9px 10px !important;
+      font-size: 13px !important;
+    }
+    .filters-card__row--mid .filter-pill {
+      padding: 9px 10px !important;
+      font-size: 13px !important;
     }
   }
   .filters-card__row--mid {
@@ -1337,14 +1444,31 @@ const STYLES = `
   @media (max-width: 768px) {
     .filters-panel {
       max-width: 100% !important;
-      padding: 10px 8px 12px !important;
+      padding: 10px 12px 12px !important;
       border-radius: 20px !important;
       margin: 5px 0 2em 0 !important;
+      box-sizing: border-box;
     }
     .filters-card {
-      padding: 10px 8px 8px !important;
+      padding: 12px 10px 10px !important;
       border-radius: 18px !important;
       max-width: 100% !important;
+      min-width: 0 !important;
+    }
+    .filters-card__row--top,
+    .filters-card__row--mid {
+      gap: 6px !important;
+    }
+    .filters-card__row--top .filter-pill,
+    .filters-card__row--dates-wrap .filter-pill {
+      min-width: 0 !important;
+      padding: 9px 12px !important;
+      font-size: 13px !important;
+    }
+    .filters-card__row--mid .filter-pill {
+      min-width: 0 !important;
+      padding: 9px 12px !important;
+      font-size: 13px !important;
     }
     .filters-top-row__title {
       display: none !important;
@@ -1533,13 +1657,27 @@ const STYLES = `
   }
   @media (max-width: 480px) {
     .filters-panel {
-      padding: 8px 6px 10px !important;
+      padding: 8px 10px 10px !important;
       border-radius: 18px !important;
       margin: 5px 0 2em 0 !important;
     }
     .filters-card {
-      padding: 8px 6px 6px !important;
+      padding: 10px 8px 8px !important;
       border-radius: 16px !important;
+    }
+    .filters-card__row--top,
+    .filters-card__row--mid {
+      gap: 4px !important;
+    }
+    .filters-card__row--top .filter-pill,
+    .filters-card__row--dates-wrap .filter-pill,
+    .filters-card__row--mid .filter-pill {
+      padding: 8px 10px !important;
+      font-size: 12px !important;
+    }
+    .filters-card__top-action.filters-clear {
+      padding: 8px 10px !important;
+      font-size: 12px !important;
     }
     .filters-top-row {
       gap: 6px !important;
@@ -1626,6 +1764,14 @@ const STYLES = `
     .filters-search-expanded input {
       font-size: 12px !important;
       padding: 9px 12px 9px 36px !important;
+    }
+    .filters-search-input {
+      font-size: 16px !important;
+      padding: 10px 12px !important;
+    }
+    .filters-card__row--search.filters-card__row--search-open {
+      max-height: 72px !important;
+      margin-top: 6px !important;
     }
     .filters-search-expanded button {
       font-size: 10px !important;
@@ -2329,25 +2475,17 @@ export default function ExploreHomeScreen() {
         0, 0, 0
       ));
 
-      // Si hay rango de fechas, verificar que la fecha del evento esté dentro del rango
-        if (hasDateRange) {
-        // ✅ CORRECCIÓN: Comparar strings YYYY-MM-DD directamente para evitar problemas de zona horaria
-        // Esto asegura que eventos del 7, 8, 9 y 10 de febrero se incluyan si el rango es 7-10
-        
-        // Para eventos recurrentes, verificar que la fecha calculada esté en el rango
+      // Si hay rango de fechas (ej. "Hoy" con from=to=hoy), usar solo la fecha de INICIO del evento.
+      // - Eventos que empiezan hoy se muestran en "Hoy" aunque ya haya pasado la hora de inicio.
+      // - Eventos que empiezan sábado y terminan domingo 2am no se muestran en "Domingo".
+      if (hasDateRange) {
         if (fecha._recurrence_index !== undefined) {
-          // fechaDateStr ya está en formato YYYY-MM-DD
           if (filters.dateFrom && fechaDateStr < filters.dateFrom) return false;
           if (filters.dateTo && fechaDateStr > filters.dateTo) return false;
-          return true; // Si está en el rango, incluir
+          return true;
         }
-        
-        // Para eventos sin recurrencia, verificar que esté en el rango
-        // Incluir TODOS los eventos que ocurran en días dentro del rango
-        // No importa si terminan antes, si el evento es de un día dentro del rango, se incluye
         if (filters.dateFrom && fechaDateStr < filters.dateFrom) return false;
         if (filters.dateTo && fechaDateStr > filters.dateTo) return false;
-        // Si pasa ambas verificaciones, está en el rango, incluir
         return true;
       }
 
@@ -3149,7 +3287,13 @@ export default function ExploreHomeScreen() {
               </div>
 
               {/* Tipo dropdown panel (portal) */}
-              {openFilterDropdown === "type" && typePillRef.current && typeof document !== "undefined" && createPortal(
+              {openFilterDropdown === "type" && typePillRef.current && typeof document !== "undefined" && (() => {
+                const rect = typePillRef.current.getBoundingClientRect();
+                const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
+                const margin = 12;
+                const panelWidth = Math.min(Math.max(240, rect.width), vw - 2 * margin);
+                const left = Math.max(margin, Math.min(rect.left, vw - panelWidth - margin));
+                return createPortal(
                 <div
                   role="listbox"
                   id="filters-type-listbox"
@@ -3158,14 +3302,16 @@ export default function ExploreHomeScreen() {
                   style={{
                     position: 'fixed',
                     zIndex: 9999,
-                    minWidth: Math.max(240, typePillRef.current.getBoundingClientRect().width),
+                    width: panelWidth,
+                    maxWidth: 'calc(100vw - 24px)',
+                    boxSizing: 'border-box',
                     background: 'linear-gradient(180deg, #161b24 0%, #0f1218 100%)',
                     border: '1px solid rgba(41, 127, 150, 0.3)',
                     borderRadius: 16,
                     padding: '12px 10px',
                     boxShadow: '0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.05) inset',
-                    top: typePillRef.current.getBoundingClientRect().bottom + 8,
-                    left: typePillRef.current.getBoundingClientRect().left,
+                    top: rect.bottom + 8,
+                    left,
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -3200,7 +3346,8 @@ export default function ExploreHomeScreen() {
                   </div>
                 </div>,
                 document.body
-              )}
+              );
+              })()}
 
               {/* Fila 2: Ritmos, Zonas, Lupa (búsqueda colapsada) */}
               <div className="filters-card__row filters-card__row--mid" role="toolbar" aria-label={t("filter_type_aria")}>
