@@ -79,6 +79,17 @@ theme.spacing(4)  // 32px
 - `@baileapp/web` - Aplicación web
 - `@baileapp/ui` - Componentes compartidos
 
+## 📱 How to build a Play-uploadable AAB (Android)
+
+Release AABs must be signed with the upload key expected by Google Play. See **[docs/ANDROID_PLAY_AAB_BUILD.md](docs/ANDROID_PLAY_AAB_BUILD.md)** for:
+
+- EAS build with the correct credentials
+- Local Gradle build after `expo prebuild` (signing via `UPLOAD_*` in `gradle.properties` or env)
+- Verifying keystore SHA-1: `./scripts/verify-upload-key.sh <keystore> <alias>`
+- Reset upload key in Play Console if the correct keystore is missing
+
+Do not commit keystores or real passwords; use EAS or local env only.
+
 ## 🛠️ Tech Stack
 
 - **Vite** - Build tool

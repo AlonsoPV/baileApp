@@ -37,6 +37,12 @@ yarn-error.*
 config/local.env
 google-service-account.json
 
+# Android signing (never commit keystores or real credentials)
+credentials.json
+credentials/
+upload-keystore.jks
+upload_certificate.pem
+
 # generic build artifacts
 build/
 

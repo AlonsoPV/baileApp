@@ -1,0 +1,9 @@
+# Copy this to android/gradle.properties after running: npx expo prebuild --platform android
+# Do NOT commit real passwords. Use env vars or a local file outside the repo.
+# Expected SHA-1 for Play upload key: 81:AE:12:4E:EA:D6:36:11:39:CB:4A:15:3E:AC:3D:C0:A8:FC:42:17
+# Verify with: ./scripts/verify-upload-key.sh <path-to-keystore> <key-alias>
+
+UPLOAD_STORE_FILE=upload-keystore.jks
+UPLOAD_STORE_PASSWORD=SET_IN_LOCAL_ENV
+UPLOAD_KEY_ALIAS=upload
+UPLOAD_KEY_PASSWORD=SET_IN_LOCAL_ENV

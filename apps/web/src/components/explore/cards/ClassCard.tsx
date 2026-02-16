@@ -227,7 +227,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
             margin: 0 auto;
           }
           .class-card {
-            --card-ar: 9 / 16;
+            --card-ar: 9 / 16.5;
           }
           img, [style*="objectFit"] {
             max-width: 100% !important;
@@ -258,8 +258,8 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
           position: relative;
           cursor: pointer;
-          /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar */
-          --card-ar: 4 / 5;
+          /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar. +15px altura aprox. */
+          --card-ar: 4 / 5.2;
         }
 
         /* 👇 área media con imagen COMPLETA */
@@ -359,9 +359,10 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
 
         .class-card-title {
           margin: 0 0 clamp(5px, 1vw, 8px);
-          font-size: clamp(14px, 2.2vw, 18px);
+          font-size: clamp(18px, 2.8vw, 22px);
           font-weight: 900;
           color: #fff;
+          text-transform: uppercase;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
           word-break: break-word;
           line-height: 1.3;
@@ -417,9 +418,9 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           display: block;
           text-align: center;
           text-transform: uppercase;
-          background: linear-gradient(135deg, #FF6A1A, #E94E1B);
+          background: #4690A3;
           border-color: rgba(255,255,255,.18);
-          color: #111;
+          color: #fff;
         }
 
         .class-card-actions {

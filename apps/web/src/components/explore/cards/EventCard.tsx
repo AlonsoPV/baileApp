@@ -90,6 +90,16 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
   const lugar = item.lugar || item.evento_lugar;
   const ciudad = item.ciudad || item.evento_ciudad;
   const direccion = item.direccion || item.evento_direccion;
+  // Solo mostrar el nombre del lugar (antes de " · " o ","), no la dirección completa
+  const lugarSoloNombre = React.useMemo(() => {
+    if (!lugar || typeof lugar !== "string") return lugar || "";
+    const s = String(lugar).trim();
+    const separadores = [" · ", " ·", "· ", ",", " – ", " - "];
+    for (const sep of separadores) {
+      if (s.includes(sep)) return s.split(sep)[0].trim();
+    }
+    return s;
+  }, [lugar]);
   const organizador = item.organizador_nombre || item.organizer_name;
   
   // Calcular la fecha a mostrar: si ya tiene fecha (de expansión recurrente), usarla; si no, calcular
@@ -167,7 +177,7 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
             max-width: min(420px, calc((9 / 16) * 100vh));
             margin: 0 auto;
           }
-          .card { --card-ar: 9 / 16; }
+          .card { --card-ar: 9 / 16.5; }
           img, [style*="objectFit"] {
             max-width: 100% !important;
             /* height: auto !important; */
@@ -199,8 +209,8 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
           position: relative;
           cursor: pointer;
-          /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar */
-          --card-ar: 4 / 5;
+          /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar. +15px altura aprox. */
+          --card-ar: 4 / 5.2;
         }
         /* 👇 área media con imagen COMPLETA */
         .media {
@@ -287,9 +297,10 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
         }
         .event-title {
           margin: 0 0 clamp(5px, 1vw, 8px);
-          font-size: clamp(16px, 2.5vw, 20px);
+          font-size: clamp(18px, 2.8vw, 22px);
           font-weight: 900;
           color: #fff;
+          text-transform: uppercase;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
           word-break: break-word;
           line-height: 1.3;
@@ -339,9 +350,9 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           display: block;
           text-align: center;
           text-transform: uppercase;
-          background: linear-gradient(135deg, #FF6A1A, #E94E1B);
+          background: #4690A3;
           border-color: rgba(255,255,255,.18);
-          color: #111;
+          color: #fff;
         }
         .card-actions {
           position: absolute;
@@ -489,8 +500,8 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
                 {horaInicio && (
                   <div className="tag">🕗 {formatHHMM(horaInicio)}</div>
                 )}
-                {lugar && (
-                  <div className="tag">📍 {lugar}</div>
+                {lugarSoloNombre && (
+                  <div className="tag">📍 {lugarSoloNombre}</div>
                 )}
               </div>
             </div>

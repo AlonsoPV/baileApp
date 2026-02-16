@@ -8,10 +8,10 @@ export const EXPLORE_CARD_STYLES = `
   @media (max-width: 768px) {
     .explore-card-mobile {
       /* Prevent giant cards (vh) and prevent too-narrow cards */
-      max-width: min(420px, calc((9 / 16) * 100vh));
+      max-width: min(420px, calc((9 / 16.5) * 100vh));
       margin: 0 auto;
     }
-    .explore-card { --card-ar: 9 / 16; }
+    .explore-card { --card-ar: 9 / 16.5; }
     img, [style*="objectFit"] {
       max-width: 100% !important;
       /* height: auto !important; */
@@ -37,8 +37,8 @@ export const EXPLORE_CARD_STYLES = `
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
     position: relative;
     cursor: pointer;
-    /* Default aspect ratio (desktop/tablet). Mobile overrides via --card-ar */
-    --card-ar: 4 / 5;
+    /* Default aspect ratio (desktop/tablet). Mobile overrides via --card-ar. +15px altura aprox. */
+    --card-ar: 4 / 5.2;
     /* Permitir swipe horizontal del slider aunque el gesto inicie sobre la card,
        sin bloquear el scroll vertical de la pantalla. */
     touch-action: pan-x pan-y;
@@ -113,9 +113,10 @@ export const EXPLORE_CARD_STYLES = `
 
   .explore-card-title {
     margin: 0 0 clamp(5px, 1vw, 8px);
-    font-size: clamp(14px, 2.2vw, 18px);
+    font-size: clamp(18px, 2.8vw, 22px);
     font-weight: 900;
     color: #fff;
+    text-transform: uppercase;
     text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
     word-break: break-word;
     line-height: 1.3;

@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import dotenv from "dotenv";
 import type { ExpoConfig } from "expo/config";
+// Plugin in .js so EAS/Node require() can resolve it (app.config is evaluated in Node)
+const withAndroidReleaseSigning = require("./plugins/androidReleaseSigning.js");
 
 // In some Expo config evaluation contexts, mutating process.env can be unreliable.
 // We'll parse the local env file into an object and use it as the source of truth.
@@ -300,6 +302,11 @@ const config: ExpoConfig = {
       projectId: "8bdc3562-9d5b-4606-b5f0-f7f1f7f6fa66",
     },
   },
+
+  plugins: [
+    // Android release signing from UPLOAD_* (gradle.properties or env). See docs/ANDROID_PLAY_AAB_BUILD.md
+    withAndroidReleaseSigning as ExpoConfig["plugins"] extends (infer U)[] ? U : never,
+  ],
 
   updates: {
     // ⚠️ Debugging builds 254/255 vs 253:
