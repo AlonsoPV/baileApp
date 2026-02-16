@@ -23,7 +23,7 @@ Asegúrate de que tu configuración de Android esté correcta:
 
 ```typescript
 android: {
-  package: "com.tuorg.dondebailarmx",  // ✅ Debe coincidir con Google Play
+  package: "com.tuorg.dondebailarmx.app",  // ✅ Debe coincidir con Google Play
   adaptiveIcon: {
     foregroundImage: "./assets/adaptive-icon.png",
     backgroundColor: "#000000",
@@ -240,7 +240,7 @@ npx eas-cli build:view [BUILD_ID]
 
 **Solución:**
 - Verifica que el `package` en `app.config.ts` coincida exactamente con el de Google Play Console
-- El package name debe ser: `com.tuorg.dondebailarmx`
+- El package name debe ser: `com.tuorg.dondebailarmx.app`
 
 ### Error: "Version code ya existe"
 
@@ -270,7 +270,7 @@ npx eas-cli build:view [BUILD_ID]
 Antes de generar el AAB, verifica:
 
 - [ ] Versión actualizada en `app.config.ts`
-- [ ] Package name correcto (`com.tuorg.dondebailarmx`)
+- [ ] Package name correcto (`com.tuorg.dondebailarmx.app`)
 - [ ] Icono y splash screen configurados
 - [ ] Variables de entorno configuradas
 - [ ] Iniciado sesión en EAS (`eas login`)

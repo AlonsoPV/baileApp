@@ -32,7 +32,7 @@ export function MidCTA({
     >
       <div className="landing-container">
         <div className="landing-mid-cta__card">
-          <h2 className="landing-mid-cta__title">Listo para encontrar dónde bailar</h2>
+          <h2 className="landing-mid-cta__title">Listo para encontrar dónde bailar en CDMX</h2>
           <p className="landing-mid-cta__microcopy">
             {landingContent.hero.ctaMicrocopy}
           </p>

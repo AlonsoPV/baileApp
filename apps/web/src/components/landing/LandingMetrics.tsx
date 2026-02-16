@@ -1,25 +1,30 @@
 import React from "react";
 
 const METRICS = [
-  { value: "+300", label: "Eventos publicados" },
-  { value: "+120", label: "Academias activas" },
-  { value: "+10k", label: "Búsquedas mensuales" },
+  { value: "+300", label: "Eventos publicados", accent: 1 },
+  { value: "+120", label: "Academias activas", accent: 2 },
+  { value: "+10k", label: "Búsquedas mensuales", accent: 3 },
 ];
 
 export function LandingMetrics() {
   return (
     <section className="landing-metrics" aria-label="Métricas">
       <div className="landing-container">
+        <p className="landing-metrics__overline">La comunidad en números</p>
         <div className="landing-metrics__grid">
           {METRICS.map((m, i) => (
-            <div key={i} className="metric">
+            <article
+              key={i}
+              className={`metric metric--accent-${m.accent}`}
+              aria-label={`${m.value} ${m.label}`}
+            >
               <p className="metric__num">{m.value}</p>
-              <div className="metric__label">{m.label}</div>
-            </div>
+              <p className="metric__label">{m.label}</p>
+            </article>
           ))}
         </div>
-        <p className="metrics-note">
-          ※ LOS NÚMEROS ANTERIORES SON PLACEHOLDERS CON FINES ILUSTRATIVOS.
+        <p className="landing-metrics__note">
+          Los números anteriores son placeholders con fines ilustrativos.
         </p>
       </div>
     </section>

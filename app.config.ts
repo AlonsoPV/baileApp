@@ -234,7 +234,7 @@ const config: ExpoConfig = {
   },
 
   android: {
-    package: "com.tuorg.dondebailarmx",
+    package: "com.tuorg.dondebailarmx.app",
     // versionCode debe ser MAYOR que el último subido a Google Play. Si Play rechaza la versión,
     // en Consola → tu app → Producción/Prueba interna → revisa "Código de versión" del último AAB y pon aquí un número mayor.
     versionCode: 12,

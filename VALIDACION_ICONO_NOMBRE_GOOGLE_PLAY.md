@@ -4,7 +4,7 @@
 
 ### Nombre de la App
 - **Configurado en `app.config.ts`**: `"Donde Bailar MX"`
-- **Package ID**: `com.tuorg.dondebailarmx`
+- **Package ID**: `com.tuorg.dondebailarmx.app`
 
 ### Iconos Configurados
 - **Icono principal**: `./assets/icon.png`
@@ -95,8 +95,8 @@ Una vez en la ficha de Play Store, verifica estos elementos:
 - [ ] No hay diferencias significativas en colores, diseño o elementos
 
 ### Package ID
-- [ ] El Package ID en Play Store es: `com.tuorg.dondebailarmx`
-- [ ] El Package ID en `app.config.ts` es: `com.tuorg.dondebailarmx`
+- [ ] El Package ID en Play Store es: `com.tuorg.dondebailarmx.app`
+- [ ] El Package ID en `app.config.ts` es: `com.tuorg.dondebailarmx.app`
 - [ ] Ambos coinciden exactamente
 
 ---
