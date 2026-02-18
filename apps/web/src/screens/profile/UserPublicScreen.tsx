@@ -809,8 +809,13 @@ export const UserProfileLive: React.FC = () => {
     const fromP1 = p1?.url ? p1.url : undefined;
     const avatar = getMediaBySlot(effectiveMedia as any, 'avatar');
     const fromAvatarSlot = avatar?.url ? avatar.url : undefined;
-    return toUrl(fromProfile || fromP1 || fromAvatarSlot) ?? fromProfile ?? fromP1 ?? fromAvatarSlot;
+    const raw = toUrl(fromProfile || fromP1 || fromAvatarSlot) ?? fromProfile ?? fromP1 ?? fromAvatarSlot;
+    if (!raw || typeof raw !== 'string' || !raw.trim() || raw.includes('undefined') || raw === '/default-media.png') return undefined;
+    return raw;
   }, [effectiveMedia, profile?.avatar_url, toSupabasePublicUrl]);
+
+  const [avatarError, setAvatarError] = React.useState(false);
+  React.useEffect(() => { setAvatarError(false); }, [avatarUrl]);
 
   const carouselPhotos = React.useMemo(() => {
     if (!effectiveMedia || !Array.isArray(effectiveMedia) || effectiveMedia.length === 0) {
@@ -818,7 +823,7 @@ export const UserProfileLive: React.FC = () => {
     }
     return PHOTO_SLOTS
       .map(slot => getMediaBySlot(effectiveMedia as any, slot))
-      .filter(item => item && item.kind === 'photo' && item.url && typeof item.url === 'string' && item.url.trim() !== '')
+      .filter(item => item && item.kind === 'photo' && item.url && typeof item.url === 'string' && item.url.trim() !== '' && !item.url.includes('undefined') && item.url !== '/default-media.png')
       .map(item => toDirectPublicStorageUrl(item!.url) || item!.url);
   }, [effectiveMedia]);
 
@@ -1088,10 +1093,11 @@ export const UserProfileLive: React.FC = () => {
                   background: colors.gradients.primary
                 }}
               >
-                {avatarUrl ? (
+                {avatarUrl && !avatarError ? (
                   <ImageWithFallback
                     src={avatarUrl}
                     alt={t('avatar')}
+                    onError={() => setAvatarError(true)}
                     style={{
                       width: '100%',
                       height: '100%',

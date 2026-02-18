@@ -1,6 +1,12 @@
 import React from "react";
 
-const FALLBACK = "/default-media.png";
+// Placeholder SVG para no depender de /default-media.png (puede no existir). Evita imágenes rotas.
+const PLACEHOLDER_SVG =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#2a2a2e"/><path d="M70 60h60v80l-25-30-15 20-20-25z" fill="#4b5563"/><circle cx="85" cy="72" r="10" fill="#4b5563"/></svg>'
+  );
+const FALLBACK = PLACEHOLDER_SVG;
 
 type ImageWithFallbackProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, "loading"> & {
   fallback?: string;
@@ -40,6 +46,7 @@ export default function ImageWithFallback({
   width,
   height,
   style,
+  onError,
   ...rest
 }: ImageWithFallbackProps) {
   const [err, setErr] = React.useState(false);
@@ -54,13 +61,18 @@ export default function ImageWithFallback({
   const styleWidth = typeof style?.width === 'string' && style.width.includes('%') ? undefined : (width ? `${width}px` : undefined);
   const styleHeight = typeof style?.height === 'string' && style.height.includes('%') ? undefined : (height ? `${height}px` : undefined);
 
+  const handleError = React.useCallback((e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    setErr(true);
+    onError?.(e);
+  }, [onError]);
+
   return (
     <picture>
       {optimizedAvif && <source srcSet={optimizedAvif} type="image/avif" sizes={sizes} />}
       {optimizedWebp && <source srcSet={optimizedWebp} type="image/webp" sizes={sizes} />}
       <img
         src={finalSrc}
-        onError={() => setErr(true)}
+        onError={handleError}
         decoding="async"
         loading={resolvedLoading}
         // React renderiza esto como `fetchpriority` en el DOM.

@@ -580,6 +580,7 @@ export const UserProfileLive: React.FC = () => {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [avatarError, setAvatarError] = React.useState(false);
 
   const safeMedia = media || [];
   const { data: rsvpEvents } = useUserRSVPEvents('interesado');
@@ -634,12 +635,26 @@ export const UserProfileLive: React.FC = () => {
 
   const avatarUrl = React.useMemo(() => {
     const p1 = getMediaBySlot(safeMedia as any, 'p1');
-    if (p1?.url) return toDirectPublicStorageUrl(p1.url) ?? p1.url;
-    if (profile?.avatar_url) return toDirectPublicStorageUrl(toSupabasePublicUrl(profile.avatar_url)) ?? toSupabasePublicUrl(profile.avatar_url);
+    if (p1?.url) {
+      const url = toDirectPublicStorageUrl(p1.url) ?? p1.url;
+      if (url && url.trim() && !url.includes('undefined') && url !== '/default-media.png') return url;
+    }
+    if (profile?.avatar_url) {
+      const url = toDirectPublicStorageUrl(toSupabasePublicUrl(profile.avatar_url)) ?? toSupabasePublicUrl(profile.avatar_url);
+      if (url && url.trim() && !url.includes('undefined') && url !== '/default-media.png') return url;
+    }
     const avatar = getMediaBySlot(safeMedia as any, 'avatar');
-    if (avatar?.url) return toDirectPublicStorageUrl(avatar.url) ?? avatar.url;
+    if (avatar?.url) {
+      const url = toDirectPublicStorageUrl(avatar.url) ?? avatar.url;
+      if (url && url.trim() && !url.includes('undefined') && url !== '/default-media.png') return url;
+    }
     return undefined;
   }, [safeMedia, profile?.avatar_url, toSupabasePublicUrl]);
+
+  // Reset avatarError cuando cambia avatarUrl
+  React.useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUrl]);
 
   const handleCoverUpload = React.useCallback(async (file: File) => {
     if (!user) return;
@@ -716,7 +731,7 @@ export const UserProfileLive: React.FC = () => {
   const carouselPhotos = React.useMemo(() => {
     return PHOTO_SLOTS
       .map(slot => getMediaBySlot(safeMedia as any, slot))
-      .filter(item => item && item.kind === 'photo' && item.url && item.url.trim() !== '')
+      .filter(item => item && item.kind === 'photo' && item.url && typeof item.url === 'string' && item.url.trim() !== '' && !item.url.includes('undefined') && item.url !== '/default-media.png')
       .map(item => toDirectPublicStorageUrl(item!.url) || item!.url);
   }, [safeMedia]);
 
@@ -880,10 +895,11 @@ export const UserProfileLive: React.FC = () => {
                   background: colors.gradients.primary
                 }}
               >
-                {avatarUrl ? (
+                {avatarUrl && !avatarError ? (
                   <ImageWithFallback
                     src={avatarUrl}
                     alt="Avatar"
+                    onError={() => setAvatarError(true)}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -900,7 +916,8 @@ export const UserProfileLive: React.FC = () => {
                     justifyContent: 'center',
                     fontSize: '6rem',
                     fontWeight: '700',
-                    color: 'white'
+                    color: 'white',
+                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
                   }}>
                     {profile?.display_name?.[0]?.toUpperCase() || '?'}
                   </div>

@@ -133,6 +133,7 @@ export const EXPLORE_CARD_STYLES = `
     overflow: hidden;
     line-height: 1.4;
     font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000;
   }
 
   .explore-card-meta {

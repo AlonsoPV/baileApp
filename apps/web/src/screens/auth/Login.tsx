@@ -30,6 +30,8 @@ export function Login() {
   const [error, setError] = useState('');
   const [signUpError, setSignUpError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const [isMagicLinkLoading, setIsMagicLinkLoading] = useState(false);
   const [isSignUpLoading, setIsSignUpLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [signUpMessage, setSignUpMessage] = useState('');
@@ -57,9 +59,8 @@ export function Login() {
 
   const handleMagicLink = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    
-    // Protección contra doble submit
-    if (isLoading) {
+
+    if (isMagicLinkLoading || isPasswordLoading) {
       console.warn('[Login] Intento de doble submit bloqueado');
       return;
     }
@@ -76,6 +77,7 @@ export function Login() {
       return;
     }
 
+    setIsMagicLinkLoading(true);
     setIsLoading(true);
     setError('');
     setMessage('');
@@ -107,6 +109,7 @@ export function Login() {
       }
       setIsSuccess(false);
     } finally {
+      setIsMagicLinkLoading(false);
       setIsLoading(false);
     }
   };
@@ -299,6 +302,7 @@ export function Login() {
       return;
     }
 
+    setIsPasswordLoading(true);
     setIsLoading(true);
     setError('');
     setMessage('');
@@ -323,6 +327,7 @@ export function Login() {
       setError(msg);
       showToast(msg, 'error');
     } finally {
+      setIsPasswordLoading(false);
       setIsLoading(false);
     }
   };
@@ -675,27 +680,27 @@ export function Login() {
 
               <Button
                 type="submit"
-                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
+                disabled={isPasswordLoading || isMagicLinkLoading || isGoogleLoading}
                 style={{
                   width: '100%',
-                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
+                  opacity: isPasswordLoading || isMagicLinkLoading || isGoogleLoading ? 0.5 : 1,
                   background: brandGradientPrimary,
                 }}
               >
-                {isLoading ? '⏳ Verificando...' : '🔓 Entrar con contraseña'}
+                {isPasswordLoading ? '⏳ Verificando...' : '🔓 Entrar con contraseña'}
               </Button>
 
               <Button
                 type="button"
                 onClick={handleMagicLink}
-                disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading}
+                disabled={isPasswordLoading || isMagicLinkLoading || isGoogleLoading}
                 style={{
                   width: '100%',
-                  opacity: (activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading ? 0.5 : 1,
+                  opacity: isPasswordLoading || isMagicLinkLoading || isGoogleLoading ? 0.5 : 1,
                   background: brandGradientSecondary,
                 }}
               >
-                {isLoading ? '⏳ Enviando...' : '📬 Enlace de inicio'}
+                {isMagicLinkLoading ? '⏳ Enviando...' : '📬 Enlace de inicio'}
               </Button>
             </div>
           </form>

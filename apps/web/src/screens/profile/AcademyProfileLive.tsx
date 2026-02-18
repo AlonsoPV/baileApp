@@ -1614,7 +1614,7 @@ export default function AcademyProfileLive() {
   const carouselPhotos = useMemo(() => 
     PHOTO_SLOTS
       .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-      .filter(Boolean)
+      .filter((u): u is string => !!u && typeof u === 'string' && u.trim() !== '' && !u.includes('undefined') && u !== '/default-media.png')
       .map(u => toDirectPublicStorageUrl(u) || u) as string[],
     [media]
   );
@@ -1623,7 +1623,8 @@ export default function AcademyProfileLive() {
     const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
     const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
     const raw = p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
-    return raw ? (toDirectPublicStorageUrl(raw) ?? raw) : null;
+    if (!raw || typeof raw !== 'string' || !raw.trim() || raw.includes('undefined') || raw === '/default-media.png') return null;
+    return toDirectPublicStorageUrl(raw) ?? raw;
   }, [media, academy]);
 
   const videos = useMemo(() =>

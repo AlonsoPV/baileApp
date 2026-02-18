@@ -144,7 +144,7 @@ export function OrganizerPublicScreen() {
   const media = normalizeMediaArray((org as any)?.media);
   const carouselPhotos = PHOTO_SLOTS
     .map(slot => getMediaBySlot(media as any, slot)?.url)
-    .filter(Boolean)
+    .filter((u): u is string => !!u && typeof u === 'string' && u.trim() !== '' && !u.includes('undefined') && u !== '/default-media.png')
     .map(u => toDirectPublicStorageUrl(u) || u) as string[];
   const videos = VIDEO_SLOTS
     .map(slot => getMediaBySlot(media as any, slot)?.url)

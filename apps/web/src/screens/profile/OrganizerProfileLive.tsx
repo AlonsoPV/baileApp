@@ -10,6 +10,7 @@ import { fmtDate } from "../../utils/format";
 import RitmosChips from "../../components/RitmosChips";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
@@ -1113,7 +1114,8 @@ export function OrganizerProfileLive() {
   const carouselPhotos = useMemo(() => {
     return PHOTO_SLOTS
       .map(slot => getMediaBySlot(safeMedia as any, slot)?.url)
-      .filter(Boolean) as string[];
+      .filter((u): u is string => !!u && typeof u === 'string' && u.trim() !== '' && !u.includes('undefined') && u !== '/default-media.png')
+      .map(u => toDirectPublicStorageUrl(u) || u);
   }, [safeMedia]);
 
   const videos = useMemo(() => {
@@ -1505,12 +1507,17 @@ export function OrganizerProfileLive() {
     );
   }
 
-  // Resolver avatar URL con null checks
-  const avatarUrl = (() => {
+  // Resolver avatar URL con null checks; excluir URLs inválidas para no mostrar placeholder roto
+  const avatarUrl = useMemo(() => {
     const cover = getMediaBySlot(safeMedia as any, 'cover');
     const p1 = getMediaBySlot(safeMedia as any, 'p1');
-    return cover?.url || p1?.url || undefined;
-  })();
+    const raw = cover?.url || p1?.url;
+    if (!raw || typeof raw !== 'string' || !raw.trim() || raw.includes('undefined') || raw === '/default-media.png') return undefined;
+    return toDirectPublicStorageUrl(raw) || raw;
+  }, [safeMedia]);
+
+  const [avatarError, setAvatarError] = useState(false);
+  React.useEffect(() => { setAvatarError(false); }, [avatarUrl]);
 
   return (
     <>
@@ -1663,10 +1670,11 @@ export function OrganizerProfileLive() {
                   position: 'relative'
                 }}
               >
-                {avatarUrl ? (
-                  <img
+                {avatarUrl && !avatarError ? (
+                  <ImageWithFallback
                     src={avatarUrl}
                     alt="Logo del organizador"
+                    onError={() => setAvatarError(true)}
                     style={{
                       width: '100%',
                       height: '100%',
