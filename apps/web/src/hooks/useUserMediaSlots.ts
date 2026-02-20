@@ -52,7 +52,10 @@ export function useUserMediaSlots() {
       // Invalidar queries de media y del perfil para forzar recarga
       await qc.invalidateQueries({ queryKey: KEY(user?.id) });
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
-      
+      // UserProfileLive usa useUserMedia con key ["profile","media"]
+      await qc.invalidateQueries({ queryKey: ["profile","media", user?.id] });
+      // UserPublicScreen usa ['user-public-profile-fields', userId] para media
+      await qc.invalidateQueries({ queryKey: ["user-public-profile-fields", user?.id] });
       // Forzar refetch inmediato para que los cambios se reflejen de inmediato
       await qc.refetchQueries({ queryKey: KEY(user?.id) });
     },
@@ -118,7 +121,8 @@ export function useUserMediaSlots() {
       // Invalidar queries de media y del perfil para forzar recarga
       await qc.invalidateQueries({ queryKey: KEY(user?.id) });
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
-      
+      await qc.invalidateQueries({ queryKey: ["profile","media", user?.id] });
+      await qc.invalidateQueries({ queryKey: ["user-public-profile-fields", user?.id] });
       // Forzar refetch inmediato para que los cambios se reflejen de inmediato
       await qc.refetchQueries({ queryKey: KEY(user?.id) });
     },
@@ -172,7 +176,8 @@ export function useUserMediaSlots() {
       // Invalidar queries de media y del perfil para forzar recarga
       await qc.invalidateQueries({ queryKey: KEY(user?.id) });
       await qc.invalidateQueries({ queryKey: ["profile","me", user?.id] });
-      
+      await qc.invalidateQueries({ queryKey: ["profile","media", user?.id] });
+      await qc.invalidateQueries({ queryKey: ["user-public-profile-fields", user?.id] });
       // Forzar refetch inmediato para que los cambios se reflejen de inmediato
       await qc.refetchQueries({ queryKey: KEY(user?.id) });
     },

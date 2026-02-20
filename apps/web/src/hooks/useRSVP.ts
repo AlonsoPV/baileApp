@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthProvider";
 
 // =====================================================
 // TIPOS DE RSVP
@@ -99,9 +100,14 @@ export function useEventsWithRSVPStats(params?: {
  * Obtiene los eventos donde el usuario tiene RSVP
  */
 export function useUserRSVPEvents(status?: RSVPStatus) {
+  const { user } = useAuth();
+  const userId = user?.id;
+
   return useQuery({
-    queryKey: ["rsvp", "user-events", status],
+    queryKey: ["rsvp", "user-events", status, userId],
+    enabled: !!userId,
     queryFn: async () => {
+      if (!userId) return [];
       let req = supabase
         .from("event_rsvp")
         .select(`
@@ -110,11 +116,11 @@ export function useUserRSVPEvents(status?: RSVPStatus) {
             *,
             events_parent!inner (
               *,
-              profiles_organizer!inner (*)
+              profiles_organizer (*)
             )
           )
         `)
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
+        .eq("user_id", userId);
       
       if (status) {
         req = req.eq("status", status);

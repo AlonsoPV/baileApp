@@ -658,7 +658,7 @@ export const UserProfileLive: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('event_rsvp')
-        .select(`*, events_date!inner(*, events_parent!inner(*, profiles_organizer!inner(*)))`)
+        .select(`*, events_date!inner(*, events_parent!inner(*, profiles_organizer(*)))`)
         .eq('user_id', userId)
         .eq('status', 'interesado');
       if (error) throw error;
