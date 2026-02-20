@@ -410,7 +410,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const {
     userStatus,
     stats,
-    toggleInterested,
+    setStatus,
     isUpdating
   } = useEventRSVP(dateId);
 
@@ -2106,9 +2106,9 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                     {/* Contador de RSVP comentado - interestedCount={interestedCount} */}
                     <RSVPButtons
                       currentStatus={userStatus}
-                      onStatusChange={toggleInterested}
+                      onStatusChange={setStatus}
                       disabled={isUpdating}
-                      interestedCount={undefined}
+                      interestedCount={stats?.total}
                     />
                   </RequireLogin>
 
@@ -2118,14 +2118,14 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
                     {/* Estado actual del usuario */}
                     <div className="subtle" aria-live="polite">
-                      {userStatus === 'interesado' ? t('event_of_interest') : t('mark_interested_prompt')}
+                      {userStatus === 'going' ? t('event_of_interest') : userStatus === 'interesado' ? t('event_of_interest') : t('mark_interested_prompt')}
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Fila 2: Agregar a calendario (solo si interesado) */}
-              {userStatus === 'interesado' && (
+              {(userStatus === 'interesado' || userStatus === 'going') && (
                 <div className="card" aria-label={t('add_to_calendar')}>
                   <div style={{ display: 'grid', gap: '.75rem', justifyItems: 'center', textAlign: 'center' }}>
                     <h3 className="headline">{t('calendar')}</h3>

@@ -5,10 +5,11 @@ import { useAuth } from "../contexts/AuthProvider";
 // =====================================================
 // TIPOS DE RSVP
 // =====================================================
-export type RSVPStatus = 'interesado';
+export type RSVPStatus = 'interesado' | 'going';
 
 export interface RSVPStats {
   interesado: number;
+  going?: number;
   total: number;
   // Backwards compat: algunas RPCs/vistas devuelven `total_interesado`
   total_interesado?: number;
@@ -285,6 +286,8 @@ export function useEventRSVP(eventDateId?: number) {
     updateRSVP: handleRSVP,
     removeRSVP: handleRemoveRSVP,
     toggleInterested: () => handleRSVP(userRSVP.data === 'interesado' ? null : 'interesado'),
+    toggleGoing: () => handleRSVP(userRSVP.data === 'going' ? null : 'going'),
+    setStatus: (status: RSVPStatus | null) => handleRSVP(status),
     isUpdating: updateRSVP.isPending || removeRSVP.isPending,
     
     // Estados de mutación

@@ -17,6 +17,8 @@
   "nav_tagline": "Encuentra tu ritmo y tu espacio",
   "interested": "Me interesa",
   "not_interested": "Ya no me interesa",
+  "going": "Asistiré",
+  "not_going": "Ya no asistiré",
   "interested_count": "{{count}} interesado",
   "interested_count_plural": "{{count}} interesados",
   "view_details": "Ver detalles",

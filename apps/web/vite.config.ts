@@ -16,6 +16,8 @@ export default defineConfig({
       "screens/onboarding/PickZonas.loading.test.tsx",
       // User data isolation guardrails (per-user storage namespacing)
       "state/userIsolation.test.ts",
+      // RSVP expiration logic
+      "utils/eventDateExpiration.test.ts",
     ],
     environment: "jsdom",
     globals: true,

@@ -19,6 +19,7 @@ import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import { useTranslation } from "react-i18next";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
+import { isEventDateExpired } from "../../utils/eventDateExpiration";
 
 /** Normaliza media: si viene como string JSON desde la API, lo parsea a array. */
 function normalizeMediaArray(raw: unknown): unknown[] {
@@ -660,42 +661,20 @@ export const UserProfileLive: React.FC = () => {
         .from('event_rsvp')
         .select(`*, events_date!inner(*, events_parent!inner(*, profiles_organizer(*)))`)
         .eq('user_id', userId)
-        .eq('status', 'interesado');
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     }
   });
 
-  const today = React.useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
-  const isAvailableEventDate = React.useCallback((evento: any) => {
-    if (!evento) return false;
-    // Si tiene fecha, verificar que sea hoy o futura (incluye recurrentes con fecha específica)
-    const raw = (evento as any).fecha;
-    if (raw) {
-      try {
-        const base = String(raw).split('T')[0];
-        const [y, m, d] = base.split('-').map((n: string) => parseInt(n, 10));
-        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return true;
-        const dt = new Date(y, m - 1, d);
-        dt.setHours(0, 0, 0, 0);
-        return dt >= today;
-      } catch {
-        return true;
-      }
-    }
-    // Sin fecha: slot recurrente (dia_semana) sin fecha específica - mantener visible
-    if (typeof (evento as any).dia_semana === 'number') return true;
-    return false;
-  }, [today]);
-
   const availableRsvpEvents = React.useMemo(() => {
-    return (rsvpEvents || []).filter((r: any) => isAvailableEventDate(r.events_date));
-  }, [rsvpEvents, isAvailableEventDate]);
+    const filtered = (rsvpEvents || []).filter((r: any) => !isEventDateExpired(r.events_date));
+    return filtered.sort((a: any, b: any) => {
+      const fa = (a.events_date?.fecha || '') as string;
+      const fb = (b.events_date?.fecha || '') as string;
+      return fa.localeCompare(fb);
+    });
+  }, [rsvpEvents]);
 
   const [session, setSession] = useState<any>(null);
 

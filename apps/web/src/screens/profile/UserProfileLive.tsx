@@ -23,6 +23,7 @@ import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import { useTranslation } from "react-i18next";
 import { useProfileSwitchMetrics } from "../../hooks/useProfileSwitchMetrics";
+import { isEventDateExpired } from "../../utils/eventDateExpiration";
 
 const STYLES = `
   .profile-container {
@@ -583,38 +584,16 @@ export const UserProfileLive: React.FC = () => {
   const [avatarError, setAvatarError] = React.useState(false);
 
   const safeMedia = media || [];
-  const { data: rsvpEvents } = useUserRSVPEvents('interesado');
-
-  const today = React.useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
-  const isAvailableEventDate = React.useCallback((evento: any) => {
-    if (!evento) return false;
-    // Si tiene fecha, verificar que sea hoy o futura (incluye recurrentes con fecha específica)
-    const raw = (evento as any).fecha;
-    if (raw) {
-      try {
-        const base = String(raw).split('T')[0];
-        const [y, m, d] = base.split('-').map((n: string) => parseInt(n, 10));
-        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return true;
-        const dt = new Date(y, m - 1, d);
-        dt.setHours(0, 0, 0, 0);
-        return dt >= today;
-      } catch {
-        return true;
-      }
-    }
-    // Sin fecha: slot recurrente (dia_semana) sin fecha específica - mantener visible
-    if (typeof (evento as any).dia_semana === 'number') return true;
-    return false;
-  }, [today]);
+  const { data: rsvpEvents } = useUserRSVPEvents();
 
   const availableRsvpEvents = React.useMemo(() => {
-    return (rsvpEvents || []).filter((r: any) => isAvailableEventDate(r.events_date));
-  }, [rsvpEvents, isAvailableEventDate]);
+    const filtered = (rsvpEvents || []).filter((r: any) => !isEventDateExpired(r.events_date));
+    return filtered.sort((a: any, b: any) => {
+      const fa = (a.events_date?.fecha || '') as string;
+      const fb = (b.events_date?.fecha || '') as string;
+      return fa.localeCompare(fb);
+    });
+  }, [rsvpEvents]);
 
   const toSupabasePublicUrl = React.useCallback((maybePath?: string): string | undefined => {
     if (!maybePath) return undefined;
