@@ -21,7 +21,8 @@ html {
   overflow-x: hidden;
   overflow-y: auto;
   will-change: auto;
-  touch-action: manipulation;
+  /* Ensure vertical scrolling works on Chrome Android */
+  touch-action: pan-x pan-y;
 }
 
 body {
@@ -37,7 +38,8 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   will-change: auto;
-  touch-action: manipulation;
+  /* Ensure vertical scrolling works on Chrome Android */
+  touch-action: pan-x pan-y;
 }
 
 /* iOS: evita zoom automático al hacer focus (zoom si font-size < 16px) */

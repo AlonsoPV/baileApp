@@ -608,8 +608,8 @@ export default function WebAppScreen() {
             readyReceivedRef.current = false;
             markPerformance("webview_load_start");
           }}
-          onLoadProgress={({ nativeEvent }) => {
-            const progress = nativeEvent.progress;
+          onLoadProgress={(e: { nativeEvent: { progress: number } }) => {
+            const progress = e.nativeEvent.progress;
             if (progress >= 1) {
               markPerformance("webview_load_progress_100");
             }
@@ -893,12 +893,14 @@ export default function WebAppScreen() {
           </View>
         )}
 
+        {/* Cortina de carga azul con logo — desactivada
         {loading && !hasError && (
           <View style={styles.loaderOverlay}>
             <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />
             <ActivityIndicator size="large" color="#ffffff" />
           </View>
         )}
+        */}
 
         {nativeAuthInProgress && (
           <View style={styles.loaderOverlay}>

@@ -2440,10 +2440,32 @@ export default function ExploreHomeScreen() {
   const fechasLoading = fechasQuery.isLoading;
   const fechasError = (fechasQuery as any).isError;
   const fechasErrObj = (fechasQuery as any).error;
+  const [fechasTimedOut, setFechasTimedOut] = React.useState(false);
   const fechasData = React.useMemo(() => {
     if (!shouldLoadFechas) return [];
     return flattenQueryData(fechasQuery.data);
   }, [fechasQuery.data, shouldLoadFechas]);
+
+  // Evitar loading infinito en mobile: si la primera carga tarda demasiado, mostrar error con reintento.
+  const fechasReqKey = React.useMemo(() => {
+    const qk = String(qDeferred || '');
+    const r = Array.isArray(filters.ritmos) ? filters.ritmos.join(',') : '';
+    const z = Array.isArray(filters.zonas) ? filters.zonas.join(',') : '';
+    return `${qk}|${r}|${z}|${filters.dateFrom || ''}|${filters.dateTo || ''}`;
+  }, [qDeferred, filters.ritmos, filters.zonas, filters.dateFrom, filters.dateTo]);
+
+  React.useEffect(() => {
+    if (!shouldLoadFechas) {
+      setFechasTimedOut(false);
+      return;
+    }
+    if (!fechasLoading) {
+      setFechasTimedOut(false);
+      return;
+    }
+    const t = window.setTimeout(() => setFechasTimedOut(true), 20_000);
+    return () => window.clearTimeout(t);
+  }, [shouldLoadFechas, fechasLoading, fechasReqKey]);
 
   const filteredFechas = React.useMemo(() => {
     const parseYmdToDate = (value?: string | null) => {
@@ -3513,7 +3535,13 @@ export default function ExploreHomeScreen() {
 
           {(((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
             <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length} sectionId="fechas">
-              {fechasLoading ? (
+              {fechasTimedOut ? (
+                <InlineQueryError
+                  title="La carga está tardando demasiado"
+                  error={{ message: "Timeout cargando eventos" } as any}
+                  onRetry={() => (fechasQuery as any).refetch?.()}
+                />
+              ) : fechasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : fechasError ? (
                 <InlineQueryError

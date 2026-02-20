@@ -26,6 +26,19 @@ export default function AppShell() {
 
   const defaultProfileInfo = getDefaultProfileInfo();
 
+  // Mobile Chrome guard: ensure we never leave the page scroll-locked.
+  // Some overlays (menus/modals) can set body overflow hidden; make sure it's released on route changes.
+  React.useEffect(() => {
+    try { document.body.style.overflow = ""; } catch {}
+    try { document.documentElement.style.overflow = ""; } catch {}
+  }, [location.pathname]);
+
+  React.useEffect(() => {
+    if (menuOpen) return;
+    try { document.body.style.overflow = ""; } catch {}
+    try { document.documentElement.style.overflow = ""; } catch {}
+  }, [menuOpen]);
+
   // Obtener avatar con la misma lógica que UserProfileLive (priorizar p1)
   const avatarUrl = (() => {
     const safeMedia = media || [];
@@ -402,9 +415,9 @@ export default function AppShell() {
           </div>
         </footer>
 
-        {user && (
+        {user && menuOpen && (
           <OffCanvasMenu
-            isOpen={menuOpen}
+            isOpen={true}
             onClose={() => setMenuOpen(false)}
             menuItems={menuItems}
             userName={user.email?.split('@')[0] || 'Usuario'}
