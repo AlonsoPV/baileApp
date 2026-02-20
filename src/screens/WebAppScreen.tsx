@@ -893,15 +893,6 @@ export default function WebAppScreen() {
           </View>
         )}
 
-        {/* Cortina de carga azul con logo — desactivada
-        {loading && !hasError && (
-          <View style={styles.loaderOverlay}>
-            <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />
-            <ActivityIndicator size="large" color="#ffffff" />
-          </View>
-        )}
-        */}
-
         {nativeAuthInProgress && (
           <View style={styles.loaderOverlay}>
             <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />

@@ -14,7 +14,6 @@ import { envReport } from "./src/lib/envReport";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { clearLastCrash, readLastCrash, type CrashRecord } from "./src/lib/crashRecorder";
 import { markPerformance, logPerformanceReport } from "./src/lib/performance";
-import { WelcomeCurtain } from "./src/components/WelcomeCurtain";
 import { AuthCoordinator } from "./src/auth/AuthCoordinator";
 import { formatFingerprint, getConfigFingerprint, getNativeGoogleConfigStatus, getRuntimeConfig } from "./src/config/runtimeConfig";
 
@@ -367,7 +366,6 @@ function AppContent() {
         <ErrorBoundary title="Error al iniciar la app">
           <RootNavigator />
         </ErrorBoundary>
-        <WelcomeCurtain />
         <StatusBar style="auto" />
       </QueryClientProvider>
     </SafeAreaProvider>
