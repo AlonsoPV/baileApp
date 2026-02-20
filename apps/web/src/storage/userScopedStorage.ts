@@ -99,7 +99,6 @@ export function clearLegacyUnscopedWebKeys() {
         }
       }
     } catch {}
-    try { localStorage.removeItem("@baileapp:hasSeenWelcomeCurtain"); } catch {}
     try { localStorage.removeItem("baileapp:drafts:v1"); } catch {}
     // Supabase session key is handled by supabase itself; do not delete here unless logging out.
   }

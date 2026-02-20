@@ -1450,7 +1450,7 @@ const STYLES = `
       max-width: 100% !important;
       padding: 10px 12px 12px !important;
       border-radius: 20px !important;
-      margin: 5px 0 2em 0 !important;
+      margin: 0 0 2em 0 !important;
       box-sizing: border-box;
     }
     .filters-card {
@@ -1662,7 +1662,7 @@ const STYLES = `
     .filters-panel {
       padding: 8px 10px 10px !important;
       border-radius: 18px !important;
-      margin: 5px 0 2em 0 !important;
+      margin: 0 0 2em 0 !important;
     }
     .filters-card {
       padding: 10px 8px 8px !important;
@@ -1850,7 +1850,7 @@ const STYLES = `
     .filters-panel {
       padding: 9px 10px 11px !important;
       border-radius: 16px !important;
-      margin: 5px 0 2em 0 !important;
+      margin: 0 0 2em 0 !important;
     }
     .filters-fav {
       padding: 7px 9px !important;
@@ -3174,7 +3174,7 @@ export default function ExploreHomeScreen() {
 
       <div className="explore-container">
         <div className="wrap">
-          <section className="filters-panel" style={{ marginTop: '5px', marginBottom: spacing[6], marginLeft: 'auto', marginRight: 'auto' }} role="region" aria-label={t('filters')}>
+          <section className="filters-panel" style={{ marginTop: 0, marginBottom: spacing[6], marginLeft: 'auto', marginRight: 'auto' }} role="region" aria-label={t('filters')}>
             {usingFavoriteFilters && user && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}

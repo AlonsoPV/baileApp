@@ -1,13 +1,22 @@
 // components/explore/HorizontalSlider.tsx
 /**
  * HorizontalSlider optimizado para scroll fluido en mobile
- * 
+ *
  * Optimizaciones implementadas:
  * - Detección de scroll activo para desactivar animaciones pesadas
  * - Aceleración de hardware con translateZ(0) y will-change
  * - CSS contain para limitar repaints durante scroll
  * - Reducción de scroll-behavior durante scroll activo
  * - Optimizaciones específicas para mobile (touch-action, overscroll-behavior)
+ * - Touch: scroll horizontal funciona aunque el gesto empiece sobre una card (tap vs scroll con umbral 8px)
+ *
+ * QA manual (ExploreHomeScreenModern, Android / touch):
+ * - [ ] Swipe horizontal iniciando sobre una card: se mueve el carrusel
+ * - [ ] Swipe horizontal iniciando en el espacio entre cards: se mueve el carrusel
+ * - [ ] Tap rápido en card: abre detalle (onPress/navegación)
+ * - [ ] Arrastre vertical (incluso sobre la zona del carrusel): scroll vertical de la página fluido
+ * - [ ] Arrastre diagonal: si predomina horizontal (|dx|>=|dy|) scroll horizontal; si predomina vertical, scroll vertical
+ * iOS: comprobar que el comportamiento no empeore.
  */
 import React, { useRef, useMemo, useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -52,6 +61,13 @@ export default function HorizontalSlider<T>({
   const dragStartXRef = useRef(0);
   const dragStartScrollLeftRef = useRef(0);
   const suppressClickUntilRef = useRef(0);
+  // Touch scroll-from-card (Android): capture touch so viewport can scroll when user drags on a card
+  const touchIdRef = useRef<number | null>(null);
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const touchStartScrollLeftRef = useRef(0);
+  const touchScrollingRef = useRef(false);
+  const TOUCH_SLOP = 8;
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
   const isDesktop =
@@ -233,6 +249,65 @@ export default function HorizontalSlider<T>({
     }
   }, []);
 
+  // Touch: allow horizontal scroll when gesture starts on a card (Android). Use capture + non-passive so we can preventDefault.
+  const onTouchStartCapture = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (!viewportRef.current || !allowUserScroll || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    touchIdRef.current = t.identifier;
+    touchStartXRef.current = t.clientX;
+    touchStartYRef.current = t.clientY;
+    touchStartScrollLeftRef.current = viewportRef.current.scrollLeft;
+    touchScrollingRef.current = false;
+  }, [allowUserScroll]);
+
+  const onTouchEndCapture = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 0) {
+      if (touchScrollingRef.current) {
+        suppressClickUntilRef.current = Date.now() + 300;
+      }
+      touchIdRef.current = null;
+      touchScrollingRef.current = false;
+    }
+  }, []);
+
+  const onTouchCancelCapture = useCallback(() => {
+    touchIdRef.current = null;
+    touchScrollingRef.current = false;
+  }, []);
+
+  // touchmove must be non-passive to call preventDefault; attach natively in capture phase
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el || !allowUserScroll) return;
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const id = touchIdRef.current;
+      if (id === null) return;
+      const t = Array.from(e.touches).find((x) => x.identifier === id);
+      if (!t) return;
+
+      const dx = t.clientX - touchStartXRef.current;
+      const dy = t.clientY - touchStartYRef.current;
+
+      if (!touchScrollingRef.current) {
+        const adx = Math.abs(dx);
+        const ady = Math.abs(dy);
+        if (adx >= TOUCH_SLOP && adx >= ady) {
+          touchScrollingRef.current = true;
+        }
+      }
+      if (touchScrollingRef.current) {
+        e.preventDefault();
+        const maxScrollLeft = layoutRef.current.maxScrollLeft ?? Math.max(0, el.scrollWidth - el.clientWidth);
+        el.scrollLeft = Math.max(0, Math.min(maxScrollLeft, touchStartScrollLeftRef.current - dx));
+      }
+    };
+
+    el.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
+    return () => el.removeEventListener("touchmove", onTouchMove, { capture: true } as any);
+  }, [allowUserScroll]);
+
   const scrollByAmount = useCallback((dir: 1 | -1) => {
     const el = viewportRef.current;
     if (!el) return;
@@ -260,6 +335,9 @@ export default function HorizontalSlider<T>({
         onPointerUp={endPointerDrag}
         onPointerCancel={endPointerDrag}
         onPointerLeave={endPointerDrag}
+        onTouchStartCapture={onTouchStartCapture}
+        onTouchEndCapture={onTouchEndCapture}
+        onTouchCancelCapture={onTouchCancelCapture}
         onClickCapture={onClickCapture}
         style={{
           position: "relative",
