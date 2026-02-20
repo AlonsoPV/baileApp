@@ -263,8 +263,9 @@ export default function HorizontalSlider<T>({
         onClickCapture={onClickCapture}
         style={{
           position: "relative",
-          overflowX: allowUserScroll ? "auto" : "hidden",
-          overflowY: "visible",
+          /* Android: overflow-x: scroll asegura que el scroll horizontal esté habilitado (auto puede no activarse) */
+          overflowX: allowUserScroll ? "scroll" : "hidden",
+          overflowY: "hidden",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           width: "100%",
@@ -283,9 +284,7 @@ export default function HorizontalSlider<T>({
           transform: "none",
           WebkitTransform: "none",
           willChange: isScrolling ? "scroll-position" : "auto",
-          // Touch actions
-          // Fix Android: permitir tanto scroll horizontal como vertical, pero con overscroll-behavior-y: auto
-          // el scroll vertical se propagará al contenedor padre cuando el gesto es principalmente vertical
+          // Touch: pan-x prioriza scroll horizontal en el slider; pan-y permite scroll vertical en contenido interno
           touchAction: "pan-x pan-y",
           // Mouse drag UX
           cursor: allowUserScroll ? "grab" : "default",

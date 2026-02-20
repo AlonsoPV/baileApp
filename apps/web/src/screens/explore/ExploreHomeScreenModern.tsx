@@ -388,19 +388,23 @@ const STYLES = `
   }
   .explore-container { 
     min-height: 100vh; 
+    min-height: 100dvh;
     /* IMPORTANT: This screen is styled for a dark UI (cards/text assume dark background). */
     background: #0b0d10; 
     color: ${colors.gray[50]}; 
     width: 100%;
+    max-width: 100vw;
     overflow-x: hidden;
-    overflow-y: auto; /* Permitir scroll vertical cuando el contenido supera el viewport */
+    overflow-y: auto;
     padding-top: 0;
     padding-bottom: env(safe-area-inset-bottom);
-    /* Optimizaciones de scroll vertical */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    touch-action: pan-y;
-    /* No usar contain/transform aquí para no romper el scroll ni position: fixed */
+    touch-action: auto;
+    -webkit-tap-highlight-color: transparent;
   }
   @media (min-width: 769px) {
     .explore-container {
@@ -433,8 +437,8 @@ const STYLES = `
     margin: 0 auto; 
     padding: 0 ${spacing[6]} ${spacing[10]};
     width: 100%;
+    min-width: 0;
     box-sizing: border-box;
-    /* Optimizaciones de scroll */
     transform: translateZ(0);
     will-change: auto;
   }
@@ -1611,13 +1615,12 @@ const STYLES = `
       height: 16px !important;
       font-size: 0.65rem !important;
     }
-    /* Estilos para la fila de búsqueda expandida en mobile */
     .filters-search-expanded {
       margin-top: 6px !important;
       padding: 6px 0 !important;
     }
     .filters-search-expanded input {
-      font-size: 13px !important;
+      font-size: 16px !important;
       padding: 10px 12px 10px 38px !important;
     }
     .filters-search-expanded button {
@@ -1746,7 +1749,7 @@ const STYLES = `
     .chip {
       font-size: 10px !important;
       padding: 7px 11px !important;
-      min-height: 34px !important;
+      min-height: 40px !important;
       gap: 5px !important;
     }
     .chip__icon {
@@ -1762,7 +1765,7 @@ const STYLES = `
       padding: 5px 0 !important;
     }
     .filters-search-expanded input {
-      font-size: 12px !important;
+      font-size: 16px !important;
       padding: 9px 12px 9px 36px !important;
     }
     .filters-search-input {
@@ -1896,13 +1899,13 @@ const STYLES = `
       padding: 4px 0 !important;
     }
     .filters-search-expanded input {
-      font-size: 11px !important;
+      font-size: 16px !important;
       padding: 8px 10px 8px 34px !important;
     }
     .filters-search-expanded button {
       font-size: 9px !important;
       padding: 8px 10px !important;
-      min-height: 36px !important;
+      min-height: 40px !important;
     }
     .filters-tabs {
       padding: 2px 0 6px 0 !important;
@@ -1914,7 +1917,7 @@ const STYLES = `
     .tab {
       font-size: 10px !important;
       padding: 9px 12px !important;
-      min-height: 36px !important;
+      min-height: 40px !important;
       min-width: fit-content !important;
       flex: 0 0 auto !important;
       white-space: nowrap !important;

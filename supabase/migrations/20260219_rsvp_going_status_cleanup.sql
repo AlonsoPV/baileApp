@@ -180,7 +180,7 @@ BEGIN
     PERFORM cron.schedule(
       'cleanup-expired-rsvps',
       '0 9 * * *',  -- 9:00 UTC ≈ 3:00 AM Mexico City (simplified; DST may vary)
-      $$SELECT public.cleanup_expired_rsvps()$$
+      'SELECT public.cleanup_expired_rsvps()'
     );
   END IF;
 EXCEPTION WHEN OTHERS THEN
