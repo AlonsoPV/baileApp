@@ -16,7 +16,9 @@ class PerformanceTracker {
   private startTime: number;
 
   constructor() {
-    this.startTime = performance.now();
+    this.startTime = typeof performance !== "undefined" && typeof performance.now === "function"
+      ? performance.now()
+      : Date.now();
     this.mark("app_start");
   }
 
@@ -24,14 +26,16 @@ class PerformanceTracker {
    * Record a performance milestone
    */
   mark(name: string): void {
-    const now = performance.now();
+    const now = typeof performance !== "undefined" && typeof performance.now === "function"
+      ? performance.now()
+      : Date.now();
     const relativeTime = now - this.startTime;
     this.marks.push({ name, timestamp: now, relativeTime });
-    
-    // Log immediately for real-time debugging
+
+    // [PERF] prefix for Android logcat filtering (e.g. adb logcat | grep PERF)
     const isDev = typeof __DEV__ !== "undefined" && __DEV__;
     if (isDev) {
-      console.log(`[Performance] ${name}: ${relativeTime.toFixed(2)}ms`);
+      console.log(`[PERF] ${name}: ${relativeTime.toFixed(2)}ms`);
     }
   }
 
@@ -86,17 +90,17 @@ class PerformanceTracker {
    */
   logReport(): void {
     const report = this.getReport();
-    console.log("[Performance Report] ========================================");
-    console.log(`[Performance] Total time to ready: ${report.totalTime.toFixed(2)}ms`);
-    console.log("[Performance] Milestones:");
+    console.log("[PERF] ========================================");
+    console.log(`[PERF] Total time to ready: ${report.totalTime.toFixed(2)}ms`);
+    console.log("[PERF] Milestones:");
     report.marks.forEach((mark) => {
-      console.log(`[Performance]   ${mark.name.padEnd(30)} ${mark.relativeTime.toFixed(2).padStart(8)}ms`);
+      console.log(`[PERF]   ${mark.name.padEnd(30)} ${mark.relativeTime.toFixed(2).padStart(8)}ms`);
     });
-    console.log("[Performance] Phases:");
+    console.log("[PERF] Phases:");
     report.phases.forEach((phase) => {
-      console.log(`[Performance]   ${phase.phase.padEnd(40)} ${phase.duration.toFixed(2).padStart(8)}ms`);
+      console.log(`[PERF]   ${phase.phase.padEnd(40)} ${phase.duration.toFixed(2).padStart(8)}ms`);
     });
-    console.log("[Performance Report] ========================================");
+    console.log("[PERF] ========================================");
   }
 }
 

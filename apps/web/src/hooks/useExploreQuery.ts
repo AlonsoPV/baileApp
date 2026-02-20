@@ -558,5 +558,8 @@ export function useExploreQuery(params: QueryParams & { enabled?: boolean }) {
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
     enabled, // Solo ejecutar la query si enabled es true
+    staleTime: 1000 * 120, // 2 min — home/explore no necesita refetch tan seguido; reduce carga en Android
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 }

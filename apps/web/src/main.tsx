@@ -11,6 +11,10 @@ import './index.css';
 // ✅ Inicializar i18n ANTES de renderizar la app
 import './i18n';
 import { installNativeAuthBridge } from "./native/nativeAuthBridge";
+import { mark } from "./utils/performanceLogger";
+
+// Medición de carga (prefijo [PERF] para Android logcat)
+mark("app_start");
 
 // Normalizar URLs con dobles barras ANTES de que React Router las procese
 if (window.location.pathname.includes('//')) {

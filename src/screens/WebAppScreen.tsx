@@ -15,11 +15,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { getRuntimeConfig } from "../config/runtimeConfig";
 import { AuthCoordinator } from "../auth/AuthCoordinator";
+import { markPerformance } from "../lib/performance";
 import { assertGoogleAuthConfig } from "../auth/assertGoogleAuthConfig";
 import { logHost, shouldAuthDebug } from "../utils/authDebug";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
 // Puedes ajustar esto a staging si  lo necesitas.
+// Siempre HTTPS; no cargar http:// en el WebView (evita cleartext/SSL en Android).
 const WEB_APP_URL = "https://dondebailar.com.mx";
 
 // Icono de la app (mismo que en la web) para la pantalla de carga.
@@ -28,6 +30,69 @@ const APP_ICON_URL =
 
 const NAVBAR_TEAL = "#297F96";
 
+/** Timeout de carga (ms): si no llega onLoadEnd/READY, mostrar error. */
+const LOAD_TIMEOUT_MS = 20_000;
+
+type WebViewErrorDetail = {
+  code?: number;
+  description?: string;
+  url?: string;
+  statusCode?: number;
+  canGoBack?: boolean;
+  canGoForward?: boolean;
+  isSsl?: boolean;
+  userMessage: string;
+};
+
+function logWebViewError(
+  source: "onError" | "onHttpError" | "onRenderProcessGone" | "onContentProcessDidTerminate",
+  payload: Record<string, unknown>
+): void {
+  if (typeof console?.log !== "function") return;
+  console.log(`[WEBVIEW_ERR] ${source}`, JSON.stringify(payload, null, 2));
+}
+
+function classifyWebViewError(
+  code?: number,
+  description?: string,
+  statusCode?: number
+): { userMessage: string; isSsl: boolean } {
+  const desc = String(description ?? "").toLowerCase();
+  const codeStr = String(code ?? "");
+  const isSsl =
+    /ssl|cert|handshake|err_cert|net::err_cert|chain|authority|invalid.*certificate/i.test(desc) ||
+    /ssl|cert|err_cert/i.test(codeStr);
+  if (isSsl) {
+    return {
+      userMessage:
+        "Problema con certificado SSL. Intenta de nuevo. Si persiste, actualiza WebView/Chrome.",
+      isSsl: true,
+    };
+  }
+  if (/dns|host.*lookup|unable to resolve|err_name_not_resolved|net::err_name_not_resolved/i.test(desc)) {
+    return { userMessage: "No se pudo resolver el servidor. Revisa tu red.", isSsl: false };
+  }
+  if (/timeout|timed out|err_timed_out|net::err_timed_out/i.test(desc) || code === -8) {
+    return { userMessage: "La conexión tardó demasiado.", isSsl: false };
+  }
+  if (typeof statusCode === "number") {
+    if (statusCode >= 500) {
+      return { userMessage: `Servidor no disponible (${statusCode}).`, isSsl: false };
+    }
+    if (statusCode >= 400) {
+      return { userMessage: `Servidor no disponible (${statusCode}).`, isSsl: false };
+    }
+  }
+  if (/connection|network|failed to connect|err_connection|net::err_connection/i.test(desc)) {
+    return { userMessage: "No se pudo conectar. Revisa tu red.", isSsl: false };
+  }
+  return {
+    userMessage:
+      "No se pudo cargar la página. Revisa tu conexión e intenta de nuevo.",
+    isSsl: false,
+  };
+}
+
 export default function WebAppScreen() {
   const [loading, setLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
@@ -35,9 +100,12 @@ export default function WebAppScreen() {
   const [webViewModule, setWebViewModule] = React.useState<any>(null);
   const [nativeAuthInProgress, setNativeAuthInProgress] = React.useState(false);
   const [nativeAuthError, setNativeAuthError] = React.useState<string | null>(null);
+  const [lastWebViewError, setLastWebViewError] = React.useState<WebViewErrorDetail | null>(null);
   const webviewRef = React.useRef<any>(null);
   const insets = useSafeAreaInsets();
   const loadWatchdogRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadStartTimeRef = React.useRef<number>(0);
+  const readyReceivedRef = React.useRef(false);
 
   const clearLoadWatchdog = React.useCallback(() => {
     if (loadWatchdogRef.current) {
@@ -48,14 +116,20 @@ export default function WebAppScreen() {
 
   const armLoadWatchdog = React.useCallback(() => {
     clearLoadWatchdog();
-    // Safety net: WKWebView sometimes never fires onLoadEnd/onError when a navigation is cancelled/blocked.
-    // This prevents the native overlay from becoming an "infinite spinner".
     loadWatchdogRef.current = setTimeout(() => {
-      console.warn("[WebAppScreen] Load watchdog fired (60s). Clearing loader and showing error overlay.");
+      logWebViewError("onError", {
+        source: "load_timeout",
+        timeoutMs: LOAD_TIMEOUT_MS,
+        message: "onLoadEnd/READY did not fire within timeout",
+      });
+      setLastWebViewError({
+        userMessage: "La conexión tardó demasiado.",
+        description: `Timeout ${LOAD_TIMEOUT_MS / 1000}s`,
+      });
       setLoading(false);
       setHasError(true);
       loadWatchdogRef.current = null;
-    }, 60_000);
+    }, LOAD_TIMEOUT_MS);
   }, [clearLoadWatchdog]);
 
   const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
@@ -245,6 +319,21 @@ export default function WebAppScreen() {
       }
 
       if (nativeAuthInProgress) return;
+
+      // Handshake READY: web indica que primera pantalla está lista; ocultar loader y medir TTI
+      if (msg?.type === "READY") {
+        if (!readyReceivedRef.current) {
+          readyReceivedRef.current = true;
+          const elapsed = Date.now() - loadStartTimeRef.current;
+          if (typeof console?.log === "function") {
+            console.log(`[PERF] webview_ready: ${elapsed.toFixed(2)}ms`);
+          }
+          markPerformance("webview_ready");
+          clearLoadWatchdog();
+          setLoading(false);
+        }
+        return;
+      }
 
       if (msg?.type === "NATIVE_AUTH_APPLE") {
         setNativeAuthInProgress(true);
@@ -437,15 +526,22 @@ export default function WebAppScreen() {
     [getGoogleIosClientId, getGoogleWebClientId, injectWebAuthError, injectWebSetSession, nativeAuthInProgress]
   );
 
-  const handleReload = () => {
+  const handleReload = React.useCallback(() => {
     setHasError(false);
+    setLastWebViewError(null);
     setLoading(true);
     if (webViewImportError || !webViewModule) {
       loadWebViewModule();
       return;
     }
-    webviewRef.current?.reload();
-  };
+    webviewRef.current?.reload?.();
+  }, [webViewImportError, webViewModule]);
+
+  const openInBrowser = React.useCallback(() => {
+    Linking.openURL(WEB_APP_URL).catch((err) => {
+      console.warn("[WebAppScreen] No se pudo abrir en navegador:", err);
+    });
+  }, []);
 
   if (webViewImportError) {
     return (
@@ -498,24 +594,120 @@ export default function WebAppScreen() {
             showsVerticalScrollIndicator={false}
             automaticallyAdjustContentInsets={false}
             contentInsetAdjustmentBehavior="never"
+          userAgent={
+            Platform.OS === "android"
+              ? `DondeBailarApp/${Constants.expoConfig?.version ?? "1.0"} Android WebView`
+              : undefined
+          }
           onLoadStart={() => {
             setHasError(false);
+            setLastWebViewError(null);
             setLoading(true);
             armLoadWatchdog();
+            loadStartTimeRef.current = Date.now();
+            readyReceivedRef.current = false;
+            markPerformance("webview_load_start");
+          }}
+          onLoadProgress={({ nativeEvent }) => {
+            const progress = nativeEvent.progress;
+            if (progress >= 1) {
+              markPerformance("webview_load_progress_100");
+            }
           }}
           onLoadEnd={() => {
             clearLoadWatchdog();
+            const elapsed = Date.now() - loadStartTimeRef.current;
+            if (typeof console?.log === "function") {
+              console.log(`[PERF] webview_load_end: ${elapsed.toFixed(2)}ms`);
+            }
+            markPerformance("webview_load_end");
             setLoading(false);
           }}
           onError={(e: any) => {
-            console.log("WebView error:", e?.nativeEvent);
+            const ev = e?.nativeEvent ?? {};
+            const code = ev.code;
+            const description = ev.description ?? ev.message ?? "";
+            const url = ev.url ?? "";
+            const canGoBack = ev.canGoBack;
+            const canGoForward = ev.canGoForward;
+            logWebViewError("onError", {
+              code,
+              description,
+              url,
+              canGoBack,
+              canGoForward,
+            });
+            const { userMessage, isSsl } = classifyWebViewError(code, description, undefined);
+            setLastWebViewError({
+              code,
+              description,
+              url,
+              canGoBack,
+              canGoForward,
+              isSsl,
+              userMessage,
+            });
             clearLoadWatchdog();
             setLoading(false);
             setHasError(true);
           }}
           onHttpError={(e: any) => {
-            console.log("HTTP error:", e?.nativeEvent?.statusCode, e?.nativeEvent?.description);
+            const ev = e?.nativeEvent ?? {};
+            const statusCode = ev.statusCode;
+            const description = ev.description ?? "";
+            const url = ev.url ?? ev.target ?? "";
+            logWebViewError("onHttpError", {
+              statusCode,
+              description,
+              url,
+            });
+            const { userMessage, isSsl } = classifyWebViewError(undefined, description, statusCode);
+            setLastWebViewError((prev) => ({
+              ...prev,
+              statusCode,
+              description: prev?.description ?? description,
+              url: prev?.url ?? url,
+              isSsl: prev?.isSsl ?? isSsl,
+              userMessage: prev?.userMessage ?? userMessage,
+            }));
+            if (statusCode >= 400) {
+              clearLoadWatchdog();
+              setLoading(false);
+              setHasError(true);
+            }
           }}
+          onRenderProcessGone={
+            Platform.OS === "android"
+              ? (e: any) => {
+                  const ev = e?.nativeEvent ?? {};
+                  logWebViewError("onRenderProcessGone", {
+                    didCrash: ev.didCrash,
+                    rendererPriorityAtExit: ev.rendererPriorityAtExit,
+                  });
+                  setLastWebViewError({
+                    userMessage:
+                      "El contenido se cerró inesperadamente. Revisa tu conexión y reintenta.",
+                  });
+                  clearLoadWatchdog();
+                  setLoading(false);
+                  setHasError(true);
+                }
+              : undefined
+          }
+          onContentProcessDidTerminate={
+            Platform.OS === "ios"
+              ? () => {
+                  logWebViewError("onContentProcessDidTerminate", {});
+                  setLastWebViewError({
+                    userMessage:
+                      "El contenido se cerró inesperadamente. Revisa tu conexión y reintenta.",
+                  });
+                  clearLoadWatchdog();
+                  setLoading(false);
+                  setHasError(true);
+                }
+              : undefined
+          }
           // Permitir JS y almacenamiento para que la web funcione igual que en el navegador
           javaScriptEnabled
           domStorageEnabled
@@ -732,11 +924,38 @@ export default function WebAppScreen() {
           <View style={styles.errorOverlay}>
             <Text style={styles.errorTitle}>No se pudo cargar la página</Text>
             <Text style={styles.errorText}>
-              Puede ser un problema de red, DNS o SSL. Intenta de nuevo o revisa tu conexión.
+              {lastWebViewError?.userMessage ??
+                "Puede ser un problema de red, DNS o SSL. Intenta de nuevo o revisa tu conexión."}
             </Text>
-            <TouchableOpacity style={styles.button} onPress={handleReload}>
-              <Text style={styles.buttonText}>Reintentar</Text>
-            </TouchableOpacity>
+            {__DEV__ && lastWebViewError && (
+              <View style={styles.errorCodeBox}>
+                <Text style={styles.errorCodeLabel}>[DEV] Código / descripción:</Text>
+                <Text style={styles.errorCodeText}>
+                  code={String(lastWebViewError.code ?? "—")}
+                  {"  "}
+                  statusCode={String(lastWebViewError.statusCode ?? "—")}
+                </Text>
+                <Text style={styles.errorCodeText} numberOfLines={3}>
+                  {lastWebViewError.description || "—"}
+                </Text>
+                {lastWebViewError.url ? (
+                  <Text style={styles.errorCodeText} numberOfLines={2}>
+                    url={lastWebViewError.url}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+            <View style={styles.errorButtonsRow}>
+              <TouchableOpacity style={styles.button} onPress={handleReload}>
+                <Text style={styles.buttonText}>Reintentar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonSecondary]}
+                onPress={openInBrowser}
+              >
+                <Text style={styles.buttonText}>Abrir en navegador</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>
@@ -815,6 +1034,39 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#000",
     fontWeight: "bold",
+  },
+  errorCodeBox: {
+    alignSelf: "stretch",
+    marginTop: 12,
+    marginBottom: 16,
+    padding: 10,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  errorCodeLabel: {
+    color: "#fbbf24",
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  errorCodeText: {
+    color: "#e5e7eb",
+    fontSize: 11,
+    fontFamily: "monospace",
+    marginTop: 2,
+  },
+  errorButtonsRow: {
+    flexDirection: "row",
+    gap: 12,
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  buttonSecondary: {
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
   },
 });
 

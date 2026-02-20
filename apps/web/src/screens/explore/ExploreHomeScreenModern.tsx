@@ -30,6 +30,7 @@ import { ClassesSection } from "../../components/sections/ClassesSection";
 import { AcademiesSection } from "../../components/sections/AcademiesSection";
 import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
 import { useToast } from "../../components/Toast";
+import { mark, notifyReady } from "@/utils/performanceLogger";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -2131,6 +2132,12 @@ export default function ExploreHomeScreen() {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
+  // [PERF] hitos de carga (Android logcat | grep PERF)
+  React.useEffect(() => {
+    mark("first_screen_mount");
+    mark("data_fetch_start", false);
+  }, []);
+
   // Guard rail: asegurar overlay-root (para casos de WebView/PWA o HTML cacheado)
   // COMENTADO: Cortina deshabilitada
   // React.useEffect(() => {
@@ -2638,6 +2645,33 @@ export default function ExploreHomeScreen() {
       usuariosAutoLoadRef.current = false;
     }
   }, [shouldLoadUsuarios, usuariosQuery.hasNextPage, usuariosQuery.isFetchingNextPage, usuariosQuery.isLoading, usuariosQuery.data, usuariosQuery.fetchNextPage]);
+
+  // [PERF] data_fetch_end cuando llega la primera data (fechas es la sección principal)
+  const perfDataFetchEndDone = React.useRef(false);
+  React.useEffect(() => {
+    if (perfDataFetchEndDone.current || !shouldLoadFechas) return;
+    const pages = fechasQuery.data?.pages;
+    if (pages?.length && (pages[0]?.data?.length ?? 0) > 0) {
+      perfDataFetchEndDone.current = true;
+      mark("data_fetch_end");
+    }
+  }, [shouldLoadFechas, fechasQuery.data]);
+
+  // [PERF] list_render_end + READY (handshake con WebView) tras primer paint con contenido
+  const perfReadySent = React.useRef(false);
+  React.useEffect(() => {
+    if (perfReadySent.current) return;
+    const hasListContent = filteredFechas.length > 0;
+    const loadingDone = !fechasLoading;
+    if (!hasListContent && !loadingDone) return;
+    const rafId = requestAnimationFrame(() => {
+      if (perfReadySent.current) return;
+      perfReadySent.current = true;
+      if (hasListContent) mark("list_render_end");
+      notifyReady();
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [filteredFechas.length, fechasLoading]);
 
   const classesList = React.useMemo(() => {
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
