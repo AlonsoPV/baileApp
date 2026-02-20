@@ -30,7 +30,7 @@ import { ClassesSection } from "../../components/sections/ClassesSection";
 import { AcademiesSection } from "../../components/sections/AcademiesSection";
 import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
 import { useToast } from "../../components/Toast";
-import { mark, notifyReady } from "@/utils/performanceLogger";
+import { mark, notifyError, notifyReady } from "@/utils/performanceLogger";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -2448,6 +2448,19 @@ export default function ExploreHomeScreen() {
     const t = window.setTimeout(() => setFechasTimedOut(true), 20_000);
     return () => window.clearTimeout(t);
   }, [shouldLoadFechas, fechasLoading, fechasReqKey]);
+
+  // WebView: si hay timeout o error de fetch, notificar al host (evita "loading infinito" en la app)
+  React.useEffect(() => {
+    if (fechasTimedOut) {
+      notifyError({ scope: "fechas", reason: "timeout" });
+    }
+  }, [fechasTimedOut]);
+
+  React.useEffect(() => {
+    if (fechasError) {
+      notifyError({ scope: "fechas", reason: "fetch_error" });
+    }
+  }, [fechasError]);
 
   const filteredFechas = React.useMemo(() => {
     const parseYmdToDate = (value?: string | null) => {

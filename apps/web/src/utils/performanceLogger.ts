@@ -69,6 +69,12 @@ export function getMarks(): { name: string; time: number; relativeMs: number }[]
   return [...marks];
 }
 
+function marksToMap() {
+  const out: Record<string, number> = {};
+  for (const m of marks) out[m.name] = Number(m.relativeMs.toFixed(2));
+  return out;
+}
+
 /**
  * Obtiene el tiempo entre dos hitos por nombre.
  */
@@ -96,12 +102,33 @@ export function logReport(): void {
  * El host puede ocultar el skeleton cuando recibe este mensaje.
  */
 export function notifyReady(): void {
+  // Web Performance API (solo cliente): útil para inspección en DevTools
+  try {
+    if (typeof performance !== "undefined" && typeof performance.mark === "function") {
+      performance.mark("web_ready");
+    }
+  } catch {}
+
   try {
     if (typeof window !== "undefined" && (window as any).ReactNativeWebView?.postMessage) {
-      (window as any).ReactNativeWebView.postMessage(JSON.stringify({ type: "READY" }));
+      (window as any).ReactNativeWebView.postMessage(
+        JSON.stringify({ type: "READY", t: now(), marks: marksToMap() })
+      );
     }
   } catch {
     // ignore
   }
   mark("web_ready", true);
+}
+
+export function notifyError(payload: Record<string, unknown>): void {
+  try {
+    if (typeof window !== "undefined" && (window as any).ReactNativeWebView?.postMessage) {
+      (window as any).ReactNativeWebView.postMessage(
+        JSON.stringify({ type: "ERROR", t: now(), marks: marksToMap(), ...payload })
+      );
+    }
+  } catch {
+    // ignore
+  }
 }

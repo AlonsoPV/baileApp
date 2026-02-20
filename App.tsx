@@ -16,8 +16,10 @@ import { clearLastCrash, readLastCrash, type CrashRecord } from "./src/lib/crash
 import { markPerformance, logPerformanceReport } from "./src/lib/performance";
 import { AuthCoordinator } from "./src/auth/AuthCoordinator";
 import { formatFingerprint, getConfigFingerprint, getNativeGoogleConfigStatus, getRuntimeConfig } from "./src/config/runtimeConfig";
+import { PerformanceLogger } from "./src/utils/perf";
 
 // ✅ Generate ENV report at startup (logs to console for debugging)
+PerformanceLogger.mark("app_start");
 markPerformance("app_config_start");
 const envReportResult = envReport();
 markPerformance("env_report_generated");

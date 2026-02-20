@@ -16,6 +16,7 @@ import Constants from "expo-constants";
 import { getRuntimeConfig } from "../config/runtimeConfig";
 import { AuthCoordinator } from "../auth/AuthCoordinator";
 import { markPerformance } from "../lib/performance";
+import { PerformanceLogger } from "../utils/perf";
 import { assertGoogleAuthConfig } from "../auth/assertGoogleAuthConfig";
 import { logHost, shouldAuthDebug } from "../utils/authDebug";
 
@@ -106,6 +107,9 @@ export default function WebAppScreen() {
   const loadWatchdogRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadStartTimeRef = React.useRef<number>(0);
   const readyReceivedRef = React.useRef(false);
+  const [webViewProgress, setWebViewProgress] = React.useState(0);
+  const progressMarksRef = React.useRef<{ p25?: boolean; p50?: boolean; p75?: boolean; p100?: boolean }>({});
+  const [debugOpen, setDebugOpen] = React.useState(false);
 
   const clearLoadWatchdog = React.useCallback(() => {
     if (loadWatchdogRef.current) {
@@ -329,6 +333,12 @@ export default function WebAppScreen() {
             console.log(`[PERF] webview_ready: ${elapsed.toFixed(2)}ms`);
           }
           markPerformance("webview_ready");
+          PerformanceLogger.mark("web_ready");
+          if (typeof __DEV__ !== "undefined" && __DEV__) {
+            try {
+              PerformanceLogger.flush();
+            } catch {}
+          }
           clearLoadWatchdog();
           setLoading(false);
         }
@@ -543,6 +553,50 @@ export default function WebAppScreen() {
     });
   }, []);
 
+  const copyPerfToClipboard = React.useCallback(async () => {
+    const snap = PerformanceLogger.snapshot();
+    const text = JSON.stringify(
+      {
+        url: WEB_APP_URL,
+        progress: webViewProgress,
+        loading,
+        hasError,
+        lastWebViewError,
+        perf: snap,
+      },
+      null,
+      2
+    );
+    try {
+      // Optional dependency; if not installed, fallback to console.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const Clipboard = require("expo-clipboard");
+      if (Clipboard?.setStringAsync) {
+        await Clipboard.setStringAsync(text);
+        console.log("[PERF] copied perf snapshot to clipboard");
+        return;
+      }
+    } catch {
+      // ignore
+    }
+    console.log("[PERF] perf snapshot (clipboard not available):\n", text);
+  }, [webViewProgress, loading, hasError, lastWebViewError]);
+
+  const perfKeyTimes = React.useMemo(() => {
+    const { marks } = PerformanceLogger.snapshot();
+    const get = (label: string) => marks.find((m) => m.label === label)?.relMs;
+    const start = get("webview_load_start");
+    const ready = get("web_ready");
+    const end = get("webview_load_end");
+    return {
+      start,
+      ready,
+      end,
+      startToReady: start !== undefined && ready !== undefined ? ready - start : undefined,
+      startToEnd: start !== undefined && end !== undefined ? end - start : undefined,
+    };
+  }, [webViewProgress, loading, hasError, lastWebViewError]);
+
   if (webViewImportError) {
     return (
       <View style={[styles.container, { paddingTop: Platform.OS === "ios" ? insets.top + 4 : 0 }]}>
@@ -585,7 +639,6 @@ export default function WebAppScreen() {
             style={styles.webview}
             originWhitelist={["*"]}
             onMessage={handleWebMessage}
-            startInLoadingState
             scalesPageToFit={false}
             setBuiltInZoomControls={false}
             setDisplayZoomControls={false}
@@ -606,12 +659,31 @@ export default function WebAppScreen() {
             armLoadWatchdog();
             loadStartTimeRef.current = Date.now();
             readyReceivedRef.current = false;
+            setWebViewProgress(0);
+            progressMarksRef.current = {};
             markPerformance("webview_load_start");
+            PerformanceLogger.mark("webview_load_start");
           }}
           onLoadProgress={(e: { nativeEvent: { progress: number } }) => {
-            const progress = e.nativeEvent.progress;
-            if (progress >= 1) {
+            const progress = Math.max(0, Math.min(1, e.nativeEvent.progress || 0));
+            setWebViewProgress(progress);
+            const pct = Math.round(progress * 100);
+            if (pct >= 25 && !progressMarksRef.current.p25) {
+              progressMarksRef.current.p25 = true;
+              PerformanceLogger.mark("webview_progress_25");
+            }
+            if (pct >= 50 && !progressMarksRef.current.p50) {
+              progressMarksRef.current.p50 = true;
+              PerformanceLogger.mark("webview_progress_50");
+            }
+            if (pct >= 75 && !progressMarksRef.current.p75) {
+              progressMarksRef.current.p75 = true;
+              PerformanceLogger.mark("webview_progress_75");
+            }
+            if (pct >= 100 && !progressMarksRef.current.p100) {
+              progressMarksRef.current.p100 = true;
               markPerformance("webview_load_progress_100");
+              PerformanceLogger.mark("webview_progress_100");
             }
           }}
           onLoadEnd={() => {
@@ -621,6 +693,7 @@ export default function WebAppScreen() {
               console.log(`[PERF] webview_load_end: ${elapsed.toFixed(2)}ms`);
             }
             markPerformance("webview_load_end");
+            PerformanceLogger.mark("webview_load_end");
             setLoading(false);
           }}
           onError={(e: any) => {
@@ -893,6 +966,45 @@ export default function WebAppScreen() {
           </View>
         )}
 
+        {__DEV__ && (
+          <View pointerEvents="box-none" style={styles.perfOverlayWrap}>
+            <TouchableOpacity
+              style={styles.perfPill}
+              onPress={() => setDebugOpen((v) => !v)}
+              accessibilityLabel="Toggle performance overlay"
+            >
+              <Text style={styles.perfPillText}>PERF</Text>
+            </TouchableOpacity>
+            {debugOpen && (
+              <View style={styles.perfPanel} pointerEvents="auto">
+                <Text style={styles.perfTitle}>Performance (DEV)</Text>
+                <Text style={styles.perfLine}>url: {WEB_APP_URL}</Text>
+                <Text style={styles.perfLine}>progress: {Math.round(webViewProgress * 100)}%</Text>
+                <Text style={styles.perfLine}>loading: {String(loading)}  error: {String(hasError)}</Text>
+                {perfKeyTimes.startToReady !== undefined ? (
+                  <Text style={styles.perfLine}>start→ready: {perfKeyTimes.startToReady.toFixed(0)}ms</Text>
+                ) : null}
+                {perfKeyTimes.startToEnd !== undefined ? (
+                  <Text style={styles.perfLine}>start→end: {perfKeyTimes.startToEnd.toFixed(0)}ms</Text>
+                ) : null}
+                {lastWebViewError ? (
+                  <Text style={styles.perfLine}>
+                    err: code={String(lastWebViewError.code ?? "—")} status={String(lastWebViewError.statusCode ?? "—")}
+                  </Text>
+                ) : null}
+                <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
+                  <TouchableOpacity style={[styles.button, { paddingVertical: 8 }]} onPress={copyPerfToClipboard}>
+                    <Text style={styles.buttonText}>Copiar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.buttonSecondary, styles.button, { paddingVertical: 8 }]} onPress={() => PerformanceLogger.flush()}>
+                    <Text style={styles.buttonText}>Log</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
         {nativeAuthInProgress && (
           <View style={styles.loaderOverlay}>
             <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />
@@ -1060,6 +1172,48 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.15)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.4)",
+  },
+  perfOverlayWrap: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 8 : 10,
+    right: 10,
+    zIndex: 9999,
+    alignItems: "flex-end",
+  },
+  perfPill: {
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  perfPillText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  perfPanel: {
+    marginTop: 10,
+    width: 320,
+    maxWidth: 340,
+    backgroundColor: "rgba(0,0,0,0.78)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    padding: 12,
+  },
+  perfTitle: {
+    color: "#fff",
+    fontWeight: "800",
+    marginBottom: 8,
+  },
+  perfLine: {
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 12,
+    marginBottom: 4,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
 });
 
