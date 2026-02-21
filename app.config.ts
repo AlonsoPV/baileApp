@@ -152,11 +152,11 @@ const AUTH_DEBUG_FLAG =
 const config: ExpoConfig = {
   name: "Donde Bailar MX",
   slug: "donde-bailar-mx",
-  version: "1.0.7",
+  version: "1.0.8",
 
   // ✅ para bare workflow / evita r e l error
   // (este archivo tiene prioridad sobre app. json)
-  runtimeVersion: "1.0.7",
+  runtimeVersion: "1.0.8",
 
   scheme: "dondebailarmx",
   orientation: "default", // Permite todas las orientaciones para compatibilidad con pantallas grandes (Android 16+)
@@ -179,7 +179,7 @@ const config: ExpoConfig = {
     supportsTablet: true,
     bundleIdentifier: "com.tuorg.dondebailarmx",
     // ✅ App Store Connect: must be numeric and increase over last uploaded build.
-    buildNumber: "263",
+    buildNumber: "264",
     infoPlist: (() => {
       const googleIosClientId = required("EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID", GOOGLE_IOS_CLIENT_ID_PROD);
       const googleWebClientId = required("EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID", GOOGLE_WEB_CLIENT_ID_PROD);
@@ -239,7 +239,7 @@ const config: ExpoConfig = {
     package: "com.tuorg.dondebailarmx.app",
     // versionCode debe ser MAYOR que el último subido a Google Play.
     // en Consola → tu app → Producción/Prueba interna → revisa "Código de versión" del último AAB y pon aquí un número mayor.
-    versionCode: 15,
+    versionCode: 16,
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#000000",
