@@ -396,20 +396,22 @@ const STYLES = `
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
-    overflow-y: auto;
+    /* Mobile: no overflow-y aquí; el scroll es en app-shell-content para Android WebView */
+    overflow-y: visible;
     padding-top: 0;
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-    touch-action: auto;
+    touch-action: pan-x pan-y;
     -webkit-tap-highlight-color: transparent;
+    transform: none;
+    -webkit-transform: none;
   }
   @media (min-width: 769px) {
     .explore-container {
-      overflow-y: auto;
+      overflow-y: visible;
       height: auto;
       min-height: 100vh;
     }

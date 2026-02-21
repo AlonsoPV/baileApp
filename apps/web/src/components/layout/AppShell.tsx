@@ -89,6 +89,7 @@ export default function AppShell() {
       <style>{`
         .app-shell-root {
           min-height: 100vh;
+          height: 100dvh;
           background: #0b0d10;
           color: #e5e7eb;
           display: flex;
@@ -98,6 +99,7 @@ export default function AppShell() {
           padding-bottom: env(safe-area-inset-bottom);
           /* Asegurar que no haya overflow que cause problemas de stacking */
           overflow-x: hidden;
+          overflow-y: hidden;
         }
         .app-shell-content {
           flex: 1;
@@ -123,11 +125,16 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-shell-content {
+            /* Mobile: contenedor de scroll único para que funcione en Android WebView */
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: calc(100dvh - 60px);
             padding-top: calc(64px + max(env(safe-area-inset-top), 0px) + 0px);
             padding-bottom: 0.25rem;
             padding-left: 0.75rem;
             padding-right: 0.75rem;
-            min-height: calc(100vh - 180px);
+            min-height: 0;
+            touch-action: pan-x pan-y;
           }
         }
         @media (max-width: 480px) {
@@ -136,7 +143,7 @@ export default function AppShell() {
             padding-bottom: .25rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
-            min-height: calc(100vh - 160px);
+            /* Mantener min-height: 0 del breakpoint 768px para scroll funcional */
           }
         }
         @media (max-width: 430px) {

@@ -293,7 +293,9 @@ export default function HorizontalSlider<T>({
       if (!touchScrollingRef.current) {
         const adx = Math.abs(dx);
         const ady = Math.abs(dy);
-        if (adx >= TOUCH_SLOP && adx >= ady) {
+        /* Solo tratar como scroll horizontal si claramente predomina (adx > ady).
+         * Si ady >= adx, permitir scroll vertical de la página en Android WebView. */
+        if (adx >= TOUCH_SLOP && adx > ady) {
           touchScrollingRef.current = true;
         }
       }
