@@ -583,9 +583,15 @@ const STYLES = `
     position: relative;
     overflow: visible;
   }
-  /* Dropdown de fechas — responsivo */
+  /* Dropdown de fechas — responsivo, sin scroll interno */
   .date-filter-dropdown {
     max-width: calc(100vw - 24px);
+    overflow: visible;
+  }
+  /* Dropdown multi-select (ritmos/zonas) — dentro del viewport */
+  .multi-select-tree-dropdown {
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
   }
   .date-filter-dropdown__presets {
     min-width: 0;
@@ -3292,7 +3298,6 @@ export default function ExploreHomeScreen() {
                     style={{ minWidth: 120, justifyContent: "space-between" }}
                   >
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                      <span className="pill-icon" aria-hidden="true">📂</span>
                       <span className="pill-text">
                         {t(TYPE_OPTIONS.find((o) => o.id === (filters.type || 'fechas'))?.labelKey ?? 'explore_type_sociales')}
                       </span>

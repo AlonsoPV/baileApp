@@ -6,11 +6,11 @@ import React, { useRef, useEffect, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import type { TreeGroup } from "@/filters/exploreFilterGroups";
 
-const PANEL_STYLE: React.CSSProperties = {
-  position: "absolute",
+const PANEL_BASE: React.CSSProperties = {
+  position: "fixed",
   zIndex: 9999,
   minWidth: 280,
-  maxHeight: "min(420px, calc(100vh - 120px))",
+  maxHeight: 420,
   overflow: "hidden",
   display: "flex",
   flexDirection: "column",
@@ -119,15 +119,39 @@ export function MultiSelectTreeDropdown({
     };
   }, [open, onClose, anchorEl, triggerRef]);
 
-  // Posicionar panel debajo del ancla
-  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>(PANEL_STYLE);
+  // Posicionar panel debajo del ancla, respetando viewport
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>(PANEL_BASE);
   useEffect(() => {
     if (!open || !anchorEl) return;
     const rect = anchorEl.getBoundingClientRect();
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 768;
+    const margin = 12;
+    const gap = 6;
+    const panelWidth = Math.min(Math.max(280, rect.width), vw - 2 * margin);
+    const panelMaxHeight = Math.min(420, vh - 2 * margin);
+
+    const maxLeft = vw - panelWidth - margin;
+    const left = Math.max(margin, Math.min(rect.left, maxLeft));
+
+    const spaceBelow = vh - rect.bottom - gap - margin;
+    const spaceAbove = rect.top - gap - margin;
+    const showAbove = spaceBelow < 200 && spaceAbove > spaceBelow;
+
+    const top = showAbove
+      ? Math.max(margin, rect.top - panelMaxHeight - gap)
+      : rect.bottom + gap;
+    const maxHeight = showAbove
+      ? rect.top - gap - margin
+      : vh - (rect.bottom + gap) - margin;
+
     setPanelStyle({
-      ...PANEL_STYLE,
-      top: rect.bottom + 6,
-      left: rect.left,
+      ...PANEL_BASE,
+      top,
+      left,
+      width: panelWidth,
+      maxWidth: vw - 2 * margin,
+      maxHeight: Math.max(200, Math.min(panelMaxHeight, maxHeight)),
     });
   }, [open, anchorEl]);
 
