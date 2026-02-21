@@ -399,7 +399,6 @@ async function fetchPage(params: QueryParams, page: number) {
   // Filtro adicional para eventos con dia_semana y por hora para eventos de HOY (CDMX):
   if (type === 'fechas' && finalData.length > 0) {
     const todayStr = getTodayCDMX();
-    const nowCDMX = getNowCDMX();
     const expandedData: any[] = [];
 
     // Log para verificar si hay eventos recurrentes
@@ -497,30 +496,14 @@ async function fetchPage(params: QueryParams, page: number) {
               shouldInclude = false;
             }
           } else {
-            // Si no hay rango de fechas, verificar que sea futuro (solo si es hoy, verificar hora)
-            if (fechaStr === todayStr) {
-              const horaStr = row.hora_inicio as string | null | undefined;
-              if (horaStr) {
-                const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
-                if (Number.isFinite(yy) && Number.isFinite(mm) && Number.isFinite(dd)) {
-                  const [hhRaw, minRaw] = String(horaStr).split(':');
-                  const hh = parseInt(hhRaw ?? '0', 10);
-                  const min = parseInt(minRaw ?? '0', 10);
-                  const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
-                  
-                  // Si la hora de inicio ya pasó en CDMX, no incluir el evento
-                  if (eventDateTime.getTime() < nowCDMX.getTime()) {
-                    shouldInclude = false;
-                  }
-                }
-              }
-            } else {
-              // Si no es hoy, verificar que la fecha sea futura
-              const fechaDate = new Date(fechaStr + 'T12:00:00');
-              const todayDate = new Date(todayStr + 'T12:00:00');
-              if (fechaDate < todayDate) {
-                shouldInclude = false;
-              }
+            // Si no hay rango de fechas, verificar que la fecha de inicio del evento sea hoy o futura.
+            // Los eventos se muestran en el día de su hora de inicio, de 00:00 a 23:59 de ese día,
+            // sin importar si ya pasó la hora de inicio. Ej: evento viernes 19:00 - sábado 02:00
+            // se muestra de 00:00 a 23:59 del viernes.
+            const fechaDate = new Date(fechaStr + 'T12:00:00');
+            const todayDate = new Date(todayStr + 'T12:00:00');
+            if (fechaDate < todayDate) {
+              shouldInclude = false;
             }
           }
         }
