@@ -153,7 +153,7 @@ export default function AppShell() {
         }
         .app-footer {
           margin-top: auto;
-          padding: 1rem 1.5rem;
+          padding: 0.5rem 1.5rem;
           border-top: none;
           background: linear-gradient(180deg, rgba(12, 18, 24, 0.97) 0%, rgba(8, 12, 18, 0.99) 100%);
           backdrop-filter: blur(24px) saturate(1.2);
@@ -164,15 +164,15 @@ export default function AppShell() {
           right: 0;
           bottom: 0;
           overflow: hidden;
-          padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+          padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
           z-index: 10;
           box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25), 0 -1px 0 rgba(255, 255, 255, 0.04) inset;
         }
         /* Escritorio: footer compacto y moderno */
         @media (min-width: 769px) {
           .app-footer {
-            padding: 0.75rem 1.5rem;
-            padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            padding: 0.5rem 1.5rem;
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
           }
           .app-footer-content {
             gap: 1rem;
@@ -190,12 +190,12 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-footer {
-            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(0.4rem + env(safe-area-inset-bottom));
           }
         }
         @media (max-width: 480px) {
           .app-footer {
-            padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(0.35rem + env(safe-area-inset-bottom));
           }
         }
         .app-footer::before {
@@ -273,7 +273,7 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-footer {
-            padding: 0.875rem 0.75rem;
+            padding: 0.5rem 0.75rem;
           }
           .app-footer-content {
             gap: 0.6rem;
@@ -299,7 +299,7 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-footer {
-            padding: 0.75rem 0.5rem;
+            padding: 0.4rem 0.5rem;
           }
           .app-footer-content {
             gap: 0.5rem;

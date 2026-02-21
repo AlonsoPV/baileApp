@@ -191,12 +191,26 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   // }, [stats]);
   const interestedCount = undefined; // Contador comentado
 
+  const toUrl = (u: string | null | undefined) => (u ? (toDirectPublicStorageUrl(u) || u) : undefined);
   const p1Date = getMediaBySlot(dateMedia, 'p1')?.url;
   const p1Parent = getMediaBySlot(parentMedia, 'p1')?.url;
+  const avatarSlot = [...dateMedia, ...parentMedia].find((m: any) => m?.slot === 'avatar');
+  const avatarUrl = avatarSlot?.url ?? (avatarSlot as any)?.path;
+  const firstDate = dateMedia[0] as any;
+  const firstParent = parentMedia[0] as any;
+  const firstDateUrl = firstDate?.url ?? firstDate?.path ?? (typeof firstDate === 'string' ? firstDate : '');
+  const firstParentUrl = firstParent?.url ?? firstParent?.path ?? (typeof firstParent === 'string' ? firstParent : '');
+  const firstUrl = firstDateUrl || firstParentUrl;
   const baseFlyerUrl =
-    (date.flyer_url ? (toDirectPublicStorageUrl(date.flyer_url) || date.flyer_url) : undefined) ||
-    (p1Date ? (toDirectPublicStorageUrl(p1Date) || p1Date) : undefined) ||
-    (p1Parent ? (toDirectPublicStorageUrl(p1Parent) || p1Parent) : undefined);
+    (date.flyer_url ? toUrl(date.flyer_url) : undefined) ||
+    (p1Date ? toUrl(p1Date) : undefined) ||
+    (p1Parent ? toUrl(p1Parent) : undefined) ||
+    (avatarUrl ? toUrl(avatarUrl) : undefined) ||
+    ((date as any).avatar_url ? toUrl((date as any).avatar_url) : undefined) ||
+    ((parent as any)?.avatar_url ? toUrl((parent as any).avatar_url) : undefined) ||
+    ((date as any).portada_url ? toUrl((date as any).portada_url) : undefined) ||
+    ((parent as any)?.portada_url ? toUrl((parent as any).portada_url) : undefined) ||
+    (firstUrl ? toUrl(firstUrl) : undefined);
   const flyerCacheKey =
     ((date as any)?.updated_at as string | undefined) ||
     (date.created_at as string | undefined) ||

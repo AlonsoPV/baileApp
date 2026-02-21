@@ -155,8 +155,8 @@
   left: 0;
   right: 0;
   z-index: 100;
-  padding: 12px 16px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding: 8px 16px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
   background: linear-gradient(0deg, rgba(15, 18, 22, 0.98), rgba(11, 11, 15, 0.96));
   backdrop-filter: blur(16px);
   border-top: 1px solid rgba(41, 127, 150, 0.25);
@@ -164,7 +164,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
 }
 .eds-sticky-cta__center {
   display: flex;
@@ -175,7 +175,7 @@
 }
 .eds-sticky-cta__main {
   flex: 1;
-  min-height: 44px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -214,8 +214,8 @@
   transition: background 0.2s;
 }
 .eds-sticky-cta__icon {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 40px;
+  min-height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

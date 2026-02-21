@@ -1908,13 +1908,18 @@
     background: rgba(255, 255, 255, 0.95);
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   }
+  .landing-nav .landing-container {
+    width: 100%;
+    max-width: 100%;
+  }
   .landing-nav__inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 0;
-    gap: var(--gap);
+    padding: 14px 0;
+    gap: clamp(8px, 2vw, 20px);
     min-width: 0;
+    flex-wrap: wrap;
   }
   .landing-brand {
     display: flex;
@@ -1939,10 +1944,11 @@
   .landing-brand__icon svg { width: 18px; height: 18px; }
   .landing-brand__icon img { width: 100%; height: 100%; object-fit: contain; }
   .landing-brand__name {
-    font-size: 20px;
+    font-size: clamp(1rem, 3vw, 1.25rem);
     display: flex;
     align-items: baseline;
     gap: 0;
+    flex-wrap: wrap;
   }
   .landing-brand__name span { color: var(--lb-text); }
   .landing-brand__name em {
@@ -2574,6 +2580,15 @@
   }
   @media (max-width: 980px) {
     .landing-nav__links { display: none; }
+  }
+  @media (max-width: 560px) {
+    .landing-nav__inner { padding: 12px 0; }
+    .landing-brand__icon { width: 28px; height: 28px; }
+    .landing-nav__cta .btn { padding: 0.5rem 1rem; font-size: 0.875rem; }
+  }
+  @media (max-width: 360px) {
+    .landing-brand__name { font-size: 0.9375rem; }
+    .landing-nav__cta .btn { padding: 0.5rem 0.75rem; font-size: 0.8125rem; }
   }
   @media (max-width: 560px) {
     .landing-device { border-radius: 24px; padding: 10px; min-width: 260px; }
