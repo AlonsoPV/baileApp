@@ -94,41 +94,26 @@ export default function AppShell() {
           color: #e5e7eb;
           display: flex;
           flex-direction: column;
-          /* Safe areas support */
           padding-top: env(safe-area-inset-top);
-          padding-bottom: env(safe-area-inset-bottom);
+          padding-bottom: 0;
           /* Asegurar que no haya overflow que cause problemas de stacking */
           overflow-x: hidden;
           overflow-y: hidden;
         }
         .app-shell-content {
           flex: 1;
-          min-height: 0; /* Permite que el flex item encoja y muestre scroll */
-          /* Espacio mínimo bajo el header fijo (sin duplicar safe-area) */
-          padding-top: 4.5rem;
-          padding-bottom: 0.5rem;
-          padding-left: 1rem;
-          padding-right: 1rem;
-          min-height: calc(100vh - 200px);
-          /* Asegurar padding-bottom suficiente para que el footer no tape contenido */
-          padding-bottom: calc(2rem);
-          /* Optimizaciones de scroll vertical */
+          min-height: 0;
+          overflow-y: auto;
+          overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
-          /* Nota: NO aplicar transform/contain aquí; rompe overlays fixed en iOS/WebView */
-        }
-        @media (min-width: 769px) {
-          .app-shell-content {
-            overflow-y: auto; /* En escritorio: scroll vertical dentro del contenido */
-            max-height: calc(100vh - 4.5rem); /* Altura máxima para que el scroll sea visible */
-          }
+          padding-top: 4.5rem;
+          padding-left: 1rem;
+          padding-right: 1rem;
+          padding-bottom: 0rem;
         }
         @media (max-width: 768px) {
           .app-shell-content {
-            /* Mobile: contenedor de scroll único para que funcione en Android WebView */
-            overflow-y: auto;
-            overflow-x: hidden;
-            max-height: calc(100dvh - 60px);
             padding-top: calc(64px + max(env(safe-area-inset-top), 0px) + 0px);
             padding-bottom: 0.25rem;
             padding-left: 0.75rem;
@@ -143,36 +128,30 @@ export default function AppShell() {
             padding-bottom: .25rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
-            /* Mantener min-height: 0 del breakpoint 768px para scroll funcional */
           }
         }
         @media (max-width: 430px) {
           .app-shell-content {
-            padding-bottom: calc(1.5rem) !important;
+            padding-bottom: 0.75rem !important;
           }
         }
         .app-footer {
-          margin-top: auto;
-          padding: 0.5rem 1.5rem;
+          position: static !important;
+          flex-shrink: 0;
+          padding: 0.35rem 1.5rem;
+          padding-bottom: calc(0.1rem + env(safe-area-inset-bottom));
           border-top: none;
           background: linear-gradient(180deg, rgba(12, 18, 24, 0.97) 0%, rgba(8, 12, 18, 0.99) 100%);
           backdrop-filter: blur(24px) saturate(1.2);
           -webkit-backdrop-filter: blur(24px) saturate(1.2);
-          /* Footer fijo en la parte inferior */
-          position: fixed;
-          left: 0;
-          right: 0;
-          bottom: 0;
           overflow: hidden;
-          padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
-          z-index: 10;
           box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25), 0 -1px 0 rgba(255, 255, 255, 0.04) inset;
         }
         /* Escritorio: footer compacto y moderno */
         @media (min-width: 769px) {
           .app-footer {
-            padding: 0.5rem 1.5rem;
-            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            padding: 0.35rem 1.5rem;
+            padding-bottom: calc(0.1rem + env(safe-area-inset-bottom));
           }
           .app-footer-content {
             gap: 1rem;
@@ -190,12 +169,13 @@ export default function AppShell() {
         }
         @media (max-width: 768px) {
           .app-footer {
-            padding-bottom: calc(0.4rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(0.1rem + env(safe-area-inset-bottom));
           }
         }
         @media (max-width: 480px) {
           .app-footer {
-            padding-bottom: calc(0.35rem + env(safe-area-inset-bottom));
+            padding: 0.35rem 0.5rem;
+            padding-bottom: calc(0.1rem + env(safe-area-inset-bottom));
           }
         }
         .app-footer::before {
@@ -326,8 +306,8 @@ export default function AppShell() {
 
         @media (max-width: 430px) {
           .app-footer {
-            padding: 0.75rem 0.4rem !important;
-            padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
+            padding: 0.4rem !important;
+            padding-bottom: calc(0.1rem + env(safe-area-inset-bottom)) !important;
           }
           .app-footer-content {
             gap: 0.35rem !important;
@@ -374,8 +354,8 @@ export default function AppShell() {
         
         @media (max-width: 360px) {
           .app-footer {
-            padding: 0.65rem 0.3rem !important;
-            padding-bottom: calc(0.65rem + env(safe-area-inset-bottom)) !important;
+            padding: 0.35rem 0.3rem !important;
+            padding-bottom: calc(0.1rem + env(safe-area-inset-bottom)) !important;
           }
           .app-footer-content {
             gap: 0.25rem !important;
@@ -400,7 +380,6 @@ export default function AppShell() {
             <Outlet />
           </AppBootstrap>
         </div>
-
         <footer className="app-footer">
           <div className="app-footer-content">
             <JoinCommunityForm />

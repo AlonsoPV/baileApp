@@ -147,17 +147,17 @@
   user-select: none;
 }
 
-/* ===== STICKY CTA BAR (contenido centrado, sin mapa) ===== */
-/* Sticky bar: posicionar arriba del footer de AppShell para evitar solapamiento */
+/* ===== STICKY CTA BAR (contenido centrado, pegado al footer) ===== */
+/* bottom = altura del footer (AppShell) para que quede pegado sin hueco */
 .eds-sticky-cta {
   position: fixed;
-  bottom: calc(4rem + env(safe-area-inset-bottom));
+  bottom: 3.75rem;
   left: 0;
   right: 0;
   z-index: 100;
   padding: 8px 16px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
-  background: linear-gradient(0deg, rgba(15, 18, 22, 0.98), rgba(11, 11, 15, 0.96));
+  background: linear-gradient(135deg, #297F96 0%, #1d5a6b 50%, #164a58 100%);
   backdrop-filter: blur(16px);
   border-top: 1px solid rgba(41, 127, 150, 0.25);
   box-shadow: 0 -4px 20px rgba(41, 127, 150, 0.06), 0 -2px 8px rgba(235, 55, 127, 0.04);

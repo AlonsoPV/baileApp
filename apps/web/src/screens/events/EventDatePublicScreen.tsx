@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useEventDate } from "../../hooks/useEventDate";
 import { useEventDateSuspense } from "../../hooks/useEventDateSuspense";
 import { useEventParent } from "../../hooks/useEventParent";
 import { useTags } from "../../hooks/useTags";
@@ -24,13 +23,14 @@ import {
 import "../../components/events/EventDetail/eventDetailScreen.css";
 import { useToast } from "../../components/Toast";
 import RequireLogin from "@/components/auth/RequireLogin";
-import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
+import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { EventDateSkeleton } from "../../components/skeletons/EventDateSkeleton";
 import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
 import { getLocaleFromI18n } from "../../utils/locale";
+import { routes } from "../../routes/registry";
 
 const colors = {
   coral: '#FF3D57',
@@ -191,7 +191,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   // }, [stats]);
   const interestedCount = undefined; // Contador comentado
 
-  const toUrl = (u: string | null | undefined) => (u ? (toDirectPublicStorageUrl(u) || u) : undefined);
+  const toUrl = (u: string | null | undefined) =>
+    u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined;
   const p1Date = getMediaBySlot(dateMedia, 'p1')?.url;
   const p1Parent = getMediaBySlot(parentMedia, 'p1')?.url;
   const avatarSlot = [...dateMedia, ...parentMedia].find((m: any) => m?.slot === 'avatar');
@@ -345,7 +346,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           dateStr={dateStr}
           timeRange={timeRange}
           venueName={venueName}
-          onBack={() => navigate('/explore')}
+          onBack={() => navigate(routes.app.explore)}
           onShare={handleShare}
           toDirectUrl={toDirectPublicStorageUrl}
         />

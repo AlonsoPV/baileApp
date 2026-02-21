@@ -30,9 +30,9 @@ export default function RequireLogin({ children, fallback, redirectTo = "/auth/l
         fontWeight: 800,
         cursor: "pointer",
       }}
-      aria-label="Inicia sesión para continuar"
+      aria-label="Inicia sesión para agendar"
     >
-      🔒 Inicia sesión para continuar
+      🔒 Inicia sesión para agendar
     </button>
   );
 }

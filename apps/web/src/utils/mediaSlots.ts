@@ -20,7 +20,7 @@ export function normalizeMediaArray(raw: unknown): MediaItem[] {
     return raw.map((m: any) => ({
       slot: m?.slot ?? '',
       kind: (m?.kind ?? (m?.type === 'video' ? 'video' : 'photo')) as 'photo' | 'video',
-      url: typeof m?.url === 'string' ? m.url : '',
+      url: (typeof m?.url === 'string' ? m.url : (typeof m?.path === 'string' ? m.path : '')),
       thumb: typeof m?.thumb === 'string' ? m.thumb : undefined,
       title: typeof m?.title === 'string' ? m.title : undefined,
     })).filter((m: MediaItem) => m.slot && m.url);

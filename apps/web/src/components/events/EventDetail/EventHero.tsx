@@ -1,6 +1,5 @@
 import React from "react";
 import { Share2 } from "lucide-react";
-import ImageWithFallback from "../../ImageWithFallback";
 export interface EventHeroProps {
   title: string;
   flyerUrl?: string | null;
@@ -32,17 +31,22 @@ export function EventHero({
     : null;
   const src = displayUrl ? toDirectUrl(displayUrl) || displayUrl : null;
 
+  const heroStyle: React.CSSProperties = src
+    ? {
+        backgroundImage: `url(${src})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }
+    : { background: PLACEHOLDER_GRADIENT };
+
   return (
-    <section className="eds-hero" aria-label="Hero del evento">
-      <div className="eds-hero__bg" aria-hidden />
-      {src ? (
-        <ImageWithFallback
-          src={src}
-          alt=""
-          className="eds-hero__img"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-        />
-      ) : (
+    <section
+      className="eds-hero"
+      aria-label="Hero del evento"
+      style={heroStyle}
+    >
+      {!src && (
         <div
           className="eds-hero__img"
           style={{ background: PLACEHOLDER_GRADIENT, position: "absolute", inset: 0 }}
