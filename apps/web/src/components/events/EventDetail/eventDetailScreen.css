@@ -148,9 +148,10 @@
 }
 
 /* ===== STICKY CTA BAR (contenido centrado, sin mapa) ===== */
+/* Sticky bar: posicionar arriba del footer de AppShell para evitar solapamiento */
 .eds-sticky-cta {
   position: fixed;
-  bottom: 0;
+  bottom: calc(4rem + env(safe-area-inset-bottom));
   left: 0;
   right: 0;
   z-index: 100;
@@ -231,14 +232,14 @@
   color: var(--eds-accent);
 }
 
-/* ===== CONTENT WRAPPER (spacer for sticky) ===== */
+/* ===== CONTENT WRAPPER (spacer for sticky + footer) ===== */
 .eds-content {
-  padding: 0 16px 100px;
+  padding: 0 16px 180px;
   max-width: 680px;
   margin: 0 auto;
 }
 @media (min-width: 768px) {
-  .eds-content { padding-bottom: 40px; }
+  .eds-content { padding-bottom: 120px; }
 }
 
 /* ===== INFO GRID ===== */

@@ -89,7 +89,7 @@ export default function DancerCard({ item, to }: Props) {
   const placeholderReason = !coverUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
   logCardImage('dancer', item.id, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
 
-  const name = item.display_name || "Dancer";
+  const name = item.display_name || (item as any).nombre || "Dancer";
   const bio = item.bio || "";
 
   // Tags de ritmos via ids numéricos o catálogo seleccionado

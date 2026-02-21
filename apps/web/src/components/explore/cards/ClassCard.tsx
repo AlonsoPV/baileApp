@@ -532,7 +532,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           </div>
 
           <div className="class-card-content">
-            <h3 className="class-card-title">{item.titulo || 'Clase'}</h3>
+            <h3 className="class-card-title">{item.titulo || (item as any).nombre || 'Clase'}</h3>
 
             {item.ownerName && (
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000' }}>
