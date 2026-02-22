@@ -2,7 +2,7 @@ import React from 'react';
 import { useExploreQuery } from '../../hooks/useExploreQuery';
 import { GridSkeleton } from '../skeletons/GridSkeleton';
 import AcademyCard from '../explore/cards/AcademyCard';
-import HorizontalSlider from '../explore/HorizontalSlider';
+import HorizontalCarousel from '../explore/HorizontalCarousel';
 import type { ExploreFilters } from '../../state/exploreFilters';
 import { useSmartLoading } from '../../hooks/useSmartLoading';
 import { RefreshingIndicator } from '../loading/RefreshingIndicator';
@@ -76,7 +76,7 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
   return (
     <>
       <RefreshingIndicator isFetching={isRefetching} />
-      <HorizontalSlider
+      <HorizontalCarousel
         items={itemsToShow}
         renderItem={(item: any, idx: number) => (
           <div key={item.id || idx}>

@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { useExploreQuery } from '../../hooks/useExploreQuery';
 import { GridSkeleton } from '../skeletons/GridSkeleton';
 import EventCard from '../explore/cards/EventCard';
-import HorizontalSlider from '../explore/HorizontalSlider';
+import HorizontalCarousel from '../explore/HorizontalCarousel';
 import { motion } from 'framer-motion';
 import type { ExploreFilters } from '../../state/exploreFilters';
 import { useSmartLoading } from '../../hooks/useSmartLoading';
@@ -83,7 +83,7 @@ function EventsSectionContent({ filters, q, enabled = true, renderAs = 'slider',
   return (
     <>
       <RefreshingIndicator isFetching={isRefetching} />
-      <HorizontalSlider
+      <HorizontalCarousel
         items={itemsToShow}
         renderItem={(item: any, idx: number) => (
           <motion.div

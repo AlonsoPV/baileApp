@@ -400,7 +400,7 @@ export default function HorizontalSlider<T>({
             contain: layout style paint;
             transform: translateZ(0);
             will-change: auto;
-            scroll-snap-align: center;
+            scroll-snap-align: start;
             padding: 12px 0;
           }
           .horizontal-slider-grid--hero > * {

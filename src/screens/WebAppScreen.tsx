@@ -11,6 +11,11 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import * as ExpoLinking from "expo-linking";
+import {
+  addToCalendar,
+  openGoogleCalendarTemplateFallback,
+  type AddToCalendarPayload,
+} from "../lib/addToCalendar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { getRuntimeConfig } from "../config/runtimeConfig";
@@ -303,6 +308,22 @@ export default function WebAppScreen() {
     }
   }, []);
 
+  const injectWebCalendarResult = React.useCallback((result: { ok: boolean; code?: string; message: string; requestId?: string }) => {
+    const js = `
+      try {
+        window.dispatchEvent(new CustomEvent('baileapp:add-to-calendar-result', {
+          detail: ${JSON.stringify(result)}
+        }));
+      } catch (e) {}
+      true;
+    `;
+    try {
+      webviewRef.current?.injectJavaScript?.(js);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const handleWebMessage = React.useCallback(
     async (event: any) => {
       const raw = event?.nativeEvent?.data;
@@ -532,8 +553,54 @@ export default function WebAppScreen() {
           setNativeAuthInProgress(false);
         }
       }
+
+      if (msg?.type === "ADD_TO_CALENDAR") {
+        const addReqId = String(msg?.requestId || "");
+        const addPayload: AddToCalendarPayload = {
+          title: String(msg?.payload?.title ?? ""),
+          start: String(msg?.payload?.start ?? ""),
+          end: String(msg?.payload?.end ?? ""),
+          location: msg?.payload?.location ? String(msg.payload.location) : undefined,
+          description: msg?.payload?.description ? String(msg.payload.description) : undefined,
+          eventLink: msg?.payload?.eventLink ? String(msg.payload.eventLink) : undefined,
+        };
+        try {
+          const result = await addToCalendar(addPayload);
+          injectWebCalendarResult({
+            ok: result.ok,
+            code: result.ok ? undefined : result.code,
+            message: result.message,
+            requestId: addReqId,
+          });
+        } catch (e: any) {
+          injectWebCalendarResult({
+            ok: false,
+            code: "CREATE_FAILED",
+            message: e?.message || "Error al agregar al calendario.",
+            requestId: addReqId,
+          });
+        }
+      }
+
+      if (msg?.type === "ADD_TO_CALENDAR_FALLBACK_GOOGLE") {
+        const payload: AddToCalendarPayload = {
+          title: String(msg?.payload?.title ?? ""),
+          start: String(msg?.payload?.start ?? ""),
+          end: String(msg?.payload?.end ?? ""),
+          location: msg?.payload?.location ? String(msg.payload.location) : undefined,
+          description: msg?.payload?.description ? String(msg.payload.description) : undefined,
+          eventLink: msg?.payload?.eventLink ? String(msg.payload.eventLink) : undefined,
+        };
+        openGoogleCalendarTemplateFallback(payload);
+      }
+
+      if (msg?.type === "OPEN_SETTINGS") {
+        ExpoLinking.openSettings().catch((err) => {
+          console.warn("[WebAppScreen] No se pudo abrir configuración:", err);
+        });
+      }
     },
-    [getGoogleIosClientId, getGoogleWebClientId, injectWebAuthError, injectWebSetSession, nativeAuthInProgress]
+    [getGoogleIosClientId, getGoogleWebClientId, injectWebAuthError, injectWebSetSession, injectWebCalendarResult, nativeAuthInProgress]
   );
 
   const handleReload = React.useCallback(() => {

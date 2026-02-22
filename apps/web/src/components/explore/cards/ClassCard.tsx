@@ -231,19 +231,19 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           }
           img, [style*="objectFit"] {
             max-width: 100% !important;
-            object-fit: cover !important;
-            border-radius: 30px;
-            height: 100% !important;
-            padding: 10px;
           }
         }
 
+        /* Responsive: Mobile */
+        @media (max-width: 768px) {
+          .class-card-title { font-size: clamp(1.4375rem, 3.2vw, 1.6875rem) !important; }
+          .class-card-meta .tag { font-size: clamp(16px, 2.2vw, 20px) !important; }
+        }
         /* Responsive: Mobile pequeño */
         @media (max-width: 480px) {
           .class-card-mobile {
             max-width: 100%;
           }
-          /* Menos padding para que no se tape el póster en pantallas pequeñas */
           .class-card-content {
             padding: 10px 10px max(8px, env(safe-area-inset-bottom));
           }
@@ -258,62 +258,62 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
           position: relative;
           cursor: pointer;
+          /* Permite iniciar swipe horizontal desde la card */
+          touch-action: pan-x pan-y;
           /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar. +15px altura aprox. */
           --card-ar: 4 / 5.2;
         }
 
-        /* 👇 área media con imagen COMPLETA */
+        /* 👇 área media: fondo suave + frame con imagen COMPLETA (contain) */
         .class-card-media {
           position: relative;
-          aspect-ratio: var(--card-ar); /* single source of truth */
+          flex: 1;
+          min-height: 0;
+          aspect-ratio: var(--card-ar);
           background: rgba(255, 255, 255, 0.04);
         }
-
-        /* fondo "relleno" usando la misma imagen, con blur */
-        .class-card-media::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background-image: var(--img);
-          background-size: cover;
-          background-position: center;
-          filter: blur(18px) saturate(1.1);
-          transform: scale(1.08);
-          opacity: 0.55;
-        }
-
-        /* capa para oscurecer un poco (mejor legibilidad) */
-        .class-card-media::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.82) 100%);
-        }
-
-        /* la imagen REAL completa */
-        .class-card-media img {
+        .class-card-media__bg {
           position: absolute;
           inset: 0;
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          object-position: center center;
-          filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
-          z-index: 1;
-          transform: translateZ(0);
-          willChange: auto;
-          backfaceVisibility: hidden;
-          WebkitBackfaceVisibility: hidden;
+          background-size: cover;
+          background-position: center;
+          opacity: 0.12;
         }
-        .class-card-media-placeholder {
+        .class-card-media__frame {
           position: absolute;
           inset: 0;
-          z-index: 0;
+          padding: 10px 12px 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1;
+        }
+        .class-card-media__overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0.75) 100%);
+          pointer-events: none;
+          z-index: 2;
+        }
+        .class-card-media__frame img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain !important;
+          object-position: center center;
+          border-radius: 8px;
+        }
+        .class-card-media__frame .class-card-media-placeholder {
+          width: 100%;
+          height: 100%;
+          min-height: 100px;
           display: flex;
           align-items: center;
           justify-content: center;
           background: linear-gradient(145deg, rgba(40, 44, 62, 0.95) 0%, rgba(25, 28, 40, 0.98) 100%);
           border: 1px dashed rgba(255, 255, 255, 0.12);
+          border-radius: 8px;
         }
         .class-card-media-placeholder svg {
           width: 48px;
@@ -329,7 +329,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           display: flex;
           gap: 8px;
           flex-wrap: wrap;
-          z-index: 2;
+          z-index: 3;
         }
 
         .class-card-badge {
@@ -358,8 +358,8 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
         }
 
         .class-card-title {
-          margin: 0 0 clamp(5px, 1vw, 8px);
-          font-size: clamp(18px, 2.8vw, 22px);
+          margin: 0 0 clamp(6px, 1.2vw, 10px);
+          font-size: clamp(1.25rem, 3vw, 1.5rem);
           font-weight: 900;
           color: #fff;
           text-transform: uppercase;
@@ -387,6 +387,8 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           text-align: center;
           font-weight: 700;
           text-transform: uppercase;
+          min-height: 44px;
+          line-height: 44px;
         }
 
         .class-card-meta-row--time-zone {
@@ -396,12 +398,13 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
         }
 
         .class-card-meta .tag {
-          font-size: clamp(10px, 1.6vw, 13px);
+          font-size: clamp(13px, 2vw, 17px);
           font-weight: 700;
           color: rgba(234, 240, 255, 0.85);
           background: rgba(17, 21, 32, 0.55);
           border: 1px solid rgba(255, 255, 255, 0.14);
-          padding: clamp(5px, 1vw, 9px) clamp(7px, 1.2vw, 12px);
+          padding: clamp(8px, 1.2vw, 10px) clamp(10px, 1.4vw, 14px);
+          min-height: 36px;
           border-radius: 999px;
           display: inline-flex;
           gap: 8px;
@@ -479,42 +482,38 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           whileTap={{ scale: 0.98 }}
           style={fillHeight ? ({ height: '100%', alignSelf: 'stretch' } as React.CSSProperties) : undefined}
         >
-          <div
-            className="class-card-media"
-            style={{
-              '--img': !priority && imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
-            } as React.CSSProperties}
-          >
-            {showPlaceholder && (
-              <div className="class-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
-                </svg>
-              </div>
-            )}
+          <div className="class-card-media">
             {imageUrlFinal && !imageError && (
-              <img
-                src={imageUrlFinal}
-                alt={item.titulo || 'Clase'}
-                loading={priority ? "eager" : "lazy"}
-                fetchPriority={priority ? "high" : "auto"}
-                decoding="async"
-                style={{
-                  objectFit: 'cover',
-                  objectPosition: 'center center',
-                  transform: 'translateZ(0)',
-                  willChange: 'auto',
-                  backfaceVisibility: 'hidden',
-                  WebkitBackfaceVisibility: 'hidden'
-                }}
-                onLoad={() => { logCardImage('clase', item.ownerId ?? item.titulo, imageUrlFinal, true, 'load'); setImageError(false); }}
-                onError={(e) => {
-                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
-                  console.warn('[CardImageError] type=clase id=', item.ownerId ?? item.titulo, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
-                  setImageError(true);
-                }}
+              <div
+                className="class-card-media__bg"
+                style={{ backgroundImage: `url(${imageUrlFinal})` }}
+                aria-hidden
               />
             )}
+            <div className="class-card-media__frame">
+              {showPlaceholder ? (
+                <div className="class-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+                  </svg>
+                </div>
+              ) : imageUrlFinal && !imageError ? (
+                <img
+                  src={imageUrlFinal}
+                  alt={item.titulo || 'Clase'}
+                  loading={priority ? "eager" : "lazy"}
+                  fetchPriority={priority ? "high" : "auto"}
+                  decoding="async"
+                  onLoad={() => { logCardImage('clase', item.ownerId ?? item.titulo, imageUrlFinal, true, 'load'); setImageError(false); }}
+                  onError={(e) => {
+                    const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
+                    console.warn('[CardImageError] type=clase id=', item.ownerId ?? item.titulo, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
+                    setImageError(true);
+                  }}
+                />
+              ) : null}
+            </div>
+            <div className="class-card-media__overlay" aria-hidden />
 
             {isToday && (
               <div className="class-card-badges">
@@ -522,13 +521,6 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
               </div>
             )}
 
-            <div className="class-card-actions">
-              <div className="class-card-cta">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </div>
           </div>
 
           <div className="class-card-content">

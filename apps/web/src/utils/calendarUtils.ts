@@ -54,6 +54,21 @@ function formatDateForCalendar(date: string | Date): string {
 }
 
 /**
+ * Formatea Date a ISO local (YYYY-MM-DDTHH:mm:ss) sin Z.
+ * Para enviar al bridge nativo y evitar corrimientos por UTC.
+ */
+export function formatDateToLocalISO(date: Date): string {
+  const d = normalizeDate(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
+/**
  * Construye un archivo ICS para descarga
  */
 export function buildICS(event: CalendarEvent): string {

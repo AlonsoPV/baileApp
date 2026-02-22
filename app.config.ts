@@ -306,6 +306,12 @@ const config: ExpoConfig = {
   plugins: [
     // Android release signing from UPLOAD_* (gradle.properties or env). See docs/ANDROID_PLAY_AAB_BUILD.md
     withAndroidReleaseSigning as ExpoConfig["plugins"] extends (infer U)[] ? U : never,
+    [
+      "expo-calendar",
+      {
+        calendarPermission: "Dónde Bailar necesita acceso a tu calendario para agregar eventos y clases.",
+      },
+    ],
   ],
 
   updates: {

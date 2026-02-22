@@ -5,9 +5,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
-import { buildICS, buildGoogleUrl } from "../utils/calendarUtils";
+import { buildICS, buildGoogleUrl, formatDateToLocalISO } from "../utils/calendarUtils";
 import { calculateRecurringDates, calculateMultipleRecurringDates } from "../utils/calculateRecurringDates";
 import { useAuth } from "@/contexts/AuthProvider";
+import { isNativeApp } from "@/utils/isNativeApp";
 
 type AddToCalendarProps = {
   eventId: string | number;
@@ -18,6 +19,7 @@ type AddToCalendarProps = {
   end: string | Date;
   allDay?: boolean;
   showAsIcon?: boolean;
+  eventLink?: string; // URL del evento para descripción en calendario
   classId?: number;      // ID de clase (si es  diferente de eventId)
   academyId?: number;    // ID de academia dueña de la clase
   teacherId?: number;    // ID de maestro dueño de la clase
@@ -41,6 +43,7 @@ export default function AddToCalendarWithStats({
   end,
   allDay,
   showAsIcon = false,
+  eventLink,
   classId,
   academyId,
   teacherId,
@@ -52,6 +55,7 @@ export default function AddToCalendarWithStats({
 }: AddToCalendarProps) {
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
+  const [calendarError, setCalendarError] = useState<{ code?: string; message: string } | null>(null);
   const [count, setCount] = useState<number>(0);
   const [alreadyAdded, setAlreadyAdded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -126,6 +130,154 @@ export default function AddToCalendarWithStats({
     };
     checkIfAdded();
   }, [user, eventIdStr]);
+
+  const inNative = isNativeApp(routerLocation.search);
+
+  useEffect(() => {
+    if (!inNative) return;
+    const handler = (e: CustomEvent<{ ok: boolean; code?: string; message: string }>) => {
+      const d = e.detail;
+      setLoading(false);
+      setOpen(false);
+      if (d.ok) {
+        setAdded(true);
+        setTimeout(() => setAdded(false), 2000);
+      } else {
+        setCalendarError({ code: d.code, message: d.message });
+      }
+    };
+    window.addEventListener("baileapp:add-to-calendar-result", handler as EventListener);
+    return () => window.removeEventListener("baileapp:add-to-calendar-result", handler as EventListener);
+  }, [inNative]);
+
+  const getNativePayload = () => ({
+    title,
+    start: formatDateToLocalISO(normalizedStart),
+    end: formatDateToLocalISO(normalizedEnd),
+    location: location || undefined,
+    description: description || undefined,
+    eventLink: eventLink || undefined,
+  });
+
+  const handleAddNative = async () => {
+    if (!user?.id) {
+      setOpen(false);
+      navigate("/auth/login", { state: { from: routerLocation.pathname + routerLocation.search } });
+      return;
+    }
+    if (alreadyAdded) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+      setOpen(false);
+      const rn = (window as any).ReactNativeWebView;
+      if (rn?.postMessage) {
+        rn.postMessage(JSON.stringify({ type: "ADD_TO_CALENDAR", requestId: String(Date.now()), payload: getNativePayload() }));
+      }
+      return;
+    }
+    setLoading(true);
+    setCalendarError(null);
+    try {
+      const { error: errorInteresados } = await supabase.from("eventos_interesados").insert({
+        event_id: eventIdStr,
+        user_id: user.id,
+      });
+      if (errorInteresados) throw errorInteresados;
+      const finalClassId = classId || (typeof eventId === "number" ? eventId : Number(eventIdStr));
+      if (typeof finalClassId === "number" && !Number.isNaN(finalClassId)) {
+        let normalizedRoleBaile = roleBaile;
+        if (roleBaile === "lead") normalizedRoleBaile = "leader";
+        else if (roleBaile === "follow") normalizedRoleBaile = "follower";
+        let fechasEspecificas: (string | null)[] = [];
+        if (fecha) fechasEspecificas = [fecha];
+        else if (diasSemana && Array.isArray(diasSemana) && diasSemana.length > 0)
+          fechasEspecificas = calculateMultipleRecurringDates(diasSemana, 3);
+        else if (diaSemana != null && typeof diaSemana === "number")
+          fechasEspecificas = calculateRecurringDates(diaSemana, 3);
+        else fechasEspecificas = [null as any];
+        const insertPayloads = fechasEspecificas.map((fechaEspecifica) => ({
+          user_id: user.id,
+          class_id: finalClassId,
+          academy_id: academyId || null,
+          teacher_id: teacherId || null,
+          role_baile: normalizedRoleBaile || null,
+          zona_tag_id: zonaTagId || null,
+          status: "tentative" as const,
+          fecha_especifica: fechaEspecifica || null,
+        }));
+        await supabase.from("clase_asistencias").upsert(insertPayloads, {
+          onConflict: "user_id,class_id,fecha_especifica",
+        });
+        if (academyId) {
+          qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
+          qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
+        }
+        if (teacherId) {
+          qc.invalidateQueries({ queryKey: ["teacher-class-metrics", teacherId] });
+          qc.refetchQueries({ queryKey: ["teacher-class-metrics", teacherId] });
+        }
+      }
+      setAdded(true);
+      setAlreadyAdded(true);
+      setCount((prev) => prev + 1);
+      const rn = (window as any).ReactNativeWebView;
+      if (rn?.postMessage) {
+        rn.postMessage(
+          JSON.stringify({
+            type: "ADD_TO_CALENDAR",
+            requestId: String(Date.now()),
+            payload: getNativePayload(),
+          })
+        );
+      } else {
+        setLoading(false);
+      }
+    } catch (err) {
+      setLoading(false);
+      alert(t("error_adding_calendar"));
+    }
+  };
+
+  const handleOpenSettings = () => {
+    setCalendarError(null);
+    const rn = (window as any).ReactNativeWebView;
+    if (rn?.postMessage) rn.postMessage(JSON.stringify({ type: "OPEN_SETTINGS" }));
+  };
+
+  const handleFallbackGoogle = () => {
+    setCalendarError(null);
+    const rn = (window as any).ReactNativeWebView;
+    if (rn?.postMessage)
+      rn.postMessage(
+        JSON.stringify({
+          type: "ADD_TO_CALENDAR_FALLBACK_GOOGLE",
+          payload: getNativePayload(),
+        })
+      );
+  };
+
+  const handleFallbackICS = () => {
+    setCalendarError(null);
+    try {
+      const ics = buildICS({
+        title,
+        description,
+        location,
+        start: normalizedStart,
+        end: normalizedEnd,
+        allDay,
+      });
+      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "donde-bailar-evento.ics";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // ignore
+    }
+  };
 
   const handleAdd = async (href: string) => {
     console.log("[AddToCalendarWithStats] 🎯 handleAdd llamado con:", {
@@ -598,6 +750,111 @@ export default function AddToCalendarWithStats({
 
         {typeof document !== 'undefined' && document.body && createPortal(
           <>
+            {calendarError && (
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 10000,
+                    background: "rgba(0,0,0,0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 24,
+                  }}
+                  onClick={() => setCalendarError(null)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      background: "rgba(20,20,28,0.98)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      borderRadius: 16,
+                      padding: 24,
+                      maxWidth: 360,
+                      width: "100%",
+                    }}
+                  >
+                    <h3 style={{ color: "#fff", marginBottom: 12, fontSize: 18, fontWeight: 700 }}>
+                      {calendarError.code === "PERMISSION_DENIED"
+                        ? t("calendar_permission_required")
+                        : t("calendar_add_failed")}
+                    </h3>
+                    <p style={{ color: "rgba(255,255,255,0.85)", marginBottom: 20, fontSize: 14 }}>
+                      {calendarError.message}
+                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {calendarError.code === "PERMISSION_DENIED" && (
+                        <button
+                          onClick={handleOpenSettings}
+                          style={{
+                            padding: 12,
+                            borderRadius: 10,
+                            background: "linear-gradient(135deg, #7F7CFF, #21D4FD)",
+                            color: "#000",
+                            fontWeight: 700,
+                            border: "none",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {t("calendar_open_settings")}
+                        </button>
+                      )}
+                      <button
+                        onClick={handleFallbackGoogle}
+                        style={{
+                          padding: 12,
+                          borderRadius: 10,
+                          background: "rgba(255,255,255,0.12)",
+                          color: "#fff",
+                          fontWeight: 600,
+                          border: "1px solid rgba(255,255,255,0.25)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {t("google_calendar")}
+                      </button>
+                      {icsBlobUrl && (
+                        <button
+                          onClick={handleFallbackICS}
+                          style={{
+                            padding: 12,
+                            borderRadius: 10,
+                            background: "rgba(255,255,255,0.08)",
+                            color: "#fff",
+                            fontWeight: 600,
+                            border: "1px solid rgba(255,255,255,0.2)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {t("calendar_download_ics")}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setCalendarError(null)}
+                        style={{
+                          padding: 10,
+                          color: "rgba(255,255,255,0.7)",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: 14,
+                        }}
+                      >
+                        {t("close")}
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </AnimatePresence>
+            )}
             <AnimatePresence>
               {open && (
                 <motion.div
@@ -636,17 +893,41 @@ export default function AddToCalendarWithStats({
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MenuItem
-                    label={t('google_calendar')}
-                    onClick={() => handleAdd(googleUrl)}
-                    icon="📅"
-                  />
-                  {icsBlobUrl && (
-                    <MenuItem
-                      label={t('apple_calendar')}
-                      onClick={() => handleAdd(icsBlobUrl)}
-                      icon="📱"
-                    />
+                  {inNative ? (
+                    <>
+                      <MenuItem
+                        label={t('add_to_calendar_button')}
+                        onClick={() => handleAddNative()}
+                        icon="📅"
+                      />
+                      <MenuItem
+                        label={t('google_calendar')}
+                        onClick={() => handleAdd(googleUrl)}
+                        icon="📅"
+                      />
+                      {icsBlobUrl && (
+                        <MenuItem
+                          label={t('apple_calendar')}
+                          onClick={() => handleAdd(icsBlobUrl)}
+                          icon="📱"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <MenuItem
+                        label={t('google_calendar')}
+                        onClick={() => handleAdd(googleUrl)}
+                        icon="📅"
+                      />
+                      {icsBlobUrl && (
+                        <MenuItem
+                          label={t('apple_calendar')}
+                          onClick={() => handleAdd(icsBlobUrl)}
+                          icon="📱"
+                        />
+                      )}
+                    </>
                   )}
                 </motion.div>
               )}
@@ -753,6 +1034,111 @@ export default function AddToCalendarWithStats({
 
       {typeof document !== 'undefined' && document.body && createPortal(
         <>
+          {calendarError && (
+            <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 10000,
+                  background: "rgba(0,0,0,0.6)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 24,
+                }}
+                onClick={() => setCalendarError(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    background: "rgba(20,20,28,0.98)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 16,
+                    padding: 24,
+                    maxWidth: 360,
+                    width: "100%",
+                  }}
+                >
+                  <h3 style={{ color: "#fff", marginBottom: 12, fontSize: 18, fontWeight: 700 }}>
+                    {calendarError.code === "PERMISSION_DENIED"
+                      ? t("calendar_permission_required")
+                      : t("calendar_add_failed")}
+                  </h3>
+                  <p style={{ color: "rgba(255,255,255,0.85)", marginBottom: 20, fontSize: 14 }}>
+                    {calendarError.message}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {calendarError.code === "PERMISSION_DENIED" && (
+                      <button
+                        onClick={handleOpenSettings}
+                        style={{
+                          padding: 12,
+                          borderRadius: 10,
+                          background: "linear-gradient(135deg, #7F7CFF, #21D4FD)",
+                          color: "#000",
+                          fontWeight: 700,
+                          border: "none",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {t("calendar_open_settings")}
+                      </button>
+                    )}
+                    <button
+                      onClick={handleFallbackGoogle}
+                      style={{
+                        padding: 12,
+                        borderRadius: 10,
+                        background: "rgba(255,255,255,0.12)",
+                        color: "#fff",
+                        fontWeight: 600,
+                        border: "1px solid rgba(255,255,255,0.25)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {t("google_calendar")}
+                    </button>
+                    {icsBlobUrl && (
+                      <button
+                        onClick={handleFallbackICS}
+                        style={{
+                          padding: 12,
+                          borderRadius: 10,
+                          background: "rgba(255,255,255,0.08)",
+                          color: "#fff",
+                          fontWeight: 600,
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {t("calendar_download_ics")}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setCalendarError(null)}
+                      style={{
+                        padding: 10,
+                        color: "rgba(255,255,255,0.7)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: 14,
+                      }}
+                    >
+                      {t("close")}
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            </AnimatePresence>
+          )}
           <AnimatePresence>
             {open && (
               <motion.div
@@ -792,9 +1178,21 @@ export default function AddToCalendarWithStats({
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <MenuItem label={t('google_calendar')} onClick={() => handleAdd(googleUrl)} icon="📅" />
-                {icsBlobUrl && (
-                  <MenuItem label={t('apple_calendar')} onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
+                {inNative ? (
+                  <>
+                    <MenuItem label={t('add_to_calendar_button')} onClick={() => handleAddNative()} icon="📅" />
+                    <MenuItem label={t('google_calendar')} onClick={() => handleAdd(googleUrl)} icon="📅" />
+                    {icsBlobUrl && (
+                      <MenuItem label={t('apple_calendar')} onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <MenuItem label={t('google_calendar')} onClick={() => handleAdd(googleUrl)} icon="📅" />
+                    {icsBlobUrl && (
+                      <MenuItem label={t('apple_calendar')} onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
+                    )}
+                  </>
                 )}
               </motion.div>
             )}

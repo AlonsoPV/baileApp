@@ -12,11 +12,11 @@ export const EXPLORE_CARD_STYLES = `
       margin: 0 auto;
     }
     .explore-card { --card-ar: 9 / 16.5; }
-    img, [style*="objectFit"] {
-      max-width: 100% !important;
-      /* height: auto !important; */
-      object-fit: cover !important;
+    .explore-card-media img {
+      object-fit: contain !important;
     }
+    .explore-card-title { font-size: clamp(26px, 3.5vw, 30px) !important; }
+    .explore-card-tag { font-size: clamp(18px, 2.2vw, 21px) !important; }
   }
 
   /* Responsive: Small mobile */
@@ -63,9 +63,7 @@ export const EXPLORE_CARD_STYLES = `
     background-image: var(--img, none);
     background-size: cover;
     background-position: center;
-    filter: blur(18px) saturate(1.1);
-    transform: scale(1.08);
-    opacity: 0.55;
+    opacity: 0.12;
   }
   .explore-card-media::after {
     content: "";
@@ -75,12 +73,12 @@ export const EXPLORE_CARD_STYLES = `
   }
   .explore-card-media img {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    inset: 10px 12px;
+    width: calc(100% - 24px);
+    height: calc(100% - 20px);
+    object-fit: contain;
     object-position: center center;
-    filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
+    border-radius: 8px;
     z-index: 1;
   }
 
@@ -113,7 +111,7 @@ export const EXPLORE_CARD_STYLES = `
 
   .explore-card-title {
     margin: 0 0 clamp(5px, 1vw, 8px);
-    font-size: clamp(18px, 2.8vw, 22px);
+    font-size: clamp(23px, 3.2vw, 27px);
     font-weight: 900;
     color: #fff;
     text-transform: uppercase;
@@ -144,7 +142,7 @@ export const EXPLORE_CARD_STYLES = `
   }
 
   .explore-card-tag {
-    font-size: clamp(10px, 1.6vw, 13px);
+    font-size: clamp(15px, 2vw, 18px);
     color: rgba(234, 240, 255, 0.85);
     background: rgba(17, 21, 32, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.14);

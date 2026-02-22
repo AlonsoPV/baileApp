@@ -178,16 +178,14 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
         /* Responsive: Mobile */
         @media (max-width: 768px) {
           .event-card-mobile {
-            /* Evitar cards gigantes (por vh) en pantallas altas y también evitar que quede muy angosta */
             max-width: min(420px, calc((9 / 16) * 100vh));
             margin: 0 auto;
           }
           .card { --card-ar: 9 / 16.5; }
-          img, [style*="objectFit"] {
-            max-width: 100% !important;
-            /* height: auto !important; */
-            object-fit: cover !important;
-          }
+          img, [style*="objectFit"] { max-width: 100% !important; }
+          .event-title { font-size: clamp(1.4375rem, 3.2vw, 1.6875rem) !important; }
+          .meta .tag { font-size: clamp(16px, 2.2vw, 20px) !important; }
+          .badge.cost-chip { font-size: clamp(13px, 1.8vw, 16px) !important; padding: 8px 12px !important; }
         }
         
         /* Responsive: Mobile pequeño */
@@ -214,54 +212,58 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
           position: relative;
           cursor: pointer;
+          /* Permite iniciar swipe horizontal desde la card */
+          touch-action: pan-x pan-y;
           /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar. +15px altura aprox. */
           --card-ar: 4 / 5.2;
         }
-        /* 👇 área media con imagen COMPLETA */
+        /* 👇 área media: fondo suave + frame con imagen COMPLETA (contain) */
         .media {
           position: relative;
-          aspect-ratio: var(--card-ar); /* single source of truth */
+          flex: 1;
+          min-height: 0;
+          aspect-ratio: var(--card-ar);
           background: rgba(255, 255, 255, 0.04);
         }
-        /* fondo "relleno" usando la misma imagen, con blur */
-        .media::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background-image: var(--img);
-          background-size: cover;
-          background-position: center;
-          filter: blur(18px) saturate(1.1);
-          transform: scale(1.08);
-          opacity: 0.55;
-        }
-        /* capa para oscurecer un poco (mejor legibilidad) */
-        .media::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.82) 100%);
-        }
-        /* la imagen REAL completa */
-        .media img {
+        .media__bg {
           position: absolute;
           inset: 0;
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          object-position: center center;
-          filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
-          z-index: 1;
+          background-size: cover;
+          background-position: center;
+          opacity: 0.12;
         }
-        .media-placeholder {
+        .media__frame {
           position: absolute;
           inset: 0;
-          z-index: 0;
+          /* Sin padding horizontal para que el flyer ocupe todo el ancho */
+          padding: 10px 0 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1;
+        }
+        @media (max-width: 480px) {
+          /* Mantener full-width; solo padding vertical */
+          .media__frame { padding: 10px 0 10px; }
+        }
+        /* .media__overlay { ... } desactivado por UX */
+        .media__frame img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain !important;
+          object-position: center center;
+          /* El borde redondeado lo da la card; evita “márgenes” laterales */
+          border-radius: 0;
+        }
+        .media__frame .media-placeholder {
           display: flex;
           align-items: center;
           justify-content: center;
           background: linear-gradient(145deg, rgba(40, 44, 62, 0.95) 0%, rgba(25, 28, 40, 0.98) 100%);
           border: 1px dashed rgba(255, 255, 255, 0.12);
+          border-radius: 8px;
         }
         .media-placeholder svg {
           width: 48px;
@@ -301,8 +303,8 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           z-index: 2;
         }
         .event-title {
-          margin: 0 0 clamp(5px, 1vw, 8px);
-          font-size: clamp(18px, 2.8vw, 22px);
+          margin: 0 0 clamp(6px, 1.2vw, 10px);
+          font-size: clamp(1.25rem, 3vw, 1.5rem);
           font-weight: 900;
           color: #fff;
           text-transform: uppercase;
@@ -327,6 +329,8 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           text-align: center;
           font-weight: 700;
           text-transform: uppercase;
+          min-height: 34px;
+          line-height: 34px;
         }
         .meta-row--time-zone {
           display: flex;
@@ -334,12 +338,13 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           flex-wrap: wrap;
         }
         .meta .tag {
-          font-size: clamp(10px, 1.6vw, 13px);
+          font-size: clamp(13px, 2vw, 17px);
           font-weight: 700;
           color: rgba(234, 240, 255, 0.85);
           background: rgba(17, 21, 32, 0.55);
           border: 1px solid rgba(255, 255, 255, 0.14);
-          padding: clamp(5px, 1vw, 9px) clamp(7px, 1.2vw, 12px);
+          padding: clamp(8px, 1.2vw, 10px) clamp(10px, 1.4vw, 14px);
+          min-height: 44px;
           border-radius: 999px;
           display: inline-flex;
           gap: 8px;
@@ -350,6 +355,54 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           text-overflow: ellipsis;
           backdrop-filter: blur(8px);
           font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .meta-row--time-zone .tag {
+          height: 44px;
+        }
+        /* Ubicación puede ocupar 2 líneas si hace falta */
+        .meta-row--time-zone .tag--location {
+          height: auto;
+          white-space: normal;
+          overflow: visible;
+          text-overflow: unset;
+          line-height: 1.2;
+          word-break: break-word;
+        }
+        .tag--cost {
+          font-weight: 800;
+          color: #fff;
+          background: rgba(17, 21, 32, 0.65);
+          border-color: rgba(255,255,255,0.18);
+        }
+        .tag__cost-icon {
+          width: 18px;
+          height: 18px;
+          min-width: 18px;
+          min-height: 18px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.18);
+          font-weight: 900;
+          font-size: 12px;
+          line-height: 1;
+        }
+        .tag__discount-badge {
+          width: 20px;
+          height: 20px;
+          min-width: 20px;
+          min-height: 20px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: #16A34A;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 900;
+          line-height: 1;
         }
         .meta .meta-row--date .tag {
           display: block;
@@ -428,62 +481,48 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
           whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
         >
-          <div 
-            className="media" 
-          style={{
-              '--img': !priority && imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
-              '--overlay-opacity': flyer && !imageError ? 0 : 1
-            } as React.CSSProperties}
-          >
-            {showPlaceholder && (
-              <div
-                className="media-placeholder"
-                data-reason={placeholderReason}
-                aria-hidden
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <path d="M21 15l-5-5L5 21" />
-                </svg>
-              </div>
-            )}
+          <div className="media">
             {imageUrlFinal && !imageError && (
-              <img
-                src={imageUrlFinal}
-                alt={`Poster del evento ${nombre}`}
-                loading={priority ? "eager" : "lazy"}
-                fetchPriority={priority ? "high" : "auto"}
-                decoding="async"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  objectPosition: 'center center',
-                  transform: 'translateZ(0)',
-                  willChange: 'auto',
-                  backfaceVisibility: 'hidden',
-                  WebkitBackfaceVisibility: 'hidden'
-                }}
-                onLoad={() => {
-                  logCardImage("evento", eventId, imageUrlFinal, true, "load");
-                  setImageError(false);
-                }}
-                onError={(e) => {
-                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? "Image load failed";
-                  console.warn("[CardImageError] type=evento id=", eventId, "uri=", imageUrlFinal?.slice(0, 80), "error=", msg);
-                  setImageError(true);
-                }}
+              <div
+                className="media__bg"
+                style={{ backgroundImage: `url(${imageUrlFinal})` }}
+                aria-hidden
               />
             )}
-
-            <div className="card-actions">
-              <div className="cta">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
+            <div className="media__frame">
+              {showPlaceholder ? (
+                <div
+                  className="media-placeholder"
+                  data-reason={placeholderReason}
+                  aria-hidden
+                  style={{ width: '100%', height: '100%', minHeight: 100 }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="M21 15l-5-5L5 21" />
+                  </svg>
+                </div>
+              ) : imageUrlFinal && !imageError ? (
+                <img
+                  src={imageUrlFinal}
+                  alt={`Poster del evento ${nombre}`}
+                  loading={priority ? "eager" : "lazy"}
+                  fetchPriority={priority ? "high" : "auto"}
+                  decoding="async"
+                  onLoad={() => {
+                    logCardImage("evento", eventId, imageUrlFinal, true, "load");
+                    setImageError(false);
+                  }}
+                  onError={(e) => {
+                    const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? "Image load failed";
+                    console.warn("[CardImageError] type=evento id=", eventId, "uri=", imageUrlFinal?.slice(0, 80), "error=", msg);
+                    setImageError(true);
+                  }}
+                />
+              ) : null}
             </div>
+            {/* <div className="media__overlay" aria-hidden /> */}
         </div>
 
           <div className="content">
@@ -495,72 +534,6 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
               </div>
         )}
 
-            {(costMonto != null || showDiscount) && (
-              <div className="badges" style={{ position: 'static', marginBottom: 12 }}>
-                {costMonto != null && (
-                  <div
-                    className="badge cost-chip"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      fontSize: 'clamp(10px, 1.6vw, 13px)',
-                      fontWeight: 800,
-                      padding: '6px 12px',
-                      borderRadius: 999,
-                      border: '1px solid rgba(255,255,255,0.18)',
-                      background: 'rgba(17, 21, 32, 0.65)',
-                      backdropFilter: 'blur(8px)',
-                      color: '#fff',
-                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    <span>{costMonto === 0 ? 'Gratis' : formatCostoMonto(costMonto)}</span>
-                    {showDiscount && (
-                      <span
-                        aria-label="Descuento o precio especial disponible"
-                        title="Descuento o precio especial disponible"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          background: '#16A34A',
-                          color: '#fff',
-                          fontSize: 11,
-                          fontWeight: 800,
-                        }}
-                      >
-                        %
-                      </span>
-                    )}
-                  </div>
-                )}
-                {costMonto == null && showDiscount && (
-                  <span
-                    className="badge"
-                    aria-label="Descuento o precio especial disponible"
-                    title="Descuento o precio especial disponible"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      background: '#16A34A',
-                      color: '#fff',
-                      fontSize: 12,
-                      fontWeight: 800,
-                    }}
-                  >
-                    %
-                  </span>
-                )}
-              </div>
-            )}
             <div className="meta">
               {fecha && (
                 <div className="meta-row--date">
@@ -571,8 +544,28 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
                 {horaInicio && (
                   <div className="tag">🕗 {formatHHMM(horaInicio)}</div>
                 )}
+                {costMonto != null && (
+                  <div
+                    className="tag tag--cost"
+                    aria-label={costMonto === 0 ? 'Entrada gratis' : `Costo taquilla ${formatCostoMonto(costMonto)}`}
+                  >
+                    {costMonto === 0 ? (
+                      <span>Gratis</span>
+                    ) : (
+                      <>
+                        <span className="tag__cost-icon" aria-hidden>$</span>
+                        <span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+                      </>
+                    )}
+                    {showDiscount && (
+                      <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">
+                        %
+                      </span>
+                    )}
+                  </div>
+                )}
                 {lugarSoloNombre && (
-                  <div className="tag">📍 {lugarSoloNombre}</div>
+                  <div className="tag tag--location">📍 {lugarSoloNombre}</div>
                 )}
               </div>
             </div>

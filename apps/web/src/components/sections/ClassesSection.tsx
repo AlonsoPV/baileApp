@@ -2,7 +2,7 @@ import React from 'react';
 import { useExploreQuery } from '../../hooks/useExploreQuery';
 import { GridSkeleton } from '../skeletons/GridSkeleton';
 import ClassCard from '../explore/cards/ClassCard';
-import HorizontalSlider from '../explore/HorizontalSlider';
+import HorizontalCarousel from '../explore/HorizontalCarousel';
 import { motion } from 'framer-motion';
 import type { ExploreFilters } from '../../state/exploreFilters';
 import { useSmartLoading } from '../../hooks/useSmartLoading';
@@ -139,7 +139,7 @@ function ClassesSectionContent({ filters, q, enabled = true, renderAs = 'slider'
   return (
     <>
       <RefreshingIndicator isFetching={academiasRefetching || maestrosRefetching} />
-      <HorizontalSlider
+      <HorizontalCarousel
         items={itemsToShow}
         renderItem={(item: any, idx: number) => (
           <motion.div

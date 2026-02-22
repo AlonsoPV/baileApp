@@ -14,7 +14,7 @@ import EventCard from "../../components/explore/cards/EventCard";
 import OrganizerCard from "../../components/explore/cards/OrganizerCard";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
-import HorizontalSlider from "../../components/explore/HorizontalSlider";
+import HorizontalCarousel from "../../components/explore/HorizontalCarousel";
 import BrandCard from "../../components/explore/cards/BrandCard";
 import ClassCard from "../../components/explore/cards/ClassCard";
 import SocialCard from "../../components/explore/cards/SocialCard";
@@ -99,11 +99,12 @@ function useExploreCardDimensions(isMobile: boolean) {
     const availableHeight =
       vh - topNavHeight - filtersCollapsedHeight - sectionHeaderHeight - verticalPadding;
 
-    const cardHeight = Math.max(420, Math.min(620, availableHeight));
-    const containerWidth = vw - 24;
-    const cardWidth = Math.floor(containerWidth * 0.84);
+    const cardHeight = Math.max(440, Math.min(640, availableHeight));
+    const containerWidth = vw - 32;
+    const cardWidth = Math.floor(containerWidth * 0.9);
+    const cardWidthClamped = Math.min(cardWidth, Math.floor(vw * 0.92));
 
-    return { width: cardWidth, height: cardHeight };
+    return { width: cardWidthClamped, height: cardHeight };
   }, [isMobile]);
 
   const [dimensions, setDimensions] = React.useState(compute);
@@ -162,21 +163,21 @@ function SectionHeader({
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 12,
-        paddingTop: 6,
-        paddingBottom: 10,
-        marginBottom: 12,
-        borderBottom: '2px solid transparent',
-        borderImage: 'linear-gradient(90deg, rgba(255,157,28,0.5), rgba(168,85,247,0.3), transparent) 1',
+        paddingTop: 10,
+        paddingBottom: 12,
+        marginBottom: 8,
+        borderBottom: '3px solid transparent',
+        borderImage: 'linear-gradient(90deg, rgba(255,157,28,0.6), rgba(168,85,247,0.4), transparent) 1',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h2
             className="section-title section-title--hero"
             style={{
               margin: 0,
-              fontSize: 'clamp(1.1rem, 4.5vw, 1.25rem)',
-              fontWeight: 800,
+              fontSize: 'clamp(1.25rem, 5vw, 1.5rem)',
+              fontWeight: 900,
               color: '#fff',
               letterSpacing: '-0.02em',
               lineHeight: 1.25,
@@ -184,24 +185,6 @@ function SectionHeader({
           >
             {title}
           </h2>
-          {typeof count === 'number' && (
-            <span
-              style={{
-                height: 26,
-                padding: '0 10px',
-                borderRadius: 999,
-                fontSize: 0.8125,
-                fontWeight: 700,
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: 'rgba(255,255,255,0.9)',
-                display: 'inline-flex',
-                alignItems: 'center',
-              }}
-            >
-              {count}
-            </span>
-          )}
         </div>
         {subline && (
           <span style={{ fontSize: 0.8, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{subline}</span>
@@ -215,17 +198,22 @@ function SectionHeader({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 4,
+            justifyContent: 'center',
+            minWidth: 44,
+            minHeight: 44,
+            gap: 6,
             fontSize: 0.875,
             fontWeight: 600,
             color: 'rgba(255,157,28,0.95)',
             textDecoration: 'none',
-            padding: '6px 10px',
-            borderRadius: 8,
+            padding: '10px 12px',
+            borderRadius: 10,
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
           }}
         >
           {label}
-          <span aria-hidden>→</span>
+          <span aria-hidden style={{ fontSize: '0.75em' }}>›</span>
         </Link>
       )}
     </div>
@@ -652,6 +640,9 @@ const STYLES = `
     width: 100%;
   }
   @media (max-width: 768px) {
+    .section-title--hero {
+      font-size: clamp(1.6875rem, 5.5vw, 1.9375rem) !important;
+    }
     .explore-slider--mobile {
       grid-template-columns: 1fr !important;
       gap: 0 !important;
@@ -697,6 +688,7 @@ const STYLES = `
     max-width: 700px;
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 0;
     padding: 6px 0;
     position: relative;
     box-sizing: border-box;
@@ -1665,7 +1657,7 @@ const STYLES = `
       max-width: 100% !important;
       padding: 10px 12px 12px !important;
       border-radius: 20px !important;
-      margin: 0 0 2em 0 !important;
+      margin: 0 !important;
       box-sizing: border-box;
     }
     .filters-card {
@@ -1877,7 +1869,7 @@ const STYLES = `
     .filters-panel {
       padding: 8px 10px 10px !important;
       border-radius: 18px !important;
-      margin: 0 0 2em 0 !important;
+      margin: 0 !important;
     }
     .filters-card {
       padding: 10px 8px 8px !important;
@@ -2065,7 +2057,7 @@ const STYLES = `
     .filters-panel {
       padding: 9px 10px 11px !important;
       border-radius: 16px !important;
-      margin: 0 0 2em 0 !important;
+      margin: 0 !important;
     }
     .filters-fav {
       padding: 7px 9px !important;
@@ -3581,7 +3573,7 @@ export default function ExploreHomeScreen() {
 
       <div className="explore-container">
         <div className="wrap">
-          <section className="filters-panel" style={{ marginTop: 0, marginBottom: spacing[6], marginLeft: 'auto', marginRight: 'auto' }} role="region" aria-label={t('filters')}>
+          <section className="filters-panel" style={{ marginTop: 0, marginLeft: 'auto', marginRight: 'auto' }} role="region" aria-label={t('filters')}>
             {/* Mobile: botón Filtros que abre panel desplegable */}
             {isMobile && (
               <div className="filters-mobile-trigger-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
@@ -3985,7 +3977,7 @@ export default function ExploreHomeScreen() {
               ) : (
                 <>
                   {filteredFechas.length > 0 ? (
-                    <HorizontalSlider
+                    <HorizontalCarousel
                       {...sliderProps}
                       items={filteredFechas}
                       renderItem={(fechaEvento: any, idx: number) => {
@@ -4086,7 +4078,7 @@ export default function ExploreHomeScreen() {
 
                 return (
                   <>
-                    <HorizontalSlider
+                    <HorizontalCarousel
                       {...sliderProps}
                       items={classesListWithCTA}
                       renderItem={renderClaseItem}
@@ -4161,7 +4153,7 @@ export default function ExploreHomeScreen() {
                   {maestrosData.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
                   ) : (
-                  <HorizontalSlider
+                  <HorizontalCarousel
                     {...maestrosSliderProps}
                     items={maestrosDataWithCTA}
                     renderItem={(item: any, idx: number) => {
@@ -4249,7 +4241,7 @@ export default function ExploreHomeScreen() {
                 <>
                   {validUsuarios.length > 0 ? (
                     <>
-                      <HorizontalSlider
+                      <HorizontalCarousel
                         {...sliderProps}
                         items={validUsuarios}
                         renderItem={(u: any, idx: number) => {
@@ -4357,7 +4349,7 @@ export default function ExploreHomeScreen() {
                 />
               ) : organizadoresData.length > 0 ? (
                 <>
-                  <HorizontalSlider
+                  <HorizontalCarousel
                     {...sliderProps}
                     items={organizadoresDataWithCTA}
                     renderItem={(item: any, idx: number) => {
@@ -4447,7 +4439,7 @@ export default function ExploreHomeScreen() {
                   {marcasData.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
                   ) : (
-                    <HorizontalSlider
+                    <HorizontalCarousel
                       {...sliderProps}
                       items={marcasDataWithCTA}
                       renderItem={(item: any, idx: number) => {
