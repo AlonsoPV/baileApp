@@ -33,6 +33,10 @@ type Props<T = any> = {
   disableDesktopScroll?: boolean;
   /** Si false, no se muestran los botones Anterior/Siguiente (por defecto true) */
   showNavButtons?: boolean;
+  /** Alto fijo de cada item en mobile (hero cards). Si > 0, los items tendrán esta altura. */
+  itemHeight?: number;
+  /** Ancho fijo de cada item en mobile (hero cards). Si > 0, se usa como gridAutoColumns. */
+  itemWidth?: number;
 };
 
 export default function HorizontalSlider<T>({
@@ -45,6 +49,8 @@ export default function HorizontalSlider<T>({
   autoColumns,
   disableDesktopScroll = false,
   showNavButtons = true,
+  itemHeight,
+  itemWidth,
 }: Props<T>) {
   const viewportRef = useRef<HTMLDivElement>(null);
   // Cache geometry to avoid forced reflow in hot paths (wheel/drag).
@@ -374,31 +380,76 @@ export default function HorizontalSlider<T>({
           WebkitBackfaceVisibility: "hidden"
         }}
       >
-        {/* Oculta scrollbar nativo en webkit */}
         <style>{`
           .horizontal-scroll::-webkit-scrollbar { display: none; }
-
-          /* Snap strongly on mobile for a consistent "slide" gesture */
           @media (max-width: 768px) {
-            .horizontal-scroll {
-              scroll-snap-type: x mandatory;
+            .horizontal-scroll { scroll-snap-type: x mandatory; }
+          }
+          .horizontal-scroll > * { touch-action: auto; }
+          @media (max-width: 768px) {
+            .horizontal-slider-grid:not(.horizontal-slider-grid--hero) {
+              grid-auto-columns: calc(100vw - 120px) !important;
             }
           }
-
-          /* Fix Android: permitir que el scroll vertical se propague desde las cards */
-          .horizontal-scroll > * {
-            /* Asegurar que las cards no bloqueen el scroll vertical */
-            touch-action: auto;
+          @media (max-width: 480px) {
+            .horizontal-slider-grid:not(.horizontal-slider-grid--hero) {
+              grid-auto-columns: calc(100vw - 100px) !important;
+            }
           }
+          .horizontal-slider-grid > * {
+            contain: layout style paint;
+            transform: translateZ(0);
+            will-change: auto;
+            scroll-snap-align: center;
+            padding: 12px 0;
+          }
+          .horizontal-slider-grid--hero > * {
+            height: 100%;
+            min-height: 0;
+            padding: 12px 0;
+            margin: 2px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .horizontal-slider-grid--hero > * > * {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            align-self: stretch;
+          }
+          /* Contenido de cards (EventCard, ClassCard, etc.) debe llenar todo el espacio en hero */
+          .horizontal-slider-grid--hero .event-card-mobile,
+          .horizontal-slider-grid--hero .card,
+          .horizontal-slider-grid--hero .explore-card,
+          .horizontal-slider-grid--hero .explore-card-mobile,
+          .horizontal-slider-grid--hero .class-card,
+          .horizontal-slider-grid--hero .class-card-mobile,
+          .horizontal-slider-grid--hero .social-card-mobile {
+            height: 100% !important;
+            max-height: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .horizontal-slider-grid--hero .media,
+          .horizontal-slider-grid--hero .explore-card-media,
+          .horizontal-slider-grid--hero .class-card-media {
+            flex: 1 !important;
+            min-height: 0 !important;
+            aspect-ratio: auto !important;
+          }
+          .horizontal-scroll.scrolling .horizontal-slider-grid > * { transition: none !important; }
         `}</style>
-
         <div
-          className="horizontal-slider-grid"
+          className={`horizontal-slider-grid ${itemWidth && itemWidth > 0 ? 'horizontal-slider-grid--hero' : ''}`}
           style={{
             display: "grid",
             gridAutoFlow: "column",
-            // Fijar ancho de card para que no se estiren cuando hay <= 3
-            ...(autoColumns === undefined
+            gridAutoRows: itemHeight && itemHeight > 0 ? `minmax(${itemHeight}px, 1fr)` : undefined,
+            // Fijar ancho de card: itemWidth (hero) > autoColumns > default
+            ...(itemWidth && itemWidth > 0
+              ? { gridAutoColumns: `${itemWidth}px` }
+              : autoColumns === undefined
               ? { gridAutoColumns: "280px" }
               : autoColumns === null
               ? {}
@@ -413,34 +464,6 @@ export default function HorizontalSlider<T>({
             WebkitPerspective: "1000px"
           }}
         >
-          <style>{`
-            /* Mobile: 1 tarjeta completa por sección */
-            @media (max-width: 768px) {
-              .horizontal-slider-grid {
-                grid-auto-columns: calc(100vw - 120px) !important;
-              }
-            }
-            
-            @media (max-width: 480px) {
-              .horizontal-slider-grid {
-                grid-auto-columns: calc(100vw - 100px) !important;
-              }
-            }
-            
-            /* Optimizaciones de rendimiento para cards durante scroll */
-            .horizontal-slider-grid > * {
-              contain: layout style paint;
-              transform: translateZ(0);
-              will-change: auto;
-              scroll-snap-align: center;
-              padding: 12px 0;
-            }
-            
-            /* Reducir animaciones durante scroll activo */
-            .horizontal-scroll.scrolling .horizontal-slider-grid > * {
-              transition: none !important;
-            }
-          `}</style>
           {items?.map((it, idx) => renderItem(it, idx))}
         </div>
       </div>

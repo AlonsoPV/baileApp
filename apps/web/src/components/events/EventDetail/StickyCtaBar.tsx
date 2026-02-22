@@ -8,16 +8,19 @@ export interface StickyCtaBarProps {
   userStatus: RSVPStatus | null;
   onStatusChange: (s: RSVPStatus | null) => void;
   isUpdating: boolean;
+  /** No mostrado en la UI (métricas siguen en backend/otras secciones) */
   interestedCount?: number;
   onShare: () => void;
+  /** Botón icono-only para añadir al calendario (44x44, tooltip accesible) */
+  calendarButton?: React.ReactNode;
 }
 
 export function StickyCtaBar({
   userStatus,
   onStatusChange,
   isUpdating,
-  interestedCount,
   onShare,
+  calendarButton,
 }: StickyCtaBarProps) {
   return (
     <div className="eds-sticky-cta" role="complementary" aria-label="Acciones rápidas">
@@ -27,9 +30,14 @@ export function StickyCtaBar({
             currentStatus={userStatus}
             onStatusChange={onStatusChange}
             disabled={isUpdating}
-            interestedCount={interestedCount}
+            singleButton
             style={{ maxWidth: "none" }}
           />
+          {calendarButton && (
+            <div className="eds-sticky-cta__calendar-wrap" title="Añadir al calendario">
+              {calendarButton}
+            </div>
+          )}
         </div>
       </RequireLogin>
       <button

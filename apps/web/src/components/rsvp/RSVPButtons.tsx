@@ -19,6 +19,8 @@ interface RSVPButtonsProps {
   className?: string;
   disabled?: boolean;
   interestedCount?: number;
+  /** Si true, solo muestra el botón "Me interesa" (oculta "Voy" y el contador) */
+  singleButton?: boolean;
 }
 
 const buttonBase = {
@@ -44,7 +46,8 @@ export default function RSVPButtons({
   style,
   className,
   disabled = false,
-  interestedCount
+  interestedCount,
+  singleButton = false,
 }: RSVPButtonsProps) {
   const { t } = useTranslation();
   const isInterested = currentStatus === 'interesado';
@@ -115,53 +118,55 @@ export default function RSVPButtons({
           )}
         </motion.button>
 
-        {/* Asistiré / RSVP */}
-        <motion.button
-          whileHover={!disabled ? { scale: 1.02, boxShadow: '0 8px 25px rgba(30, 136, 229, 0.4)' } : {}}
-          whileTap={!disabled ? { scale: 0.98 } : {}}
-          onClick={handleGoing}
-          disabled={disabled}
-          style={{
-            ...buttonBase,
-            background: isGoing
-              ? 'linear-gradient(135deg, #1E88E5, #42A5F5)'
-              : 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(66, 165, 245, 0.1))',
-            color: colors.light,
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            boxShadow: isGoing ? '0 8px 25px rgba(30, 136, 229, 0.4)' : '0 4px 15px rgba(0, 0, 0, 0.3)',
-            opacity: disabled ? 0.5 : 1,
-            border: isGoing ? '2px solid rgba(30, 136, 229, 0.5)' : '2px solid rgba(30, 136, 229, 0.2)',
-          }}
-        >
-          <span style={{ fontSize: '1.2rem', zIndex: 2 }}>{isGoing ? '✅' : '📅'}</span>
-          <span style={{ zIndex: 2 }}>{isGoing ? t('not_going') : t('going')}</span>
-          {isGoing && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              style={{
-                position: 'absolute',
-                top: '-5px',
-                right: '-5px',
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #1E88E5, #42A5F5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.8rem',
-                zIndex: 3,
-              }}
-            >
-              ✓
-            </motion.div>
-          )}
-        </motion.button>
+        {/* Asistiré / Voy - oculto cuando singleButton (solo "Me interesa" registra RSVP) */}
+        {!singleButton && (
+          <motion.button
+            whileHover={!disabled ? { scale: 1.02, boxShadow: '0 8px 25px rgba(30, 136, 229, 0.4)' } : {}}
+            whileTap={!disabled ? { scale: 0.98 } : {}}
+            onClick={handleGoing}
+            disabled={disabled}
+            style={{
+              ...buttonBase,
+              background: isGoing
+                ? 'linear-gradient(135deg, #1E88E5, #42A5F5)'
+                : 'linear-gradient(135deg, rgba(30, 136, 229, 0.2), rgba(66, 165, 245, 0.1))',
+              color: colors.light,
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              boxShadow: isGoing ? '0 8px 25px rgba(30, 136, 229, 0.4)' : '0 4px 15px rgba(0, 0, 0, 0.3)',
+              opacity: disabled ? 0.5 : 1,
+              border: isGoing ? '2px solid rgba(30, 136, 229, 0.5)' : '2px solid rgba(30, 136, 229, 0.2)',
+            }}
+          >
+            <span style={{ fontSize: '1.2rem', zIndex: 2 }}>{isGoing ? '✅' : '📅'}</span>
+            <span style={{ zIndex: 2 }}>{isGoing ? t('not_going') : t('going')}</span>
+            {isGoing && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                style={{
+                  position: 'absolute',
+                  top: '-5px',
+                  right: '-5px',
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1E88E5, #42A5F5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.8rem',
+                  zIndex: 3,
+                }}
+              >
+                ✓
+              </motion.div>
+            )}
+          </motion.button>
+        )}
       </div>
 
-      {/* Contador de interesados + asistentes */}
-      {typeof interestedCount === 'number' && interestedCount >= 0 && (
+      {/* Contador de interesados - oculto en sticky bar (singleButton) */}
+      {!singleButton && typeof interestedCount === 'number' && interestedCount >= 0 && (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div
             aria-live="polite"

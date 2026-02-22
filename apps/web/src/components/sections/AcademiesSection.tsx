@@ -13,12 +13,14 @@ interface AcademiesSectionProps {
   enabled?: boolean;
   renderAs?: 'grid' | 'slider';
   maxItems?: number;
+  itemHeight?: number;
+  itemWidth?: number;
 }
 
 /**
  * Componente wrapper para sección de academias con loading inteligente
  */
-function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems }: AcademiesSectionProps) {
+function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, itemHeight, itemWidth }: AcademiesSectionProps) {
   const academiasQuery = useExploreQuery({
     type: 'academias',
     q: q || undefined,
@@ -81,6 +83,8 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
             <AcademyCard item={item} priority={idx === 0} />
           </div>
         )}
+        itemHeight={itemHeight}
+        itemWidth={itemWidth}
       />
     </>
   );

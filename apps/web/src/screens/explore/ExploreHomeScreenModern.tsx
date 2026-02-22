@@ -82,6 +82,156 @@ function useStableArray<T>(arr: T[]): T[] {
   return React.useMemo(() => [...arr], [JSON.stringify(arr)]);
 }
 
+/** Hook para calcular dimensiones hero de cards en mobile (viewport-aware). */
+function useExploreCardDimensions(isMobile: boolean) {
+  const compute = React.useCallback(() => {
+    if (typeof window === 'undefined') return { width: 0, height: 0 };
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    if (!isMobile || vw >= 769) return { width: 0, height: 0 };
+
+    const topNavHeight = 72;
+    const filtersCollapsedHeight = 70;
+    const sectionHeaderHeight = 52;
+    const verticalPadding = 20;
+
+    const availableHeight =
+      vh - topNavHeight - filtersCollapsedHeight - sectionHeaderHeight - verticalPadding;
+
+    const cardHeight = Math.max(420, Math.min(620, availableHeight));
+    const containerWidth = vw - 24;
+    const cardWidth = Math.floor(containerWidth * 0.84);
+
+    return { width: cardWidth, height: cardHeight };
+  }, [isMobile]);
+
+  const [dimensions, setDimensions] = React.useState(compute);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setDimensions(compute());
+    const handler = () => setDimensions(compute());
+    window.addEventListener('resize', handler);
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', handler);
+      vv.addEventListener('scroll', handler);
+    }
+    return () => {
+      window.removeEventListener('resize', handler);
+      vv?.removeEventListener('resize', handler);
+      vv?.removeEventListener('scroll', handler);
+    };
+  }, [compute]);
+
+  return React.useMemo(
+    () => ({
+      cardHeight: dimensions.height,
+      cardWidth: dimensions.width,
+      sectionMinHeight: dimensions.height > 0 ? dimensions.height + 52 + 24 + 20 : undefined,
+    }),
+    [dimensions.height, dimensions.width]
+  );
+}
+
+/** Encabezado de sección reutilizable con título, contador, subline opcional y CTA Ver todo. */
+function SectionHeader({
+  title,
+  count,
+  subline,
+  toAll,
+  onViewAll,
+  seeAllLabel,
+}: {
+  title: string;
+  count?: number;
+  subline?: string;
+  toAll?: string;
+  onViewAll?: () => void;
+  seeAllLabel?: string;
+}) {
+  const { t } = useTranslation();
+  const label = seeAllLabel ?? t('see_all');
+
+  return (
+    <div
+      className="section-header section-header--hero"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        paddingTop: 6,
+        paddingBottom: 10,
+        marginBottom: 12,
+        borderBottom: '2px solid transparent',
+        borderImage: 'linear-gradient(90deg, rgba(255,157,28,0.5), rgba(168,85,247,0.3), transparent) 1',
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <h2
+            className="section-title section-title--hero"
+            style={{
+              margin: 0,
+              fontSize: 'clamp(1.1rem, 4.5vw, 1.25rem)',
+              fontWeight: 800,
+              color: '#fff',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.25,
+            }}
+          >
+            {title}
+          </h2>
+          {typeof count === 'number' && (
+            <span
+              style={{
+                height: 26,
+                padding: '0 10px',
+                borderRadius: 999,
+                fontSize: 0.8125,
+                fontWeight: 700,
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: 'rgba(255,255,255,0.9)',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              {count}
+            </span>
+          )}
+        </div>
+        {subline && (
+          <span style={{ fontSize: 0.8, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{subline}</span>
+        )}
+      </div>
+      {(toAll || onViewAll) && (
+        <Link
+          to={toAll || '#'}
+          onClick={onViewAll ? (e) => { e.preventDefault(); onViewAll(); } : undefined}
+          className="section-header-link"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 0.875,
+            fontWeight: 600,
+            color: 'rgba(255,157,28,0.95)',
+            textDecoration: 'none',
+            padding: '6px 10px',
+            borderRadius: 8,
+          }}
+        >
+          {label}
+          <span aria-hidden>→</span>
+        </Link>
+      )}
+    </div>
+  );
+}
+
 function useLoadMoreOnDemand(query: InfiniteQueryLike<any, unknown> | null) {
   const handleLoadMore = React.useCallback(() => {
     if (query?.hasNextPage && !query.isFetchingNextPage) {
@@ -2118,7 +2268,23 @@ function FiltersLayout({
   );
 }
 
-function Section({ title, toAll, children, count, sectionId }: { title: string; toAll: string; children: React.ReactNode; count?: number; sectionId?: string }) {
+function Section({
+  title,
+  toAll,
+  children,
+  count,
+  sectionId,
+  subline,
+  sectionMinHeight,
+}: {
+  title: string;
+  toAll: string;
+  children: React.ReactNode;
+  count?: number;
+  sectionId?: string;
+  subline?: string;
+  sectionMinHeight?: number;
+}) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -2129,40 +2295,16 @@ function Section({ title, toAll, children, count, sectionId }: { title: string; 
       style={{
         marginBottom: '4rem',
         position: 'relative',
-        scrollMarginTop: '100px'
+        scrollMarginTop: '100px',
+        ...(sectionMinHeight ? { minHeight: sectionMinHeight } : {}),
       }}
     >
-      <div
-        className="section-header"
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 12,
-          marginBottom: 16,
-          paddingTop: 8,
-          paddingBottom: 8,
-        }}
-      >
-        <h2
-          className="section-title"
-          style={{
-            margin: 0,
-            fontSize: '1.25rem',
-            fontWeight: 800,
-            color: '#fff',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.3,
-          }}
-        >
-          {title}
-          {typeof count === 'number' && (
-            <span style={{ marginLeft: 8, opacity: 0.7, fontWeight: 600, fontSize: '0.95rem' }}>
-              ({count})
-            </span>
-          )}
-        </h2>
-      </div>
+      <SectionHeader
+        title={title}
+        count={count}
+        subline={subline}
+        toAll={toAll || undefined}
+      />
       {children}
     </motion.section>
   );
@@ -2303,6 +2445,8 @@ export default function ExploreHomeScreen() {
     [preferences]
   );
 
+  const { cardHeight, cardWidth, sectionMinHeight } = useExploreCardDimensions(isMobile);
+
   const sliderProps = React.useMemo(
     () => ({
       className: isMobile ? 'explore-slider explore-slider--mobile' : 'explore-slider',
@@ -2312,8 +2456,10 @@ export default function ExploreHomeScreen() {
       disableDesktopScroll: true,
       // Botones Anterior/Siguiente visibles en escritorio; en móvil los oculta el CSS del HorizontalSlider
       showNavButtons: !isMobile,
+      itemHeight: cardHeight > 0 ? cardHeight : undefined,
+      itemWidth: cardWidth > 0 ? cardWidth : undefined,
     }),
-    [isMobile]
+    [isMobile, cardHeight, cardWidth]
   );
 
   // ✅ Opción A (RECOMENDADA): autoColumns explícito SOLO para maestros en mobile
@@ -2323,13 +2469,15 @@ export default function ExploreHomeScreen() {
       // Ajusta el valor según lo que acepte tu HorizontalSlider:
       // - si acepta string CSS: '80%' / 'min(320px, 85vw)'
       // - si acepta número: 280 / 320
-      autoColumns: isMobile ? '80%' : undefined,
+      autoColumns: isMobile && cardWidth <= 0 ? '80%' : undefined,
       // En escritorio, deshabilitar scroll dentro del carrusel (evita que se “trabe” la interacción/scroll de la página)
       disableDesktopScroll: true,
       // Botones Anterior/Siguiente visibles en escritorio
       showNavButtons: !isMobile,
+      itemHeight: cardHeight > 0 ? cardHeight : undefined,
+      itemWidth: cardWidth > 0 ? cardWidth : undefined,
     }),
-    [isMobile]
+    [isMobile, cardHeight, cardWidth]
   );
 
   React.useEffect(() => {
@@ -3819,7 +3967,7 @@ export default function ExploreHomeScreen() {
           </section>
 
           {(((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
-            <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length} sectionId="fechas">
+            <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length} sectionId="fechas" sectionMinHeight={sectionMinHeight}>
               {fechasTimedOut ? (
                 <InlineQueryError
                   title="La carga está tardando demasiado"
@@ -3916,7 +4064,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && ((academiasLoading || maestrosLoading) || hasClases || academiasError || maestrosError)) || selectedType === 'clases')) && (
-            <Section title={t('section_recommended_classes')} toAll="/explore/list?type=clases" count={classesList.length} sectionId="clases">
+            <Section title={t('section_recommended_classes')} toAll="/explore/list?type=clases" count={classesList.length} sectionId="clases" sectionMinHeight={sectionMinHeight}>
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>;
@@ -3962,12 +4110,14 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (academiasLoading || hasAcademias)) || selectedType === 'academias')) && (
-            <Section title={t('section_best_academies_zone')} toAll="/explore/list?type=academias" count={academiasData.length} sectionId="academias">
+            <Section title={t('section_best_academies_zone')} toAll="/explore/list?type=academias" count={academiasData.length} sectionId="academias" sectionMinHeight={sectionMinHeight}>
               <AcademiesSection
                 filters={filters}
                 q={qDeferred || undefined}
                 enabled={showAll || selectedType === 'academias'}
                 maxItems={12}
+                itemHeight={cardHeight > 0 ? cardHeight : undefined}
+                itemWidth={cardWidth > 0 ? cardWidth : undefined}
               />
               {!academiasLoading && academiasData.length === 0 && (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
@@ -3997,7 +4147,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (maestrosLoading || hasMaestros || maestrosError)) || selectedType === 'maestros')) && (
-            <Section title={t('section_featured_teachers')} toAll="/explore/list?type=maestros" count={maestrosData.length} sectionId="maestros">
+            <Section title={t('section_featured_teachers')} toAll="/explore/list?type=maestros" count={maestrosData.length} sectionId="maestros" sectionMinHeight={sectionMinHeight}>
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : maestrosError ? (
@@ -4092,7 +4242,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (usuariosLoading || hasUsuarios)) || selectedType === 'usuarios')) && (
-            <Section title={t('section_dancers_near_you')} toAll="/explore/list?type=usuarios" count={validUsuarios.length} sectionId="usuarios">
+            <Section title={t('section_dancers_near_you')} toAll="/explore/list?type=usuarios" count={validUsuarios.length} sectionId="usuarios" sectionMinHeight={sectionMinHeight}>
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -4190,7 +4340,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (organizadoresLoading || organizadoresData.length > 0 || organizadoresError)) || selectedType === 'organizadores')) && (
-            <Section title={t('section_event_producers')} toAll="/explore/list?type=organizadores" count={organizadoresData.length} sectionId="organizadores">
+            <Section title={t('section_event_producers')} toAll="/explore/list?type=organizadores" count={organizadoresData.length} sectionId="organizadores" sectionMinHeight={sectionMinHeight}>
               {organizadoresLoading ? (
                 <div className="cards-grid">
                   {[...Array(6)].map((_, i) => (
@@ -4289,7 +4439,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (marcasLoading || hasMarcas)) || selectedType === 'marcas')) && (
-            <Section title={t('section_specialized_brands')} toAll="/explore/list?type=marcas" count={marcasData.length} sectionId="marcas">
+            <Section title={t('section_specialized_brands')} toAll="/explore/list?type=marcas" count={marcasData.length} sectionId="marcas" sectionMinHeight={sectionMinHeight}>
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (

@@ -6,6 +6,8 @@ import { useEventParent } from "../../hooks/useEventParent";
 import { useTags } from "../../hooks/useTags";
 import { useEventRSVP } from "../../hooks/useRSVP";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
+import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
   EventHero,
@@ -189,7 +191,56 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   //   
   //   return count;
   // }, [stats]);
-  const interestedCount = undefined; // Contador comentado
+  // Calcular start/end para calendario (fecha específica o dia_semana recurrente)
+  const { calendarStart, calendarEnd } = React.useMemo(() => {
+    try {
+      const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+      const horaFin = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+      let start: Date;
+      let end: Date;
+      const diaSemana = (date as any).dia_semana;
+      if (diaSemana !== null && diaSemana !== undefined && typeof diaSemana === 'number') {
+        start = calculateNextDateWithTime(diaSemana, horaInicio);
+        const [h, m] = horaFin.split(':').map(Number);
+        end = new Date(start);
+        end.setHours(h ?? 23, m ?? 0, 0, 0);
+      } else {
+        const fechaStr = (date.fecha || (date as any).fecha_inicio || '').toString();
+        const fechaOnly = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;
+        if (!fechaOnly) {
+          start = new Date();
+          end = new Date();
+          end.setHours(end.getHours() + 2);
+          return { calendarStart: start, calendarEnd: end };
+        }
+        const parsedStart = new Date(`${fechaOnly}T${horaInicio}:00`);
+        const parsedEnd = new Date(`${fechaOnly}T${horaFin}:00`);
+        start = isNaN(parsedStart.getTime()) ? new Date() : parsedStart;
+        end = isNaN(parsedEnd.getTime()) || parsedEnd.getTime() <= start.getTime()
+          ? (() => { const d = new Date(start); d.setHours(d.getHours() + 2); return d; })()
+          : parsedEnd;
+      }
+      return { calendarStart: start, calendarEnd: end };
+    } catch {
+      const s = new Date();
+      const e = new Date(s);
+      e.setHours(e.getHours() + 2);
+      return { calendarStart: s, calendarEnd: e };
+    }
+  }, [date.fecha, date.hora_inicio, date.hora_fin, (date as any).dia_semana, (date as any).fecha_inicio]);
+
+  const dateName = date.nombre || parent?.nombre || 'Fecha de baile';
+  const calendarButton = (
+    <AddToCalendarWithStats
+      eventId={dateId}
+      title={dateName}
+      description={date.biografia || parent?.descripcion}
+      location={date.lugar || date.ciudad}
+      start={calendarStart}
+      end={calendarEnd}
+      showAsIcon
+    />
+  );
 
   const toUrl = (u: string | null | undefined) =>
     u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined;
@@ -268,7 +319,6 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
   };
 
-  const dateName = date.nombre || parent?.nombre || 'Fecha de baile';
   const formattedDate = formatDate(date.fecha || (date as any).fecha_inicio || '');
   const locationName = date.lugar || date.ciudad || (parent as any)?.ciudad || getZonaName((date.zonas || [])[0]) || 'México';
   const hasLocation = !!(date.lugar || date.direccion || date.ciudad);
@@ -354,8 +404,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           userStatus={userStatus}
           onStatusChange={setStatus}
           isUpdating={isUpdating}
-          interestedCount={stats?.total}
           onShare={handleShare}
+          calendarButton={calendarButton}
         />
         <div className="eds-content">
           <InfoGrid
