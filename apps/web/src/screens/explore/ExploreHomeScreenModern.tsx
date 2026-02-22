@@ -1462,6 +1462,55 @@ const STYLES = `
     }
   }
   @media (max-width: 768px) {
+    /* Panel de filtros compacto (sheet con height: auto) */
+    .filtersPanel-mobile {
+      flex: none !important;
+    }
+    .filtersPanel__row--header {
+      min-height: 36px !important;
+      padding: 6px 10px !important;
+    }
+    .filtersPanel-mobile .filters-card {
+      padding: 8px 0 0 !important;
+    }
+    .filtersPanel-mobile .filters-card__row--top {
+      grid-template-columns: 1fr 1fr !important;
+    }
+    .filtersPanel-mobile .filters-card__row--top:not(.filters-card__row--top-with-dates) {
+      grid-template-columns: 1fr !important;
+    }
+    .filtersPanel-mobile .filters-card__row--mid {
+      grid-template-columns: 1fr 1fr 44px !important;
+      margin-bottom: 0 !important;
+    }
+    .filtersPanel-mobile .filters-card__row--top,
+    .filtersPanel-mobile .filters-card__row--mid {
+      gap: 6px !important;
+    }
+    .filtersPanel-mobile .filter-pill,
+    .filtersPanel-mobile .filters-card__row--top .filter-pill,
+    .filtersPanel-mobile .filters-card__row--dates-wrap .filter-pill,
+    .filtersPanel-mobile .filters-card__row--mid .filter-pill {
+      min-height: 44px !important;
+      max-height: 48px !important;
+      padding: 8px 10px !important;
+      font-size: 13px !important;
+    }
+    .filtersPanel-mobile .filters-search-toggle {
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+    }
+    .filtersPanel-mobile .filters-card__row--search {
+      margin-top: 6px !important;
+    }
+    .filtersPanel-mobile .filters-card__row--search.filters-card__row--search-open {
+      max-height: 56px !important;
+    }
+    .filtersPanel-mobile .filters-fav {
+      margin-bottom: 6px !important;
+    }
     .filters-panel {
       max-width: 100% !important;
       padding: 10px 12px 12px !important;
@@ -1966,6 +2015,8 @@ function FiltersLayout({
   children,
   overlayStyle,
   onClickOverlay,
+  onClearFilters,
+  activeFiltersCount = 0,
 }: {
   isMobile: boolean;
   onClose: () => void;
@@ -1974,8 +2025,11 @@ function FiltersLayout({
   children: React.ReactNode;
   overlayStyle?: React.CSSProperties;
   onClickOverlay?: (e: React.MouseEvent) => void;
+  onClearFilters?: () => void;
+  activeFiltersCount?: number;
 }) {
   if (!isMobile) return <>{children}</>;
+  const topOffset = 'max(env(safe-area-inset-top), 16px)';
   return (
     <div
       style={{
@@ -1986,47 +2040,79 @@ function FiltersLayout({
         backdropFilter: 'blur(8px)',
         display: 'flex',
         flexDirection: 'column',
-        padding: 'max(env(safe-area-inset-top), 12px) 12px max(env(safe-area-inset-bottom), 12px)',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+        padding: `${topOffset} 12px 12px`,
         overflow: 'hidden',
         ...overlayStyle,
       }}
       onClick={onClickOverlay}
     >
       <div
+        className="filtersPanel-mobile"
         style={{
-          flex: 1,
-          minHeight: 0,
+          width: '100%',
+          height: 'auto',
+          maxHeight: `calc(100vh - ${topOffset} - 24px)`,
           display: 'flex',
           flexDirection: 'column',
           background: 'linear-gradient(180deg, #1c1f28 0%, #14171e 100%)',
-          borderRadius: 20,
+          borderRadius: 18,
           border: '1px solid rgba(255,255,255,.12)',
           boxShadow: '0 16px 48px rgba(0,0,0,.5)',
           overflow: 'hidden',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottom: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#fff' }}>{title}</h2>
+        <div className="filtersPanel__row--header" style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: 4, padding: '6px 10px', borderBottom: '1px solid rgba(255,255,255,0.1)', flexShrink: 0, minHeight: 36 }}>
+          <span style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>{title}</span>
+          {onClearFilters && (
+            <button
+              type="button"
+              onClick={onClearFilters}
+              disabled={activeFiltersCount === 0}
+              aria-label="Limpiar filtros"
+              style={{
+                height: 36,
+                padding: '0 8px',
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.15)',
+                background: activeFiltersCount > 0 ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
+                color: '#fff',
+                fontSize: 14,
+                cursor: activeFiltersCount > 0 ? 'pointer' : 'default',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <span aria-hidden style={{ opacity: activeFiltersCount > 0 ? 1 : 0.5 }}>↩</span>
+              <span style={{ minWidth: 16, height: 16, padding: '0 4px', fontSize: 11, fontWeight: 700, background: activeFiltersCount > 0 ? 'rgba(255,106,26,0.9)' : 'rgba(255,255,255,0.3)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{activeFiltersCount}</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}
             aria-label={closeLabel ?? title}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
+              width: 36,
+              height: 36,
+              padding: 0,
+              borderRadius: 10,
               border: '1px solid rgba(255,255,255,0.15)',
               background: 'rgba(255,255,255,0.08)',
               color: '#fff',
-              fontSize: 18,
+              fontSize: 16,
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             ✕
           </button>
         </div>
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 16 }}>{children}</div>
+        <div style={{ padding: 12, overflowY: 'auto', flex: '0 1 auto', minHeight: 0 }}>{children}</div>
       </div>
     </div>
   );
@@ -3437,6 +3523,22 @@ export default function ExploreHomeScreen() {
                 title={t('filters') || 'Filtros'}
                 closeLabel={t('close') || 'Cerrar'}
                 onClickOverlay={(e) => e.target === e.currentTarget && setFiltersPanelOpen(false)}
+                onClearFilters={() => {
+                  handleFilterChange({
+                    ...filters,
+                    type: 'all',
+                    q: '',
+                    ritmos: [],
+                    zonas: [],
+                    datePreset: 'todos',
+                    dateFrom: undefined,
+                    dateTo: undefined
+                  });
+                  setUsingFavoriteFilters(false);
+                  setOpenFilterDropdown(null);
+                  setSearchOpen(false);
+                }}
+                activeFiltersCount={activeFiltersCount}
               >
             {usingFavoriteFilters && user && (
               <motion.div
@@ -3478,7 +3580,7 @@ export default function ExploreHomeScreen() {
             <div className="filters-card">
               {/* Fila 1: Tipo + Fechas (si aplica) + Filtros activos — misma cuadrícula que fila 2 para alinear anchos */}
               <div
-                className={`filters-card__row filters-card__row--top ${showDatesDropdown ? 'filters-card__row--top-with-dates' : ''} ${activeFiltersCount > 0 ? 'filters-card__row--top-with-actions' : ''}`}
+                className={`filters-card__row filters-card__row--top ${showDatesDropdown ? 'filters-card__row--top-with-dates' : ''}`}
                 role="toolbar"
                 aria-label={t("filter_type_aria")}
               >
@@ -3523,31 +3625,6 @@ export default function ExploreHomeScreen() {
                       <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
                     </button>
                   </div>
-                )}
-                {activeFiltersCount > 0 && (
-                  <button
-                    type="button"
-                    className="filters-clear filters-card__top-action"
-                    onClick={() => {
-                      handleFilterChange({
-                        ...filters,
-                        type: 'all',
-                        q: '',
-                        ritmos: [],
-                        zonas: [],
-                        datePreset: 'todos',
-                        dateFrom: undefined,
-                        dateTo: undefined
-                      });
-                      setUsingFavoriteFilters(false);
-                      setOpenFilterDropdown(null);
-                      setSearchOpen(false);
-                    }}
-                    aria-label={t('clear_all_filters')}
-                  >
-                    <span className="filters-badge" aria-hidden="true">{activeFiltersCount}</span>
-                    <span>{t('filters') || 'Filtros'}</span>
-                  </button>
                 )}
               </div>
 
