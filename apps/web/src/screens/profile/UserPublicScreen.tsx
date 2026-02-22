@@ -9,17 +9,16 @@ import { PHOTO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
 import { colors } from "../../theme/colors";
-import RitmosChips from "../../components/RitmosChips";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
-import { BioSection } from "../../components/profile/BioSection";
+import { UserProfileHero } from "../../components/profile/UserProfileHero";
 import { useFollowStatus } from "../../hooks/useFollowStatus";
 import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
-import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import { useTranslation } from "react-i18next";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
-import { isEventDateExpired } from "../../utils/eventDateExpiration";
+import { isEventUpcomingOrToday, getEventPrimaryDate } from "../../utils/eventDateExpiration";
+import { Modal } from "../../components/ui/Modal";
 
 /** Normaliza media: si viene como string JSON desde la API, lo parsea a array. */
 function normalizeMediaArray(raw: unknown): unknown[] {
@@ -201,7 +200,239 @@ const STYLES = `
   .community-scroll::-webkit-scrollbar-thumb:hover {
     background: rgba(255,255,255,.35);
   }
-  
+
+  /* Community section - redesigned */
+  .community-card-container {
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: rgba(0,0,0,0.3) 0 8px 32px;
+    backdrop-filter: blur(10px);
+    padding: 1rem 1rem 1.25rem;
+  }
+  .community-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .community-header-title { font-size: 1.25rem; font-weight: 700; color: white; margin: 0; }
+  .community-header-subtitle { font-size: 0.8125rem; color: rgba(255,255,255,0.65); margin: 0.25rem 0 0 0; }
+  .community-counter {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .community-counter-chip {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.95);
+    display: inline-flex;
+    align-items: center;
+  }
+  .community-segmented-tabs {
+    display: flex;
+    background: rgba(0,0,0,0.25);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 1rem;
+  }
+  .community-segmented-tab {
+    flex: 1;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .community-segmented-tab:focus-visible { outline: 2px solid rgba(255,157,28,0.6); outline-offset: 2px; }
+  .community-segmented-tab:hover { color: white; }
+  .community-segmented-tab.active {
+    color: white;
+    background: linear-gradient(135deg, rgba(255,157,28,0.35) 0%, rgba(255,99,56,0.2) 100%);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+  }
+  .community-avatar-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .community-avatar-item {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 0 12px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.1);
+  }
+  .community-avatar-item img { width: 100%; height: 100%; object-fit: cover; }
+  .community-avatar-item.overflow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+  }
+  .community-user-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 52px;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .community-user-row:last-child { border-bottom: none; }
+  .community-user-row:hover { background: rgba(255,255,255,0.04); }
+  .community-user-row .avatar-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .community-user-row .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .community-user-row .user-info { flex: 1; min-width: 0; }
+  .community-user-row .display-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .community-relation-badges { display: flex; gap: 0.375rem; flex-shrink: 0; }
+  .relation-badge {
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .relation-badge.te-sigue {
+    background: rgba(6,182,212,0.2);
+    border: 1px solid rgba(6,182,212,0.5);
+    color: #22d3ee;
+  }
+  .relation-badge.sigues {
+    background: rgba(168,85,247,0.2);
+    border: 1px solid rgba(168,85,247,0.5);
+    color: #c084fc;
+  }
+  .community-ver-todos {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  .community-ver-todos-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: rgba(255,157,28,0.95);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+  }
+  .community-ver-todos-btn:hover { color: #FF9F1C; background: rgba(255,157,28,0.1); }
+  .community-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.9375rem;
+  }
+  .community-empty p { margin: 0 0 1rem; }
+
+  /* Media info cards - Dato curioso / Qué me gusta bailar */
+  .media-info-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .media-info-card {
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    min-height: 180px;
+    background: rgba(255,255,255,0.04);
+  }
+  .media-info-card-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+  }
+  .media-info-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 40%, transparent 100%);
+  }
+  .media-info-card-content {
+    position: relative;
+    z-index: 1;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 100%;
+  }
+  .media-info-card-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.25rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  .media-info-card-text {
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.9);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+  }
+  .media-info-card-more {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: rgba(255,157,28,0.95);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+  }
+  .media-info-card-more:hover { text-decoration: underline; color: #FF9F1C; }
+  @media (max-width: 768px) {
+    .media-info-cards-grid { grid-template-columns: 1fr; gap: 12px; }
+  }
   @media (max-width: 1024px) {
     .events-grid {
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
@@ -667,11 +898,14 @@ export const UserProfileLive: React.FC = () => {
     }
   });
 
+  // Filter RSVP events to upcoming only (>= today). Exclude past events.
   const availableRsvpEvents = React.useMemo(() => {
-    const filtered = (rsvpEvents || []).filter((r: any) => !isEventDateExpired(r.events_date));
+    const filtered = (rsvpEvents || []).filter((r: any) =>
+      isEventUpcomingOrToday(r.events_date)
+    );
     return filtered.sort((a: any, b: any) => {
-      const fa = (a.events_date?.fecha || '') as string;
-      const fb = (b.events_date?.fecha || '') as string;
+      const fa = getEventPrimaryDate(a.events_date) || '';
+      const fb = getEventPrimaryDate(b.events_date) || '';
       return fa.localeCompare(fb);
     });
   }, [rsvpEvents]);
@@ -814,26 +1048,8 @@ export const UserProfileLive: React.FC = () => {
   const [networkTab, setNetworkTab] = useState<"following" | "followers">("followers");
   const networkList = networkTab === "following" ? following : followers;
   const networkIsEmpty = networkList.length === 0;
-
-  const communityCards: Array<{
-    id: "followers" | "following";
-    label: string;
-    value: number;
-    accent: string;
-  }> = [
-    {
-      id: "following",
-      label: t('following'),
-      value: counts.following ?? 0,
-      accent: "linear-gradient(120deg, rgba(94,234,212,0.65), rgba(59,130,246,0.65))",
-    },
-    {
-      id: "followers",
-      label: t('followers'),
-      value: counts.followers ?? 0,
-      accent: "linear-gradient(120deg, rgba(251,113,133,0.7), rgba(168,85,247,0.7))",
-    },
-  ];
+  const [showAllNetworkModal, setShowAllNetworkModal] = useState(false);
+  const [verMasModal, setVerMasModal] = useState<{ title: string; text: string } | null>(null);
 
   const goToProfile = useCallback((id?: string) => {
     if (id) navigate(`/u/${id}`);
@@ -981,320 +1197,28 @@ export const UserProfileLive: React.FC = () => {
         paddingTop: '0',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
-        <div
-          id="user-profile-banner"
-          data-baile-id="user-profile-banner"
-          data-test-id="user-profile-banner"
-          className="profile-banner glass-card-container"
-          style={{
-            position: 'relative',
-            margin: '0.5rem auto 0 auto',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Botón Volver a inicio */}
-          <motion.button
-            onClick={() => navigate('/explore')}
-            whileHover={{ scale: 1.1, x: -3 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label={t('back_to_start')}
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              left: '1rem',
-              zIndex: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              border: 'none',
-              background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))',
-              cursor: 'pointer',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        <div style={{ margin: '0.5rem auto 0 auto', maxWidth: 900 }}>
+          <UserProfileHero
+            user={profile}
+            avatarUrl={avatarUrl}
+            allTags={allTags}
+            ritmosSlugs={normalizeRitmosToSlugs(profile, allTags)}
+            isOwnProfile={isOwnProfile}
+            showFollowButton={showFollowButton}
+            followState={{
+              followers: counts.followers ?? 0,
+              following: counts.following ?? 0,
+              isFollowing,
+              loading: followLoading,
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.3), rgba(255,209,102,0.25))';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset';
-            }}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: '#f093fb' }}
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </motion.button>
-          <div
-            id="user-profile-banner-grid"
-            data-baile-id="user-profile-banner-grid"
-            data-test-id="user-profile-banner-grid"
-            className="banner-grid"
-          >
-            <div
-              id="user-profile-banner-avatar-container"
-              data-baile-id="user-profile-banner-avatar-container"
-              data-test-id="user-profile-banner-avatar-container"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '1rem'
-              }}
-            >
-              <div
-                id="user-profile-banner-avatar"
-                data-baile-id="user-profile-banner-avatar"
-                data-test-id="user-profile-banner-avatar"
-                className="banner-avatar"
-                style={{
-                  width: '250px',
-                  height: '250px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  border: '6px solid rgba(255, 255, 255, 0.9)',
-                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8)',
-                  background: colors.gradients.primary
-                }}
-              >
-                {avatarUrl && !avatarError ? (
-                  <ImageWithFallback
-                    src={avatarUrl}
-                    alt={t('avatar')}
-                    onError={() => setAvatarError(true)}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center top'
-                    }}
-                  />
-                ) : (
-                  <div className="banner-avatar-fallback" style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '6rem',
-                    fontWeight: '700',
-                    color: 'white'
-                  }}>
-                    {profile?.display_name?.[0]?.toUpperCase() || '?'}
-                  </div>
-                )}
-              </div>
-              
-              <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label={t('share_profile')}
-                  title={t('share')}
-                  onClick={handleShareProfile}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))',
-                    border: '1px solid rgba(255,255,255,0.25)',
-                    color: '#fff',
-                    borderRadius: 999,
-                    backdropFilter: 'blur(12px)',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.12))';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))';
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)';
-                  }}
-                >
-                  <span style={{ fontSize: '1rem' }}>📤</span>
-                  <span>{t('share')}</span>
-                </motion.button>
-                {copied && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8, y: -10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    role="status"
-                    aria-live="polite"
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      marginTop: '0.5rem',
-                      padding: '6px 12px',
-                      borderRadius: 12,
-                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.9))',
-                      color: '#fff',
-                      border: '1px solid rgba(255,255,255,0.3)',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
-                      zIndex: 11,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    <span>✓</span>
-                    <span>{t('copied')}</span>
-                  </motion.div>
-                )}
-              </div>
-            </div>
-
-            <div
-              id="user-profile-banner-info"
-              data-baile-id="user-profile-banner-info"
-              data-test-id="user-profile-banner-info"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.5rem',
-                justifyContent: 'center',
-                alignItems: 'center',
-                textAlign: 'center'
-              }}
-            >
-              <h1
-                id="user-profile-display-name"
-                data-baile-id="user-profile-display-name"
-                data-test-id="user-profile-display-name"
-                style={{
-                  fontSize: '3rem',
-                  fontWeight: '800',
-                  margin: 0,
-                  color: '#fff',
-                  lineHeight: '1.2',
-                  textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px'
-                }}
-              >
-                {profile?.display_name || t('user')}
-              </h1>
-
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.8rem'
-                }}
-              >
-                {[
-                  { label: 'Followers', value: counts.followers, icon: '★', hue: 'rgba(236,72,153,0.2)' },
-                  { label: 'Following', value: counts.following, icon: '➜', hue: 'rgba(59,130,246,0.2)' },
-                ].map((chip) => (
-                  <div
-                    key={chip.label}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.55rem',
-                      padding: '0.55rem 1.1rem',
-                      borderRadius: '18px',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      background: 'rgba(0,0,0,0.25)',
-                      color: '#fff',
-                      boxShadow: '0 12px 26px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <span style={{ fontSize: '1rem', opacity: 0.9 }}>{chip.icon}</span>
-                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-                      <span style={{ fontSize: '0.75rem', letterSpacing: 0.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' }}>
-                        {chip.label}
-                      </span>
-                      <span style={{ fontSize: '1.15rem', fontWeight: 800 }}>{chip.value}</span>
-                    </div>
-                    <span
-                      aria-hidden
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: `radial-gradient(circle at top right, ${chip.hue}, transparent 60%)`,
-                        opacity: 0.9,
-                        pointerEvents: 'none',
-                      }}
-                    />
-                  </div>
-                ))}
-                {showFollowButton && (
-                  <button
-                    onClick={handleToggleFollow}
-                    disabled={followLoading}
-                    style={{
-                      padding: '0.55rem 1.4rem',
-                      borderRadius: '999px',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                      background: isFollowing
-                        ? 'rgba(34, 197, 94, 0.25)'
-                        : 'linear-gradient(135deg, rgba(59,130,246,0.65), rgba(147,51,234,0.65))',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      fontWeight: 700,
-                      cursor: followLoading ? 'progress' : 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 8px 18px rgba(0,0,0,0.2)',
-                      opacity: followLoading ? 0.7 : 1
-                    }}
-                  >
-                    {isFollowing ? t('following') : t('follow')}
-                  </button>
-                )}
-              </div>
-
-              <div
-                id="user-profile-tags"
-                data-baile-id="user-profile-tags"
-                data-test-id="user-profile-tags"
-                style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
-              >
-                {(() => {
-                  const slugs = normalizeRitmosToSlugs(profile, allTags);
-                  return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
-                  ) : null;
-                })()}
-                <ZonaGroupedChips
-                  selectedIds={profile?.zonas}
-                  allTags={allTags}
-                  mode="display"
-                  icon="📍"
-                  size="compact"
-                />
-              </div>
-            </div>
-          </div>
+            onFollowToggle={handleToggleFollow}
+            onShare={handleShareProfile}
+            copied={copied}
+            onBack={() => navigate('/explore')}
+            showBackButton
+            avatarError={avatarError}
+            onAvatarError={() => setAvatarError(true)}
+          />
         </div>
 
         <div
@@ -1308,456 +1232,254 @@ export const UserProfileLive: React.FC = () => {
           }}
         >
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <BioSection 
-              bio={profile?.bio}
-              redes={profile?.redes_sociales || (profile?.respuestas as any)?.redes}
-            />
-          </motion.div>
-
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="glass-card-container"
-            style={{ 
-              textAlign: 'left', 
-              marginTop: '1.25rem',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-            }}
+            className="community-card-container"
+            style={{ marginTop: '1.25rem' }}
           >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.25rem',
-                marginBottom: '1.5rem'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-                <h3 className="section-title" style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>
-                  👥 Comunidad
-                </h3>
-                <div style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  padding: '0.4rem',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  {communityCards.map((card) => {
-                    const active = networkTab === card.id;
+            <div className="community-header">
+              <div>
+                <h3 className="community-header-title">Comunidad</h3>
+                <p className="community-header-subtitle">Seguidores y seguidos</p>
+              </div>
+              <div className="community-counter">
+                <span className="community-counter-chip">Seguidores {(counts.followers ?? 0).toLocaleString('es-MX')}</span>
+                <span className="community-counter-chip">Siguiendo {(counts.following ?? 0).toLocaleString('es-MX')}</span>
+              </div>
+            </div>
+
+            <div className="community-segmented-tabs">
+              <button
+                type="button"
+                className={`community-segmented-tab ${networkTab === 'followers' ? 'active' : ''}`}
+                onClick={() => setNetworkTab('followers')}
+              >
+                {t('followers')} ({(counts.followers ?? 0).toLocaleString('es-MX')})
+              </button>
+              <button
+                type="button"
+                className={`community-segmented-tab ${networkTab === 'following' ? 'active' : ''}`}
+                onClick={() => setNetworkTab('following')}
+              >
+                {t('following')} ({(counts.following ?? 0).toLocaleString('es-MX')})
+              </button>
+            </div>
+
+            {networkIsEmpty ? (
+              <div className="community-empty">
+                <p>{networkTab === 'following'
+                  ? t('no_following_yet', { name: profile?.display_name || t('this_user') })
+                  : t('no_followers_yet', { name: profile?.display_name || t('this_user') })}</p>
+                <button
+                  type="button"
+                  onClick={handleShareProfile}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: 8,
+                    background: 'rgba(255,157,28,0.2)',
+                    border: '1px solid rgba(255,157,28,0.4)',
+                    color: '#FF9F1C',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {t('share_profile')}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="community-avatar-row">
+                  {(networkList.slice(0, 7) as Array<{ id: string; display_name: string | null; avatar_url: string | null }>).map((person, idx) => {
+                    const isOverflow = idx === 6 && networkList.length > 7;
                     return (
                       <button
-                        key={card.id}
-                        onClick={() => setNetworkTab(card.id)}
-                        style={{
-                          border: 'none',
-                          borderRadius: '12px',
-                          padding: '0.6rem 1.2rem',
-                          background: active ? card.accent : 'transparent',
-                          color: '#fff',
-                          fontWeight: 700,
-                          fontSize: '0.875rem',
-                          letterSpacing: 0.2,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                          boxShadow: active
-                            ? '0 4px 12px rgba(68,55,155,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
-                            : 'none',
-                          transform: active ? 'scale(1.02)' : 'scale(1)',
-                          opacity: active ? 1 : 0.7,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem'
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!active) {
-                            e.currentTarget.style.opacity = '0.85';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!active) {
-                            e.currentTarget.style.opacity = '0.7';
-                          }
-                        }}
+                        key={person.id}
+                        type="button"
+                        className={`community-avatar-item ${isOverflow ? 'overflow' : ''}`}
+                        onClick={() => isOverflow ? setShowAllNetworkModal(true) : goToProfile(person.id)}
+                        title={person.display_name || undefined}
                       >
-                        <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', opacity: active ? 0.95 : 0.75 }}>
-                          {card.label}:
-                        </span>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>
-                          {card.value.toLocaleString('es-MX')}
-                        </span>
+                        {isOverflow ? `+${networkList.length - 7}` : (
+                          <ImageWithFallback
+                            src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
+                            alt={person.display_name || t('profile')}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        )}
                       </button>
                     );
                   })}
                 </div>
-              </div>
-            </div>
-
-            {networkIsEmpty ? (
-              <div
-                style={{
-                  padding: '2rem 1.5rem',
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))',
-                  borderRadius: '20px',
-                  border: '2px dashed rgba(255,255,255,0.2)',
-                  textAlign: 'center',
-                  color: 'rgba(255,255,255,0.8)'
-                }}
-              >
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem', opacity: 0.8 }}>
-                  {networkTab === 'following' ? '🔍' : '👋'}
-                </div>
-                <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6 }}>
-                  {networkTab === 'following'
-                    ? t('no_following_yet', { name: profile.display_name || t('this_user') })
-                    : t('no_followers_yet', { name: profile.display_name || t('this_user') })}
-                </p>
-              </div>
-            ) : (
-              <div style={{ position: 'relative' }}>
-                <div
-                  className="community-scroll"
-                  style={{
-                    display: 'flex',
-                    gap: '1rem',
-                    overflowX: 'auto',
-                    padding: '0.5rem 0.25rem 1rem 0.25rem',
-                    scrollSnapType: 'x mandatory',
-                    WebkitOverflowScrolling: 'touch',
-                    scrollbarWidth: 'thin'
-                  }}
-                >
-                  {networkList.map((person) => (
+                <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+                  {networkList.slice(0, 6).map((person) => (
                     <button
                       key={person.id}
+                      type="button"
+                      className="community-user-row"
                       onClick={() => goToProfile(person.id)}
-                      style={{
-                        position: 'relative',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem',
-                        padding: '1.25rem',
-                        minWidth: '240px',
-                        maxWidth: '240px',
-                        borderRadius: '20px',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        background: 'linear-gradient(135deg, rgba(30,30,40,0.98), rgba(20,20,30,0.95))',
-                        cursor: 'pointer',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
-                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                        scrollSnapAlign: 'start'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                        e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15)';
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)';
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-                      }}
                     >
-                      <span
-                        aria-hidden
-                        style={{
-                          position: 'absolute',
-                          inset: '-25% -35%',
-                          background: networkTab === 'followers'
-                            ? 'radial-gradient(circle, rgba(236,72,153,0.15), transparent 70%)'
-                            : 'radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%)',
-                          opacity: 0.6,
-                          pointerEvents: 'none',
-                          transition: 'opacity 0.3s ease'
-                        }}
-                      />
-                      <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div
-                          style={{
-                            position: 'relative',
-                            width: 64,
-                            height: 64,
-                            minWidth: 64,
-                            minHeight: 64,
-                            flexShrink: 0,
-                            borderRadius: '50%',
-                            padding: '3px',
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1))',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-                            boxSizing: 'border-box'
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              borderRadius: '50%',
-                              overflow: 'hidden',
-                              backgroundColor: 'rgba(0,0,0,0.3)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            <ImageWithFallback
-                              src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
-                              alt={person.display_name || t('profile')}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                objectPosition: 'center',
-                                display: 'block'
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div style={{ 
-                          textAlign: 'left', 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          gap: '0.4rem',
-                          flex: 1,
-                          minWidth: 0
-                        }}>
-                          <div style={{ 
-                            fontWeight: 800, 
-                            color: '#fff', 
-                            fontSize: '1.05rem',
-                            lineHeight: 1.2,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {person.display_name || t('dancer')}
-                          </div>
-                          <span
-                            style={{
-                              alignSelf: 'flex-start',
-                              padding: '0.25rem 0.7rem',
-                              borderRadius: 999,
-                              fontSize: '0.7rem',
-                              letterSpacing: 0.4,
-                              textTransform: 'uppercase',
-                              background: networkTab === 'followers'
-                                ? 'linear-gradient(135deg, rgba(236,72,153,0.25), rgba(168,85,247,0.25))'
-                                : 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(147,51,234,0.25))',
-                              border: '1px solid rgba(255,255,255,0.2)',
-                              color: 'rgba(255,255,255,0.95)',
-                              fontWeight: 600,
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                            }}
-                          >
-                            {networkTab === 'followers' ? t('follows_you') : t('you_follow')}
-                          </span>
-                        </div>
+                      <div className="avatar-wrap">
+                        <ImageWithFallback
+                          src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
+                          alt={person.display_name || t('profile')}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       </div>
-                      <div
-                        style={{
-                          position: 'relative',
-                          zIndex: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          paddingTop: '0.75rem',
-                          borderTop: '1px solid rgba(255,255,255,0.1)',
-                          marginTop: '0.25rem'
-                        }}
-                      >
-                        <span style={{ 
-                          color: 'rgba(255,255,255,0.85)', 
-                          fontSize: '0.85rem', 
-                          fontWeight: 600,
-                          letterSpacing: 0.2
-                        }}>
-                          {t('view_profile')}
-                        </span>
-                        <span style={{ 
-                          color: '#fff', 
-                          fontSize: '1.3rem', 
-                          fontWeight: 700,
-                          transition: 'transform 0.2s ease'
-                        }}>→</span>
+                      <div className="user-info">
+                        <div className="display-name">{person.display_name || t('dancer')}</div>
+                      </div>
+                      <div className="community-relation-badges">
+                        {networkTab === 'followers' && (
+                          <span className="relation-badge te-sigue">{t('follows_you')}</span>
+                        )}
+                        {networkTab === 'following' && (
+                          <span className="relation-badge sigues">{t('you_follow')}</span>
+                        )}
                       </div>
                     </button>
                   ))}
                 </div>
-                <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ 
-                    width: 32, 
-                    height: '100%', 
-                    background: 'linear-gradient(to right, rgba(18,18,18,0.95), rgba(18,18,18,0))',
-                    pointerEvents: 'none'
-                  }} />
-                  <div style={{ 
-                    width: 32, 
-                    height: '100%', 
-                    background: 'linear-gradient(to left, rgba(18,18,18,0.95), rgba(18,18,18,0))',
-                    pointerEvents: 'none'
-                  }} />
+                <div className="community-ver-todos">
+                  <button
+                    type="button"
+                    className="community-ver-todos-btn"
+                    onClick={() => setShowAllNetworkModal(true)}
+                  >
+                    Ver todos los {networkTab === 'followers' ? t('followers').toLowerCase() : t('following').toLowerCase()}
+                    <span aria-hidden>→</span>
+                  </button>
                 </div>
-              </div>
+              </>
             )}
           </motion.section>
 
+          <Modal
+            open={showAllNetworkModal}
+            onClose={() => setShowAllNetworkModal(false)}
+            title={networkTab === 'followers' ? t('followers') : t('following')}
+          >
+            <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+              {networkList.map((person) => (
+                <button
+                  key={person.id}
+                  type="button"
+                  className="community-user-row"
+                  onClick={() => { goToProfile(person.id); setShowAllNetworkModal(false); }}
+                  style={{ width: '100%' }}
+                >
+                  <div className="avatar-wrap">
+                    <ImageWithFallback
+                      src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
+                      alt={person.display_name || t('profile')}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div className="user-info">
+                    <div className="display-name">{person.display_name || t('dancer')}</div>
+                  </div>
+                  <div className="community-relation-badges">
+                    {networkTab === 'followers' && (
+                      <span className="relation-badge te-sigue">{t('follows_you')}</span>
+                    )}
+                    {networkTab === 'following' && (
+                      <span className="relation-badge sigues">{t('you_follow')}</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </Modal>
+
           {(() => {
             const fotoP2 = getMediaBySlot(effectiveMedia as any, 'p2');
+            const fotoP3 = getMediaBySlot(effectiveMedia as any, 'p3');
             const datoCurioso = (effectiveRespuestas as any)?.dato_curioso;
+            const gustaBailar = (effectiveRespuestas as any)?.gusta_bailar;
             const datoCuriosoTrimmed = typeof datoCurioso === 'string' ? datoCurioso.trim() : '';
-            const hasSection1Content = (fotoP2?.url) || (datoCuriosoTrimmed && datoCuriosoTrimmed.length > 0);
-            
-            // Debug: verificar qué datos tenemos
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[UserPublicScreen] Sección 1 - fotoP2:', fotoP2, 'datoCurioso:', datoCurioso, 'hasContent:', hasSection1Content);
-            }
-            
-            if (!hasSection1Content) return null;
-            
+            const gustaBailarTrimmed = typeof gustaBailar === 'string' ? gustaBailar.trim() : '';
+            const hasP2 = (fotoP2?.url) || (datoCuriosoTrimmed && datoCuriosoTrimmed.length > 0);
+            const hasP3 = (fotoP3?.url) || (gustaBailarTrimmed && gustaBailarTrimmed.length > 0);
+            if (!hasP2 && !hasP3) return null;
+
+            const truncateForPreview = (text: string, maxLen: number = 140) => {
+              if (!text || text.length <= maxLen) return { text, needsMore: false };
+              return { text: text.slice(0, maxLen).trim() + '…', needsMore: true };
+            };
+            const dc = truncateForPreview(datoCuriosoTrimmed || t('no_curious_fact'));
+            const gb = truncateForPreview(gustaBailarTrimmed || t('no_dance_style'));
+
             return (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="section-content glass-card-container"
+            style={{ marginTop: '1.25rem' }}
           >
-            <div className="question-section">
-              <div style={{
-                width: '100%',
-                height: '100%',
-                    objectFit: 'contain',
-                objectPosition: 'center',
-                transition: 'transform 0.3s ease',
-              }}>
-                    {fotoP2 ? (
-                  <ImageWithFallback
-                        src={toDirectPublicStorageUrl(fotoP2.url) || fotoP2.url}
-                    alt={t('personal_photo')}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
+            <div className="media-info-cards-grid">
+              {hasP2 && (
+                <div className="media-info-card">
+                  <div
+                    className="media-info-card-bg"
+                    style={{ backgroundImage: fotoP2?.url ? `url(${toDirectPublicStorageUrl(fotoP2.url) || fotoP2.url})` : undefined }}
                   />
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.875rem'
-                  }}>
-                    {t('no_photo')}
+                  <div className="media-info-card-overlay" />
+                  <div className="media-info-card-content">
+                    <h3 className="media-info-card-title">{t('curious_fact_title')}</h3>
+                    <p className="media-info-card-text">{dc.text}</p>
+                    {dc.needsMore && (
+                      <button
+                        type="button"
+                        className="media-info-card-more"
+                        onClick={() => setVerMasModal({ title: t('curious_fact_title'), text: datoCuriosoTrimmed || t('no_curious_fact') })}
+                      >
+                        {t('see_more')}
+                      </button>
+                    )}
                   </div>
-                )}
-              </div>
-
-              <div>
-              <h3 className="section-title">{t('curious_fact_title')}</h3>
-                <div style={{
-                  padding: '1.25rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1.05rem',
-                  lineHeight: '1.7',
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  fontWeight: '400'
-                }}>
-                      {datoCuriosoTrimmed || t('no_curious_fact')}
                 </div>
-              </div>
+              )}
+              {hasP3 && (
+                <div className="media-info-card">
+                  <div
+                    className="media-info-card-bg"
+                    style={{ backgroundImage: fotoP3?.url ? `url(${toDirectPublicStorageUrl(fotoP3.url) || fotoP3.url})` : undefined }}
+                  />
+                  <div className="media-info-card-overlay" />
+                  <div className="media-info-card-content">
+                    <h3 className="media-info-card-title">{t('what_you_like_to_dance_title')}</h3>
+                    <p className="media-info-card-text">{gb.text}</p>
+                    {gb.needsMore && (
+                      <button
+                        type="button"
+                        className="media-info-card-more"
+                        onClick={() => setVerMasModal({ title: t('what_you_like_to_dance_title'), text: gustaBailarTrimmed || t('no_dance_style') })}
+                      >
+                        {t('see_more')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.section>
             );
           })()}
 
-          {(() => {
-            const fotoP3 = getMediaBySlot(effectiveMedia as any, 'p3');
-            const gustaBailar = (effectiveRespuestas as any)?.gusta_bailar;
-            const gustaBailarTrimmed = typeof gustaBailar === 'string' ? gustaBailar.trim() : '';
-            const hasSection2Content = (fotoP3?.url) || (gustaBailarTrimmed && gustaBailarTrimmed.length > 0);
-            
-            // Debug: verificar qué datos tenemos
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[UserPublicScreen] Sección 2 - fotoP3:', fotoP3, 'gustaBailar:', gustaBailar, 'hasContent:', hasSection2Content);
-            }
-            
-            if (!hasSection2Content) return null;
-            
-            return (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="section-content glass-card-container"
+          <Modal
+            open={!!verMasModal}
+            onClose={() => setVerMasModal(null)}
+            title={verMasModal?.title}
           >
-            <div className="question-section">
-              <div>
-              <h3 className="section-title">{t('what_you_like_to_dance_title')}</h3>
-                <div style={{
-                  padding: '1.25rem',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  fontSize: '1.05rem',
-                  lineHeight: '1.7',
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  fontWeight: '400'
-                }}>
-                      {gustaBailarTrimmed || t('no_dance_style')}
-                </div>
-              </div>
-
-              <div style={{
-                width: '100%',
-                height: '100%',
-                    objectFit: 'contain',
-                objectPosition: 'center',
-                transition: 'transform 0.3s ease',
-              }}>
-                    {fotoP3 ? (
-                  <ImageWithFallback
-                        src={toDirectPublicStorageUrl(fotoP3.url) || fotoP3.url}
-                    alt={t('dance_photo')}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '0.875rem'
-                  }}>
-                    {t('no_photo')}
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.section>
-            );
-          })()}
+            {verMasModal && (
+              <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.95)' }}>
+                {verMasModal.text}
+              </p>
+            )}
+          </Modal>
 
           <motion.section
             id="user-profile-interested-events"

@@ -4,13 +4,56 @@
  * Timezone: America/Mexico_City (app default)
  */
 
+import { startOfDay } from 'date-fns';
+
 const TZ = 'America/Mexico_City';
 
 export interface EventDateLike {
   fecha?: string | null;
+  fecha_inicio?: string | null;
   hora_inicio?: string | null;
   hora_fin?: string | null;
   dia_semana?: number | null;
+}
+
+/**
+ * Gets the primary date string for an event (fecha or fecha_inicio fallback).
+ * Returns null if both are empty/invalid.
+ */
+export function getEventPrimaryDate(
+  eventDate: EventDateLike | null | undefined
+): string | null {
+  if (!eventDate) return null;
+  const raw = (eventDate as any).fecha ?? (eventDate as any).fecha_inicio ?? null;
+  if (!raw || typeof raw !== 'string' || !raw.trim()) return null;
+  return raw.trim();
+}
+
+/**
+ * Returns true if the event date is today or in the future (day-based comparison).
+ * Used for "Eventos de interés" to show only upcoming/today events, not past.
+ * - Events with invalid/null date are excluded (returns false).
+ * - Compares by start of day (local) to avoid timezone/hour issues.
+ */
+export function isEventUpcomingOrToday(
+  eventDate: EventDateLike | null | undefined,
+  options?: IsEventDateExpiredOptions
+): boolean {
+  const dateStr = getEventPrimaryDate(eventDate);
+  if (!dateStr) return false;
+  try {
+    const dateOnly = String(dateStr).split('T')[0];
+    const [y, m, d] = dateOnly.split('-').map((n: string) => parseInt(n, 10));
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
+    const eventDateObj = new Date(y, m - 1, d);
+    if (Number.isNaN(eventDateObj.getTime())) return false;
+    const eventDayStart = startOfDay(eventDateObj);
+    const today = options?.nowOverride ?? new Date();
+    const todayStart = startOfDay(today);
+    return eventDayStart >= todayStart;
+  } catch {
+    return false;
+  }
 }
 
 /**
