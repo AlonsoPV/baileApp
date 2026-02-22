@@ -14,25 +14,29 @@ import {
   FaTelegram
 } from 'react-icons/fa';
 
-interface BioSectionProps {
-  bio?: string;
-  redes?: {
-    instagram?: string;
-    facebook?: string;
-    tiktok?: string;
-    youtube?: string;
-    email?: string;
-    twitter?: string;
-    linkedin?: string;
-    spotify?: string;
-    whatsapp?: string;
-    website?: string;
-    web?: string;
-    telegram?: string;
-  } | null;
+export interface BioSectionRedes {
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  youtube?: string;
+  email?: string;
+  twitter?: string;
+  linkedin?: string;
+  spotify?: string;
+  whatsapp?: string;
+  website?: string;
+  web?: string;
+  telegram?: string;
 }
 
-export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
+interface BioSectionProps {
+  bio?: string;
+  redes?: BioSectionRedes | null;
+  /** Modo hero: solo muestra iconos de redes, sin card ni título */
+  variant?: 'default' | 'hero';
+}
+
+export const BioSection: React.FC<BioSectionProps> = ({ bio, redes, variant = 'default' }) => {
   const { t } = useTranslation();
   // Debug logs solo en desarrollo
   useEffect(() => {
@@ -175,6 +179,49 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes }) => {
   const availableSocials = Object.entries(socialLinks).filter(
     ([_, value]) => value && value.trim() !== ''
   );
+
+  // Modo hero: solo iconos de redes sociales (para UserProfileHero) - estilo nightlife: círculos gris oscuro
+  if (variant === 'hero') {
+    if (availableSocials.length === 0) return null;
+    return (
+      <div className="bio-section-hero" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-start', alignItems: 'center' }}>
+        {availableSocials.map(([platform, username]) => (
+          <a
+            key={platform}
+            href={getSocialUrl(platform, username as string)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bio-social-icon"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: 'rgba(50, 50, 58, 0.85)',
+              color: '#fff',
+              border: '1px solid rgba(255,255,255,0.1)',
+              textDecoration: 'none',
+              transition: 'transform 0.2s ease, background 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)';
+              e.currentTarget.style.background = 'rgba(65, 65, 75, 0.95)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.background = 'rgba(50, 50, 58, 0.85)';
+            }}
+            title={`${platform}: ${username}`}
+          >
+            {getSocialIcon(platform)}
+          </a>
+        ))}
+      </div>
+    );
+  }
 
   // Siempre mostrar la sección, incluso sin datos
   return (
