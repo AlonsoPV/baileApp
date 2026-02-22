@@ -1958,6 +1958,80 @@ const STYLES = `
   }
 `;
 
+function FiltersLayout({
+  isMobile,
+  onClose,
+  title,
+  closeLabel,
+  children,
+  overlayStyle,
+  onClickOverlay,
+}: {
+  isMobile: boolean;
+  onClose: () => void;
+  title: string;
+  closeLabel?: string;
+  children: React.ReactNode;
+  overlayStyle?: React.CSSProperties;
+  onClickOverlay?: (e: React.MouseEvent) => void;
+}) {
+  if (!isMobile) return <>{children}</>;
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10000,
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 'max(env(safe-area-inset-top), 12px) 12px max(env(safe-area-inset-bottom), 12px)',
+        overflow: 'hidden',
+        ...overlayStyle,
+      }}
+      onClick={onClickOverlay}
+    >
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'linear-gradient(180deg, #1c1f28 0%, #14171e 100%)',
+          borderRadius: 20,
+          border: '1px solid rgba(255,255,255,.12)',
+          boxShadow: '0 16px 48px rgba(0,0,0,.5)',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottom: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#fff' }}>{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={closeLabel ?? title}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.08)',
+              color: '#fff',
+              fontSize: 18,
+              cursor: 'pointer',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 16 }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
 function Section({ title, toAll, children, count, sectionId }: { title: string; toAll: string; children: React.ReactNode; count?: number; sectionId?: string }) {
   return (
     <motion.section
@@ -1972,6 +2046,37 @@ function Section({ title, toAll, children, count, sectionId }: { title: string; 
         scrollMarginTop: '100px'
       }}
     >
+      <div
+        className="section-header"
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 16,
+          paddingTop: 8,
+          paddingBottom: 8,
+        }}
+      >
+        <h2
+          className="section-title"
+          style={{
+            margin: 0,
+            fontSize: '1.25rem',
+            fontWeight: 800,
+            color: '#fff',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.3,
+          }}
+        >
+          {title}
+          {typeof count === 'number' && (
+            <span style={{ marginLeft: 8, opacity: 0.7, fontWeight: 600, fontSize: '0.95rem' }}>
+              ({count})
+            </span>
+          )}
+        </h2>
+      </div>
       {children}
     </motion.section>
   );
@@ -2003,9 +2108,11 @@ export default function ExploreHomeScreen() {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 768;
   });
+  const isDesktop = !isMobile;
   const [hasAppliedDefaults, setHasAppliedDefaults] = React.useState(false);
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
+  const [filtersPanelOpen, setFiltersPanelOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   React.useEffect(() => {
@@ -3241,6 +3348,96 @@ export default function ExploreHomeScreen() {
       <div className="explore-container">
         <div className="wrap">
           <section className="filters-panel" style={{ marginTop: 0, marginBottom: spacing[6], marginLeft: 'auto', marginRight: 'auto' }} role="region" aria-label={t('filters')}>
+            {/* Mobile: botón Filtros que abre panel desplegable */}
+            {isMobile && (
+              <div className="filters-mobile-trigger-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <button
+                  type="button"
+                  className="filters-mobile-btn"
+                  onClick={() => setFiltersPanelOpen(true)}
+                  aria-label={t('filters') || 'Filtros'}
+                  aria-expanded={filtersPanelOpen}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '12px 20px',
+                    borderRadius: 14,
+                    border: '1px solid rgba(41, 127, 150, 0.4)',
+                    background: 'linear-gradient(135deg, rgba(41, 127, 150, 0.2) 0%, rgba(235, 55, 127, 0.1) 100%)',
+                    color: '#fff',
+                    fontSize: 15,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(41, 127, 150, 0.25)',
+                  }}
+                >
+                  <span aria-hidden>⚙</span>
+                  <span>{t('filters') || 'Filtros'}</span>
+                  {activeFiltersCount > 0 && (
+                    <span
+                      style={{
+                        minWidth: 22,
+                        height: 22,
+                        padding: '0 6px',
+                        borderRadius: 999,
+                        background: 'rgba(235, 55, 127, 0.9)',
+                        color: '#fff',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleFilterChange({
+                        ...filters,
+                        type: 'all',
+                        q: '',
+                        ritmos: [],
+                        zonas: [],
+                        datePreset: 'todos',
+                        dateFrom: undefined,
+                        dateTo: undefined,
+                      });
+                      setUsingFavoriteFilters(false);
+                      setOpenFilterDropdown(null);
+                      setFiltersPanelOpen(false);
+                    }}
+                    aria-label={t('clear_all_filters')}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 12,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      background: 'rgba(255,255,255,0.08)',
+                      color: '#fff',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {t('clear') || 'Limpiar'}
+                  </button>
+                )}
+              </div>
+            )}
+            {/* Filtros: desktop inline, móvil en drawer cuando filtersPanelOpen */}
+            {(isDesktop || (isMobile && filtersPanelOpen)) && (
+              <FiltersLayout
+                isMobile={isMobile}
+                onClose={() => setFiltersPanelOpen(false)}
+                title={t('filters') || 'Filtros'}
+                closeLabel={t('close') || 'Cerrar'}
+                onClickOverlay={(e) => e.target === e.currentTarget && setFiltersPanelOpen(false)}
+              >
             {usingFavoriteFilters && user && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -3540,6 +3737,8 @@ export default function ExploreHomeScreen() {
               </div>
 
             </div>
+              </FiltersLayout>
+            )}
           </section>
 
           {(((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (

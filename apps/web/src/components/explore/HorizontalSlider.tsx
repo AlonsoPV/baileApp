@@ -432,7 +432,8 @@ export default function HorizontalSlider<T>({
               contain: layout style paint;
               transform: translateZ(0);
               will-change: auto;
-              scroll-snap-align: start;
+              scroll-snap-align: center;
+              padding: 12px 0;
             }
             
             /* Reducir animaciones durante scroll activo */

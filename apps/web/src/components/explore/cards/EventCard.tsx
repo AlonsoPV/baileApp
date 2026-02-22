@@ -9,6 +9,7 @@ import { calculateNextDateWithTime } from "../../../utils/calculateRecurringDate
 import { fmtDate } from "../../../utils/format";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
+import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
 
 interface EventCardProps {
   item: any;
@@ -131,6 +132,10 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
     // Si no tiene dia_semana, usar la fecha original
     return fechaOriginal;
   }, [item.fecha, item.evento_fecha, item.dia_semana, item._recurrence_index, horaInicio]);
+
+  const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
+  const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
+  const costMonto = getMonto(primaryCost);
 
   const ritmoNames: string[] = React.useMemo(() => {
     try {
@@ -490,6 +495,72 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
               </div>
         )}
 
+            {(costMonto != null || showDiscount) && (
+              <div className="badges" style={{ position: 'static', marginBottom: 12 }}>
+                {costMonto != null && (
+                  <div
+                    className="badge cost-chip"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 'clamp(10px, 1.6vw, 13px)',
+                      fontWeight: 800,
+                      padding: '6px 12px',
+                      borderRadius: 999,
+                      border: '1px solid rgba(255,255,255,0.18)',
+                      background: 'rgba(17, 21, 32, 0.65)',
+                      backdropFilter: 'blur(8px)',
+                      color: '#fff',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    <span>{costMonto === 0 ? 'Gratis' : formatCostoMonto(costMonto)}</span>
+                    {showDiscount && (
+                      <span
+                        aria-label="Descuento o precio especial disponible"
+                        title="Descuento o precio especial disponible"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          background: '#16A34A',
+                          color: '#fff',
+                          fontSize: 11,
+                          fontWeight: 800,
+                        }}
+                      >
+                        %
+                      </span>
+                    )}
+                  </div>
+                )}
+                {costMonto == null && showDiscount && (
+                  <span
+                    className="badge"
+                    aria-label="Descuento o precio especial disponible"
+                    title="Descuento o precio especial disponible"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      background: '#16A34A',
+                      color: '#fff',
+                      fontSize: 12,
+                      fontWeight: 800,
+                    }}
+                  >
+                    %
+                  </span>
+                )}
+              </div>
+            )}
             <div className="meta">
               {fecha && (
                 <div className="meta-row--date">

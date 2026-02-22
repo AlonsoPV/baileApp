@@ -5,7 +5,9 @@ export interface CostItem {
   nombre?: string;
   tipo?: string;
   precio?: number | string | null;
+  monto?: number | string | null;
   regla?: string;
+  descripcion?: string;
 }
 
 export interface CostsSectionProps {
@@ -33,9 +35,9 @@ export function CostsSection({
   return (
     <section className="eds-costs" aria-label="Costos">
       {items.map((item, i) => {
-        const label = item.nombre || item.tipo || "Entrada";
-        const subtitle = item.regla || (item.tipo && item.tipo !== label ? item.tipo : undefined);
-        const raw = item.precio;
+        const label = item.nombre || (item.tipo ? String(item.tipo).charAt(0).toUpperCase() + String(item.tipo).slice(1).toLowerCase() : "Entrada");
+        const subtitle = (item.descripcion ?? item.regla) || (item.tipo && item.tipo !== label ? item.tipo : undefined);
+        const raw = item.monto ?? item.precio;
         const isFree =
           raw === 0 ||
           raw === null ||

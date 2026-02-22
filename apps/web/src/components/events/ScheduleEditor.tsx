@@ -30,12 +30,47 @@ type ScheduleItem = {
 type RitmoTag = { id: number; nombre: string };
 type ZonaTag = { id: number; nombre: string };
 
+export type CostoTipo = 'taquilla' | 'preventa' | 'promocion' | 'otro';
+
 type CostoItem = {
-  nombre?: string; // etiqueta y clave de referencia
-  tipo?: 'Taquilla' | 'Preventa' | 'Promoción' | 'Otro';
+  tipo: CostoTipo | string;
+  monto: number;
+  descripcion?: string;
+  nombre?: string; // referencia para cronograma
+  /** @deprecated use monto */
   precio?: number | null;
+  /** @deprecated use descripcion */
   regla?: string;
 };
+
+const TIPOS_COSTO: { id: CostoTipo; label: string }[] = [
+  { id: 'taquilla', label: 'Taquilla' },
+  { id: 'preventa', label: 'Preventa' },
+  { id: 'promocion', label: 'Promoción' },
+  { id: 'otro', label: 'Otro' },
+];
+
+function normalizeCostoForForm(c: any): CostoItem {
+  const tipoRaw = (c?.tipo ?? 'otro').toString().toLowerCase();
+  const tipo: CostoTipo =
+    tipoRaw === 'taquilla' ? 'taquilla'
+    : tipoRaw === 'preventa' ? 'preventa'
+    : tipoRaw === 'promocion' || tipoRaw === 'promoción' || tipoRaw === 'promo' ? 'promocion'
+    : 'otro';
+  const monto = typeof c?.monto === 'number' ? c.monto : (typeof c?.precio === 'number' ? c.precio : 0);
+  return {
+    tipo,
+    monto: monto >= 0 ? monto : 0,
+    descripcion: c?.descripcion ?? c?.regla ?? '',
+    nombre: c?.nombre,
+    precio: c?.precio,
+    regla: c?.regla,
+  };
+}
+
+function toOutputCosto(c: CostoItem) {
+  return { tipo: c.tipo, monto: c.monto, descripcion: c.descripcion || undefined, nombre: c.nombre || undefined };
+}
 
 type MetaState = {
   ritmoId?: number | null;
@@ -71,9 +106,6 @@ type Props = {
   className?: string;
 };
 
-const tiposCosto: NonNullable<CostoItem['tipo']>[] = [
-  'Taquilla', 'Preventa', 'Promoción', 'Otro'
-];
 
 const niveles = ['Inicial', 'Intermedio', 'Avanzado', 'Todos'] as const;
 
@@ -234,14 +266,15 @@ export default function ScheduleEditorPlus({
   const duplicateCosto = (index: number) => {
     const original = costos[index];
     if (!original) return;
+    const c = normalizeCostoForForm(original);
     const clone: CostoItem = {
-      ...original,
-      nombre: original.nombre ? `${original.nombre} (copia)` : 'Costo (copia)',
+      ...c,
+      nombre: c.nombre ? `${c.nombre} (copia)` : `${TIPOS_COSTO.find(t => t.id === c.tipo)?.label ?? 'Costo'} (copia)`,
     };
     const next = [
-      ...costos.slice(0, index + 1),
-      clone,
-      ...costos.slice(index + 1),
+      ...costos.slice(0, index + 1).map(normalizeCostoForForm).map(toOutputCosto),
+      toOutputCosto(clone),
+      ...costos.slice(index + 1).map(normalizeCostoForForm).map(toOutputCosto),
     ];
     onChangeCostos(next);
     // Evitar desalineación de índices tras duplicar
@@ -253,15 +286,20 @@ export default function ScheduleEditorPlus({
 
   // ====== Costos ======
   const [newCosto, setNewCosto] = useState<CostoItem>({
-    nombre: '',
-    tipo: 'Otro',
-    precio: null,
-    regla: ''
+    tipo: 'taquilla',
+    monto: 0,
+    descripcion: '',
+    nombre: ''
   });
 
   const setCosto = (idx: number, patch: Partial<CostoItem>) => {
-    const next = [...costos];
-    next[idx] = { ...next[idx], ...patch };
+    const arr = costos.map(normalizeCostoForForm);
+    const curr = arr[idx];
+    if (!curr) return;
+    const merged = { ...curr, ...patch };
+    if ('precio' in patch && patch.precio !== undefined) (merged as any).monto = patch.precio;
+    if ('regla' in patch && patch.regla !== undefined) merged.descripcion = patch.regla;
+    const next = arr.map((c, i) => (i === idx ? toOutputCosto(merged) : toOutputCosto(c)));
     onChangeCostos(next);
     // Si el usuario toca cualquier campo, re-abrimos (descolapsamos) el item.
     setCollapsedCostIdxs((prev) => {
@@ -272,22 +310,27 @@ export default function ScheduleEditorPlus({
     });
   };
 
+  const hasTaquilla = (costos || []).some((c) => normalizeCostoForForm(c).tipo === 'taquilla');
   const addCostoToList = () => {
-    if (!newCosto.nombre?.trim()) return;
-    onChangeCostos([...costos, newCosto]);
-    // Colapsar el item recién agregado para mantener el formulario limpio.
+    const c = normalizeCostoForForm(newCosto);
+    if (c.monto < 0) return;
+    if (c.tipo === 'taquilla' && hasTaquilla) return; // Solo puede existir un taquilla
+    onChangeCostos([...costos.map(normalizeCostoForForm).map(toOutputCosto), toOutputCosto(c)]);
     setCollapsedCostIdxs((prev) => new Set(prev).add((costos || []).length));
-    setNewCosto({ nombre: '', tipo: 'Otro', precio: null, regla: '' });
+    setNewCosto({ tipo: 'otro', monto: 0, descripcion: '', nombre: '' });
     setIsAddingCosto(false);
   };
 
   const removeCosto = (idx: number) => {
-    onChangeCostos(costos.filter((_, i) => i !== idx));
+    onChangeCostos(costos.filter((_, i) => i !== idx).map(normalizeCostoForForm).map(toOutputCosto));
     // Evitar desalineación de índices tras eliminar
     setCollapsedCostIdxs(new Set());
   };
 
-  const costoNombres = useMemo(() => (costos || []).map(c => (c.nombre || '').trim()).filter(Boolean), [costos]);
+  const costoNombres = useMemo(() => (costos || []).map(c => {
+    const n = normalizeCostoForForm(c);
+    return (n.nombre || TIPOS_COSTO.find(t => t.id === n.tipo)?.label || '').trim();
+  }).filter(Boolean), [costos]);
 
   return (
     <div style={{ ...style }} className={className}>
@@ -724,70 +767,69 @@ export default function ScheduleEditorPlus({
             <div style={{ display: 'grid', gap: 12 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre (referencia)</div>
-                  <input
-                    style={input}
-                    placeholder="Ej. Clase suelta / Paquete 4 clases"
-                    value={newCosto.nombre || ''}
-                    onChange={(e)=> setNewCosto({ ...newCosto, nombre: e.target.value })}
-                  />
-                </div>
-                <div>
                   <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
                   <div style={pillWrap}>
-                    {tiposCosto.map(t => (
+                    {TIPOS_COSTO.map(t => (
                       <div
-                        key={t}
-                        style={pill(newCosto.tipo === t)}
-                        onClick={()=> setNewCosto({ ...newCosto, tipo: t })}
-                      >{t}</div>
+                        key={t.id}
+                        style={pill(normalizeCostoForForm(newCosto).tipo === t.id)}
+                        onClick={()=> setNewCosto({ ...newCosto, tipo: t.id })}
+                      >{t.label}</div>
                     ))}
                   </div>
                 </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Precio</div>
+                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Monto *</div>
                   <input
                     type="number" min={0} step="1" placeholder="Ej. 200"
-                    value={newCosto.precio ?? ''}
-                    onChange={(e)=> setNewCosto({ ...newCosto, precio: e.target.value === '' ? null : Number(e.target.value) })}
+                    value={newCosto.monto ?? ''}
+                    onChange={(e)=> setNewCosto({ ...newCosto, monto: Math.max(0, Number(e.target.value) || 0) })}
                     style={input}
-                  />
-                </div>
-                <div>
-                  <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Regla / Descripción (opcional)</div>
-                  <input
-                    style={input}
-                    placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
-                    value={newCosto.regla || ''}
-                    onChange={(e)=> setNewCosto({ ...newCosto, regla: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start' }}>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Descripción (opcional)</div>
+                <input
+                  style={input}
+                  placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
+                  value={newCosto.descripcion || ''}
+                  onChange={(e)=> setNewCosto({ ...newCosto, descripcion: e.target.value })}
+                />
+              </div>
+
+              <div style={{ marginTop: 12 }}>
+                <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre (referencia para cronograma)</div>
+                <input
+                  style={input}
+                  placeholder="Ej. General, VIP"
+                  value={newCosto.nombre || ''}
+                  onChange={(e)=> setNewCosto({ ...newCosto, nombre: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start', marginTop: 12 }}>
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={addCostoToList}
-                  disabled={!newCosto.nombre?.trim()}
+                  disabled={normalizeCostoForForm(newCosto).monto < 0 || (normalizeCostoForForm(newCosto).tipo === 'taquilla' && hasTaquilla)}
                   style={{
                     padding: '10px 20px',
                     borderRadius: 8,
                     border: 'none',
-                    background: newCosto.nombre?.trim()
+                    background: normalizeCostoForForm(newCosto).monto >= 0 && !(normalizeCostoForForm(newCosto).tipo === 'taquilla' && hasTaquilla)
                       ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`
                       : `${colors.light}33`,
                     color: colors.light,
                     fontSize: '0.9rem',
                     fontWeight: 600,
-                    cursor: newCosto.nombre?.trim() ? 'pointer' : 'not-allowed'
+                    cursor: normalizeCostoForForm(newCosto).monto >= 0 && !(normalizeCostoForForm(newCosto).tipo === 'taquilla' && hasTaquilla) ? 'pointer' : 'not-allowed'
                   }}
                 >✅ Agregar Costo</motion.button>
                 <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     setIsAddingCosto(false);
-                    setNewCosto({ nombre: '', tipo: 'Otro', precio: null, regla: '' });
+                    setNewCosto({ tipo: 'taquilla', monto: 0, descripcion: '', nombre: '' });
                   }}
                   style={{
                     padding: '10px 20px',
@@ -806,7 +848,9 @@ export default function ScheduleEditorPlus({
         )}
 
         <div style={{ display: 'grid', gap: 12 }}>
-          {costos.map((c, idx)=> (
+          {costos.map((raw, idx)=> {
+            const c = normalizeCostoForForm(raw);
+            return (
             <div key={idx} style={card}>
               {collapsedCostIdxs.has(idx) ? (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -818,21 +862,21 @@ export default function ScheduleEditorPlus({
                         background: `${colors.light}33`, color: colors.light, fontSize: '0.8rem', fontWeight: 600,
                         textTransform: 'capitalize'
                       }}>
-                        {c.tipo || 'Otro'}
+                        {TIPOS_COSTO.find(t => t.id === c.tipo)?.label ?? c.tipo}
                       </span>
                       <span style={{
                         padding: '4px 8px', borderRadius: 12,
                         background: `${colors.light}33`, color: colors.light, fontSize: '0.8rem', fontWeight: 600
                       }}>
-                        {c.precio === null || c.precio === undefined ? 'Gratis' : `$${Number(c.precio).toLocaleString()}`}
+                        {c.monto === 0 ? 'Gratis' : `$${Number(c.monto).toLocaleString()}`}
                       </span>
                     </div>
                     <h4 style={{ fontSize: '1rem', fontWeight: 600, color: colors.light, marginBottom: 4 }}>
-                      {(c.nombre || 'Costo').toString()}
+                      {(c.nombre || TIPOS_COSTO.find(t => t.id === c.tipo)?.label || 'Costo').toString()}
                     </h4>
-                    {c.regla && (
+                    {c.descripcion && (
                       <p style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.8, margin: 0 }}>
-                        📋 {c.regla}
+                        📋 {c.descripcion}
                       </p>
                     )}
                   </div>
@@ -855,47 +899,46 @@ export default function ScheduleEditorPlus({
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
-                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre (referencia)</div>
-                      <input
-                        style={input}
-                        placeholder="Ej. Clase suelta / Paquete 4 clases"
-                        value={c.nombre || ''}
-                        onChange={(e)=> setCosto(idx, { nombre: e.target.value })}
-                      />
-                    </div>
-                    <div>
                       <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Tipo</div>
                       <div style={pillWrap}>
-                        {tiposCosto.map(t => (
+                        {TIPOS_COSTO.map(t => (
                           <div
-                            key={t}
-                            style={pill(c.tipo === t)}
-                            onClick={()=> setCosto(idx, { tipo: t })}
-                          >{t}</div>
+                            key={t.id}
+                            style={pill(c.tipo === t.id)}
+                            onClick={()=> setCosto(idx, { tipo: t.id })}
+                          >{t.label}</div>
                         ))}
                       </div>
                     </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
                     <div>
-                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Precio</div>
+                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Monto *</div>
                       <input
                         type="number" min={0} step="1" placeholder="Ej. 200"
-                        value={c.precio ?? ''}
-                        onChange={(e)=> setCosto(idx, { precio: e.target.value === '' ? null : Number(e.target.value) })}
+                        value={c.monto ?? ''}
+                        onChange={(e)=> setCosto(idx, { monto: Math.max(0, Number(e.target.value) || 0) })}
                         style={input}
                       />
                     </div>
-                    <div>
-                      <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Regla / Descripción (opcional)</div>
-                      <input
-                        style={input}
-                        placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
-                        value={c.regla || ''}
-                        onChange={(e)=> setCosto(idx, { regla: e.target.value })}
-                      />
-                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Descripción (opcional)</div>
+                    <input
+                      style={input}
+                      placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
+                      value={c.descripcion || ''}
+                      onChange={(e)=> setCosto(idx, { descripcion: e.target.value })}
+                    />
+                  </div>
+
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ marginBottom: 4, fontSize: '0.9rem', color: colors.light }}>Nombre (referencia para cronograma)</div>
+                    <input
+                      style={input}
+                      placeholder="Ej. General, VIP"
+                      value={c.nombre || ''}
+                      onChange={(e)=> setCosto(idx, { nombre: e.target.value })}
+                    />
                   </div>
 
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-start', marginTop: 10, flexWrap: 'wrap' }}>
@@ -945,7 +988,7 @@ export default function ScheduleEditorPlus({
                 </>
               )}
             </div>
-          ))}
+          );})}
         </div>
 
         {costos.length === 0 && (

@@ -1,4 +1,17 @@
 export type Aprobacion = 'borrador'|'en_revision'|'aprobado'|'rechazado';
+
+export type EventCostoTipo = 'taquilla' | 'preventa' | 'promocion' | 'otro';
+
+export type EventCosto = {
+  tipo: EventCostoTipo | string;
+  monto: number;
+  descripcion?: string;
+  nombre?: string;
+  /** @deprecated use monto */
+  precio?: number;
+  /** @deprecated use descripcion */
+  regla?: string;
+};
 export type PubEstado = 'borrador'|'publicado';
 export type RSVPStatus = 'voy'|'interesado'|'no_voy';
 
@@ -55,7 +68,7 @@ export type EventDate = {
   referencias?: string|null; // Referencias de ubicación
   requisitos?: string|null; 
   cronograma?: any[]; // Cronograma de actividades
-  costos?: any[]; // Costos y promociones
+  costos?: EventCosto[];
   flyer_url?: string|null; // URL del flyer del evento
   estilos: number[]; 
   media: any[]; 
