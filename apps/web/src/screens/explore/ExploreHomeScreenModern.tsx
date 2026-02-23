@@ -136,25 +136,16 @@ function useExploreCardDimensions(isMobile: boolean) {
   );
 }
 
-/** Encabezado de sección reutilizable con título, contador, subline opcional y CTA Ver todo. */
+/** Encabezado de sección reutilizable con título, contador y subline opcional. */
 function SectionHeader({
   title,
   count,
   subline,
-  toAll,
-  onViewAll,
-  seeAllLabel,
 }: {
   title: string;
   count?: number;
   subline?: string;
-  toAll?: string;
-  onViewAll?: () => void;
-  seeAllLabel?: string;
 }) {
-  const { t } = useTranslation();
-  const label = seeAllLabel ?? t('see_all');
-
   return (
     <div
       className="section-header section-header--hero"
@@ -190,32 +181,6 @@ function SectionHeader({
           <span style={{ fontSize: 0.8, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{subline}</span>
         )}
       </div>
-      {(toAll || onViewAll) && (
-        <Link
-          to={toAll || '#'}
-          onClick={onViewAll ? (e) => { e.preventDefault(); onViewAll(); } : undefined}
-          className="section-header-link"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 44,
-            minHeight: 44,
-            gap: 6,
-            fontSize: 0.875,
-            fontWeight: 600,
-            color: 'rgba(255,157,28,0.95)',
-            textDecoration: 'none',
-            padding: '10px 12px',
-            borderRadius: 10,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          {label}
-          <span aria-hidden style={{ fontSize: '0.75em' }}>›</span>
-        </Link>
-      )}
     </div>
   );
 }
@@ -2262,7 +2227,6 @@ function FiltersLayout({
 
 function Section({
   title,
-  toAll,
   children,
   count,
   sectionId,
@@ -2270,7 +2234,6 @@ function Section({
   sectionMinHeight,
 }: {
   title: string;
-  toAll: string;
   children: React.ReactNode;
   count?: number;
   sectionId?: string;
@@ -2291,12 +2254,7 @@ function Section({
         ...(sectionMinHeight ? { minHeight: sectionMinHeight } : {}),
       }}
     >
-      <SectionHeader
-        title={title}
-        count={count}
-        subline={subline}
-        toAll={toAll || undefined}
-      />
+      <SectionHeader title={title} count={count} subline={subline} />
       {children}
     </motion.section>
   );
@@ -3959,7 +3917,7 @@ export default function ExploreHomeScreen() {
           </section>
 
           {(((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
-            <Section title={t('section_upcoming_scene')} toAll="/explore/list?type=fechas" count={filteredFechas.length} sectionId="fechas" sectionMinHeight={sectionMinHeight}>
+            <Section title={t('section_upcoming_scene')} count={filteredFechas.length} sectionId="fechas" sectionMinHeight={sectionMinHeight}>
               {fechasTimedOut ? (
                 <InlineQueryError
                   title="La carga está tardando demasiado"
@@ -4056,7 +4014,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && ((academiasLoading || maestrosLoading) || hasClases || academiasError || maestrosError)) || selectedType === 'clases')) && (
-            <Section title={t('section_recommended_classes')} toAll="/explore/list?type=clases" count={classesList.length} sectionId="clases" sectionMinHeight={sectionMinHeight}>
+            <Section title={t('section_recommended_classes')} count={classesList.length} sectionId="clases" sectionMinHeight={sectionMinHeight}>
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>;
@@ -4102,7 +4060,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (academiasLoading || hasAcademias)) || selectedType === 'academias')) && (
-            <Section title={t('section_best_academies_zone')} toAll="/explore/list?type=academias" count={academiasData.length} sectionId="academias" sectionMinHeight={sectionMinHeight}>
+            <Section title={t('section_best_academies_zone')} count={academiasData.length} sectionId="academias" sectionMinHeight={sectionMinHeight}>
               <AcademiesSection
                 filters={filters}
                 q={qDeferred || undefined}
@@ -4139,7 +4097,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (maestrosLoading || hasMaestros || maestrosError)) || selectedType === 'maestros')) && (
-            <Section title={t('section_featured_teachers')} toAll="/explore/list?type=maestros" count={maestrosData.length} sectionId="maestros" sectionMinHeight={sectionMinHeight}>
+            <Section title={t('section_featured_teachers')} count={maestrosData.length} sectionId="maestros" sectionMinHeight={sectionMinHeight}>
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : maestrosError ? (
@@ -4234,7 +4192,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (usuariosLoading || hasUsuarios)) || selectedType === 'usuarios')) && (
-            <Section title={t('section_dancers_near_you')} toAll="/explore/list?type=usuarios" count={validUsuarios.length} sectionId="usuarios" sectionMinHeight={sectionMinHeight}>
+            <Section title={t('section_dancers_near_you')} count={validUsuarios.length} sectionId="usuarios" sectionMinHeight={sectionMinHeight}>
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -4332,7 +4290,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (organizadoresLoading || organizadoresData.length > 0 || organizadoresError)) || selectedType === 'organizadores')) && (
-            <Section title={t('section_event_producers')} toAll="/explore/list?type=organizadores" count={organizadoresData.length} sectionId="organizadores" sectionMinHeight={sectionMinHeight}>
+            <Section title={t('section_event_producers')} count={organizadoresData.length} sectionId="organizadores" sectionMinHeight={sectionMinHeight}>
               {organizadoresLoading ? (
                 <div className="cards-grid">
                   {[...Array(6)].map((_, i) => (
@@ -4431,7 +4389,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {(((showAll && (marcasLoading || hasMarcas)) || selectedType === 'marcas')) && (
-            <Section title={t('section_specialized_brands')} toAll="/explore/list?type=marcas" count={marcasData.length} sectionId="marcas" sectionMinHeight={sectionMinHeight}>
+            <Section title={t('section_specialized_brands')} count={marcasData.length} sectionId="marcas" sectionMinHeight={sectionMinHeight}>
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
@@ -4520,7 +4478,7 @@ export default function ExploreHomeScreen() {
           )}
 
           {/* Sección Comparte */}
-          <Section title={t('share_section')} toAll="" sectionId="comparte">
+          <Section title={t('share_section')} sectionId="comparte">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

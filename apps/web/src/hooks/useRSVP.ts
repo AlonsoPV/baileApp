@@ -113,12 +113,8 @@ export function useUserRSVPEvents(status?: RSVPStatus) {
         .from("event_rsvp")
         .select(`
           *,
-          events_date!inner (
-            *,
-            events_parent!inner (
-              *,
-              profiles_organizer (*)
-            )
+          events_date (
+            *
           )
         `)
         .eq("user_id", userId);

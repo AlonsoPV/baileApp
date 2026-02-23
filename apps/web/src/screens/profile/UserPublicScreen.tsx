@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
-import { PHOTO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { PHOTO_SLOTS, getMediaBySlot, normalizeMediaArray, type MediaItem } from "../../utils/mediaSlots";
 import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
 import { colors } from "../../theme/colors";
@@ -19,20 +19,6 @@ import { useTranslation } from "react-i18next";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import { isEventUpcomingOrToday, getEventPrimaryDate } from "../../utils/eventDateExpiration";
 import { Modal } from "../../components/ui/Modal";
-
-/** Normaliza media: si viene como string JSON desde la API, lo parsea a array. */
-function normalizeMediaArray(raw: unknown): unknown[] {
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === 'string' && raw.trim()) {
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-  return [];
-}
 
 const STYLES = `
   .profile-container {
@@ -857,6 +843,15 @@ export const UserProfileLive: React.FC = () => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
+  // Fix media rendering + scroll reset
+  useEffect(() => {
+    try {
+      const el = document.querySelector('.app-shell-content') as HTMLElement | null;
+      if (el) el.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      else window.scrollTo(0, 0);
+    } catch {}
+  }, [userId]);
+
   const { data: profile, isLoading } = useQuery({
     queryKey: ['user-public', userId],
     enabled: !!userId,
@@ -884,19 +879,49 @@ export const UserProfileLive: React.FC = () => {
     setLoadingTimedOut(false);
   }, [isLoading, userId]);
 
-  const { data: rsvpEvents } = useQuery({
+  const {
+    data: rsvpEvents,
+    isLoading: rsvpsLoading,
+    error: rsvpsError,
+  } = useQuery({
     queryKey: ['user-rsvps', userId],
     enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('event_rsvp')
-        .select(`*, events_date!inner(*, events_parent!inner(*, profiles_organizer(*)))`)
+        .select(`event_date_id,status,created_at,events_date(*)`)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     }
   });
+
+  // Logs temporales (solo dev): validar RSVPs -> EventDate
+  React.useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    try {
+      const rows = (rsvpEvents as any[]) || [];
+      const first = rows[0];
+      const resolved = rows.filter(r => !!(r as any)?.events_date);
+      console.log('[UserPublicScreen] RSVP debug', {
+        profileUserId: userId,
+        rsvpsCount: rows.length,
+        firstRsvp: first ? {
+          id: (first as any).id,
+          event_date_id: (first as any).event_date_id,
+          status: (first as any).status,
+          created_at: (first as any).created_at,
+          hasEventsDate: !!(first as any).events_date,
+          primaryDate: getEventPrimaryDate((first as any).events_date),
+        } : null,
+        resolvedEventDatesCount: resolved.length,
+      });
+      if (rsvpsError) {
+        console.error('[UserPublicScreen] RSVP query error:', rsvpsError);
+      }
+    } catch {}
+  }, [rsvpEvents, userId, rsvpsError]);
 
   // Filter RSVP events to upcoming only (>= today). Exclude past events.
   const availableRsvpEvents = React.useMemo(() => {
@@ -941,11 +966,21 @@ export const UserProfileLive: React.FC = () => {
     const arr = normalizeMediaArray(viewMedia);
 
     // Debug: verificar datos del perfil (vista pública)
-    if (process.env.NODE_ENV === 'development' && profile) {
+    if (import.meta.env.DEV && profile) {
+      const slot = (s: string) => (arr as MediaItem[]).find((m) => m?.slot === s);
       console.log('[UserPublicScreen] Profile data (from view):', {
-        hasMedia: !!(profile as any).media,
+        avatar_url: (profile as any)?.avatar_url,
+        mediaRawType: Array.isArray(viewMedia) ? 'array' : typeof viewMedia,
+        hasMedia: !!viewMedia,
         mediaLength: arr.length,
-        mediaType: Array.isArray(viewMedia) ? 'array' : typeof viewMedia,
+        slots: {
+          avatar: slot('avatar')?.url,
+          p1: slot('p1')?.url,
+          p2: slot('p2')?.url,
+          p3: slot('p3')?.url,
+          cover: slot('cover')?.url,
+          v1: slot('v1')?.url,
+        },
         hasRespuestas: !!(profile as any).respuestas,
       });
     }
@@ -1016,13 +1051,18 @@ export const UserProfileLive: React.FC = () => {
   }, []);
 
   const avatarUrl = React.useMemo(() => {
-    const toUrl = (u: string | undefined) => (u ? (toDirectPublicStorageUrl(u) ?? u) : undefined);
-    const fromProfile = profile?.avatar_url ? toSupabasePublicUrl(profile.avatar_url) : undefined;
-    const p1 = getMediaBySlot(effectiveMedia as any, 'p1');
-    const fromP1 = p1?.url ? p1.url : undefined;
-    const avatar = getMediaBySlot(effectiveMedia as any, 'avatar');
-    const fromAvatarSlot = avatar?.url ? avatar.url : undefined;
-    const raw = toUrl(fromProfile || fromP1 || fromAvatarSlot) ?? fromProfile ?? fromP1 ?? fromAvatarSlot;
+    const resolve = (u?: string) => {
+      if (!u) return undefined;
+      const pub = toSupabasePublicUrl(u) ?? u;
+      return toDirectPublicStorageUrl(pub) ?? pub;
+    };
+
+    // Prioridad requerida:
+    // 1) profile.avatar_url  2) media slot "avatar"  3) media slot "p1"  4) iniciales (en Hero)
+    const fromProfile = profile?.avatar_url ? resolve(profile.avatar_url) : undefined;
+    const fromAvatarSlot = resolve(getMediaBySlot(effectiveMedia as any, 'avatar')?.url);
+    const fromP1 = resolve(getMediaBySlot(effectiveMedia as any, 'p1')?.url);
+    const raw = fromProfile || fromAvatarSlot || fromP1;
     if (!raw || typeof raw !== 'string' || !raw.trim() || raw.includes('undefined') || raw === '/default-media.png') return undefined;
     return raw;
   }, [effectiveMedia, profile?.avatar_url, toSupabasePublicUrl]);
@@ -1037,7 +1077,10 @@ export const UserProfileLive: React.FC = () => {
     return PHOTO_SLOTS
       .map(slot => getMediaBySlot(effectiveMedia as any, slot))
       .filter(item => item && item.kind === 'photo' && item.url && typeof item.url === 'string' && item.url.trim() !== '' && !item.url.includes('undefined') && item.url !== '/default-media.png')
-      .map(item => toDirectPublicStorageUrl(item!.url) || item!.url);
+      .map(item => {
+        const pub = toSupabasePublicUrl(item!.url) ?? item!.url;
+        return toDirectPublicStorageUrl(pub) || pub;
+      });
   }, [effectiveMedia]);
 
   const { counts, setCounts, refetch: refetchCounts } = useFollowerCounts(profileUserId);
@@ -1518,7 +1561,46 @@ export const UserProfileLive: React.FC = () => {
               )}
             </div>
 
-            {availableRsvpEvents.length > 0 ? (
+            {rsvpsLoading ? (
+              <HorizontalSlider
+                items={[0, 1, 2]}
+                renderItem={(_, index: number) => (
+                  <div
+                    key={index}
+                    style={{
+                      width: 360,
+                      maxWidth: '84vw',
+                      height: 460,
+                      borderRadius: 22,
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      boxShadow: '0 16px 36px rgba(0,0,0,0.25)',
+                    }}
+                  />
+                )}
+                gap={20}
+                autoColumns="minmax(320px, 400px)"
+                showNavButtons={false}
+              />
+            ) : rsvpsError ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{
+                  textAlign: 'center',
+                  padding: '2rem 1rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: colors.light,
+                  opacity: 0.9,
+                }}
+              >
+                {process.env.NODE_ENV === 'development'
+                  ? `Error cargando RSVPs: ${(rsvpsError as any)?.message ?? String(rsvpsError)}`
+                  : t('could_not_load', 'No se pudo cargar')}
+              </motion.div>
+            ) : availableRsvpEvents.length > 0 ? (
               <HorizontalSlider
                 items={availableRsvpEvents.map((rsvp: any) => rsvp.events_date).filter(Boolean)}
                 renderItem={(evento: any, index: number) => (
@@ -1594,14 +1676,17 @@ export const UserProfileLive: React.FC = () => {
             const videoV1 = getMediaBySlot(effectiveMedia as any, 'v1');
             
             // Debug: verificar qué datos tenemos
-            if (process.env.NODE_ENV === 'development') {
+            if (import.meta.env.DEV) {
               console.log('[UserPublicScreen] Video - videoV1:', videoV1, 'effectiveMedia length:', effectiveMedia.length);
             }
             
-            if (!videoV1 || !videoV1.url || typeof videoV1.url !== 'string' || videoV1.url.trim() === '') {
+            if (!videoV1 || videoV1.kind !== 'video' || !videoV1.url || typeof videoV1.url !== 'string' || videoV1.url.trim() === '') {
               return null;
             }
             
+            const videoSrc = toDirectPublicStorageUrl(toSupabasePublicUrl(videoV1.url) || videoV1.url) || (toSupabasePublicUrl(videoV1.url) || videoV1.url);
+            if (!videoSrc || typeof videoSrc !== 'string' || !videoSrc.trim() || videoSrc.includes('undefined')) return null;
+
             return (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
@@ -1663,7 +1748,7 @@ export const UserProfileLive: React.FC = () => {
                     zIndex: 2
                   }}>
                     <VideoPlayerWithPiP
-                    src={toDirectPublicStorageUrl(videoV1.url) || videoV1.url}
+                    src={videoSrc}
                     controls
                     preload="metadata"
                     controlsList="nodownload noplaybackrate"

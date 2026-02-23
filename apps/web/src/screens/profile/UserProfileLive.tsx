@@ -651,7 +651,37 @@ export const UserProfileLive: React.FC = () => {
   const [avatarError, setAvatarError] = React.useState(false);
 
   const safeMedia = media || [];
-  const { data: rsvpEvents } = useUserRSVPEvents();
+  const {
+    data: rsvpEvents,
+    isLoading: rsvpsLoading,
+    error: rsvpsError,
+  } = useUserRSVPEvents();
+
+  // Logs temporales (solo dev): validar RSVPs -> EventDate
+  React.useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    try {
+      const rows = (rsvpEvents as any[]) || [];
+      const first = rows[0];
+      const resolved = rows.filter(r => !!(r as any)?.events_date);
+      console.log('[UserProfileLive] RSVP debug', {
+        userId: user?.id,
+        rsvpsCount: rows.length,
+        firstRsvp: first ? {
+          id: (first as any).id,
+          event_date_id: (first as any).event_date_id,
+          status: (first as any).status,
+          created_at: (first as any).created_at,
+          hasEventsDate: !!(first as any).events_date,
+          primaryDate: getEventPrimaryDate((first as any).events_date),
+        } : null,
+        resolvedEventDatesCount: resolved.length,
+      });
+      if (rsvpsError) {
+        console.error('[UserProfileLive] RSVP query error:', rsvpsError);
+      }
+    } catch {}
+  }, [rsvpEvents, user?.id, rsvpsError]);
 
   // Filter RSVP events to upcoming only (>= today). Exclude past events.
   const availableRsvpEvents = React.useMemo(() => {
@@ -683,21 +713,20 @@ export const UserProfileLive: React.FC = () => {
   }, []);
 
   const avatarUrl = React.useMemo(() => {
-    const p1 = getMediaBySlot(safeMedia as any, 'p1');
-    if (p1?.url) {
-      const url = toDirectPublicStorageUrl(p1.url) ?? p1.url;
-      if (url && url.trim() && !url.includes('undefined') && url !== '/default-media.png') return url;
-    }
-    if (profile?.avatar_url) {
-      const url = toDirectPublicStorageUrl(toSupabasePublicUrl(profile.avatar_url)) ?? toSupabasePublicUrl(profile.avatar_url);
-      if (url && url.trim() && !url.includes('undefined') && url !== '/default-media.png') return url;
-    }
-    const avatar = getMediaBySlot(safeMedia as any, 'avatar');
-    if (avatar?.url) {
-      const url = toDirectPublicStorageUrl(avatar.url) ?? avatar.url;
-      if (url && url.trim() && !url.includes('undefined') && url !== '/default-media.png') return url;
-    }
-    return undefined;
+    const resolve = (raw?: string | null) => {
+      if (!raw || typeof raw !== 'string') return undefined;
+      const v = raw.trim();
+      if (!v || v.includes('undefined') || v === '/default-media.png') return undefined;
+      const pub = toSupabasePublicUrl(v) ?? v;
+      return toDirectPublicStorageUrl(pub) ?? pub;
+    };
+
+    // Prioridad requerida:
+    // 1) profile.avatar_url  2) media slot "avatar"  3) media slot "p1"  4) iniciales (en Hero)
+    const fromProfile = resolve(profile?.avatar_url ?? null);
+    const fromAvatarSlot = resolve(getMediaBySlot(safeMedia as any, 'avatar')?.url ?? null);
+    const fromP1 = resolve(getMediaBySlot(safeMedia as any, 'p1')?.url ?? null);
+    return fromProfile || fromAvatarSlot || fromP1;
   }, [safeMedia, profile?.avatar_url, toSupabasePublicUrl]);
 
   // Reset avatarError cuando cambia avatarUrl
@@ -1160,7 +1189,46 @@ export const UserProfileLive: React.FC = () => {
               )}
             </div>
 
-            {availableRsvpEvents.length > 0 ? (
+            {rsvpsLoading ? (
+              <HorizontalSlider
+                items={[0, 1, 2]}
+                renderItem={(_, index: number) => (
+                  <div
+                    key={index}
+                    style={{
+                      width: 360,
+                      maxWidth: '84vw',
+                      height: 460,
+                      borderRadius: 22,
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      boxShadow: '0 16px 36px rgba(0,0,0,0.25)',
+                    }}
+                  />
+                )}
+                gap={20}
+                autoColumns="minmax(320px, 400px)"
+                showNavButtons={false}
+              />
+            ) : rsvpsError ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{
+                  textAlign: 'center',
+                  padding: '2rem 1rem',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: colors.light,
+                  opacity: 0.9,
+                }}
+              >
+                {process.env.NODE_ENV === 'development'
+                  ? `Error cargando RSVPs: ${(rsvpsError as any)?.message ?? String(rsvpsError)}`
+                  : t('could_not_load', 'No se pudo cargar')}
+              </motion.div>
+            ) : availableRsvpEvents.length > 0 ? (
               <HorizontalSlider
                 items={availableRsvpEvents.filter((rsvp: any) => rsvp.events_date)}
                 renderItem={(rsvp: any, index: number) => {

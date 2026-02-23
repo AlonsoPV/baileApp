@@ -1116,12 +1116,13 @@ export function OrganizerProfileLive() {
       .map(slot => getMediaBySlot(safeMedia as any, slot)?.url)
       .filter((u): u is string => !!u && typeof u === 'string' && u.trim() !== '' && !u.includes('undefined') && u !== '/default-media.png')
       .map(u => toDirectPublicStorageUrl(u) || u);
-  }, [safeMedia]);
+  }, [safeMedia, org]);
 
   const videos = useMemo(() => {
     return VIDEO_SLOTS
-      .map(slot => getMediaBySlot(safeMedia as any, slot)?.url)
-      .filter(Boolean) as string[];
+      .map(slot => getMediaBySlot(safeMedia as any, slot))
+      .filter((m): m is any => !!m && m.kind === 'video' && !!m.url && typeof m.url === 'string' && m.url.trim() !== '' && !m.url.includes('undefined') && m.url !== '/default-media.png')
+      .map((m) => toDirectPublicStorageUrl(m.url) || m.url);
   }, [safeMedia]);
 
   // Agregar agregación de ubicaciones desde los sociales (events_parent)
@@ -1509,11 +1510,21 @@ export function OrganizerProfileLive() {
 
   // Resolver avatar URL con null checks; excluir URLs inválidas para no mostrar placeholder roto
   const avatarUrl = useMemo(() => {
-    const cover = getMediaBySlot(safeMedia as any, 'cover');
-    const p1 = getMediaBySlot(safeMedia as any, 'p1');
-    const raw = cover?.url || p1?.url;
-    if (!raw || typeof raw !== 'string' || !raw.trim() || raw.includes('undefined') || raw === '/default-media.png') return undefined;
-    return toDirectPublicStorageUrl(raw) || raw;
+    const resolve = (raw?: string | null) => {
+      if (!raw || typeof raw !== 'string') return undefined;
+      const v = raw.trim();
+      if (!v || v.includes('undefined') || v === '/default-media.png') return undefined;
+      return toDirectPublicStorageUrl(v) || v;
+    };
+
+    // Prioridad requerida:
+    // 1) profile.avatar_url  2) media slot "avatar"  3) media slot "p1"  4) fallback cover/inicial
+    const fromProfile =
+      resolve((org as any)?.avatar_url || (org as any)?.logo_url || null);
+    const fromAvatarSlot = resolve(getMediaBySlot(safeMedia as any, 'avatar')?.url || null);
+    const fromP1 = resolve(getMediaBySlot(safeMedia as any, 'p1')?.url || null);
+    const fromCover = resolve(getMediaBySlot(safeMedia as any, 'cover')?.url || null);
+    return fromProfile || fromAvatarSlot || fromP1 || fromCover;
   }, [safeMedia]);
 
   const [avatarError, setAvatarError] = useState(false);

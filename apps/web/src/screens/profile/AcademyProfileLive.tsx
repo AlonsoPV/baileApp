@@ -1613,25 +1613,27 @@ export default function AcademyProfileLive() {
   // Memoizar fotos del carrusel
   const carouselPhotos = useMemo(() => 
     PHOTO_SLOTS
-      .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-      .filter((u): u is string => !!u && typeof u === 'string' && u.trim() !== '' && !u.includes('undefined') && u !== '/default-media.png')
-      .map(u => toDirectPublicStorageUrl(u) || u) as string[],
+      .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot))
+      .filter((m): m is MediaSlotItem => !!m && m.kind === 'photo' && !!m.url && typeof m.url === 'string' && m.url.trim() !== '' && !m.url.includes('undefined') && m.url !== '/default-media.png')
+      .map(m => toDirectPublicStorageUrl(m.url) || m.url) as string[],
     [media]
   );
 
   const primaryAvatarUrl = useMemo(() => {
-    const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
     const cover = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url;
-    const raw = p1 || cover || (academy as any)?.avatar_url || (academy as any)?.portada_url || null;
+    const avatarSlot = getMediaBySlot(media as unknown as MediaSlotItem[], 'avatar')?.url;
+    const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url;
+    // Prioridad requerida (avatar): avatar_url -> slot avatar -> p1 -> cover
+    const raw = (academy as any)?.avatar_url || avatarSlot || p1 || cover || (academy as any)?.portada_url || null;
     if (!raw || typeof raw !== 'string' || !raw.trim() || raw.includes('undefined') || raw === '/default-media.png') return null;
     return toDirectPublicStorageUrl(raw) ?? raw;
   }, [media, academy]);
 
   const videos = useMemo(() =>
     VIDEO_SLOTS
-      .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot)?.url)
-      .filter(Boolean)
-      .map(u => toDirectPublicStorageUrl(u) || u) as string[],
+      .map(slot => getMediaBySlot(media as unknown as MediaSlotItem[], slot))
+      .filter((m): m is MediaSlotItem => !!m && m.kind === 'video' && !!m.url && typeof m.url === 'string' && m.url.trim() !== '' && !m.url.includes('undefined') && m.url !== '/default-media.png')
+      .map(m => toDirectPublicStorageUrl(m.url) || m.url) as string[],
     [media]
   );
 

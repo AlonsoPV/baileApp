@@ -99,6 +99,15 @@ export function OrganizerPublicScreen() {
   const { ritmos: allRitmos = [], zonas: allZonas = [] } = useTags();
   const [copied, setCopied] = React.useState(false);
 
+  // Fix media rendering + scroll reset
+  React.useEffect(() => {
+    try {
+      const el = document.querySelector('.app-shell-content') as HTMLElement | null;
+      if (el) el.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      else window.scrollTo(0, 0);
+    } catch {}
+  }, [routeId]);
+
   const { data: org, isLoading, isError } = useQuery({
     queryKey: ['org-public', routeId],
     enabled: !!routeId,
@@ -142,14 +151,72 @@ export function OrganizerPublicScreen() {
   const { data: eventDates = [] } = useEventDatesByOrganizer((org as any)?.id);
 
   const media = normalizeMediaArray((org as any)?.media);
-  const carouselPhotos = PHOTO_SLOTS
-    .map(slot => getMediaBySlot(media as any, slot)?.url)
-    .filter((u): u is string => !!u && typeof u === 'string' && u.trim() !== '' && !u.includes('undefined') && u !== '/default-media.png')
-    .map(u => toDirectPublicStorageUrl(u) || u) as string[];
-  const videos = VIDEO_SLOTS
-    .map(slot => getMediaBySlot(media as any, slot)?.url)
-    .filter(Boolean)
-    .map(u => toDirectPublicStorageUrl(u) || u) as string[];
+
+  const isValidMediaUrl = React.useCallback((raw?: string | null) => {
+    if (!raw || typeof raw !== 'string') return false;
+    const v = raw.trim();
+    if (!v) return false;
+    if (v.includes('undefined')) return false;
+    if (v === '/default-media.png') return false;
+    return true;
+  }, []);
+
+  const resolveMediaUrl = React.useCallback((raw?: string | null): string | undefined => {
+    if (!isValidMediaUrl(raw)) return undefined;
+    const v = String(raw).trim();
+    return toDirectPublicStorageUrl(v) || v;
+  }, [isValidMediaUrl]);
+
+  // Avatar (prioridad): profile.avatar_url (si existe) -> slot avatar -> p1 -> cover -> iniciales
+  const avatarUrl = React.useMemo(() => {
+    const fromProfile =
+      (org as any)?.avatar_url ||
+      (org as any)?.logo_url ||
+      (org as any)?.foto_url ||
+      null;
+    const raw =
+      fromProfile ||
+      getMediaBySlot(media as any, 'avatar')?.url ||
+      getMediaBySlot(media as any, 'p1')?.url ||
+      getMediaBySlot(media as any, 'cover')?.url ||
+      null;
+    return resolveMediaUrl(raw);
+  }, [org, media, resolveMediaUrl]);
+
+  const videoV1 = React.useMemo(() => getMediaBySlot(media as any, 'v1'), [media]);
+  const videoSrc = React.useMemo(() => {
+    if (!videoV1 || (videoV1 as any)?.kind !== 'video') return undefined;
+    return resolveMediaUrl((videoV1 as any).url);
+  }, [videoV1, resolveMediaUrl]);
+
+  const carouselPhotos = React.useMemo(() => {
+    return PHOTO_SLOTS
+      .map((slot) => getMediaBySlot(media as any, slot))
+      .filter((m): m is any => !!m && m.kind === 'photo' && isValidMediaUrl(m.url))
+      .map((m) => resolveMediaUrl(m.url)!)
+      .filter(Boolean);
+  }, [media, isValidMediaUrl, resolveMediaUrl]);
+
+  const videos = React.useMemo(() => {
+    return VIDEO_SLOTS
+      .map((slot) => getMediaBySlot(media as any, slot))
+      .filter((m): m is any => !!m && m.kind === 'video' && isValidMediaUrl(m.url))
+      .map((m) => resolveMediaUrl(m.url)!)
+      .filter(Boolean);
+  }, [media, isValidMediaUrl, resolveMediaUrl]);
+
+  // Debug DEV: validar fuente de datos / slots
+  React.useEffect(() => {
+    if (!import.meta.env.DEV || !org) return;
+    const slot = (s: string) => getMediaBySlot(media as any, s)?.url;
+    console.log('[OrganizerPublicScreen] org/media debug:', {
+      routeId,
+      avatar_url: (org as any)?.avatar_url,
+      mediaLength: media.length,
+      slots: { avatar: slot('avatar'), p1: slot('p1'), p2: slot('p2'), p3: slot('p3'), cover: slot('cover'), v1: slot('v1') },
+      resolved: { avatarUrl, videoSrc },
+    });
+  }, [org, media, routeId, avatarUrl, videoSrc]);
 
   const getRitmoNombres = () => {
     const names: string[] = [];
@@ -945,17 +1012,13 @@ export function OrganizerPublicScreen() {
             {/* Avatar */}
             <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.6 }} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 10, position: 'relative' }}>
               <div id="organizer-avatar" data-test-id="organizer-avatar" className="org-banner-avatar" style={{ width: 250, height: 250, borderRadius: '50%', overflow: 'hidden', border: `4px solid ${colors.glass.strong}`, boxShadow: `${colors.shadows.glow}, 0 20px 40px rgba(0,0,0,0.3)`, background: colors.gradients.primary, position: 'relative' }}>
-                {(() => {
-                  const raw = getMediaBySlot(media as any, 'cover')?.url || getMediaBySlot(media as any, 'p1')?.url || '';
-                  const src = raw ? (toDirectPublicStorageUrl(raw) || raw) : '';
-                  return src ? (
-                    <img src={src} alt="Logo del organizador" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div className="org-banner-avatar-fallback" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem', fontWeight: typography.fontWeight.black, color: colors.light }}>
-                      {(org as any)?.nombre_publico?.[0]?.toUpperCase() || '🎤'}
-                    </div>
-                  );
-                })()}
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Logo del organizador" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div className="org-banner-avatar-fallback" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem', fontWeight: typography.fontWeight.black, color: colors.light }}>
+                    {(org as any)?.nombre_publico?.[0]?.toUpperCase() || '🎤'}
+                  </div>
+                )}
                 <div className="shimmer-effect" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: '50%' }} />
               </div>
               {/* Badge de verificación y botón de compartir inline debajo del avatar */}
@@ -1233,7 +1296,7 @@ export function OrganizerPublicScreen() {
           </motion.section>
 
           {/* Slot Video */}
-          {getMediaBySlot(media as any, 'v1') && (
+          {videoSrc && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1330,7 +1393,7 @@ export function OrganizerPublicScreen() {
                   zIndex: 2
                 }}>
                   <VideoPlayerWithPiP
-                    src={toDirectPublicStorageUrl(getMediaBySlot(media as any, 'v1')!.url) || getMediaBySlot(media as any, 'v1')!.url}
+                    src={videoSrc}
                     controls
                     preload="metadata"
                     controlsList="nodownload noplaybackrate"
