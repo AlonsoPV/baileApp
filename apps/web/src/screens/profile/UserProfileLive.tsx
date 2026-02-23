@@ -726,19 +726,6 @@ export const UserProfileLive: React.FC = () => {
   const [verMasModal, setVerMasModal] = useState<{ title: string; text: string } | null>(null);
   const [communityAvatarErrors, setCommunityAvatarErrors] = useState<Set<string>>(new Set());
 
-  const getCommunityAvatarUrl = React.useCallback((p: { avatar_url?: string | null }) => {
-    const raw = toSupabasePublicUrl(p?.avatar_url ?? undefined) ?? p?.avatar_url ?? undefined;
-    return (raw && typeof raw === 'string') ? (toDirectPublicStorageUrl(raw) || raw) : null;
-  }, [toSupabasePublicUrl]);
-  const showCommunityAvatarImg = React.useCallback((person: { id: string; avatar_url?: string | null }, url: string | null) => {
-    const valid = url && (url.startsWith('http') || url.startsWith('data:'));
-    return valid && !communityAvatarErrors.has(person.id);
-  }, [communityAvatarErrors]);
-  const handleCommunityAvatarError = React.useCallback((personId: string) => {
-    setCommunityAvatarErrors(prev => new Set(prev).add(personId));
-  }, []);
-  React.useEffect(() => setCommunityAvatarErrors(new Set()), [networkList]);
-  
   // Mark UI as ready when profile is loaded and component has rendered
   useEffect(() => {
     if (!profileLoading && profile) {
@@ -810,6 +797,19 @@ export const UserProfileLive: React.FC = () => {
     (maybePath?: string): string | undefined => resolveSupabaseStoragePublicUrl(maybePath),
     []
   );
+
+  const getCommunityAvatarUrl = React.useCallback((p: { avatar_url?: string | null }) => {
+    const raw = toSupabasePublicUrl(p?.avatar_url ?? undefined) ?? p?.avatar_url ?? undefined;
+    return (raw && typeof raw === 'string') ? (toDirectPublicStorageUrl(raw) || raw) : null;
+  }, [toSupabasePublicUrl]);
+  const showCommunityAvatarImg = React.useCallback((person: { id: string; avatar_url?: string | null }, url: string | null) => {
+    const valid = url && (url.startsWith('http') || url.startsWith('data:'));
+    return valid && !communityAvatarErrors.has(person.id);
+  }, [communityAvatarErrors]);
+  const handleCommunityAvatarError = React.useCallback((personId: string) => {
+    setCommunityAvatarErrors(prev => new Set(prev).add(personId));
+  }, []);
+  React.useEffect(() => setCommunityAvatarErrors(new Set()), [networkList]);
 
   const avatarUrl = React.useMemo(() => {
     const resolve = (raw?: string | null) => {
