@@ -184,7 +184,7 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes, variant = 'd
   if (variant === 'hero') {
     if (availableSocials.length === 0) return null;
     return (
-      <div className="bio-section-hero" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-start', alignItems: 'center' }}>
+      <div className="bio-section-hero" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
         {availableSocials.map(([platform, username]) => (
           <a
             key={platform}

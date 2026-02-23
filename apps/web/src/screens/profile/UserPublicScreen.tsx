@@ -320,6 +320,7 @@ const STYLES = `
     justify-content: flex-start;
   }
   .community-avatar-item {
+    position: relative;
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -333,11 +334,30 @@ const STYLES = `
     justify-content: center;
     background: rgba(255,255,255,0.1);
   }
-  .community-avatar-item img { width: 100%; height: 100%; object-fit: cover; }
+  .community-avatar-item img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
   .community-avatar-item.overflow {
     font-size: 0.75rem;
     font-weight: 700;
     color: rgba(255,255,255,0.9);
+  }
+  .community-avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.95);
+    background: rgba(255,255,255,0.12);
+  }
+  .community-user-row .avatar-wrap .community-avatar-initial {
+    font-size: 0.9rem;
   }
   .community-user-row {
     display: flex;
@@ -352,13 +372,19 @@ const STYLES = `
   .community-user-row:last-child { border-bottom: none; }
   .community-user-row:hover { background: rgba(255,255,255,0.04); }
   .community-user-row .avatar-wrap {
+    position: relative;
     width: 40px;
     height: 40px;
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
   }
-  .community-user-row .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .community-user-row .avatar-wrap img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
   .community-user-row .user-info { flex: 1; min-width: 0; }
   .community-user-row .display-name {
     font-size: 0.9375rem;
@@ -756,15 +782,18 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
             height: '100%'
           }}
         >
-          <ImageWithFallback
+          <img
             src={photos[currentIndex]}
             alt={`${t('photo')} ${currentIndex + 1}`}
+            loading="eager"
+            decoding="async"
             style={{
               width: '100%',
               height: '100%',
               objectFit: 'contain',
               objectPosition: 'center',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              display: 'block'
             }}
             onClick={handleFullscreenOpen}
           />
@@ -818,13 +847,16 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
               whileTap={{ scale: 0.95 }}
               className={`carousel-thumbnail ${currentIndex === index ? 'active' : ''}`}
             >
-              <ImageWithFallback
+              <img
                 src={photo}
                 alt={`${t('photo_thumbnail')} ${index + 1}`}
+                loading={index < 4 ? 'eager' : 'lazy'}
+                decoding="async"
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover'
+                  objectFit: 'cover',
+                  display: 'block'
                 }}
               />
             </motion.button>
@@ -856,13 +888,16 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
             borderRadius: '12px',
             overflow: 'hidden'
           }}>
-            <ImageWithFallback
+            <img
               src={photos[currentIndex]}
               alt={`${t('photo')} ${currentIndex + 1} - ${t('close_fullscreen')}`}
+              loading="eager"
+              decoding="async"
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'contain'
+                objectFit: 'contain',
+                display: 'block'
               }}
             />
 
@@ -1126,11 +1161,8 @@ export const UserProfileLive: React.FC = () => {
     return PHOTO_SLOTS
       .map(slot => getMediaBySlot(effectiveMedia as any, slot))
       .filter(item => item && item.kind === 'photo' && item.url && typeof item.url === 'string' && item.url.trim() !== '' && !item.url.includes('undefined') && item.url !== '/default-media.png')
-      .map(item => {
-        const pub = toSupabasePublicUrl(item!.url) ?? item!.url;
-        return toDirectPublicStorageUrl(pub) || pub;
-      });
-  }, [effectiveMedia]);
+      .map(item => toDirectPublicStorageUrl(toSupabasePublicUrl(item!.url) ?? item!.url) || item!.url);
+  }, [effectiveMedia, toSupabasePublicUrl]);
 
   const { counts, setCounts, refetch: refetchCounts } = useFollowerCounts(profileUserId);
   const { isFollowing, toggleFollow, loading: followLoading } = useFollowStatus(profileUserId);
@@ -1142,6 +1174,20 @@ export const UserProfileLive: React.FC = () => {
   const networkIsEmpty = networkList.length === 0;
   const [showAllNetworkModal, setShowAllNetworkModal] = useState(false);
   const [verMasModal, setVerMasModal] = useState<{ title: string; text: string } | null>(null);
+  const [communityAvatarErrors, setCommunityAvatarErrors] = useState<Set<string>>(new Set());
+
+  const getCommunityAvatarUrl = React.useCallback((p: { avatar_url?: string | null }) => {
+    const raw = toSupabasePublicUrl(p?.avatar_url ?? undefined) ?? p?.avatar_url ?? undefined;
+    return (raw && typeof raw === 'string') ? (toDirectPublicStorageUrl(raw) || raw) : null;
+  }, [toSupabasePublicUrl]);
+  const showCommunityAvatarImg = React.useCallback((person: { id: string; avatar_url?: string | null }, url: string | null) => {
+    const valid = url && (url.startsWith('http') || url.startsWith('data:'));
+    return valid && !communityAvatarErrors.has(person.id);
+  }, [communityAvatarErrors]);
+  const handleCommunityAvatarError = React.useCallback((personId: string) => {
+    setCommunityAvatarErrors(prev => new Set(prev).add(personId));
+  }, []);
+  React.useEffect(() => setCommunityAvatarErrors(new Set()), [networkList]);
 
   const goToProfile = useCallback((id?: string) => {
     if (id) navigate(`/u/${id}`);
@@ -1387,6 +1433,8 @@ export const UserProfileLive: React.FC = () => {
                 <div className="community-avatar-row">
                   {(networkList.slice(0, 7) as Array<{ id: string; display_name: string | null; avatar_url: string | null }>).map((person, idx) => {
                     const isOverflow = idx === 6 && networkList.length > 7;
+                    const avatarUrl = getCommunityAvatarUrl(person);
+                    const showImg = showCommunityAvatarImg(person, avatarUrl);
                     return (
                       <button
                         key={person.id}
@@ -1395,19 +1443,29 @@ export const UserProfileLive: React.FC = () => {
                         onClick={() => isOverflow ? setShowAllNetworkModal(true) : goToProfile(person.id)}
                         title={person.display_name || undefined}
                       >
-                        {isOverflow ? `+${networkList.length - 7}` : (
-                          <ImageWithFallback
-                            src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
+                        {isOverflow ? `+${networkList.length - 7}` : showImg ? (
+                          <img
+                            src={avatarUrl!}
                             alt={person.display_name || t('profile')}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            loading="eager"
+                            decoding="async"
+                            onError={() => handleCommunityAvatarError(person.id)}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                           />
+                        ) : (
+                          <span className="community-avatar-initial" aria-hidden>
+                            {person.display_name?.[0]?.toUpperCase() || '?'}
+                          </span>
                         )}
                       </button>
                     );
                   })}
                 </div>
                 <div style={{ maxHeight: 280, overflowY: 'auto' }}>
-                  {networkList.slice(0, 6).map((person) => (
+                  {networkList.slice(0, 6).map((person) => {
+                    const avatarUrl = getCommunityAvatarUrl(person);
+                    const showImg = showCommunityAvatarImg(person, avatarUrl);
+                    return (
                     <button
                       key={person.id}
                       type="button"
@@ -1415,11 +1473,20 @@ export const UserProfileLive: React.FC = () => {
                       onClick={() => goToProfile(person.id)}
                     >
                       <div className="avatar-wrap">
-                        <ImageWithFallback
-                          src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
-                          alt={person.display_name || t('profile')}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
+                        {showImg ? (
+                          <img
+                            src={avatarUrl!}
+                            alt={person.display_name || t('profile')}
+                            loading="eager"
+                            decoding="async"
+                            onError={() => handleCommunityAvatarError(person.id)}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          />
+                        ) : (
+                          <span className="community-avatar-initial" aria-hidden>
+                            {person.display_name?.[0]?.toUpperCase() || '?'}
+                          </span>
+                        )}
                       </div>
                       <div className="user-info">
                         <div className="display-name">{person.display_name || t('dancer')}</div>
@@ -1433,7 +1500,7 @@ export const UserProfileLive: React.FC = () => {
                         )}
                       </div>
                     </button>
-                  ))}
+                  );})}
                 </div>
                 <div className="community-ver-todos">
                   <button
@@ -1455,7 +1522,10 @@ export const UserProfileLive: React.FC = () => {
             title={networkTab === 'followers' ? t('followers') : t('following')}
           >
             <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-              {networkList.map((person) => (
+              {networkList.map((person) => {
+                const avatarUrl = getCommunityAvatarUrl(person);
+                const showImg = showCommunityAvatarImg(person, avatarUrl);
+                return (
                 <button
                   key={person.id}
                   type="button"
@@ -1464,11 +1534,20 @@ export const UserProfileLive: React.FC = () => {
                   style={{ width: '100%' }}
                 >
                   <div className="avatar-wrap">
-                    <ImageWithFallback
-                      src={toDirectPublicStorageUrl(person.avatar_url) || person.avatar_url || ''}
-                      alt={person.display_name || t('profile')}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    {showImg ? (
+                      <img
+                        src={avatarUrl!}
+                        alt={person.display_name || t('profile')}
+                        loading="eager"
+                        decoding="async"
+                        onError={() => handleCommunityAvatarError(person.id)}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                    ) : (
+                      <span className="community-avatar-initial" aria-hidden>
+                        {person.display_name?.[0]?.toUpperCase() || '?'}
+                      </span>
+                    )}
                   </div>
                   <div className="user-info">
                     <div className="display-name">{person.display_name || t('dancer')}</div>
@@ -1482,7 +1561,7 @@ export const UserProfileLive: React.FC = () => {
                     )}
                   </div>
                 </button>
-              ))}
+              );})}
             </div>
           </Modal>
 

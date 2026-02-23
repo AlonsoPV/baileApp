@@ -336,6 +336,7 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
           }
           .user-profile-hero-inner {
             grid-template-columns: 1fr;
+            justify-items: center;
             padding: 1.5rem 1rem;
             gap: 1.25rem;
             text-align: center;
@@ -350,6 +351,11 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
           .user-profile-hero-content {
             align-items: center;
             text-align: center;
+            width: 100%;
+            max-width: 100%;
+          }
+          .user-profile-hero-content .bio-section-hero {
+            justify-content: center;
           }
           .user-profile-hero-avatar {
             width: 160px;
