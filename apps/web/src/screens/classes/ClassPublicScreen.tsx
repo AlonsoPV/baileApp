@@ -21,6 +21,16 @@ import { useToast } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
 import { useCreateCheckoutSession } from '@/hooks/useStripeCheckout';
 import { getLocaleFromI18n } from '@/utils/locale';
+import {
+  Activity,
+  BarChart3,
+  CalendarDays,
+  Clock,
+  DollarSign,
+  ExternalLink,
+  MapPin,
+  Music2,
+} from 'lucide-react';
 
 type SourceType = 'teacher' | 'academy';
 
@@ -325,7 +335,7 @@ export default function ClassPublicScreen() {
           }
           return new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'MXN',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           }).format(precio);
@@ -476,9 +486,9 @@ export default function ClassPublicScreen() {
           if (min === 0) {
             return t('free');
           }
-          return new Intl.NumberFormat('en-US', {
+          return new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'MXN',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           }).format(min);
@@ -525,6 +535,87 @@ export default function ClassPublicScreen() {
     SEO_LOGO_URL;
   const seoImage = seoImageRaw === SEO_LOGO_URL ? SEO_LOGO_URL : (toDirectPublicStorageUrl(seoImageRaw) || seoImageRaw);
   const classUrl = `${SEO_BASE_URL}/clase/${isTeacher ? 'teacher' : 'academy'}/${idNum}${classIndexParam ? `?i=${classIndexParam}` : classIdParam ? `?classId=${classIdParam}` : ''}`;
+
+  // Avatar del hero (OBLIGATORIO: academia/maestro que imparte la clase)
+  const avatarUri = (() => {
+    const raw =
+      profile?.avatar_url ||
+      (getMediaBySlot(mediaList, 'avatar') as any)?.url ||
+      (getMediaBySlot(mediaList, 'p1') as any)?.url ||
+      null;
+    if (!raw) return SEO_LOGO_URL;
+    return toDirectPublicStorageUrl(raw) || raw;
+  })();
+
+  const heroBgUri = (() => {
+    const raw =
+      profile?.banner_url ||
+      (getMediaBySlot(mediaList, 'cover') as any)?.url ||
+      null;
+    if (!raw) return undefined;
+    return toDirectPublicStorageUrl(raw) || raw;
+  })();
+
+  const dayLabelLong = React.useMemo(() => {
+    try {
+      // Fecha específica: “Domingo, 1 de diciembre”
+      if (selectedClass?.fecha) {
+        const fechaValue = String(selectedClass.fecha);
+        const fechaOnly = fechaValue.includes('T') ? fechaValue.split('T')[0] : fechaValue;
+        const [year, month, day] = fechaOnly.split('-').map(Number);
+        const fechaDate = new Date(year, (month || 1) - 1, day || 1);
+        return fechaDate.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+      }
+
+      const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
+
+      // Parámetro de día específico (clase con múltiples días)
+      if (diaParam !== null) {
+        const diaNum = Number(diaParam);
+        if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return dayNames[diaNum] || t('day_not_specified');
+      }
+
+      // Día de la semana simple
+      if (selectedClass?.diaSemana !== undefined && selectedClass?.diaSemana !== null) {
+        return dayNames[selectedClass.diaSemana] || t('day_not_specified');
+      }
+      if (selectedClass?.dia_semana !== undefined && selectedClass?.dia_semana !== null) {
+        const d = Number(selectedClass.dia_semana);
+        if (!Number.isNaN(d) && d >= 0 && d <= 6) return dayNames[d] || t('day_not_specified');
+      }
+
+      // Múltiples días
+      if (Array.isArray(selectedClass?.diasSemana) && selectedClass.diasSemana.length > 0) {
+        const dayNameMap: Record<string, string> = {
+          domingo: t('sunday'), dom: t('sunday'),
+          lunes: t('monday'), lun: t('monday'),
+          martes: t('tuesday'), mar: t('tuesday'),
+          miércoles: t('wednesday'), miercoles: t('wednesday'), mié: t('wednesday'), mie: t('wednesday'),
+          jueves: t('thursday'), jue: t('thursday'),
+          viernes: t('friday'), vie: t('friday'),
+          sábado: t('saturday'), sabado: t('saturday'), sáb: t('saturday'), sab: t('saturday'),
+        };
+        const diasLegibles = selectedClass.diasSemana
+          .map((d: string | number) => {
+            if (typeof d === 'number' && d >= 0 && d <= 6) return dayNames[d];
+            if (typeof d === 'string') return dayNameMap[d.toLowerCase()] || d;
+            return null;
+          })
+          .filter(Boolean) as string[];
+        return diasLegibles.join(', ') || t('day_not_specified');
+      }
+    } catch {}
+    return t('day_not_specified');
+  }, [selectedClass?.fecha, selectedClass?.diaSemana, (selectedClass as any)?.dia_semana, (selectedClass as any)?.diasSemana, diaParam, locale, t]);
+
+  const timeLabel = scheduleLabel || '';
+  const ritmoPrincipal = Array.isArray(ritmosRaw) && ritmosRaw.length ? String(ritmosRaw[0]) : '';
+  const ritmosExtra = Array.isArray(ritmosRaw) ? ritmosRaw.slice(1, 4).map((r: any) => String(r)).filter(Boolean) : [];
+
+  const locationCity = (ubicacion as any)?.ciudad || profile?.ciudad || '';
+  const locationDisplay = [locationLabel, locationCity].filter(Boolean).join(locationLabel && locationCity ? ', ' : '');
+  const mapsQuery = encodeURIComponent(`${(ubicacion as any)?.nombre ?? ''} ${(ubicacion as any)?.direccion ?? ''} ${(ubicacion as any)?.ciudad ?? ''}`.trim());
+  const mapsHref = mapsQuery ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}` : undefined;
 
   return (
     <>
@@ -973,595 +1064,658 @@ export default function ClassPublicScreen() {
         .btn{display:inline-flex;align-items:center;gap:.55rem;padding:.6rem .95rem;border-radius:999px;font-weight:800;letter-spacing:.01em;font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif}
         .btn-maps{border:1px solid rgba(240,147,251,.4);color:#f7d9ff; background:radial-gradient(120% 120% at 0% 0%,rgba(240,147,251,.18),rgba(240,147,251,.08)); box-shadow:0 6px 18px rgba(240,147,251,.20) }
         .btn-copy{border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.06)}
+
+        /* =====================================================
+           ClassPublicScreen UI (hero + info grid per design)
+           ===================================================== */
+        .class-hero {
+          position: relative;
+          overflow: hidden;
+          border-radius: 28px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: linear-gradient(180deg, #1C2B3D 0%, #18273A 100%);
+          box-shadow: 0 22px 60px rgba(0,0,0,0.55);
+          height: clamp(220px, 30vw, 320px);
+          margin-bottom: 16px;
+        }
+        .class-hero__bg {
+          position: absolute;
+          inset: 0;
+          background-size: cover;
+          background-position: center;
+          filter: saturate(0.92) contrast(1.05);
+          opacity: 0.18;
+          transform: scale(1.02);
+        }
+        .class-hero__overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(24,39,58,0.18) 0%, rgba(24,39,58,0.46) 55%, rgba(10,10,15,0.72) 100%);
+          backdrop-filter: blur(10px);
+        }
+        .class-hero__accent {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #5B6CFF 0%, #7A6CFF 45%, #B15CFF 100%);
+          opacity: 0.95;
+        }
+        .class-hero__inner {
+          position: relative;
+          z-index: 1;
+          height: 100%;
+          padding: 18px 18px 18px 18px;
+          display: grid;
+          grid-template-columns: 92px 1fr;
+          gap: 16px;
+          align-items: end;
+        }
+        .class-hero__avatar {
+          position: absolute;
+          left: 18px;
+          top: -18px;
+          width: 96px;
+          height: 96px;
+          border-radius: 999px;
+          border: 3px solid rgba(255,255,255,0.18);
+          background: rgba(255,255,255,0.07);
+          box-shadow: 0 18px 46px rgba(0,0,0,0.55);
+          overflow: hidden;
+        }
+        .class-hero__avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .class-hero__text {
+          grid-column: 1 / -1;
+          padding-top: 58px; /* espacio para avatar overlap */
+          min-width: 0;
+        }
+        .class-hero__title {
+          margin: 0 0 6px 0;
+          color: #fff;
+          font-weight: 900;
+          letter-spacing: -0.03em;
+          line-height: 1.06;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-size: clamp(1.65rem, 4.2vw, 2.6rem);
+        }
+        .class-hero__subtitle {
+          margin: 0 0 12px 0;
+          color: rgba(255,255,255,0.68);
+          font-size: 0.95rem;
+          font-weight: 600;
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .class-hero__subtitle a {
+          color: rgba(255,255,255,0.86);
+          text-decoration: none;
+          font-weight: 700;
+          border-bottom: 2px solid rgba(255,255,255,0.18);
+        }
+        .class-chips-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          align-items: center;
+          margin: 0;
+          padding: 0;
+          list-style: none;
+        }
+        .class-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 12px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.10);
+          background: rgba(0,0,0,0.16);
+          color: rgba(255,255,255,0.92);
+          font-size: 0.9rem;
+          font-weight: 800;
+          box-shadow: 0 14px 34px rgba(0,0,0,0.22);
+          backdrop-filter: blur(14px);
+          max-width: 100%;
+          min-width: 0;
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .class-chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .class-info-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 14px;
+          margin-top: 14px;
+          margin-bottom: 16px;
+        }
+        @media (min-width: 768px) {
+          .class-info-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .class-info-card {
+          border-radius: 22px;
+          border: 1px solid rgba(255,255,255,0.10);
+          background: rgba(14, 16, 20, 0.78);
+          box-shadow: 0 18px 46px rgba(0,0,0,0.45);
+          backdrop-filter: blur(12px);
+          padding: 16px 16px;
+          display: grid;
+          grid-template-columns: 44px 1fr auto;
+          gap: 12px;
+          align-items: start;
+          min-width: 0;
+        }
+        .class-info-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 14px;
+          display: grid;
+          place-items: center;
+          background: rgba(122, 108, 255, 0.14);
+          border: 1px solid rgba(122, 108, 255, 0.20);
+          color: rgba(122, 108, 255, 0.98);
+          box-shadow: 0 12px 26px rgba(0,0,0,0.22);
+        }
+        .class-info-meta {
+          min-width: 0;
+        }
+        .class-info-label {
+          margin: 0 0 6px 0;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.55);
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .class-info-value {
+          margin: 0;
+          font-size: 1.05rem;
+          font-weight: 900;
+          color: rgba(255,255,255,0.95);
+          line-height: 1.25;
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          word-break: break-word;
+        }
+        .class-info-sub {
+          margin: 6px 0 0 0;
+          font-size: 0.92rem;
+          font-weight: 700;
+          color: rgba(255,255,255,0.70);
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .class-info-action {
+          min-width: 44px;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          border: 1px solid rgba(122,108,255,0.22);
+          background: rgba(122,108,255,0.10);
+          color: rgba(122,108,255,0.98);
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .class-section {
+          margin-top: 16px;
+        }
+        .class-actions-row {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          align-items: center;
+        }
       `}</style>
       <div className="date-public-inner">
-        {/* Hero Banner */}
-        <motion.div
-          className="class-hero-banner"
-          initial={{ opacity: 0, y: 16 }}
+        {/* Hero (oscuro, compacto) */}
+        <motion.section
+          className="class-hero"
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.36 }}
+          transition={{ duration: 0.32 }}
+          aria-label={t('class', 'Clase')}
         >
-          {/* Efectos decorativos de fondo */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(circle at 20% 30%, rgba(30,136,229,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(240,147,251,0.08) 0%, transparent 50%)',
-            pointerEvents: 'none',
-            zIndex: 0
-          }} />
-          
-          <div className="class-hero-content">
-            {/* Columna 1: Info de la clase */}
-            <div>
-              <div className="class-back-button-container" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', width: '100%' }}>
-                  <motion.button
-                  className="class-back-button"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => navigate(creatorLink)}
-                  style={{
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: 999,
-                    border: '2px solid rgba(240,147,251,0.3)',
-                    background: 'rgba(240,147,251,0.15)',
-                    color: '#f093fb',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    boxShadow: '0 8px 20px rgba(240,147,251,.25)',
-                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                  }}
-                  >
-                    {t('back')}
-                  </motion.button>
-              </div>
-              
-              <h1 className="class-title" style={{ textAlign: 'left' }}>
-                {classTitle}
-              </h1>
+          {heroBgUri && <div className="class-hero__bg" style={{ backgroundImage: `url(${heroBgUri})` }} />}
+          <div className="class-hero__overlay" />
+          <div className="class-hero__accent" aria-hidden />
 
-              {/* Chips de fecha/día, horario, costo, ubicación y nivel */}
-              <div className="class-chips-container" style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem', width: '100%' }}>
-                {/* Chip de fecha o día */}
-                {(() => {
-                  if (selectedClass?.fecha) {
-                    // Fecha específica - parsear como hora local para evitar problemas de zona horaria
-                    const fechaDate = (() => {
-                      const fechaValue = selectedClass.fecha;
-                      // Si la fecha ya incluye hora, extraer solo la parte de fecha
-                      const fechaOnly = fechaValue.includes('T') ? fechaValue.split('T')[0] : fechaValue;
-                      const [year, month, day] = fechaOnly.split('-').map(Number);
-                      // Crear fecha en hora local (no UTC) para evitar mostrar día anterior
-                      return new Date(year, month - 1, day);
-                    })();
-                    const fechaStr = fechaDate.toLocaleDateString(locale, { 
-                      weekday: 'short', 
-                      day: 'numeric', 
-                      month: 'short' 
-                    });
-                    return (
-                      <span className="chip chip-date">
-                        📅 {fechaStr}
-                      </span>
-                    );
-                  } else if (diaParam !== null) {
-                    // Si hay un parámetro de día específico en la URL, mostrar solo ese día
-                    const diaNum = Number(diaParam);
-                    if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
-                      const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
-                      const dayName = dayNames[diaNum] || t('day_not_specified');
-                      return (
-                        <span className="chip chip-date">
-                          📅 {dayName}
-                        </span>
-                      );
-                    }
-                  } else if (diaParam !== null) {
-                    // Si hay un parámetro de día específico en la URL, mostrar solo ese día
-                    const diaNum = Number(diaParam);
-                    if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
-                      const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
-                      const dayName = dayNames[diaNum] || t('day_not_specified');
-                      return (
-                        <span className="chip chip-date">
-                          📅 {dayName}
-                        </span>
-                      );
-                    }
-                  } else if (selectedClass?.diaSemana !== undefined && selectedClass?.diaSemana !== null) {
-                    // Día de la semana
-                    const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
-                    const dayName = dayNames[selectedClass.diaSemana] || t('day_not_specified');
-                    return (
-                      <span className="chip chip-date">
-                        📅 {dayName}
-                      </span>
-                    );
-                  } else if (Array.isArray(selectedClass?.diasSemana) && selectedClass.diasSemana.length > 0) {
-                    // Múltiples días - convertir números/strings a nombres de días
-                    const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
-                    const dayNameMap: Record<string, string> = {
-                      'domingo': t('sunday'), 'dom': t('sunday'),
-                      'lunes': t('monday'), 'lun': t('monday'),
-                      'martes': t('tuesday'), 'mar': t('tuesday'),
-                      'miércoles': t('wednesday'), 'miercoles': t('wednesday'), 'mié': t('wednesday'), 'mie': t('wednesday'),
-                      'jueves': t('thursday'), 'jue': t('thursday'),
-                      'viernes': t('friday'), 'vie': t('friday'),
-                      'sábado': t('saturday'), 'sabado': t('saturday'), 'sáb': t('saturday'), 'sab': t('saturday'),
-                    };
-                    const diasLegibles = selectedClass.diasSemana.map((d: string | number) => {
-                      if (typeof d === 'number' && d >= 0 && d <= 6) {
-                        return dayNames[d];
-                      }
-                      if (typeof d === 'string') {
-                        return dayNameMap[d.toLowerCase()] || d;
-                      }
-                      return null;
-                    }).filter((d: string | null) => d !== null);
-                    return (
-                      <span className="chip chip-date">
-                        📅 {diasLegibles.join(', ')}
-                      </span>
-                    );
-                  }
-                  return null;
-                })()}
-                
-                {scheduleLabel && (
-                  <span className="chip chip-time">🕒 {scheduleLabel}</span>
-                )}
-                {costLabel && (
-                  <span className="chip chip-cost">💰 {costLabel}</span>
-                )}
-                {locationLabel && (
-                  <span className="chip chip-location">📍 {locationLabel}</span>
+          <div className="class-hero__avatar">
+            <img src={avatarUri} alt={creatorName ? `${creatorName} avatar` : 'Avatar'} />
+          </div>
+
+          <div className="class-hero__inner">
+            <div className="class-hero__text">
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(creatorLink)}
+                  className="class-info-action"
+                  aria-label={t('back', 'Volver')}
+                  title={t('back', 'Volver')}
+                  style={{ padding: '0 14px', fontWeight: 900 }}
+                >
+                  ← {t('back')}
+                </motion.button>
+              </div>
+
+              <h1 className="class-hero__title">{classTitle}</h1>
+              <p className="class-hero__subtitle">
+                {t('by', 'por')}{' '}
+                <Link to={creatorLink}>
+                  {creatorName}
+                </Link>
+              </p>
+
+              <ul className="class-chips-row" aria-label={t('filters', 'Detalles')}>
+                {ritmoPrincipal && (
+                  <li className="class-chip" title={ritmoPrincipal}>
+                    <Music2 size={18} aria-hidden />
+                    <span>{ritmoPrincipal}</span>
+                  </li>
                 )}
                 {selectedClass?.nivel && (
-                  <span className="chip chip-level">
-                    🎯 {selectedClass.nivel}
-                  </span>
+                  <li className="class-chip" title={String(selectedClass.nivel)}>
+                    <BarChart3 size={18} aria-hidden />
+                    <span>{String(selectedClass.nivel)}</span>
+                  </li>
                 )}
-              </div>
-
-              {/* Botones de acción */}
-              <div className="class-action-buttons" style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginBottom: '1.5rem', width: '100%' }}>
-                {/* Botón Ver en Maps */}
-                {ubicacion && (ubicacion.direccion || ubicacion.nombre || ubicacion.ciudad) && (
-                  <motion.a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ubicacion.nombre ?? ''} ${ubicacion.direccion ?? ''} ${ubicacion.ciudad ?? ''}`.trim())}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="btn-maps-inline"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '.55rem',
-                      padding: '.6rem 1.1rem',
-                      borderRadius: 999,
-                      border: '1px solid rgba(240,147,251,.4)',
-                      color: '#f7d9ff',
-                      background: 'radial-gradient(120% 120% at 0% 0%, rgba(240,147,251,.18), rgba(240,147,251,.08))',
-                      boxShadow: '0 6px 18px rgba(240,147,251,.20)',
-                      fontWeight: 800,
-                      fontSize: '.9rem',
-                      textDecoration: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                    }}
-                  >
-                    <span>📍</span>
-                    <span>{t('view_on_maps')}</span>
-                    <span aria-hidden style={{ fontSize: '.85rem' }}>↗</span>
-                  </motion.a>
+                {!!dayLabelLong && (
+                  <li className="class-chip" title={dayLabelLong}>
+                    <CalendarDays size={18} aria-hidden />
+                    <span>{dayLabelLong}</span>
+                  </li>
                 )}
-
-                {/* Botón WhatsApp (solo para academias con WhatsApp configurado y usuarios logueados) */}
-                {user && whatsappNumber && (
-                  <motion.a
-                    href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, classTitle, t('hello_from_db')) || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '.55rem',
-                      padding: '.6rem 1.1rem',
-                      borderRadius: 999,
-                      border: '1px solid rgba(37, 211, 102, 0.5)',
-                      color: '#fff',
-                      background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                      boxShadow: '0 6px 18px rgba(37, 211, 102, 0.3)',
-                      fontWeight: 800,
-                      fontSize: '.9rem',
-                      textDecoration: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                    }}
-                  >
-                    <FaWhatsapp size={18} />
-                    <span>{t('consult_whatsapp')}</span>
-                  </motion.a>
+                {!!timeLabel && (
+                  <li className="class-chip" title={timeLabel}>
+                    <Clock size={18} aria-hidden />
+                    <span>{timeLabel}</span>
+                  </li>
                 )}
-
-                {/* Botón de Pago (Stripe) - solo requiere precio > 0 y stripe_account_id */}
-                {typeof classPrice === 'number' && classPrice > 0 && !!profile?.stripe_account_id && (
-                  <motion.button
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handlePayClick}
-                    disabled={createCheckout.isPending}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '.55rem',
-                      padding: '.6rem 1.1rem',
-                      borderRadius: 999,
-                      border: '1px solid rgba(34, 197, 94, 0.5)',
-                      color: '#fff',
-                      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                      boxShadow: '0 6px 18px rgba(34, 197, 94, 0.3)',
-                      fontWeight: 800,
-                      fontSize: '.9rem',
-                      cursor: createCheckout.isPending ? 'not-allowed' : 'pointer',
-                      opacity: createCheckout.isPending ? 0.7 : 1,
-                      transition: 'all 0.2s ease',
-                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                    }}
-                  >
-                    <span>💳</span>
-                    <span>
-                      {createCheckout.isPending
-                        ? t('processing')
-                        : `${t('pay')} ${new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', { style: 'currency', currency: 'MXN' }).format(
-                            classPrice,
-                          )}`}
-                    </span>
-                  </motion.button>
-                )}
-
-                {/* Botón de Agregar a Calendario */}
-                {selectedClass && (
-                  <motion.div
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <AddToCalendarWithStats
-                      eventId={classUniqueId || idNum}
-                      classId={classUniqueId || undefined}
-                      academyId={!isTeacher ? profile?.id : undefined}
-                      teacherId={isTeacher ? profile?.id : undefined}
-                      roleBaile={userProfile?.rol_baile || null}
-                      zonaTagId={selectedClass?.ubicacionJson?.zona_tag_id || profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
-                      title={classTitle}
-                      description={`Clase de ${classTitle} con ${creatorName}`}
-                      location={locationLabel}
-                      fecha={selectedClass?.fecha || null}
-                      diaSemana={(() => {
-                        // Si hay un parámetro dia en la URL, usar ese día específico
-                        if (diaParam !== null) {
-                          const diaNum = Number(diaParam);
-                          if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
-                            return diaNum;
-                          }
-                        }
-                        // Si no, usar el diaSemana de la clase
-                        return selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null;
-                      })()}
-                      diasSemana={(() => {
-                        // Si hay un parámetro dia en la URL, no pasar diasSemana (solo ese día específico)
-                        if (diaParam !== null) {
-                          const diaNum = Number(diaParam);
-                          if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
-                            return null; // No pasar diasSemana, solo diaSemana con el día específico
-                          }
-                        }
-                        // Si no hay parámetro dia, usar la lógica normal
-                        if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana)) {
-                          const dayMap: Record<string, number> = {
-                            'domingo': 0, 'dom': 0,
-                            'lunes': 1, 'lun': 1,
-                            'martes': 2, 'mar': 2,
-                            'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
-                            'jueves': 4, 'jue': 4,
-                            'viernes': 5, 'vie': 5,
-                            'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
-                          };
-                          const dias = selectedClass.diasSemana
-                            .map((d: string) => dayMap[String(d).toLowerCase().trim()])
-                            .filter((d: number | undefined) => d !== undefined) as number[];
-                          return dias.length > 0 ? dias : null;
-                        }
-                        return null;
-                      })()}
-                      start={(() => {
-                        try {
-                          // Función auxiliar para normalizar hora
-                          const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
-                            if (!timeStr || typeof timeStr !== 'string') return defaultTime;
-                            const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
-                            if (timeMatch) {
-                              const hours = parseInt(timeMatch[1], 10);
-                              const minutes = parseInt(timeMatch[2], 10);
-                              if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-                                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                              }
-                            }
-                            return defaultTime;
-                          };
-                          
-                          if (selectedClass.fecha) {
-                            const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
-                            const hora = normalizeTime(selectedClass.inicio, '20:00');
-                            // Usar fecha local en lugar de string ISO para evitar problemas de zona horaria
-                            const [year, month, day] = fechaStr.split('-').map(Number);
-                            const [hour, minute] = hora.split(':').map(Number);
-                            if (!isNaN(year) && !isNaN(month) && !isNaN(day) && !isNaN(hour) && !isNaN(minute)) {
-                              const date = new Date(year, month - 1, day, hour, minute, 0, 0);
-                              console.log('[ClassPublicScreen] ✅ Start date construida:', {
-                                fechaStr,
-                                hora,
-                                date: date.toISOString(),
-                                local: date.toLocaleString()
-                              });
-                              return date;
-                            }
-                            return new Date(`${fechaStr}T${hora}:00`);
-                          }
-                          // Si es clase semanal, calcular próxima ocurrencia
-                          // Priorizar: 1) día de URL, 2) diaSemana/dia_semana específico, 3) primer día de diasSemana
-                          const diaParaCalcular = (() => {
-                            // 1. Si hay parámetro dia en la URL, usar ese día específico
-                            if (diaParam !== null) {
-                              const diaNum = Number(diaParam);
-                              if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
-                                console.log('[ClassPublicScreen] 📅 Usando día de URL:', diaNum);
-                                return diaNum;
-                              }
-                            }
-                            
-                            // 2. Priorizar diaSemana o dia_semana (día específico de esta clase expandida)
-                            if (selectedClass?.diaSemana !== null && selectedClass?.diaSemana !== undefined && typeof selectedClass.diaSemana === 'number' && selectedClass.diaSemana >= 0 && selectedClass.diaSemana <= 6) {
-                              console.log('[ClassPublicScreen] 📅 Usando diaSemana específico:', selectedClass.diaSemana);
-                              return selectedClass.diaSemana;
-                            }
-                            if (selectedClass?.dia_semana !== null && selectedClass?.dia_semana !== undefined && typeof selectedClass.dia_semana === 'number' && selectedClass.dia_semana >= 0 && selectedClass.dia_semana <= 6) {
-                              console.log('[ClassPublicScreen] 📅 Usando dia_semana específico:', selectedClass.dia_semana);
-                              return selectedClass.dia_semana;
-                            }
-                            
-                            // 3. Si tiene múltiples días, usar el primer día
-                            if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) && selectedClass.diasSemana.length > 0) {
-                              const dayMap: Record<string, number> = {
-                                'domingo': 0, 'dom': 0,
-                                'lunes': 1, 'lun': 1,
-                                'martes': 2, 'mar': 2,
-                                'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
-                                'jueves': 4, 'jue': 4,
-                                'viernes': 5, 'vie': 5,
-                                'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
-                              };
-                              const firstDay = selectedClass.diasSemana[0];
-                              if (typeof firstDay === 'number' && firstDay >= 0 && firstDay <= 6) {
-                                console.log('[ClassPublicScreen] 📅 Usando primer día de diasSemana (número):', firstDay);
-                                return firstDay;
-                              }
-                              if (typeof firstDay === 'string') {
-                                const dayNum = dayMap[firstDay.toLowerCase().trim()];
-                                if (dayNum !== undefined) {
-                                  console.log('[ClassPublicScreen] 📅 Usando primer día de diasSemana (string):', firstDay, '->', dayNum);
-                                  return dayNum;
-                                }
-                              }
-                            }
-                            
-                            console.warn('[ClassPublicScreen] ⚠️ No se pudo determinar el día para calcular:', {
-                              diaParam,
-                              diaSemana: selectedClass?.diaSemana,
-                              dia_semana: selectedClass?.dia_semana,
-                              diasSemana: selectedClass?.diasSemana
-                            });
-                            return null;
-                          })();
-                          
-                          if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
-                            const hora = normalizeTime(selectedClass.inicio, '20:00');
-                            const date = calculateNextDateWithTime(diaParaCalcular, hora);
-                            console.log('[ClassPublicScreen] ✅ Start date calculada (semanal):', {
-                              diaParaCalcular,
-                              hora,
-                              date: date.toISOString(),
-                              local: date.toLocaleString(),
-                              diaSemana: selectedClass?.diaSemana,
-                              dia_semana: selectedClass?.dia_semana,
-                              diasSemana: selectedClass?.diasSemana
-                            });
-                            return date;
-                          }
-                          
-                          // Fallback: usar fecha/hora actual
-                          const now = new Date();
-                          const hora = normalizeTime(selectedClass.inicio, '20:00');
-                          const [hour, minute] = hora.split(':').map(Number);
-                          now.setHours(hour, minute, 0, 0);
-                          return now;
-                        } catch {
-                          return new Date();
-                        }
-                      })()}
-                      end={(() => {
-                        try {
-                          // Función auxiliar para normalizar hora
-                          const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
-                            if (!timeStr || typeof timeStr !== 'string') return defaultTime;
-                            const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
-                            if (timeMatch) {
-                              const hours = parseInt(timeMatch[1], 10);
-                              const minutes = parseInt(timeMatch[2], 10);
-                              if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-                                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                              }
-                            }
-                            return defaultTime;
-                          };
-                          
-                          if (selectedClass.fecha) {
-                            const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
-                            const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
-                            // Usar fecha local en lugar de string ISO para evitar problemas de zona horaria
-                            const [year, month, day] = fechaStr.split('-').map(Number);
-                            const [hour, minute] = hora.split(':').map(Number);
-                            if (!isNaN(year) && !isNaN(month) && !isNaN(day) && !isNaN(hour) && !isNaN(minute)) {
-                              const date = new Date(year, month - 1, day, hour, minute, 0, 0);
-                              console.log('[ClassPublicScreen] ✅ End date construida:', {
-                                fechaStr,
-                                hora,
-                                date: date.toISOString(),
-                                local: date.toLocaleString()
-                              });
-                              return date;
-                            }
-                            return new Date(`${fechaStr}T${hora}:00`);
-                          }
-                          // Si es clase semanal, calcular próxima ocurrencia
-                          // Priorizar: 1) día de URL, 2) diaSemana/dia_semana específico, 3) primer día de diasSemana
-                          const diaParaCalcular = (() => {
-                            // 1. Si hay parámetro dia en la URL, usar ese día específico
-                            if (diaParam !== null) {
-                              const diaNum = Number(diaParam);
-                              if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) {
-                                return diaNum;
-                              }
-                            }
-                            
-                            // 2. Priorizar diaSemana o dia_semana (día específico de esta clase expandida)
-                            if (selectedClass?.diaSemana !== null && selectedClass?.diaSemana !== undefined && typeof selectedClass.diaSemana === 'number' && selectedClass.diaSemana >= 0 && selectedClass.diaSemana <= 6) {
-                              return selectedClass.diaSemana;
-                            }
-                            if (selectedClass?.dia_semana !== null && selectedClass?.dia_semana !== undefined && typeof selectedClass.dia_semana === 'number' && selectedClass.dia_semana >= 0 && selectedClass.dia_semana <= 6) {
-                              return selectedClass.dia_semana;
-                            }
-                            
-                            // 3. Si tiene múltiples días, usar el primer día
-                            if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) && selectedClass.diasSemana.length > 0) {
-                              const dayMap: Record<string, number> = {
-                                'domingo': 0, 'dom': 0,
-                                'lunes': 1, 'lun': 1,
-                                'martes': 2, 'mar': 2,
-                                'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
-                                'jueves': 4, 'jue': 4,
-                                'viernes': 5, 'vie': 5,
-                                'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
-                              };
-                              const firstDay = selectedClass.diasSemana[0];
-                              if (typeof firstDay === 'number' && firstDay >= 0 && firstDay <= 6) {
-                                return firstDay;
-                              }
-                              if (typeof firstDay === 'string') {
-                                const dayNum = dayMap[firstDay.toLowerCase().trim()];
-                                if (dayNum !== undefined) return dayNum;
-                              }
-                            }
-                            
-                            return null;
-                          })();
-                          
-                          if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
-                            const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
-                            const startDate = calculateNextDateWithTime(diaParaCalcular, normalizeTime(selectedClass.inicio, '20:00'));
-                            const endDate = new Date(startDate);
-                            const [horaFin, minutoFin] = hora.split(':').map(Number);
-                            if (!isNaN(horaFin) && !isNaN(minutoFin)) {
-                              endDate.setHours(horaFin, minutoFin, 0, 0);
-                              // Si la hora de fin es menor o igual a la de inicio, agregar 2 horas
-                              if (endDate.getTime() <= startDate.getTime()) {
-                                endDate.setHours(startDate.getHours() + 2);
-                              }
-                              console.log('[ClassPublicScreen] ✅ End date calculada (semanal):', {
-                                diaParaCalcular,
-                                hora,
-                                startDate: startDate.toISOString(),
-                                endDate: endDate.toISOString(),
-                                local: endDate.toLocaleString(),
-                                diaSemana: selectedClass?.diaSemana,
-                                dia_semana: selectedClass?.dia_semana,
-                                diasSemana: selectedClass?.diasSemana
-                              });
-                              return endDate;
-                            }
-                            // Fallback si la hora no es válida
-                            endDate.setHours(startDate.getHours() + 2);
-                            return endDate;
-                          }
-                          
-                          // Fallback: usar fecha/hora actual
-                          const now = new Date();
-                          const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
-                          const [hour, minute] = hora.split(':').map(Number);
-                          now.setHours(hour, minute, 0, 0);
-                          return now;
-                        } catch {
-                          const end = new Date();
-                          end.setHours(end.getHours() + 2);
-                          return end;
-                        }
-                      })()}
-                      showAsIcon={false}
-                    />
-                  </motion.div>
-                )}
-              </div>
-            </div>
-            
-            {/* Columna 2: Creada por + Card del creador */}
-            <div className="class-creator-section" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-              <div className="class-creator-info" style={{ 
-                padding: '1rem 1.25rem',
-                borderRadius: 16,
-                border: '1px solid rgba(255,255,255,.12)',
-                background: 'rgba(255,255,255,.05)',
-                backdropFilter: 'blur(10px)',
-                textAlign: 'center',
-                width: '100%',
-                maxWidth: '350px'
-              }}>
-                {/* <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,.7)', marginBottom: '.5rem' }}>
-                  Creada por
-                </p> */}
-                <Link to={creatorLink} style={{ 
-                  color: '#FFD166', 
-                  fontWeight: 900, 
-                  fontSize: '1.1rem',
-                  textDecoration: 'none', 
-                  borderBottom: '2px solid rgba(255,209,102,0.5)',
-                  paddingBottom: '2px',
-                  transition: 'all 0.2s',
-                  display: 'inline-block',
-                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                }}>
-                  {creatorTypeLabel} · {creatorName}
-                </Link>
-              </div>
-              
-              <div style={{ width: '100%', maxWidth: '350px' }}>
-                {isTeacher ? (
-                  <TeacherCard item={profile} />
-                ) : (
-                  <AcademyCard item={profile} />
-                )}
-              </div>
+              </ul>
             </div>
           </div>
-        </motion.div>
+        </motion.section>
+
+        {/* Grid de 4 cards (info) */}
+        <section className="class-info-grid" aria-label={t('info', 'Información')}>
+          <div className="class-info-card">
+            <div className="class-info-icon" aria-hidden><CalendarDays size={20} /></div>
+            <div className="class-info-meta">
+              <p className="class-info-label">{t('date_and_time', 'Fecha y hora')}</p>
+              <p className="class-info-value">{dayLabelLong}</p>
+              {timeLabel && <p className="class-info-sub">{timeLabel}</p>}
+            </div>
+            <span />
+          </div>
+
+          <div className="class-info-card">
+            <div className="class-info-icon" aria-hidden><MapPin size={20} /></div>
+            <div className="class-info-meta">
+              <p className="class-info-label">{t('location', 'Ubicación')}</p>
+              <p className="class-info-value">{locationDisplay || t('place', 'Lugar')}</p>
+            </div>
+            {mapsHref ? (
+              <a
+                className="class-info-action"
+                href={mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t('view_on_maps', 'Abrir en Google Maps')}
+                title={t('view_on_maps', 'Abrir en Google Maps')}
+              >
+                <ExternalLink size={18} aria-hidden />
+              </a>
+            ) : (
+              <span />
+            )}
+          </div>
+
+          <div className="class-info-card">
+            <div className="class-info-icon" aria-hidden><DollarSign size={20} /></div>
+            <div className="class-info-meta">
+              <p className="class-info-label">{t('costs', 'Costo')}</p>
+              <p className="class-info-value">{costLabel || t('cost_not_specified', 'Costo no especificado')}</p>
+            </div>
+            <span />
+          </div>
+
+          <div className="class-info-card">
+            <div className="class-info-icon" aria-hidden><Activity size={20} /></div>
+            <div className="class-info-meta">
+              <p className="class-info-label">{t('level_and_ritmos', 'Nivel y ritmos')}</p>
+              <p className="class-info-value">
+                {(selectedClass?.nivel ? String(selectedClass.nivel) : t('level', 'Nivel'))}
+                {ritmoPrincipal ? ` • ${ritmoPrincipal}` : ''}
+              </p>
+              {ritmosExtra.length > 0 && (
+                <p className="class-info-sub">
+                  {ritmosExtra.join(' • ')}
+                </p>
+              )}
+            </div>
+            <span />
+          </div>
+        </section>
+
+        {/* Acciones existentes (reubicadas, misma lógica) */}
+        <section className="class-section" aria-label={t('actions', 'Acciones')}>
+          <div className="class-actions-row">
+            {/* Abrir Maps */}
+            {mapsHref && (
+              <motion.a
+                href={mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.03, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                className="btn-maps-inline"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '.55rem',
+                  padding: '.6rem 1.1rem',
+                  borderRadius: 999,
+                  border: '1px solid rgba(240,147,251,.4)',
+                  color: '#f7d9ff',
+                  background: 'radial-gradient(120% 120% at 0% 0%, rgba(240,147,251,.18), rgba(240,147,251,.08))',
+                  boxShadow: '0 6px 18px rgba(240,147,251,.20)',
+                  fontWeight: 800,
+                  fontSize: '.9rem',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                }}
+              >
+                <span>📍</span>
+                <span>{t('view_on_maps')}</span>
+                <span aria-hidden style={{ fontSize: '.85rem' }}>↗</span>
+              </motion.a>
+            )}
+
+            {/* WhatsApp (existente) */}
+            {user && whatsappNumber && (
+              <motion.a
+                href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, classTitle, t('hello_from_db')) || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.03, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '.55rem',
+                  padding: '.6rem 1.1rem',
+                  borderRadius: 999,
+                  border: '1px solid rgba(37, 211, 102, 0.5)',
+                  color: '#fff',
+                  background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                  boxShadow: '0 6px 18px rgba(37, 211, 102, 0.3)',
+                  fontWeight: 800,
+                  fontSize: '.9rem',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                }}
+              >
+                <FaWhatsapp size={18} />
+                <span>{t('consult_whatsapp')}</span>
+              </motion.a>
+            )}
+
+            {/* Pago Stripe (existente) */}
+            {typeof classPrice === 'number' && classPrice > 0 && !!profile?.stripe_account_id && (
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handlePayClick}
+                disabled={createCheckout.isPending}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '.55rem',
+                  padding: '.6rem 1.1rem',
+                  borderRadius: 999,
+                  border: '1px solid rgba(34, 197, 94, 0.5)',
+                  color: '#fff',
+                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                  boxShadow: '0 6px 18px rgba(34, 197, 94, 0.3)',
+                  fontWeight: 800,
+                  fontSize: '.9rem',
+                  cursor: createCheckout.isPending ? 'not-allowed' : 'pointer',
+                  opacity: createCheckout.isPending ? 0.7 : 1,
+                  transition: 'all 0.2s ease',
+                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                }}
+              >
+                <span>💳</span>
+                <span>
+                  {createCheckout.isPending
+                    ? t('processing')
+                    : `${t('pay')} ${new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', { style: 'currency', currency: 'MXN' }).format(
+                        classPrice,
+                      )}`}
+                </span>
+              </motion.button>
+            )}
+
+            {/* Add to calendar (existente) */}
+            {selectedClass && (
+              <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+                <AddToCalendarWithStats
+                  eventId={classUniqueId || idNum}
+                  classId={classUniqueId || undefined}
+                  academyId={!isTeacher ? profile?.id : undefined}
+                  teacherId={isTeacher ? profile?.id : undefined}
+                  roleBaile={userProfile?.rol_baile || null}
+                  zonaTagId={selectedClass?.ubicacionJson?.zona_tag_id || profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
+                  title={classTitle}
+                  description={`Clase de ${classTitle} con ${creatorName}`}
+                  location={locationLabel}
+                  fecha={selectedClass?.fecha || null}
+                  diaSemana={(() => {
+                    if (diaParam !== null) {
+                      const diaNum = Number(diaParam);
+                      if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
+                    }
+                    return selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null;
+                  })()}
+                  diasSemana={(() => {
+                    if (diaParam !== null) {
+                      const diaNum = Number(diaParam);
+                      if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return null;
+                    }
+                    if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana)) {
+                      const dayMap: Record<string, number> = {
+                        domingo: 0, dom: 0,
+                        lunes: 1, lun: 1,
+                        martes: 2, mar: 2,
+                        miércoles: 3, miercoles: 3, mié: 3, mie: 3,
+                        jueves: 4, jue: 4,
+                        viernes: 5, vie: 5,
+                        sábado: 6, sabado: 6, sáb: 6, sab: 6,
+                      };
+                      const dias = selectedClass.diasSemana
+                        .map((d: string) => dayMap[String(d).toLowerCase().trim()])
+                        .filter((d: number | undefined) => d !== undefined) as number[];
+                      return dias.length > 0 ? dias : null;
+                    }
+                    return null;
+                  })()}
+                  start={(() => {
+                    try {
+                      const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
+                        if (!timeStr || typeof timeStr !== 'string') return defaultTime;
+                        const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
+                        if (timeMatch) {
+                          const hours = parseInt(timeMatch[1], 10);
+                          const minutes = parseInt(timeMatch[2], 10);
+                          if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                          }
+                        }
+                        return defaultTime;
+                      };
+                      if (selectedClass.fecha) {
+                        const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                        const hora = normalizeTime(selectedClass.inicio, '20:00');
+                        const [year, month, day] = fechaStr.split('-').map(Number);
+                        const [hour, minute] = hora.split(':').map(Number);
+                        if (!isNaN(year) && !isNaN(month) && !isNaN(day) && !isNaN(hour) && !isNaN(minute)) {
+                          return new Date(year, month - 1, day, hour, minute, 0, 0);
+                        }
+                        return new Date(`${fechaStr}T${hora}:00`);
+                      }
+                      const diaParaCalcular = (() => {
+                        if (diaParam !== null) {
+                          const diaNum = Number(diaParam);
+                          if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
+                        }
+                        if (selectedClass?.diaSemana !== null && selectedClass?.diaSemana !== undefined && typeof selectedClass.diaSemana === 'number') return selectedClass.diaSemana;
+                        if (selectedClass?.dia_semana !== null && selectedClass?.dia_semana !== undefined && typeof selectedClass.dia_semana === 'number') return selectedClass.dia_semana;
+                        if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) && selectedClass.diasSemana.length > 0) {
+                          const dayMap: Record<string, number> = {
+                            domingo: 0, dom: 0,
+                            lunes: 1, lun: 1,
+                            martes: 2, mar: 2,
+                            miércoles: 3, miercoles: 3, mié: 3, mie: 3,
+                            jueves: 4, jue: 4,
+                            viernes: 5, vie: 5,
+                            sábado: 6, sabado: 6, sáb: 6, sab: 6,
+                          };
+                          const firstDay = selectedClass.diasSemana[0];
+                          if (typeof firstDay === 'number') return firstDay;
+                          if (typeof firstDay === 'string') return dayMap[firstDay.toLowerCase().trim()] ?? null;
+                        }
+                        return null;
+                      })();
+                      if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
+                        const hora = normalizeTime(selectedClass.inicio, '20:00');
+                        return calculateNextDateWithTime(diaParaCalcular, hora);
+                      }
+                      const now = new Date();
+                      const hora = normalizeTime(selectedClass.inicio, '20:00');
+                      const [hour, minute] = hora.split(':').map(Number);
+                      now.setHours(hour, minute, 0, 0);
+                      return now;
+                    } catch {
+                      return new Date();
+                    }
+                  })()}
+                  end={(() => {
+                    try {
+                      const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
+                        if (!timeStr || typeof timeStr !== 'string') return defaultTime;
+                        const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
+                        if (timeMatch) {
+                          const hours = parseInt(timeMatch[1], 10);
+                          const minutes = parseInt(timeMatch[2], 10);
+                          if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                          }
+                        }
+                        return defaultTime;
+                      };
+                      if (selectedClass.fecha) {
+                        const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                        const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
+                        const [year, month, day] = fechaStr.split('-').map(Number);
+                        const [hour, minute] = hora.split(':').map(Number);
+                        if (!isNaN(year) && !isNaN(month) && !isNaN(day) && !isNaN(hour) && !isNaN(minute)) {
+                          return new Date(year, month - 1, day, hour, minute, 0, 0);
+                        }
+                        return new Date(`${fechaStr}T${hora}:00`);
+                      }
+                      const diaParaCalcular = (() => {
+                        if (diaParam !== null) {
+                          const diaNum = Number(diaParam);
+                          if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
+                        }
+                        if (selectedClass?.diaSemana !== null && selectedClass?.diaSemana !== undefined && typeof selectedClass.diaSemana === 'number') return selectedClass.diaSemana;
+                        if (selectedClass?.dia_semana !== null && selectedClass?.dia_semana !== undefined && typeof selectedClass.dia_semana === 'number') return selectedClass.dia_semana;
+                        if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) && selectedClass.diasSemana.length > 0) {
+                          const dayMap: Record<string, number> = {
+                            domingo: 0, dom: 0,
+                            lunes: 1, lun: 1,
+                            martes: 2, mar: 2,
+                            miércoles: 3, miercoles: 3, mié: 3, mie: 3,
+                            jueves: 4, jue: 4,
+                            viernes: 5, vie: 5,
+                            sábado: 6, sabado: 6, sáb: 6, sab: 6,
+                          };
+                          const firstDay = selectedClass.diasSemana[0];
+                          if (typeof firstDay === 'number') return firstDay;
+                          if (typeof firstDay === 'string') return dayMap[firstDay.toLowerCase().trim()] ?? null;
+                        }
+                        return null;
+                      })();
+                      if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
+                        const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
+                        const startDate = calculateNextDateWithTime(diaParaCalcular, normalizeTime(selectedClass.inicio, '20:00'));
+                        const endDate = new Date(startDate);
+                        const [h, m] = hora.split(':').map(Number);
+                        endDate.setHours(h || startDate.getHours() + 2, m || 0, 0, 0);
+                        if (endDate.getTime() <= startDate.getTime()) endDate.setHours(startDate.getHours() + 2);
+                        return endDate;
+                      }
+                      const end = new Date();
+                      end.setHours(end.getHours() + 2);
+                      return end;
+                    } catch {
+                      const end = new Date();
+                      end.setHours(end.getHours() + 2);
+                      return end;
+                    }
+                  })()}
+                  showAsIcon={false}
+                />
+              </motion.div>
+            )}
+          </div>
+        </section>
+
+        {/* Perfil del creador (existente) */}
+        <section className="class-section" aria-label={t('profile', 'Perfil')}>
+          <div className="class-creator-section" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14, alignItems: 'start' }}>
+            <div className="class-creator-info" style={{
+              padding: '1rem 1.25rem',
+              borderRadius: 18,
+              border: '1px solid rgba(255,255,255,.12)',
+              background: 'rgba(255,255,255,.05)',
+              backdropFilter: 'blur(10px)',
+              textAlign: 'left',
+              width: '100%',
+            }}>
+              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
+                {t('by', 'por')}
+              </div>
+              <Link to={creatorLink} style={{
+                color: '#FFD166',
+                fontWeight: 900,
+                fontSize: '1.1rem',
+                textDecoration: 'none',
+                borderBottom: '2px solid rgba(255,209,102,0.5)',
+                paddingBottom: '2px',
+                transition: 'all 0.2s',
+                display: 'inline-block',
+                fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+              }}>
+                {creatorTypeLabel} · {creatorName}
+              </Link>
+            </div>
+
+            <div style={{ width: '100%' }}>
+              {isTeacher ? <TeacherCard item={profile} /> : <AcademyCard item={profile} />}
+            </div>
+          </div>
+        </section>
 
         {/* Clases, horarios, costos y agregar a calendario - COMENTADO */}
         {/* <motion.section 
