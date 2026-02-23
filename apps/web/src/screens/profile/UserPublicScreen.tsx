@@ -81,19 +81,31 @@ const STYLES = `
   }
   .carousel-main {
     position: relative;
+    z-index: 2;
+    width: 100%;
     height: 350px;
+    min-height: 350px;
+    flex-shrink: 0;
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.15);
     background: rgba(0, 0, 0, 0.2);
-    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .carousel-main img {
-    object-fit: contain !important;
-    object-position: center !important;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+  .carousel-thumbnail img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   .carousel-thumbnails {
     display: flex;
@@ -160,6 +172,8 @@ const STYLES = `
   }
   
   .glass-card-container {
+    position: relative;
+    z-index: 2;
     opacity: 1;
     margin-bottom: 2rem;
     padding: 2rem;
@@ -170,6 +184,52 @@ const STYLES = `
     box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px;
     backdrop-filter: blur(10px);
     transform: none;
+  }
+  .section-content.glass-card-container .question-section > div:last-child {
+    position: relative;
+    z-index: 2;
+    min-height: 350px;
+  }
+  .section-content.glass-card-container .question-section video,
+  .section-content.glass-card-container .question-section [data-video-wrapper] {
+    display: block;
+    width: 100%;
+    min-height: 350px;
+    object-fit: contain;
+    object-position: center;
+  }
+  #user-profile-photo-gallery,
+  .gallery-section.glass-card-container {
+    position: relative;
+    z-index: 2;
+  }
+  #user-profile-photo-gallery .carousel-container {
+    position: relative;
+    z-index: 2;
+  }
+  #user-profile-photo-gallery .carousel-main {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 350px;
+    min-height: 350px;
+  }
+  #user-profile-photo-gallery .carousel-main img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+  #user-profile-photo-gallery .carousel-thumbnail {
+    position: relative;
+    z-index: 2;
+  }
+  #user-profile-photo-gallery .carousel-thumbnail img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   
   .community-scroll {
@@ -1233,6 +1293,7 @@ export const UserProfileLive: React.FC = () => {
           <UserProfileHero
             user={profile}
             avatarUrl={avatarUrl}
+            avatarUrlSameAsNav={profile?.avatar_url}
             allTags={allTags}
             ritmosSlugs={normalizeRitmosToSlugs(profile, allTags)}
             isOwnProfile={isOwnProfile}

@@ -19,8 +19,13 @@ export function resolveSupabaseStoragePublicUrl(
   const v = String(maybePath).trim();
   if (!v) return undefined;
 
-  // Already a URL / absolute path
-  if (/^https?:\/\//i.test(v) || v.startsWith("data:") || v.startsWith("/")) return v;
+  // Already a URL / absolute path → normalizar bucket erróneo AVATARS (debe ser media/avatars)
+  if (/^https?:\/\//i.test(v) || v.startsWith("data:") || v.startsWith("/")) {
+    if (v.includes("/storage/v1/object/public/AVATARS/")) {
+      return v.replace("/storage/v1/object/public/AVATARS/", "/storage/v1/object/public/media/avatars/");
+    }
+    return v;
+  }
 
   const defaultBucket = options?.defaultBucket || "media";
   const knownBuckets = new Set([defaultBucket, "media"]);
@@ -38,7 +43,8 @@ export function resolveSupabaseStoragePublicUrl(
     } else {
       // Treat entire string as a path inside default bucket (e.g. "avatars/...")
       bucket = defaultBucket;
-      path = v;
+      // Normalizar bucket erróneo en path: AVATARS/xxx → avatars/xxx
+      path = first.toLowerCase() === "avatars" ? `avatars/${rest}` : v;
     }
   }
 

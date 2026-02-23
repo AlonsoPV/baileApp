@@ -11,21 +11,30 @@ const SUPABASE_RENDER_PATH = "/storage/v1/render/image/public/";
  * (/object/public/...). Evita fallos cuando Image Transformation no está disponible.
  * Si la URL no es de render, devuelve la URL absoluta normalizada.
  */
+/** Normaliza URLs de Supabase que usan bucket erróneo AVATARS → media/avatars */
+function normalizeSupabaseStorageUrl(url: string): string {
+  if (url.includes("/storage/v1/object/public/AVATARS/")) {
+    return url.replace("/storage/v1/object/public/AVATARS/", "/storage/v1/object/public/media/avatars/");
+  }
+  return url;
+}
+
 export function toDirectPublicStorageUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
   const u = String(url).trim();
   if (!u) return undefined;
   try {
-    if (u.includes(SUPABASE_RENDER_PATH)) {
-      const pathPart = u.split(SUPABASE_RENDER_PATH)[1]?.split("?")[0];
+    const normalized = normalizeSupabaseStorageUrl(u);
+    if (normalized.includes(SUPABASE_RENDER_PATH)) {
+      const pathPart = normalized.split(SUPABASE_RENDER_PATH)[1]?.split("?")[0];
       if (pathPart) {
-        const origin = u.startsWith("http") ? new URL(u).origin : getSupabaseUrl();
+        const origin = normalized.startsWith("http") ? new URL(normalized).origin : getSupabaseUrl();
         return `${origin}${SUPABASE_PUBLIC_PATH}${pathPart}`;
       }
     }
-    return ensureAbsoluteImageUrl(u) ?? u;
+    return ensureAbsoluteImageUrl(normalized) ?? normalized;
   } catch {
-    return u;
+    return normalizeSupabaseStorageUrl(u);
   }
 }
 
@@ -141,8 +150,9 @@ export function optimizeSupabaseImageUrl(
  */
 export function ensureAbsoluteImageUrl(url?: string | null): string | null {
   if (!url) return null;
-  const urlString = String(url).trim();
+  let urlString = String(url).trim();
   if (!urlString) return null;
+  urlString = normalizeSupabaseStorageUrl(urlString);
   if (/^https:\/\//i.test(urlString)) return urlString;
   if (/^http:\/\//i.test(urlString)) {
     if (typeof window !== "undefined" && window.location?.protocol === "https:") {

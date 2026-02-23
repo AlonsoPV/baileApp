@@ -2282,6 +2282,7 @@ export default function ExploreHomeScreen() {
   const typePillRef = React.useRef<HTMLButtonElement | null>(null);
   const [searchOpen, setSearchOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement | null>(null);
+  const searchToggleRef = React.useRef<HTMLButtonElement | null>(null);
   const [isMobile, setIsMobile] = React.useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 768;
@@ -3830,6 +3831,7 @@ export default function ExploreHomeScreen() {
                   <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
                 </button>
                 <button
+                  ref={searchToggleRef}
                   type="button"
                   className={`filter-pill filters-search-toggle ${searchOpen ? "filter-pill--active" : ""}`}
                   onClick={() => setSearchOpen((v) => !v)}
@@ -3906,7 +3908,10 @@ export default function ExploreHomeScreen() {
                 <button
                   type="button"
                   className="filters-search-close"
-                  onClick={() => setSearchOpen(false)}
+                  onClick={() => {
+                    searchToggleRef.current?.focus();
+                    requestAnimationFrame(() => setSearchOpen(false));
+                  }}
                   aria-label={t('close') || 'Cerrar'}
                 >
                   ✕

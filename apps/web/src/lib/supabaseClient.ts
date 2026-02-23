@@ -11,6 +11,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+// Console warning "feature_collector.js: using deprecated parameters... pass a single object"
+// comes from @supabase/gotrue-js internals, not from this createClient call (we already pass a single options object).
+// To fix it would require a patch in node_modules or a Supabase package upgrade when they fix the internal init call.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     // IMPORTANT (iPad/WKWebView): prevent "hung forever" network calls.

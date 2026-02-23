@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import ImageWithFallback from "../ImageWithFallback";
 import RitmosChips from "../RitmosChips";
 import ZonaGroupedChips from "./ZonaGroupedChips";
 import { BioSection } from "./BioSection";
 import { colors } from "../../theme/colors";
+import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
+import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 
 type TagLike = { id: number; nombre?: string; slug?: string; tipo?: string };
 
@@ -37,6 +38,8 @@ export interface UserProfileHeroProps {
   showBackButton?: boolean;
   avatarError?: boolean;
   onAvatarError?: () => void;
+  /** URL exacta que usa el nav (profile.avatar_url) para usar la misma en el hero y que la imagen cargue */
+  avatarUrlSameAsNav?: string | null;
 }
 
 const BIO_TRUNCATE_LENGTH = 120;
@@ -56,6 +59,7 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
   showBackButton = true,
   avatarError = false,
   onAvatarError,
+  avatarUrlSameAsNav,
 }) => {
   const { t } = useTranslation();
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -67,6 +71,21 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
     : bio;
 
   const redes = user?.redes_sociales || (user?.respuestas as { redes?: BioSection["props"]["redes"] })?.redes;
+
+  // URL para el img: usar la misma que el nav (avatarUrlSameAsNav) si es full URL, si no la resuelta
+  const resolvedAvatarUrl = useMemo(() => {
+    if (avatarError) return undefined;
+    const rawNav = avatarUrlSameAsNav != null ? String(avatarUrlSameAsNav).trim() : "";
+    if (rawNav && /^https?:\/\//i.test(rawNav)) return rawNav;
+    if (!avatarUrl) return undefined;
+    const raw = String(avatarUrl).trim();
+    if (!raw || raw.includes("undefined") || raw === "/default-media.png") return undefined;
+    const step1 = resolveSupabaseStoragePublicUrl(raw) ?? raw;
+    const step2 = toDirectPublicStorageUrl(step1) ?? step1;
+    if (!step2) return undefined;
+    if (/^https?:\/\//i.test(step2) || step2.startsWith("data:")) return step2;
+    return undefined;
+  }, [avatarUrl, avatarError, avatarUrlSameAsNav]);
 
   return (
     <>
@@ -127,16 +146,26 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
           text-align: left;
         }
         .user-profile-hero-avatar-wrap {
+          position: relative;
+          z-index: 2;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: flex-start;
-        }
-        .user-profile-hero-avatar {
           width: 200px;
           height: 200px;
           min-width: 200px;
           min-height: 200px;
+          flex-shrink: 0;
+        }
+        .user-profile-hero-avatar {
+          position: relative;
+          z-index: 2;
+          width: 200px;
+          height: 200px;
+          min-width: 200px;
+          min-height: 200px;
+          flex-shrink: 0;
           border-radius: 50%;
           overflow: hidden;
           border: 4px solid rgba(255, 255, 255, 0.12);
@@ -144,6 +173,25 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
             0 16px 48px rgba(0, 0, 0, 0.6),
             0 0 0 1px rgba(255, 255, 255, 0.06) inset;
           background: colors.gradients.primary;
+        }
+        .user-profile-hero-avatar img,
+        .user-profile-hero-avatar > div {
+          position: absolute;
+          inset: 0;
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center top;
+        }
+        .user-profile-hero-avatar > div {
+          display: flex;
+          object-fit: unset;
+          align-items: center;
+          justify-content: center;
+          font-size: 5rem;
+          font-weight: 700;
+          color: #fff;
         }
         .user-profile-hero-content {
           display: flex;
@@ -294,6 +342,10 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
           }
           .user-profile-hero-avatar-wrap {
             justify-content: center;
+            width: 160px;
+            height: 160px;
+            min-width: 160px;
+            min-height: 160px;
           }
           .user-profile-hero-content {
             align-items: center;
@@ -319,6 +371,12 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
           }
         }
         @media (max-width: 480px) {
+          .user-profile-hero-avatar-wrap {
+            width: 140px;
+            height: 140px;
+            min-width: 140px;
+            min-height: 140px;
+          }
           .user-profile-hero-avatar {
             width: 140px;
             height: 140px;
@@ -436,10 +494,13 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
               data-test-id="user-profile-banner-avatar"
               className="user-profile-hero-avatar"
             >
-              {avatarUrl && !avatarError ? (
-                <ImageWithFallback
-                  src={avatarUrl}
+              {resolvedAvatarUrl ? (
+                <img
+                  src={resolvedAvatarUrl}
                   alt={t("avatar")}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   onError={onAvatarError}
                   style={{
                     width: "100%",
