@@ -556,7 +556,7 @@ export default function ClassPublicScreen() {
     return toDirectPublicStorageUrl(raw) || raw;
   })();
 
-  const dayLabelLong = React.useMemo(() => {
+  const dayLabelLong = (() => {
     try {
       // Fecha específica: “Domingo, 1 de diciembre”
       if (selectedClass?.fecha) {
@@ -606,7 +606,7 @@ export default function ClassPublicScreen() {
       }
     } catch {}
     return t('day_not_specified');
-  }, [selectedClass?.fecha, selectedClass?.diaSemana, (selectedClass as any)?.dia_semana, (selectedClass as any)?.diasSemana, diaParam, locale, t]);
+  })();
 
   const timeLabel = scheduleLabel || '';
   const ritmoPrincipal = Array.isArray(ritmosRaw) && ritmosRaw.length ? String(ritmosRaw[0]) : '';
@@ -1077,6 +1077,7 @@ export default function ClassPublicScreen() {
           box-shadow: 0 22px 60px rgba(0,0,0,0.55);
           height: clamp(220px, 30vw, 320px);
           margin-bottom: 16px;
+          --class-hero-avatar-size: clamp(120px, 16vw, 152px);
         }
         .class-hero__bg {
           position: absolute;
@@ -1108,21 +1109,19 @@ export default function ClassPublicScreen() {
           height: 100%;
           padding: 18px 18px 18px 18px;
           display: grid;
-          grid-template-columns: 92px 1fr;
-          gap: 16px;
-          align-items: end;
+          grid-template-columns: 1fr;
+          align-items: center;
         }
         .class-hero__avatar {
-          position: absolute;
-          left: 18px;
-          top: -18px;
-          width: 96px;
-          height: 96px;
+          width: var(--class-hero-avatar-size);
+          height: var(--class-hero-avatar-size);
           border-radius: 999px;
           border: 3px solid rgba(255,255,255,0.18);
           background: rgba(255,255,255,0.07);
           box-shadow: 0 18px 46px rgba(0,0,0,0.55);
           overflow: hidden;
+          justify-self: end;
+          align-self: center;
         }
         .class-hero__avatar img {
           width: 100%;
@@ -1131,9 +1130,20 @@ export default function ClassPublicScreen() {
           display: block;
         }
         .class-hero__text {
-          grid-column: 1 / -1;
-          padding-top: 58px; /* espacio para avatar overlap */
+          display: grid;
+          grid-template-columns: 1fr var(--class-hero-avatar-size);
+          gap: 16px;
+          align-items: start;
           min-width: 0;
+        }
+        .class-hero__copy { min-width: 0; }
+        @media (max-width: 520px) {
+          .class-hero__text {
+            grid-template-columns: 1fr;
+          }
+          .class-hero__avatar {
+            justify-self: start;
+          }
         }
         .class-hero__title {
           margin: 0 0 6px 0;
@@ -1268,6 +1278,11 @@ export default function ClassPublicScreen() {
           flex-wrap: wrap;
           align-items: center;
         }
+
+        /* Ocultar media del card (solo esta pantalla) */
+        .date-public-root .explore-card-media {
+          display: none !important;
+        }
       `}</style>
       <div className="date-public-inner">
         {/* Hero (oscuro, compacto) */}
@@ -1282,61 +1297,63 @@ export default function ClassPublicScreen() {
           <div className="class-hero__overlay" />
           <div className="class-hero__accent" aria-hidden />
 
-          <div className="class-hero__avatar">
-            <img src={avatarUri} alt={creatorName ? `${creatorName} avatar` : 'Avatar'} />
-          </div>
-
           <div className="class-hero__inner">
             <div className="class-hero__text">
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate(creatorLink)}
-                  className="class-info-action"
-                  aria-label={t('back', 'Volver')}
-                  title={t('back', 'Volver')}
-                  style={{ padding: '0 14px', fontWeight: 900 }}
-                >
-                  ← {t('back')}
-                </motion.button>
+              <div className="class-hero__copy">
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(creatorLink)}
+                    className="class-info-action"
+                    aria-label={t('back', 'Volver')}
+                    title={t('back', 'Volver')}
+                    style={{ padding: '0 14px', fontWeight: 900 }}
+                  >
+                    ← {t('back')}
+                  </motion.button>
+                </div>
+
+                <h1 className="class-hero__title">{classTitle}</h1>
+                <p className="class-hero__subtitle">
+                  {t('by', 'por')}{' '}
+                  <Link to={creatorLink}>
+                    {creatorName}
+                  </Link>
+                </p>
+
+                <ul className="class-chips-row" aria-label={t('filters', 'Detalles')}>
+                  {ritmoPrincipal && (
+                    <li className="class-chip" title={ritmoPrincipal}>
+                      <Music2 size={18} aria-hidden />
+                      <span>{ritmoPrincipal}</span>
+                    </li>
+                  )}
+                  {selectedClass?.nivel && (
+                    <li className="class-chip" title={String(selectedClass.nivel)}>
+                      <BarChart3 size={18} aria-hidden />
+                      <span>{String(selectedClass.nivel)}</span>
+                    </li>
+                  )}
+                  {!!dayLabelLong && (
+                    <li className="class-chip" title={dayLabelLong}>
+                      <CalendarDays size={18} aria-hidden />
+                      <span>{dayLabelLong}</span>
+                    </li>
+                  )}
+                  {!!timeLabel && (
+                    <li className="class-chip" title={timeLabel}>
+                      <Clock size={18} aria-hidden />
+                      <span>{timeLabel}</span>
+                    </li>
+                  )}
+                </ul>
               </div>
 
-              <h1 className="class-hero__title">{classTitle}</h1>
-              <p className="class-hero__subtitle">
-                {t('by', 'por')}{' '}
-                <Link to={creatorLink}>
-                  {creatorName}
-                </Link>
-              </p>
-
-              <ul className="class-chips-row" aria-label={t('filters', 'Detalles')}>
-                {ritmoPrincipal && (
-                  <li className="class-chip" title={ritmoPrincipal}>
-                    <Music2 size={18} aria-hidden />
-                    <span>{ritmoPrincipal}</span>
-                  </li>
-                )}
-                {selectedClass?.nivel && (
-                  <li className="class-chip" title={String(selectedClass.nivel)}>
-                    <BarChart3 size={18} aria-hidden />
-                    <span>{String(selectedClass.nivel)}</span>
-                  </li>
-                )}
-                {!!dayLabelLong && (
-                  <li className="class-chip" title={dayLabelLong}>
-                    <CalendarDays size={18} aria-hidden />
-                    <span>{dayLabelLong}</span>
-                  </li>
-                )}
-                {!!timeLabel && (
-                  <li className="class-chip" title={timeLabel}>
-                    <Clock size={18} aria-hidden />
-                    <span>{timeLabel}</span>
-                  </li>
-                )}
-              </ul>
+              <div className="class-hero__avatar">
+                <img src={avatarUri} alt={creatorName ? `${creatorName} avatar` : 'Avatar'} />
+              </div>
             </div>
           </div>
         </motion.section>
@@ -1681,39 +1698,10 @@ export default function ClassPublicScreen() {
           </div>
         </section>
 
-        {/* Perfil del creador (existente) */}
+        {/* Card del creador (sin bloque extra) */}
         <section className="class-section" aria-label={t('profile', 'Perfil')}>
-          <div className="class-creator-section" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14, alignItems: 'start' }}>
-            <div className="class-creator-info" style={{
-              padding: '1rem 1.25rem',
-              borderRadius: 18,
-              border: '1px solid rgba(255,255,255,.12)',
-              background: 'rgba(255,255,255,.05)',
-              backdropFilter: 'blur(10px)',
-              textAlign: 'left',
-              width: '100%',
-            }}>
-              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
-                {t('by', 'por')}
-              </div>
-              <Link to={creatorLink} style={{
-                color: '#FFD166',
-                fontWeight: 900,
-                fontSize: '1.1rem',
-                textDecoration: 'none',
-                borderBottom: '2px solid rgba(255,209,102,0.5)',
-                paddingBottom: '2px',
-                transition: 'all 0.2s',
-                display: 'inline-block',
-                fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-              }}>
-                {creatorTypeLabel} · {creatorName}
-              </Link>
-            </div>
-
-            <div style={{ width: '100%' }}>
-              {isTeacher ? <TeacherCard item={profile} /> : <AcademyCard item={profile} />}
-            </div>
+          <div style={{ width: '100%' }}>
+            {isTeacher ? <TeacherCard item={profile} /> : <AcademyCard item={profile} />}
           </div>
         </section>
 
