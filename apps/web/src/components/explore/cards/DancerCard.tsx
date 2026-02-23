@@ -6,6 +6,7 @@ import { supabase } from "../../../lib/supabase";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
+import { resolveSupabaseStoragePublicUrl } from "../../../utils/supabaseStoragePublicUrl";
 // no se usa urls.userLive, pedimos navegar a /app/profile con query
 
 type DancerItem = {
@@ -31,21 +32,10 @@ export default function DancerCard({ item, to }: Props) {
 
   // URL pública directa (sin render/Image Transformation para evitar fallos en cards)
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
-    if (!maybePath) return undefined;
-    const v = String(maybePath).trim();
+    const v = resolveSupabaseStoragePublicUrl(maybePath);
+    if (!v) return undefined;
     if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) {
       return ensureAbsoluteImageUrl(v) || v;
-    }
-    const slash = v.indexOf('/');
-    if (slash > 0) {
-      const bucket = v.slice(0, slash);
-      const path = v.slice(slash + 1);
-      try {
-        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-        return data.publicUrl || v;
-      } catch {
-        return v;
-      }
     }
     return v;
   };

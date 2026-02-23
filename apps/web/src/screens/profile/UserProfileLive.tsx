@@ -23,6 +23,7 @@ import { useTranslation } from "react-i18next";
 import { useProfileSwitchMetrics } from "../../hooks/useProfileSwitchMetrics";
 import { isEventUpcomingOrToday, getEventPrimaryDate } from "../../utils/eventDateExpiration";
 import { Modal } from "../../components/ui/Modal";
+import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 
 const STYLES = `
   .profile-container {
@@ -695,22 +696,10 @@ export const UserProfileLive: React.FC = () => {
     });
   }, [rsvpEvents]);
 
-  const toSupabasePublicUrl = React.useCallback((maybePath?: string): string | undefined => {
-    if (!maybePath) return undefined;
-    const v = String(maybePath).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
-    const slash = v.indexOf('/');
-    if (slash > 0) {
-      const bucket = v.slice(0, slash);
-      const path = v.slice(slash + 1);
-      try {
-        return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
-      } catch {
-        return v;
-      }
-    }
-    return v;
-  }, []);
+  const toSupabasePublicUrl = React.useCallback(
+    (maybePath?: string): string | undefined => resolveSupabaseStoragePublicUrl(maybePath),
+    []
+  );
 
   const avatarUrl = React.useMemo(() => {
     const resolve = (raw?: string | null) => {

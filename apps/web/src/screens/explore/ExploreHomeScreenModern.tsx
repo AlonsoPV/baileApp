@@ -2946,7 +2946,9 @@ export default function ExploreHomeScreen() {
   // Cargar automáticamente todas las páginas de usuarios para mostrar todos sin límite
   const usuariosAutoLoadRef = React.useRef(false);
   React.useEffect(() => {
-    if (!shouldLoadUsuarios || !usuariosQuery.data) {
+    // Importante: no autoload cuando "showAll" está activo (pantalla inicial),
+    // porque dispara muchas requests y puede inflar first_screen_mount.
+    if (!shouldLoadUsuarios || selectedType !== 'usuarios' || !usuariosQuery.data) {
       usuariosAutoLoadRef.current = false;
       return;
     }

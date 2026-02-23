@@ -25,6 +25,7 @@ import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp } from 'react
 import ZonaGroupedChips from '../../components/profile/ZonaGroupedChips';
 import { validateZonasAgainstCatalog } from '../../utils/validateZonas';
 import { useTranslation } from 'react-i18next';
+import { resolveSupabaseStoragePublicUrl } from '../../utils/supabaseStoragePublicUrl';
 
 const colors = {
   dark: '#121212',
@@ -628,22 +629,8 @@ export default function UserProfileEditor() {
   const [removing, setRemoving] = useState<{ [key: string]: boolean }>({});
   const [showFilterPreferences, setShowFilterPreferences] = useState(false);
 
-  const toSupabasePublicUrl = (maybePath?: string): string | undefined => {
-    if (!maybePath) return undefined;
-    const v = String(maybePath).trim();
-    if (/^https?:\/\//i.test(v) || v.startsWith('data:') || v.startsWith('/')) return v;
-    const slash = v.indexOf('/');
-    if (slash > 0) {
-      const bucket = v.slice(0, slash);
-      const path = v.slice(slash + 1);
-      try {
-        return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
-      } catch {
-        return v;
-      }
-    }
-    return v;
-  };
+  const toSupabasePublicUrl = (maybePath?: string): string | undefined =>
+    resolveSupabaseStoragePublicUrl(maybePath);
 
   const mediaWithAvatarFallback: MediaItem[] = React.useMemo(() => {
     const base = Array.isArray(media) ? media.slice() : [];

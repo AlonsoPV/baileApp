@@ -162,7 +162,12 @@ export function ensureAbsoluteImageUrl(url?: string | null): string | null {
     console.warn("[ensureAbsoluteImageUrl] URL relativa sin base:", urlString.slice(0, 60));
     return null;
   }
-  const full = `${base.replace(/\/$/, "")}${SUPABASE_PUBLIC_PATH}${urlString}`;
+  // Si viene como "avatars/..." (path sin bucket), asumir bucket "media" por defecto.
+  // Esto evita generar URLs inválidas como /storage/.../public/avatars/... cuando el bucket real es "media".
+  const isKnownBucketPrefix =
+    urlString.startsWith("media/") || urlString.startsWith("public/");
+  const storageKey = isKnownBucketPrefix ? urlString : `media/${urlString}`;
+  const full = `${base.replace(/\/$/, "")}${SUPABASE_PUBLIC_PATH}${storageKey}`;
   return full;
 }
 

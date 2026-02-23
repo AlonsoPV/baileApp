@@ -21,6 +21,7 @@ import { useToast } from '@/components/Toast';
 import { supabase } from '@/lib/supabase';
 import { useCreateCheckoutSession } from '@/hooks/useStripeCheckout';
 import { getLocaleFromI18n } from '@/utils/locale';
+import { resolveSupabaseStoragePublicUrl } from '@/utils/supabaseStoragePublicUrl';
 import {
   Activity,
   BarChart3,
@@ -99,6 +100,10 @@ export default function ClassPublicScreen() {
     () => normalizeMediaArray((profile as any)?.media),
     [(profile as any)?.media],
   );
+  const [heroAvatarError, setHeroAvatarError] = React.useState(false);
+  React.useEffect(() => {
+    setHeroAvatarError(false);
+  }, [(profile as any)?.avatar_url, (profile as any)?.media]);
 
   if (!rawId || Number.isNaN(idNum)) {
     return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>{t('missing_id')}</div>;
@@ -544,7 +549,8 @@ export default function ClassPublicScreen() {
       (getMediaBySlot(mediaList, 'p1') as any)?.url ||
       null;
     if (!raw) return SEO_LOGO_URL;
-    return toDirectPublicStorageUrl(raw) || raw;
+    const pub = resolveSupabaseStoragePublicUrl(raw, { defaultBucket: 'media' }) || raw;
+    return toDirectPublicStorageUrl(pub) || pub;
   })();
 
   const heroBgUri = (() => {
@@ -553,7 +559,8 @@ export default function ClassPublicScreen() {
       (getMediaBySlot(mediaList, 'cover') as any)?.url ||
       null;
     if (!raw) return undefined;
-    return toDirectPublicStorageUrl(raw) || raw;
+    const pub = resolveSupabaseStoragePublicUrl(raw, { defaultBucket: 'media' }) || raw;
+    return toDirectPublicStorageUrl(pub) || pub;
   })();
 
   const dayLabelLong = (() => {
@@ -1352,7 +1359,11 @@ export default function ClassPublicScreen() {
               </div>
 
               <div className="class-hero__avatar">
-                <img src={avatarUri} alt={creatorName ? `${creatorName} avatar` : 'Avatar'} />
+                <img
+                  src={heroAvatarError ? SEO_LOGO_URL : avatarUri}
+                  alt={creatorName ? `${creatorName} avatar` : 'Avatar'}
+                  onError={() => setHeroAvatarError((prev) => (prev ? prev : true))}
+                />
               </div>
             </div>
           </div>

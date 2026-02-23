@@ -30,6 +30,7 @@ import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/u
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
 import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
 import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
+import { useAllowedRitmosTeacher } from "../../hooks/useAllowedRitmosTeacher";
 
 // Lazy load heavy components
 const TeacherMetricsPanel = React.lazy(() => import("../../components/profile/TeacherMetricsPanel").then(m => ({ default: m.TeacherMetricsPanel })));
@@ -1169,6 +1170,7 @@ export default function TeacherProfileEditor() {
   const queryClient = useQueryClient();
   const { clearDraft } = useDrafts();
   const { data: allTags } = useTags();
+  const { allowedIds: allowedRitmoCatalogIds } = useAllowedRitmosTeacher();
   const { media, add, remove } = useTeacherMedia();
   const upsert = useUpsertTeacher();
   const [editingIndex, setEditingIndex] = React.useState<number|null>(null);
@@ -2345,7 +2347,11 @@ export default function TeacherProfileEditor() {
                   };
 
                   return (
-                    <RitmosChips selected={selectedCatalogIds} onChange={onChangeCatalog} />
+                    <RitmosChips
+                      selected={selectedCatalogIds}
+                      onChange={onChangeCatalog}
+                      allowedIds={allowedRitmoCatalogIds}
+                    />
                   );
                 })()}
               </div>
