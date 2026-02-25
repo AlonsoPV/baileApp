@@ -220,7 +220,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   //     console.warn('[EventDatePublicScreen] Invalid interestedCount from stats:', stats);
   //     return 0;
   //   }
-  //   
+  //    
   //   return count;
   // }, [stats]);
   // Calcular start/end para calendario (fecha específica o dia_semana recurrente)
