@@ -293,7 +293,7 @@ export function useRSVPCounts(parentId?: number) {
       
       // Obtener todos los RSVPs para esas fechas
       const { data: all, error: e2 } = await supabase
-        .from("rsvp")
+        .from("event_rsvp")
         .select("event_date_id, status")
         .in("event_date_id", ids);
       if (e2) throw e2;
@@ -329,7 +329,7 @@ export function useMyRSVP() {
 
       // Usar upsert con onConflict explícito
       const { error } = await supabase
-        .from("rsvp")
+        .from("event_rsvp")
         .upsert(
           { 
             user_id: user.id, 

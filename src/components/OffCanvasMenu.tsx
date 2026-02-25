@@ -1,5 +1,5 @@
 // src/components/OffCanvasMenu.tsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -39,9 +39,13 @@ export function OffCanvasMenu({
   const translateX = useRef(new Animated.Value(-layout.menuWidth)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
+
+  const [shouldRender, setShouldRender] = useState(visible);
+
   useEffect(() => {
     if (visible) {
-      // Slide in
+      setShouldRender(true);
+  
       Animated.parallel([
         Animated.spring(translateX, {
           toValue: 0,
@@ -56,7 +60,6 @@ export function OffCanvasMenu({
         }),
       ]).start();
     } else {
-      // Slide out
       Animated.parallel([
         Animated.timing(translateX, {
           toValue: -layout.menuWidth,
@@ -68,13 +71,13 @@ export function OffCanvasMenu({
           duration: 200,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(({ finished }) => {
+        if (finished) setShouldRender(false);
+      });
     }
   }, [visible]);
+  if (!shouldRender) return null;
 
-  if (!visible && translateX._value === -layout.menuWidth) {
-    return null;
-  }
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={visible ? 'auto' : 'none'}>

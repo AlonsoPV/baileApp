@@ -1,0 +1,568 @@
+.event-card-mobile {
+    width: 100%;
+  }
+
+  /* Fuente única de proporción/altura:
+     - La altura real la define ".media" (aspect-ratio).
+     - ".event-card-mobile" solo controla ancho/márgenes (evita reglas compitiendo). */
+  
+  /* Responsive: Mobile */
+  @media (max-width: 768px) {
+    .event-card-mobile {
+      max-width: min(420px, calc((9 / 16) * 100vh));
+      margin: 0 auto;
+    }
+    .card { --card-ar: 9 / 16.5; }
+    img, [style*="objectFit"] { max-width: 100% !important; }
+    .event-title { font-size: clamp(1.4375rem, 3.2vw, 1.6875rem) !important; }
+    .meta .tag { font-size: clamp(16px, 2.2vw, 20px) !important; }
+    .badge.cost-chip { font-size: clamp(13px, 1.8vw, 16px) !important; padding: 8px 12px !important; }
+  }
+  
+  /* Responsive: Mobile pequeño */
+  @media (max-width: 480px) {
+    .event-card-mobile {
+      max-width: 100%;
+    }
+    /* Menos padding para que no se tape el póster en pantallas pequeñas */
+    .content {
+      padding: 10px 10px max(8px, env(safe-area-inset-bottom));
+    }
+  }
+  /* CARD */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .card {
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+    position: relative;
+    cursor: pointer;
+    /* Permite iniciar swipe horizontal desde la card */
+    touch-action: pan-x pan-y;
+    /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar. +15px altura aprox. */
+    --card-ar: 4 / 5.2;
+  }
+  /* 👇 área media: fondo suave + frame con imagen COMPLETA (contain) */
+  .media {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    aspect-ratio: var(--card-ar);
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .media__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.12;
+  }
+  .media__frame {
+    position: absolute;
+    inset: 0;
+    /* Sin padding horizontal para que el flyer ocupe todo el ancho */
+    padding: 10px 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  @media (max-width: 480px) {
+    /* Mantener full-width; solo padding vertical */
+    .media__frame { padding: 10px 0 10px; }
+  }
+  /* .media__overlay { ... } desactivado por UX */
+  .media__frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain !important;
+    object-position: center center;
+    /* El borde redondeado lo da la card; evita “márgenes” laterales */
+    border-radius: 0;
+  }
+  .media__frame .media-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, rgba(40, 44, 62, 0.95) 0%, rgba(25, 28, 40, 0.98) 100%);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+  }
+  .media-placeholder svg {
+    width: 48px;
+    height: 48px;
+    opacity: 0.4;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    z-index: 2;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(17, 21, 32, 0.55);
+    backdrop-filter: blur(8px);
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .badge.hot {
+    border: none;
+    background: linear-gradient(135deg, var(--brand1), var(--brand2));
+  }
+  .content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 14px 14px max(12px, env(safe-area-inset-bottom));
+    z-index: 2;
+  }
+  .event-title {
+    margin: 0 0 clamp(6px, 1.2vw, 10px);
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
+    word-break: break-word;
+    line-height: 1.3;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .meta {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vw, 8px);
+    margin-bottom: clamp(8px, 1vw, 10px);
+  }
+  .meta-row--date {
+    width: 100%;
+  }
+  .meta-row--date .tag {
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    min-height: 34px;
+    line-height: 34px;
+  }
+  .meta-row--time-zone {
+    display: flex;
+    gap: clamp(6px, 1vw, 8px);
+    flex-wrap: wrap;
+  }
+  .meta .tag {
+    font-size: clamp(13px, 2vw, 17px);
+    font-weight: 700;
+    color: rgba(234, 240, 255, 0.85);
+    background: rgba(17, 21, 32, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: clamp(8px, 1.2vw, 10px) clamp(10px, 1.4vw, 14px);
+    min-height: 44px;
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    backdrop-filter: blur(8px);
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .meta-row--time-zone .tag {
+    height: 44px;
+  }
+  /* Ubicación puede ocupar 2 líneas si hace falta */
+  .meta-row--time-zone .tag--location {
+    height: auto;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+  .tag--cost {
+    font-weight: 800;
+    color: #fff;
+    background: rgba(17, 21, 32, 0.65);
+    border-color: rgba(255,255,255,0.18);
+  }
+  .tag__cost-icon {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    font-weight: 900;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .tag__discount-badge {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #16A34A;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .meta .meta-row--date .tag {
+    display: block;
+    text-align: center;
+    text-transform: uppercase;
+    background: #4690A3;
+    border-color: rgba(255,255,255,.18);
+    color: #fff;
+  }
+  .card-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cta {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    user-select: none;
+    pointer-events: none;
+    transition: all 0.2s ease;
+  }
+
+  .cta svg {
+    width: 18px;
+    height: 18px;
+    stroke: rgba(255, 255, 255, 0.9);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.2s ease;
+  }
+
+  .card:hover .cta {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+  }
+
+  .card:hover .cta svg {
+    stroke: rgba(255, 255, 255, 1);
+  }
+  .ghost {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    color: var(--text, rgba(255, 255, 255, 0.85));
+    transition: all 0.2s;
+  }
+  .ghost:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  
+  .class-card-mobile {
+    width: 100%;
+  }
+
+  /* Fuente única de proporción/altura:
+     - La altura real la define ".media" (aspect-ratio).
+     - ".class-card-mobile" solo controla ancho/márgenes (evita reglas compitiendo). */
+
+  /* Responsive: Mobile */
+  @media (max-width: 768px) {
+    .class-card-mobile {
+      /* Evitar cards gigantes (por vh) en pantallas altas y también evitar que quede muy angosta */
+      max-width: min(420px, calc((9 / 16) * 100vh));
+      margin: 0 auto;
+    }
+    .class-card {
+      --card-ar: 9 / 16.5;
+    }
+    img, [style*="objectFit"] {
+      max-width: 100% !important;
+    }
+  }
+
+  /* Responsive: Mobile */
+  @media (max-width: 768px) {
+    .class-card-title { font-size: clamp(1.4375rem, 3.2vw, 1.6875rem) !important; }
+    .class-card-meta .tag { font-size: clamp(16px, 2.2vw, 20px) !important; }
+  }
+  /* Responsive: Mobile pequeño */
+  @media (max-width: 480px) {
+    .class-card-mobile {
+      max-width: 100%;
+    }
+    .class-card-content {
+      padding: 10px 10px max(8px, env(safe-area-inset-bottom));
+    }
+  }
+
+  /* CARD */
+  .class-card {
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+    position: relative;
+    cursor: pointer;
+    /* Permite iniciar swipe horizontal desde la card */
+    touch-action: pan-x pan-y;
+    /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar. +15px altura aprox. */
+    --card-ar: 4 / 5.2;
+  }
+
+  /* 👇 área media: fondo suave + frame con imagen COMPLETA (contain) */
+  .class-card-media {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    aspect-ratio: var(--card-ar);
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .class-card-media__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.12;
+  }
+  .class-card-media__frame {
+    position: absolute;
+    inset: 0;
+    padding: 10px 12px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  .class-card-media__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0.75) 100%);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .class-card-media__frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain !important;
+    object-position: center center;
+    border-radius: 8px;
+  }
+  .class-card-media__frame .class-card-media-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, rgba(40, 44, 62, 0.95) 0%, rgba(25, 28, 40, 0.98) 100%);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+  }
+  .class-card-media-placeholder svg {
+    width: 48px;
+    height: 48px;
+    opacity: 0.4;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .class-card-badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    z-index: 3;
+  }
+
+  .class-card-badge {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(17, 21, 32, 0.55);
+    backdrop-filter: blur(8px);
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .class-card-badge.hot {
+    border: none;
+    background: linear-gradient(135deg, var(--brand1), var(--brand2));
+  }
+
+  .class-card-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 14px 14px max(12px, env(safe-area-inset-bottom));
+    z-index: 2;
+  }
+
+  .class-card-title {
+    margin: 0 0 clamp(6px, 1.2vw, 10px);
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px;
+    word-break: break-word;
+    line-height: 1.3;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .class-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1vw, 8px);
+    margin-bottom: clamp(8px, 1vw, 10px);
+  }
+
+  .class-card-meta-row--date {
+    width: 100%;
+  }
+
+  .class-card-meta-row--date .tag {
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    min-height: 44px;
+    line-height: 44px;
+  }
+
+  .class-card-meta-row--time-zone {
+    display: flex;
+    gap: clamp(6px, 1vw, 8px);
+    flex-wrap: wrap;
+  }
+
+  .class-card-meta .tag {
+    font-size: clamp(13px, 2vw, 17px);
+    font-weight: 700;
+    color: rgba(234, 240, 255, 0.85);
+    background: rgba(17, 21, 32, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: clamp(8px, 1.2vw, 10px) clamp(10px, 1.4vw, 14px);
+    min-height: 36px;
+    border-radius: 999px;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    backdrop-filter: blur(8px);
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .class-card-meta .class-card-meta-row--date .tag {
+    display: block;
+    text-align: center;
+    text-transform: uppercase;
+    background: #4690A3;
+    border-color: rgba(255,255,255,.18);
+    color: #fff;
+  }
+
+  .class-card-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .class-card-cta {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    user-select: none;
+    pointer-events: none;
+    transition: all 0.2s ease;
+  }
+
+  .class-card-cta svg {
+    width: 18px;
+    height: 18px;
+    stroke: rgba(255, 255, 255, 0.9);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.2s ease;
+  }
+
+  .class-card:hover .class-card-cta {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+  }
+
+  .class-card:hover .class-card-cta svg {
+    stroke: rgba(255, 255, 255, 1);
+  }

@@ -228,30 +228,38 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     try {
       const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
       const horaFin = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
+  
+      const fechaStr = (date.fecha || (date as any).fecha_inicio || '').toString();
+      const fechaOnly = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;
+  
       let start: Date;
       let end: Date;
+  
+      // ✅ 1) Si hay fecha concreta, usarla SIEMPRE
+      if (fechaOnly) {
+        const parsedStart = new Date(`${fechaOnly}T${horaInicio}:00`);
+        const parsedEnd = new Date(`${fechaOnly}T${horaFin}:00`);
+        start = isNaN(parsedStart.getTime()) ? new Date() : parsedStart;
+        end =
+          isNaN(parsedEnd.getTime()) || parsedEnd.getTime() <= start.getTime()
+            ? (() => { const d = new Date(start); d.setHours(d.getHours() + 2); return d; })()
+            : parsedEnd;
+        return { calendarStart: start, calendarEnd: end };
+      }
+  
+      // ✅ 2) Solo si NO hay fecha, usar dia_semana
       const diaSemana = (date as any).dia_semana;
       if (diaSemana !== null && diaSemana !== undefined && typeof diaSemana === 'number') {
         start = calculateNextDateWithTime(diaSemana, horaInicio);
         const [h, m] = horaFin.split(':').map(Number);
         end = new Date(start);
         end.setHours(h ?? 23, m ?? 0, 0, 0);
-      } else {
-        const fechaStr = (date.fecha || (date as any).fecha_inicio || '').toString();
-        const fechaOnly = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;
-        if (!fechaOnly) {
-          start = new Date();
-          end = new Date();
-          end.setHours(end.getHours() + 2);
-          return { calendarStart: start, calendarEnd: end };
-        }
-        const parsedStart = new Date(`${fechaOnly}T${horaInicio}:00`);
-        const parsedEnd = new Date(`${fechaOnly}T${horaFin}:00`);
-        start = isNaN(parsedStart.getTime()) ? new Date() : parsedStart;
-        end = isNaN(parsedEnd.getTime()) || parsedEnd.getTime() <= start.getTime()
-          ? (() => { const d = new Date(start); d.setHours(d.getHours() + 2); return d; })()
-          : parsedEnd;
+        return { calendarStart: start, calendarEnd: end };
       }
+  
+      start = new Date();
+      end = new Date(start);
+      end.setHours(end.getHours() + 2);
       return { calendarStart: start, calendarEnd: end };
     } catch {
       const s = new Date();
@@ -259,7 +267,9 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       e.setHours(e.getHours() + 2);
       return { calendarStart: s, calendarEnd: e };
     }
-  }, [date.fecha, date.hora_inicio, date.hora_fin, (date as any).dia_semana, (date as any).fecha_inicio]);
+  }, [date.fecha, (date as any).fecha_inicio, date.hora_inicio, date.hora_fin, (date as any).dia_semana]);
+
+
 
   const dateName = date.nombre || parent?.nombre || 'Fecha de baile';
   const calendarButton = (

@@ -1,23 +1,43 @@
+// path: src/hooks/useHydratedForm.ts
 import React from "react";
 import { useDrafts } from "../state/drafts";
 
-// merge superficial con objetos; lo profundo lo hace SQL
+type DraftRecord<T> = {
+  value: T;
+  serverStamp?: string | null;
+};
+
+function isPlainObject(v: any): v is Record<string, any> {
+  return !!v && typeof v === "object" && !Array.isArray(v);
+}
+
 function deepMerge<T>(a: T, b: any): T {
   if (Array.isArray(a) || Array.isArray(b)) return (b ?? a) as T;
+  if (!isPlainObject(a) || !isPlainObject(b)) return (b ?? a) as T;
+
   const out: any = { ...(a as any) };
   for (const k of Object.keys(b || {})) {
-    const nv = (b as any)[k], pv = (a as any)[k];
-    out[k] =
-      nv && typeof nv === "object" && !Array.isArray(nv) &&
-      pv && typeof pv === "object" && !Array.isArray(pv)
-        ? deepMerge(pv, nv)
-        : nv;
+    const nv = (b as any)[k];
+    const pv = (a as any)[k];
+    out[k] = isPlainObject(nv) && isPlainObject(pv) ? deepMerge(pv, nv) : nv;
   }
   return out;
 }
 
 function isMeaningfulDraft(v: any) {
-  return v && typeof v === "object" && JSON.stringify(v) !== "{}";
+  return isPlainObject(v) && JSON.stringify(v) !== "{}";
+}
+
+/**
+ * Protege arrays tipo "NOT NULL" (ej. ritmos_seleccionados) contra null.
+ * Ajusta esta lista si tienes más campos array NOT NULL.
+ */
+function sanitizeNotNullArrays<T extends Record<string, any>>(obj: T): T {
+  const out: any = { ...obj };
+  if (out.ritmos_seleccionados === null) out.ritmos_seleccionados = [];
+  if (out.ritmos === null) out.ritmos = [];
+  if (out.zonas === null) out.zonas = [];
+  return out as T;
 }
 
 type Opt<T> = {
@@ -25,6 +45,7 @@ type Opt<T> = {
   serverData?: (T & { updated_at?: string }) | null;
   defaults: T;
   preferDraft?: boolean;
+  draftDebounceMs?: number;
 };
 
 export function useHydratedForm<T extends Record<string, any>>({
@@ -32,112 +53,132 @@ export function useHydratedForm<T extends Record<string, any>>({
   serverData,
   defaults,
   preferDraft = true,
+  draftDebounceMs = 400,
 }: Opt<T>) {
   const { getDraft, setDraft } = useDrafts();
-  const draftRec = getDraft(draftKey);
-  const draftVal = draftRec?.value as T | undefined;
 
-  const [form, setForm] = React.useState<T>(defaults);
+  const serverStamp = serverData?.updated_at ?? null;
+
+  const draftRaw = getDraft(draftKey) as { value?: any } | undefined;
+  const draftRec = (draftRaw?.value ?? null) as DraftRecord<T> | null;
+  const draftVal = draftRec?.value as T | undefined;
+  const draftStamp = draftRec?.serverStamp ?? null;
+
+  const [form, setForm] = React.useState<T>(sanitizeNotNullArrays(defaults));
   const [hydrated, setHydrated] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
 
-  const srvStamp = serverData?.updated_at || JSON.stringify(serverData ?? {});
   const srvRef = React.useRef<string | null>(null);
+  const debounceRef = React.useRef<number | null>(null);
 
-  // Hidratación inicial: NO escribir en draft durante render
+  // Hidratación inicial robusta
   React.useEffect(() => {
     if (hydrated) return;
 
-    if (preferDraft && isMeaningfulDraft(draftVal)) {
-      setForm(draftVal as T);
+    const canUseDraft =
+      preferDraft &&
+      isMeaningfulDraft(draftVal) &&
+      (!serverStamp || draftStamp === serverStamp);
+
+    if (canUseDraft) {
+      setForm(sanitizeNotNullArrays(draftVal as T));
       setHydrated(true);
+      srvRef.current = serverStamp;
       return;
     }
 
     if (serverData) {
-      const base = deepMerge(defaults, serverData as any);
-      setForm(base);
+      const base = deepMerge(sanitizeNotNullArrays(defaults), serverData as any);
+      setForm(sanitizeNotNullArrays(base));
       setHydrated(true);
-      srvRef.current = srvStamp;
-      // si quieres persistir el draft inicial, hazlo en otro efecto (ver abajo)
+      srvRef.current = serverStamp;
       return;
     }
 
-    setForm(defaults);
+    setForm(sanitizeNotNullArrays(defaults));
     setHydrated(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, draftKey, !!serverData]);
+    srvRef.current = serverStamp;
+  }, [
+    hydrated,
+    preferDraft,
+    draftKey,
+    draftVal,
+    draftStamp,
+    serverData,
+    serverStamp,
+    defaults,
+  ]);
 
-  // Persistir el form *ya hidratado* al draft (post-render)
+  // Persistir draft con debounce (evita spam/races)
   React.useEffect(() => {
     if (!hydrated) return;
-    // sólo persistimos cuando el usuario ya interactuó o cuando vino del server
-    // evita escrituras redundantes que disparen la advertencia
-    setDraft(draftKey, form);
-    // Nota: si te preocupa el spam de escrituras, puedes debouncer aquí.
-  }, [hydrated, form, draftKey, setDraft]);
 
-  // Si cambia el server y el usuario NO está editando, resincroniza
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+
+    debounceRef.current = window.setTimeout(() => {
+      const rec: DraftRecord<T> = {
+        value: sanitizeNotNullArrays(form),
+        serverStamp: srvRef.current ?? serverStamp,
+      };
+      setDraft(draftKey, rec);
+    }, draftDebounceMs);
+
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [hydrated, form, draftKey, setDraft, draftDebounceMs, serverStamp]);
+
+  // Resync: si cambia el server y el usuario NO está editando, reemplazar por server+defaults
   React.useEffect(() => {
     if (!hydrated || !serverData) return;
-    if (srvRef.current === srvStamp) return;
-    if (!dirty) {
-      setForm((cur) => deepMerge(cur, serverData as any));
-      srvRef.current = srvStamp;
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [srvStamp, hydrated, dirty, draftKey]);
+    if (srvRef.current === serverStamp) return;
+    if (dirty) return;
 
-  const setField = React.useCallback(
-    <K extends keyof T>(key: K, value: T[K]) => {
-      setForm((cur) => ({ ...cur, [key]: value }));
-      if (!dirty) setDirty(true);
-    },
-    [dirty]
-  );
+    const next = deepMerge(sanitizeNotNullArrays(defaults), serverData as any);
+    setForm(sanitizeNotNullArrays(next));
+    srvRef.current = serverStamp;
+  }, [hydrated, serverData, serverStamp, dirty, defaults]);
+
+  const setField = React.useCallback(<K extends keyof T>(key: K, value: T[K]) => {
+    setForm((cur) => sanitizeNotNullArrays({ ...cur, [key]: value } as T));
+    setDirty(true);
+  }, []);
 
   const setAll = React.useCallback((next: T) => {
-    setForm(next);
-    if (!dirty) setDirty(true);
-  }, [dirty]);
+    setForm(sanitizeNotNullArrays(next));
+    setDirty(true);
+  }, []);
 
-  const setNested = React.useCallback(
-    (path: string, value: any) => {
-      setForm((cur) => {
-        const keys = path.split('.');
-        const lastKey = keys.pop()!;
-        
-        let current: any = { ...cur };
-        let pointer: any = current;
-        
-        // Navegar hasta el penúltimo nivel
-        for (const key of keys) {
-          if (!(key in pointer) || typeof pointer[key] !== 'object') {
-            pointer[key] = {};
-          } else {
-            pointer[key] = { ...pointer[key] };
-          }
-          pointer = pointer[key];
-        }
-        
-        // Actualizar el valor final
-        pointer[lastKey] = value;
-        
-        return current;
-      });
-      if (!dirty) setDirty(true);
+  const setNested = React.useCallback((path: string, value: any) => {
+    setForm((cur) => {
+      const keys = path.split(".");
+      const lastKey = keys.pop()!;
+      const root: any = Array.isArray(cur) ? [...(cur as any)] : { ...cur };
+
+      let pointer: any = root;
+      for (const key of keys) {
+        const pv = pointer[key];
+        if (pv == null) pointer[key] = {};
+        else if (Array.isArray(pv)) pointer[key] = [...pv];
+        else if (isPlainObject(pv)) pointer[key] = { ...pv };
+        else pointer[key] = {};
+        pointer = pointer[key];
+      }
+      pointer[lastKey] = value;
+      return sanitizeNotNullArrays(root as T);
+    });
+    setDirty(true);
+  }, []);
+
+  const setFromServer = React.useCallback(
+    (server: T & { updated_at?: string }) => {
+      const merged = deepMerge(sanitizeNotNullArrays(defaults), server as any);
+      setForm(sanitizeNotNullArrays(merged));
+      srvRef.current = server.updated_at ?? null;
+      setDirty(false);
     },
-    [dirty]
+    [defaults]
   );
-
-  // Llamar después de guardar y refetch (para alinear draft+form con server)
-  const setFromServer = React.useCallback((server: T & { updated_at?: string }) => {
-    const merged = deepMerge(defaults, server as any);
-    setForm(merged);
-    srvRef.current = server.updated_at || JSON.stringify(server);
-    setDirty(false);
-    // Persistimos en el efecto de arriba (no aquí en render)
-  }, [defaults]);
 
   return { form, setField, setAll, setNested, hydrated, dirty, setFromServer };
 }

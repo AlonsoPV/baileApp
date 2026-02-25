@@ -102,6 +102,9 @@ export function useEventsWithRSVPStats(params?: {
  * Usa dos consultas (event_rsvp + events_date) y fusiona en frontend para evitar
  * depender del embed de PostgREST que puede fallar por RLS o nombre de relación.
  */
+// path: src/hooks/useRSVP.ts
+// path: src/hooks/useRSVP.ts
+// path: src/hooks/useRSVP.ts
 export function useUserRSVPEvents(status?: RSVPStatus) {
   const { user } = useAuth();
   const userId = user?.id;
@@ -111,27 +114,38 @@ export function useUserRSVPEvents(status?: RSVPStatus) {
     enabled: !!userId,
     queryFn: async () => {
       if (!userId) return [];
+
       let req = supabase
         .from("event_rsvp")
-        .select("id, user_id, event_date_id, status, created_at")
+        .select("id, user_id, event_date_id, event_parent_id, status, created_at, updated_at")
         .eq("user_id", userId);
+
       if (status) req = req.eq("status", status);
+
       const { data: rows, error } = await req;
       if (error) throw error;
       if (!rows?.length) return [];
-      const ids = [...new Set((rows as any[]).map((r) => r.event_date_id).filter(Boolean))];
-      if (ids.length === 0) return rows as any[];
-      const { data: events, error: eventsError } = await supabase
-        .from("events_date")
-        .select("*")
-        .in("id", ids);
-      if (eventsError) throw eventsError;
-      const byId = new Map((events || []).map((e: any) => [e.id, e]));
-      return (rows as any[]).map((r) => ({
-        ...r,
-        events_date: byId.get(r.event_date_id) ?? null,
-      }));
-    }
+
+      const eventDateIds = [...new Set(rows.map((r: any) => r.event_date_id).filter(Boolean))];
+
+      const { data: dates, error: datesError } = eventDateIds.length
+        ? await supabase.from("events_date").select("*").in("id", eventDateIds)
+        : { data: [], error: null };
+
+      if (datesError) throw datesError;
+
+      const datesById = new Map((dates || []).map((d: any) => [d.id, d]));
+
+      // ✅ NO consultar tabla padre inexistente "events"
+      return rows.map((r: any) => {
+        const d = datesById.get(r.event_date_id) ?? null;
+        return {
+          ...r,
+          events_date: d,
+          _event: d, // EventCard recibe events_date (ya te funciona)
+        };
+      });
+    },
   });
 }
 
