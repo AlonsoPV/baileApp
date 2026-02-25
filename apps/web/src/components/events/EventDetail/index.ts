@@ -1,6 +1,6 @@
 export { EventHeaderHero } from "./EventHeaderHero";
 export { EventHero } from "./EventHero";
-export { StickyCtaBar } from "./StickyCtaBar";
+export { StickyCtaBar, type StickyRsvpState } from "./StickyCtaBar";
 export { InfoCard } from "./InfoCard";
 export { InfoGrid } from "./InfoGrid";
 export { SectionHeader } from "./SectionHeader";

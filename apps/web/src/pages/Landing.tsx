@@ -10,7 +10,7 @@ import { FactorWow } from "@/components/landing/FactorWow";
 import { DecisionNotDiscovery } from "@/components/landing/DecisionNotDiscovery";
 import { Retention } from "@/components/landing/Retention";
 import { BusinessCase } from "@/components/landing/BusinessCase";
-import { BenefitGrid } from "@/components/landing/BenefitGrid";
+import { BenefitGrid } from "@/components/landing/BenefitGrid"; 
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { MidCTA } from "@/components/landing/MidCTA";
 import { SocialProof } from "@/components/landing/SocialProof";

@@ -18,9 +18,16 @@ export function LandingNav({ onOpenDownload, onOpenB2B }: LandingNavProps) {
     <header className="landing-nav" role="banner">
       <div className="landing-container">
         <div className="landing-nav__inner">
+          
+
+          <nav className="landing-brand__name" aria-label="Secciones">
+            {/* <a href="#funciones">Funciones</a> */}
+            <a href="https://dondebailar.com.mx/explore" target="_blank" rel="noopener noreferrer">Explorar el mundo del baile</a>
+            {/* <a href="#negocios" onClick={(e) => { e.preventDefault(); onOpenB2B(); }}>Para Negocios</a> */}
+          </nav>
           <a className="landing-brand" href="#descargar" aria-label="Donde Bailar MX inicio">
             <div className="landing-brand__icon" aria-hidden>
-              <img src={BRAND_ICON_URL} alt="" width={24} height={24} />
+              <img src={BRAND_ICON_URL} alt="" width={45} height={45} />
             </div>
             <div className="landing-brand__name">
               <span>DONDE</span>
@@ -28,16 +35,9 @@ export function LandingNav({ onOpenDownload, onOpenB2B }: LandingNavProps) {
               <span>MX</span>
             </div>
           </a>
-
-          <nav className="landing-nav__links" aria-label="Secciones">
-            <a href="#funciones">Funciones</a>
-            <a href="#funciones">Explorar</a>
-            <a href="#negocios" onClick={(e) => { e.preventDefault(); onOpenB2B(); }}>Para Negocios</a>
-          </nav>
-
           <div className="landing-nav__cta">
             <button type="button" className="btn btn-primary" onClick={handleDownload}>
-              Descargar App
+              Descargar
             </button>
           </div>
         </div>

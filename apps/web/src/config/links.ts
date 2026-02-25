@@ -4,13 +4,13 @@
  */
 
 export const APP_STORE_URL =
-  (import.meta.env.VITE_APP_STORE_URL as string) || "https://apps.apple.com/app/donde-bailar-mx/id123456789";
+  (import.meta.env.VITE_APP_STORE_URL as string) || "https://apps.apple.com/mx/app/donde-bailar-mx/id6756324774";
 
 export const PLAY_STORE_URL =
   (import.meta.env.VITE_PLAY_STORE_URL as string) || "https://play.google.com/store/apps/details?id=com.dondebailar.app";
 
 export const WHATSAPP_URL =
-  (import.meta.env.VITE_WHATSAPP_URL as string) || "https://wa.me/5215512345678";
+  (import.meta.env.VITE_WHATSAPP_URL as string) || "https://wa.me/+525511981149";
 
 /** URL de contacto genérico (email o página) si no usas WhatsApp como principal */
 export const CONTACT_URL =

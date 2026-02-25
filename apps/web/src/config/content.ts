@@ -11,7 +11,7 @@ export const landingContent = {
     /** Visión corta para retener */
     subheadline:
       "La plataforma donde personas, academias y maestros se encuentran con intención real. Eventos y clases ordenados, filtros por ritmo y zona, actualizado diario.",
-    ctaPrimary: "Descargar la app",
+    ctaPrimary: "Descargar",
     ctaSecondary: "Soy academia o maestro",
     ctaMicrocopy: "Gratis · Sin spam · Descarga en segundos",
     badges: [
@@ -238,10 +238,10 @@ export const landingContent = {
         q: "¿Cómo moderan el contenido?",
         a: "Revisamos eventos y perfiles para mantener información verídica y respetuosa.",
       },
-      {
+      /* {
         q: "¿Puedo desactivar notificaciones?",
         a: "Sí. Puedes elegir qué notificaciones recibir o desactivarlas por completo.",
-      },
+      }, */
       {
         q: "¿Mis datos están seguros?",
         a: "Sí. No vendemos tus datos. Revisa nuestra política de privacidad.",

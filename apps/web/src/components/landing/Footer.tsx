@@ -15,7 +15,7 @@ import { track, LANDING_EVENTS } from "@/lib/track";
 
 const { footer } = landingContent;
 
-const INSTAGRAM_URL = "https://instagram.com/dondebailarmx";
+const INSTAGRAM_URL = "https://www.instagram.com/dondebailar_2026/";
 
 export function Footer({
   onDownloadClick,
@@ -74,33 +74,36 @@ export function Footer({
         </section>
 
         {/* Links columns */}
-        <nav className="landing-footer__cols cols" aria-label="Enlaces">
-          <div className="col">
+        <nav
+          className="landing-footer__cols cols"
+          aria-label="Enlaces"
+        >
+          <div className="col col--combined">
             <div className="col__title">
               <FileText size={14} strokeWidth={2} aria-hidden />
               {footer.legalTitle}
             </div>
+
             <div className="col__links">
               <Link className="link" to="/aviso-de-privacidad">
                 <span>{footer.privacy}</span>
                 <span className="link__meta">Política</span>
               </Link>
-              <Link className="link" to="/legal">
-                <span>{footer.terms}</span>
-                <span className="link__meta">Uso</span>
-              </Link>
             </div>
-          </div>
-          <div className="col">
-            <div className="col__title">
+
+            <div className="col__divider" />
+
+            <div className="col__title col__title--secondary">
               <HelpCircle size={14} strokeWidth={2} aria-hidden />
               {footer.supportTitle}
             </div>
+
             <div className="col__links">
               <Link className="link" to="/soporte">
                 <span>{footer.helpCenter}</span>
                 <span className="link__meta">FAQ</span>
               </Link>
+
               <a
                 className="link"
                 href={WHATSAPP_URL}
@@ -113,7 +116,6 @@ export function Footer({
             </div>
           </div>
         </nav>
-
         {/* CTA */}
         <aside className="landing-footer__cta cta" aria-label="Acciones">
           <div className="cta__card">
@@ -133,7 +135,7 @@ export function Footer({
               Contáctanos
             </Link>
             <div className="cta__micro">
-              <span className="chip">Pro</span>
+              {/* <span className="chip">Pro</span> */}
               <span>{footer.ctaPro}</span>
             </div>
           </div>

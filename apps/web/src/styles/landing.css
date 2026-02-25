@@ -515,83 +515,191 @@
   }
 
   /* Modal de descarga (popup App Store / Google Play) */
-  .download-modal-content {
-    padding: 0.25rem 0;
+  /* ===== Download modal (UX/UI upgrade) ===== */
+/* =========================
+   Download Modal — Tech Purple (UX/UI)
+   ========================= */
+
+   :root{
+    /* Fondo morado (ajusta si quieres más violeta o más azul) */
+    --dl-bg-0: #0B0716;
+    --dl-bg-1: #1A0F33;
+    --dl-bg-2: #2A1450;
+  
+    /* Accent */
+    --dl-cyan: var(--lb-cyan, #00E5FF);
+    --dl-violet: #7C3AED;
+    --dl-pink: #FF4DA6;
+  
+    /* Texto */
+    --dl-text: rgba(255,255,255,0.94);
+    --dl-muted: rgba(255,255,255,0.70);
+    --dl-soft: rgba(255,255,255,0.14);
+  
+    --dl-shadow: 0 26px 70px rgba(0,0,0,0.60);
+    --dl-radius: 26px;
   }
-  .download-modal-subtitle {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: rgba(26, 26, 46, 0.65);
-    margin: 0 0 1.25rem;
+  
+  /* Si tienes un contenedor del modal (opcional, por si existe) */
+  .download-modal,
+  .download-modal-panel,
+  .download-modal-container{
+    background:
+      radial-gradient(900px 420px at 18% 12%, rgba(0,229,255,0.14), transparent 60%),
+      radial-gradient(860px 460px at 82% 18%, rgba(124,58,237,0.16), transparent 62%),
+      radial-gradient(900px 520px at 55% 92%, rgba(255,77,166,0.10), transparent 60%),
+      linear-gradient(180deg, var(--dl-bg-2), var(--dl-bg-1) 35%, var(--dl-bg-0));
+    border-radius: var(--dl-radius);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: var(--dl-shadow);
+    overflow: hidden;
+  }
+  
+  /* Si existe overlay/backdrop (opcional) */
+  .download-modal-overlay{
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+  }
+  
+  /* Contenido */
+  .download-modal-content{
+    padding: clamp(12px, 1.8vw, 18px) clamp(14px, 2vw, 20px);
+  }
+  
+  /* Subtitle: antes usaba color oscuro, aquí debe ser claro */
+  .download-modal-subtitle{
+    font-size: 0.95rem;
+    font-weight: 750;
+    color: var(--dl-muted);
+    margin: 6px 0 18px;
     text-align: center;
+    letter-spacing: -0.01em;
   }
-  .download-modal-buttons {
+  
+  /* Botones */
+  .download-modal-buttons{
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
-  .download-modal-btn {
+  
+  @media (max-width: 560px){
+    .download-modal-buttons{
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Card-button (más premium) */
+  .download-modal-btn{
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    padding: 1.5rem 1rem;
-    border-radius: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.05);
+    gap: 10px;
+  
+    padding: 18px 14px;
+    min-height: 152px;
+  
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.14);
+  
+    /* glass morado */
+    background: #297F96;
+    backdrop-filter: blur(10px);
+  
     cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     text-align: center;
     font-family: inherit;
+  
+    box-shadow: 0 18px 46px rgba(0,0,0,0.45);
+    transition:
+      transform 140ms ease,
+      background 140ms ease,
+      border-color 140ms ease,
+      box-shadow 140ms ease;
   }
-  .download-modal-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+  
+  /* borde con gradiente */
+  .download-modal-btn::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius: inherit;
+    padding: 1px;
+  
+    background: linear-gradient(
+      135deg,
+      rgba(0,229,255,0.30),
+      rgba(124,58,237,0.26),
+      rgba(255,77,166,0.20)
+    );
+  
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  
+    opacity: 0.60;
+    pointer-events:none;
+  }
+  
+  /* Hover/active */
+  .download-modal-btn:hover{
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    border-color: rgba(255,255,255,0.22);
+    background: #F02E95;
+    box-shadow: 0 24px 62px rgba(0,0,0,0.62);
   }
-  .download-modal-btn:active {
+  
+  .download-modal-btn:active{
     transform: translateY(0);
   }
-  .download-modal-btn:focus-visible {
-    outline: 2px solid var(--lb-cyan);
-    outline-offset: 2px;
+  
+  .download-modal-btn:focus-visible{
+    outline: 2px solid var(--dl-cyan);
+    outline-offset: 3px;
   }
-  .download-modal-btn__icon {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  
+  /* Icon bubble */
+  .download-modal-btn__icon{
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+  
+    background: rgba(0,0,0,0.20);
+    border: 1px solid rgba(255,255,255,0.12);
   }
-  .download-modal-btn__icon svg {
-    width: 36px;
-    height: 36px;
+  
+  .download-modal-btn__icon svg{
+    width: 32px;
+    height: 32px;
+    opacity: 0.92;
   }
-  .download-modal-btn__icon--apple {
-    color: var(--lb-text);
+  
+  /* Icon colors */
+  .download-modal-btn__icon--apple,
+  .download-modal-btn__icon--play{
+    color: var(--dl-text);
   }
-  .download-modal-btn__icon--play {
-    color: var(--lb-text);
+  
+ 
+  
+  /* Labels */
+  .download-modal-btn__label{
+    font-size: 1.05rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--dl-text);
   }
-  .download-modal-btn--apple:hover .download-modal-btn__icon--apple {
-    color: #f5f5f7;
-  }
-  .download-modal-btn--play:hover .download-modal-btn__icon--play {
-    color: #a5c9ff;
-  }
-  .download-modal-btn__label {
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--lb-text);
-  }
-  .download-modal-btn__sublabel {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: rgba(26, 26, 46, 0.65);
-  }
+  
 
+  
+  /* Reduce motion */
+  @media (prefers-reduced-motion: reduce){
+    .download-modal-btn{ transition: none; }
+  }
   /* PainSolution: dos columnas (problema | solución) */
   .landing-pain-solution__grid {
     display: grid;
@@ -1114,7 +1222,7 @@
   /* Columns */
   .landing-footer__cols.cols {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 1rem;
     align-content: start;
   }
@@ -1448,10 +1556,10 @@
   }
   @media (min-width: 1100px) {
     .landing-decision__wrap {
-      display: grid;
+      display: flex;
       grid-template-columns: minmax(300px, 380px) 1fr;
       gap: 3rem 3.5rem;
-      align-items: start;
+      align-items: center;
       max-width: 100%;
     }
   }
@@ -1935,10 +2043,10 @@
     width: 34px;
     height: 34px;
     border-radius: 12px;
-    background: linear-gradient(135deg, rgba(255, 46, 147, 0.9), rgba(255, 138, 0, 0.9));
+    background: white;
     display: grid;
     place-items: center;
-    box-shadow: 0 12px 30px rgba(255, 46, 147, 0.18);
+
     border: 1px solid rgba(255, 255, 255, 0.12);
   }
   .landing-brand__icon svg { width: 18px; height: 18px; }

@@ -41,7 +41,7 @@ export function SocialProof() {
           ))}
         </div>
 
-        <div className="landing-social-proof__allies">
+      {/*   <div className="landing-social-proof__allies">
           <h3 className="landing-social-proof__allies-title">{alliesTitle}</h3>
           <p
             className="landing-social-proof__allies-placeholder landing-muted"
@@ -49,7 +49,7 @@ export function SocialProof() {
           >
             {alliesPlaceholder}
           </p>
-        </div>
+        </div> */}
       </div>
     </motion.section>
   );

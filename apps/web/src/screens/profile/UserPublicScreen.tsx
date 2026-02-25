@@ -983,13 +983,25 @@ export const UserProfileLive: React.FC = () => {
     queryKey: ['user-rsvps', userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: rows, error } = await supabase
         .from('event_rsvp')
-        .select(`event_date_id,status,created_at,events_date(*)`)
+        .select('id, user_id, event_date_id, status, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data || [];
+      if (!rows?.length) return [];
+      const ids = [...new Set((rows as any[]).map((r: any) => r.event_date_id).filter(Boolean))];
+      if (ids.length === 0) return rows as any[];
+      const { data: events, error: eventsError } = await supabase
+        .from('events_date')
+        .select('*')
+        .in('id', ids);
+      if (eventsError) throw eventsError;
+      const byId = new Map((events || []).map((e: any) => [e.id, e]));
+      return (rows as any[]).map((r: any) => ({
+        ...r,
+        events_date: byId.get(r.event_date_id) ?? null,
+      }));
     }
   });
 
@@ -1019,14 +1031,28 @@ export const UserProfileLive: React.FC = () => {
     } catch {}
   }, [rsvpEvents, userId, rsvpsError]);
 
-  // Filter RSVP events to upcoming only (>= today). Exclude past events.
+  // Eventos con RSVP del usuario (>= hoy) para #user-profile-interested-events
   const availableRsvpEvents = React.useMemo(() => {
-    const filtered = (rsvpEvents || []).filter((r: any) =>
-      isEventUpcomingOrToday(r.events_date)
-    );
-    return filtered.sort((a: any, b: any) => {
-      const fa = getEventPrimaryDate(a.events_date) || '';
-      const fb = getEventPrimaryDate(b.events_date) || '';
+    const rows = (rsvpEvents || []) as any[];
+    const normalizeEvent = (r: any) => {
+      const raw =
+        r.events_date ??
+        r.event_date ??
+        (r as any).eventsDate ??
+        (r as any).eventDate;
+      const single = Array.isArray(raw) ? raw[0] : raw;
+      return single && typeof single === 'object' ? single : null;
+    };
+    const withEvent = rows.map((r) => ({ ...r, _event: normalizeEvent(r) }));
+    const filtered = withEvent.filter((r) => {
+      if (!r._event) return false;
+      const primary = getEventPrimaryDate(r._event);
+      if (primary) return isEventUpcomingOrToday(r._event);
+      return true;
+    });
+    return filtered.sort((a, b) => {
+      const fa = getEventPrimaryDate(a._event) || '';
+      const fb = getEventPrimaryDate(b._event) || '';
       return fa.localeCompare(fb);
     });
   }, [rsvpEvents]);
@@ -1653,10 +1679,13 @@ export const UserProfileLive: React.FC = () => {
             )}
           </Modal>
 
+          {/* Eventos con RSVP del usuario: única sección que muestra "Eventos de interés" (>= hoy) */}
           <motion.section
             id="user-profile-interested-events"
             data-baile-id="user-profile-interested-events"
             data-test-id="user-profile-interested-events"
+            role="region"
+            aria-labelledby="user-profile-interested-events-title"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -1670,7 +1699,7 @@ export const UserProfileLive: React.FC = () => {
               flexWrap: 'wrap',
               gap: '0.75rem'
             }}>
-              <h3 className="section-title" style={{ margin: 0 }}>
+              <h3 id="user-profile-interested-events-title" className="section-title" style={{ margin: 0 }}>
                 {t('interested_events_title')}
               </h3>
               {availableRsvpEvents.length > 0 && (
@@ -1731,7 +1760,7 @@ export const UserProfileLive: React.FC = () => {
               </motion.div>
             ) : availableRsvpEvents.length > 0 ? (
               <HorizontalSlider
-                items={availableRsvpEvents.map((rsvp: any) => rsvp.events_date).filter(Boolean)}
+                items={availableRsvpEvents.map((r: any) => r._event ?? r.events_date).filter(Boolean)}
                 renderItem={(evento: any, index: number) => (
                   <motion.div
                     key={evento.id || index}

@@ -39,8 +39,8 @@ export default function AppOffCanvasMenu({ isOpen, onClose }: Props) {
     () =>
       ([
         { id: 'home', label: t('home'), icon: '🏠', onClick: () => navigateAndClose('/explore') },
-        { id: 'challenges', label: t('challenges'), icon: '🏆', onClick: () => navigateAndClose('/challenges') },
-        { id: 'trending', label: t('trending'), icon: '📈', onClick: () => navigateAndClose('/trending') },
+       // { id: 'challenges', label: t('challenges'), icon: '🏆', onClick: () => navigateAndClose('/challenges') },
+//{ id: 'trending', label: t('trending'), icon: '📈', onClick: () => navigateAndClose('/trending') },
         { id: 'me', label: t('my_profile'), icon: '👤', onClick: () => navigateAndClose(routes.app.profile) },
         { id: 'request-role', label: t('request_role'), icon: '📝', onClick: () => navigateAndClose('/app/roles/request') },
         { id: 'validation-info', label: t('validation_info'), icon: '✅', onClick: () => navigateAndClose('/validation/info') },

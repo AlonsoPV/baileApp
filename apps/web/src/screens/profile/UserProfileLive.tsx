@@ -781,14 +781,32 @@ export const UserProfileLive: React.FC = () => {
     } catch {}
   }, [rsvpEvents, user?.id, rsvpsError]);
 
-  // Filter RSVP events to upcoming only (>= today). Exclude past events.
+  // Eventos con RSVP del usuario (>= hoy) para #user-profile-interested-events
   const availableRsvpEvents = React.useMemo(() => {
-    const filtered = (rsvpEvents || []).filter((r: any) =>
-      isEventUpcomingOrToday(r.events_date)
-    );
-    return filtered.sort((a: any, b: any) => {
-      const fa = getEventPrimaryDate(a.events_date) || '';
-      const fb = getEventPrimaryDate(b.events_date) || '';
+    const rows = (rsvpEvents || []) as any[];
+    const normalizeEvent = (r: any) => {
+      const raw =
+        r.events_date ??
+        r.event_date ??
+        (r as any).eventsDate ??
+        (r as any).eventDate;
+      const single = Array.isArray(raw) ? raw[0] : raw;
+      return single && typeof single === 'object' ? single : null;
+    };
+    const withEvent = rows.map((r) => ({ ...r, _event: normalizeEvent(r) }));
+    const filtered = withEvent.filter((r) => {
+      if (!r._event) return false;
+      const primary = getEventPrimaryDate(r._event);
+      if (primary) return isEventUpcomingOrToday(r._event);
+      return true;
+    });
+    if (process.env.NODE_ENV === 'development' && rows.length > 0 && filtered.length === 0) {
+      const first = rows[0];
+      console.warn('[UserProfileLive] RSVP rows have no _event or all filtered out. First row keys:', first ? Object.keys(first) : [], 'first._event:', withEvent[0]?._event);
+    }
+    return filtered.sort((a, b) => {
+      const fa = getEventPrimaryDate(a._event) || '';
+      const fb = getEventPrimaryDate(b._event) || '';
       return fa.localeCompare(fb);
     });
   }, [rsvpEvents]);
@@ -1286,10 +1304,13 @@ export const UserProfileLive: React.FC = () => {
             {verMasModal && <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.95)' }}>{verMasModal.text}</p>}
           </Modal>
 
+          {/* Eventos con RSVP del usuario: única sección que muestra "Eventos de interés" (>= hoy) */}
           <motion.section
             id="user-profile-interested-events"
             data-baile-id="user-profile-interested-events"
             data-test-id="user-profile-interested-events"
+            role="region"
+            aria-labelledby="user-profile-interested-events-title"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -1303,7 +1324,7 @@ export const UserProfileLive: React.FC = () => {
               flexWrap: 'wrap',
               gap: '0.75rem'
             }}>
-              <h3 className="section-title" style={{ margin: 0 }}>
+              <h3 id="user-profile-interested-events-title" className="section-title" style={{ margin: 0 }}>
                 ✨ {t('interested_events_title')}
               </h3>
               {availableRsvpEvents.length > 0 && (
@@ -1363,9 +1384,9 @@ export const UserProfileLive: React.FC = () => {
               </motion.div>
             ) : availableRsvpEvents.length > 0 ? (
               <HorizontalSlider
-                items={availableRsvpEvents.filter((rsvp: any) => rsvp.events_date)}
+                items={availableRsvpEvents.filter((r: any) => r._event || r.events_date)}
                 renderItem={(rsvp: any, index: number) => {
-                  const evento = rsvp.events_date;
+                  const evento = rsvp._event ?? rsvp.events_date;
                   if (!evento) return null;
                   return (
                     <motion.div

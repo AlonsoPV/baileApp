@@ -709,6 +709,7 @@ export default function AddToCalendarWithStats({
               : '0 6px 16px rgba(0,0,0,0.25)',
           }}
           title={added ? t('added_calendar_tooltip') : t('add_calendar_tooltip')}
+          aria-label={added ? t('event_added_calendar') : t('add_event_calendar')}
         >
           {added ? "✅" : loading ? "⏳" : "📅"}
         </motion.button>

@@ -21,6 +21,8 @@ interface RSVPButtonsProps {
   interestedCount?: number;
   /** Si true, solo muestra el botón "Me interesa" (oculta "Voy" y el contador) */
   singleButton?: boolean;
+  /** En singleButton: cuando está activo (interesado), usar esta key i18n para el label (ej. "Voy ✓") */
+  singleButtonActiveLabelKey?: string;
 }
 
 const buttonBase = {
@@ -48,11 +50,13 @@ export default function RSVPButtons({
   disabled = false,
   interestedCount,
   singleButton = false,
+  singleButtonActiveLabelKey = 'going_check',
 }: RSVPButtonsProps) {
   const { t } = useTranslation();
   const isInterested = currentStatus === 'interesado';
   const isGoing = currentStatus === 'going';
   const hasAnyStatus = isInterested || isGoing;
+  const activeLabel = singleButton && isInterested ? t(singleButtonActiveLabelKey) : null;
 
   const handleInterested = () => {
     if (disabled) return;
@@ -93,7 +97,9 @@ export default function RSVPButtons({
           }}
         >
           <span style={{ fontSize: '1.2rem', zIndex: 2 }}>{isInterested ? '❤️' : '👀'}</span>
-          <span style={{ zIndex: 2 }}>{isInterested ? t('not_interested') : t('interested')}</span>
+          <span style={{ zIndex: 2 }}>
+            {isInterested ? (activeLabel ?? t('not_interested')) : t('interested')}
+          </span>
           {isInterested && (
             <motion.div
               initial={{ scale: 0 }}

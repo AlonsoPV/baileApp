@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useEventDateSuspense } from "../../hooks/useEventDateSuspense";
 import { useEventParent } from "../../hooks/useEventParent";
 import { useTags } from "../../hooks/useTags";
-import { useEventRSVP } from "../../hooks/useRSVP";
+import { useEventRSVP, type RSVPStatus } from "../../hooks/useRSVP";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import {
   EventHero,
   StickyCtaBar,
+  type StickyRsvpState,
   InfoGrid,
   ExpandableText,
   CostsSection,
@@ -168,8 +169,39 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     userStatus,
     stats,
     setStatus,
-    isUpdating
+    isUpdating,
   } = useEventRSVP(dateId);
+
+  // Optimistic UI + state machine: idle | active | loading | error
+  const [optimisticStatus, setOptimisticStatus] = React.useState<RSVPStatus | null | undefined>(undefined);
+  const requestIdRef = React.useRef(0);
+
+  const effectiveStatus = optimisticStatus !== undefined ? optimisticStatus : userStatus;
+  const rsvpState: StickyRsvpState = isUpdating
+    ? 'loading'
+    : effectiveStatus === 'interesado' || effectiveStatus === 'going'
+      ? 'active'
+      : 'idle';
+
+  const handleStatusChange = React.useCallback(
+    (s: RSVPStatus | null) => {
+      if (isUpdating) return;
+      const previous = effectiveStatus;
+      const reqId = ++requestIdRef.current;
+      setOptimisticStatus(s);
+      setStatus(s)
+        .then(() => {
+          if (reqId === requestIdRef.current) setOptimisticStatus(undefined);
+        })
+        .catch(() => {
+          if (reqId === requestIdRef.current) {
+            setOptimisticStatus(previous ?? undefined);
+            showToast(t('rsvp_error_toast', 'No se pudo registrar, intenta de nuevo'), 'error');
+          }
+        });
+    },
+    [effectiveStatus, isUpdating, setStatus, showToast, t]
+  );
 
   // Calcular contador de interesados de forma robusta
   // La función RPC get_event_rsvp_stats retorna { interesado: number, total: number }
@@ -401,9 +433,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           toDirectUrl={toDirectPublicStorageUrl}
         />
         <StickyCtaBar
-          userStatus={userStatus}
-          onStatusChange={setStatus}
+          userStatus={effectiveStatus}
+          onStatusChange={handleStatusChange}
           isUpdating={isUpdating}
+          rsvpState={rsvpState}
           onShare={handleShare}
           calendarButton={calendarButton}
         />

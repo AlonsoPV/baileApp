@@ -612,7 +612,7 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
           }}
         >
           <Link
-            to="/"
+            to="/explore"
             className="nav-center-brand"
             style={{
               textDecoration: 'none',

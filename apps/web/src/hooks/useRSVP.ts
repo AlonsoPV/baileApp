@@ -98,7 +98,9 @@ export function useEventsWithRSVPStats(params?: {
 }
 
 /**
- * Obtiene los eventos donde el usuario tiene RSVP
+ * Obtiene los eventos donde el usuario tiene RSVP.
+ * Usa dos consultas (event_rsvp + events_date) y fusiona en frontend para evitar
+ * depender del embed de PostgREST que puede fallar por RLS o nombre de relación.
  */
 export function useUserRSVPEvents(status?: RSVPStatus) {
   const { user } = useAuth();
@@ -111,21 +113,24 @@ export function useUserRSVPEvents(status?: RSVPStatus) {
       if (!userId) return [];
       let req = supabase
         .from("event_rsvp")
-        .select(`
-          *,
-          events_date (
-            *
-          )
-        `)
+        .select("id, user_id, event_date_id, status, created_at")
         .eq("user_id", userId);
-      
-      if (status) {
-        req = req.eq("status", status);
-      }
-      
-      const { data, error } = await req;
+      if (status) req = req.eq("status", status);
+      const { data: rows, error } = await req;
       if (error) throw error;
-      return data || [];
+      if (!rows?.length) return [];
+      const ids = [...new Set((rows as any[]).map((r) => r.event_date_id).filter(Boolean))];
+      if (ids.length === 0) return rows as any[];
+      const { data: events, error: eventsError } = await supabase
+        .from("events_date")
+        .select("*")
+        .in("id", ids);
+      if (eventsError) throw eventsError;
+      const byId = new Map((events || []).map((e: any) => [e.id, e]));
+      return (rows as any[]).map((r) => ({
+        ...r,
+        events_date: byId.get(r.event_date_id) ?? null,
+      }));
     }
   });
 }
@@ -158,8 +163,6 @@ export function useUpdateRSVP() {
       return data as RSVPResponse;
     },
     onSuccess: (data, variables) => {
-      console.log('[useUpdateRSVP] Success, invalidating cache for eventDateId:', variables.eventDateId);
-      
       // Invalidar todas las queries relacionadas con RSVP
       queryClient.invalidateQueries({ queryKey: ["rsvp"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
@@ -179,11 +182,7 @@ export function useUpdateRSVP() {
       // Invalidar también las queries de eventos específicos
       queryClient.invalidateQueries({ queryKey: ["event", "date", variables.eventDateId] });
       queryClient.invalidateQueries({ queryKey: ["event", "parent"] });
-      
-      // Invalidar perfil público (UserPublicScreen usa ['user-rsvps', userId])
       queryClient.invalidateQueries({ queryKey: ["user-rsvps"] });
-      
-      console.log('[useUpdateRSVP] Cache invalidation completed');
     }
   });
 }
@@ -205,8 +204,6 @@ export function useRemoveRSVP() {
       return data as RSVPResponse;
     },
     onSuccess: (data, variables) => {
-      console.log('[useRemoveRSVP] Success, invalidating cache for eventDateId:', variables);
-      
       // Invalidar todas las queries relacionadas con RSVP
       queryClient.invalidateQueries({ queryKey: ["rsvp"] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
@@ -245,21 +242,12 @@ export function useEventRSVP(eventDateId?: number) {
   
   const handleRSVP = async (status: RSVPStatus | null) => {
     if (!eventDateId) return;
-    
-    console.log('[useEventRSVP] handleRSVP called with:', { eventDateId, status });
-    
     try {
-      // Si se pasa null, removemos el RSVP
       if (status === null) {
-        console.log('[useEventRSVP] Removing RSVP for eventDateId:', eventDateId);
         await removeRSVP.mutateAsync(eventDateId);
       } else {
-        // Si se pasa 'interesado', lo actualizamos
-        console.log('[useEventRSVP] Updating RSVP for eventDateId:', eventDateId, 'status:', status);
         await updateRSVP.mutateAsync({ eventDateId, status });
       }
-      
-      console.log('[useEventRSVP] RSVP operation completed successfully');
     } catch (error) {
       console.error('[useEventRSVP] Error updating RSVP:', error);
       throw error;

@@ -221,6 +221,24 @@
   min-width: 44px;
   min-height: 44px;
 }
+
+.eds-sticky-cta__spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.eds-sticky-cta__spinner-icon {
+  animation: eds-sticky-cta-spin 0.8s linear infinite;
+}
+
+@keyframes eds-sticky-cta-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 .eds-sticky-cta__icon {
   min-width: 44px;
   min-height: 44px;

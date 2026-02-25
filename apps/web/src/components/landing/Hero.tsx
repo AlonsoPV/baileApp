@@ -34,7 +34,7 @@ export function Hero({ onOpenDownload, onOpenB2B }: HeroProps) {
         </div>
 
         <h1 className="landing-hero__title">
-          <span className="white">ENCUENTRA </span>
+          <span className="white">ENCUENTRA </span><br />
           <span className="grad">DÓNDE BAILAR</span>
           <br />
           <span className="white">HOY MISMO</span>
@@ -48,10 +48,10 @@ export function Hero({ onOpenDownload, onOpenB2B }: HeroProps) {
         <div className="landing-hero__ctas">
           <button type="button" className="btn btn-primary" onClick={handleDownloadClick}>
             <Smartphone size={18} strokeWidth={2} aria-hidden />
-            Descargar la App
+            Descargar
           </button>
           <button type="button" className="btn btn-ghost" onClick={handleB2BClick}>
-            Soy academia / maestro
+            ¿Dónde Bailar?
           </button>
         </div>
 
@@ -136,7 +136,7 @@ export function DownloadModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Descargar la app">
+    <Modal open={open} onClose={onClose}>
       <div className="download-modal-content">
         <p className="download-modal-subtitle">Elige tu plataforma</p>
         <div className="download-modal-buttons">
@@ -150,7 +150,6 @@ export function DownloadModal({
               <AppleLogoIcon />
             </span>
             <span className="download-modal-btn__label">App Store</span>
-            <span className="download-modal-btn__sublabel">iPhone / iPad</span>
           </button>
           <button
             type="button"
@@ -162,7 +161,7 @@ export function DownloadModal({
               <GooglePlayIcon />
             </span>
             <span className="download-modal-btn__label">Google Play</span>
-            <span className="download-modal-btn__sublabel">Android</span>
+
           </button>
         </div>
       </div>
