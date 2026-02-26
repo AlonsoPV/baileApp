@@ -33,7 +33,8 @@ import { EventDateSkeleton } from "../../components/skeletons/EventDateSkeleton"
 import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
 import { getLocaleFromI18n } from "../../utils/locale";
 import { routes } from "../../routes/registry";
-import { getEventDateYmd } from "../../utils/eventDateDisplay";
+import { resolveEventDateYmd } from "../../utils/eventDateDisplay";
+import { supabase } from "../../lib/supabase";
 
 const colors = {
   coral: '#FF3D57',
@@ -132,7 +133,47 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   
   // Con Suspense, date siempre existe cuando se renderiza
   const date = useEventDateSuspense(dateId);
-  const displayYmd = React.useMemo(() => getEventDateYmd(date), [date]);
+  const displayYmd = React.useMemo(() => resolveEventDateYmd(date), [date]);
+
+  // ✅ Si abrimos una "plantilla" legacy (dia_semana sin fecha), materializar ocurrencias y redirigir
+  // a la primera ocurrencia real futura para navegar por un events_date.id real.
+  React.useEffect(() => {
+    if (!date?.parent_id) return;
+    const hasDiaSemana = typeof (date as any)?.dia_semana === "number";
+    const hasFecha = !!(date as any)?.fecha || !!(date as any)?.fecha_inicio;
+    if (!hasDiaSemana) return;
+    if (hasFecha) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: Number(date.parent_id), p_weeks_ahead: 12 } as any);
+        const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+        const { data: nextRows, error } = await supabase
+          .from("events_date")
+          .select("id,fecha")
+          .eq("parent_id", Number(date.parent_id))
+          .not("fecha", "is", null)
+          .gte("fecha", today)
+          .order("fecha", { ascending: true })
+          .limit(1);
+
+        if (cancelled) return;
+        if (!error && Array.isArray(nextRows) && nextRows[0]?.id) {
+          const nextId = Number((nextRows[0] as any).id);
+          if (Number.isFinite(nextId) && nextId !== dateId) {
+            navigate(`/social/fecha/${nextId}`, { replace: true });
+          }
+        }
+      } catch (e) {
+        if (import.meta.env.DEV) console.warn("[EventDetail] ensure_weekly_occurrences/redirect failed", e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [date?.parent_id, (date as any)?.dia_semana, (date as any)?.fecha, (date as any)?.fecha_inicio, dateId, navigate]);
   
   // Estas queries pueden ser opcionales (no usan Suspense)
   const { data: parent } = useEventParent(date?.parent_id ?? undefined);
@@ -165,7 +206,23 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     }
   }, [fullAddress, showToast, t]);
 
-  // Hook de RSVP
+  // RSVP: disponible con o sin login. Sin login se guarda en localStorage.
+  const GUEST_RSVP_KEY = (id: number) => `rsvp_guest_${id}`;
+  const readGuestRsvp = React.useCallback((id: number): RSVPStatus | null => {
+    try {
+      const raw = localStorage.getItem(GUEST_RSVP_KEY(id));
+      if (raw === 'interesado' || raw === 'going') return raw;
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const [guestRsvpStatus, setGuestRsvpStatus] = React.useState<RSVPStatus | null>(() => readGuestRsvp(dateId));
+  React.useEffect(() => {
+    setGuestRsvpStatus(readGuestRsvp(dateId));
+  }, [dateId, readGuestRsvp]);
+
   const {
     userStatus,
     stats,
@@ -173,14 +230,18 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     isUpdating,
   } = useEventRSVP(dateId);
 
-  // TEMP: permitir UI RSVP sin login; backend puede seguir exigiendo auth
-  const canMutateRsvp = !!user;
+  const canMutateRsvpBackend = !!user;
 
   // Optimistic UI + state machine: idle | active | loading | error
   const [optimisticStatus, setOptimisticStatus] = React.useState<RSVPStatus | null | undefined>(undefined);
   const requestIdRef = React.useRef(0);
 
-  const effectiveStatus = optimisticStatus !== undefined ? optimisticStatus : (canMutateRsvp ? userStatus : null);
+  const effectiveStatus = React.useMemo(() => {
+    if (optimisticStatus !== undefined) return optimisticStatus;
+    if (canMutateRsvpBackend) return userStatus ?? null;
+    return guestRsvpStatus;
+  }, [optimisticStatus, canMutateRsvpBackend, userStatus, guestRsvpStatus]);
+
   const rsvpState: StickyRsvpState = isUpdating
     ? 'loading'
     : effectiveStatus === 'interesado' || effectiveStatus === 'going'
@@ -190,8 +251,14 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const handleStatusChange = React.useCallback(
     (s: RSVPStatus | null) => {
       if (isUpdating) return;
-      if (!canMutateRsvp) {
-        showToast(t('rsvp_guest_toast', 'RSVP temporalmente requiere login en backend. UI desbloqueada.'), 'info');
+      if (!canMutateRsvpBackend) {
+        try {
+          if (s === null) localStorage.removeItem(GUEST_RSVP_KEY(dateId));
+          else localStorage.setItem(GUEST_RSVP_KEY(dateId), s);
+        } catch {
+          // ignore
+        }
+        setGuestRsvpStatus(s);
         return;
       }
       const previous = effectiveStatus;
@@ -208,7 +275,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           }
         });
     },
-    [canMutateRsvp, effectiveStatus, isUpdating, setStatus, showToast, t]
+    [dateId, canMutateRsvpBackend, effectiveStatus, isUpdating, setStatus, showToast, t]
   );
 
   // Calcular contador de interesados de forma robusta

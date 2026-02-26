@@ -401,122 +401,135 @@ async function fetchPage(params: QueryParams, page: number) {
   // Filtro adicional para eventos con dia_semana y por hora para eventos de HOY (CDMX):
   if (type === 'fechas' && finalData.length > 0) {
     const todayStr = getTodayCDMX();
-    const expandedData: any[] = [];
 
-    // Log para verificar si hay eventos recurrentes
-    const recurrentEvents = finalData.filter((row: any) => 
-      row.dia_semana !== null && row.dia_semana !== undefined && typeof row.dia_semana === 'number'
+    const addDaysYmd = (ymd: string, days: number) => {
+      try {
+        const [y, m, d] = String(ymd).split("-").map((x) => parseInt(x, 10));
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return ymd;
+        const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+        dt.setUTCDate(dt.getUTCDate() + days);
+        const yy = dt.getUTCFullYear();
+        const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(dt.getUTCDate()).padStart(2, "0");
+        return `${yy}-${mm}-${dd}`;
+      } catch {
+        return ymd;
+      }
+    };
+
+    // ✅ Materializar ocurrencias reales para plantillas recurrentes (dia_semana no-null)
+    // Esto evita "inventar" IDs/fechas en frontend y permite navegación 1:1 con events_date.id real.
+    const recurringParentIds = Array.from(
+      new Set(
+        finalData
+          .filter((row: any) => row?.parent_id && typeof row?.dia_semana === "number")
+          .map((row: any) => Number(row.parent_id))
+          .filter((n: any) => Number.isFinite(n))
+      )
     );
-    if (recurrentEvents.length > 0) {
-      console.log('[useExploreQuery] Eventos recurrentes encontrados:', {
-        total: finalData.length,
-        recurrentes: recurrentEvents.length,
-        eventos: recurrentEvents.map((r: any) => ({
-          id: r.id,
-          dia_semana: r.dia_semana,
-          fecha_original: r.fecha,
-          hora_inicio: r.hora_inicio
-        }))
-      });
-    }
 
-    finalData.forEach((row: any) => {
-      // Si tiene dia_semana, expandir en 4 ocurrencias
-      if (row.dia_semana !== null && row.dia_semana !== undefined && typeof row.dia_semana === 'number') {
+    if (recurringParentIds.length > 0) {
+      for (const pid of recurringParentIds) {
         try {
-          const horaInicioStr = row.hora_inicio || '20:00';
-          
-          // Calcular la fecha base (primera ocurrencia)
-          const primeraFecha = calculateNextDateWithTime(row.dia_semana, horaInicioStr);
-          const ocurrenciasParaEsteEvento: any[] = [];
-          
-          // Calcular las próximas 4 ocurrencias (sin filtrar dentro del bucle, igual que EventParentPublicScreenModern)
-          for (let i = 0; i < 4; i++) {
-            // Calcular la fecha de esta ocurrencia (sumar i semanas)
-            const fechaOcurrencia = new Date(primeraFecha);
-            fechaOcurrencia.setDate(primeraFecha.getDate() + (i * 7));
-            
-            const year = fechaOcurrencia.getFullYear();
-            const month = String(fechaOcurrencia.getMonth() + 1).padStart(2, '0');
-            const day = String(fechaOcurrencia.getDate()).padStart(2, '0');
-            const fechaStr = `${year}-${month}-${day}`;
-            
-            // Crear una copia del evento con la fecha de esta ocurrencia
-            // NO filtrar aquí - el filtrado se hará después en el frontend
-            const expandedItem = {
-              ...row,
-              fecha: fechaStr,
-              _recurrence_index: i, // Para identificar que es una ocurrencia recurrente
-              _original_id: row.id, // Mantener referencia al ID original
-              id: `${row.id}_${i}`, // ID único para cada ocurrencia
-            };
-            
-            ocurrenciasParaEsteEvento.push(expandedItem);
-            expandedData.push(expandedItem);
-          }
-          
-          // Log temporal para depuración - verificar que se generaron las 4 ocurrencias
-          if (ocurrenciasParaEsteEvento.length !== 4) {
-            console.warn(`[useExploreQuery] Evento ${row.id} solo generó ${ocurrenciasParaEsteEvento.length} ocurrencias de 4 esperadas:`, {
-              originalId: row.id,
-              dia_semana: row.dia_semana,
-              ocurrenciasGeneradas: ocurrenciasParaEsteEvento.length,
-              fechas: ocurrenciasParaEsteEvento.map((item: any) => item.fecha).sort(),
-              horaInicio: horaInicioStr
-            });
-          } else {
-            console.log(`[useExploreQuery] Evento ${row.id} expandido correctamente:`, {
-              originalId: row.id,
-              dia_semana: row.dia_semana,
-              ocurrenciasGeneradas: ocurrenciasParaEsteEvento.length,
-              fechas: ocurrenciasParaEsteEvento.map((item: any) => item.fecha).sort(),
-              horaInicio: horaInicioStr
-            });
-          }
+          await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: 12 } as any);
         } catch (e) {
-          console.error('Error calculando ocurrencias para evento recurrente:', e);
-          // Si falla, incluir el evento original
-          expandedData.push(row);
-        }
-      } else {
-        // Para eventos sin dia_semana, verificar que estén en el rango de fechas (si aplica)
-        let shouldInclude = true;
-        
-        if (row?.fecha) {
-          const fechaStr = String(row.fecha).split('T')[0];
-          
-          // Verificar rango de fechas si está disponible en params
-          if (params.dateFrom || params.dateTo) {
-            // Regla por día: se usa solo la fecha de INICIO del evento (fecha).
-            // - "Hoy": se muestran todos los eventos que EMPIEZAN hoy, aunque ya haya pasado la hora de inicio
-            //   (ej. empieza 7pm sábado, son las 10pm sábado → se sigue viendo en Hoy).
-            // - Un evento que empieza sábado 7pm y termina domingo 2am NO se muestra en Domingo.
-            if (params.dateFrom && fechaStr < params.dateFrom) {
-              shouldInclude = false;
-            }
-            if (params.dateTo && fechaStr > params.dateTo) {
-              shouldInclude = false;
-            }
-          } else {
-            // Si no hay rango de fechas, verificar que la fecha de inicio del evento sea hoy o futura.
-            // Los eventos se muestran en el día de su hora de inicio, de 00:00 a 23:59 de ese día,
-            // sin importar si ya pasó la hora de inicio. Ej: evento viernes 19:00 - sábado 02:00
-            // se muestra de 00:00 a 23:59 del viernes.
-            const fechaDate = new Date(fechaStr + 'T12:00:00');
-            const todayDate = new Date(todayStr + 'T12:00:00');
-            if (fechaDate < todayDate) {
-              shouldInclude = false;
-            }
-          }
-        }
-        
-        if (shouldInclude) {
-          expandedData.push(row);
+          console.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
         }
       }
+
+      // Re-fetch ocurrencias reales (rango: dateFrom/dateTo o hoy + 84 días)
+      try {
+        const rangeFrom = dateFrom || todayStr;
+        const rangeTo = dateTo || addDaysYmd(rangeFrom, 84);
+        const { data: occRows, error: occErr } = await supabase
+          .from("events_date")
+          .select(select as any)
+          .eq("estado_publicacion", "publicado")
+          .in("parent_id", recurringParentIds as any)
+          .gte("fecha", rangeFrom)
+          .lte("fecha", rangeTo)
+          .order("fecha", { ascending: true });
+
+        if (!occErr && Array.isArray(occRows) && occRows.length > 0) {
+          const byId = new Map<any, any>();
+          (finalData as any[]).forEach((r) => byId.set((r as any)?.id, r));
+          (occRows as any[]).forEach((r) => byId.set((r as any)?.id, r));
+          finalData = Array.from(byId.values());
+        }
+      } catch (e) {
+        console.warn("[useExploreQuery] re-fetch occurrences failed", e);
+      }
+    }
+
+    const nextData: any[] = [];
+    const toYmd = (raw: any) => {
+      if (!raw) return '';
+      const plain = String(raw).split('T')[0];
+      return plain || '';
+    };
+    const shouldIncludeByYmd = (fechaStr: string) => {
+      if (!fechaStr) return false;
+
+      // Verificar rango de fechas si está disponible en params
+      if (params.dateFrom || params.dateTo) {
+        // Regla por día: se usa solo la fecha de INICIO del evento (fecha).
+        // - "Hoy": se muestran todos los eventos que EMPIEZAN hoy, aunque ya haya pasado la hora de inicio
+        //   (ej. empieza 7pm sábado, son las 10pm sábado → se sigue viendo en Hoy).
+        // - Un evento que empieza sábado 7pm y termina domingo 2am NO se muestra en Domingo.
+        if (params.dateFrom && fechaStr < params.dateFrom) return false;
+        if (params.dateTo && fechaStr > params.dateTo) return false;
+        return true;
+      }
+
+      // Si no hay rango de fechas, verificar que la fecha de inicio del evento sea hoy o futura.
+      // Los eventos se muestran en el día de su hora de inicio, de 00:00 a 23:59 de ese día,
+      // sin importar si ya pasó la hora de inicio.
+      const fechaDate = new Date(fechaStr + 'T12:00:00');
+      const todayDate = new Date(todayStr + 'T12:00:00');
+      return !(fechaDate < todayDate);
+    };
+
+    finalData.forEach((row: any) => {
+      const hasDiaSemana = row.dia_semana !== null && row.dia_semana !== undefined && typeof row.dia_semana === 'number';
+      const parentId = typeof row?.parent_id === "number" ? row.parent_id : null;
+
+      // ✅ Regla de fuente única:
+      // - Si `fecha` existe, se usa esa fecha y se filtra como evento normal (aunque exista dia_semana).
+      // - Solo si `fecha` NO existe, se calcula una "next occurrence" para display usando dia_semana.
+      let ymd = toYmd(row?.fecha || (row as any)?.fecha_inicio);
+
+      if (!ymd && hasDiaSemana) {
+        // Si ya hay ocurrencias reales para este parent, NO mostrar la plantilla sin fecha.
+        // (La navegación debe ser por occurrences reales con fecha.)
+        if (parentId != null) {
+          const hasRealForParent = finalData.some((r: any) => r?.parent_id === parentId && !!toYmd(r?.fecha || (r as any)?.fecha_inicio));
+          if (hasRealForParent) return;
+        }
+        try {
+          const horaInicioStr = row.hora_inicio || '20:00';
+          const next = calculateNextDateWithTime(row.dia_semana, horaInicioStr);
+          const year = next.getFullYear();
+          const month = String(next.getMonth() + 1).padStart(2, '0');
+          const day = String(next.getDate()).padStart(2, '0');
+          ymd = `${year}-${month}-${day}`;
+        } catch (e) {
+          console.error('Error calculando next occurrence para evento recurrente legacy:', e);
+          ymd = '';
+        }
+      }
+
+      if (!ymd) return;
+      if (!shouldIncludeByYmd(ymd)) return;
+
+      // Solo en fallback legacy (fecha vacía) inyectamos la fecha display para orden/UI.
+      const out = hasDiaSemana && !toYmd(row?.fecha || (row as any)?.fecha_inicio)
+        ? { ...row, fecha: ymd, _legacy_next_occurrence: true }
+        : row;
+
+      nextData.push(out);
     });
 
-    finalData = expandedData;
+    finalData = nextData;
     
     // Ordenar por fecha después de expandir
     finalData.sort((a, b) => {

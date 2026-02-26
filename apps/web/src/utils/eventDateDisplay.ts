@@ -1,6 +1,7 @@
 import { calculateNextDateWithTime } from "./calculateRecurringDates";
 
-export function getEventDateYmd(item: any): string | null {
+/** Devuelve YYYY-MM-DD para mostrar en UI. */
+export function resolveEventDateYmd(item: any): string | null {
   // 1) Fuente de verdad: fecha real en row de events_date
   const fecha = item?.fecha || item?.evento_fecha || item?.fecha_inicio;
   if (fecha) return String(fecha).split("T")[0] ?? null;
@@ -19,4 +20,7 @@ export function getEventDateYmd(item: any): string | null {
 
   return null;
 }
+
+// Alias retrocompatible (usado en varias pantallas).
+export const getEventDateYmd = resolveEventDateYmd;
 

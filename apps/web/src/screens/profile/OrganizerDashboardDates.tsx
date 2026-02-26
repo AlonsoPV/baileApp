@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDatesByParent, useRSVPCounts } from "../../hooks/useEvents";
 import { RSVPCountsRow } from "../../components/events/RSVPCountsRow";
 import { fmtDate, fmtTime } from "../../utils/format";
+import { auditEventParentDates } from "../../utils/eventDateConsistency";
 
 const colors = {
   coral: '#FF3D57',
@@ -21,6 +22,7 @@ export function OrganizerDashboardDates() {
   const parentId = Number(id);
   const { data: dates } = useDatesByParent(parentId, false); // false = incluir borradores
   const { data: counts } = useRSVPCounts(parentId);
+  const audit = useMemo(() => auditEventParentDates(Number.isFinite(parentId) ? parentId : null, (dates as any) || []), [parentId, dates]);
 
   const mapCounts = useMemo(() => {
     const m = new Map<number, any>();
@@ -123,6 +125,30 @@ export function OrganizerDashboardDates() {
           + Nueva Fecha
         </motion.button>
       </div>
+
+      {import.meta.env.DEV && audit.needsBackfill && (
+        <div style={{
+          padding: 16,
+          borderRadius: 14,
+          border: `1px solid ${colors.orange}55`,
+          background: `${colors.orange}14`,
+          marginBottom: 16,
+        }}>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>Auditoría (DEV): posibles inconsistencias</div>
+          <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.35 }}>
+            <div><b>tipo</b>: {audit.inferredType} · <b>fechas</b>: {audit.totalDates} · <b>únicas</b>: {audit.uniqueFechas}</div>
+            {audit.missingFechaIds.length > 0 && (
+              <div><b>sin fecha</b>: {audit.missingFechaIds.slice(0, 20).join(", ")}{audit.missingFechaIds.length > 20 ? "…" : ""}</div>
+            )}
+            {audit.duplicateFechas.length > 0 && (
+              <div><b>fechas duplicadas</b>: {audit.duplicateFechas.slice(0, 5).map((d) => `${d.fecha} (${d.ids.length})`).join(" · ")}{audit.duplicateFechas.length > 5 ? "…" : ""}</div>
+            )}
+            {audit.weekdayMismatches.length > 0 && (
+              <div><b>weekday mismatch</b>: {audit.weekdayMismatches.slice(0, 5).map((m) => `${m.id}@${m.fecha} (dia_semana=${m.dia_semana}, weekday=${m.weekday})`).join(" · ")}{audit.weekdayMismatches.length > 5 ? "…" : ""}</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Fechas List */}
       <div style={{ display: 'grid', gap: '16px' }}>

@@ -8,7 +8,7 @@ import { fmtDate } from "../../../utils/format";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
-import { getEventDateYmd } from "../../../utils/eventDateDisplay";
+import { resolveEventDateYmd } from "../../../utils/eventDateDisplay";
 import "./Card.css";
 
 interface EventCardProps {
@@ -18,8 +18,14 @@ interface EventCardProps {
 }
 
 export default function EventCard({ item, priority = false }: EventCardProps) {
+  const toNumericId = (v: any): number | null => {
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string" && /^\d+$/.test(v)) return Number(v);
+    return null;
+  };
+
   // Si es una ocurrencia recurrente, usar el ID original para la navegación
-  const eventId = item.id ?? item.event_date_id ?? item._original_id;
+  const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : '#';
   const { data: allTags } = useTags() as any;
   const formatHHMM = (t?: string) => {
@@ -103,7 +109,7 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
   }, [lugar]);
   const organizador = item.organizador_nombre || item.organizer_name;
   
-  const fecha = React.useMemo(() => getEventDateYmd(item), [item]);
+  const fecha = React.useMemo(() => resolveEventDateYmd(item), [item]);
 
   if (import.meta.env.DEV) {
     // eslint-disable-next-line no-console
