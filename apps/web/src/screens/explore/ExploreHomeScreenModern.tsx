@@ -2112,6 +2112,16 @@ const STYLES = `
       margin: 0 -0.15rem !important;
     }
   }
+  /* Android mobile: quitar margen entre navbar y filters-mobile-trigger-row */
+  .explore-container.android-mobile .wrap {
+    padding-top: 0 !important;
+  }
+  .explore-container.android-mobile .filters-panel {
+    padding-top: 0 !important;
+  }
+  .explore-container.android-mobile .filters-mobile-trigger-row {
+    margin-top: 0 !important;
+  }
 `;
 
 function FiltersLayout({
@@ -2287,6 +2297,7 @@ export default function ExploreHomeScreen() {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 768;
   });
+  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
   const isDesktop = !isMobile;
   const [hasAppliedDefaults, setHasAppliedDefaults] = React.useState(false);
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
@@ -3532,7 +3543,7 @@ export default function ExploreHomeScreen() {
       <SeoHead section="explore" />
       <style>{STYLES}</style>
 
-      <div className="explore-container">
+      <div className={`explore-container${isMobile && isAndroid ? ' android-mobile' : ''}`}>
         <div className="wrap">
           <section className="filters-panel" style={{ marginTop: 0, marginLeft: 'auto', marginRight: 'auto' }} role="region" aria-label={t('filters')}>
             {/* Mobile: botón Filtros que abre panel desplegable */}

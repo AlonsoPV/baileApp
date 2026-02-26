@@ -3,12 +3,14 @@ import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useDatesByParent, useCreateDate, useUpdateDate } from "../../hooks/useEvents";
+import { useCreateEventDate } from "../../hooks/useEventDate";
 import { useEventDateMedia } from "../../hooks/useEventDateMedia";
 import { useToast } from "../../components/Toast";
 import EventCreateForm from "../../components/events/EventCreateForm";
 import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import { ensureMaxVideoDuration } from "../../utils/videoValidation";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 const colors = {
   coral: "#FF3D57",
@@ -30,6 +32,7 @@ export const EventDateEditor: React.FC = () => {
   const { data: organizer } = useMyOrganizer();
   const { data: dates } = useDatesByParent(parentIdNumFromRoute ?? undefined);
   const createMutation = useCreateDate();
+  const createBatchMutation = useCreateEventDate();
   const updateMutation = useUpdateDate();
   const { showToast } = useToast();
 
@@ -86,6 +89,35 @@ export const EventDateEditor: React.FC = () => {
   const handleSubmit = async (values: any) => {
     if (!parentIdNum) throw new Error("ID del evento padre no válido");
 
+    const isRecurringWeekly = typeof values?.dia_semana === "number";
+
+    const parseYMD = (s: any) => {
+      try {
+        if (!s) return null;
+        const plain = String(s).split("T")[0];
+        const [y, m, d] = plain.split("-").map((x) => parseInt(x, 10));
+        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+        return new Date(y, m - 1, d);
+      } catch {
+        return null;
+      }
+    };
+
+    const formatYmd = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    };
+
+    const existingYmd = new Set<string>();
+    if (Array.isArray(dates)) {
+      dates.forEach((d: any) => {
+        const ymd = d?.fecha ? String(d.fecha).split("T")[0] : null;
+        if (ymd) existingYmd.add(ymd);
+      });
+    }
+
     // Normalizaciones defensivas (evitan borrar datos si values viene incompleto)
     const nextCronograma =
       values?.cronograma ?? (isEditing ? (currentDate as any)?.cronograma : undefined) ?? [];
@@ -98,9 +130,6 @@ export const EventDateEditor: React.FC = () => {
       djs: values?.djs || null,
       telefono_contacto: values?.telefono_contacto || null,
       mensaje_contacto: values?.mensaje_contacto || null,
-
-      fecha: values?.fecha || null,
-      dia_semana: typeof values?.dia_semana === "number" ? values.dia_semana : null,
 
       hora_inicio: values?.hora_inicio || null,
       hora_fin: values?.hora_fin || null,
@@ -134,16 +163,100 @@ export const EventDateEditor: React.FC = () => {
       // El media se gestiona con useEventDateMedia (events_date.media).
     };
 
+    if (isRecurringWeekly) {
+      const dia = Number(values.dia_semana);
+      const weeksToCreate = 12;
+      const horaInicio = values?.hora_inicio || "20:00";
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const pickStart = () => {
+        const fromValues = parseYMD(values?.fecha);
+        const fromCurrent = parseYMD((currentDate as any)?.fecha);
+        const candidate = fromValues || fromCurrent;
+        if (candidate && candidate.getDay() === dia && candidate.getTime() >= today.getTime()) return candidate;
+
+        const next = calculateNextDateWithTime(dia, horaInicio);
+        const dt = new Date(next.getFullYear(), next.getMonth(), next.getDate());
+        dt.setHours(0, 0, 0, 0);
+        return dt;
+      };
+
+      const startDate = pickStart();
+      const startYmd = formatYmd(startDate);
+
+      // Al convertir a recurrente semanal, garantizar que la fila "principal" tenga fecha real
+      if (isEditing && currentDate) {
+        const updated = await updateMutation.mutateAsync({
+          id: (currentDate as any).id,
+          ...basePayload,
+          fecha: startYmd,
+          dia_semana: dia,
+        } as any);
+
+        existingYmd.add(startYmd);
+
+        const payloads: any[] = [];
+        for (let i = 1; i < weeksToCreate; i++) {
+          const next = new Date(startDate);
+          next.setDate(startDate.getDate() + i * 7);
+          const ymd = formatYmd(next);
+          if (existingYmd.has(ymd)) continue;
+          payloads.push({
+            organizer_id: (organizer as any)?.id ?? null,
+            parent_id: parentIdNum,
+            ...basePayload,
+            fecha: ymd,
+            dia_semana: dia,
+          });
+        }
+
+        if (payloads.length) {
+          await createBatchMutation.mutateAsync(payloads);
+        }
+
+        return updated;
+      }
+
+      // Create: batch insert N ocurrencias con fecha real (id distinto por semana)
+      const payloads: any[] = [];
+      for (let i = 0; i < weeksToCreate; i++) {
+        const next = new Date(startDate);
+        next.setDate(startDate.getDate() + i * 7);
+        const ymd = formatYmd(next);
+        if (existingYmd.has(ymd)) continue;
+        payloads.push({
+          organizer_id: (organizer as any)?.id ?? null,
+          parent_id: parentIdNum,
+          ...basePayload,
+          fecha: ymd,
+          dia_semana: dia,
+        });
+      }
+
+      const created = await createBatchMutation.mutateAsync(payloads);
+      const createdRows = Array.isArray(created) ? created : [created];
+      const first = createdRows
+        .filter(Boolean)
+        .sort((a: any, b: any) => String(a?.fecha || "").localeCompare(String(b?.fecha || "")))[0];
+      return first ?? null;
+    }
+
     if (isEditing && currentDate) {
       await updateMutation.mutateAsync({
         id: (currentDate as any).id,
         ...basePayload,
+        fecha: values?.fecha || null,
+        dia_semana: typeof values?.dia_semana === "number" ? values.dia_semana : null,
       });
     } else {
       const createPayload = {
         organizer_id: (organizer as any)?.id ?? null,
         parent_id: parentIdNum,
         ...basePayload,
+        fecha: values?.fecha || null,
+        dia_semana: typeof values?.dia_semana === "number" ? values.dia_semana : null,
       };
       await createMutation.mutateAsync(createPayload as any);
     }

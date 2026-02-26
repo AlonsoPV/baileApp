@@ -292,12 +292,9 @@ export default function AddToCalendarWithStats({
     });
 
     if (!user?.id) {
-      // Si no hay usuario en el contexto de autenticación,
-      // en lugar de ejecutar la acción original, mandamos al flujo de login
+      // TEMP: sin login permitir abrir enlace (Google Calendar / ICS) sin registrar en backend
       setOpen(false);
-      navigate("/auth/login", {
-        state: { from: routerLocation.pathname + routerLocation.search },
-      });
+      window.open(href, "_blank");
       return;
     }
 
@@ -649,36 +646,8 @@ export default function AddToCalendarWithStats({
     }
   }, [open]);
 
-  // Si es una clase y no hay usuario, mostrar botón de login en lugar del botón de calendario
-  if (isClass && !user?.id) {
-    return (
-      <button
-        onClick={() => navigate("/auth/login", { state: { from: routerLocation.pathname + routerLocation.search } })}
-        style={{
-          padding: showAsIcon ? "0" : "12px 16px",
-          width: showAsIcon ? "40px" : "auto",
-          height: showAsIcon ? "40px" : "auto",
-          borderRadius: showAsIcon ? "50%" : 14,
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06))",
-          color: "#fff",
-          fontWeight: 900,
-          letterSpacing: ".01em",
-          cursor: "pointer",
-          boxShadow: "0 10px 28px rgba(0,0,0,0.35)",
-          backdropFilter: "blur(8px)",
-          display: showAsIcon ? "flex" : "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: showAsIcon ? "20px" : "inherit",
-        }}
-        title={t('login_to_add_calendar')}
-        aria-label={t('login_to_add_calendar')}
-      >
-        {showAsIcon ? "🔒" : `🔒 ${t('login')}`}
-      </button>
-    );
-  }
+  // TEMP: candado desactivado — siempre mostrar botón de calendario (ICS/Google sin login)
+  // Antes: isClass && !user?.id mostraba botón "Inicia sesión para añadir al calendario"
 
   if (showAsIcon) {
     return (

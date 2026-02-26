@@ -1,6 +1,5 @@
 import React from "react";
 import { Share2, Loader2 } from "lucide-react";
-import RequireLogin from "../../auth/RequireLogin";
 import RSVPButtons from "../../rsvp/RSVPButtons";
 import type { RSVPStatus } from "../../../hooks/useRSVP";
 
@@ -33,33 +32,31 @@ export function StickyCtaBar({
 
   return (
     <div className="eds-sticky-cta" role="complementary" aria-label="Acciones rápidas">
-      <RequireLogin>
-        <div className="eds-sticky-cta__center">
-          <RSVPButtons
-            currentStatus={userStatus}
-            onStatusChange={onStatusChange}
-            disabled={isDisabled}
-            singleButton
-            singleButtonActiveLabelKey="going_check"
-            style={{ maxWidth: "none" }}
-          />
-          {isDisabled && (
-            <span className="eds-sticky-cta__spinner" aria-hidden>
-              <Loader2 size={20} strokeWidth={2} className="eds-sticky-cta__spinner-icon" />
-            </span>
-          )}
-          {showCalendar && (
-            <div
-              className="eds-sticky-cta__calendar-wrap"
-              title="Añadir al calendario"
-              role="group"
-              aria-label="Añadir a calendario"
-            >
-              {calendarButton}
-            </div>
-          )}
-        </div>
-      </RequireLogin>
+      <div className="eds-sticky-cta__center">
+        <RSVPButtons
+          currentStatus={userStatus}
+          onStatusChange={onStatusChange}
+          disabled={isDisabled}
+          singleButton
+          singleButtonActiveLabelKey="going_check"
+          style={{ maxWidth: "none" }}
+        />
+        {isDisabled && (
+          <span className="eds-sticky-cta__spinner" aria-hidden>
+            <Loader2 size={20} strokeWidth={2} className="eds-sticky-cta__spinner-icon" />
+          </span>
+        )}
+        {showCalendar && (
+          <div
+            className="eds-sticky-cta__calendar-wrap"
+            title="Añadir al calendario"
+            role="group"
+            aria-label="Añadir a calendario"
+          >
+            {calendarButton}
+          </div>
+        )}
+      </div>
       <button
         type="button"
         className="eds-sticky-cta__icon"

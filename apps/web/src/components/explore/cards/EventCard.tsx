@@ -2,14 +2,13 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
-import AddToCalendarWithStats from "../../AddToCalendarWithStats";
 import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
-import { calculateNextDateWithTime } from "../../../utils/calculateRecurringDates";
 import { fmtDate } from "../../../utils/format";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
+import { getEventDateYmd } from "../../../utils/eventDateDisplay";
 import "./Card.css";
 
 interface EventCardProps {
@@ -104,35 +103,12 @@ export default function EventCard({ item, priority = false }: EventCardProps) {
   }, [lugar]);
   const organizador = item.organizador_nombre || item.organizer_name;
   
-  // Calcular la fecha a mostrar: si ya tiene fecha (de expansión recurrente), usarla; si no, calcular
-  const fecha = React.useMemo(() => {
-    // Si ya tiene fecha (de la expansión), usarla directamente
-    const fechaOriginal = item.fecha || item.evento_fecha;
-    if (!fechaOriginal) return null;
-    
-    // Si es una ocurrencia recurrente expandida, la fecha ya está calculada
-    if (item._recurrence_index !== undefined) {
-      return fechaOriginal;
-    }
-    
-    // Si tiene dia_semana pero no es una ocurrencia expandida, calcular la próxima fecha
-    if (item.dia_semana !== null && item.dia_semana !== undefined && typeof item.dia_semana === 'number') {
-      try {
-        const horaInicioStr = horaInicio || '20:00';
-        const proximaFecha = calculateNextDateWithTime(item.dia_semana, horaInicioStr);
-        const year = proximaFecha.getFullYear();
-        const month = String(proximaFecha.getMonth() + 1).padStart(2, '0');
-        const day = String(proximaFecha.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      } catch (e) {
-        console.error('Error calculando próxima fecha:', e);
-        return fechaOriginal;
-      }
-    }
-    
-    // Si no tiene dia_semana, usar la fecha original
-    return fechaOriginal;
-  }, [item.fecha, item.evento_fecha, item.dia_semana, item._recurrence_index, horaInicio]);
+  const fecha = React.useMemo(() => getEventDateYmd(item), [item]);
+
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log("[EventCard] id:", item?.id, "fecha:", item?.fecha, "dia_semana:", item?.dia_semana, "display:", fecha);
+  }
 
   const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);

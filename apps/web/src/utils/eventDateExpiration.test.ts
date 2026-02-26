@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { isEventDateExpired, isEventDateUpcoming } from "./eventDateExpiration";
+import { isEventDateExpired, isEventDateUpcoming, isEventUpcomingOrToday } from "./eventDateExpiration";
 
 const NOW = new Date("2026-02-19T21:00:00Z"); // 15:00 Mexico City
 
@@ -57,5 +57,44 @@ describe("eventDateExpiration", () => {
     // Client-side: no duplicate rows possible; DB enforces
     const evento = { fecha: "2026-02-25", hora_fin: "23:00" };
     expect(isEventDateExpired(evento, opts)).toBe(false);
+  });
+});
+
+describe("isEventUpcomingOrToday", () => {
+  // 2026-02-19 21:00 UTC = 15:00 Mexico City → "today" in CDMX is 2026-02-19
+  const NOW = new Date("2026-02-19T21:00:00Z");
+  const opts = { nowOverride: NOW };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("returns true for event today even when hora_inicio has passed (e.g. 8pm event, now 11pm)", () => {
+    const evento = { fecha: "2026-02-19", hora_inicio: "20:00" };
+    expect(isEventUpcomingOrToday(evento, opts)).toBe(true);
+  });
+
+  it("returns false for event yesterday", () => {
+    const evento = { fecha: "2026-02-18", hora_inicio: "20:00" };
+    expect(isEventUpcomingOrToday(evento, opts)).toBe(false);
+  });
+
+  it("returns true for event tomorrow", () => {
+    const evento = { fecha: "2026-02-20", hora_inicio: "20:00" };
+    expect(isEventUpcomingOrToday(evento, opts)).toBe(true);
+  });
+
+  it("returns true when event has no fecha (dia_semana fallback)", () => {
+    expect(isEventUpcomingOrToday({ dia_semana: 5, hora_inicio: "20:00" })).toBe(true);
+  });
+
+  it("returns true for null/undefined event (fallback do not hide)", () => {
+    expect(isEventUpcomingOrToday(null)).toBe(true);
+    expect(isEventUpcomingOrToday(undefined)).toBe(true);
   });
 });

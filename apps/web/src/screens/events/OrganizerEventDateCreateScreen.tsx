@@ -239,16 +239,56 @@ export default function OrganizerEventDateCreateScreen() {
       const dt = parseYMD(dateForm.fecha);
       const dia_semana = dateForm.repetir_semanal ? (dt ? dt.getDay() : null) : null;
 
-      const created = await createDate.mutateAsync({
-        ...basePayload,
-        fecha: dateForm.fecha,
-        dia_semana,
-      } as any);
+      const formatYmd = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+
+      const weeksToCreate = dateForm.repetir_semanal ? Math.max(1, Number(dateForm.semanas_repetir || 12)) : 1;
+
+      const created = await (async () => {
+        // ✅ Recurrente: crear N ocurrencias reales (una fila por semana)
+        if (dateForm.repetir_semanal && typeof dia_semana === 'number' && dt) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const start = new Date(dt);
+          start.setHours(0, 0, 0, 0);
+          while (start.getTime() < today.getTime()) {
+            start.setDate(start.getDate() + 7);
+          }
+
+          const payloads = Array.from({ length: weeksToCreate }, (_, i) => {
+            const next = new Date(start);
+            next.setDate(start.getDate() + i * 7);
+            return {
+              ...basePayload,
+              fecha: formatYmd(next),
+              dia_semana,
+            };
+          });
+
+          return await createDate.mutateAsync(payloads as any);
+        }
+
+        // ✅ No recurrente: una sola fecha
+        return await createDate.mutateAsync({
+          ...basePayload,
+          fecha: dateForm.fecha,
+          dia_semana,
+        } as any);
+      })();
 
       showToast('Fecha creada ✅', 'success');
 
-      if ((created as any)?.id) {
-        navigate(`/social/fecha/${(created as any).id}`);
+      const createdRows = Array.isArray(created) ? created : [created];
+      const best = createdRows
+        .filter(Boolean)
+        .sort((a: any, b: any) => String(a?.fecha || '').localeCompare(String(b?.fecha || '')))[0];
+
+      if (best?.id) {
+        navigate(`/social/fecha/${best.id}`);
       } else {
         navigate(`/social/${parentIdNum}`);
       }

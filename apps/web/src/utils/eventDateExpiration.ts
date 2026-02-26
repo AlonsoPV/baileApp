@@ -4,9 +4,22 @@
  * Timezone: America/Mexico_City (app default)
  */
 
-import { startOfDay } from 'date-fns';
-
 const TZ = 'America/Mexico_City';
+
+/**
+ * Returns YYYY-MM-DD for a date in the given timezone (e.g. America/Mexico_City).
+ * Used so "today" is consistent regardless of user's local timezone.
+ */
+function ymdInTz(d: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
 
 export interface EventDateLike {
   fecha?: string | null;
@@ -32,28 +45,27 @@ export function getEventPrimaryDate(
 /**
  * Returns true if the event date is today or in the future (day-based comparison).
  * Used for "Eventos de interés" to show only upcoming/today events, not past.
- * - Events with invalid/null date are excluded (returns false).
- * - Compares by start of day (local) to avoid timezone/hour issues.
+ * - Hoy: siempre visible, sin importar hora_inicio.
+ * - Futuro: visible.
+ * - Fecha anterior a hoy: oculto.
+ * Uses America/Mexico_City for "today" so behaviour is consistent.
  */
 export function isEventUpcomingOrToday(
   eventDate: EventDateLike | null | undefined,
-  options?: IsEventDateExpiredOptions
+  options?: IsEventDateExpiredOptions & { timeZone?: string }
 ): boolean {
-  const dateStr = getEventPrimaryDate(eventDate);
-  if (!dateStr) return false;
-  try {
-    const dateOnly = String(dateStr).split('T')[0];
-    const [y, m, d] = dateOnly.split('-').map((n: string) => parseInt(n, 10));
-    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
-    const eventDateObj = new Date(y, m - 1, d);
-    if (Number.isNaN(eventDateObj.getTime())) return false;
-    const eventDayStart = startOfDay(eventDateObj);
-    const today = options?.nowOverride ?? new Date();
-    const todayStart = startOfDay(today);
-    return eventDayStart >= todayStart;
-  } catch {
-    return false;
-  }
+  const fechaRaw = eventDate && ((eventDate as any).fecha ?? (eventDate as any).fecha_inicio);
+  if (!fechaRaw) return true; // fallback: si no hay fecha, no lo ocultes (ej. dia_semana)
+  const timeZone = options?.timeZone ?? TZ;
+  const now = options?.nowOverride ?? new Date();
+  const todayYmd = ymdInTz(now, timeZone);
+  const fechaYmd = String(fechaRaw).split('T')[0];
+  // Hoy siempre visible
+  if (fechaYmd === todayYmd) return true;
+  // Futuro visible
+  if (fechaYmd > todayYmd) return true;
+  // Pasado oculto
+  return false;
 }
 
 /**

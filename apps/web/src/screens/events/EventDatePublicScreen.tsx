@@ -7,7 +7,6 @@ import { useTags } from "../../hooks/useTags";
 import { useEventRSVP, type RSVPStatus } from "../../hooks/useRSVP";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
-import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
   EventHero,
@@ -25,7 +24,7 @@ import {
 } from "../../components/events/EventDetail";
 import "../../components/events/EventDetail/eventDetailScreen.css";
 import { useToast } from "../../components/Toast";
-import RequireLogin from "@/components/auth/RequireLogin";
+// import RequireLogin from "@/components/auth/RequireLogin"; // TEMP: desactivado para permitir acciones sin login
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import SeoHead from "@/components/SeoHead";
@@ -34,6 +33,7 @@ import { EventDateSkeleton } from "../../components/skeletons/EventDateSkeleton"
 import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
 import { getLocaleFromI18n } from "../../utils/locale";
 import { routes } from "../../routes/registry";
+import { getEventDateYmd } from "../../utils/eventDateDisplay";
 
 const colors = {
   coral: '#FF3D57',
@@ -132,6 +132,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   
   // Con Suspense, date siempre existe cuando se renderiza
   const date = useEventDateSuspense(dateId);
+  const displayYmd = React.useMemo(() => getEventDateYmd(date), [date]);
   
   // Estas queries pueden ser opcionales (no usan Suspense)
   const { data: parent } = useEventParent(date?.parent_id ?? undefined);
@@ -172,11 +173,14 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     isUpdating,
   } = useEventRSVP(dateId);
 
+  // TEMP: permitir UI RSVP sin login; backend puede seguir exigiendo auth
+  const canMutateRsvp = !!user;
+
   // Optimistic UI + state machine: idle | active | loading | error
   const [optimisticStatus, setOptimisticStatus] = React.useState<RSVPStatus | null | undefined>(undefined);
   const requestIdRef = React.useRef(0);
 
-  const effectiveStatus = optimisticStatus !== undefined ? optimisticStatus : userStatus;
+  const effectiveStatus = optimisticStatus !== undefined ? optimisticStatus : (canMutateRsvp ? userStatus : null);
   const rsvpState: StickyRsvpState = isUpdating
     ? 'loading'
     : effectiveStatus === 'interesado' || effectiveStatus === 'going'
@@ -186,6 +190,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const handleStatusChange = React.useCallback(
     (s: RSVPStatus | null) => {
       if (isUpdating) return;
+      if (!canMutateRsvp) {
+        showToast(t('rsvp_guest_toast', 'RSVP temporalmente requiere login en backend. UI desbloqueada.'), 'info');
+        return;
+      }
       const previous = effectiveStatus;
       const reqId = ++requestIdRef.current;
       setOptimisticStatus(s);
@@ -200,7 +208,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           }
         });
     },
-    [effectiveStatus, isUpdating, setStatus, showToast, t]
+    [canMutateRsvp, effectiveStatus, isUpdating, setStatus, showToast, t]
   );
 
   // Calcular contador de interesados de forma robusta
@@ -228,32 +236,19 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     try {
       const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
       const horaFin = (date.hora_fin || date.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
-  
-      const fechaStr = (date.fecha || (date as any).fecha_inicio || '').toString();
-      const fechaOnly = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;
-  
+
       let start: Date;
       let end: Date;
   
-      // ✅ 1) Si hay fecha concreta, usarla SIEMPRE
-      if (fechaOnly) {
-        const parsedStart = new Date(`${fechaOnly}T${horaInicio}:00`);
-        const parsedEnd = new Date(`${fechaOnly}T${horaFin}:00`);
+      // ✅ 1) Si hay fecha concreta (o display calculado legacy), usarla SIEMPRE
+      if (displayYmd) {
+        const parsedStart = new Date(`${displayYmd}T${horaInicio}:00`);
+        const parsedEnd = new Date(`${displayYmd}T${horaFin}:00`);
         start = isNaN(parsedStart.getTime()) ? new Date() : parsedStart;
         end =
           isNaN(parsedEnd.getTime()) || parsedEnd.getTime() <= start.getTime()
             ? (() => { const d = new Date(start); d.setHours(d.getHours() + 2); return d; })()
             : parsedEnd;
-        return { calendarStart: start, calendarEnd: end };
-      }
-  
-      // ✅ 2) Solo si NO hay fecha, usar dia_semana
-      const diaSemana = (date as any).dia_semana;
-      if (diaSemana !== null && diaSemana !== undefined && typeof diaSemana === 'number') {
-        start = calculateNextDateWithTime(diaSemana, horaInicio);
-        const [h, m] = horaFin.split(':').map(Number);
-        end = new Date(start);
-        end.setHours(h ?? 23, m ?? 0, 0, 0);
         return { calendarStart: start, calendarEnd: end };
       }
   
@@ -267,7 +262,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       e.setHours(e.getHours() + 2);
       return { calendarStart: s, calendarEnd: e };
     }
-  }, [date.fecha, (date as any).fecha_inicio, date.hora_inicio, date.hora_fin, (date as any).dia_semana]);
+  }, [displayYmd, date.hora_inicio, date.hora_fin]);
 
 
 
@@ -361,7 +356,12 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
   };
 
-  const formattedDate = formatDate(date.fecha || (date as any).fecha_inicio || '');
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log("[EventDetail] id:", date?.id, "fecha:", date?.fecha, "dia_semana:", (date as any)?.dia_semana, "display:", displayYmd);
+  }
+
+  const formattedDate = formatDate(displayYmd || '');
   const locationName = date.lugar || date.ciudad || (parent as any)?.ciudad || getZonaName((date.zonas || [])[0]) || 'México';
   const hasLocation = !!(date.lugar || date.direccion || date.ciudad);
   const ritmosList = Array.isArray((date as any).ritmos)
@@ -395,7 +395,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     }
   }, [dateUrl, dateName, t, showToast]);
 
-  const dateStr = formatHeaderDate(date.fecha || (date as any).fecha_inicio || '');
+  const dateStr = formatHeaderDate(displayYmd || '');
   const timeRange = formatHeaderTimeRange(date.hora_inicio, date.hora_fin);
   const venueName = date.lugar || '';
   const mapsUrl = (date.lugar || date.direccion || date.ciudad)
