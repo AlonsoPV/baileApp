@@ -1512,52 +1512,6 @@ const STYLES = `
       transition: none;
     }
   }
-  .load-more-btn {
-    margin-top: 1.5rem;
-    padding: 0.875rem 1.75rem;
-    border-radius: 999px;
-    border: 1px solid rgba(240, 147, 251, 0.35);
-    background: rgba(240, 147, 251, 0.1);
-    color: #fff;
-    font-size: 0.875rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(240, 147, 251, 0.15);
-    letter-spacing: 0.3px;
-  }
-  .load-more-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(240, 147, 251, 0.2), rgba(255, 195, 143, 0.15));
-    opacity: 0;
-    transition: opacity 0.25s ease;
-  }
-  .load-more-btn:hover {
-    background: rgba(240, 147, 251, 0.18);
-    border-color: rgba(240, 147, 251, 0.5);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(240, 147, 251, 0.3);
-  }
-  .load-more-btn:hover::before {
-    opacity: 1;
-  }
-  .load-more-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(240, 147, 251, 0.2);
-  }
-  .load-more-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none !important;
-  }
   @media (min-width: 769px) and (max-width: 1024px) {
     .filters-tabs {
       gap: 6px;
@@ -4017,15 +3971,6 @@ export default function ExploreHomeScreen() {
                   ) : (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
                   )}
-                  {fechasLoadMore.hasNextPage && (
-                    <button
-                      className="load-more-btn"
-                      onClick={fechasLoadMore.handleLoadMore}
-                      disabled={fechasLoadMore.isFetching}
-                    >
-                      {fechasLoadMore.isFetching ? t('loading_dots') : t('load_more_dates')}
-                    </button>
-                  )}
                 </>
               )}
             </Section>
@@ -4059,18 +4004,6 @@ export default function ExploreHomeScreen() {
                       items={classesListWithCTA}
                       renderItem={renderClaseItem}
                     />
-                    {(academiasLoadMore.hasNextPage || maestrosLoadMore.hasNextPage) && (
-                      <button
-                        className="load-more-btn"
-                        onClick={() => {
-                          if (academiasLoadMore.hasNextPage) academiasLoadMore.handleLoadMore();
-                          if (maestrosLoadMore.hasNextPage) maestrosLoadMore.handleLoadMore();
-                        }}
-                        disabled={academiasLoadMore.isFetching || maestrosLoadMore.isFetching}
-                      >
-                        {(academiasLoadMore.isFetching || maestrosLoadMore.isFetching) ? t('loading_dots') : t('load_more_classes')}
-                      </button>
-                    )}
                   </>
                 );
               })()}
@@ -4089,27 +4022,6 @@ export default function ExploreHomeScreen() {
               />
               {!academiasLoading && academiasData.length === 0 && (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
-              )}
-              {/* Mantener botón de cargar más si es necesario */}
-                  {academiasLoadMore.hasNextPage && (
-                    <button
-                      className="load-more-btn"
-                      onClick={academiasLoadMore.handleLoadMore}
-                      disabled={academiasLoadMore.isFetching}
-                  style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '999px',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    background: 'rgba(255,255,255,0.1)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                    >
-                      {academiasLoadMore.isFetching ? t('loading_dots') : t('load_more_academies')}
-                    </button>
               )}
             </Section>
           )}
@@ -4194,15 +4106,6 @@ export default function ExploreHomeScreen() {
                       );
                     }}
                   />
-                  )}
-                  {maestrosLoadMore.hasNextPage && (
-                    <button
-                      className="load-more-btn"
-                      onClick={maestrosLoadMore.handleLoadMore}
-                      disabled={maestrosLoadMore.isFetching}
-                    >
-                      {maestrosLoadMore.isFetching ? t('loading_dots') : t('load_more_teachers')}
-                    </button>
                   )}
                 </>
               )}
@@ -4390,15 +4293,6 @@ export default function ExploreHomeScreen() {
                       );
                     }}
                   />
-                  {organizadoresLoadMore.hasNextPage && (
-                    <button
-                      className="load-more-btn"
-                      onClick={organizadoresLoadMore.handleLoadMore}
-                      disabled={organizadoresLoadMore.isFetching}
-                    >
-                      {organizadoresLoadMore.isFetching ? t('loading_dots') : t('load_more_organizers')}
-                    </button>
-                  )}
                 </>
               ) : (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
@@ -4480,15 +4374,6 @@ export default function ExploreHomeScreen() {
                       );
                       }}
                     />
-                  )}
-                  {marcasLoadMore.hasNextPage && (
-                    <button
-                      className="load-more-btn"
-                      onClick={marcasLoadMore.handleLoadMore}
-                      disabled={marcasLoadMore.isFetching}
-                    >
-                      {marcasLoadMore.isFetching ? t('loading_dots') : t('load_more_brands')}
-                    </button>
                   )}
                 </>
               )}

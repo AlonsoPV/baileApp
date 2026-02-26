@@ -8,6 +8,57 @@ const PAGE_LIMIT = 12;
 
 type QueryParams = ExploreFilters;
 
+function normalizeSearch(raw?: string) {
+  const s = String(raw ?? "").trim();
+  if (!s) return null;
+  // PostgREST logic tree uses commas as separators; escape to avoid broken `.or(...)`.
+  // Also escape backslashes so the comma escape survives URL encoding/decoding.
+  const esc = s.replace(/\\/g, "\\\\").replace(/,/g, "\\,");
+  return {
+    raw: s,
+    lower: s.toLowerCase(),
+    pattern: `%${esc}%`,
+  };
+}
+
+function uniqueNumbers(values: any[]): number[] {
+  const out: number[] = [];
+  const seen = new Set<number>();
+  for (const v of values) {
+    const n = typeof v === "number" ? v : Number(v);
+    if (!Number.isFinite(n) || seen.has(n)) continue;
+    seen.add(n);
+    out.push(n);
+  }
+  return out;
+}
+
+function includesLower(haystack: any, needleLower: string) {
+  if (!needleLower) return true;
+  if (haystack === null || haystack === undefined) return false;
+  return String(haystack).toLowerCase().includes(needleLower);
+}
+
+function matchesFechaSearch(row: any, needleLower: string, organizerIdSet?: Set<number> | null) {
+  if (!needleLower) return true;
+
+  const organizerId = row?.events_parent?.organizer_id;
+  const organizerIdNum = typeof organizerId === "number" ? organizerId : Number(organizerId);
+  const organizerMatch =
+    !!organizerIdSet &&
+    Number.isFinite(organizerIdNum) &&
+    organizerIdSet.has(organizerIdNum);
+
+  return (
+    includesLower(row?.nombre, needleLower) ||
+    includesLower(row?.lugar, needleLower) ||
+    includesLower(row?.ciudad, needleLower) ||
+    includesLower(row?.direccion, needleLower) ||
+    includesLower(row?.events_parent?.nombre, needleLower) ||
+    organizerMatch
+  );
+}
+
 /**
  * Obtiene la fecha de hoy en zona horaria de CDMX (America/Mexico_City)
  * Retorna en formato YYYY-MM-DD
@@ -115,6 +166,7 @@ function baseSelect(type: ExploreType) {
 async function fetchPage(params: QueryParams, page: number) {
   const { type, q, ritmos, zonas, dateFrom, dateTo } = params;
   const { table, select } = baseSelect(type);
+  const search = normalizeSearch(q);
 
   // Construir query
   let query = supabase.from(table).select(select, { count: "exact" });
@@ -174,30 +226,25 @@ async function fetchPage(params: QueryParams, page: number) {
       query = query.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX}`);
     }
     
-    // filtrar por estilos/ritmos (solo a nivel de fecha).
-    // NOTA: Intentar mezclar `events_parent.*` dentro del mismo `.or(...)` rompe el parser
-    // de PostgREST ("failed to parse logic tree"). `events_date` ya contiene los campos
-    // necesarios (`estilos`, `ritmos_seleccionados`) para filtrar correctamente.
-    if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
-      const parts: string[] = [];
-      if ((ritmos?.length || 0) > 0) {
-        const setTags = `{${(ritmos as number[]).join(',')}}`;
-        parts.push(`estilos.ov.${setTags}`); // fecha.estilos
-      }
-      if ((selectedCatalogIds?.length || 0) > 0) {
-        const setCat = `{${selectedCatalogIds.join(',')}}`;
-        parts.push(`ritmos_seleccionados.ov.${setCat}`); // fecha.ritmos_seleccionados
-      }
-      if (parts.length > 0) query = query.or(parts.join(','));
+    // Ritmos: preferimos filtrar por IDs numéricos (`estilos int[]`).
+    // Si el esquema/registro usa slugs (`ritmos_seleccionados text[]`) y no hay IDs, usamos overlaps ahí.
+    if ((ritmos?.length || 0) > 0) {
+      query = query.overlaps("estilos", ritmos as any);
+    } else if ((selectedCatalogIds?.length || 0) > 0) {
+      query = query.overlaps("ritmos_seleccionados", selectedCatalogIds as any);
     }
+
     // zonas específicas de la fecha (campo zona numérico)
     if (zonas?.length)   query = query.in("zona", zonas as any);
     
-    // búsqueda textual: nombre del evento, lugar, ciudad, direccion
-    // Nota: events_parent.nombre se filtra post-query porque Supabase no permite ilike en relaciones anidadas
-    // Hacemos una query adicional para eventos que coincidan solo con events_parent.nombre
-    if (q) {
-      query = query.or(`nombre.ilike.%${q}%,lugar.ilike.%${q}%,ciudad.ilike.%${q}%,direccion.ilike.%${q}%`);
+    // Búsqueda textual (solo si hay texto). Importante: usar %...% y escapar comas.
+    if (search) {
+      query = query.or([
+        `nombre.ilike.${search.pattern}`,
+        `lugar.ilike.${search.pattern}`,
+        `ciudad.ilike.${search.pattern}`,
+        `direccion.ilike.${search.pattern}`,
+      ].join(","));
     }
     
     // orden por fecha asc (próximos primero)
@@ -207,12 +254,18 @@ async function fetchPage(params: QueryParams, page: number) {
     // Filtrar solo organizadores aprobados
     query = query.eq("estado_aprobacion", "aprobado");
     
-    if (q) query = query.ilike("nombre_publico", `%${q}%`);
+    if (search) {
+      // `v_organizers_public` es SELECT * de profiles_organizer → incluye `nombre_publico` y `bio` en la práctica.
+      query = query.or([
+        `nombre_publico.ilike.${search.pattern}`,
+        `bio.ilike.${search.pattern}`,
+      ].join(","));
+    }
     
     query = query.order("created_at", { ascending: false });
   }
   else if (type === "maestros" || type === "academias") {
-    if (q) query = query.ilike("nombre_publico", `%${q}%`);
+    if (search) query = query.ilike("nombre_publico", search.pattern);
     if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
       const parts: string[] = [];
       if ((ritmos?.length || 0) > 0) {
@@ -233,7 +286,7 @@ async function fetchPage(params: QueryParams, page: number) {
   }
   else if (type === "sociales") {
     // Eventos padre (sociales) - usar estilos y zonas
-    if (q) query = query.ilike("nombre", `%${q}%`);
+    if (search) query = query.ilike("nombre", search.pattern);
     if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
       const parts: string[] = [];
       if ((ritmos?.length || 0) > 0) {
@@ -252,7 +305,7 @@ async function fetchPage(params: QueryParams, page: number) {
   }
   else if (type === "usuarios") {
     // La vista v_user_public ya filtra por onboarding_complete = true
-    if (q) query = query.ilike("display_name", `%${q}%`);
+    if (search) query = query.ilike("display_name", search.pattern);
     if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
       const parts: string[] = [];
       if ((ritmos?.length || 0) > 0) {
@@ -271,7 +324,7 @@ async function fetchPage(params: QueryParams, page: number) {
   } 
   else {
     // maestros / academias / marcas – usar columnas correctas
-    if (q) query = query.ilike("nombre_publico", `%${q}%`);
+    if (search) query = query.ilike("nombre_publico", search.pattern);
     if (ritmos?.length) query = query.overlaps("ritmos", ritmos as any);
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
     
@@ -295,47 +348,72 @@ async function fetchPage(params: QueryParams, page: number) {
   // Supabase typed client may infer `GenericStringError[]` for complex selects.
   // We normalize to `any[]` because downstream code operates dynamically by `type`.
   let finalData: any[] = (data as any[]) || [];
+  let searchOrganizerIdSet: Set<number> | null = null;
 
-  // Query adicional para eventos que coincidan solo con events_parent.nombre
-  // (no se puede hacer con ilike en relaciones anidadas en la query principal)
-  if (type === 'fechas' && q) {
+  // Query adicional para `fechas`: incluir matches por
+  // - `events_parent.nombre`
+  // - organizador (`v_organizers_public.nombre_publico`)
+  // sin romper la query principal (y manteniendo AND con filtros de fecha/ritmos/zonas).
+  if (type === 'fechas' && search) {
     try {
       const todayCDMX = getTodayCDMX();
-      let parentQuery = supabase
-        .from("events_date")
-        .select(`
-          id,
-          parent_id,
-          nombre,
-          fecha,
-          dia_semana,
-          hora_inicio,
-          hora_fin,
-          lugar,
-          direccion,
-          ciudad,
-          zona,
-          estado_publicacion,
-          estilos,
-          ritmos_seleccionados,
-          costos,
-          media,
-          flyer_url,
-          created_at,
-          updated_at,
-          events_parent!inner(
-            id,
-            nombre,
-            descripcion,
-            estilos,
-            ritmos_seleccionados,
-            zonas,
-            media,
-            organizer_id
-          )
-        `)
-        .eq("estado_publicacion", "publicado")
-        .ilike("events_parent.nombre", `%${q}%`);
+
+      const matchedParentIds = new Set<number>();
+      const matchedOrganizerIds = new Set<number>();
+
+      // 1) Parent IDs por texto en events_parent (nombre/descripcion)
+      try {
+        const { data: parentRows } = await supabase
+          .from("events_parent")
+          .select("id")
+          .or([
+            `nombre.ilike.${search.pattern}`,
+          ].join(","))
+          .limit(250);
+        for (const r of (parentRows || []) as any[]) {
+          if (typeof r?.id === "number" && Number.isFinite(r.id)) matchedParentIds.add(r.id);
+        }
+      } catch (e) {
+        console.warn("[useExploreQuery] events_parent text search failed (non-fatal):", e);
+      }
+
+      // 2) Parent IDs por organizador (match en v_organizers_public)
+      try {
+        const { data: orgRows } = await supabase
+          .from("v_organizers_public")
+          .select("id")
+          .or([
+            `nombre_publico.ilike.${search.pattern}`,
+          ].join(","))
+          .limit(250);
+
+        const organizerIds = uniqueNumbers(((orgRows || []) as any[]).map((r) => (r as any)?.id));
+        organizerIds.forEach((id) => matchedOrganizerIds.add(id));
+        searchOrganizerIdSet = new Set(organizerIds);
+
+        if (organizerIds.length > 0) {
+          const { data: parentByOrg } = await supabase
+            .from("events_parent")
+            .select("id")
+            .in("organizer_id", organizerIds as any)
+            .limit(500);
+          for (const r of (parentByOrg || []) as any[]) {
+            if (typeof r?.id === "number" && Number.isFinite(r.id)) matchedParentIds.add(r.id);
+          }
+        }
+      } catch (e) {
+        console.warn("[useExploreQuery] organizer search failed (non-fatal):", e);
+      }
+
+      const parentIds = Array.from(matchedParentIds).slice(0, 250);
+      if (parentIds.length === 0 && matchedOrganizerIds.size === 0) {
+        // Nada extra que traer; seguimos con la query principal.
+      } else if (parentIds.length > 0) {
+        let parentQuery = supabase
+          .from("events_date")
+          .select(select as any)
+          .eq("estado_publicacion", "publicado")
+          .in("parent_id", parentIds as any);
       
       // Aplicar los mismos filtros de fecha que la query principal
       if (dateFrom && dateTo) {
@@ -354,20 +432,11 @@ async function fetchPage(params: QueryParams, page: number) {
         parentQuery = parentQuery.in("zona", zonas as any);
       }
       
-      // Aplicar filtros de ritmos (simplificado - solo a nivel de fecha, no parent)
-      if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
-        const parts: string[] = [];
-        if ((ritmos?.length || 0) > 0) {
-          const setTags = `{${(ritmos as number[]).join(',')}}`;
-          parts.push(`estilos.ov.${setTags}`);
-        }
-        if ((selectedCatalogIds?.length || 0) > 0) {
-          const setCat = `{${selectedCatalogIds.join(',')}}`;
-          parts.push(`ritmos_seleccionados.ov.${setCat}`);
-        }
-        if (parts.length > 0) {
-          parentQuery = parentQuery.or(parts.join(','));
-        }
+      // Aplicar filtros de ritmos (mismo criterio que query principal)
+      if ((ritmos?.length || 0) > 0) {
+        parentQuery = parentQuery.overlaps("estilos", ritmos as any);
+      } else if ((selectedCatalogIds?.length || 0) > 0) {
+        parentQuery = parentQuery.overlaps("ritmos_seleccionados", selectedCatalogIds as any);
       }
       
       const { data: parentMatches } = await (parentQuery as any).order("fecha", { ascending: true });
@@ -378,25 +447,15 @@ async function fetchPage(params: QueryParams, page: number) {
         const newMatches = (parentMatches as any[]).filter((r: any) => !existingIds.has(r.id));
         finalData = [...finalData, ...newMatches];
       }
+      }
     } catch (error) {
-      console.warn('[useExploreQuery] Error en query adicional para events_parent.nombre:', error);
+      console.warn("[useExploreQuery] Extra search queries failed (non-fatal):", error);
       // Continuar con los resultados de la query principal
     }
   }
 
-  // Filtro post-query para asegurar que todos los resultados coincidan con la búsqueda
-  if (type === 'fechas' && q && finalData.length > 0) {
-    const searchLower = q.toLowerCase();
-    finalData = finalData.filter((row: any) => {
-      const nombreMatch = row?.nombre?.toLowerCase().includes(searchLower);
-      const lugarMatch = row?.lugar?.toLowerCase().includes(searchLower);
-      const ciudadMatch = row?.ciudad?.toLowerCase().includes(searchLower);
-      const direccionMatch = row?.direccion?.toLowerCase().includes(searchLower);
-      const parentNombreMatch = row?.events_parent?.nombre?.toLowerCase().includes(searchLower);
-      
-      return nombreMatch || lugarMatch || ciudadMatch || direccionMatch || parentNombreMatch;
-    });
-  }
+  // NOTA: El filtrado final por texto se aplica al final del pipeline (después de materializar ocurrencias),
+  // porque el paso de "re-fetch occurrences" puede re-introducir filas del mismo `parent_id`.
 
   // Filtro adicional para eventos con dia_semana y por hora para eventos de HOY (CDMX):
   if (type === 'fechas' && finalData.length > 0) {
@@ -540,6 +599,25 @@ async function fetchPage(params: QueryParams, page: number) {
       return 0;
     });
   }
+
+  // ✅ Filtro final por texto para `fechas` (después de materializar ocurrencias)
+  if (type === "fechas" && search && finalData.length > 0) {
+    let organizerIds = searchOrganizerIdSet;
+    if (!organizerIds) {
+      try {
+        const { data: orgRows } = await supabase
+          .from("v_organizers_public")
+          .select("id")
+          .or([`nombre_publico.ilike.${search.pattern}`].join(","))
+          .limit(250);
+        organizerIds = new Set(uniqueNumbers(((orgRows || []) as any[]).map((r) => (r as any)?.id)));
+      } catch {
+        organizerIds = new Set<number>();
+      }
+    }
+
+    finalData = finalData.filter((row: any) => matchesFechaSearch(row, search.lower, organizerIds));
+  }
   
   return { 
     data: finalData, 
@@ -550,8 +628,20 @@ async function fetchPage(params: QueryParams, page: number) {
 
 export function useExploreQuery(params: QueryParams & { enabled?: boolean }) {
   const { enabled = true, ...queryParams } = params;
+  const qKey = String(queryParams.q || "").trim().toLowerCase();
+  const ritmosKey = Array.isArray(queryParams.ritmos) ? [...queryParams.ritmos].sort((a, b) => a - b).join(",") : "";
+  const zonasKey = Array.isArray(queryParams.zonas) ? [...queryParams.zonas].sort((a, b) => a - b).join(",") : "";
   return useInfiniteQuery({
-    queryKey: ["explore", queryParams],
+    queryKey: [
+      "explore",
+      queryParams.type,
+      qKey,
+      ritmosKey,
+      zonasKey,
+      queryParams.dateFrom ?? "",
+      queryParams.dateTo ?? "",
+      queryParams.pageSize ?? PAGE_LIMIT,
+    ],
     queryFn: ({ pageParam = 0 }) => fetchPage(queryParams, pageParam as number),
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,

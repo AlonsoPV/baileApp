@@ -146,13 +146,21 @@ export function useEventsLive(params?: EventsLiveParams) {
         .select("*")
         .order("fecha", { ascending: true });
 
+      const s = String(q ?? "").trim();
+      const esc = s.replace(/\\/g, "\\\\").replace(/,/g, "\\,");
+      const pattern = s ? `%${esc}%` : "";
+
       // Filtros de fecha
       if (dateFrom) req = req.gte("fecha", dateFrom);
       if (dateTo) req = req.lte("fecha", dateTo);
 
       // Búsqueda de texto en lugar, ciudad o dirección
-      if (q) {
-        req = req.or(`lugar.ilike.%${q}%,ciudad.ilike.%${q}%,direccion.ilike.%${q}%`);
+      if (s) {
+        req = req.or([
+          `lugar.ilike.${pattern}`,
+          `ciudad.ilike.${pattern}`,
+          `direccion.ilike.${pattern}`,
+        ].join(","));
       }
 
       // Filtro por ciudad específica
