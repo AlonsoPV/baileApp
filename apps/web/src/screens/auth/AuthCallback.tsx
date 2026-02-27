@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { setNeedsPinVerify } from '@/lib/pin';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -43,7 +42,7 @@ export default function AuthCallback() {
           // Verificar si el usuario tiene perfil y onboarding completo
           const { data: profileRaw, error: profileError } = await supabase
             .from('profiles_user')
-            .select('user_id, onboarding_complete, onboarding_completed, pin_hash, display_name, ritmos, ritmos_seleccionados, zonas, rol_baile')
+            .select('user_id, onboarding_complete, onboarding_completed, display_name, ritmos, ritmos_seleccionados, zonas, rol_baile')
             .eq('user_id', user.id)
             .maybeSingle();
 
@@ -101,19 +100,6 @@ export default function AuthCallback() {
           if (!profile?.onboarding_complete) {
             navigate('/onboarding/basics', { replace: true });
             return;
-          }
-          
-          // Verificar PIN solo si tiene PIN configurado Y onboarding completo Y no está verificado en esta sesión
-          if (profile?.pin_hash) {
-            const { isPinVerified } = await import('@/lib/pin');
-            const alreadyVerified = isPinVerified(user.id);
-            
-            if (!alreadyVerified) {
-              setNeedsPinVerify(user.id);
-              navigate('/auth/pin', { replace: true });
-              return;
-            }
-            // Si ya está verificado, continuar normalmente
           }
           
           // Si todo está OK, ir a explore

@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useProfileMode } from '@/state/profileMode';
-import { clearAllPinVerified, setNeedsPinVerify } from '@/lib/pin';
 import { isMobileWebView } from '@/utils/authRedirect';
 import { setActiveUserId } from '@/storage/activeUser';
 import { clearLegacyUnscopedWebKeys, clearUserScopedWebStorage } from '@/storage/userScopedStorage';
@@ -340,9 +339,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // 🎭 Resetear modo de perfil a "usuario" por defecto
       useProfileMode.getState().setMode("usuario");
-
-      // 🔐 Marcar que esta sesión requiere verificación de PIN (solo por sesión)
-      setNeedsPinVerify(data.user.id);
     }
     
     return { data, error };
@@ -358,7 +354,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // 🧹 Limpiar cache INMEDIATAMENTE
       qc.clear();
-      clearAllPinVerified();
       
       // 🎭 Resetear modo de perfil a "usuario"
       useProfileMode.getState().setMode("usuario");
@@ -401,7 +396,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setLoading(false);
       qc.clear();
-      clearAllPinVerified();
       useProfileMode.getState().setMode("usuario");
       return { error: e };
     }

@@ -22,6 +22,8 @@ import { supabase } from '@/lib/supabase';
 import { useCreateCheckoutSession } from '@/hooks/useStripeCheckout';
 import { getLocaleFromI18n } from '@/utils/locale';
 import { resolveSupabaseStoragePublicUrl } from '@/utils/supabaseStoragePublicUrl';
+import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
+import { normalizeRitmosToSlugs, TAG_NAME_TO_SLUG } from '@/utils/normalizeRitmos';
 import {
   Activity,
   BarChart3,
@@ -522,13 +524,101 @@ export default function ClassPublicScreen() {
     return name || undefined;
   })();
 
-  // Ritmos de la clase: preferir los IDs numéricos más nuevos (ritmoIds),
-  // pero mantener compatibilidad con datos antiguos que usan "ritmos"
-  const ritmosRaw =
-    (selectedClass?.ritmoIds && Array.isArray(selectedClass.ritmoIds) && selectedClass.ritmoIds) ||
-    (selectedClass?.ritmos && Array.isArray(selectedClass.ritmos) && selectedClass.ritmos) ||
-    [];
-  const ritmosLabel = Array.isArray(ritmosRaw) ? ritmosRaw.slice(0, 3).join(', ') : '';
+  const ritmoCatalogMaps = React.useMemo(() => {
+    const idToLabel = new Map<string, string>();
+    const labelToIdLower = new Map<string, string>();
+    RITMOS_CATALOG.forEach((g) =>
+      g.items.forEach((i) => {
+        idToLabel.set(i.id, i.label);
+        labelToIdLower.set(i.label.trim().toLowerCase(), i.id);
+      }),
+    );
+    const tagNameToSlugLower = new Map<string, string>();
+    Object.entries(TAG_NAME_TO_SLUG).forEach(([k, v]) => tagNameToSlugLower.set(k.trim().toLowerCase(), v));
+    return { idToLabel, labelToIdLower, tagNameToSlugLower };
+  }, []);
+
+  const { ritmoLabels, ritmoPrincipalLabel } = React.useMemo(() => {
+    const labels: string[] = [];
+
+    // 1) Preferir slugs ya normalizados (nuevo modelo): ritmos_seleccionados / ritmosSeleccionados
+    const slugsCandidate = [
+      ...(Array.isArray((selectedClass as any)?.ritmos_seleccionados) ? ((selectedClass as any).ritmos_seleccionados as any[]) : []),
+      ...(Array.isArray((selectedClass as any)?.ritmosSeleccionados) ? ((selectedClass as any).ritmosSeleccionados as any[]) : []),
+    ].filter((x) => typeof x === 'string') as string[];
+
+    let slugs: string[] = [];
+    if (slugsCandidate.length > 0) {
+      slugs = normalizeRitmosToSlugs({ ritmos_seleccionados: slugsCandidate });
+    } else {
+      // 2) IDs numéricos: ritmoIds / ritmos / ritmoId
+      const ids: Array<number | string> = [];
+      if (Array.isArray((selectedClass as any)?.ritmoIds)) ids.push(...(((selectedClass as any).ritmoIds as any[]) || []));
+      if (Array.isArray((selectedClass as any)?.ritmos)) ids.push(...(((selectedClass as any).ritmos as any[]) || []));
+      if ((selectedClass as any)?.ritmoId != null) ids.push((selectedClass as any).ritmoId);
+
+      // 3) Strings legacy: ritmo / estilo / ritmos[] como nombres
+      const legacyStrings: string[] = [];
+      if (typeof (selectedClass as any)?.ritmo === 'string') legacyStrings.push(String((selectedClass as any).ritmo));
+      if (typeof (selectedClass as any)?.estilo === 'string') legacyStrings.push(String((selectedClass as any).estilo));
+      if (Array.isArray((selectedClass as any)?.ritmos)) {
+        (((selectedClass as any).ritmos as any[]) || []).forEach((r) => {
+          if (typeof r === 'string') legacyStrings.push(r);
+        });
+      }
+
+      const legacySlugsFromStrings = legacyStrings
+        .map((s) => String(s ?? '').trim())
+        .filter(Boolean)
+        .map((s) => {
+          const lower = s.toLowerCase();
+          if (ritmoCatalogMaps.idToLabel.has(s)) return s; // ya es slug
+          const byLabel = ritmoCatalogMaps.labelToIdLower.get(lower);
+          if (byLabel) return byLabel;
+          const byTagName = ritmoCatalogMaps.tagNameToSlugLower.get(lower);
+          if (byTagName) return byTagName;
+          return null;
+        })
+        .filter(Boolean) as string[];
+
+      if (legacySlugsFromStrings.length > 0) {
+        slugs = normalizeRitmosToSlugs({ ritmos_seleccionados: legacySlugsFromStrings });
+      } else if (ids.length > 0) {
+        // Nota: normalizeRitmosToSlugs conoce el mapping ID->slug (TAG_ID_TO_SLUG)
+        slugs = normalizeRitmosToSlugs({ ritmos: ids });
+      }
+    }
+
+    if (slugs.length > 0) {
+      slugs.forEach((slug) => {
+        const label = ritmoCatalogMaps.idToLabel.get(slug) || slug;
+        if (label) labels.push(label);
+      });
+    }
+
+    const uniq = [...new Set(labels)].filter(Boolean);
+    const primary = uniq[0] || '';
+    return { ritmoLabels: uniq, ritmoPrincipalLabel: primary };
+  }, [selectedClass, ritmoCatalogMaps]);
+
+  const nivelLabel = React.useMemo(() => {
+    const raw = (selectedClass as any)?.nivel;
+    if (raw === null || raw === undefined) return undefined;
+    const s = String(raw).trim();
+    if (!s) return undefined;
+
+    // Algunos datos legacy guardan el nivel como índice/código en vez del label.
+    const levelByCode: Record<string, string> = {
+      '0': 'Todos los niveles',
+      '1': 'Principiante',
+      '2': 'Intermedio',
+      '3': 'Avanzado',
+    };
+    if (levelByCode[s]) return levelByCode[s];
+    return s;
+  }, [selectedClass]);
+
+  const ritmosLabel = ritmoLabels.slice(0, 3).join(', ');
   const locationName = locationLabel || ubicacion?.ciudad || profile?.ciudad || t('mexico');
   const classTimes = scheduleLabel ? ` · Horario: ${scheduleLabel}` : '';
   const seoDescription = `${classTitle} con ${creatorName} en ${locationName}${classTimes}${ritmosLabel ? ` · Ritmos: ${ritmosLabel}` : ''}.`;
@@ -616,8 +706,6 @@ export default function ClassPublicScreen() {
   })();
 
   const timeLabel = scheduleLabel || '';
-  const ritmoPrincipal = Array.isArray(ritmosRaw) && ritmosRaw.length ? String(ritmosRaw[0]) : '';
-  const ritmosExtra = Array.isArray(ritmosRaw) ? ritmosRaw.slice(1, 4).map((r: any) => String(r)).filter(Boolean) : [];
 
   const locationCity = (ubicacion as any)?.ciudad || profile?.ciudad || '';
   const locationDisplay = [locationLabel, locationCity].filter(Boolean).join(locationLabel && locationCity ? ', ' : '');
@@ -1190,7 +1278,7 @@ export default function ClassPublicScreen() {
           padding: 10px 12px;
           border-radius: 999px;
           border: 1px solid rgba(255,255,255,0.10);
-          background: rgba(0,0,0,0.16);
+          background: linear-gradient(135deg, rgba(122,108,255,0.14), rgba(0,0,0,0.16));
           color: rgba(255,255,255,0.92);
           font-size: 0.9rem;
           font-weight: 800;
@@ -1199,8 +1287,20 @@ export default function ClassPublicScreen() {
           max-width: 100%;
           min-width: 0;
           font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          transition: transform .15s ease, border-color .15s ease, background .15s ease;
+        }
+        .class-chip:hover {
+          transform: translateY(-1px);
+          border-color: rgba(122,108,255,0.30);
+          background: linear-gradient(135deg, rgba(122,108,255,0.20), rgba(0,0,0,0.16));
         }
         .class-chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .class-chip--ritmo { border-color: rgba(177,92,255,0.26); background: linear-gradient(135deg, rgba(177,92,255,0.18), rgba(0,0,0,0.16)); }
+        .class-chip--nivel { border-color: rgba(30,136,229,0.26); background: linear-gradient(135deg, rgba(30,136,229,0.16), rgba(0,0,0,0.16)); }
+        .class-chip--date { border-color: rgba(122,108,255,0.22); }
+        .class-chip--time { border-color: rgba(255,209,102,0.26); background: linear-gradient(135deg, rgba(255,209,102,0.16), rgba(0,0,0,0.16)); }
+        .class-chip--location { border-color: rgba(0,188,212,0.24); background: linear-gradient(135deg, rgba(0,188,212,0.14), rgba(0,0,0,0.16)); }
+        .class-chip--cost { border-color: rgba(34,197,94,0.24); background: linear-gradient(135deg, rgba(34,197,94,0.14), rgba(0,0,0,0.16)); }
         .class-info-grid {
           display: grid;
           grid-template-columns: 1fr;
@@ -1331,28 +1431,40 @@ export default function ClassPublicScreen() {
                 </p>
 
                 <ul className="class-chips-row" aria-label={t('filters', 'Detalles')}>
-                  {ritmoPrincipal && (
-                    <li className="class-chip" title={ritmoPrincipal}>
+                  {ritmoPrincipalLabel && (
+                    <li className="class-chip class-chip--ritmo" title={ritmoPrincipalLabel}>
                       <Music2 size={18} aria-hidden />
-                      <span>{ritmoPrincipal}</span>
+                      <span>{ritmoPrincipalLabel}</span>
                     </li>
                   )}
-                  {selectedClass?.nivel && (
-                    <li className="class-chip" title={String(selectedClass.nivel)}>
+                  {nivelLabel && (
+                    <li className="class-chip class-chip--nivel" title={nivelLabel}>
                       <BarChart3 size={18} aria-hidden />
-                      <span>{String(selectedClass.nivel)}</span>
+                      <span>{nivelLabel}</span>
                     </li>
                   )}
                   {!!dayLabelLong && (
-                    <li className="class-chip" title={dayLabelLong}>
+                    <li className="class-chip class-chip--date" title={dayLabelLong}>
                       <CalendarDays size={18} aria-hidden />
                       <span>{dayLabelLong}</span>
                     </li>
                   )}
                   {!!timeLabel && (
-                    <li className="class-chip" title={timeLabel}>
+                    <li className="class-chip class-chip--time" title={timeLabel}>
                       <Clock size={18} aria-hidden />
                       <span>{timeLabel}</span>
+                    </li>
+                  )}
+                  {!!locationLabel && (
+                    <li className="class-chip class-chip--location" title={locationLabel}>
+                      <MapPin size={18} aria-hidden />
+                      <span>{locationLabel}</span>
+                    </li>
+                  )}
+                  {!!costLabel && (
+                    <li className="class-chip class-chip--cost" title={costLabel}>
+                      <DollarSign size={18} aria-hidden />
+                      <span>{costLabel}</span>
                     </li>
                   )}
                 </ul>
@@ -1415,20 +1527,32 @@ export default function ClassPublicScreen() {
           <div className="class-info-card">
             <div className="class-info-icon" aria-hidden><Activity size={20} /></div>
             <div className="class-info-meta">
-              <p className="class-info-label">{t('level_and_ritmos', 'Nivel y ritmos')}</p>
+              <p className="class-info-label">{t('level', 'Nivel')}</p>
               <p className="class-info-value">
-                {(selectedClass?.nivel ? String(selectedClass.nivel) : t('level', 'Nivel'))}
-                {ritmoPrincipal ? ` • ${ritmoPrincipal}` : ''}
+                {(nivelLabel ? nivelLabel : t('level', 'Nivel'))}
               </p>
-              {ritmosExtra.length > 0 && (
-                <p className="class-info-sub">
-                  {ritmosExtra.join(' • ')}
-                </p>
-              )}
             </div>
             <span />
           </div>
         </section>
+
+        {/* Descripción (si existe) */}
+        {selectedClass?.descripcion && (
+          <section className="class-section" aria-label={t('description', 'Descripción')}>
+            <div
+              className="class-info-card"
+              style={{ gridTemplateColumns: '44px 1fr', alignItems: 'start' }}
+            >
+              <div className="class-info-icon" aria-hidden>📝</div>
+              <div className="class-info-meta">
+                <p className="class-info-label">{t('description', 'Descripción')}</p>
+                <p className="class-info-value" style={{ fontSize: '1rem', fontWeight: 800, color: 'rgba(255,255,255,0.88)' }}>
+                  {String(selectedClass.descripcion)}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Acciones existentes (reubicadas, misma lógica) */}
         <section className="class-section" aria-label={t('actions', 'Acciones')}>

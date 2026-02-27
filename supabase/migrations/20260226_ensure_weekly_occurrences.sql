@@ -5,6 +5,10 @@
 --
 -- Nota: evitamos depender de un índice/constraint único existente para (parent_id, fecha),
 -- usando LEFT JOIN para no duplicar. (Luego se puede agregar constraint único cuando la data esté limpia.)
+--
+-- Importante (caso real): algunos `parent_id` contienen múltiples "series" distintas (nombres diferentes).
+-- En ese caso, deduplicar solo por (parent_id, fecha) puede bloquear la materialización.
+-- Aquí deduplicamos por (parent_id, fecha, nombre) para permitir múltiples eventos el mismo día bajo un parent.
 
 create or replace function public.ensure_weekly_occurrences(
   p_parent_id bigint,
@@ -21,6 +25,7 @@ declare
   weekday int;
   start_date date;
   max_fecha_weekly date;
+  horizon_max date;
   inserted_total int := 0;
   inserted int := 0;
 begin
@@ -32,6 +37,9 @@ begin
   end if;
 
   today_cdmx := (now() at time zone 'America/Mexico_City')::date;
+  -- Ventana de seguridad: ignorar "max(fecha)" absurdamente lejano.
+  -- (Si existe basura como 2038+, NO debe empujar el start_date.)
+  horizon_max := (today_cdmx + ((greatest(p_weeks_ahead, 12) + 2) * 7))::date;
 
   -- 1) Generar por cada serie recurrente (dia_semana) dentro del parent.
   -- Si un parent tiene 2 plantillas (ej. miércoles y jueves), materializamos ambas.
@@ -50,7 +58,9 @@ begin
     from public.events_date
     where parent_id = p_parent_id
       and dia_semana = weekday
-      and fecha is not null;
+      and coalesce(nombre, '') = coalesce(tpl.nombre, '')
+      and fecha is not null
+      and fecha <= horizon_max;
 
     -- Regla: generar siempre hacia adelante, empezando una semana después de la última fecha conocida
     if max_fecha_weekly is not null then
@@ -126,6 +136,7 @@ begin
     left join public.events_date existing
       on existing.parent_id = tpl.parent_id
      and existing.fecha = gen.fecha
+     and coalesce(existing.nombre, '') = coalesce(tpl.nombre, '')
     where existing.id is null;
 
     get diagnostics inserted = row_count;
@@ -146,11 +157,11 @@ begin
     select 1
     from public.events_date
     where fecha is not null
-    group by parent_id, fecha
+    group by parent_id, fecha, nombre
     having count(*) > 1
     limit 1
   ) then
-    raise notice 'Skipping unique index events_date(parent_id, fecha): duplicates exist (run backfill/cleanup first).';
+    raise notice 'Skipping unique index events_date(parent_id, fecha, nombre): duplicates exist (run backfill/cleanup first).';
     return;
   end if;
 
@@ -158,9 +169,37 @@ begin
     select 1
     from pg_indexes
     where schemaname = 'public'
-      and indexname = 'events_date_parent_id_fecha_uniq_idx'
+      and indexname = 'events_date_parent_id_fecha_nombre_uniq_idx'
   ) then
-    execute 'create unique index events_date_parent_id_fecha_uniq_idx on public.events_date (parent_id, fecha) where fecha is not null;';
+    execute 'create unique index events_date_parent_id_fecha_nombre_uniq_idx on public.events_date (parent_id, fecha, nombre) where fecha is not null;';
+  end if;
+end $$;
+
+-- Recomendado: un recurrente (dia_semana) debe estar ligado a un parent.
+-- Lo creamos SOLO si no existen filas inválidas (dia_semana not null AND parent_id is null).
+do $$
+begin
+  if exists (
+    select 1
+    from public.events_date
+    where dia_semana is not null
+      and parent_id is null
+    limit 1
+  ) then
+    raise notice 'Skipping constraint recurrent_requires_parent: rows exist with dia_semana and parent_id NULL (backfill first).';
+    return;
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.table_constraints
+    where table_schema = 'public'
+      and table_name = 'events_date'
+      and constraint_name = 'events_date_recurrent_requires_parent_chk'
+  ) then
+    alter table public.events_date
+      add constraint events_date_recurrent_requires_parent_chk
+      check (dia_semana is null or parent_id is not null);
   end if;
 end $$;
 

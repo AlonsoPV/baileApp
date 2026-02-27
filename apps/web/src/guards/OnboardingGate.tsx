@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { routes } from "@/routes/registry";
-import { isPinVerified, needsPinVerify } from "@/lib/pin";
 import LoadingScreen from "@/components/LoadingScreen";
 
 const PROTECTED_PREFIX = [/^\/app\//, /^\/profile(\/|$)/];
@@ -16,7 +15,6 @@ type OnboardingRow = {
   user_id: string;
   onboarding_complete?: boolean | null;
   onboarding_completed?: boolean | null;
-  pin_hash?: string | null;
   updated_at?: string | null;
   display_name?: string | null;
   ritmos?: unknown[] | string | null;
@@ -58,14 +56,14 @@ function safeArrayLen(v: any): number {
 async function fetchOnboardingStatus(userId: string): Promise<OnboardingStatus> {
   const { data, error } = await supabase
     .from("profiles_user")
-    .select("user_id, onboarding_complete, pin_hash, updated_at, display_name, ritmos, ritmos_seleccionados, zonas, rol_baile")
+    .select("user_id, onboarding_complete, updated_at, display_name, ritmos, ritmos_seleccionados, zonas, rol_baile")
     .eq("user_id", userId)
     .maybeSingle();
 
   if (error) throw error;
 
   const row = (data as OnboardingRow | null) ?? null;
-  if (!row) return { onboarding_complete: false, pin_hash: null, user_id: userId };
+  if (!row) return { onboarding_complete: false, user_id: userId };
 
   const hasName = !!row.display_name;
   const ritmosCount = safeArrayLen(row.ritmos) + safeArrayLen(row.ritmos_seleccionados);
@@ -146,15 +144,8 @@ export default function OnboardingGate() {
   }
 
   const complete = data?.onboarding_complete === true;
-  const hasPin = !!data?.pin_hash;
 
   if (complete) {
-    const onPinRoutes = location.pathname.startsWith(routes.auth.pin) || location.pathname.startsWith(routes.auth.pinSetup);
-    if (!onPinRoutes && hasPin && !isOnboardingRoute) {
-      if (needsPinVerify(user.id) && !isPinVerified(user.id)) {
-        return <Navigate to={routes.auth.pin} replace />;
-      }
-    }
     return <Outlet />;
   }
 
