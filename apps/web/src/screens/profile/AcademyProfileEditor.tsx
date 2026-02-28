@@ -3579,7 +3579,7 @@ export default function AcademyProfileEditor() {
               </div>
 
               {/* Gestión de Videos */}
-              <div className="media-management-section" style={{ marginBottom: '3rem' }}>
+            {/*   <div className="media-management-section" style={{ marginBottom: '3rem' }}>
                 <div className="media-management-header">
                   <div className="media-management-icon">
                     🎥
@@ -3616,7 +3616,7 @@ export default function AcademyProfileEditor() {
                 slots={[...VIDEO_SLOTS]}
               />
                 </div>
-              </div>
+              </div> */}
             </>
           )}
 

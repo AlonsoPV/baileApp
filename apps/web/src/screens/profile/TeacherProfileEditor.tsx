@@ -2696,7 +2696,7 @@ export default function TeacherProfileEditor() {
         </React.Suspense>
 
         {/* Gestión de Videos */}
-        <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de videos...</div>}>
+      {/*   <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de videos...</div>}>
           <VideoManagementSection
             media={media}
             uploading={Object.fromEntries(VIDEO_SLOTS.map(slot => [slot, add.isPending]))}
@@ -2706,7 +2706,7 @@ export default function TeacherProfileEditor() {
             description="Videos promocionales, clases de muestra, testimonios"
             slots={[...VIDEO_SLOTS]}
           />
-        </React.Suspense>
+        </React.Suspense> */}
           </div>
         )}
       </div>

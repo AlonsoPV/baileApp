@@ -1366,7 +1366,7 @@ export default function TeacherProfileLive() {
           )}
 
           {/* Slot Video */}
-          {getMediaBySlot(media as unknown as MediaSlotItem[], 'v1') && (
+         {/*  {getMediaBySlot(media as unknown as MediaSlotItem[], 'v1') && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1379,7 +1379,7 @@ export default function TeacherProfileLive() {
                 overflow: 'hidden'
               }}
             >
-              {/* Header con gradiente superior */}
+            
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -1390,7 +1390,6 @@ export default function TeacherProfileLive() {
                 borderRadius: '20px 20px 0 0'
               }} />
               
-              {/* Header compacto */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1431,7 +1430,7 @@ export default function TeacherProfileLive() {
                 </div>
               </div>
 
-              {/* Contenedor del video compacto */}
+             
               <div style={{
                 position: 'relative',
                 width: '100%',
@@ -1444,7 +1443,7 @@ export default function TeacherProfileLive() {
                 boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
                 padding: '3px'
               }}>
-                {/* Borde interno con gradiente */}
+            
                 <div style={{
                   position: 'absolute',
                   inset: '3px',
@@ -1454,7 +1453,7 @@ export default function TeacherProfileLive() {
                   zIndex: 1
                 }} />
                 
-                {/* Video */}
+              
                 <div style={{
                   position: 'relative',
                   width: '100%',
@@ -1478,7 +1477,6 @@ export default function TeacherProfileLive() {
                   />
                 </div>
 
-                {/* Efecto de brillo en las esquinas */}
                 <div style={{
                   position: 'absolute',
                   top: '5px',
@@ -1503,7 +1501,7 @@ export default function TeacherProfileLive() {
                 }} />
               </div>
             </motion.section>
-          )}
+          )} */}
 
           {/* Galería de Fotos Mejorada */}
           {carouselPhotos.length > 0 && (

@@ -322,16 +322,73 @@ export default function ClasesLiveTabs({
   }
 
   const clasesLiveCardStyles = `
-    .clases-live-card { width: 100%; min-width: 0; box-sizing: border-box; }
-    .clases-live-card h4 { word-wrap: break-word; overflow-wrap: break-word; min-width: 0; }
-    .clases-live-card-meta { overflow-wrap: break-word; word-break: break-word; min-width: 0; }
-    @media (max-width: 600px) {
+    .clases-live-card {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: clamp(0.75rem, 2.5vw, 1.25rem) !important;
+      border-radius: clamp(12px, 2.5vw, 18px) !important;
+      gap: clamp(0.5rem, 1.5vw, 1rem) !important;
+    }
+    .clases-live-card h4 {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      min-width: 0;
+      font-size: clamp(0.95rem, 2.2vw, 1.15rem) !important;
+      line-height: 1.25;
+      margin: 0;
+    }
+    .clases-live-card-meta {
+      overflow-wrap: break-word;
+      word-break: break-word;
+      min-width: 0;
+      font-size: clamp(0.78rem, 1.8vw, 0.95rem) !important;
+      gap: clamp(0.4rem, 1vw, 0.75rem) !important;
+      line-height: 1.4;
+    }
+    /* Móvil muy pequeño */
+    @media (max-width: 360px) {
+      .clases-live-card { padding: 0.6rem !important; border-radius: 10px !important; }
+      .clases-live-card h4 { font-size: 0.9rem !important; }
+      .clases-live-card-meta { font-size: 0.72rem !important; }
+    }
+    /* Móvil estándar */
+    @media (max-width: 480px) {
       .clases-live-card { padding: 0.75rem !important; border-radius: 12px !important; }
       .clases-live-card h4 { font-size: 1rem !important; }
       .clases-live-card-meta { font-size: 0.8rem !important; }
     }
-    @media (min-width: 601px) {
-      .clases-live-card { padding: clamp(0.75rem, 1.5vw, 1.25rem) !important; }
+    /* Móvil grande / phablet */
+    @media (min-width: 481px) and (max-width: 600px) {
+      .clases-live-card { padding: 0.85rem !important; border-radius: 14px !important; }
+      .clases-live-card h4 { font-size: 1.05rem !important; }
+      .clases-live-card-meta { font-size: 0.85rem !important; }
+    }
+    /* Tablet */
+    @media (min-width: 601px) and (max-width: 900px) {
+      .clases-live-card { padding: clamp(0.9rem, 1.5vw, 1.1rem) !important; border-radius: 16px !important; }
+      .clases-live-card h4 { font-size: 1.08rem !important; }
+      .clases-live-card-meta { font-size: 0.9rem !important; }
+    }
+    /* Desktop */
+    @media (min-width: 901px) {
+      .clases-live-card { padding: 1rem 1.25rem !important; border-radius: 18px !important; }
+      .clases-live-card h4 { font-size: 1.15rem !important; }
+      .clases-live-card-meta { font-size: 0.95rem !important; }
+    }
+    /* Evitar desborde en contenedores flex/grid */
+    .clases-live-card > * { min-width: 0; }
+    /* Responsivo: header (nombre, nivel, fecha) en una columna y dos filas */
+    @media (max-width: 768px) {
+      .clases-live-card-header {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto !important;
+        gap: 0.5rem !important;
+      }
+      .clases-live-card-header > div:first-child { grid-column: 1; grid-row: 1; }
+      .clases-live-card-header > div:last-child { grid-column: 1; grid-row: 2; }
     }
   `;
 
@@ -480,7 +537,7 @@ export default function ClasesLiveTabs({
 
                       {/* Info */}
                       <div style={{ display: "flex", flexDirection: "column", gap: ".5rem" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem", flexWrap: "wrap" }}>
+                        <div className="clases-live-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem", flexWrap: "wrap" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1, flexWrap: "wrap" }}>
                             <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 900 }}>{titulo}</h4>
                             {c.fechaModo === 'por_agendar' ? (
@@ -1041,7 +1098,7 @@ export default function ClasesLiveTabs({
 
                 {/* Info */}
                 <div style={{ display: "grid", gap: ".5rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem" }}>
+                  <div className="clases-live-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1, flexWrap: "wrap" }}>
                       <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900 }}>{titulo}</h4>
                       {c.fechaModo === 'por_agendar' ? (

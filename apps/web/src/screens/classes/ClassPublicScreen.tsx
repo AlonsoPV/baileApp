@@ -107,6 +107,112 @@ export default function ClassPublicScreen() {
     setHeroAvatarError(false);
   }, [(profile as any)?.avatar_url, (profile as any)?.media]);
 
+  // Derive cronograma/selectedClass etc. BEFORE any early return so hooks below always run in the same order.
+  const cronograma = profile?.cronograma || profile?.horarios || [];
+  const costos = profile?.costos || [];
+  const ubicacionBase = Array.isArray(profile?.ubicaciones) && profile.ubicaciones.length > 0
+    ? {
+        nombre: profile.ubicaciones[0]?.nombre,
+        direccion: profile.ubicaciones[0]?.direccion,
+        ciudad: profile.ubicaciones[0]?.ciudad,
+        referencias: profile.ubicaciones[0]?.referencias,
+      }
+    : undefined;
+  const classesArr = Array.isArray(cronograma) ? (cronograma as any[]) : [];
+  const selectedClassIndex = (() => {
+    if (classIdParam) {
+      const foundIndex = classesArr.findIndex((c: any) => String(c?.id) === String(classIdParam));
+      if (foundIndex >= 0) return foundIndex;
+    }
+    if (classIndexParam !== '') {
+      const idx = Number(classIndexParam);
+      if (!Number.isNaN(idx) && idx >= 0 && idx < classesArr.length) return idx;
+    }
+    return 0;
+  })();
+  const selectedClass = classesArr[selectedClassIndex] ?? classesArr[0];
+  const ritmoCatalogMaps = React.useMemo(() => {
+    const idToLabel = new Map<string, string>();
+    const labelToIdLower = new Map<string, string>();
+    RITMOS_CATALOG.forEach((g) =>
+      g.items.forEach((i) => {
+        idToLabel.set(i.id, i.label);
+        labelToIdLower.set(i.label.trim().toLowerCase(), i.id);
+      }),
+    );
+    const tagNameToSlugLower = new Map<string, string>();
+    Object.entries(TAG_NAME_TO_SLUG).forEach(([k, v]) => tagNameToSlugLower.set(k.trim().toLowerCase(), v));
+    return { idToLabel, labelToIdLower, tagNameToSlugLower };
+  }, []);
+
+  const { ritmoLabels, ritmoPrincipalLabel } = React.useMemo(() => {
+    const labels: string[] = [];
+    const slugsCandidate = [
+      ...(Array.isArray((selectedClass as any)?.ritmos_seleccionados) ? ((selectedClass as any).ritmos_seleccionados as any[]) : []),
+      ...(Array.isArray((selectedClass as any)?.ritmosSeleccionados) ? ((selectedClass as any).ritmosSeleccionados as any[]) : []),
+    ].filter((x) => typeof x === 'string') as string[];
+
+    let slugs: string[] = [];
+    if (slugsCandidate.length > 0) {
+      slugs = normalizeRitmosToSlugs({ ritmos_seleccionados: slugsCandidate });
+    } else {
+      const ids: Array<number | string> = [];
+      if (Array.isArray((selectedClass as any)?.ritmoIds)) ids.push(...(((selectedClass as any).ritmoIds as any[]) || []));
+      if (Array.isArray((selectedClass as any)?.ritmos)) ids.push(...(((selectedClass as any).ritmos as any[]) || []));
+      if ((selectedClass as any)?.ritmoId != null) ids.push((selectedClass as any).ritmoId);
+      const legacyStrings: string[] = [];
+      if (typeof (selectedClass as any)?.ritmo === 'string') legacyStrings.push(String((selectedClass as any).ritmo));
+      if (typeof (selectedClass as any)?.estilo === 'string') legacyStrings.push(String((selectedClass as any).estilo));
+      if (Array.isArray((selectedClass as any)?.ritmos)) {
+        (((selectedClass as any).ritmos as any[]) || []).forEach((r) => {
+          if (typeof r === 'string') legacyStrings.push(r);
+        });
+      }
+      const legacySlugsFromStrings = legacyStrings
+        .map((s) => String(s ?? '').trim())
+        .filter(Boolean)
+        .map((s) => {
+          const lower = s.toLowerCase();
+          if (ritmoCatalogMaps.idToLabel.has(s)) return s;
+          const byLabel = ritmoCatalogMaps.labelToIdLower.get(lower);
+          if (byLabel) return byLabel;
+          const byTagName = ritmoCatalogMaps.tagNameToSlugLower.get(lower);
+          if (byTagName) return byTagName;
+          return null;
+        })
+        .filter(Boolean) as string[];
+      if (legacySlugsFromStrings.length > 0) {
+        slugs = normalizeRitmosToSlugs({ ritmos_seleccionados: legacySlugsFromStrings });
+      } else if (ids.length > 0) {
+        slugs = normalizeRitmosToSlugs({ ritmos: ids });
+      }
+    }
+    if (slugs.length > 0) {
+      slugs.forEach((slug) => {
+        const label = ritmoCatalogMaps.idToLabel.get(slug) || slug;
+        if (label) labels.push(label);
+      });
+    }
+    const uniq = [...new Set(labels)].filter(Boolean);
+    const primary = uniq[0] || '';
+    return { ritmoLabels: uniq, ritmoPrincipalLabel: primary };
+  }, [selectedClass, ritmoCatalogMaps]);
+
+  const nivelLabel = React.useMemo(() => {
+    const raw = (selectedClass as any)?.nivel;
+    if (raw === null || raw === undefined) return undefined;
+    const s = String(raw).trim();
+    if (!s) return undefined;
+    const levelByCode: Record<string, string> = {
+      '0': 'Todos los niveles',
+      '1': 'Principiante',
+      '2': 'Intermedio',
+      '3': 'Avanzado',
+    };
+    if (levelByCode[s]) return levelByCode[s];
+    return s;
+  }, [selectedClass]);
+
   if (!rawId || Number.isNaN(idNum)) {
     return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>{t('missing_id')}</div>;
   }
@@ -122,57 +228,6 @@ export default function ClassPublicScreen() {
   const creatorName = profile?.nombre_publico || profile?.display_name || '—';
   const creatorLink = isTeacher ? urls.teacherLive(profile?.id) : urls.academyLive(profile?.id);
   const creatorTypeLabel = isTeacher ? t('teacher') : t('academy');
-
-  // Usar cronograma como fuente principal, con horarios como fallback para compatibilidad
-  const cronograma = profile?.cronograma || profile?.horarios || [];
-  const costos = profile?.costos || [];
-  const ubicacionBase = Array.isArray(profile?.ubicaciones) && profile.ubicaciones.length > 0
-    ? {
-        nombre: profile.ubicaciones[0]?.nombre,
-        direccion: profile.ubicaciones[0]?.direccion,
-        ciudad: profile.ubicaciones[0]?.ciudad,
-        referencias: profile.ubicaciones[0]?.referencias,
-      }
-    : undefined;
-
-  // Seleccionar SOLO una clase del cronograma (por id o índice). Fallback: primera.
-  const classesArr = Array.isArray(cronograma) ? (cronograma as any[]) : [];
-  let selectedClass: any | undefined = undefined;
-  let selectedClassIndex = 0;
-  
-  console.log('[ClassPublicScreen] 🔍 Buscando clase:', { classIdParam, classIndexParam, classesArrLength: classesArr.length });
-  
-  if (classIdParam) {
-    const foundIndex = classesArr.findIndex((c: any) => String(c?.id) === String(classIdParam));
-    if (foundIndex >= 0) {
-      selectedClass = classesArr[foundIndex];
-      selectedClassIndex = foundIndex;
-      console.log('[ClassPublicScreen] ✅ Clase encontrada por ID:', { foundIndex, class: selectedClass });
-    }
-  }
-  if (!selectedClass && classIndexParam !== '') {
-    const idx = Number(classIndexParam);
-    if (!Number.isNaN(idx) && idx >= 0 && idx < classesArr.length) {
-      selectedClass = classesArr[idx];
-      selectedClassIndex = idx;
-      console.log('[ClassPublicScreen] ✅ Clase encontrada por índice:', { idx, class: selectedClass });
-    } else {
-      console.warn('[ClassPublicScreen] ⚠️ Índice inválido:', { idx, classesArrLength: classesArr.length });
-    }
-  }
-  if (!selectedClass) {
-    selectedClass = classesArr[0];
-    selectedClassIndex = 0;
-    console.log('[ClassPublicScreen] ⚠️ Usando primera clase como fallback:', selectedClass);
-  }
-  
-  console.log('[ClassPublicScreen] 📋 Clase seleccionada:', {
-    index: selectedClassIndex,
-    id: selectedClass?.id,
-    titulo: selectedClass?.titulo,
-    nombre: selectedClass?.nombre,
-    referenciaCosto: selectedClass?.referenciaCosto
-  });
 
   // Precio numérico de la clase (para Stripe)
   const classPrice: number | null = (() => {
@@ -523,100 +578,6 @@ export default function ClassPublicScreen() {
     }
     return name || undefined;
   })();
-
-  const ritmoCatalogMaps = React.useMemo(() => {
-    const idToLabel = new Map<string, string>();
-    const labelToIdLower = new Map<string, string>();
-    RITMOS_CATALOG.forEach((g) =>
-      g.items.forEach((i) => {
-        idToLabel.set(i.id, i.label);
-        labelToIdLower.set(i.label.trim().toLowerCase(), i.id);
-      }),
-    );
-    const tagNameToSlugLower = new Map<string, string>();
-    Object.entries(TAG_NAME_TO_SLUG).forEach(([k, v]) => tagNameToSlugLower.set(k.trim().toLowerCase(), v));
-    return { idToLabel, labelToIdLower, tagNameToSlugLower };
-  }, []);
-
-  const { ritmoLabels, ritmoPrincipalLabel } = React.useMemo(() => {
-    const labels: string[] = [];
-
-    // 1) Preferir slugs ya normalizados (nuevo modelo): ritmos_seleccionados / ritmosSeleccionados
-    const slugsCandidate = [
-      ...(Array.isArray((selectedClass as any)?.ritmos_seleccionados) ? ((selectedClass as any).ritmos_seleccionados as any[]) : []),
-      ...(Array.isArray((selectedClass as any)?.ritmosSeleccionados) ? ((selectedClass as any).ritmosSeleccionados as any[]) : []),
-    ].filter((x) => typeof x === 'string') as string[];
-
-    let slugs: string[] = [];
-    if (slugsCandidate.length > 0) {
-      slugs = normalizeRitmosToSlugs({ ritmos_seleccionados: slugsCandidate });
-    } else {
-      // 2) IDs numéricos: ritmoIds / ritmos / ritmoId
-      const ids: Array<number | string> = [];
-      if (Array.isArray((selectedClass as any)?.ritmoIds)) ids.push(...(((selectedClass as any).ritmoIds as any[]) || []));
-      if (Array.isArray((selectedClass as any)?.ritmos)) ids.push(...(((selectedClass as any).ritmos as any[]) || []));
-      if ((selectedClass as any)?.ritmoId != null) ids.push((selectedClass as any).ritmoId);
-
-      // 3) Strings legacy: ritmo / estilo / ritmos[] como nombres
-      const legacyStrings: string[] = [];
-      if (typeof (selectedClass as any)?.ritmo === 'string') legacyStrings.push(String((selectedClass as any).ritmo));
-      if (typeof (selectedClass as any)?.estilo === 'string') legacyStrings.push(String((selectedClass as any).estilo));
-      if (Array.isArray((selectedClass as any)?.ritmos)) {
-        (((selectedClass as any).ritmos as any[]) || []).forEach((r) => {
-          if (typeof r === 'string') legacyStrings.push(r);
-        });
-      }
-
-      const legacySlugsFromStrings = legacyStrings
-        .map((s) => String(s ?? '').trim())
-        .filter(Boolean)
-        .map((s) => {
-          const lower = s.toLowerCase();
-          if (ritmoCatalogMaps.idToLabel.has(s)) return s; // ya es slug
-          const byLabel = ritmoCatalogMaps.labelToIdLower.get(lower);
-          if (byLabel) return byLabel;
-          const byTagName = ritmoCatalogMaps.tagNameToSlugLower.get(lower);
-          if (byTagName) return byTagName;
-          return null;
-        })
-        .filter(Boolean) as string[];
-
-      if (legacySlugsFromStrings.length > 0) {
-        slugs = normalizeRitmosToSlugs({ ritmos_seleccionados: legacySlugsFromStrings });
-      } else if (ids.length > 0) {
-        // Nota: normalizeRitmosToSlugs conoce el mapping ID->slug (TAG_ID_TO_SLUG)
-        slugs = normalizeRitmosToSlugs({ ritmos: ids });
-      }
-    }
-
-    if (slugs.length > 0) {
-      slugs.forEach((slug) => {
-        const label = ritmoCatalogMaps.idToLabel.get(slug) || slug;
-        if (label) labels.push(label);
-      });
-    }
-
-    const uniq = [...new Set(labels)].filter(Boolean);
-    const primary = uniq[0] || '';
-    return { ritmoLabels: uniq, ritmoPrincipalLabel: primary };
-  }, [selectedClass, ritmoCatalogMaps]);
-
-  const nivelLabel = React.useMemo(() => {
-    const raw = (selectedClass as any)?.nivel;
-    if (raw === null || raw === undefined) return undefined;
-    const s = String(raw).trim();
-    if (!s) return undefined;
-
-    // Algunos datos legacy guardan el nivel como índice/código en vez del label.
-    const levelByCode: Record<string, string> = {
-      '0': 'Todos los niveles',
-      '1': 'Principiante',
-      '2': 'Intermedio',
-      '3': 'Avanzado',
-    };
-    if (levelByCode[s]) return levelByCode[s];
-    return s;
-  }, [selectedClass]);
 
   const ritmosLabel = ritmoLabels.slice(0, 3).join(', ');
   const locationName = locationLabel || ubicacion?.ciudad || profile?.ciudad || t('mexico');
