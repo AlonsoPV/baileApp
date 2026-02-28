@@ -1,0 +1,63 @@
+/**
+ * Selects mínimos para eventos — reduce payload en Explore (cards) vs detalle.
+ * Ver OPTIMIZATION_PLAN.md Fase 1.2, 1.3
+ */
+
+/** Columnas para cards en Explore (lista). Excluye media, costos, cronograma, direccion. */
+export const SELECT_EVENTS_CARD = `
+  id,
+  parent_id,
+  nombre,
+  fecha,
+  dia_semana,
+  hora_inicio,
+  hora_fin,
+  lugar,
+  ciudad,
+  zona,
+  estado_publicacion,
+  estilos,
+  ritmos_seleccionados,
+  flyer_url,
+  created_at,
+  updated_at,
+  events_parent(
+    id,
+    nombre,
+    organizer_id
+  )
+`;
+
+/** Columnas para detalle (EventDatePublicScreen). Incluye media, costos, cronograma. */
+export const SELECT_EVENTS_DETAIL = `
+  id,
+  parent_id,
+  nombre,
+  fecha,
+  dia_semana,
+  hora_inicio,
+  hora_fin,
+  lugar,
+  direccion,
+  ciudad,
+  zona,
+  estado_publicacion,
+  estilos,
+  ritmos_seleccionados,
+  costos,
+  cronograma,
+  media,
+  flyer_url,
+  created_at,
+  updated_at,
+  events_parent(
+    id,
+    nombre,
+    descripcion,
+    estilos,
+    ritmos_seleccionados,
+    zonas,
+    media,
+    organizer_id
+  )
+`;

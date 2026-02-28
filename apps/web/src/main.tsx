@@ -18,6 +18,12 @@ import { startScrollLockWatchdog } from "./utils/scrollLockWatchdog";
 try { performance?.mark?.("web_boot_start"); } catch {}
 mark("app_start");
 
+// PERF Collector (dev-only): intercepta [PERF] logs, window.perfReport(), window.perfExport()
+if (import.meta.env?.DEV) {
+  import("./dev/perfCollector");
+  import("./dev/runPerfScenarios").then((m) => m.installPerfScenarioRunners());
+}
+
 // Normalizar URLs con dobles barras ANTES de que React Router las procese
 if (window.location.pathname.includes('//')) {
   const normalizedPath = window.location.pathname.replace(/\/+/g, '/');

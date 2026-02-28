@@ -15,6 +15,7 @@
     "test": "node --max-old-space-size=8192 ./node_modules/vitest/vitest.mjs",
     "test:run": "node --max-old-space-size=8192 ./node_modules/vitest/vitest.mjs run",
     "test:no-infinite-loading": "tsx scripts/test-no-infinite-loading.ts",
+    "perf:report": "node scripts/generatePerfReport.mjs",
     "check:auth": "powershell -Command \"if (Select-String -Path 'src\\**\\*.ts','src\\**\\*.tsx' -Pattern 'useAuth\\(\\)' | Select-String -Pattern '(utils|stores|services)') { Write-Host '❌ useAuth usado fuera de componentes'; exit 1 } else { Write-Host '✅ useAuth sólo en componentes' }\""
   },
   "dependencies": {

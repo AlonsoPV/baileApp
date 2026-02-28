@@ -2,7 +2,9 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { ExploreFilters, ExploreType } from "../state/exploreFilters";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
+import { SELECT_EVENTS_CARD } from "@/lib/eventSelects";
 import { calculateNextDateWithTime } from "../utils/calculateRecurringDates";
+import { perfLog } from "../utils/perfLog";
 
 const PAGE_LIMIT = 12;
 
@@ -106,43 +108,8 @@ function getNowCDMX(): Date {
 function baseSelect(type: ExploreType) {
   switch (type) {
     case "fechas":
-      // Mismo que eventos pero específicamente para fechas
-      // NOTA: No podemos hacer join directo events_parent->profiles_organizer
-      // porque la FK es events_parent.organizer_id -> auth.users.id, no -> profiles_organizer
-      return { 
-        table: "events_date", 
-        select: `
-          id,
-          parent_id,
-          nombre,
-          fecha,
-          dia_semana,
-          hora_inicio,
-          hora_fin,
-          lugar,
-          direccion,
-          ciudad,
-          zona,
-          estado_publicacion,
-          estilos,
-          ritmos_seleccionados,
-          costos,
-          media,
-          flyer_url,
-          created_at,
-          updated_at,
-          events_parent(
-            id,
-            nombre,
-            descripcion,
-            estilos,
-            ritmos_seleccionados,
-            zonas,
-            media,
-            organizer_id
-          )
-        `
-      };
+      // Select mínimo para cards (payload < 10KB). Ver eventSelects.ts
+      return { table: "events_date", select: SELECT_EVENTS_CARD };
     case "organizadores":  
       // Usar vista pública que solo muestra organizadores aprobados
       return { table: "v_organizers_public", select: "*" };
@@ -163,7 +130,9 @@ function baseSelect(type: ExploreType) {
   }
 }
 
-async function fetchPage(params: QueryParams, page: number) {
+/** Exportado para runPerfScenarios (dev). NO usar en producción. */
+export async function fetchExplorePage(params: QueryParams, page: number) {
+  const fetchStart = performance.now();
   const { type, q, ritmos, zonas, dateFrom, dateTo } = params;
   const { table, select } = baseSelect(type);
   const search = normalizeSearch(q);
@@ -171,27 +140,81 @@ async function fetchPage(params: QueryParams, page: number) {
   // Construir query
   let query = supabase.from(table).select(select, { count: "exact" });
 
-  // Mapeo opcional: de ritmos (tags numéricos) a catálogo (string IDs) para permitir OR sobre ritmos_seleccionados
+  // Paralelizar: tags_mapping + búsquedas por texto (cuando aplica)
   let selectedCatalogIds: string[] = [];
-  try {
-    if (ritmos && ritmos.length > 0) {
-      // Obtener nombres de tags seleccionados
-      const { data: tagRows, error: tagErr } = await supabase
-        .from('tags')
-        .select('id,nombre,tipo')
-        .in('id', ritmos as any)
-        .eq('tipo', 'ritmo');
-      if (!tagErr && tagRows && tagRows.length > 0) {
-        const labelToId = new Map<string, string>();
-        RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToId.set(i.label, i.id)));
-        selectedCatalogIds = (tagRows as any[])
-          .map(r => labelToId.get(r.nombre))
-          .filter(Boolean) as string[];
-      }
-    }
-  } catch (e) {
-    console.warn('[useExploreQuery] Catalog mapping failed, continuing with numeric only', e);
+  let searchParentRows: any[] = [];
+  let searchOrgRows: any[] = [];
+
+  const parallelPromises: Promise<void>[] = [];
+
+  if (ritmos && ritmos.length > 0) {
+    parallelPromises.push(
+      (async () => {
+        try {
+          const tagsStart = performance.now();
+          const { data: tagRows, error: tagErr } = await supabase
+            .from('tags')
+            .select('id,nombre,tipo')
+            .in('id', ritmos as any)
+            .eq('tipo', 'ritmo');
+          const tagsEnd = performance.now();
+          perfLog({ hook: 'useExploreQuery', step: 'tags_mapping', duration_ms: tagsEnd - tagsStart, rows: tagRows?.length ?? 0, data: tagRows, error: tagErr });
+          if (!tagErr && tagRows && tagRows.length > 0) {
+            const labelToId = new Map<string, string>();
+            RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToId.set(i.label, i.id)));
+            selectedCatalogIds.push(...(tagRows as any[]).map(r => labelToId.get(r.nombre)).filter(Boolean) as string[]);
+          }
+        } catch (e) {
+          console.warn('[useExploreQuery] Catalog mapping failed, continuing with numeric only', e);
+        }
+      })()
+    );
   }
+
+  if (type === "fechas" && search) {
+    parallelPromises.push(
+      (async () => {
+        try {
+          const epStart = performance.now();
+          const { data: parentRows } = await supabase
+            .from("events_parent")
+            .select("id")
+            .or([`nombre.ilike.${search.pattern}`].join(","))
+            .limit(250);
+          const epEnd = performance.now();
+          if (import.meta.env?.DEV) {
+            console.log("[PERF_SQL] search_events_parent:", { pattern: search.pattern });
+          }
+          perfLog({ hook: 'useExploreQuery', step: 'search_events_parent', duration_ms: epEnd - epStart, rows: parentRows?.length ?? 0, data: parentRows });
+          searchParentRows.push(...(parentRows || []));
+        } catch (e) {
+          console.warn("[useExploreQuery] events_parent text search failed (non-fatal):", e);
+        }
+      })()
+    );
+    parallelPromises.push(
+      (async () => {
+        try {
+          const orgStart = performance.now();
+          const { data: orgRows } = await supabase
+            .from("v_organizers_public")
+            .select("id")
+            .or([`nombre_publico.ilike.${search.pattern}`].join(","))
+            .limit(250);
+          const orgEnd = performance.now();
+          if (import.meta.env?.DEV) {
+            console.log("[PERF_SQL] search_v_organizers_public:", { pattern: search.pattern });
+          }
+          perfLog({ hook: 'useExploreQuery', step: 'search_v_organizers_public', duration_ms: orgEnd - orgStart, rows: orgRows?.length ?? 0, data: orgRows });
+          searchOrgRows.push(...(orgRows || []));
+        } catch (e) {
+          console.warn("[useExploreQuery] organizer search failed (non-fatal):", e);
+        }
+      })()
+    );
+  }
+
+  await Promise.all(parallelPromises);
 
   // Filtros por tipo
   if (type === "fechas") {
@@ -338,7 +361,28 @@ async function fetchPage(params: QueryParams, page: number) {
   const from = page * (params.pageSize || PAGE_LIMIT);
   const to   = from + (params.pageSize || PAGE_LIMIT) - 1;
   
+  if (import.meta.env?.DEV && type === "fechas") {
+    const todayCDMX = getTodayCDMX();
+    console.log("[PERF_SQL] main_events_query params:", {
+      table: "events_date",
+      select: "id,parent_id,nombre,fecha,dia_semana,...+events_parent(...)",
+      filters: {
+        estado_publicacion: "publicado",
+        dateOr: `dia_semana.not.is.null OR fecha.gte.${dateFrom || todayCDMX}`,
+        dateOr2: dateTo ? `dia_semana.not.is.null OR fecha.lte.${dateTo}` : null,
+        ritmos: ritmos?.length ? `overlaps(estilos,${JSON.stringify(ritmos)})` : null,
+        zonas: zonas?.length ? `in(zona,${JSON.stringify(zonas)})` : null,
+        search: search ? `or(nombre.ilike,lugar.ilike,ciudad.ilike,direccion.ilike).${search.pattern}` : null,
+      },
+      order: "fecha asc",
+      range: [from, to],
+    });
+  }
+  
+  const mainStart = performance.now();
   const { data, error, count } = await query.range(from, to);
+  const mainEnd = performance.now();
+  perfLog({ hook: 'useExploreQuery', step: 'main_events_query', duration_ms: mainEnd - mainStart, rows: (data as any[])?.length ?? 0, data, error, extra: { count: count ?? 0, type } });
   
   if (error) {
     console.error('[useExploreQuery] Error:', error);
@@ -350,63 +394,38 @@ async function fetchPage(params: QueryParams, page: number) {
   let finalData: any[] = (data as any[]) || [];
   let searchOrganizerIdSet: Set<number> | null = null;
 
-  // Query adicional para `fechas`: incluir matches por
-  // - `events_parent.nombre`
-  // - organizador (`v_organizers_public.nombre_publico`)
-  // sin romper la query principal (y manteniendo AND con filtros de fecha/ritmos/zonas).
+  // Usar resultados de búsqueda paralela (search_events_parent + search_v_organizers ya ejecutados)
   if (type === 'fechas' && search) {
     try {
       const todayCDMX = getTodayCDMX();
-
       const matchedParentIds = new Set<number>();
-      const matchedOrganizerIds = new Set<number>();
 
-      // 1) Parent IDs por texto en events_parent (nombre/descripcion)
-      try {
-        const { data: parentRows } = await supabase
-          .from("events_parent")
-          .select("id")
-          .or([
-            `nombre.ilike.${search.pattern}`,
-          ].join(","))
-          .limit(250);
-        for (const r of (parentRows || []) as any[]) {
-          if (typeof r?.id === "number" && Number.isFinite(r.id)) matchedParentIds.add(r.id);
-        }
-      } catch (e) {
-        console.warn("[useExploreQuery] events_parent text search failed (non-fatal):", e);
+      for (const r of searchParentRows as any[]) {
+        if (typeof r?.id === "number" && Number.isFinite(r.id)) matchedParentIds.add(r.id);
       }
 
-      // 2) Parent IDs por organizador (match en v_organizers_public)
-      try {
-        const { data: orgRows } = await supabase
-          .from("v_organizers_public")
+      const organizerIds = uniqueNumbers((searchOrgRows as any[]).map((r) => (r as any)?.id));
+      searchOrganizerIdSet = new Set(organizerIds);
+
+      if (organizerIds.length > 0) {
+        const pboStart = performance.now();
+        const { data: parentByOrg } = await supabase
+          .from("events_parent")
           .select("id")
-          .or([
-            `nombre_publico.ilike.${search.pattern}`,
-          ].join(","))
-          .limit(250);
-
-        const organizerIds = uniqueNumbers(((orgRows || []) as any[]).map((r) => (r as any)?.id));
-        organizerIds.forEach((id) => matchedOrganizerIds.add(id));
-        searchOrganizerIdSet = new Set(organizerIds);
-
-        if (organizerIds.length > 0) {
-          const { data: parentByOrg } = await supabase
-            .from("events_parent")
-            .select("id")
-            .in("organizer_id", organizerIds as any)
-            .limit(500);
-          for (const r of (parentByOrg || []) as any[]) {
-            if (typeof r?.id === "number" && Number.isFinite(r.id)) matchedParentIds.add(r.id);
-          }
+          .in("organizer_id", organizerIds as any)
+          .limit(500);
+        const pboEnd = performance.now();
+        if (import.meta.env?.DEV) {
+          console.log("[PERF_SQL] search_events_parent_by_org:", { organizer_ids: organizerIds });
         }
-      } catch (e) {
-        console.warn("[useExploreQuery] organizer search failed (non-fatal):", e);
+        perfLog({ hook: 'useExploreQuery', step: 'search_events_parent_by_org', duration_ms: pboEnd - pboStart, rows: parentByOrg?.length ?? 0, data: parentByOrg });
+        for (const r of (parentByOrg || []) as any[]) {
+          if (typeof r?.id === "number" && Number.isFinite(r.id)) matchedParentIds.add(r.id);
+        }
       }
 
       const parentIds = Array.from(matchedParentIds).slice(0, 250);
-      if (parentIds.length === 0 && matchedOrganizerIds.size === 0) {
+      if (parentIds.length === 0 && (searchOrganizerIdSet?.size ?? 0) === 0) {
         // Nada extra que traer; seguimos con la query principal.
       } else if (parentIds.length > 0) {
         let parentQuery = supabase
@@ -439,7 +458,10 @@ async function fetchPage(params: QueryParams, page: number) {
         parentQuery = parentQuery.overlaps("ritmos_seleccionados", selectedCatalogIds as any);
       }
       
+      const pmStart = performance.now();
       const { data: parentMatches } = await (parentQuery as any).order("fecha", { ascending: true });
+      const pmEnd = performance.now();
+      perfLog({ hook: 'useExploreQuery', step: 'search_parent_matches_events_date', duration_ms: pmEnd - pmStart, rows: (parentMatches as any[])?.length ?? 0, data: parentMatches });
       
       if (Array.isArray(parentMatches) && parentMatches.length > 0) {
         // Combinar resultados, evitando duplicados
@@ -488,6 +510,7 @@ async function fetchPage(params: QueryParams, page: number) {
     );
 
     if (recurringParentIds.length > 0) {
+      const rpcStart = performance.now();
       for (const pid of recurringParentIds) {
         try {
           await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: 12 } as any);
@@ -495,11 +518,14 @@ async function fetchPage(params: QueryParams, page: number) {
           console.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
         }
       }
+      const rpcEnd = performance.now();
+      perfLog({ hook: 'useExploreQuery', step: 'ensure_weekly_occurrences_rpc', duration_ms: rpcEnd - rpcStart, rows: 0, extra: { parents_count: recurringParentIds.length } });
 
       // Re-fetch ocurrencias reales (rango: dateFrom/dateTo o hoy + 84 días)
       try {
         const rangeFrom = dateFrom || todayStr;
         const rangeTo = dateTo || addDaysYmd(rangeFrom, 84);
+        const occStart = performance.now();
         const { data: occRows, error: occErr } = await supabase
           .from("events_date")
           .select(select as any)
@@ -508,6 +534,8 @@ async function fetchPage(params: QueryParams, page: number) {
           .gte("fecha", rangeFrom)
           .lte("fecha", rangeTo)
           .order("fecha", { ascending: true });
+        const occEnd = performance.now();
+        perfLog({ hook: 'useExploreQuery', step: 'refetch_recurring_occurrences', duration_ms: occEnd - occStart, rows: occRows?.length ?? 0, data: occRows, error: occErr });
 
         if (!occErr && Array.isArray(occRows) && occRows.length > 0) {
           const byId = new Map<any, any>();
@@ -605,11 +633,14 @@ async function fetchPage(params: QueryParams, page: number) {
     let organizerIds = searchOrganizerIdSet;
     if (!organizerIds) {
       try {
+        const foStart = performance.now();
         const { data: orgRows } = await supabase
           .from("v_organizers_public")
           .select("id")
           .or([`nombre_publico.ilike.${search.pattern}`].join(","))
           .limit(250);
+        const foEnd = performance.now();
+        perfLog({ hook: 'useExploreQuery', step: 'filter_organizers_final', duration_ms: foEnd - foStart, rows: orgRows?.length ?? 0, data: orgRows });
         organizerIds = new Set(uniqueNumbers(((orgRows || []) as any[]).map((r) => (r as any)?.id)));
       } catch {
         organizerIds = new Set<number>();
@@ -618,6 +649,9 @@ async function fetchPage(params: QueryParams, page: number) {
 
     finalData = finalData.filter((row: any) => matchesFechaSearch(row, search.lower, organizerIds));
   }
+  
+  const fetchEnd = performance.now();
+  perfLog({ hook: 'useExploreQuery', step: 'fetchPage_total', duration_ms: fetchEnd - fetchStart, rows: finalData.length, data: finalData, extra: { count: count ?? 0, type } });
   
   return { 
     data: finalData, 
@@ -642,7 +676,7 @@ export function useExploreQuery(params: QueryParams & { enabled?: boolean }) {
       queryParams.dateTo ?? "",
       queryParams.pageSize ?? PAGE_LIMIT,
     ],
-    queryFn: ({ pageParam = 0 }) => fetchPage(queryParams, pageParam as number),
+    queryFn: ({ pageParam = 0 }) => fetchExplorePage(queryParams, pageParam as number),
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
     enabled, // Solo ejecutar la query si enabled es true

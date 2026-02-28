@@ -1,6 +1,8 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { EventDate } from "../types/events";
+import { perfLog } from "../utils/perfLog";
+import { SELECT_EVENTS_DETAIL } from "@/lib/eventSelects";
 
 /**
  * Hook para usar con Suspense
@@ -29,24 +31,17 @@ export function useEventDateSuspense(dateId: number): EventDate {
   const query = useSuspenseQuery<EventDate>({
     queryKey: ["event", "date", dateId],
     queryFn: async (): Promise<EventDate> => {
-      console.log('[useEventDateSuspense] Fetching date with ID:', dateId);
-      
+      const start = performance.now();
       const { data, error } = await supabase
         .from("events_date")
-        .select("*")
+        .select(SELECT_EVENTS_DETAIL)
         .eq("id", dateId)
         .maybeSingle();
-        
-      console.log('[useEventDateSuspense] Supabase response:', { data, error });
+      const end = performance.now();
+      perfLog({ hook: 'useEventDateSuspense', step: 'events_date_by_id', duration_ms: end - start, rows: data ? 1 : 0, data, error, extra: { dateId } });
       
       if (error) {
         console.error('[useEventDateSuspense] Supabase error:', error);
-        console.error('[useEventDateSuspense] Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
         throw error;
       }
       
@@ -55,7 +50,6 @@ export function useEventDateSuspense(dateId: number): EventDate {
         throw new Error(`Event date with ID ${dateId} not found`);
       }
       
-      console.log('[useEventDateSuspense] Returning data:', data);
       return data as EventDate;
     },
     staleTime: 1000 * 60, // 1 minuto - datos frescos

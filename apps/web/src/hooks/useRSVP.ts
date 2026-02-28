@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthProvider";
+import { perfLog } from "../utils/perfLog";
 
 // =====================================================
 // TIPOS DE RSVP
@@ -36,8 +37,11 @@ export function useUserRSVP(eventDateId?: number) {
     queryFn: async () => {
       if (!eventDateId) return null;
       
+      const start = performance.now();
       const { data, error } = await supabase
         .rpc('get_user_rsvp_status', { event_id: eventDateId });
+      const end = performance.now();
+      perfLog({ hook: 'useRSVP', step: 'get_user_rsvp_status', duration_ms: end - start, rows: data != null ? 1 : 0, data, error, extra: { eventDateId } });
       
       if (error) throw error;
       return data as RSVPStatus | null;
@@ -55,8 +59,11 @@ export function useEventRSVPStats(eventDateId?: number) {
     queryFn: async () => {
       if (!eventDateId) return null;
       
+      const start = performance.now();
       const { data, error } = await supabase
         .rpc('get_event_rsvp_stats', { event_id: eventDateId });
+      const end = performance.now();
+      perfLog({ hook: 'useRSVP', step: 'get_event_rsvp_stats', duration_ms: end - start, rows: data?.length ?? 0, data, error, extra: { eventDateId } });
       
       if (error) throw error;
       return data?.[0] as RSVPStats | null;
@@ -90,7 +97,11 @@ export function useEventsWithRSVPStats(params?: {
       if (ritmos?.length) req = req.overlaps("evento_estilos", ritmos as any);
       if (zonas?.length) req = req.in("zona", zonas as any);
       
+      const start = performance.now();
       const { data, error } = await req;
+      const end = performance.now();
+      perfLog({ hook: 'useRSVP', step: 'events_with_rsvp_stats', duration_ms: end - start, rows: data?.length ?? 0, data, error });
+      
       if (error) throw error;
       return data || [];
     }
@@ -115,6 +126,7 @@ export function useUserRSVPEvents(status?: RSVPStatus) {
     queryFn: async () => {
       if (!userId) return [];
 
+      const rsvpStart = performance.now();
       let req = supabase
         .from("event_rsvp")
         .select("id, user_id, event_date_id, event_parent_id, status, created_at, updated_at")
@@ -123,14 +135,20 @@ export function useUserRSVPEvents(status?: RSVPStatus) {
       if (status) req = req.eq("status", status);
 
       const { data: rows, error } = await req;
+      const rsvpEnd = performance.now();
+      perfLog({ hook: 'useRSVP', step: 'user_rsvp_events_event_rsvp', duration_ms: rsvpEnd - rsvpStart, rows: rows?.length ?? 0, data: rows, error });
+      
       if (error) throw error;
       if (!rows?.length) return [];
 
       const eventDateIds = [...new Set(rows.map((r: any) => r.event_date_id).filter(Boolean))];
 
+      const datesStart = performance.now();
       const { data: dates, error: datesError } = eventDateIds.length
         ? await supabase.from("events_date").select("*").in("id", eventDateIds)
         : { data: [], error: null };
+      const datesEnd = performance.now();
+      perfLog({ hook: 'useRSVP', step: 'user_rsvp_events_events_date', duration_ms: datesEnd - datesStart, rows: dates?.length ?? 0, data: dates, error: datesError });
 
       if (datesError) throw datesError;
 
@@ -167,11 +185,14 @@ export function useUpdateRSVP() {
       eventDateId: number; 
       status: RSVPStatus 
     }) => {
+      const start = performance.now();
       const { data, error } = await supabase
         .rpc('upsert_event_rsvp', {
           p_event_date_id: eventDateId,
           p_status: status
         });
+      const end = performance.now();
+      perfLog({ hook: 'useRSVP', step: 'upsert_event_rsvp', duration_ms: end - start, rows: data ? 1 : 0, data, error, extra: { eventDateId } });
       
       if (error) throw error;
       return data as RSVPResponse;
@@ -209,10 +230,13 @@ export function useRemoveRSVP() {
   
   return useMutation({
     mutationFn: async (eventDateId: number) => {
+      const start = performance.now();
       const { data, error } = await supabase
         .rpc('delete_event_rsvp', {
           p_event_date_id: eventDateId
         });
+      const end = performance.now();
+      perfLog({ hook: 'useRSVP', step: 'delete_event_rsvp', duration_ms: end - start, rows: data ? 1 : 0, data, error, extra: { eventDateId } });
       
       if (error) throw error;
       return data as RSVPResponse;
