@@ -31,7 +31,7 @@ const defaultFilters: ExploreFilters = {
   q: "",
   ritmos: [],
   zonas: [],
-  datePreset: 'hoy',
+  datePreset: 'todos',
   pageSize: 12,
 };
 
