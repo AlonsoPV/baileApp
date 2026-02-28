@@ -468,7 +468,7 @@ export default function HorizontalSlider<T>({
         </div>
       </div>
 
-      {/* Botones de navegación debajo del viewport - Ocultos en móvil o si showNavButtons=false */}
+      {/* Botones de navegación: visibles en desktop y responsive, diseño moderno UX/UI */}
       {showNavButtons && canScroll && (
         <div
           style={{
@@ -481,95 +481,87 @@ export default function HorizontalSlider<T>({
           className="horizontal-slider-buttons"
         >
           <style>{`
-            /* Ocultar botones en móvil */
+            .horizontal-slider-buttons {
+              padding: 6px 0;
+            }
+            .horizontal-slider-buttons__btn {
+              width: 44px;
+              height: 44px;
+              min-width: 44px;
+              min-height: 44px;
+              border-radius: 50%;
+              border: 1px solid rgba(240, 147, 251, 0.35);
+              background: rgba(255, 255, 255, 0.06);
+              color: rgba(0, 0, 0, 0.75);
+              display: grid;
+              place-items: center;
+              cursor: pointer;
+              font-size: 1rem;
+              font-weight: 600;
+              transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+              box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+              -webkit-tap-highlight-color: transparent;
+            }
+            .horizontal-slider-buttons__btn:hover:not(:disabled) {
+              background: rgba(240, 147, 251, 0.12);
+              border-color: rgba(240, 147, 251, 0.5);
+              box-shadow: 0 4px 16px rgba(240, 147, 251, 0.15);
+            }
+            .horizontal-slider-buttons__btn:active:not(:disabled) {
+              transform: scale(0.92);
+            }
+            .horizontal-slider-buttons__btn:disabled {
+              opacity: 0.4;
+              cursor: not-allowed;
+            }
             @media (max-width: 768px) {
               .horizontal-slider-buttons {
-                display: none !important;
+                display: flex !important;
+                justify-content: center;
+                align-items: center;
+                gap: 20px;
+                padding: 10px 0 6px;
+              }
+              .horizontal-slider-buttons__btn {
+                width: 48px;
+                height: 48px;
+                min-width: 48px;
+                min-height: 48px;
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: rgba(255, 255, 255, 0.9);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+              }
+              .horizontal-slider-buttons__btn:hover:not(:disabled),
+              .horizontal-slider-buttons__btn:focus-visible:not(:disabled) {
+                background: rgba(255, 255, 255, 0.14);
+                border-color: rgba(255, 255, 255, 0.35);
+                box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
               }
             }
           `}</style>
           <motion.button
             type="button"
             aria-label="Anterior"
-            whileHover={{ scale: 1.05, x: -2 }}
-            whileTap={{ scale: 0.95 }}
+            className="horizontal-slider-buttons__btn"
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => scrollByAmount(-1)}
             disabled={!canScroll}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 999,
-              border: "1px solid rgba(240, 147, 251, 0.3)",
-              background: "rgba(240, 147, 251, 0.08)",
-              color: "rgba(0, 0, 0, 0.7)",
-              display: "grid",
-              placeItems: "center",
-              cursor: canScroll ? "pointer" : "not-allowed",
-              opacity: canScroll ? 1 : 0.4,
-              backdropFilter: "blur(10px)",
-              fontSize: "1.1rem",
-              fontWeight: 700,
-              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "none"
-            }}
-            onMouseEnter={(e) => {
-              if (canScroll) {
-                e.currentTarget.style.background = "rgba(240, 147, 251, 0.15)";
-                e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.5)";
-                e.currentTarget.style.boxShadow = "none";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (canScroll) {
-                e.currentTarget.style.background = "rgba(240, 147, 251, 0.08)";
-                e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.3)";
-                e.currentTarget.style.boxShadow = "none";
-              }
-            }}
           >
-            ◀
+            ‹
           </motion.button>
-
           <motion.button
             type="button"
             aria-label="Siguiente"
-            whileHover={{ scale: 1.05, x: 2 }}
-            whileTap={{ scale: 0.95 }}
+            className="horizontal-slider-buttons__btn"
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => scrollByAmount(1)}
             disabled={!canScroll}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 999,
-              border: "1px solid rgba(240, 147, 251, 0.3)",
-              background: "rgba(240, 147, 251, 0.08)",
-              color: "rgba(0, 0, 0, 0.7)",
-              display: "grid",
-              placeItems: "center",
-              cursor: canScroll ? "pointer" : "not-allowed",
-              opacity: canScroll ? 1 : 0.4,
-              backdropFilter: "blur(10px)",
-              fontSize: "1.1rem",
-              fontWeight: 700,
-              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "none"
-            }}
-            onMouseEnter={(e) => {
-              if (canScroll) {
-                e.currentTarget.style.background = "rgba(240, 147, 251, 0.15)";
-                e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.5)";
-                e.currentTarget.style.boxShadow = "none";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (canScroll) {
-                e.currentTarget.style.background = "rgba(240, 147, 251, 0.08)";
-                e.currentTarget.style.borderColor = "rgba(240, 147, 251, 0.3)";
-                e.currentTarget.style.boxShadow = "none";
-              }
-            }}
           >
-            ▶
+            ›
           </motion.button>
         </div>
       )}

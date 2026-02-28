@@ -612,36 +612,10 @@ const STYLES = `
       grid-template-columns: 1fr !important;
       gap: 0 !important;
     }
-    /* Botones de navegación visibles en mobile, diseño minimalista */
+    /* Botones del slider: el componente HorizontalSlider ya los muestra en responsive con diseño moderno */
     .explore-slider--mobile .horizontal-slider-buttons {
-      display: flex !important;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-      padding: 8px 0 4px;
-    }
-    .explore-slider--mobile .horizontal-slider-buttons button {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      min-height: 40px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.85);
-      font-size: 0.75rem;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .explore-slider--mobile .horizontal-slider-buttons button:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(255,255,255,0.3);
-    }
-    .explore-slider--mobile .horizontal-slider-buttons button:active {
-      transform: scale(0.95);
+      gap: 20px;
+      padding: 10px 0 6px;
     }
   }
   :root {
