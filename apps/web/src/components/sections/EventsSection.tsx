@@ -14,13 +14,15 @@ interface EventsSectionProps {
   enabled?: boolean;
   renderAs?: 'grid' | 'slider';
   maxItems?: number;
+  /** 'bottom' = fila de navegación inferior (mobile); 'overlay' = botones superpuestos */
+  navPosition?: 'overlay' | 'bottom';
 }
 
 /**
  * Componente wrapper para sección de eventos con Suspense
  * Usa React Query con loading inteligente (skeleton en first load, indicador en refetch)
  */
-function EventsSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems }: EventsSectionProps) {
+function EventsSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, navPosition = 'overlay' }: EventsSectionProps) {
   const fechasQuery = useExploreQuery({
     type: 'fechas',
     q: q || undefined,
@@ -96,6 +98,7 @@ function EventsSectionContent({ filters, q, enabled = true, renderAs = 'slider',
             <EventCard item={item} priority={idx === 0} />
           </motion.div>
         )}
+        navPosition={navPosition}
       />
     </>
   );

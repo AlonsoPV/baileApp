@@ -32,6 +32,8 @@ type Props<T = any> = {
   disableDesktopScroll?: boolean;
   /** Si false, no se muestran los botones Anterior/Siguiente (por defecto true) */
   showNavButtons?: boolean;
+  /** 'overlay' = botones superpuestos a los lados; 'bottom' = fila inferior dedicada (mejor UX en mobile) */
+  navPosition?: 'overlay' | 'bottom';
   /** Alto fijo de cada item en mobile (hero cards). Si > 0, los items tendrán esta altura. */
   itemHeight?: number;
   /** Ancho fijo de cada item en mobile (hero cards). Si > 0, se usa como gridAutoColumns. */
@@ -48,6 +50,7 @@ export default function HorizontalSlider<T>({
   autoColumns,
   disableDesktopScroll = false,
   showNavButtons = true,
+  navPosition = 'overlay',
   itemHeight,
   itemWidth,
 }: Props<T>) {
@@ -346,6 +349,104 @@ export default function HorizontalSlider<T>({
     };
   }, [updateArrows, items?.length]);
 
+  const navButtonBottomStyle: React.CSSProperties = {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    display: "grid",
+    placeItems: "center",
+    fontSize: 22,
+    fontWeight: 700,
+    cursor: "pointer",
+    WebkitTapHighlightColor: "transparent",
+    transition: "all 0.2s ease",
+    border: "none",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+  };
+  const navButtonBottomActive: React.CSSProperties = {
+    background: "linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%)",
+    color: "#fff",
+    boxShadow: "0 4px 20px rgba(168, 85, 247, 0.4), 0 2px 8px rgba(0,0,0,0.2)",
+  };
+  const navButtonBottomDisabled: React.CSSProperties = {
+    background: "rgba(255,255,255,0.08)",
+    color: "rgba(255,255,255,0.35)",
+    cursor: "not-allowed",
+    boxShadow: "none",
+  };
+
+  const ArrowLeft = ({ size = 20 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  );
+  const ArrowRight = ({ size = 20 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12h14M12 5l7 7-7 7" />
+    </svg>
+  );
+
+  const navButtons = showNavButtons && canScroll && (
+    <>
+      <button
+        type="button"
+        aria-label="Anterior"
+        onClick={() => scrollByAmount(-1)}
+        disabled={!canLeft}
+        style={{
+          pointerEvents: "auto",
+          position: navPosition === "overlay" ? "absolute" : undefined,
+          left: navPosition === "overlay" ? 8 : undefined,
+          top: navPosition === "overlay" ? "50%" : undefined,
+          transform: navPosition === "overlay" ? "translateY(-50%)" : undefined,
+          right: undefined,
+          width: 42,
+          height: 42,
+          borderRadius: 999,
+          border: "1px solid rgba(255,255,255,0.18)",
+          background: "rgba(15,15,18,0.55)",
+          backdropFilter: "blur(10px)",
+          display: "grid",
+          placeItems: "center",
+          cursor: canLeft ? "pointer" : "not-allowed",
+          opacity: canLeft ? 1 : 0.35,
+          color: "rgba(255,255,255,0.9)",
+          WebkitTapHighlightColor: "transparent",
+        }}
+      >
+        <ArrowLeft />
+      </button>
+      <button
+        type="button"
+        aria-label="Siguiente"
+        onClick={() => scrollByAmount(1)}
+        disabled={!canRight}
+        style={{
+          pointerEvents: "auto",
+          position: navPosition === "overlay" ? "absolute" : undefined,
+          right: navPosition === "overlay" ? 8 : undefined,
+          left: navPosition === "overlay" ? undefined : undefined,
+          top: navPosition === "overlay" ? "50%" : undefined,
+          transform: navPosition === "overlay" ? "translateY(-50%)" : undefined,
+          width: 42,
+          height: 42,
+          borderRadius: 999,
+          border: "1px solid rgba(255,255,255,0.18)",
+          background: "rgba(15,15,18,0.55)",
+          backdropFilter: "blur(10px)",
+          display: "grid",
+          placeItems: "center",
+          cursor: canRight ? "pointer" : "not-allowed",
+          opacity: canRight ? 1 : 0.35,
+          color: "rgba(255,255,255,0.9)",
+          WebkitTapHighlightColor: "transparent",
+        }}
+      >
+        <ArrowRight />
+      </button>
+    </>
+  );
+
   return (
     <div
       className={className}
@@ -353,12 +454,14 @@ export default function HorizontalSlider<T>({
         position: "relative",
         display: "flex",
         flexDirection: "column",
-        gap: 16,
+        gap: navPosition === "bottom" ? 12 : 16,
+        flex: navPosition === "bottom" ? 1 : undefined,
+        minHeight: navPosition === "bottom" ? 0 : undefined,
         ...style
       }}
     >
-      {/* Overlay de botones: pointer-events: none para que el scroll vertical pase; solo los botones capturan */}
-      {showNavButtons && canScroll && (
+      {/* Overlay de botones (solo cuando navPosition === 'overlay') */}
+      {navPosition === "overlay" && (
         <div
           style={{
             position: "absolute",
@@ -368,64 +471,7 @@ export default function HorizontalSlider<T>({
           }}
           aria-hidden
         >
-          <button
-            type="button"
-            aria-label="Anterior"
-            onClick={() => scrollByAmount(-1)}
-            disabled={!canLeft}
-            style={{
-              pointerEvents: "auto",
-              position: "absolute",
-              left: 8,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 42,
-              height: 42,
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "rgba(15,15,18,0.55)",
-              backdropFilter: "blur(10px)",
-              display: "grid",
-              placeItems: "center",
-              cursor: canLeft ? "pointer" : "not-allowed",
-              opacity: canLeft ? 1 : 0.35,
-              color: "rgba(255,255,255,0.9)",
-              fontSize: 20,
-              fontWeight: 700,
-              WebkitTapHighlightColor: "transparent",
-            }}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            aria-label="Siguiente"
-            onClick={() => scrollByAmount(1)}
-            disabled={!canRight}
-            style={{
-              pointerEvents: "auto",
-              position: "absolute",
-              right: 8,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 42,
-              height: 42,
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "rgba(15,15,18,0.55)",
-              backdropFilter: "blur(10px)",
-              display: "grid",
-              placeItems: "center",
-              cursor: canRight ? "pointer" : "not-allowed",
-              opacity: canRight ? 1 : 0.35,
-              color: "rgba(255,255,255,0.9)",
-              fontSize: 20,
-              fontWeight: 700,
-              WebkitTapHighlightColor: "transparent",
-            }}
-          >
-            ›
-          </button>
+          {navButtons}
         </div>
       )}
 
@@ -444,19 +490,21 @@ export default function HorizontalSlider<T>({
         onClickCapture={onClickCapture}
         style={{
           position: "relative",
+          flex: navPosition === "bottom" ? 1 : undefined,
+          minHeight: navPosition === "bottom" ? 0 : undefined,
           overflowX: allowUserScroll ? "auto" : "hidden",
           overflowY: "hidden",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           width: "100%",
-          padding: "8px 56px",
+          padding: 0,
           // Optimizaciones de scroll para móvil
           WebkitOverflowScrolling: "touch",
           scrollBehavior: isScrolling ? "auto" : "smooth",
           overscrollBehaviorX: "contain",
           overscrollBehaviorY: "auto",
           scrollSnapType: "x mandatory",
-          scrollPadding: "0 56px",
+          scrollPadding: 0,
           // ⚠️ Importante: NO aplicar transform al contenedor scrolleable.
           // En iOS/Safari, transform en un elemento con overflow puede romper el scroll/inercia.
           transform: "none",
@@ -528,6 +576,13 @@ export default function HorizontalSlider<T>({
             aspect-ratio: auto !important;
           }
           .horizontal-scroll.scrolling .horizontal-slider-grid > * { transition: none !important; }
+          .horizontal-slider-nav-row button:not(:disabled):hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 24px rgba(168, 85, 247, 0.5) !important;
+          }
+          .horizontal-slider-nav-row button:not(:disabled):active {
+            transform: scale(0.98);
+          }
         `}</style>
         <div
           className={`horizontal-slider-grid ${itemWidth && itemWidth > 0 ? 'horizontal-slider-grid--hero' : ''}`}
@@ -558,6 +613,53 @@ export default function HorizontalSlider<T>({
           ))}
         </div>
       </div>
+
+      {/* Fila inferior de navegación (navPosition === 'bottom') */}
+      {navPosition === "bottom" && showNavButtons && canScroll && (
+        <div
+          className="horizontal-slider-nav-row"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 16,
+            flexShrink: 0,
+            width: itemWidth && itemWidth > 0 ? itemWidth : 295,
+            maxWidth: "100%",
+            boxSizing: "border-box",
+            backdropFilter: "blur(12px)",
+            position: "sticky",
+            bottom: 0,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Anterior"
+            onClick={() => scrollByAmount(-1)}
+            disabled={!canLeft}
+            style={{
+              ...navButtonBottomStyle,
+              ...(canLeft ? navButtonBottomActive : navButtonBottomDisabled),
+            }}
+          >
+            <ArrowLeft size={16} />
+          </button>
+          <button
+            type="button"
+            aria-label="Siguiente"
+            onClick={() => scrollByAmount(1)}
+            disabled={!canRight}
+            style={{
+              ...navButtonBottomStyle,
+              ...(canRight ? navButtonBottomActive : navButtonBottomDisabled),
+            }}
+          >
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

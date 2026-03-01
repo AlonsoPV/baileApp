@@ -15,12 +15,14 @@ interface AcademiesSectionProps {
   maxItems?: number;
   itemHeight?: number;
   itemWidth?: number;
+  /** 'bottom' = fila de navegación inferior (mobile); 'overlay' = botones superpuestos */
+  navPosition?: 'overlay' | 'bottom';
 }
 
 /**
  * Componente wrapper para sección de academias con loading inteligente
  */
-function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, itemHeight, itemWidth }: AcademiesSectionProps) {
+function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, itemHeight, itemWidth, navPosition = 'overlay' }: AcademiesSectionProps) {
   const academiasQuery = useExploreQuery({
     type: 'academias',
     q: q || undefined,
@@ -85,6 +87,7 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
         )}
         itemHeight={itemHeight}
         itemWidth={itemWidth}
+        navPosition={navPosition}
       />
     </>
   );

@@ -17,6 +17,8 @@ type Props<T = any> = {
   disableDesktopScroll?: boolean;
   /** Mostrar botones de navegación en escritorio. */
   showNavButtons?: boolean;
+  /** 'overlay' = botones superpuestos; 'bottom' = fila inferior (mejor en mobile) */
+  navPosition?: 'overlay' | 'bottom';
   /** 0..1 del ancho visible a desplazar por click */
   scrollStep?: number;
 };
@@ -33,6 +35,7 @@ export default function HorizontalCarousel<T>({
   autoColumns,
   disableDesktopScroll = true,
   showNavButtons = true,
+  navPosition = 'overlay',
   scrollStep = 0.85,
 }: Props<T>) {
   return (
@@ -47,6 +50,7 @@ export default function HorizontalCarousel<T>({
       autoColumns={autoColumns}
       disableDesktopScroll={disableDesktopScroll}
       showNavButtons={showNavButtons}
+      navPosition={navPosition}
       scrollStep={scrollStep}
     />
   );

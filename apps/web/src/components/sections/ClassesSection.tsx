@@ -14,6 +14,8 @@ interface ClassesSectionProps {
   enabled?: boolean;
   renderAs?: 'grid' | 'slider';
   maxItems?: number;
+  /** 'bottom' = fila de navegación inferior (mobile); 'overlay' = botones superpuestos */
+  navPosition?: 'overlay' | 'bottom';
 }
 
 /**
@@ -152,6 +154,7 @@ function ClassesSectionContent({ filters, q, enabled = true, renderAs = 'slider'
             <ClassCard item={item} priority={idx === 0} />
           </motion.div>
         )}
+        navPosition={navPosition}
       />
     </>
   );

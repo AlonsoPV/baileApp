@@ -1766,8 +1766,47 @@ const STYLES = `
       padding: 1rem !important;
       border-radius: 16px !important;
     }
+    /* Mobile: primera sección como pantalla principal */
+    .explore-container {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100dvh - 64px - env(safe-area-inset-top, 0px));
+    }
+    .explore-container .wrap {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    .explore-container .filters-panel {
+      flex-shrink: 0;
+    }
+    .explore-container .filters-mobile-trigger-row {
+      margin-bottom: 8px !important;
+    }
     .section-container {
-      margin-bottom: 2.5rem !important;
+      margin-bottom: 2rem !important;
+      /* Mobile: pantalla completa, card centrada, fila de navegación */
+      padding: 6px;
+      display: grid;
+      grid-template-rows: 1fr;
+      align-items: center;
+      justify-items: center;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .section-container:first-of-type {
+      flex: 1;
+      min-height: 0;
+    }
+    .section-container__main {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      width: 100%;
+      max-width: 100%;
+      min-height: 0;
+      flex: 1;
     }
     .section-header {
       margin-bottom: 1.5rem !important;
@@ -2216,8 +2255,10 @@ function Section({
         ...(sectionMinHeight ? { minHeight: sectionMinHeight } : {}),
       }}
     >
-      <SectionHeader title={title} count={count} subline={subline} />
-      {children}
+      <div className="section-container__main">
+        <SectionHeader title={title} count={count} subline={subline} />
+        {children}
+      </div>
     </motion.section>
   );
 }
@@ -2370,6 +2411,8 @@ export default function ExploreHomeScreen() {
       disableDesktopScroll: true,
       // Botones Anterior/Siguiente visibles en escritorio y móvil
       showNavButtons: true,
+      // En mobile: fila inferior dedicada; en desktop: overlay lateral
+      navPosition: (isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay',
       itemHeight: cardHeight > 0 ? cardHeight : undefined,
       itemWidth: cardWidth > 0 ? cardWidth : undefined,
     }),
@@ -2388,6 +2431,7 @@ export default function ExploreHomeScreen() {
       disableDesktopScroll: true,
       // Botones Anterior/Siguiente visibles en escritorio y móvil
       showNavButtons: true,
+      navPosition: (isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay',
       itemHeight: cardHeight > 0 ? cardHeight : undefined,
       itemWidth: cardWidth > 0 ? cardWidth : undefined,
     }),
@@ -4015,6 +4059,7 @@ export default function ExploreHomeScreen() {
                 maxItems={12}
                 itemHeight={cardHeight > 0 ? cardHeight : undefined}
                 itemWidth={cardWidth > 0 ? cardWidth : undefined}
+                navPosition={(isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay'}
               />
               {!academiasLoading && academiasData.length === 0 && (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
