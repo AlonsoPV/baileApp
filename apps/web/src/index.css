@@ -146,9 +146,18 @@ button {
     overscroll-behavior: contain;
     will-change: auto;
     /* NO aplicar transform a contenedores de scroll: rompe scroll en Android WebView */
-    /* transform/contain aplicados solo a sliders horizontales que lo necesitan explícitamente */
     backfaceVisibility: hidden;
     -webkit-backfaceVisibility: hidden;
+  }
+  /* Carrusel horizontal: sin transform (rompe scroll Android); pan en ambos ejes */
+  .horizontal-scroll,
+  .horizontal-slider,
+  .explore-slider {
+    transform: none !important;
+    -webkit-transform: none !important;
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Contenedor principal de scroll: asegurar que no haya transform que bloquee touch */

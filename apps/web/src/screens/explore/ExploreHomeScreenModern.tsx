@@ -254,7 +254,11 @@ function InlineQueryError({
  * - Aceleración de hardware con translateZ(0)
  * - Comparación estable por clave única del item
  */
-const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; idx: number; handlePreNavigate: () => void }) => {
+/** Imágenes eager: solo primera sección (fechas) usa 2; resto 0 para reducir LCP/CPU */
+const EAGER_MAIN = 2;
+const EAGER_OTHERS = 0;
+
+const ClaseItem = React.memo(({ clase, idx, handlePreNavigate, eagerPerCarousel = 0 }: { clase: any; idx: number; handlePreNavigate: () => void; eagerPerCarousel?: number }) => {
   const stableKey =
     `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
 
@@ -291,18 +295,17 @@ const ClaseItem = React.memo(({ clase, idx, handlePreNavigate }: { clase: any; i
           whileHover={{ y: -4, scale: 1.02 }}
           style={{ width: '100%', height: '100%' }}
         >
-          <ClassCard item={clase} fillHeight priority={idx === 0} />
+          <ClassCard item={clase} fillHeight priority={idx < eagerPerCarousel} />
         </motion.div>
       ) : (
-        <ClassCard item={clase} fillHeight priority={idx === 0} />
+        <ClassCard item={clase} fillHeight priority={idx < eagerPerCarousel} />
       )}
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Comparación personalizada para evitar re-renders innecesarios
   const prevKey = `${prevProps.clase.ownerType || 'owner'}-${prevProps.clase.ownerId ?? 'unknown'}-${prevProps.clase.titulo ?? 'class'}`;
   const nextKey = `${nextProps.clase.ownerType || 'owner'}-${nextProps.clase.ownerId ?? 'unknown'}-${nextProps.clase.titulo ?? 'class'}`;
-  return prevKey === nextKey && prevProps.idx === nextProps.idx;
+  return prevKey === nextKey && prevProps.idx === nextProps.idx && prevProps.eagerPerCarousel === nextProps.eagerPerCarousel;
 });
 
 ClaseItem.displayName = 'ClaseItem';
@@ -2716,7 +2719,8 @@ export default function ExploreHomeScreen() {
         key={`${item.ownerType || 'owner'}-${item.ownerId ?? 'unknown'}-${item.titulo ?? 'class'}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join('-') : 'semana')}-${idx}`} 
         clase={item} 
         idx={idx} 
-        handlePreNavigate={handlePreNavigate} 
+        handlePreNavigate={handlePreNavigate}
+        eagerPerCarousel={EAGER_OTHERS}
       />
     );
   }, [__DEV__, __DEV_LOG, handlePreNavigate, t]);
@@ -3981,7 +3985,7 @@ export default function ExploreHomeScreen() {
                                   boxShadow: 'none'
                                 }}
                               >
-                                <EventCard item={fechaEvento} priority={idx === 0} />
+                                <EventCard item={fechaEvento} priority={idx < EAGER_MAIN} />
                               </div>
                             );
                           } catch (e) {
@@ -4003,7 +4007,7 @@ export default function ExploreHomeScreen() {
                               boxShadow: 'none'
                             }}
                           >
-                            <EventCard item={fechaEvento} priority={idx === 0} />
+                            <EventCard item={fechaEvento} priority={idx < EAGER_MAIN} />
                           </div>
                         );
                       }}
@@ -4060,6 +4064,7 @@ export default function ExploreHomeScreen() {
                 itemHeight={cardHeight > 0 ? cardHeight : undefined}
                 itemWidth={cardWidth > 0 ? cardWidth : undefined}
                 navPosition={(isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay'}
+                eagerPerCarousel={EAGER_OTHERS}
               />
               {!academiasLoading && academiasData.length === 0 && (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
