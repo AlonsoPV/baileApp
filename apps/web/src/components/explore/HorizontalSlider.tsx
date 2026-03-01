@@ -19,7 +19,6 @@
  * iOS: comprobar que el comportamiento no empeore.
  */
 import React, { useRef, useMemo, useState, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
 
 type Props<T = any> = {
   items: T[];
@@ -319,21 +318,117 @@ export default function HorizontalSlider<T>({
   const scrollByAmount = useCallback((dir: 1 | -1) => {
     const el = viewportRef.current;
     if (!el) return;
-    const width = layoutRef.current.clientWidth || el.clientWidth;
-    const amount = width * scrollStep * dir;
-    el.scrollBy({ left: amount, behavior: "smooth" });
-  }, [scrollStep]);
+    const first = el.querySelector<HTMLElement>("[data-carousel-item]");
+    const step = first ? (first.offsetWidth + gap) : Math.round((layoutRef.current.clientWidth || el.clientWidth) * 0.9);
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  }, [scrollStep, gap]);
+
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+  const updateArrows = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanLeft(el.scrollLeft > 0);
+    setCanRight(el.scrollLeft < maxScroll - 2);
+  }, []);
+
+  useEffect(() => {
+    updateArrows();
+    const el = viewportRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateArrows, { passive: true });
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateArrows) : null;
+    if (ro) ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateArrows);
+      ro?.disconnect();
+    };
+  }, [updateArrows, items?.length]);
 
   return (
     <div
       className={className}
       style={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         gap: 16,
         ...style
       }}
     >
+      {/* Overlay de botones: pointer-events: none para que el scroll vertical pase; solo los botones capturan */}
+      {showNavButtons && canScroll && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 3,
+            pointerEvents: "none",
+          }}
+          aria-hidden
+        >
+          <button
+            type="button"
+            aria-label="Anterior"
+            onClick={() => scrollByAmount(-1)}
+            disabled={!canLeft}
+            style={{
+              pointerEvents: "auto",
+              position: "absolute",
+              left: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 42,
+              height: 42,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: "rgba(15,15,18,0.55)",
+              backdropFilter: "blur(10px)",
+              display: "grid",
+              placeItems: "center",
+              cursor: canLeft ? "pointer" : "not-allowed",
+              opacity: canLeft ? 1 : 0.35,
+              color: "rgba(255,255,255,0.9)",
+              fontSize: 20,
+              fontWeight: 700,
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            aria-label="Siguiente"
+            onClick={() => scrollByAmount(1)}
+            disabled={!canRight}
+            style={{
+              pointerEvents: "auto",
+              position: "absolute",
+              right: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 42,
+              height: 42,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: "rgba(15,15,18,0.55)",
+              backdropFilter: "blur(10px)",
+              display: "grid",
+              placeItems: "center",
+              cursor: canRight ? "pointer" : "not-allowed",
+              opacity: canRight ? 1 : 0.35,
+              color: "rgba(255,255,255,0.9)",
+              fontSize: 20,
+              fontWeight: 700,
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            ›
+          </button>
+        </div>
+      )}
+
       {/* Viewport central */}
       <div
         ref={viewportRef}
@@ -349,22 +444,19 @@ export default function HorizontalSlider<T>({
         onClickCapture={onClickCapture}
         style={{
           position: "relative",
-          /* Android: overflow-x: scroll asegura que el scroll horizontal esté habilitado (auto puede no activarse) */
-          overflowX: allowUserScroll ? "scroll" : "hidden",
+          overflowX: allowUserScroll ? "auto" : "hidden",
           overflowY: "hidden",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           width: "100%",
-          padding: "0.5rem 12px",
+          padding: "8px 56px",
           // Optimizaciones de scroll para móvil
           WebkitOverflowScrolling: "touch",
           scrollBehavior: isScrolling ? "auto" : "smooth",
           overscrollBehaviorX: "contain",
-          // Fix Android: permitir que el scroll vertical se propague al contenedor padre
           overscrollBehaviorY: "auto",
-          // Better "slide" feel on mobile (snap to cards)
-          scrollSnapType: "x proximity",
-          scrollPadding: "0 12px",
+          scrollSnapType: "x mandatory",
+          scrollPadding: "0 56px",
           // ⚠️ Importante: NO aplicar transform al contenedor scrolleable.
           // En iOS/Safari, transform en un elemento con overflow puede romper el scroll/inercia.
           transform: "none",
@@ -382,18 +474,15 @@ export default function HorizontalSlider<T>({
       >
         <style>{`
           .horizontal-scroll::-webkit-scrollbar { display: none; }
-          @media (max-width: 768px) {
-            .horizontal-scroll { scroll-snap-type: x mandatory; }
-          }
           .horizontal-scroll > * { touch-action: auto; }
           @media (max-width: 768px) {
             .horizontal-slider-grid:not(.horizontal-slider-grid--hero) {
-              grid-auto-columns: calc(100vw - 120px) !important;
+              grid-auto-columns: min(86vw, 360px) !important;
             }
           }
-          @media (max-width: 480px) {
+          @media (min-width: 769px) {
             .horizontal-slider-grid:not(.horizontal-slider-grid--hero) {
-              grid-auto-columns: calc(100vw - 100px) !important;
+              grid-auto-columns: min(320px, 24vw) !important;
             }
           }
           .horizontal-slider-grid > * {
@@ -446,16 +535,14 @@ export default function HorizontalSlider<T>({
             display: "grid",
             gridAutoFlow: "column",
             gridAutoRows: itemHeight && itemHeight > 0 ? `minmax(${itemHeight}px, 1fr)` : undefined,
-            // Fijar ancho de card: itemWidth (hero) > autoColumns > default
             ...(itemWidth && itemWidth > 0
               ? { gridAutoColumns: `${itemWidth}px` }
               : autoColumns === undefined
-              ? { gridAutoColumns: "280px" }
+              ? { gridAutoColumns: "min(320px, 24vw)" }
               : autoColumns === null
               ? {}
               : { gridAutoColumns: autoColumns as any }),
             gap,
-            // Optimizaciones de rendimiento durante scroll
             willChange: isScrolling ? "transform" : "auto",
             transform: "translateZ(0)",
             backfaceVisibility: "hidden",
@@ -464,107 +551,13 @@ export default function HorizontalSlider<T>({
             WebkitPerspective: "1000px"
           }}
         >
-          {items?.map((it, idx) => renderItem(it, idx))}
+          {items?.map((it, idx) => (
+            <div key={(it as any)?.id ?? idx} data-carousel-item style={{ minWidth: 0 }}>
+              {renderItem(it, idx)}
+            </div>
+          ))}
         </div>
       </div>
-
-      {/* Botones de navegación: visibles en desktop y responsive, diseño moderno UX/UI */}
-      {showNavButtons && canScroll && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 12,
-            width: "100%"
-          }}
-          className="horizontal-slider-buttons"
-        >
-          <style>{`
-            .horizontal-slider-buttons {
-              padding: 6px 0;
-            }
-            .horizontal-slider-buttons__btn {
-              width: 44px;
-              height: 44px;
-              min-width: 44px;
-              min-height: 44px;
-              border-radius: 50%;
-              border: 1px solid rgba(240, 147, 251, 0.35);
-              background: rgba(255, 255, 255, 0.06);
-              color: rgba(0, 0, 0, 0.75);
-              display: grid;
-              place-items: center;
-              cursor: pointer;
-              font-size: 1rem;
-              font-weight: 600;
-              transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-              box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-              -webkit-tap-highlight-color: transparent;
-            }
-            .horizontal-slider-buttons__btn:hover:not(:disabled) {
-              background: rgba(240, 147, 251, 0.12);
-              border-color: rgba(240, 147, 251, 0.5);
-              box-shadow: 0 4px 16px rgba(240, 147, 251, 0.15);
-            }
-            .horizontal-slider-buttons__btn:active:not(:disabled) {
-              transform: scale(0.92);
-            }
-            .horizontal-slider-buttons__btn:disabled {
-              opacity: 0.4;
-              cursor: not-allowed;
-            }
-            @media (max-width: 768px) {
-              .horizontal-slider-buttons {
-                display: flex !important;
-                justify-content: center;
-                align-items: center;
-                gap: 20px;
-                padding: 10px 0 6px;
-              }
-              .horizontal-slider-buttons__btn {
-                width: 48px;
-                height: 48px;
-                min-width: 48px;
-                min-height: 48px;
-                background: rgba(255, 255, 255, 0.08);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                color: rgba(255, 255, 255, 0.9);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-              }
-              .horizontal-slider-buttons__btn:hover:not(:disabled),
-              .horizontal-slider-buttons__btn:focus-visible:not(:disabled) {
-                background: rgba(255, 255, 255, 0.14);
-                border-color: rgba(255, 255, 255, 0.35);
-                box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
-              }
-            }
-          `}</style>
-          <motion.button
-            type="button"
-            aria-label="Anterior"
-            className="horizontal-slider-buttons__btn"
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-            onClick={() => scrollByAmount(-1)}
-            disabled={!canScroll}
-          >
-            ‹
-          </motion.button>
-          <motion.button
-            type="button"
-            aria-label="Siguiente"
-            className="horizontal-slider-buttons__btn"
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-            onClick={() => scrollByAmount(1)}
-            disabled={!canScroll}
-          >
-            ›
-          </motion.button>
-        </div>
-      )}
     </div>
   );
 }

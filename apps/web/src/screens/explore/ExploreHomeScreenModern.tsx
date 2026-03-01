@@ -31,6 +31,7 @@ import { AcademiesSection } from "../../components/sections/AcademiesSection";
 import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
 import { useToast } from "../../components/Toast";
 import { mark, notifyError, notifyReady } from "@/utils/performanceLogger";
+import { normalizeEventsForCards } from "@/utils/normalizeEventsForCards";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -611,11 +612,6 @@ const STYLES = `
     .explore-slider--mobile {
       grid-template-columns: 1fr !important;
       gap: 0 !important;
-    }
-    /* Botones del slider: el componente HorizontalSlider ya los muestra en responsive con diseño moderno */
-    .explore-slider--mobile .horizontal-slider-buttons {
-      gap: 20px;
-      padding: 10px 0 6px;
     }
   }
   :root {
@@ -2372,8 +2368,8 @@ export default function ExploreHomeScreen() {
       autoColumns: undefined,
       // En escritorio, deshabilitar scroll dentro del carrusel (evita que se “trabe” la interacción/scroll de la página)
       disableDesktopScroll: true,
-      // Botones Anterior/Siguiente visibles en escritorio; en móvil los oculta el CSS del HorizontalSlider
-      showNavButtons: !isMobile,
+      // Botones Anterior/Siguiente visibles en escritorio y móvil
+      showNavButtons: true,
       itemHeight: cardHeight > 0 ? cardHeight : undefined,
       itemWidth: cardWidth > 0 ? cardWidth : undefined,
     }),
@@ -2390,8 +2386,8 @@ export default function ExploreHomeScreen() {
       autoColumns: isMobile && cardWidth <= 0 ? '80%' : undefined,
       // En escritorio, deshabilitar scroll dentro del carrusel (evita que se “trabe” la interacción/scroll de la página)
       disableDesktopScroll: true,
-      // Botones Anterior/Siguiente visibles en escritorio
-      showNavButtons: !isMobile,
+      // Botones Anterior/Siguiente visibles en escritorio y móvil
+      showNavButtons: true,
       itemHeight: cardHeight > 0 ? cardHeight : undefined,
       itemWidth: cardWidth > 0 ? cardWidth : undefined,
     }),
@@ -2753,7 +2749,8 @@ export default function ExploreHomeScreen() {
     };
 
     const todayBase = parseYmdToDate(todayYmd);
-    const allFechas = fechasData.filter((d: any) => d?.estado_publicacion === 'publicado');
+    // Server ya filtra por estado_publicacion=publicado; si no viene el campo, incluimos igual
+    const allFechas = fechasData.filter((d: any) => !d?.estado_publicacion || d.estado_publicacion === 'publicado');
     const includePastEvents = !!qDeferred && qDeferred.trim().length > 0;
     const dateFrom = filters.dateFrom ? parseYmdToDate(filters.dateFrom) : null;
     const dateTo = filters.dateTo ? parseYmdToDate(filters.dateTo) : null;
@@ -2812,18 +2809,15 @@ export default function ExploreHomeScreen() {
       return fechaDateOnly >= todayDateOnly;
     });
 
-    const sorted = [...upcoming].sort((a: any, b: any) => {
-      const parseYmd = (value?: string | null) => parseYmdToDate(value);
-      const dateA = parseYmd(a?.fecha);
-      const dateB = parseYmd(b?.fecha);
-      if (!dateA && !dateB) return 0;
-      if (!dateA) return 1;
-      if (!dateB) return -1;
-      return dateA.getTime() - dateB.getTime();
-    });
-
-    return sorted;
+    // Orden ya viene del servidor (fecha, hora_inicio, id); el filter preserva orden
+    return upcoming;
   }, [fechasData, todayYmd, qDeferred, filters.dateFrom, filters.dateTo]);
+
+  /** Eventos con __ui precomputado: cero hooks/queries por card en Explore. */
+  const normalizedFechas = React.useMemo(
+    () => normalizeEventsForCards(filteredFechas, allTags as any[]),
+    [filteredFechas, allTags]
+  );
 
   const shouldLoadMaestros = showAll || selectedType === 'maestros' || selectedType === 'clases';
   const maestrosQuery = useExploreQuery({
@@ -3891,7 +3885,7 @@ export default function ExploreHomeScreen() {
           </section>
 
           {(((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
-            <Section title={t('section_upcoming_scene')} count={filteredFechas.length} sectionId="fechas" sectionMinHeight={sectionMinHeight}>
+            <Section title={t('section_upcoming_scene')} count={normalizedFechas.length} sectionId="fechas" sectionMinHeight={sectionMinHeight}>
               {fechasTimedOut ? (
                 <InlineQueryError
                   title="La carga está tardando demasiado"
@@ -3908,10 +3902,10 @@ export default function ExploreHomeScreen() {
                 />
               ) : (
                 <>
-                  {filteredFechas.length > 0 ? (
+                  {normalizedFechas.length > 0 ? (
                     <HorizontalCarousel
                       {...sliderProps}
-                      items={filteredFechas}
+                      items={normalizedFechas}
                       renderItem={(fechaEvento: any, idx: number) => {
                         if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
                           __DEV_LOG("renderItem", {

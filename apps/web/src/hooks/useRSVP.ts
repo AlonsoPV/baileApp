@@ -198,23 +198,13 @@ export function useUpdateRSVP() {
       return data as RSVPResponse;
     },
     onSuccess: (data, variables) => {
-      // Invalidar todas las queries relacionadas con RSVP
+      // Solo invalidar RSVP y detalle del evento; NO invalidar ["events"] ni ["live"] (evita refetch masivo del feed)
       queryClient.invalidateQueries({ queryKey: ["rsvp"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["live"] });
-      
-      // Invalidar queries específicas
       queryClient.invalidateQueries({ queryKey: ["rsvp", "user", variables.eventDateId] });
       queryClient.invalidateQueries({ queryKey: ["rsvp", "stats", variables.eventDateId] });
       queryClient.invalidateQueries({ queryKey: ["rsvp", "user-events"] });
-      queryClient.invalidateQueries({ queryKey: ["events", "with-rsvp"] });
-      queryClient.invalidateQueries({ queryKey: ["events", "live"] });
-      
-      // Forzar refetch inmediato de las queries específicas
       queryClient.refetchQueries({ queryKey: ["rsvp", "user", variables.eventDateId] });
       queryClient.refetchQueries({ queryKey: ["rsvp", "stats", variables.eventDateId] });
-      
-      // Invalidar también las queries de eventos específicos
       queryClient.invalidateQueries({ queryKey: ["event", "date", variables.eventDateId] });
       queryClient.invalidateQueries({ queryKey: ["event", "parent"] });
       queryClient.invalidateQueries({ queryKey: ["user-rsvps"] });
@@ -242,23 +232,15 @@ export function useRemoveRSVP() {
       return data as RSVPResponse;
     },
     onSuccess: (data, variables) => {
-      // Invalidar todas las queries relacionadas con RSVP
+      // Solo invalidar RSVP y detalle; NO invalidar ["events"] ni ["live"] (evita refetch masivo del feed)
       queryClient.invalidateQueries({ queryKey: ["rsvp"] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["live"] });
-      
-      // Invalidar queries específicas
       queryClient.invalidateQueries({ queryKey: ["rsvp", "user", variables] });
       queryClient.invalidateQueries({ queryKey: ["rsvp", "stats", variables] });
       queryClient.invalidateQueries({ queryKey: ["rsvp", "user-events"] });
-      queryClient.invalidateQueries({ queryKey: ["events", "with-rsvp"] });
-      queryClient.invalidateQueries({ queryKey: ["events", "live"] });
-      
-      // Forzar refetch de las queries específicas
       queryClient.refetchQueries({ queryKey: ["rsvp", "user", variables] });
       queryClient.refetchQueries({ queryKey: ["rsvp", "stats", variables] });
-      
-      // Invalidar perfil público (UserPublicScreen usa ['user-rsvps', userId])
+      queryClient.invalidateQueries({ queryKey: ["event", "date", variables] });
+      queryClient.invalidateQueries({ queryKey: ["event", "parent"] });
       queryClient.invalidateQueries({ queryKey: ["user-rsvps"] });
     }
   });

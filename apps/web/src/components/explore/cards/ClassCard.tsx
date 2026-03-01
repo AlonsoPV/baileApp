@@ -283,7 +283,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
                   <div className="tag">🕗 {item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}</div>
                 )}
                 {lugarNombre && (
-                  <div className="tag">📍 {lugarNombre}</div>
+                  <div className="tag tag--location">📍 {lugarNombre}</div>
                 )}
                 {ritmoNames.length > 0 && (
                   <div className="tag">🎵 {ritmoNames.slice(0, 2).join(', ')}</div>

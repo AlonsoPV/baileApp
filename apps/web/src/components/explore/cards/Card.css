@@ -190,7 +190,7 @@
   .meta-row--time-zone .tag {
     height: 44px;
   }
-  /* Ubicación puede ocupar 2 líneas si hace falta */
+  /* Ubicación: permite wrap en desktop */
   .meta-row--time-zone .tag--location {
     height: auto;
     white-space: normal;
@@ -198,6 +198,54 @@
     text-overflow: unset;
     line-height: 1.2;
     word-break: break-word;
+  }
+
+  /* Responsive: chip de ubicación optimizado en móvil */
+  @media (max-width: 768px) {
+    .meta-row--time-zone .tag--location {
+      flex: 1 1 100%;
+      min-width: 0;
+      font-size: clamp(12px, 2.5vw, 14px) !important;
+      padding: 6px 10px !important;
+      min-height: 36px !important;
+      line-height: 1.3;
+      align-items: flex-start;
+    }
+  }
+  @media (max-width: 480px) {
+    .meta-row--time-zone .tag--location {
+      font-size: 12px !important;
+      padding: 5px 8px !important;
+      min-height: 32px !important;
+    }
+  }
+
+  /* ClassCard: mismo tratamiento responsive para ubicación que EventCard */
+  .class-card-meta-row--time-zone .tag--location {
+    height: auto;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+    line-height: 1.2;
+    align-items: flex-start;
+  }
+  @media (max-width: 768px) {
+    .class-card-meta-row--time-zone .tag--location {
+      flex: 1 1 100%;
+      min-width: 0;
+      font-size: clamp(12px, 2.5vw, 14px) !important;
+      padding: 6px 10px !important;
+      min-height: 36px !important;
+      line-height: 1.3;
+    }
+  }
+  @media (max-width: 480px) {
+    .class-card-meta-row--time-zone .tag--location {
+      font-size: 12px !important;
+      padding: 5px 8px !important;
+      min-height: 32px !important;
+    }
   }
   .tag--cost {
     font-weight: 800;

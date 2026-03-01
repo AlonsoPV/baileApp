@@ -3,7 +3,7 @@
  * Ver OPTIMIZATION_PLAN.md Fase 1.2, 1.3
  */
 
-/** Columnas para cards en Explore (lista). Excluye media, costos, cronograma, direccion. */
+/** Columnas para cards en Explore (lista). Mínimo para card + navegación + RSVP. */
 export const SELECT_EVENTS_CARD = `
   id,
   parent_id,
@@ -15,11 +15,10 @@ export const SELECT_EVENTS_CARD = `
   lugar,
   ciudad,
   zona,
-  estado_publicacion,
   estilos,
   ritmos_seleccionados,
+  costos,
   flyer_url,
-  created_at,
   updated_at,
   events_parent(
     id,

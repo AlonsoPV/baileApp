@@ -23,6 +23,18 @@ function normalizeSearch(raw?: string) {
   };
 }
 
+/** Normaliza hora a "HHMM" para orden estable (acepta "20:00", "20:00:00", "2000") */
+function toSortableHora(h?: string | null): string {
+  if (!h) return "9999";
+  const s = String(h).trim();
+  if (s.includes(":")) {
+    const [hh = "00", mm = "00"] = s.split(":");
+    return hh.padStart(2, "0").slice(-2) + mm.padStart(2, "0").slice(0, 2);
+  }
+  if (s.length === 4) return s;
+  return "9999";
+}
+
 function uniqueNumbers(values: any[]): number[] {
   const out: number[] = [];
   const seen = new Set<number>();
@@ -270,8 +282,11 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       ].join(","));
     }
     
-    // orden por fecha asc (próximos primero)
-    query = query.order("fecha", { ascending: true });
+    // orden por fecha asc, luego hora_inicio, desempate por id (nulls al final)
+    query = query
+      .order("fecha", { ascending: true, nullsFirst: false })
+      .order("hora_inicio", { ascending: true, nullsFirst: false })
+      .order("id", { ascending: true });
   } 
   else if (type === "organizadores") {
     // Filtrar solo organizadores aprobados
@@ -459,7 +474,10 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       }
       
       const pmStart = performance.now();
-      const { data: parentMatches } = await (parentQuery as any).order("fecha", { ascending: true });
+      const { data: parentMatches } = await (parentQuery as any)
+        .order("fecha", { ascending: true, nullsFirst: false })
+        .order("hora_inicio", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true });
       const pmEnd = performance.now();
       perfLog({ hook: 'useExploreQuery', step: 'search_parent_matches_events_date', duration_ms: pmEnd - pmStart, rows: (parentMatches as any[])?.length ?? 0, data: parentMatches });
       
@@ -533,7 +551,9 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           .in("parent_id", recurringParentIds as any)
           .gte("fecha", rangeFrom)
           .lte("fecha", rangeTo)
-          .order("fecha", { ascending: true });
+          .order("fecha", { ascending: true, nullsFirst: false })
+          .order("hora_inicio", { ascending: true, nullsFirst: false })
+          .order("id", { ascending: true });
         const occEnd = performance.now();
         perfLog({ hook: 'useExploreQuery', step: 'refetch_recurring_occurrences', duration_ms: occEnd - occStart, rows: occRows?.length ?? 0, data: occRows, error: occErr });
 
@@ -618,13 +638,15 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
 
     finalData = nextData;
     
-    // Ordenar por fecha después de expandir
+    // Ordenar por fecha, hora_inicio, id (alineado con ORDER del servidor)
     finalData.sort((a, b) => {
-      const fechaA = a.fecha || '';
-      const fechaB = b.fecha || '';
-      if (fechaA < fechaB) return -1;
-      if (fechaA > fechaB) return 1;
-      return 0;
+      const fechaA = (a.fecha || '').toString().split('T')[0];
+      const fechaB = (b.fecha || '').toString().split('T')[0];
+      if (fechaA !== fechaB) return fechaA < fechaB ? -1 : 1;
+      const horaA = toSortableHora(a.hora_inicio);
+      const horaB = toSortableHora(b.hora_inicio);
+      if (horaA !== horaB) return horaA < horaB ? -1 : 1;
+      return (a.id ?? 0) - (b.id ?? 0);
     });
   }
 
