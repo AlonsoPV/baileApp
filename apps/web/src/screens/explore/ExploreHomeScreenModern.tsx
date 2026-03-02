@@ -254,9 +254,35 @@ function InlineQueryError({
  * - Aceleración de hardware con translateZ(0)
  * - Comparación estable por clave única del item
  */
-/** Imágenes eager: solo primera sección (fechas) usa 2; resto 0 para reducir LCP/CPU */
+type ExploreSectionId = 'fechas' | 'clases' | 'academias' | 'maestros' | 'usuarios' | 'organizadores' | 'marcas';
+const ABOVE_FOLD_SECTIONS: ExploreSectionId[] = ['fechas', 'clases'];
+const ALL_EXPLORE_SECTIONS: ExploreSectionId[] = [
+  'fechas',
+  'clases',
+  'academias',
+  'maestros',
+  'usuarios',
+  'organizadores',
+  'marcas',
+];
+
+/** Imágenes eager: primera sección usa 2; el resto 1 para priorizar percepción sin saturar red/CPU. */
 const EAGER_MAIN = 2;
-const EAGER_OTHERS = 0;
+const EAGER_OTHERS = 1;
+
+function runWhenIdle(callback: () => void, timeoutMs = 350): () => void {
+  if (typeof window === 'undefined') {
+    const id = setTimeout(callback, 0);
+    return () => clearTimeout(id);
+  }
+  const win = window as any;
+  if (typeof win.requestIdleCallback === 'function') {
+    const id = win.requestIdleCallback(callback, { timeout: timeoutMs });
+    return () => win.cancelIdleCallback?.(id);
+  }
+  const id = window.setTimeout(callback, 120);
+  return () => window.clearTimeout(id);
+}
 
 const ClaseItem = React.memo(({ clase, idx, handlePreNavigate, eagerPerCarousel = 0 }: { clase: any; idx: number; handlePreNavigate: () => void; eagerPerCarousel?: number }) => {
   const stableKey =
@@ -2308,6 +2334,9 @@ export default function ExploreHomeScreen() {
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
   const [filtersPanelOpen, setFiltersPanelOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  const [mountedSections, setMountedSections] = React.useState<Set<ExploreSectionId>>(
+    () => new Set(ABOVE_FOLD_SECTIONS)
+  );
 
   React.useEffect(() => {
     if (openFilterDropdown !== "type") return;
@@ -2412,6 +2441,47 @@ export default function ExploreHomeScreen() {
   );
 
   const { cardHeight, cardWidth, sectionMinHeight } = useExploreCardDimensions(isMobile);
+
+  React.useEffect(() => {
+    if (!showAll) {
+      const section = selectedType as ExploreSectionId | undefined;
+      if (section) {
+        setMountedSections(new Set([section]));
+      }
+      return;
+    }
+
+    setMountedSections(new Set(ABOVE_FOLD_SECTIONS));
+    const pending = ALL_EXPLORE_SECTIONS.filter((s) => !ABOVE_FOLD_SECTIONS.includes(s));
+    const cleaners: Array<() => void> = [];
+    let cancelled = false;
+
+    const mountNext = () => {
+      if (cancelled || pending.length === 0) return;
+      const next = pending.shift()!;
+      setMountedSections((prev) => {
+        if (prev.has(next)) return prev;
+        const copy = new Set(prev);
+        copy.add(next);
+        return copy;
+      });
+      if (pending.length > 0) {
+        cleaners.push(runWhenIdle(mountNext));
+      }
+    };
+
+    cleaners.push(runWhenIdle(mountNext, 220));
+
+    return () => {
+      cancelled = true;
+      cleaners.forEach((dispose) => dispose());
+    };
+  }, [showAll, selectedType]);
+
+  const shouldRenderSection = React.useCallback((section: ExploreSectionId) => {
+    if (!showAll) return selectedType === section;
+    return mountedSections.has(section);
+  }, [mountedSections, selectedType, showAll]);
 
   const sliderProps = React.useMemo(
     () => ({
@@ -2732,6 +2802,51 @@ export default function ExploreHomeScreen() {
       />
     );
   }, [__DEV__, __DEV_LOG, handlePreNavigate, t]);
+
+  const renderFechaItem = React.useCallback((fechaEvento: any, idx: number) => {
+    if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+      __DEV_LOG("renderItem", {
+        type: "fechas",
+        idx,
+        id: fechaEvento?.id,
+        original: (fechaEvento as any)?._original_id,
+        rec: (fechaEvento as any)?._recurrence_index,
+      });
+    }
+
+    const key =
+      (fechaEvento as any)?._recurrence_index !== undefined
+        ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}`
+        : (fechaEvento?.id ?? `fecha_${idx}`);
+
+    const card = (
+      <div
+        key={key}
+        onClickCapture={handlePreNavigate}
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 16,
+          padding: 0,
+          overflow: 'hidden',
+          boxShadow: 'none'
+        }}
+      >
+        <EventCard item={fechaEvento} priority={idx < EAGER_MAIN} />
+      </div>
+    );
+
+    if (__DEV__) {
+      try {
+        return card;
+      } catch (e) {
+        __DEV_LOG("renderItem_error", { type: "fechas", idx, id: fechaEvento?.id, error: (e as any)?.message || e });
+        return null;
+      }
+    }
+
+    return card;
+  }, [__DEV__, __DEV_LOG, handlePreNavigate]);
 
   const shouldLoadFechas = showAll || selectedType === 'fechas';
   const fechasQuery = useExploreQuery({
@@ -3940,7 +4055,7 @@ export default function ExploreHomeScreen() {
             )}
           </section>
 
-          {(((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
+          {shouldRenderSection('fechas') && (((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
             <Section title={t('section_upcoming_scene')} count={normalizedFechas.length} sectionId="fechas" sectionMinHeight={sectionMinHeight}>
               {fechasTimedOut ? (
                 <InlineQueryError
@@ -3962,63 +4077,7 @@ export default function ExploreHomeScreen() {
                     <HorizontalCarousel
                       {...sliderProps}
                       items={normalizedFechas}
-                      renderItem={(fechaEvento: any, idx: number) => {
-                        if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-                          __DEV_LOG("renderItem", {
-                            type: "fechas",
-                            idx,
-                            id: fechaEvento?.id,
-                            original: (fechaEvento as any)?._original_id,
-                            rec: (fechaEvento as any)?._recurrence_index,
-                          });
-                        }
-
-                        const key =
-                          (fechaEvento as any)?._recurrence_index !== undefined
-                            ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}`
-                            : (fechaEvento?.id ?? `fecha_${idx}`);
-
-                        if (__DEV__) {
-                          try {
-                            return (
-                              <div
-                                key={key}
-                                onClickCapture={handlePreNavigate}
-                                style={{
-                                  background: 'rgba(255,255,255,0.04)',
-                                  border: '1px solid rgba(255,255,255,0.08)',
-                                  borderRadius: 16,
-                                  padding: 0,
-                                  overflow: 'hidden',
-                                  boxShadow: 'none'
-                                }}
-                              >
-                                <EventCard item={fechaEvento} priority={idx < EAGER_MAIN} />
-                              </div>
-                            );
-                          } catch (e) {
-                            __DEV_LOG("renderItem_error", { type: "fechas", idx, id: fechaEvento?.id, error: (e as any)?.message || e });
-                            return null;
-                          }
-                        }
-
-                        return (
-                          <div
-                            key={key}
-                            onClickCapture={handlePreNavigate}
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              borderRadius: 16,
-                              padding: 0,
-                              overflow: 'hidden',
-                              boxShadow: 'none'
-                            }}
-                          >
-                            <EventCard item={fechaEvento} priority={idx < EAGER_MAIN} />
-                          </div>
-                        );
-                      }}
+                      renderItem={renderFechaItem}
                     />
                   ) : (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
@@ -4028,7 +4087,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(((showAll && ((academiasLoading || maestrosLoading) || hasClases || academiasError || maestrosError)) || selectedType === 'clases')) && (
+          {shouldRenderSection('clases') && (((showAll && ((academiasLoading || maestrosLoading) || hasClases || academiasError || maestrosError)) || selectedType === 'clases')) && (
             <Section title={t('section_recommended_classes')} count={classesList.length} sectionId="clases" sectionMinHeight={sectionMinHeight}>
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
@@ -4062,7 +4121,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(((showAll && (academiasLoading || hasAcademias)) || selectedType === 'academias')) && (
+          {shouldRenderSection('academias') && (((showAll && (academiasLoading || hasAcademias)) || selectedType === 'academias')) && (
             <Section title={t('section_best_academies_zone')} count={academiasData.length} sectionId="academias" sectionMinHeight={sectionMinHeight}>
               <AcademiesSection
                 filters={filters}
@@ -4080,7 +4139,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(((showAll && (maestrosLoading || hasMaestros || maestrosError)) || selectedType === 'maestros')) && (
+          {shouldRenderSection('maestros') && (((showAll && (maestrosLoading || hasMaestros || maestrosError)) || selectedType === 'maestros')) && (
             <Section title={t('section_featured_teachers')} count={maestrosData.length} sectionId="maestros" sectionMinHeight={sectionMinHeight}>
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
@@ -4166,7 +4225,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(((showAll && (usuariosLoading || hasUsuarios)) || selectedType === 'usuarios')) && (
+          {shouldRenderSection('usuarios') && (((showAll && (usuariosLoading || hasUsuarios)) || selectedType === 'usuarios')) && (
             <Section title={t('section_dancers_near_you')} count={validUsuarios.length} sectionId="usuarios" sectionMinHeight={sectionMinHeight}>
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -4264,7 +4323,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(((showAll && (organizadoresLoading || organizadoresData.length > 0 || organizadoresError)) || selectedType === 'organizadores')) && (
+          {shouldRenderSection('organizadores') && (((showAll && (organizadoresLoading || organizadoresData.length > 0 || organizadoresError)) || selectedType === 'organizadores')) && (
             <Section title={t('section_event_producers')} count={organizadoresData.length} sectionId="organizadores" sectionMinHeight={sectionMinHeight}>
               {organizadoresLoading ? (
                 <div className="cards-grid">
@@ -4354,7 +4413,7 @@ export default function ExploreHomeScreen() {
             </Section>
           )}
 
-          {(((showAll && (marcasLoading || hasMarcas)) || selectedType === 'marcas')) && (
+          {shouldRenderSection('marcas') && (((showAll && (marcasLoading || hasMarcas)) || selectedType === 'marcas')) && (
             <Section title={t('section_specialized_brands')} count={marcasData.length} sectionId="marcas" sectionMinHeight={sectionMinHeight}>
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>

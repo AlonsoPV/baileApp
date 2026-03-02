@@ -4,6 +4,57 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+function getManualChunk(id: string): string | undefined {
+  if (!id.includes("node_modules")) return undefined;
+
+  // Normalize Windows paths so chunk matching is stable.
+  const pkg = id.replace(/\\/g, "/");
+
+  if (pkg.includes("/node_modules/react/") || pkg.includes("/node_modules/react-dom/")) {
+    return "react-vendor";
+  }
+
+  if (
+    pkg.includes("/node_modules/react-router/") ||
+    pkg.includes("/node_modules/react-router-dom/") ||
+    pkg.includes("/node_modules/@remix-run/router/")
+  ) {
+    return "router";
+  }
+
+  if (
+    pkg.includes("/node_modules/@supabase/") ||
+    pkg.includes("/node_modules/@babel/runtime/")
+  ) {
+    return "supabase";
+  }
+
+  if (pkg.includes("/node_modules/framer-motion/") || pkg.includes("/node_modules/motion/")) {
+    return "motion";
+  }
+
+  if (pkg.includes("/node_modules/react-icons/") || pkg.includes("/node_modules/lucide-react/")) {
+    return "icons";
+  }
+
+  if (
+    pkg.includes("/node_modules/@tanstack/react-query/") ||
+    pkg.includes("/node_modules/@tanstack/query-core/")
+  ) {
+    return "query";
+  }
+
+  if (
+    pkg.includes("/node_modules/i18next/") ||
+    pkg.includes("/node_modules/react-i18next/") ||
+    pkg.includes("/node_modules/i18next-browser-languagedetector/")
+  ) {
+    return "i18n";
+  }
+
+  return undefined;
+}
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
@@ -56,5 +107,10 @@ export default defineConfig({
   },
   build: {
     sourcemap: true, // 👈 Clave para stack trace legible en producción
+    rollupOptions: {
+      output: {
+        manualChunks: getManualChunk,
+      },
+    },
   },
 });

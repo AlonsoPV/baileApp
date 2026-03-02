@@ -1,113 +1,119 @@
-import React from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
 import { routes } from './routes/registry';
 import { isNativeApp } from './utils/isNativeApp';
+import LoadingScreen from './components/LoadingScreen';
 
 // Guards
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { RedirectIfAuthenticated } from './components/RedirectIfAuthenticated';
 import OnboardingGate from './guards/OnboardingGate';
-
-// Auth Screens
-import { Login } from './screens/auth/Login';
-import { Signup } from './screens/auth/Signup';
-import AuthCallback from './screens/auth/AuthCallback';
-import PinSetup from './screens/auth/PinSetup';
-import PinLogin from './screens/auth/PinLogin';
-import ResetPassword from './screens/auth/ResetPassword';
-
-// Onboarding Screens
-import { ProfileBasics } from './screens/onboarding/ProfileBasics';
-import { PickRitmos } from './screens/onboarding/PickRitmos';
-import { PickZonas } from './screens/onboarding/PickZonas';
-
-// App Screens
-import { ProfileScreen } from './screens/profile/ProfileScreen';
-import ExploreHomeScreen from './screens/explore/ExploreHomeScreenModern';
-import ExploreListScreen from './screens/explore/ExploreListScreen';
-
-// Organizer Screens
-import { OrganizerEditScreen } from './screens/events/OrganizerEditScreen';
-import { OrganizerPublicScreen } from './screens/events/OrganizerPublicScreen';
-import OrganizerProfileEditor from './screens/profile/OrganizerProfileEditor';
-import { OrganizerProfileLive as OrganizerProfileLiveNew } from './screens/profile/OrganizerProfileLive';
-
-// Event Screens
-import { EventParentEditScreen } from './screens/events/EventParentEditScreen';
-import OrganizerEventParentCreateScreen from './screens/events/OrganizerEventParentCreateScreen';
-import OrganizerEventParentEditScreen from './screens/events/OrganizerEventParentEditScreen';
-import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
-import OrganizerEventDateEditScreen from './screens/events/OrganizerEventDateEditScreen';
-import OrganizerEventDateCreateScreen from './screens/events/OrganizerEventDateCreateScreen';
-import EventParentPublicScreenModern from './screens/events/EventParentPublicScreenModern';
-import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
-import { SocialLiveScreen } from './screens/events/SocialLiveScreen';
-import { DateLiveScreen } from './screens/events/DateLiveScreen';
-import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
-import QuienesSomosScreen from './screens/static/QuienesSomosScreen';
-import AboutScreen from './screens/static/AboutScreen';
-import LegalScreen from './screens/static/LegalScreen';
-import DeleteAccountScreen from './screens/static/DeleteAccountScreen';
-import DefaultProfileSettings from './screens/profile/DefaultProfileSettings';
-
-// Academy Screens
-import AcademyPublicScreen from './screens/academy/AcademyPublicScreen';
-import AcademyProfileEditor from './screens/profile/AcademyProfileEditor';
-import AcademyProfileLive from './screens/profile/AcademyProfileLive';
-import TeacherProfileEditor from './screens/profile/TeacherProfileEditor';
-import TeacherProfileLive from './screens/profile/TeacherProfileLive';
-import BrandProfileEditor from './screens/profile/BrandProfileEditor';
-import BrandProfileLive from './screens/profile/BrandProfileLive';
-
-// Brand Screens
-import BrandEditorScreen from './screens/brand/BrandEditorScreen';
-import BrandPublicScreen from './screens/brand/BrandPublicScreen';
-
-// Teacher Screens (placeholder - create these if needed)
-// import TeacherEditorScreen from './screens/teacher/TeacherEditorScreen';
-// import TeacherPublicScreen from './screens/teacher/TeacherPublicScreen';
-
-// User Screens
-import UserProfileEditor from './screens/profile/UserProfileEditor';
-import { UserProfileLive } from './screens/profile/UserProfileLive';
-import { UserProfileLive as UserPublicScreen } from './screens/profile/UserPublicScreen';
 
 // System Screens
 import NotFound from './screens/system/NotFound';
-import Unauthorized from './screens/system/Unauthorized';
 
-// Landing (home pública, sin AppShell)
-import Landing from './pages/Landing';
-
-// Additional Screens
-import InfoScreen from './screens/InfoScreen';
-import RoleSelectorScreen from './screens/profile/RoleSelectorScreen';
-import AdminRoleRequestsScreen from './screens/admin/AdminRoleRequestsScreen';
-import RequestRoleScreen from './screens/roles/RequestRoleScreen';
-import RolesInfoScreen from './screens/roles/RolesInfoScreen';
-import ValidationInfoScreen from './screens/static/ValidationInfoScreen';
-import IntegrityDebugScreen from './screens/debug/IntegrityDebugScreen';
-import SupportScreen from './screens/static/SupportScreen';
-import AcademyProposalScreen from './screens/static/AcademyProposalScreen';
-
-// Challenges
-import ChallengesList from './screens/challenges/ChallengesList';
-import ChallengeNew from './screens/challenges/ChallengeNew';
-import ChallengeDetail from './screens/challenges/ChallengeDetail';
-import ClassPublicScreen from './screens/classes/ClassPublicScreen';
-import TeacherPublicLive from './screens/profile/TeacherPublicLive';
-import TrendingDetail from './pages/trending/TrendingDetail';
-import TrendingAdmin from './pages/trending/TrendingAdmin';
-import TrendingList from './pages/trending/TrendingList';
-import CompetitionGroupList from './components/competitionGroups/CompetitionGroupList';
-import CompetitionGroupDetail from './components/competitionGroups/CompetitionGroupDetail';
-import CompetitionGroupForm from './components/competitionGroups/CompetitionGroupForm';
 import StripeOnboardingSuccess from './screens/payments/StripeOnboardingSuccess';
 import StripeOnboardingRefresh from './screens/payments/StripeOnboardingRefresh';
 import PaymentSuccess from './screens/payments/PaymentSuccess';
 import PaymentCanceled from './screens/payments/PaymentCanceled';
-import MyPurchasesScreen from './screens/payments/MyPurchasesScreen';
+
+// Lazy route screens (outside shell/layout to keep core boot lightweight)
+const Login = React.lazy(() =>
+  import('./screens/auth/Login').then((m) => ({ default: m.Login })),
+);
+const Signup = React.lazy(() =>
+  import('./screens/auth/Signup').then((m) => ({ default: m.Signup })),
+);
+const AuthCallback = React.lazy(() => import('./screens/auth/AuthCallback'));
+const PinSetup = React.lazy(() => import('./screens/auth/PinSetup'));
+const PinLogin = React.lazy(() => import('./screens/auth/PinLogin'));
+const ResetPassword = React.lazy(() => import('./screens/auth/ResetPassword'));
+const ProfileBasics = React.lazy(() =>
+  import('./screens/onboarding/ProfileBasics').then((m) => ({ default: m.ProfileBasics })),
+);
+const PickRitmos = React.lazy(() =>
+  import('./screens/onboarding/PickRitmos').then((m) => ({ default: m.PickRitmos })),
+);
+const PickZonas = React.lazy(() =>
+  import('./screens/onboarding/PickZonas').then((m) => ({ default: m.PickZonas })),
+);
+const Landing = React.lazy(() => import('./pages/Landing'));
+
+const ProfileScreen = React.lazy(() =>
+  import('./screens/profile/ProfileScreen').then((m) => ({ default: m.ProfileScreen })),
+);
+const ExploreHomeScreen = React.lazy(() => import('./screens/explore/ExploreHomeScreenModern'));
+const ExploreListScreen = React.lazy(() => import('./screens/explore/ExploreListScreen'));
+const OrganizerEditScreen = React.lazy(() =>
+  import('./screens/events/OrganizerEditScreen').then((m) => ({ default: m.OrganizerEditScreen })),
+);
+const OrganizerPublicScreen = React.lazy(() =>
+  import('./screens/events/OrganizerPublicScreen').then((m) => ({ default: m.OrganizerPublicScreen })),
+);
+const OrganizerProfileEditor = React.lazy(() => import('./screens/profile/OrganizerProfileEditor'));
+const OrganizerProfileLiveNew = React.lazy(() =>
+  import('./screens/profile/OrganizerProfileLive').then((m) => ({ default: m.OrganizerProfileLive })),
+);
+const OrganizerEventParentCreateScreen = React.lazy(() => import('./screens/events/OrganizerEventParentCreateScreen'));
+const OrganizerEventParentEditScreen = React.lazy(() => import('./screens/events/OrganizerEventParentEditScreen'));
+const EventDateEditScreen = React.lazy(() =>
+  import('./screens/events/EventDateEditScreen').then((m) => ({ default: m.EventDateEditScreen })),
+);
+const OrganizerEventDateEditScreen = React.lazy(() => import('./screens/events/OrganizerEventDateEditScreen'));
+const OrganizerEventDateCreateScreen = React.lazy(() => import('./screens/events/OrganizerEventDateCreateScreen'));
+const EventParentPublicScreenModern = React.lazy(() => import('./screens/events/EventParentPublicScreenModern'));
+const EventDatePublicScreen = React.lazy(() => import('./screens/events/EventDatePublicScreen'));
+const MyRSVPsScreen = React.lazy(() =>
+  import('./screens/events/MyRSVPsScreen').then((m) => ({ default: m.MyRSVPsScreen })),
+);
+const QuienesSomosScreen = React.lazy(() => import('./screens/static/QuienesSomosScreen'));
+const AboutScreen = React.lazy(() => import('./screens/static/AboutScreen'));
+const LegalScreen = React.lazy(() => import('./screens/static/LegalScreen'));
+const DeleteAccountScreen = React.lazy(() => import('./screens/static/DeleteAccountScreen'));
+const DefaultProfileSettings = React.lazy(() => import('./screens/profile/DefaultProfileSettings'));
+const AcademyPublicScreen = React.lazy(() => import('./screens/academy/AcademyPublicScreen'));
+const AcademyProfileEditor = React.lazy(() => import('./screens/profile/AcademyProfileEditor'));
+const AcademyProfileLive = React.lazy(() => import('./screens/profile/AcademyProfileLive'));
+const TeacherProfileEditor = React.lazy(() => import('./screens/profile/TeacherProfileEditor'));
+const TeacherProfileLive = React.lazy(() => import('./screens/profile/TeacherProfileLive'));
+const BrandProfileEditor = React.lazy(() => import('./screens/profile/BrandProfileEditor'));
+const BrandProfileLive = React.lazy(() => import('./screens/profile/BrandProfileLive'));
+const BrandEditorScreen = React.lazy(() => import('./screens/brand/BrandEditorScreen'));
+const BrandPublicScreen = React.lazy(() => import('./screens/brand/BrandPublicScreen'));
+const UserProfileEditor = React.lazy(() => import('./screens/profile/UserProfileEditor'));
+const UserProfileLive = React.lazy(() =>
+  import('./screens/profile/UserProfileLive').then((m) => ({ default: m.UserProfileLive })),
+);
+const UserPublicScreen = React.lazy(() =>
+  import('./screens/profile/UserPublicScreen').then((m) => ({ default: m.UserProfileLive })),
+);
+const RoleSelectorScreen = React.lazy(() => import('./screens/profile/RoleSelectorScreen'));
+const AdminRoleRequestsScreen = React.lazy(() => import('./screens/admin/AdminRoleRequestsScreen'));
+const RequestRoleScreen = React.lazy(() => import('./screens/roles/RequestRoleScreen'));
+const RolesInfoScreen = React.lazy(() => import('./screens/roles/RolesInfoScreen'));
+const ValidationInfoScreen = React.lazy(() => import('./screens/static/ValidationInfoScreen'));
+const IntegrityDebugScreen = React.lazy(() => import('./screens/debug/IntegrityDebugScreen'));
+const SupportScreen = React.lazy(() => import('./screens/static/SupportScreen'));
+const AcademyProposalScreen = React.lazy(() => import('./screens/static/AcademyProposalScreen'));
+const ChallengesList = React.lazy(() => import('./screens/challenges/ChallengesList'));
+const ChallengeNew = React.lazy(() => import('./screens/challenges/ChallengeNew'));
+const ChallengeDetail = React.lazy(() => import('./screens/challenges/ChallengeDetail'));
+const ClassPublicScreen = React.lazy(() => import('./screens/classes/ClassPublicScreen'));
+const TeacherPublicLive = React.lazy(() => import('./screens/profile/TeacherPublicLive'));
+const TrendingDetail = React.lazy(() => import('./pages/trending/TrendingDetail'));
+const TrendingAdmin = React.lazy(() => import('./pages/trending/TrendingAdmin'));
+const TrendingList = React.lazy(() => import('./pages/trending/TrendingList'));
+const CompetitionGroupList = React.lazy(() => import('./components/competitionGroups/CompetitionGroupList'));
+const CompetitionGroupDetail = React.lazy(() => import('./components/competitionGroups/CompetitionGroupDetail'));
+const CompetitionGroupForm = React.lazy(() => import('./components/competitionGroups/CompetitionGroupForm'));
+const MyPurchasesScreen = React.lazy(() => import('./screens/payments/MyPurchasesScreen'));
+
+function RouteSuspense({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<LoadingScreen message="Cargando pantalla..." />}>
+      {children}
+    </Suspense>
+  );
+}
 
 /**
  * HomeEntry - Determina qué mostrar en la ruta raíz (/)
@@ -126,24 +132,30 @@ function HomeEntry() {
   }
 
   // Web normal: mostrar Landing page
-  return <Landing />;
+  return (
+    <RouteSuspense>
+      <Landing />
+    </RouteSuspense>
+  );
 }
 
 export default function AppRouter() {
   return (
     <Routes>
-      {/* Auth */}
-      <Route path={routes.auth.login} element={<Login />} />
-      <Route path={routes.auth.signup} element={<Signup />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/auth/pin/setup" element={<PinSetup />} />
-      <Route path="/auth/pin" element={<PinLogin />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route element={<RouteSuspense><Outlet /></RouteSuspense>}>
+        {/* Auth */}
+        <Route path={routes.auth.login} element={<Login />} />
+        <Route path={routes.auth.signup} element={<Signup />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/pin/setup" element={<PinSetup />} />
+        <Route path="/auth/pin" element={<PinLogin />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Onboarding public */}
-      <Route path={routes.onboarding.basics} element={<ProfileBasics />} />
-      <Route path={routes.onboarding.ritmos} element={<PickRitmos />} />
-      <Route path={routes.onboarding.zonas} element={<PickZonas />} />
+        {/* Onboarding public */}
+        <Route path={routes.onboarding.basics} element={<ProfileBasics />} />
+        <Route path={routes.onboarding.ritmos} element={<PickRitmos />} />
+        <Route path={routes.onboarding.zonas} element={<PickZonas />} />
+      </Route>
 
       {/* Stripe Onboarding Routes - Public (no auth needed) */}
       <Route path="/stripe/onboarding/success" element={<StripeOnboardingSuccess />} />
@@ -158,96 +170,98 @@ export default function AppRouter() {
 
       {/* Landing pages (sin AppShell) - Home es la landing de conversión */}
       <Route path="/" element={<HomeEntry />} />
-      <Route path="/propuesta-academias" element={<AcademyProposalScreen />} />
-      <Route path="/academias/propuesta" element={<AcademyProposalScreen />} />
+      <Route path="/propuesta-academias" element={<RouteSuspense><AcademyProposalScreen /></RouteSuspense>} />
+      <Route path="/academias/propuesta" element={<RouteSuspense><AcademyProposalScreen /></RouteSuspense>} />
 
       {/* AppShell layout */}
       <Route element={<AppShell />}>
-        {/* Public */}
-        <Route path="/explore" element={<ExploreHomeScreen />} />
-        <Route path="/explore/list" element={<ExploreListScreen />} />
-        <Route path="/quienes-somos" element={<QuienesSomosScreen />} />
-        <Route path="/about" element={<AboutScreen />} />
-        <Route path="/soporte" element={<SupportScreen />} />
-        <Route path="/legal" element={<LegalScreen />} />
-        <Route path="/aviso-de-privacidad" element={<LegalScreen />} />
-        <Route path="/eliminar-cuenta" element={<DeleteAccountScreen />} />
-        <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
-        <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
-        <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
-        <Route path="/social/fecha/:id" element={<EventDatePublicScreen />} />
-        <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
-        <Route path="/profile/organizer/:id" element={<OrganizerPublicScreen />} />
-        <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
-        <Route path="/profile/academy/:academyId" element={<AcademyPublicScreen />} />
-        <Route path="/profile/academy" element={<AcademyProfileLive />} />
-        <Route path="/profile/teacher" element={<TeacherProfileLive />} />
-        <Route path="/u/:userId" element={<UserPublicScreen />} />
-        <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
-        <Route path="/maestro/:teacherId" element={<TeacherPublicLive />} />
-        {/* Trending público */}
-        <Route path="/trending" element={<TrendingList />} />
-        <Route path="/trending/:id" element={<TrendingDetail />} />
-        {/* Grupos de Competencia */}
-        <Route path="/competition-groups" element={<CompetitionGroupList />} />
-        <Route path="/competition-groups/new" element={<CompetitionGroupForm />} />
-        <Route path="/competition-groups/:id" element={<CompetitionGroupDetail />} />
-        <Route path="/competition-groups/:id/edit" element={<CompetitionGroupForm />} />
-        {/* Clase pública (usa query o params) */}
-        <Route path="/clase" element={<ClassPublicScreen />} />
-        <Route path="/clase/:type/:id" element={<ClassPublicScreen />} />
-        {/* Challenges (público: lista y detalle) */}
-        <Route path="/challenges" element={<ChallengesList />} />
-        <Route path="/challenges/:id" element={<ChallengeDetail />} />
-        {/* Info screens públicas */}
-        <Route path="/app/roles/info" element={<RolesInfoScreen />} />
-        <Route path="/validation/info" element={<ValidationInfoScreen />} />
-        {/** Public user profile by id was removed along with UserPublicProfile.tsx */}
+        <Route element={<RouteSuspense><Outlet /></RouteSuspense>}>
+          {/* Public */}
+          <Route path="/explore" element={<ExploreHomeScreen />} />
+          <Route path="/explore/list" element={<ExploreListScreen />} />
+          <Route path="/quienes-somos" element={<QuienesSomosScreen />} />
+          <Route path="/about" element={<AboutScreen />} />
+          <Route path="/soporte" element={<SupportScreen />} />
+          <Route path="/legal" element={<LegalScreen />} />
+          <Route path="/aviso-de-privacidad" element={<LegalScreen />} />
+          <Route path="/eliminar-cuenta" element={<DeleteAccountScreen />} />
+          <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
+          <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
+          <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
+          <Route path="/social/fecha/:id" element={<EventDatePublicScreen />} />
+          <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
+          <Route path="/profile/organizer/:id" element={<OrganizerPublicScreen />} />
+          <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
+          <Route path="/profile/academy/:academyId" element={<AcademyPublicScreen />} />
+          <Route path="/profile/academy" element={<AcademyProfileLive />} />
+          <Route path="/profile/teacher" element={<TeacherProfileLive />} />
+          <Route path="/u/:userId" element={<UserPublicScreen />} />
+          <Route path="/marca/:brandId" element={<BrandPublicScreen />} />
+          <Route path="/maestro/:teacherId" element={<TeacherPublicLive />} />
+          {/* Trending público */}
+          <Route path="/trending" element={<TrendingList />} />
+          <Route path="/trending/:id" element={<TrendingDetail />} />
+          {/* Grupos de Competencia */}
+          <Route path="/competition-groups" element={<CompetitionGroupList />} />
+          <Route path="/competition-groups/new" element={<CompetitionGroupForm />} />
+          <Route path="/competition-groups/:id" element={<CompetitionGroupDetail />} />
+          <Route path="/competition-groups/:id/edit" element={<CompetitionGroupForm />} />
+          {/* Clase pública (usa query o params) */}
+          <Route path="/clase" element={<ClassPublicScreen />} />
+          <Route path="/clase/:type/:id" element={<ClassPublicScreen />} />
+          {/* Challenges (público: lista y detalle) */}
+          <Route path="/challenges" element={<ChallengesList />} />
+          <Route path="/challenges/:id" element={<ChallengeDetail />} />
+          {/* Info screens públicas */}
+          <Route path="/app/roles/info" element={<RolesInfoScreen />} />
+          <Route path="/validation/info" element={<ValidationInfoScreen />} />
+          {/** Public user profile by id was removed along with UserPublicProfile.tsx */}
 
-        {/* Protected */}
-        <Route element={<OnboardingGate />}>
-          <Route path={routes.app.profile} element={<ProfileScreen />} />
-          {/* Rutas unificadas de perfil de usuario */}
-          <Route path="/profile" element={<ProfileScreen />} />
-          <Route path="/profile/edit" element={<UserProfileEditor />} />
-          {/* Nueva ruta explícita para el Live de usuario */}
-          <Route path="/profile/user" element={<UserProfileLive />} />
-          <Route path="/profile/settings" element={<DefaultProfileSettings />} />
-          <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
-          <Route path="/profile/brand" element={<BrandProfileLive />} />
-          <Route path="/profile/brand/edit" element={<BrandProfileEditor />} />
-          <Route path={routes.organizer.edit} element={<OrganizerEditScreen />} />
-          <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
-          <Route path="/events/parent/new" element={<OrganizerEventParentCreateScreen />} />
-          <Route path="/events/parent/:id/edit" element={<OrganizerEventParentEditScreen />} />
-          <Route path="/events/date/new/:parentId" element={<EventDateEditScreen />} />
-          <Route path="/events/date/:id/edit" element={<EventDateEditScreen />} />
-          <Route path="/social/new" element={<OrganizerEventParentCreateScreen />} />
-          <Route path="/social/:parentId/edit" element={<OrganizerEventParentEditScreen />} />
-          <Route path="/social/:parentId/fecha/nueva" element={<OrganizerEventDateCreateScreen />} />
-          <Route path="/social/fecha/:dateId/edit" element={<OrganizerEventDateEditScreen />} />
-          <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
-          <Route path="/me/compras" element={<MyPurchasesScreen />} />
-          <Route path={routes.academy.edit} element={<AcademyProfileEditor />} />
-          <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
-          <Route path={routes.brand.edit} element={<BrandEditorScreen />} />
-          <Route path="/profile/roles" element={<RoleSelectorScreen />} />
-          <Route path="/profile/roles/request" element={<RequestRoleScreen />} />
-          <Route path="/app/roles/request" element={<RequestRoleScreen />} />
-          <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
-          <Route path="/admin" element={<AdminRoleRequestsScreen />} />
-          <Route path="/admin/trending" element={<TrendingAdmin />} />
-          {/* Crear challenge (protegido por rol desde UI; backend con RLS) */}
-          <Route path="/challenges/new" element={<ChallengeNew />} />
-          <Route path="/debug/integrity" element={<IntegrityDebugScreen />} />
+          {/* Protected */}
+          <Route element={<OnboardingGate />}>
+            <Route path={routes.app.profile} element={<ProfileScreen />} />
+            {/* Rutas unificadas de perfil de usuario */}
+            <Route path="/profile" element={<ProfileScreen />} />
+            <Route path="/profile/edit" element={<UserProfileEditor />} />
+            {/* Nueva ruta explícita para el Live de usuario */}
+            <Route path="/profile/user" element={<UserProfileLive />} />
+            <Route path="/profile/settings" element={<DefaultProfileSettings />} />
+            <Route path="/profile/teacher/edit" element={<TeacherProfileEditor />} />
+            <Route path="/profile/brand" element={<BrandProfileLive />} />
+            <Route path="/profile/brand/edit" element={<BrandProfileEditor />} />
+            <Route path={routes.organizer.edit} element={<OrganizerEditScreen />} />
+            <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
+            <Route path="/events/parent/new" element={<OrganizerEventParentCreateScreen />} />
+            <Route path="/events/parent/:id/edit" element={<OrganizerEventParentEditScreen />} />
+            <Route path="/events/date/new/:parentId" element={<EventDateEditScreen />} />
+            <Route path="/events/date/:id/edit" element={<EventDateEditScreen />} />
+            <Route path="/social/new" element={<OrganizerEventParentCreateScreen />} />
+            <Route path="/social/:parentId/edit" element={<OrganizerEventParentEditScreen />} />
+            <Route path="/social/:parentId/fecha/nueva" element={<OrganizerEventDateCreateScreen />} />
+            <Route path="/social/fecha/:dateId/edit" element={<OrganizerEventDateEditScreen />} />
+            <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
+            <Route path="/me/compras" element={<MyPurchasesScreen />} />
+            <Route path={routes.academy.edit} element={<AcademyProfileEditor />} />
+            <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
+            <Route path={routes.brand.edit} element={<BrandEditorScreen />} />
+            <Route path="/profile/roles" element={<RoleSelectorScreen />} />
+            <Route path="/profile/roles/request" element={<RequestRoleScreen />} />
+            <Route path="/app/roles/request" element={<RequestRoleScreen />} />
+            <Route path="/admin/roles" element={<AdminRoleRequestsScreen />} />
+            <Route path="/admin" element={<AdminRoleRequestsScreen />} />
+            <Route path="/admin/trending" element={<TrendingAdmin />} />
+            {/* Crear challenge (protegido por rol desde UI; backend con RLS) */}
+            <Route path="/challenges/new" element={<ChallengeNew />} />
+            <Route path="/debug/integrity" element={<IntegrityDebugScreen />} />
+          </Route>
+
+          {/* Redirect for double slashes in Stripe routes */}
+          <Route path="//stripe/onboarding/success" element={<Navigate to="/stripe/onboarding/success" replace />} />
+          <Route path="//stripe/onboarding/refresh" element={<Navigate to="/stripe/onboarding/refresh" replace />} />
+
+          {/* Default and 404 (/) ya manejado por Landing fuera de AppShell) */}
+          <Route path="*" element={<NotFound />} />
         </Route>
-
-        {/* Redirect for double slashes in Stripe routes */}
-        <Route path="//stripe/onboarding/success" element={<Navigate to="/stripe/onboarding/success" replace />} />
-        <Route path="//stripe/onboarding/refresh" element={<Navigate to="/stripe/onboarding/refresh" replace />} />
-
-        {/* Default and 404 (/) ya manejado por Landing fuera de AppShell) */}
-        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   );
