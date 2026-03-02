@@ -13,6 +13,8 @@ import './i18n';
 import { installNativeAuthBridge } from "./native/nativeAuthBridge";
 import { mark } from "./utils/performanceLogger";
 import { startScrollLockWatchdog } from "./utils/scrollLockWatchdog";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 
 // Medición de carga (prefijo [PERF] para Android logcat)
 try { performance?.mark?.("web_boot_start"); } catch {}
@@ -42,6 +44,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <ToastProvider>
             <App />
+            <SpeedInsights />
+            <Analytics />
           </ToastProvider>
         </AuthProvider>
       </BrowserRouter>
