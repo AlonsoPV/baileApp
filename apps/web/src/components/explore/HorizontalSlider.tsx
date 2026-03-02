@@ -54,7 +54,7 @@ export default function HorizontalSlider<T>({
   itemHeight,
   itemWidth,
 }: Props<T>) {
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   // Cache geometry to avoid forced reflow in hot paths (wheel/drag).
   const layoutRef = useRef<{ clientWidth: number; maxScrollLeft: number }>({
     clientWidth: 0,
@@ -62,6 +62,8 @@ export default function HorizontalSlider<T>({
   });
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollRafRef = useRef<number | null>(null);
+  const lastScrollLogTsRef = useRef(0);
   const isDraggingRef = useRef(false);
   const isPointerDownRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
@@ -69,6 +71,7 @@ export default function HorizontalSlider<T>({
   const dragStartXRef = useRef(0);
   const dragStartScrollLeftRef = useRef(0);
   const suppressClickUntilRef = useRef(0);
+  const __DEV__ = typeof import.meta !== "undefined" && !!(import.meta as any).env?.DEV;
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
   const isDesktop =
@@ -76,7 +79,7 @@ export default function HorizontalSlider<T>({
   const allowUserScroll = !(disableDesktopScroll && isDesktop);
 
   const updateLayoutMetrics = useCallback(() => {
-    const el = viewportRef.current;
+    const el = scrollerRef.current;
     if (!el) return;
     // These reads can force layout; do them rarely (resize / items change) rather than on every wheel.
     const clientWidth = el.clientWidth;
@@ -87,7 +90,7 @@ export default function HorizontalSlider<T>({
 
   useEffect(() => {
     updateLayoutMetrics();
-    const el = viewportRef.current;
+    const el = scrollerRef.current;
     if (!el) return;
 
     // ResizeObserver is the cheapest way to keep the cached values fresh.
@@ -115,7 +118,7 @@ export default function HorizontalSlider<T>({
 
   // Wheel/trackpad: attach NON-passive listener so preventDefault works (React onWheel can be passive)
   const handleWheelNative = useCallback((e: WheelEvent) => {
-    const el = viewportRef.current;
+    const el = scrollerRef.current;
     if (!el) return;
 
     const maxScrollLeft = layoutRef.current.maxScrollLeft || Math.max(0, el.scrollWidth - el.clientWidth);
@@ -136,7 +139,29 @@ export default function HorizontalSlider<T>({
     el.scrollLeft = Math.max(0, Math.min(maxScrollLeft, next));
   }, []);
 
-  // Detectar cuando el scroll está activo para desactivar animaciones pesadas
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+  const updateNavState = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const eps = 2;
+    const nextCanLeft = el.scrollLeft > eps;
+    const nextCanRight = el.scrollLeft + el.clientWidth < el.scrollWidth - eps;
+    setCanLeft(nextCanLeft);
+    setCanRight(nextCanRight);
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log("[HorizontalSlider] nav state", {
+        canLeft: nextCanLeft,
+        canRight: nextCanRight,
+        scrollLeft: Math.round(el.scrollLeft),
+        clientWidth: el.clientWidth,
+        scrollWidth: el.scrollWidth,
+      });
+    }
+  }, [__DEV__]);
+
+  // Detectar scroll activo + actualizar navegación con rAF (evita jank en móviles).
   const handleScroll = useCallback(() => {
     setIsScrolling(true);
     if (scrollTimeoutRef.current) {
@@ -145,22 +170,61 @@ export default function HorizontalSlider<T>({
     scrollTimeoutRef.current = setTimeout(() => {
       setIsScrolling(false);
     }, 150);
-  }, []);
+
+    if (scrollRafRef.current !== null) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      updateNavState();
+      if (__DEV__) {
+        const now = Date.now();
+        if (now - lastScrollLogTsRef.current >= 500) {
+          lastScrollLogTsRef.current = now;
+          const el = scrollerRef.current;
+          if (el) {
+            // eslint-disable-next-line no-console
+            console.log("[HorizontalSlider] scroll", {
+              scrollLeft: Math.round(el.scrollLeft),
+              clientWidth: el.clientWidth,
+              scrollWidth: el.scrollWidth,
+            });
+          }
+        }
+      }
+    });
+  }, [updateNavState, __DEV__]);
 
   useEffect(() => {
-    const el = viewportRef.current;
+    const el = scrollerRef.current;
     if (!el) return;
-    el.addEventListener('scroll', handleScroll, { passive: true });
+    el.addEventListener("scroll", handleScroll, { passive: true });
+
+    const ro = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(() => {
+          updateLayoutMetrics();
+          updateNavState();
+        })
+      : null;
+    if (ro) {
+      ro.observe(el);
+      if (el.firstElementChild) ro.observe(el.firstElementChild);
+    }
+
+    updateNavState();
+
     return () => {
-      el.removeEventListener('scroll', handleScroll);
+      el.removeEventListener("scroll", handleScroll);
+      ro?.disconnect();
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+      if (scrollRafRef.current !== null) {
+        cancelAnimationFrame(scrollRafRef.current);
+      }
     };
-  }, [handleScroll]);
+  }, [handleScroll, updateLayoutMetrics, updateNavState, items?.length]);
 
   useEffect(() => {
-    const el = viewportRef.current;
+    const el = scrollerRef.current;
     if (!el) return;
     // Must be non-passive so we can preventDefault and keep scroll in the slider.
     if (!allowUserScroll) return;
@@ -171,7 +235,7 @@ export default function HorizontalSlider<T>({
   }, [handleWheelNative, allowUserScroll]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const el = viewportRef.current;
+    const el = scrollerRef.current;
     if (!el) return;
 
     // Touch should use native overflow scrolling (better momentum); mouse/pen uses drag-to-scroll.
@@ -190,7 +254,7 @@ export default function HorizontalSlider<T>({
   }, [allowUserScroll]);
 
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const el = viewportRef.current;
+    const el = scrollerRef.current;
     if (!el) return;
     if (e.pointerType === "touch") return;
     if (!allowUserScroll) return;
@@ -250,36 +314,49 @@ export default function HorizontalSlider<T>({
     }
   }, []);
 
-  const scrollByAmount = useCallback((dir: 1 | -1) => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const first = el.querySelector<HTMLElement>("[data-carousel-item]");
-    const step = first ? (first.offsetWidth + gap) : Math.round((layoutRef.current.clientWidth || el.clientWidth) * 0.9);
-    el.scrollBy({ left: dir * step, behavior: "smooth" });
-  }, [scrollStep, gap]);
-
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(false);
-  const updateArrows = useCallback(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    setCanLeft(el.scrollLeft > 0);
-    setCanRight(el.scrollLeft < maxScroll - 2);
+  const getGapPx = useCallback((el: HTMLElement) => {
+    const cs = getComputedStyle(el);
+    const raw = cs.columnGap || cs.gap || "0";
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? n : 0;
   }, []);
 
-  useEffect(() => {
-    updateArrows();
-    const el = viewportRef.current;
+  const getScrollStep = useCallback((scroller: HTMLElement) => {
+    const item = scroller.querySelector<HTMLElement>("[data-carousel-item]");
+    const gapValue = getGapPx(scroller);
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log("[HorizontalSlider] step probe", {
+        itemWidth: item?.offsetWidth ?? null,
+        gap: gapValue,
+        clientWidth: scroller.clientWidth,
+      });
+    }
+    if (item) return item.offsetWidth + gapValue;
+    return Math.round(scroller.clientWidth * 0.9);
+  }, [getGapPx, __DEV__]);
+
+  const scrollByCard = useCallback((dir: 1 | -1) => {
+    const el = scrollerRef.current;
     if (!el) return;
-    el.addEventListener("scroll", updateArrows, { passive: true });
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateArrows) : null;
-    if (ro) ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", updateArrows);
-      ro?.disconnect();
-    };
-  }, [updateArrows, items?.length]);
+    const step = getScrollStep(el);
+    const before = el.scrollLeft;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        updateNavState();
+      });
+    });
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log("[HorizontalSlider] nav click", {
+        direction: dir === 1 ? "right" : "left",
+        step: Math.round(step),
+        before: Math.round(before),
+        afterTarget: Math.round(before + dir * step),
+      });
+    }
+  }, [getScrollStep, updateNavState, __DEV__]);
 
   const navButtonBottomStyle: React.CSSProperties = {
     width: 30,
@@ -323,7 +400,7 @@ export default function HorizontalSlider<T>({
       <button
         type="button"
         aria-label="Anterior"
-        onClick={() => scrollByAmount(-1)}
+        onClick={() => scrollByCard(-1)}
         disabled={!canLeft}
         style={{
           pointerEvents: "auto",
@@ -351,7 +428,7 @@ export default function HorizontalSlider<T>({
       <button
         type="button"
         aria-label="Siguiente"
-        onClick={() => scrollByAmount(1)}
+        onClick={() => scrollByCard(1)}
         disabled={!canRight}
         style={{
           pointerEvents: "auto",
@@ -395,6 +472,7 @@ export default function HorizontalSlider<T>({
       {/* Overlay de botones (solo cuando navPosition === 'overlay') */}
       {navPosition === "overlay" && (
         <div
+          className="carousel-nav-overlay horizontal-slider-nav-overlay"
           style={{
             position: "absolute",
             inset: 0,
@@ -409,8 +487,8 @@ export default function HorizontalSlider<T>({
 
       {/* Viewport central */}
       <div
-        ref={viewportRef}
-        className={`horizontal-scroll ${isScrolling ? 'scrolling' : ''}`}
+        ref={scrollerRef}
+        className={`horizontal-scroll horizontal-carousel horizontal-slider-scroller ${isScrolling ? 'scrolling' : ''}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endPointerDrag}
@@ -429,11 +507,14 @@ export default function HorizontalSlider<T>({
           padding: 0,
           // Optimizaciones de scroll para móvil
           WebkitOverflowScrolling: "touch",
-          scrollBehavior: isScrolling ? "auto" : "smooth",
+          scrollBehavior: "smooth",
           overscrollBehaviorX: "contain",
           overscrollBehaviorY: "auto",
           scrollSnapType: "x mandatory",
-          scrollPadding: 0,
+          scrollPadding: navPosition === "overlay" ? "0 56px" : 0,
+          scrollPaddingLeft: navPosition === "overlay" ? 56 : 0,
+          scrollPaddingRight: navPosition === "overlay" ? 56 : 0,
+          scrollbarGutter: "stable",
           // ⚠️ Importante: NO aplicar transform al contenedor scrolleable.
           // En iOS/Safari, transform en un elemento con overflow puede romper el scroll/inercia.
           transform: "none",
@@ -463,6 +544,8 @@ export default function HorizontalSlider<T>({
             overflow-y: hidden;
             scroll-behavior: smooth;
           }
+          .horizontal-slider-nav-overlay { pointer-events: none; }
+          .horizontal-slider-nav-overlay .horizontal-slider-nav-row { pointer-events: auto; }
           .horizontal-scroll::-webkit-scrollbar { display: none; }
           .horizontal-scroll > * { touch-action: pan-x pan-y; }
           @media (max-width: 768px) {
@@ -486,6 +569,7 @@ export default function HorizontalSlider<T>({
             transform: translateZ(0);
             will-change: auto;
             scroll-snap-align: start;
+            scroll-snap-stop: always;
             padding: 12px 0;
           }
           .horizontal-slider-grid--hero > * {
@@ -585,7 +669,7 @@ export default function HorizontalSlider<T>({
           <button
             type="button"
             aria-label="Anterior"
-            onClick={() => scrollByAmount(-1)}
+            onClick={() => scrollByCard(-1)}
             disabled={!canLeft}
             style={{
               ...navButtonBottomStyle,
@@ -597,7 +681,7 @@ export default function HorizontalSlider<T>({
           <button
             type="button"
             aria-label="Siguiente"
-            onClick={() => scrollByAmount(1)}
+            onClick={() => scrollByCard(1)}
             disabled={!canRight}
             style={{
               ...navButtonBottomStyle,

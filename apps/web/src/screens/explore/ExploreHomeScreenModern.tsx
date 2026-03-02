@@ -652,10 +652,8 @@ const STYLES = `
   .filters-panel {
     width: 100%;
     max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 0;
-    padding: 6px 0;
+    margin: 0 auto 0;
+    padding: 6px 0 0;
     position: relative;
     box-sizing: border-box;
     min-width: 0;
@@ -1575,9 +1573,9 @@ const STYLES = `
     }
     .filters-panel {
       max-width: 100% !important;
-      padding: 10px 12px 12px !important;
+      padding: 10px 12px 0 !important;
       border-radius: 20px !important;
-      margin: 0 !important;
+      margin: 0 auto !important;
       box-sizing: border-box;
     }
     .filters-card {
@@ -1826,9 +1824,9 @@ const STYLES = `
   }
   @media (max-width: 480px) {
     .filters-panel {
-      padding: 8px 10px 10px !important;
+      padding: 8px 10px 0 !important;
       border-radius: 18px !important;
-      margin: 0 !important;
+      margin: 0 auto !important;
     }
     .filters-card {
       padding: 10px 8px 8px !important;
@@ -2014,9 +2012,9 @@ const STYLES = `
       height: 2.5px !important;
     }
     .filters-panel {
-      padding: 9px 10px 11px !important;
+      padding: 9px 10px 0 !important;
       border-radius: 16px !important;
-      margin: 0 !important;
+      margin: 0 auto !important;
     }
     .filters-fav {
       padding: 7px 9px !important;
@@ -3543,10 +3541,10 @@ export default function ExploreHomeScreen() {
 
       <div className={`explore-container${isMobile && isAndroid ? ' android-mobile' : ''}`}>
         <div className="wrap">
-          <section className="filters-panel" style={{ marginTop: 0, marginLeft: 'auto', marginRight: 'auto' }} role="region" aria-label={t('filters')}>
+          <section className="filters-panel" role="region" aria-label={t('filters')}>
             {/* Mobile: botón Filtros que abre panel desplegable */}
             {isMobile && (
-              <div className="filters-mobile-trigger-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div className="filters-mobile-trigger-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 12 }}>
                 <button
                   type="button"
                   className="filters-mobile-btn"
