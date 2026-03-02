@@ -75,15 +75,13 @@ export default function HorizontalSlider<T>({
   const __DEV__ = typeof import.meta !== "undefined" && !!(import.meta as any).env?.DEV;
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
-  const isAndroid =
-    typeof navigator !== "undefined" ? /Android/i.test(navigator.userAgent) : false;
-  const isTouchCapable =
+  const isTouchDevice =
     typeof window !== "undefined" &&
     ("ontouchstart" in window || (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0));
   const isDesktop =
     typeof window !== "undefined" ? window.matchMedia("(min-width: 769px)").matches : false;
   const allowUserScroll = !(disableDesktopScroll && isDesktop);
-  const enableMouseDrag = allowUserScroll && !isTouchCapable;
+  const enableMouseDrag = allowUserScroll && !isTouchDevice;
 
   const updateLayoutMetrics = useCallback(() => {
     const el = scrollerRef.current;
@@ -561,7 +559,7 @@ export default function HorizontalSlider<T>({
       {/* Viewport central */}
       <div
         ref={scrollerRef}
-        className={`horizontal-scroll horizontal-carousel horizontal-slider-scroller${isAndroid ? ' android-gesture' : ''} ${isScrolling ? 'scrolling' : ''}`}
+        className={`horizontal-scroll horizontal-carousel horizontal-slider-scroller ${isScrolling ? 'scrolling' : ''}`}
         {...(enableMouseDrag
           ? {
               onPointerDown,
