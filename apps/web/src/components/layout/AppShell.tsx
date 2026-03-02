@@ -119,7 +119,7 @@ export default function AppShell() {
             padding-left: 0.75rem;
             padding-right: 0.75rem;
             min-height: 0;
-            touch-action: pan-x pan-y;
+            touch-action: auto;
           }
         }
         @media (max-width: 480px) {

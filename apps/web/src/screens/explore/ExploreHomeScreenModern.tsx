@@ -2104,15 +2104,25 @@ const STYLES = `
       margin: 0 -0.15rem !important;
     }
   }
-  /* Android mobile: quitar margen entre navbar y filters-mobile-trigger-row */
+  /* Android mobile: quitar padding y margen superior entre nav-root y filters-mobile-trigger-row */
+  .app-shell-content:has(.explore-container.android-mobile) {
+    padding-top: 0 !important;
+  }
+  .explore-container.android-mobile {
+    padding-top: calc(64px + max(env(safe-area-inset-top), 0px)) !important;
+    margin-top: 0 !important;
+  }
   .explore-container.android-mobile .wrap {
     padding-top: 0 !important;
+    margin-top: 0 !important;
   }
   .explore-container.android-mobile .filters-panel {
     padding-top: 0 !important;
+    margin-top: 0 !important;
   }
   .explore-container.android-mobile .filters-mobile-trigger-row {
     margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 `;
 

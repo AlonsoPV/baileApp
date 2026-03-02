@@ -75,6 +75,8 @@ export default function HorizontalSlider<T>({
   const __DEV__ = typeof import.meta !== "undefined" && !!(import.meta as any).env?.DEV;
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
+  const isAndroid =
+    typeof navigator !== "undefined" ? /Android/i.test(navigator.userAgent) : false;
   const isDesktop =
     typeof window !== "undefined" ? window.matchMedia("(min-width: 769px)").matches : false;
   const allowUserScroll = !(disableDesktopScroll && isDesktop);
@@ -292,6 +294,59 @@ export default function HorizontalSlider<T>({
       el.removeEventListener("wheel", handleWheelNative as any);
     };
   }, [handleWheelNative, allowUserScroll]);
+
+  useEffect(() => {
+    if (!isAndroid) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    let startX = 0;
+    let startY = 0;
+    let lockedAxis: "x" | "y" | null = null;
+
+    const onPointerDownNative = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      lockedAxis = null;
+      startX = e.clientX;
+      startY = e.clientY;
+      el.style.touchAction = "pan-y";
+    };
+
+    const onPointerMoveNative = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      if (lockedAxis) return;
+      const dx = Math.abs(e.clientX - startX);
+      const dy = Math.abs(e.clientY - startY);
+      if (dx < 6 && dy < 6) return;
+      if (dx > dy) {
+        lockedAxis = "x";
+        el.style.touchAction = "pan-x";
+      } else {
+        lockedAxis = "y";
+        el.style.touchAction = "pan-y";
+      }
+    };
+
+    const onPointerUpNative = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      lockedAxis = null;
+      el.style.touchAction = "pan-y";
+    };
+
+    el.style.touchAction = "pan-y";
+    el.addEventListener("pointerdown", onPointerDownNative, { passive: true });
+    el.addEventListener("pointermove", onPointerMoveNative, { passive: true });
+    el.addEventListener("pointerup", onPointerUpNative, { passive: true });
+    el.addEventListener("pointercancel", onPointerUpNative, { passive: true });
+
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDownNative);
+      el.removeEventListener("pointermove", onPointerMoveNative);
+      el.removeEventListener("pointerup", onPointerUpNative);
+      el.removeEventListener("pointercancel", onPointerUpNative);
+      el.style.touchAction = "auto";
+    };
+  }, [isAndroid]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = scrollerRef.current;
@@ -558,7 +613,7 @@ export default function HorizontalSlider<T>({
       {/* Viewport central */}
       <div
         ref={scrollerRef}
-        className={`horizontal-scroll horizontal-carousel horizontal-slider-scroller ${isScrolling ? 'scrolling' : ''}`}
+        className={`horizontal-scroll horizontal-carousel horizontal-slider-scroller${isAndroid ? ' android-gesture' : ''} ${isScrolling ? 'scrolling' : ''}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endPointerDrag}
@@ -592,8 +647,8 @@ export default function HorizontalSlider<T>({
           transform: "none",
           WebkitTransform: "none",
           willChange: isScrolling ? "scroll-position" : "auto",
-          // Dejar al navegador resolver gesto horizontal/vertical de forma nativa.
-          touchAction: "auto",
+          // Android: priorizar scroll vertical; iOS/desktop: comportamiento nativo.
+          touchAction: isAndroid ? "pan-y" : "auto",
           // Mouse drag UX
           cursor: allowUserScroll ? "grab" : "default",
           userSelect: allowUserScroll ? "none" : "auto",
@@ -611,6 +666,18 @@ export default function HorizontalSlider<T>({
             overscroll-behavior-x: contain;
             -webkit-overflow-scrolling: touch;
           }
+          .horizontal-slider-scroller {
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
+            touch-action: auto;
+          }
+          .horizontal-slider-scroller.android-gesture {
+            touch-action: pan-y;
+          }
           .horizontal-scroll {
             overflow-x: auto;
             overflow-y: hidden;
@@ -618,8 +685,9 @@ export default function HorizontalSlider<T>({
           }
           .horizontal-slider-nav-overlay { pointer-events: none; }
           .horizontal-slider-nav-overlay .horizontal-slider-nav-row { pointer-events: auto; }
+          .horizontal-slider-nav-overlay button { pointer-events: auto; }
           .horizontal-scroll::-webkit-scrollbar { display: none; }
-          .horizontal-scroll > * { touch-action: auto; }
+          .horizontal-scroll > * { touch-action: auto; overscroll-behavior-y: auto; }
           @media (max-width: 768px) {
             .horizontal-scroll,
             .horizontal-slider,
