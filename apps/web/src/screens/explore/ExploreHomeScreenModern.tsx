@@ -647,6 +647,9 @@ const STYLES = `
     }
   }
   :root {
+    --navbar-h: 64px;
+    --safe-top: max(env(safe-area-inset-top), 0px);
+    --topbar-offset: calc(var(--safe-top) + var(--navbar-h));
     --panel: hsl(235 28% 16% / .65);
     --panel-2: hsl(235 28% 18% / .65);
     --stroke: hsl(235 35% 70% / .14);
@@ -676,6 +679,11 @@ const STYLES = `
     --fp-speed: 0.16s;
     --fp-shadow: 0 14px 40px rgba(0,0,0,.55);
     --fp-grad: linear-gradient(90deg,#ff4b8b,#ff9b45);
+  }
+  @media (max-width: 430px) {
+    :root {
+      --navbar-h: 60px;
+    }
   }
   /* Panel contenedor de la barra de filtros */
   .filters-panel {
@@ -2133,12 +2141,12 @@ const STYLES = `
       margin: 0 -0.15rem !important;
     }
   }
-  /* Android mobile: quitar padding y margen superior entre nav-root y filters-mobile-trigger-row */
+  /* Android mobile: unificar offset del navbar y pegar filters-panel sin hueco */
   .app-shell-content:has(.explore-container.android-mobile) {
     padding-top: 0 !important;
   }
   .explore-container.android-mobile {
-    padding-top: calc(64px + max(env(safe-area-inset-top), 0px)) !important;
+    padding-top: 0 !important;
     margin-top: 0 !important;
   }
   .explore-container.android-mobile .wrap {
@@ -2146,8 +2154,12 @@ const STYLES = `
     margin-top: 0 !important;
   }
   .explore-container.android-mobile .filters-panel {
+    position: sticky !important;
+    top: var(--topbar-offset) !important;
+    z-index: 25;
     padding-top: 0 !important;
     margin-top: 0 !important;
+    transform: none !important;
   }
   .explore-container.android-mobile .filters-mobile-trigger-row {
     margin-top: 0 !important;

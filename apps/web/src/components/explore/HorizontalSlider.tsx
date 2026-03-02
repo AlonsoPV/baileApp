@@ -295,59 +295,6 @@ export default function HorizontalSlider<T>({
     };
   }, [handleWheelNative, allowUserScroll]);
 
-  useEffect(() => {
-    if (!isAndroid) return;
-    const el = scrollerRef.current;
-    if (!el) return;
-
-    let startX = 0;
-    let startY = 0;
-    let lockedAxis: "x" | "y" | null = null;
-
-    const onPointerDownNative = (e: PointerEvent) => {
-      if (e.pointerType !== "touch") return;
-      lockedAxis = null;
-      startX = e.clientX;
-      startY = e.clientY;
-      el.style.touchAction = "pan-y";
-    };
-
-    const onPointerMoveNative = (e: PointerEvent) => {
-      if (e.pointerType !== "touch") return;
-      if (lockedAxis) return;
-      const dx = Math.abs(e.clientX - startX);
-      const dy = Math.abs(e.clientY - startY);
-      if (dx < 6 && dy < 6) return;
-      if (dx > dy) {
-        lockedAxis = "x";
-        el.style.touchAction = "pan-x";
-      } else {
-        lockedAxis = "y";
-        el.style.touchAction = "pan-y";
-      }
-    };
-
-    const onPointerUpNative = (e: PointerEvent) => {
-      if (e.pointerType !== "touch") return;
-      lockedAxis = null;
-      el.style.touchAction = "pan-y";
-    };
-
-    el.style.touchAction = "pan-y";
-    el.addEventListener("pointerdown", onPointerDownNative, { passive: true });
-    el.addEventListener("pointermove", onPointerMoveNative, { passive: true });
-    el.addEventListener("pointerup", onPointerUpNative, { passive: true });
-    el.addEventListener("pointercancel", onPointerUpNative, { passive: true });
-
-    return () => {
-      el.removeEventListener("pointerdown", onPointerDownNative);
-      el.removeEventListener("pointermove", onPointerMoveNative);
-      el.removeEventListener("pointerup", onPointerUpNative);
-      el.removeEventListener("pointercancel", onPointerUpNative);
-      el.style.touchAction = "auto";
-    };
-  }, [isAndroid]);
-
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -647,8 +594,8 @@ export default function HorizontalSlider<T>({
           transform: "none",
           WebkitTransform: "none",
           willChange: isScrolling ? "scroll-position" : "auto",
-          // Android: priorizar scroll vertical; iOS/desktop: comportamiento nativo.
-          touchAction: isAndroid ? "pan-y" : "auto",
+          // Permite al browser resolver pan horizontal y vertical naturalmente en Android.
+          touchAction: "pan-x pan-y",
           // Mouse drag UX
           cursor: allowUserScroll ? "grab" : "default",
           userSelect: allowUserScroll ? "none" : "auto",
@@ -673,10 +620,7 @@ export default function HorizontalSlider<T>({
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-x: contain;
-            touch-action: auto;
-          }
-          .horizontal-slider-scroller.android-gesture {
-            touch-action: pan-y;
+            touch-action: pan-x pan-y;
           }
           .horizontal-scroll {
             overflow-x: auto;
@@ -711,6 +655,14 @@ export default function HorizontalSlider<T>({
             scroll-snap-align: start;
             scroll-snap-stop: always;
             padding: 12px 0;
+          }
+          .horizontal-slider-item {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+          }
+          .horizontal-slider-item,
+          .horizontal-slider-item * {
+            touch-action: manipulation;
           }
           .horizontal-slider-grid--hero > * {
             height: 100%;
@@ -779,7 +731,7 @@ export default function HorizontalSlider<T>({
           }}
         >
           {items?.map((it, idx) => (
-            <div key={(it as any)?.id ?? idx} data-carousel-item style={{ minWidth: 0 }}>
+            <div key={(it as any)?.id ?? idx} data-carousel-item className="horizontal-slider-item" style={{ minWidth: 0 }}>
               {renderItem(it, idx)}
             </div>
           ))}
