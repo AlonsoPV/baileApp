@@ -77,9 +77,13 @@ export default function HorizontalSlider<T>({
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
   const isAndroid =
     typeof navigator !== "undefined" ? /Android/i.test(navigator.userAgent) : false;
+  const isTouchCapable =
+    typeof window !== "undefined" &&
+    ("ontouchstart" in window || (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0));
   const isDesktop =
     typeof window !== "undefined" ? window.matchMedia("(min-width: 769px)").matches : false;
   const allowUserScroll = !(disableDesktopScroll && isDesktop);
+  const enableMouseDrag = allowUserScroll && !isTouchCapable;
 
   const updateLayoutMetrics = useCallback(() => {
     const el = scrollerRef.current;
@@ -298,10 +302,8 @@ export default function HorizontalSlider<T>({
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = scrollerRef.current;
     if (!el) return;
-
-    // Touch should use native overflow scrolling (better momentum); mouse/pen uses drag-to-scroll.
-    if (e.pointerType === "touch") return;
     if (!allowUserScroll) return;
+    if (e.pointerType !== "mouse") return;
 
     isDraggingRef.current = false;
     isPointerDownRef.current = true;
@@ -317,8 +319,8 @@ export default function HorizontalSlider<T>({
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = scrollerRef.current;
     if (!el) return;
-    if (e.pointerType === "touch") return;
     if (!allowUserScroll) return;
+    if (e.pointerType !== "mouse") return;
     // Only allow drag-to-scroll while the pointer is actually down (mouse button pressed / captured).
     // Without this guard, simple mouse moves over the slider can be interpreted as a drag and suppress clicks.
     if (!isPointerDownRef.current) return;
@@ -348,7 +350,7 @@ export default function HorizontalSlider<T>({
   }, [allowUserScroll]);
 
   const endPointerDrag = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === "touch") return;
+    if (e.pointerType !== "mouse") return;
     if (isDraggingRef.current) {
       // Suppress click right after drag to avoid accidental navigation
       suppressClickUntilRef.current = Date.now() + 300;
@@ -367,11 +369,10 @@ export default function HorizontalSlider<T>({
     }
   }, []);
 
-  const onClickCapture = useCallback((e: React.SyntheticEvent) => {
+  const onClickCapture = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (Date.now() < suppressClickUntilRef.current) {
       e.preventDefault();
-      // @ts-ignore
-      e.stopPropagation?.();
+      e.stopPropagation();
     }
   }, []);
 
@@ -561,12 +562,16 @@ export default function HorizontalSlider<T>({
       <div
         ref={scrollerRef}
         className={`horizontal-scroll horizontal-carousel horizontal-slider-scroller${isAndroid ? ' android-gesture' : ''} ${isScrolling ? 'scrolling' : ''}`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endPointerDrag}
-        onPointerCancel={endPointerDrag}
-        onPointerLeave={endPointerDrag}
-        onClickCapture={onClickCapture}
+        {...(enableMouseDrag
+          ? {
+              onPointerDown,
+              onPointerMove,
+              onPointerUp: endPointerDrag,
+              onPointerCancel: endPointerDrag,
+              onPointerLeave: endPointerDrag,
+              onClickCapture,
+            }
+          : {})}
         style={{
           position: "relative",
           flex: navPosition === "bottom" ? 1 : undefined,
@@ -597,8 +602,8 @@ export default function HorizontalSlider<T>({
           // Permite al browser resolver pan horizontal y vertical naturalmente en Android.
           touchAction: "pan-x pan-y",
           // Mouse drag UX
-          cursor: allowUserScroll ? "grab" : "default",
-          userSelect: allowUserScroll ? "none" : "auto",
+          cursor: enableMouseDrag ? "grab" : "default",
+          userSelect: enableMouseDrag ? "none" : "auto",
           // Mejorar rendimiento en mobile (sin tocar transform)
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden"
@@ -722,7 +727,7 @@ export default function HorizontalSlider<T>({
               ? {}
               : { gridAutoColumns: autoColumns as any }),
             gap,
-            willChange: isScrolling ? "transform" : "auto",
+            willChange: enableMouseDrag && isScrolling ? "transform" : "auto",
             transform: "translateZ(0)",
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
