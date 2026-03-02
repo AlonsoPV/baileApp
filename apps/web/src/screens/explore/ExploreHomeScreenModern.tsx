@@ -19,6 +19,7 @@ import BrandCard from "../../components/explore/cards/BrandCard";
 import ClassCard from "../../components/explore/cards/ClassCard";
 import SocialCard from "../../components/explore/cards/SocialCard";
 import DancerCard from "../../components/explore/cards/DancerCard";
+import { LoadMoreCard } from "@/components/explore/cards/LoadMoreCard";
 import { urls } from "../../lib/urls";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
@@ -269,6 +270,8 @@ const ALL_EXPLORE_SECTIONS: ExploreSectionId[] = [
 /** Imágenes eager: primera sección usa 2; el resto 1 para priorizar percepción sin saturar red/CPU. */
 const EAGER_MAIN = 2;
 const EAGER_OTHERS = 1;
+const INITIAL_LIMIT = 10;
+const NEXT_LIMIT = 20;
 
 function runWhenIdle(callback: () => void, timeoutMs = 350): () => void {
   if (typeof window === 'undefined') {
@@ -2305,8 +2308,8 @@ export default function ExploreHomeScreen() {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const { filters, set } = useExploreFilters();
-  const selectedType = filters.type;
-  const showAll = !selectedType || selectedType === 'all';
+  const selectedType = (!filters.type || filters.type === 'all' ? 'fechas' : filters.type) as ExploreType;
+  const showAll = false;
   // DEV-only instrumentation helper (safe in prod)
   // Note: Vite does not define __DEV__ by default; we emulate it here.
   const __DEV__ = import.meta.env.DEV;
@@ -2334,6 +2337,7 @@ export default function ExploreHomeScreen() {
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
   const [filtersPanelOpen, setFiltersPanelOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  const [visibleCount, setVisibleCount] = React.useState(INITIAL_LIMIT);
   const [mountedSections, setMountedSections] = React.useState<Set<ExploreSectionId>>(
     () => new Set(ABOVE_FOLD_SECTIONS)
   );
@@ -2350,6 +2354,12 @@ export default function ExploreHomeScreen() {
     document.addEventListener("mousedown", handleClick, true);
     return () => document.removeEventListener("mousedown", handleClick, true);
   }, [openFilterDropdown]);
+
+  // Default UX: siempre iniciar en Sociales (fechas), sin "Todos" en primera carga.
+  React.useEffect(() => {
+    if (filters.type && filters.type !== 'all') return;
+    set({ type: 'fechas' as ExploreType });
+  }, [filters.type, set]);
 
   // Cerrar dropdowns de tipo y fechas al hacer scroll (que no sigan fijos en pantalla)
   React.useEffect(() => {
@@ -2803,52 +2813,7 @@ export default function ExploreHomeScreen() {
     );
   }, [__DEV__, __DEV_LOG, handlePreNavigate, t]);
 
-  const renderFechaItem = React.useCallback((fechaEvento: any, idx: number) => {
-    if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-      __DEV_LOG("renderItem", {
-        type: "fechas",
-        idx,
-        id: fechaEvento?.id,
-        original: (fechaEvento as any)?._original_id,
-        rec: (fechaEvento as any)?._recurrence_index,
-      });
-    }
-
-    const key =
-      (fechaEvento as any)?._recurrence_index !== undefined
-        ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}`
-        : (fechaEvento?.id ?? `fecha_${idx}`);
-
-    const card = (
-      <div
-        key={key}
-        onClickCapture={handlePreNavigate}
-        style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 16,
-          padding: 0,
-          overflow: 'hidden',
-          boxShadow: 'none'
-        }}
-      >
-        <EventCard item={fechaEvento} priority={idx < EAGER_MAIN} />
-      </div>
-    );
-
-    if (__DEV__) {
-      try {
-        return card;
-      } catch (e) {
-        __DEV_LOG("renderItem_error", { type: "fechas", idx, id: fechaEvento?.id, error: (e as any)?.message || e });
-        return null;
-      }
-    }
-
-    return card;
-  }, [__DEV__, __DEV_LOG, handlePreNavigate]);
-
-  const shouldLoadFechas = showAll || selectedType === 'fechas';
+  const shouldLoadFechas = selectedType === 'fechas';
   const fechasQuery = useExploreQuery({
     type: 'fechas',
     q: qDeferred || undefined,
@@ -2990,7 +2955,93 @@ export default function ExploreHomeScreen() {
     [filteredFechas, allTags]
   );
 
-  const shouldLoadMaestros = showAll || selectedType === 'maestros' || selectedType === 'clases';
+  React.useEffect(() => {
+    setVisibleCount(INITIAL_LIMIT);
+  }, [selectedType, qDeferred, filters.ritmos, filters.zonas, filters.dateFrom, filters.dateTo, filters.datePreset]);
+
+  const visibleFechas = React.useMemo(
+    () => normalizedFechas.slice(0, visibleCount),
+    [normalizedFechas, visibleCount]
+  );
+  const hasMoreServer = !!fechasQuery.hasNextPage;
+  const hasMoreClient = normalizedFechas.length > visibleCount;
+  const showLoadMoreCard = selectedType === 'fechas' && (hasMoreClient || hasMoreServer);
+
+  const onLoadMoreFechas = React.useCallback(async () => {
+    const nextCount = visibleCount + NEXT_LIMIT;
+    if (normalizedFechas.length >= nextCount) {
+      setVisibleCount(nextCount);
+      return;
+    }
+    if (fechasQuery.hasNextPage && !fechasQuery.isFetchingNextPage) {
+      await fechasQuery.fetchNextPage();
+    }
+    setVisibleCount(nextCount);
+  }, [visibleCount, normalizedFechas.length, fechasQuery]);
+
+  const fechasSliderItems = React.useMemo(
+    () => (showLoadMoreCard ? [...visibleFechas, { __type: "load_more" as const }] : visibleFechas),
+    [showLoadMoreCard, visibleFechas]
+  );
+
+  const renderFechaItem = React.useCallback((fechaEvento: any, idx: number) => {
+    if ((fechaEvento as any)?.__type === "load_more") {
+      return (
+        <LoadMoreCard
+          key="load-more-fechas"
+          onClick={onLoadMoreFechas}
+          loading={!!fechasQuery.isFetchingNextPage}
+          title={t("load_more") || "Cargar más"}
+          subtitle={t("explore_type_sociales") || "Ver más sociales"}
+        />
+      );
+    }
+
+    if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+      __DEV_LOG("renderItem", {
+        type: "fechas",
+        idx,
+        id: fechaEvento?.id,
+        original: (fechaEvento as any)?._original_id,
+        rec: (fechaEvento as any)?._recurrence_index,
+      });
+    }
+
+    const key =
+      (fechaEvento as any)?._recurrence_index !== undefined
+        ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}`
+        : (fechaEvento?.id ?? `fecha_${idx}`);
+
+    const card = (
+      <div
+        key={key}
+        onClickCapture={handlePreNavigate}
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 16,
+          padding: 0,
+          overflow: 'hidden',
+          boxShadow: 'none'
+        }}
+      >
+        <EventCard item={fechaEvento} priority={idx < EAGER_MAIN} />
+      </div>
+    );
+
+    if (__DEV__) {
+      try {
+        return card;
+      } catch (e) {
+        __DEV_LOG("renderItem_error", { type: "fechas", idx, id: fechaEvento?.id, error: (e as any)?.message || e });
+        return null;
+      }
+    }
+
+    return card;
+  }, [__DEV__, __DEV_LOG, handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]);
+
+  const shouldLoadMaestros = selectedType === 'maestros' || selectedType === 'clases';
   const maestrosQuery = useExploreQuery({
     type: 'maestros',
     q: qDeferred || undefined,
@@ -3008,7 +3059,7 @@ export default function ExploreHomeScreen() {
     return flattenQueryData(maestrosQuery.data);
   }, [maestrosQuery.data, shouldLoadMaestros]);
 
-  const shouldLoadOrganizadores = showAll || selectedType === 'organizadores';
+  const shouldLoadOrganizadores = selectedType === 'organizadores';
   const organizadoresQuery = useExploreQuery({
     type: 'organizadores',
     q: qDeferred || undefined,
@@ -3026,7 +3077,7 @@ export default function ExploreHomeScreen() {
     return flattenQueryData(organizadoresQuery.data);
   }, [organizadoresQuery.data, shouldLoadOrganizadores]);
 
-  const shouldLoadAcademias = showAll || selectedType === 'academias' || selectedType === 'clases';
+  const shouldLoadAcademias = selectedType === 'academias' || selectedType === 'clases';
   const academiasQuery = useExploreQuery({
     type: 'academias',
     q: qDeferred || undefined,
@@ -3044,7 +3095,7 @@ export default function ExploreHomeScreen() {
     return flattenQueryData(academiasQuery.data);
   }, [academiasQuery.data, shouldLoadAcademias]);
 
-  const shouldLoadMarcas = showAll || selectedType === 'marcas';
+  const shouldLoadMarcas = selectedType === 'marcas';
   const marcasQuery = useExploreQuery({
     type: 'marcas',
     q: qDeferred || undefined,
@@ -3060,7 +3111,7 @@ export default function ExploreHomeScreen() {
     return flattenQueryData(marcasQuery.data);
   }, [marcasQuery.data, shouldLoadMarcas]);
 
-  const shouldLoadUsuarios = showAll || selectedType === 'usuarios';
+  const shouldLoadUsuarios = selectedType === 'usuarios';
   const usuariosQuery = useExploreQuery({
     type: 'usuarios' as any,
     q: qDeferred || undefined,
@@ -3481,7 +3532,7 @@ export default function ExploreHomeScreen() {
   };
 
   /** Fechas dropdown solo visible cuando Tipo es Sociales (fechas) o Clases. Oculta y resetea fechas para otros tipos. */
-  const showDatesDropdown = selectedType === 'fechas' || selectedType === 'clases' || selectedType === 'all';
+  const showDatesDropdown = selectedType === 'fechas' || selectedType === 'clases';
 
   const TYPE_OPTIONS = [
     { id: 'fechas' as const, labelKey: 'explore_type_sociales' },
@@ -3491,7 +3542,6 @@ export default function ExploreHomeScreen() {
     { id: 'usuarios', labelKey: 'dancers' },
     { id: 'organizadores', labelKey: 'organizers' },
     { id: 'marcas', labelKey: 'brands' },
-    { id: 'all', labelKey: 'all' },
   ];
 
   const setTypeAndClearDatesIfNeeded = React.useCallback(
@@ -3719,7 +3769,7 @@ export default function ExploreHomeScreen() {
                     onClick={() => {
                       handleFilterChange({
                         ...filters,
-                        type: 'all',
+                        type: 'fechas',
                         q: '',
                         ritmos: [],
                         zonas: [],
@@ -3759,7 +3809,7 @@ export default function ExploreHomeScreen() {
                 onClearFilters={() => {
                   handleFilterChange({
                     ...filters,
-                    type: 'all',
+                    type: 'fechas',
                     q: '',
                     ritmos: [],
                     zonas: [],
@@ -4076,7 +4126,7 @@ export default function ExploreHomeScreen() {
                   {normalizedFechas.length > 0 ? (
                     <HorizontalCarousel
                       {...sliderProps}
-                      items={normalizedFechas}
+                      items={fechasSliderItems}
                       renderItem={renderFechaItem}
                     />
                   ) : (
