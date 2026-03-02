@@ -540,7 +540,7 @@ const STYLES = `
     padding-right: env(safe-area-inset-right);
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pan-y;
+    touch-action: auto;
     -webkit-tap-highlight-color: transparent;
     transform: none;
     -webkit-transform: none;
@@ -2146,7 +2146,7 @@ const STYLES = `
     padding-top: 0 !important;
   }
   .explore-container.android-mobile {
-    padding-top: 0 !important;
+    padding-top: var(--topbar-offset) !important;
     margin-top: 0 !important;
   }
   .explore-container.android-mobile .wrap {
@@ -2154,9 +2154,9 @@ const STYLES = `
     margin-top: 0 !important;
   }
   .explore-container.android-mobile .filters-panel {
-    position: sticky !important;
-    top: var(--topbar-offset) !important;
-    z-index: 25;
+    position: relative !important;
+    top: 0 !important;
+    z-index: auto;
     padding-top: 0 !important;
     margin-top: 0 !important;
     transform: none !important;
@@ -2164,6 +2164,23 @@ const STYLES = `
   .explore-container.android-mobile .filters-mobile-trigger-row {
     margin-top: 0 !important;
     padding-top: 0 !important;
+  }
+  /* Android: evitar nested scroll en secciones (rompe pan vertical/horizontal sobre cards) */
+  .explore-container.android-mobile .section-container {
+    overflow: visible !important;
+    overflow-y: visible !important;
+    display: block !important;
+    align-items: initial !important;
+    justify-items: initial !important;
+  }
+  .explore-container.android-mobile .section-container:first-of-type {
+    flex: initial !important;
+    min-height: auto !important;
+  }
+  .explore-container.android-mobile .section-container__main {
+    display: block !important;
+    flex: initial !important;
+    min-height: auto !important;
   }
 `;
 

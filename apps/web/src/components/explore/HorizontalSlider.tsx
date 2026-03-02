@@ -64,7 +64,6 @@ export default function HorizontalSlider<T>({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scrollRafRef = useRef<number | null>(null);
   const navSettleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastScrollLogTsRef = useRef(0);
   const isDraggingRef = useRef(false);
   const isPointerDownRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
@@ -72,7 +71,6 @@ export default function HorizontalSlider<T>({
   const dragStartXRef = useRef(0);
   const dragStartScrollLeftRef = useRef(0);
   const suppressClickUntilRef = useRef(0);
-  const __DEV__ = typeof import.meta !== "undefined" && !!(import.meta as any).env?.DEV;
 
   const canScroll = useMemo(() => (items?.length ?? 0) > 0, [items]);
   const isTouchDevice =
@@ -146,6 +144,7 @@ export default function HorizontalSlider<T>({
 
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const getCarouselItems = useCallback((scroller: HTMLElement) => {
     return Array.from(scroller.querySelectorAll<HTMLElement>("[data-carousel-item]"));
   }, []);
@@ -188,21 +187,10 @@ export default function HorizontalSlider<T>({
     const nearestIndex = getNearestItemIndex(el);
     const nextCanLeft = nearestIndex > 0;
     const nextCanRight = nearestIndex >= 0 && nearestIndex < itemNodes.length - 1;
+    if (nearestIndex >= 0) setActiveIndex(nearestIndex);
     setCanLeft(nextCanLeft);
     setCanRight(nextCanRight);
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log("[HorizontalSlider] nav state", {
-        canLeft: nextCanLeft,
-        canRight: nextCanRight,
-        nearestIndex,
-        itemsCount: itemNodes.length,
-        scrollLeft: Math.round(el.scrollLeft),
-        clientWidth: el.clientWidth,
-        scrollWidth: el.scrollWidth,
-      });
-    }
-  }, [__DEV__, getCarouselItems, getNearestItemIndex, items?.length]);
+  }, [getCarouselItems, getNearestItemIndex, items?.length]);
 
   const scheduleNavStateUpdate = useCallback(() => {
     if (navSettleTimeoutRef.current) {
@@ -234,23 +222,8 @@ export default function HorizontalSlider<T>({
     scrollRafRef.current = requestAnimationFrame(() => {
       scrollRafRef.current = null;
       updateNavState();
-      if (__DEV__) {
-        const now = Date.now();
-        if (now - lastScrollLogTsRef.current >= 500) {
-          lastScrollLogTsRef.current = now;
-          const el = scrollerRef.current;
-          if (el) {
-            // eslint-disable-next-line no-console
-            console.log("[HorizontalSlider] scroll", {
-              scrollLeft: Math.round(el.scrollLeft),
-              clientWidth: el.clientWidth,
-              scrollWidth: el.scrollWidth,
-            });
-          }
-        }
-      }
     });
-  }, [updateNavState, __DEV__]);
+  }, [updateNavState]);
 
   useEffect(() => {
     const el = scrollerRef.current;
@@ -296,6 +269,190 @@ export default function HorizontalSlider<T>({
       el.removeEventListener("wheel", handleWheelNative as any);
     };
   }, [handleWheelNative, allowUserScroll]);
+
+  // Touch fallback (Android/WebView/desktop emulation): if native horizontal scroll
+  // doesn't move, drive scrollLeft manually while preserving vertical page scroll.
+  useEffect(() => {
+    if (!allowUserScroll) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    let startX = 0;
+    let startY = 0;
+    let lastY = 0;
+    let startScrollLeft = 0;
+    let startIndex = 0;
+    let axisLock: "x" | "y" | null = null;
+    let totalDx = 0;
+    let verticalScrollHosts: Array<HTMLElement | Window> = [];
+
+    const findVerticalScrollHost = (node: HTMLElement | null): HTMLElement | null => {
+      let cur: HTMLElement | null = node?.parentElement ?? null;
+      while (cur) {
+        const cs = getComputedStyle(cur);
+        const canScrollY = /(auto|scroll|overlay)/.test(cs.overflowY);
+        if (canScrollY && cur.scrollHeight > cur.clientHeight + 1) return cur;
+        cur = cur.parentElement;
+      }
+      return null;
+    };
+
+    const collectVerticalScrollHosts = (node: HTMLElement | null): Array<HTMLElement | Window> => {
+      const hosts: Array<HTMLElement | Window> = [];
+      const seen = new Set<any>();
+      const pushUnique = (h: HTMLElement | Window | null | undefined) => {
+        if (!h || seen.has(h)) return;
+        seen.add(h);
+        hosts.push(h);
+      };
+
+      // 1) Nearest scrollable ancestor
+      pushUnique(findVerticalScrollHost(node));
+      // 2) App shell scroll container (known host in this app)
+      pushUnique(document.querySelector(".app-shell-content") as HTMLElement | null);
+      // 3) Document scrolling element fallback
+      pushUnique((document.scrollingElement as HTMLElement | null) ?? document.documentElement);
+      // 4) Window as final fallback
+      pushUnique(window);
+      return hosts;
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      const t = e.touches?.[0];
+      if (!t) return;
+      startX = t.clientX;
+      startY = t.clientY;
+      lastY = t.clientY;
+      startScrollLeft = el.scrollLeft;
+      startIndex = Math.max(0, getNearestItemIndex(el));
+      axisLock = null;
+      totalDx = 0;
+      verticalScrollHosts = collectVerticalScrollHosts(el);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.touches?.[0];
+      if (!t) return;
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      totalDx = dx;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (!axisLock) {
+        if (absDx < 8 && absDy < 8) return;
+
+        // Priorizar vertical para no bloquear scroll de página por ruido horizontal.
+        const horizontalDominant = absDx > 18 && absDx > absDy * 1.8;
+        const verticalDominant = absDy > 8 && absDy > absDx * 1.05;
+
+        if (horizontalDominant) {
+          axisLock = "x";
+        } else if (verticalDominant) {
+          axisLock = "y";
+        } else {
+          // Gesto ambiguo: esperar siguiente frame para decidir.
+          return;
+        }
+      }
+
+      if (axisLock === "x") {
+        // Si el gesto muta a vertical tras iniciar, ceder inmediatamente al scroll de página.
+        if (absDy > absDx * 1.15) {
+          axisLock = "y";
+          return;
+        }
+
+        const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+        const next = startScrollLeft - dx;
+        const clamped = Math.max(0, Math.min(maxScrollLeft, next));
+        const atLeftEdgeGoingRight = el.scrollLeft <= 0 && dx > 0;
+        const atRightEdgeGoingLeft = el.scrollLeft >= maxScrollLeft && dx < 0;
+
+        // Si estamos en borde y el gesto "empuja fuera" del carrusel, ceder al scroll vertical de página.
+        if (atLeftEdgeGoingRight || atRightEdgeGoingLeft) {
+          axisLock = "y";
+          return;
+        }
+
+        // Keep horizontal gesture in the carousel.
+        e.preventDefault();
+        el.scrollLeft = clamped;
+      }
+      if (axisLock === "y") {
+        // Fallback: force vertical page scroll even when inner card libs capture gestures.
+        const deltaY = t.clientY - lastY;
+        lastY = t.clientY;
+        if (Math.abs(deltaY) > 0.5) {
+          e.preventDefault();
+          let moved = false;
+          let movedHost: string | null = null;
+          for (const host of verticalScrollHosts) {
+            if (host === window) {
+              const before = window.scrollY;
+              window.scrollBy({ top: -deltaY, left: 0, behavior: "auto" });
+              const after = window.scrollY;
+              if (after !== before) {
+                moved = true;
+                movedHost = "window";
+                break;
+              }
+              continue;
+            }
+
+            const elHost = host as HTMLElement;
+            const before = elHost.scrollTop;
+            elHost.scrollTop -= deltaY;
+            const after = elHost.scrollTop;
+            if (after !== before) {
+              moved = true;
+              movedHost = elHost.className || elHost.tagName.toLowerCase();
+              break;
+            }
+          }
+
+          // Last resort
+          if (!moved) {
+            window.scrollBy({ top: -deltaY, left: 0, behavior: "auto" });
+          }
+        }
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (axisLock === "x") {
+        const nodes = getCarouselItems(el);
+        if (nodes.length > 0) {
+          const swipeThreshold = 28;
+          let targetIndex = getNearestItemIndex(el);
+          if (Math.abs(totalDx) >= swipeThreshold) {
+            targetIndex = Math.max(
+              0,
+              Math.min(nodes.length - 1, startIndex + (totalDx < 0 ? 1 : -1)),
+            );
+          }
+          const targetLeft = Math.max(0, nodes[targetIndex].offsetLeft - getScrollPaddingLeftPx(el));
+          el.scrollTo({ left: targetLeft, behavior: "smooth" });
+          setActiveIndex(targetIndex);
+          scheduleNavStateUpdate();
+        }
+      }
+      axisLock = null;
+      verticalScrollHosts = [];
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [allowUserScroll, getCarouselItems, getNearestItemIndex, getScrollPaddingLeftPx, items?.length, scheduleNavStateUpdate]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = scrollerRef.current;
@@ -384,17 +541,9 @@ export default function HorizontalSlider<T>({
   const getScrollStep = useCallback((scroller: HTMLElement) => {
     const item = scroller.querySelector<HTMLElement>("[data-carousel-item]");
     const gapValue = getGapPx(scroller);
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log("[HorizontalSlider] step probe", {
-        itemWidth: item?.offsetWidth ?? null,
-        gap: gapValue,
-        clientWidth: scroller.clientWidth,
-      });
-    }
     if (item) return item.offsetWidth + gapValue;
     return Math.round(scroller.clientWidth * 0.9);
-  }, [getGapPx, __DEV__]);
+  }, [getGapPx]);
 
   const scrollByCard = useCallback((dir: 1 | -1) => {
     const el = scrollerRef.current;
@@ -412,18 +561,7 @@ export default function HorizontalSlider<T>({
       el.scrollBy({ left: dir * step, behavior: "smooth" });
     }
     scheduleNavStateUpdate();
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log("[HorizontalSlider] nav click", {
-        direction: dir === 1 ? "right" : "left",
-        currentIndex,
-        itemsCount: itemNodes.length,
-        step: Math.round(step),
-        before: Math.round(before),
-        afterTarget: Math.round(before + dir * step),
-      });
-    }
-  }, [getCarouselItems, getNearestItemIndex, getScrollPaddingLeftPx, getScrollStep, scheduleNavStateUpdate, __DEV__]);
+  }, [getCarouselItems, getNearestItemIndex, getScrollPaddingLeftPx, getScrollStep, scheduleNavStateUpdate]);
 
   const navButtonBottomStyle: React.CSSProperties = {
     width: 30,
@@ -597,8 +735,8 @@ export default function HorizontalSlider<T>({
           transform: "none",
           WebkitTransform: "none",
           willChange: isScrolling ? "scroll-position" : "auto",
-          // Permite al browser resolver pan horizontal y vertical naturalmente en Android.
-          touchAction: "pan-x pan-y",
+          // Priorizar scroll vertical del contenedor padre; horizontal se maneja por fallback touch.
+          touchAction: "pan-y",
           // Mouse drag UX
           cursor: enableMouseDrag ? "grab" : "default",
           userSelect: enableMouseDrag ? "none" : "auto",
@@ -612,7 +750,7 @@ export default function HorizontalSlider<T>({
           .horizontal-scroll,
           .horizontal-slider,
           .explore-slider {
-            touch-action: auto;
+            touch-action: pan-y;
             overscroll-behavior-x: contain;
             -webkit-overflow-scrolling: touch;
           }
@@ -623,7 +761,7 @@ export default function HorizontalSlider<T>({
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-x: contain;
-            touch-action: pan-x pan-y;
+            touch-action: pan-y;
           }
           .horizontal-scroll {
             overflow-x: auto;
@@ -662,10 +800,19 @@ export default function HorizontalSlider<T>({
           .horizontal-slider-item {
             scroll-snap-align: start;
             scroll-snap-stop: always;
+            opacity: 0.72;
+            transform: scale(0.965);
+            transition: transform 220ms ease, opacity 220ms ease, filter 220ms ease;
+            filter: saturate(0.92);
+          }
+          .horizontal-slider-item.is-active {
+            opacity: 1;
+            transform: scale(1);
+            filter: saturate(1);
           }
           .horizontal-slider-item,
           .horizontal-slider-item * {
-            touch-action: manipulation;
+            touch-action: pan-y;
           }
           .horizontal-slider-grid--hero > * {
             height: 100%;
@@ -734,7 +881,7 @@ export default function HorizontalSlider<T>({
           }}
         >
           {items?.map((it, idx) => (
-            <div key={(it as any)?.id ?? idx} data-carousel-item className="horizontal-slider-item" style={{ minWidth: 0 }}>
+            <div key={(it as any)?.id ?? idx} data-carousel-item className={`horizontal-slider-item${idx === activeIndex ? " is-active" : ""}`} style={{ minWidth: 0 }}>
               {renderItem(it, idx)}
             </div>
           ))}
