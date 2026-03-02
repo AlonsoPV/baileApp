@@ -63,6 +63,7 @@ export default function HorizontalSlider<T>({
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scrollRafRef = useRef<number | null>(null);
+  const navSettleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrollLogTsRef = useRef(0);
   const isDraggingRef = useRef(false);
   const isPointerDownRef = useRef(false);
@@ -141,12 +142,48 @@ export default function HorizontalSlider<T>({
 
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
+  const getCarouselItems = useCallback((scroller: HTMLElement) => {
+    return Array.from(scroller.querySelectorAll<HTMLElement>("[data-carousel-item]"));
+  }, []);
+
+  const getScrollPaddingLeftPx = useCallback((el: HTMLElement) => {
+    const cs = getComputedStyle(el);
+    const raw = cs.scrollPaddingLeft || "0";
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? n : 0;
+  }, []);
+
+  const getNearestItemIndex = useCallback((scroller: HTMLElement) => {
+    const nodes = getCarouselItems(scroller);
+    if (!nodes.length) return -1;
+    const paddingLeft = getScrollPaddingLeftPx(scroller);
+    const targetLeft = scroller.scrollLeft + paddingLeft;
+    let nearestIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < nodes.length; i += 1) {
+      const distance = Math.abs(nodes[i].offsetLeft - targetLeft);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = i;
+      }
+    }
+    return nearestIndex;
+  }, [getCarouselItems, getScrollPaddingLeftPx]);
+
   const updateNavState = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    const eps = 2;
-    const nextCanLeft = el.scrollLeft > eps;
-    const nextCanRight = el.scrollLeft + el.clientWidth < el.scrollWidth - eps;
+    const itemNodes = getCarouselItems(el);
+    // En móviles/tabs, el slider puede medir 0 en primer render.
+    // Si hay más de 1 item, mantenemos "Siguiente" habilitado de forma provisional.
+    if (el.clientWidth <= 0 || el.scrollWidth <= 0 || itemNodes.length === 0) {
+      setCanLeft(false);
+      setCanRight((items?.length ?? 0) > 1);
+      return;
+    }
+    const nearestIndex = getNearestItemIndex(el);
+    const nextCanLeft = nearestIndex > 0;
+    const nextCanRight = nearestIndex >= 0 && nearestIndex < itemNodes.length - 1;
     setCanLeft(nextCanLeft);
     setCanRight(nextCanRight);
     if (__DEV__) {
@@ -154,12 +191,30 @@ export default function HorizontalSlider<T>({
       console.log("[HorizontalSlider] nav state", {
         canLeft: nextCanLeft,
         canRight: nextCanRight,
+        nearestIndex,
+        itemsCount: itemNodes.length,
         scrollLeft: Math.round(el.scrollLeft),
         clientWidth: el.clientWidth,
         scrollWidth: el.scrollWidth,
       });
     }
-  }, [__DEV__]);
+  }, [__DEV__, getCarouselItems, getNearestItemIndex, items?.length]);
+
+  const scheduleNavStateUpdate = useCallback(() => {
+    if (navSettleTimeoutRef.current) {
+      clearTimeout(navSettleTimeoutRef.current);
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        updateLayoutMetrics();
+        updateNavState();
+      });
+    });
+    navSettleTimeoutRef.current = setTimeout(() => {
+      updateLayoutMetrics();
+      updateNavState();
+    }, 140);
+  }, [updateLayoutMetrics, updateNavState]);
 
   // Detectar scroll activo + actualizar navegación con rAF (evita jank en móviles).
   const handleScroll = useCallback(() => {
@@ -210,6 +265,7 @@ export default function HorizontalSlider<T>({
     }
 
     updateNavState();
+    scheduleNavStateUpdate();
 
     return () => {
       el.removeEventListener("scroll", handleScroll);
@@ -220,8 +276,11 @@ export default function HorizontalSlider<T>({
       if (scrollRafRef.current !== null) {
         cancelAnimationFrame(scrollRafRef.current);
       }
+      if (navSettleTimeoutRef.current) {
+        clearTimeout(navSettleTimeoutRef.current);
+      }
     };
-  }, [handleScroll, updateLayoutMetrics, updateNavState, items?.length]);
+  }, [handleScroll, updateLayoutMetrics, updateNavState, scheduleNavStateUpdate, items?.length]);
 
   useEffect(() => {
     const el = scrollerRef.current;
@@ -339,24 +398,31 @@ export default function HorizontalSlider<T>({
   const scrollByCard = useCallback((dir: 1 | -1) => {
     const el = scrollerRef.current;
     if (!el) return;
+    const itemNodes = getCarouselItems(el);
+    const currentIndex = getNearestItemIndex(el);
+    const scrollPaddingLeft = getScrollPaddingLeftPx(el);
     const step = getScrollStep(el);
     const before = el.scrollLeft;
-    el.scrollBy({ left: dir * step, behavior: "smooth" });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        updateNavState();
-      });
-    });
+    if (itemNodes.length > 0 && currentIndex >= 0) {
+      const nextIndex = Math.max(0, Math.min(itemNodes.length - 1, currentIndex + dir));
+      const targetLeft = Math.max(0, itemNodes[nextIndex].offsetLeft - scrollPaddingLeft);
+      el.scrollTo({ left: targetLeft, behavior: "smooth" });
+    } else {
+      el.scrollBy({ left: dir * step, behavior: "smooth" });
+    }
+    scheduleNavStateUpdate();
     if (__DEV__) {
       // eslint-disable-next-line no-console
       console.log("[HorizontalSlider] nav click", {
         direction: dir === 1 ? "right" : "left",
+        currentIndex,
+        itemsCount: itemNodes.length,
         step: Math.round(step),
         before: Math.round(before),
         afterTarget: Math.round(before + dir * step),
       });
     }
-  }, [getScrollStep, updateNavState, __DEV__]);
+  }, [getCarouselItems, getNearestItemIndex, getScrollPaddingLeftPx, getScrollStep, scheduleNavStateUpdate, __DEV__]);
 
   const navButtonBottomStyle: React.CSSProperties = {
     width: 30,
@@ -463,9 +529,13 @@ export default function HorizontalSlider<T>({
         position: "relative",
         display: "flex",
         flexDirection: "column",
+        width: "100%",
+        maxWidth: "100vw",
+        minWidth: 0,
         gap: navPosition === "bottom" ? 12 : 16,
         flex: navPosition === "bottom" ? 1 : undefined,
         minHeight: navPosition === "bottom" ? 0 : undefined,
+        overflow: "hidden",
         ...style
       }}
     >
@@ -499,11 +569,13 @@ export default function HorizontalSlider<T>({
           position: "relative",
           flex: navPosition === "bottom" ? 1 : undefined,
           minHeight: navPosition === "bottom" ? 0 : undefined,
+          minWidth: 0,
           overflowX: allowUserScroll ? "auto" : "hidden",
           overflowY: "hidden",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           width: "100%",
+          maxWidth: "100%",
           padding: 0,
           // Optimizaciones de scroll para móvil
           WebkitOverflowScrolling: "touch",
@@ -520,8 +592,8 @@ export default function HorizontalSlider<T>({
           transform: "none",
           WebkitTransform: "none",
           willChange: isScrolling ? "scroll-position" : "auto",
-          // Touch: pan-x prioriza scroll horizontal en el slider; pan-y permite scroll vertical en contenido interno
-          touchAction: "pan-x pan-y",
+          // Dejar al navegador resolver gesto horizontal/vertical de forma nativa.
+          touchAction: "auto",
           // Mouse drag UX
           cursor: allowUserScroll ? "grab" : "default",
           userSelect: allowUserScroll ? "none" : "auto",
@@ -535,7 +607,7 @@ export default function HorizontalSlider<T>({
           .horizontal-scroll,
           .horizontal-slider,
           .explore-slider {
-            touch-action: pan-x pan-y;
+            touch-action: auto;
             overscroll-behavior-x: contain;
             -webkit-overflow-scrolling: touch;
           }
@@ -547,7 +619,7 @@ export default function HorizontalSlider<T>({
           .horizontal-slider-nav-overlay { pointer-events: none; }
           .horizontal-slider-nav-overlay .horizontal-slider-nav-row { pointer-events: auto; }
           .horizontal-scroll::-webkit-scrollbar { display: none; }
-          .horizontal-scroll > * { touch-action: pan-x pan-y; }
+          .horizontal-scroll > * { touch-action: auto; }
           @media (max-width: 768px) {
             .horizontal-scroll,
             .horizontal-slider,

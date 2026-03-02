@@ -39,9 +39,8 @@ export const EXPLORE_CARD_STYLES = `
     cursor: pointer;
     /* Default aspect ratio (desktop/tablet). Mobile overrides via --card-ar. +15px altura aprox. */
     --card-ar: 4 / 5.2;
-    /* Permitir swipe horizontal del slider aunque el gesto inicie sobre la card,
-       sin bloquear el scroll vertical de la pantalla. */
-    touch-action: pan-x pan-y;
+    /* Permitir que el navegador resuelva horizontal/vertical sin bloquear vertical. */
+    touch-action: auto;
   }
 
   /* Elementos interactivos: taps sin bloquear scroll */

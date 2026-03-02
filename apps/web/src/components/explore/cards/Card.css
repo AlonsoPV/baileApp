@@ -43,8 +43,8 @@
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
     position: relative;
     cursor: pointer;
-    /* Permite iniciar swipe horizontal desde la card */
-    touch-action: pan-x pan-y;
+    /* Permite que el navegador resuelva horizontal/vertical naturalmente */
+    touch-action: auto;
     /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar. +15px altura aprox. */
     --card-ar: 4 / 5.2;
   }
@@ -402,8 +402,8 @@
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
     position: relative;
     cursor: pointer;
-    /* Permite iniciar swipe horizontal desde la card */
-    touch-action: pan-x pan-y;
+    /* Permite que el navegador resuelva horizontal/vertical naturalmente */
+    touch-action: auto;
     /* Proporción default (desktop/tablet). Mobile la sobreescribe con --card-ar. +15px altura aprox. */
     --card-ar: 4 / 5.2;
   }
