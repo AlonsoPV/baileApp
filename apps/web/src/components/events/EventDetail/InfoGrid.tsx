@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar, MapPin, Copy } from "lucide-react";
+import { Calendar, MapPin, Copy, Ticket } from "lucide-react";
 
 export interface InfoGridProps {
   dateStr: string;
@@ -9,6 +9,7 @@ export interface InfoGridProps {
   mapsUrl: string;
   fullAddress?: string;
   onCopyAddress?: () => void;
+  costsSummary?: string;
 }
 
 export function InfoGrid({
@@ -19,6 +20,7 @@ export function InfoGrid({
   mapsUrl,
   fullAddress,
   onCopyAddress,
+  costsSummary,
 }: InfoGridProps) {
   const locationLabel = [venueName, city].filter(Boolean).join(", ") || venueName || city;
 
@@ -27,18 +29,12 @@ export function InfoGrid({
       <div className="eds-info-card">
         <div className="eds-info-card__row">
           <div className="eds-info-card__icon">
-            <Calendar size={20} strokeWidth={2} />
+            <Ticket size={20} strokeWidth={2} />
           </div>
-          <div className="eds-info-card__label">Fecha y horario</div>
+          <div className="eds-info-card__label">Costos</div>
         </div>
         <div className="eds-info-card__value">
-          {dateStr || "—"}
-          {timeRange && (
-            <>
-              <br />
-              {timeRange}
-            </>
-          )}
+          {costsSummary || "Por confirmar"}
         </div>
       </div>
       <div className="eds-info-card">
@@ -69,6 +65,23 @@ export function InfoGrid({
             >
               <Copy size={18} strokeWidth={2} />
             </button>
+          )}
+        </div>
+      </div>
+      <div className="eds-info-card">
+        <div className="eds-info-card__row">
+          <div className="eds-info-card__icon">
+            <Calendar size={20} strokeWidth={2} />
+          </div>
+          <div className="eds-info-card__label">Fecha y horario</div>
+        </div>
+        <div className="eds-info-card__value">
+          {dateStr || "—"}
+          {timeRange && (
+            <>
+              <br />
+              {timeRange}
+            </>
           )}
         </div>
       </div>

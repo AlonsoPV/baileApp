@@ -465,6 +465,34 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const dateStr = formatHeaderDate(displayYmd || '');
   const timeRange = formatHeaderTimeRange(date.hora_inicio, date.hora_fin);
   const venueName = date.lugar || '';
+  const costsSummary = React.useMemo(() => {
+    const items = Array.isArray((date as any)?.costos) ? (date as any).costos : [];
+    if (!items.length) return "Por confirmar";
+
+    const values = items
+      .map((item: any) => item?.monto ?? item?.precio)
+      .map((raw: any) => {
+        if (raw === null || raw === undefined || raw === "") return 0;
+        if (typeof raw === "number") return Number.isFinite(raw) ? raw : NaN;
+        if (typeof raw === "string") {
+          if (raw.toLowerCase().trim() === "gratis") return 0;
+          const parsed = parseFloat(raw.replace(/[^\d.]/g, ""));
+          return Number.isFinite(parsed) ? parsed : NaN;
+        }
+        return NaN;
+      })
+      .filter((n: number) => Number.isFinite(n));
+
+    if (!values.length) return "Por confirmar";
+    const minValue = Math.min(...values);
+    if (minValue <= 0) return "Gratis";
+
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      maximumFractionDigits: 0,
+    }).format(minValue);
+  }, [date]);
   const mapsUrl = (date.lugar || date.direccion || date.ciudad)
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
         `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
@@ -519,6 +547,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         />
         <div className="eds-content">
           <InfoGrid
+            costsSummary={costsSummary}
             dateStr={dateStr}
             timeRange={timeRange}
             venueName={venueName}

@@ -23,6 +23,10 @@ export default function AppShell() {
   const location = useLocation();
   const { data: isSuperAdmin } = useIsAdmin();
   const { t } = useTranslation();
+  const isAndroid = React.useMemo(
+    () => typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent),
+    []
+  );
 
   const defaultProfileInfo = getDefaultProfileInfo();
 
@@ -38,6 +42,29 @@ export default function AppShell() {
     try { document.body.style.overflow = ""; } catch {}
     try { document.documentElement.style.overflow = ""; } catch {}
   }, [menuOpen]);
+
+  // Sync content top offset with real navbar height to avoid top gap on Android/devices.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const setNavOffset = () => {
+      const nav = document.querySelector('.nav-root') as HTMLElement | null;
+      if (!nav) return;
+      const h = Math.max(0, Math.round(nav.getBoundingClientRect().height));
+      document.documentElement.style.setProperty('--app-navbar-offset', `${h}px`);
+    };
+
+    setNavOffset();
+    const raf = requestAnimationFrame(setNavOffset);
+    window.addEventListener('resize', setNavOffset);
+    window.addEventListener('orientationchange', setNavOffset as EventListener);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', setNavOffset);
+      window.removeEventListener('orientationchange', setNavOffset as EventListener);
+    };
+  }, []);
 
   // Obtener avatar con la misma lógica que UserProfileLive (priorizar p1)
   const avatarUrl = (() => {
@@ -107,14 +134,14 @@ export default function AppShell() {
           overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
-          padding-top: 4.5rem;
+          padding-top: var(--app-navbar-offset, 4.5rem);
           padding-left: 1rem;
           padding-right: 1rem;
           padding-bottom: 0rem;
         }
         @media (max-width: 768px) {
           .app-shell-content {
-            padding-top: calc(64px + max(env(safe-area-inset-top), 0px) + 0px);
+            padding-top: var(--app-navbar-offset, calc(64px + max(env(safe-area-inset-top), 0px)));
             padding-bottom: 0.25rem;
             padding-left: 0.75rem;
             padding-right: 0.75rem;
@@ -124,11 +151,14 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-shell-content {
-            padding-top: calc(60px + max(env(safe-area-inset-top), 0px) + 0px);
+            padding-top: var(--app-navbar-offset, calc(60px + max(env(safe-area-inset-top), 0px)));
             padding-bottom: .25rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
           }
+        }
+        .app-shell-content.android-tight-top {
+          padding-top: max(0px, calc(var(--app-navbar-offset, 60px) - 2px)) !important;
         }
         @media (max-width: 430px) {
           .app-shell-content {
@@ -375,7 +405,7 @@ export default function AppShell() {
       `}</style>
       <div className="app-shell-root">
         <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} isMenuOpen={menuOpen} />
-        <div className="app-shell-content">
+        <div className={`app-shell-content${isAndroid ? ' android-tight-top' : ''}`}>
           <AppBootstrap>
             <Outlet />
           </AppBootstrap>
