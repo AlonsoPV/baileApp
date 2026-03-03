@@ -330,12 +330,12 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
                     />
                   </label>
                   <label style={{ fontSize: 13, fontWeight: 700, opacity: 0.95 }}>
-                    DJs
+                    DJ setlist
                     <textarea
                       value={form.djs}
                       onChange={(e) => setForm({ ...form, djs: e.target.value })}
                       style={{ width: "100%", marginTop: 6, padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.25)", color: "#fff", minHeight: 68 }}
-                      placeholder="Lineup (opcional)"
+                      placeholder="5 bachatas x 1 salsa"
                     />
                   </label>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>

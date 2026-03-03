@@ -24,6 +24,8 @@ const colors = {
   light: '#F5F5F5',
 };
 
+const MAX_RECURRING_WEEKS = 30;
+
 const toAcademyLocation = (loc?: OrganizerLocation | null): AcademyLocation | null => {
   if (!loc) return null;
   return {
@@ -246,7 +248,9 @@ export default function OrganizerEventDateCreateScreen() {
         return `${y}-${m}-${day}`;
       };
 
-      const weeksToCreate = dateForm.repetir_semanal ? Math.max(1, Number(dateForm.semanas_repetir || 12)) : 1;
+      const weeksToCreate = dateForm.repetir_semanal
+        ? Math.max(1, Math.min(MAX_RECURRING_WEEKS, Number(dateForm.semanas_repetir || 12)))
+        : 1;
 
       const created = await (async () => {
         // ✅ Recurrente: crear N ocurrencias reales (una fila por semana)
@@ -511,12 +515,12 @@ export default function OrganizerEventDateCreateScreen() {
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label className="org-editor-field">
-                    DJs presentes
+                    DJ setlist
                   </label>
                   <textarea
                     value={dateForm.djs}
                     onChange={(e) => setDateForm({ ...dateForm, djs: e.target.value })}
-                    placeholder="Ejemplo: DJ Juan | DJ María | DJ Invitado Especial"
+                    placeholder="5 bachatas x 1 salsa"
                     rows={2}
                     className="org-editor-textarea"
                   />
@@ -662,9 +666,15 @@ export default function OrganizerEventDateCreateScreen() {
                     <input
                       type="number"
                       min="1"
-                      max="52"
+                      max={MAX_RECURRING_WEEKS}
                       value={dateForm.semanas_repetir || 4}
-                      onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
+                      onChange={(e) => {
+                        const raw = parseInt(e.target.value, 10);
+                        const next = Number.isFinite(raw)
+                          ? Math.max(1, Math.min(MAX_RECURRING_WEEKS, raw))
+                          : 4;
+                        setDateForm({ ...dateForm, semanas_repetir: next });
+                      }}
                       className="org-editor-input"
                       style={{ color: '#FFFFFF' }}
                     />

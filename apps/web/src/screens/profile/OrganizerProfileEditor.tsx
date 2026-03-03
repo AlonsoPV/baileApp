@@ -63,6 +63,8 @@ const colors = {
   light: '#F5F5F5',
 };
 
+const MAX_RECURRING_WEEKS = 30;
+
 const toAcademyLocation = (loc?: OrganizerLocation | null): AcademyLocation | null => {
   if (!loc) return null;
   return {
@@ -343,7 +345,9 @@ function EventParentCard({
   // Obtener la fecha "efectiva" a usar para clasificación y display (maneja eventos recurrentes)
   const getDisplayFechaYmd = (d: any): string | null => {
     try {
-      // Si es recurrente semanal, calcular la próxima ocurrencia desde hoy
+      // Si la fila ya tiene fecha concreta, esa es la fuente de verdad.
+      if (d.fecha) return String(d.fecha).split('T')[0];
+      // Solo fallback legacy: recurrente sin fecha concreta.
       if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
         const horaInicioStr = d.hora_inicio || '20:00';
         const next = calculateNextDateWithTime(d.dia_semana, horaInicioStr);
@@ -352,8 +356,7 @@ function EventParentCard({
         const day = String(next.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
       }
-      if (!d.fecha) return null;
-      return String(d.fecha).split('T')[0];
+      return null;
     } catch {
       return d?.fecha ? String(d.fecha).split('T')[0] : null;
     }
@@ -821,7 +824,7 @@ export default function OrganizerProfileEditor() {
       showToast('Selecciona una fecha base para generar ocurrencias', 'info');
       return;
     }
-    const semanas = Math.max(1, Math.min(52, dateForm.semanas_repetir || 1));
+    const semanas = Math.max(1, Math.min(MAX_RECURRING_WEEKS, dateForm.semanas_repetir || 1));
     const [year, month, day] = dateForm.fecha.split('-').map(Number);
     const primeraFecha = new Date(year, (month - 1), day);
 
@@ -4920,9 +4923,15 @@ export default function OrganizerProfileEditor() {
                             <input
                               type="number"
                               min="1"
-                              max="52"
+                              max={MAX_RECURRING_WEEKS}
                               value={dateForm.semanas_repetir || 4}
-                              onChange={(e) => setDateForm({ ...dateForm, semanas_repetir: parseInt(e.target.value) || 4 })}
+                              onChange={(e) => {
+                                const raw = parseInt(e.target.value, 10);
+                                const next = Number.isFinite(raw)
+                                  ? Math.max(1, Math.min(MAX_RECURRING_WEEKS, raw))
+                                  : 4;
+                                setDateForm({ ...dateForm, semanas_repetir: next });
+                              }}
                               className="org-editor-input"
                               style={{ width: 90, color: '#FFFFFF' }}
                             />
@@ -4959,7 +4968,7 @@ export default function OrganizerProfileEditor() {
                               ...(baseReady ? enabledStyle : disabledStyle),
                             }}
                           >
-                            {t('generate_weekly', { weeks: Math.max(1, Math.min(52, dateForm.semanas_repetir || 1)) })}
+                            {t('generate_weekly', { weeks: Math.max(1, Math.min(MAX_RECURRING_WEEKS, dateForm.semanas_repetir || 1)) })}
                           </button>
                           <button
                             type="button"

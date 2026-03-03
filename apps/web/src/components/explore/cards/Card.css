@@ -133,6 +133,36 @@
     padding: 14px 14px max(12px, env(safe-area-inset-bottom));
     z-index: 2;
   }
+  .event-setlist-top {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    max-width: calc(100% - 24px);
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(17, 21, 32, 0.72);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    pointer-events: none;
+  }
+  @media (max-width: 480px) {
+    .event-setlist-top {
+      top: 8px;
+      max-width: calc(100% - 16px);
+      font-size: 11px;
+      padding: 6px 10px;
+    }
+  }
   .event-title {
     margin: 0 0 clamp(6px, 1.2vw, 10px);
     font-size: clamp(1.25rem, 3vw, 1.5rem);

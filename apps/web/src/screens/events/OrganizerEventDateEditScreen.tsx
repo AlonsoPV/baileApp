@@ -23,6 +23,8 @@ const colors = {
   light: '#F5F5F5',
 };
 
+const MAX_RECURRING_WEEKS = 30;
+
 const toFormLocation = (loc?: OrganizerLocation | null) => {
   if (!loc) return null;
   return {
@@ -584,7 +586,7 @@ export default function OrganizerEventDateEditScreen() {
       showToast('Configura la fecha base primero', 'info');
       return;
     }
-    const weeks = Math.max(1, Math.min(52, semanasRepetir || 1));
+    const weeks = Math.max(1, Math.min(MAX_RECURRING_WEEKS, semanasRepetir || 1));
     const parseYmd = (ymd: string) => {
       const [y, m, d] = ymd.split('-').map((n) => parseInt(n, 10));
       return new Date(y, (m || 1) - 1, d || 1);
@@ -1385,11 +1387,11 @@ export default function OrganizerEventDateEditScreen() {
                         />
                       </div>
                       <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">DJs presentes</label>
+                <label className="org-editor-field">DJ setlist</label>
                         <textarea
                   value={form.djs || ''}
                   onChange={(e) => setForm({ ...form, djs: e.target.value })}
-                          placeholder="Ejemplo: DJ Juan | DJ María | DJ Invitado Especial"
+                          placeholder="5 bachatas x 1 salsa"
                           rows={2}
                           className="org-editor-textarea"
                         />
@@ -1704,9 +1706,15 @@ export default function OrganizerEventDateEditScreen() {
                             <input
                               type="number"
                               min="1"
-                              max="52"
+                              max={MAX_RECURRING_WEEKS}
                             value={semanasRepetir || 4}
-                            onChange={(e) => setSemanasRepetir(parseInt(e.target.value) || 4)}
+                            onChange={(e) => {
+                              const raw = parseInt(e.target.value, 10);
+                              const next = Number.isFinite(raw)
+                                ? Math.max(1, Math.min(MAX_RECURRING_WEEKS, raw))
+                                : 4;
+                              setSemanasRepetir(next);
+                            }}
                               className="org-editor-input"
                               style={{ width: 90, color: '#FFFFFF' }}
                             />
@@ -1743,7 +1751,7 @@ export default function OrganizerEventDateEditScreen() {
                               ...(baseReady ? enabledStyle : disabledStyle),
                             }}
                           >
-                          🔁 Generar semanal ({Math.max(1, Math.min(52, semanasRepetir || 1))})
+                          🔁 Generar semanal ({Math.max(1, Math.min(MAX_RECURRING_WEEKS, semanasRepetir || 1))})
                           </button>
                           <button
                             type="button"

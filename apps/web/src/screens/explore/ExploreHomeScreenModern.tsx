@@ -705,6 +705,19 @@ const STYLES = `
     stroke-width: 2.25;
     fill: none;
   }
+  .filters-hero-trigger-persistent {
+    position: sticky;
+    top: calc(var(--topbar-offset, 64px) + 10px);
+    z-index: 30;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: max(4px, env(safe-area-inset-right, 0px));
+    margin-bottom: 6px;
+    pointer-events: none;
+  }
+  .filters-hero-trigger-persistent .filters-hero-trigger {
+    pointer-events: auto;
+  }
   .section-container__main {
     position: relative;
     z-index: 1;
@@ -3854,6 +3867,9 @@ export default function ExploreHomeScreen() {
 
       <div className={`explore-container${isMobile && isAndroid ? ' android-mobile' : ''}`}>
         <div className="wrap">
+          <div className="filters-hero-trigger-persistent">
+            {filtersHeaderAction}
+          </div>
           <section
             className={`filters-panel${filtersPanelOpen ? '' : ' is-collapsed'}`}
             role="region"
@@ -4173,7 +4189,6 @@ export default function ExploreHomeScreen() {
               count={normalizedFechas.length}
               sectionId="fechas"
               sectionMinHeight={sectionMinHeight}
-              headerAction={filtersHeaderAction}
             >
               {fechasTimedOut ? (
                 <InlineQueryError
@@ -4211,7 +4226,6 @@ export default function ExploreHomeScreen() {
               count={classesList.length}
               sectionId="clases"
               sectionMinHeight={sectionMinHeight}
-              headerAction={filtersHeaderAction}
             >
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
@@ -4251,7 +4265,6 @@ export default function ExploreHomeScreen() {
               count={academiasData.length}
               sectionId="academias"
               sectionMinHeight={sectionMinHeight}
-              headerAction={filtersHeaderAction}
             >
               <AcademiesSection
                 filters={filters}
@@ -4275,7 +4288,6 @@ export default function ExploreHomeScreen() {
               count={maestrosData.length}
               sectionId="maestros"
               sectionMinHeight={sectionMinHeight}
-              headerAction={filtersHeaderAction}
             >
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
@@ -4367,7 +4379,6 @@ export default function ExploreHomeScreen() {
               count={validUsuarios.length}
               sectionId="usuarios"
               sectionMinHeight={sectionMinHeight}
-              headerAction={filtersHeaderAction}
             >
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -4471,7 +4482,6 @@ export default function ExploreHomeScreen() {
               count={organizadoresData.length}
               sectionId="organizadores"
               sectionMinHeight={sectionMinHeight}
-              headerAction={filtersHeaderAction}
             >
               {organizadoresLoading ? (
                 <div className="cards-grid">
@@ -4567,7 +4577,6 @@ export default function ExploreHomeScreen() {
               count={marcasData.length}
               sectionId="marcas"
               sectionMinHeight={sectionMinHeight}
-              headerAction={filtersHeaderAction}
             >
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>

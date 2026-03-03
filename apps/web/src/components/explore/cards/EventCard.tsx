@@ -19,6 +19,21 @@ interface EventCardProps {
   allTags?: any[] | null;
 }
 
+const resolveEventSetlist = (item: any): string => {
+  const candidates = [
+    item?.djs,
+    item?.evento_djs,
+    item?.events_date?.djs,
+    item?.__ui?.djs,
+  ];
+  for (const value of candidates) {
+    if (typeof value !== "string") continue;
+    const normalized = value.replace(/\s+/g, " ").trim();
+    if (normalized) return normalized;
+  }
+  return "";
+};
+
 /** Card "tonta": usa solo item.__ui precomputado. Cero hooks de datos, cero queries. */
 function EventCardDumb({ item, priority = false }: EventCardProps) {
   const ui = item?.__ui!;
@@ -54,6 +69,7 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
   const organizador = item.organizador_nombre || item.organizer_name;
+  const setlist = React.useMemo(() => resolveEventSetlist(item), [item]);
 
   const formatHHMM = (t?: string) => {
     if (!t) return "";
@@ -77,6 +93,11 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
         whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
         whileTap={{ scale: 0.98 }}
       >
+        {setlist && (
+          <div className="event-setlist-top" title={setlist}>
+            {setlist}
+          </div>
+        )}
         <div className="media">
           {imageUrlFinal && !imageError && (
             <div className="media__bg" style={{ backgroundImage: `url(${imageUrlFinal})` }} aria-hidden />
@@ -225,6 +246,7 @@ function EventCardWithTags({ item, priority = false, allTags: allTagsProp }: Eve
     return s;
   }, [lugar]);
   const organizador = item.organizador_nombre || item.organizer_name;
+  const setlist = React.useMemo(() => resolveEventSetlist(item), [item]);
   const fecha = React.useMemo(() => resolveEventDateYmd(item), [item]);
   const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
@@ -270,6 +292,11 @@ function EventCardWithTags({ item, priority = false, allTags: allTagsProp }: Eve
         whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
         whileTap={{ scale: 0.98 }}
       >
+        {setlist && (
+          <div className="event-setlist-top" title={setlist}>
+            {setlist}
+          </div>
+        )}
         <div className="media">
           {imageUrlFinal && !imageError && (
             <div className="media__bg" style={{ backgroundImage: `url(${imageUrlFinal})` }} aria-hidden />

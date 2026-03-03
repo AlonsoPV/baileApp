@@ -24,6 +24,7 @@ import { useProfileSwitchMetrics } from "../../hooks/useProfileSwitchMetrics";
 import { isEventUpcomingOrToday, getEventPrimaryDate } from "../../utils/eventDateExpiration";
 import { Modal } from "../../components/ui/Modal";
 import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
+import "./UserProfile.css";
 
 
 

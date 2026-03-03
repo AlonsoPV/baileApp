@@ -8,6 +8,7 @@ export const SELECT_EVENTS_CARD = `
   id,
   parent_id,
   nombre,
+  djs,
   fecha,
   dia_semana,
   hora_inicio,

@@ -5,6 +5,7 @@ import { useToast } from "../Toast";
 import { useBulkUpdateEventDates } from "../../hooks/useBulkUpdateEventDates";
 import { uploadEventFlyer } from "../../lib/uploadEventFlyer";
 import { supabase } from "../../lib/supabase";
+import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 
 type OrganizerLocationLite = {
   id?: number;
@@ -88,6 +89,43 @@ function toHHmm(value?: string | null) {
   return String(value);
 }
 
+function toWeekdayNumber(value: unknown): number | null {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (n < 0 || n > 6) return null;
+  return n;
+}
+
+function resolveDisplayYmd(row: EventDateRow): string {
+  const ymdFromRow = String(row.fecha || "").split("T")[0];
+  if (ymdFromRow) return ymdFromRow;
+  try {
+    const diaSemana = toWeekdayNumber((row as any)?.dia_semana);
+    if (diaSemana !== null) {
+      const next = calculateNextDateWithTime(diaSemana, row.hora_inicio || "20:00");
+      const y = next.getFullYear();
+      const m = String(next.getMonth() + 1).padStart(2, "0");
+      const d = String(next.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+  } catch {}
+  return String(row.fecha || "").split("T")[0];
+}
+
+function formatYmdWithWeekdayEs(value?: string | null) {
+  const ymd = String(value || "").split("T")[0];
+  if (!ymd) return "—";
+  try {
+    const [y, m, d] = ymd.split("-").map((n) => parseInt(n, 10));
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return ymd;
+    const dt = new Date(y, m - 1, d);
+    const weekday = dt.toLocaleDateString("es-MX", { weekday: "long" });
+    return `${weekday} · ${ymd}`;
+  } catch {
+    return ymd;
+  }
+}
+
 const Row = React.memo(function Row({
   row,
   selected,
@@ -147,7 +185,7 @@ const Row = React.memo(function Row({
 }) {
   const flyerTone = row.flyer_url ? "ok" : "warn";
   const pubTone = row.estado_publicacion === "publicado" ? "ok" : "muted";
-  const isRecurrent = (row as any)?.dia_semana !== null && (row as any)?.dia_semana !== undefined;
+  const isRecurrent = toWeekdayNumber((row as any)?.dia_semana) !== null;
   return (
     <div
       className="eds-grid eds-row"
@@ -206,7 +244,7 @@ const Row = React.memo(function Row({
             className={`eds-editableDate ${canEditFecha ? "" : "eds-editableDateDisabled"}`}
             style={{ maxWidth: "100%", minWidth: 0 }}
           >
-            <span style={{ opacity: 1 }}>{String(row.fecha).split("T")[0]}</span>
+            <span style={{ opacity: 1 }}>{formatYmdWithWeekdayEs(resolveDisplayYmd(row))}</span>
             {isRecurrent && (
               <span
                 className="eds-recurMark"
