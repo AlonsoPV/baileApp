@@ -143,10 +143,12 @@ function SectionHeader({
   title,
   count,
   subline,
+  actionSlot,
 }: {
   title: string;
   count?: number;
   subline?: string;
+  actionSlot?: React.ReactNode;
 }) {
   return (
     <div
@@ -183,6 +185,7 @@ function SectionHeader({
           <span style={{ fontSize: 0.8, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{subline}</span>
         )}
       </div>
+      {actionSlot && <div className="section-header-actions">{actionSlot}</div>}
     </div>
   );
 }
@@ -622,6 +625,52 @@ const STYLES = `
   .section-header-link {
     flex-shrink: 0;
   }
+  .section-header-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .filters-hero-trigger {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, rgba(41,127,150,0.22) 0%, rgba(235,55,127,0.14) 100%);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
+    box-shadow: 0 6px 16px rgba(0,0,0,.28);
+  }
+  .filters-hero-trigger:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255,255,255,0.32);
+    box-shadow: 0 10px 24px rgba(0,0,0,.34);
+  }
+  .filters-hero-trigger:active {
+    transform: translateY(0);
+  }
+  .filters-hero-trigger__badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: rgba(235, 55, 127, 0.95);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    border: 1px solid rgba(12, 14, 19, 0.65);
+    box-shadow: 0 2px 8px rgba(0,0,0,.32);
+  }
   .section-title-text {
     font-size: 1.875rem;
     font-weight: 800;
@@ -694,6 +743,9 @@ const STYLES = `
     position: relative;
     box-sizing: border-box;
     min-width: 0;
+  }
+  .filters-panel.is-collapsed {
+    display: none;
   }
   .filters-panel::before {
     content: '';
@@ -1819,9 +1871,6 @@ const STYLES = `
     .explore-container .filters-panel {
       flex-shrink: 0;
     }
-    .explore-container .filters-mobile-trigger-row {
-      margin-bottom: 8px !important;
-    }
     .section-container {
       margin-bottom: 2rem !important;
       /* Mobile: pantalla completa, card centrada, fila de navegación */
@@ -2161,10 +2210,6 @@ const STYLES = `
     margin-top: 0 !important;
     transform: none !important;
   }
-  .explore-container.android-mobile .filters-mobile-trigger-row {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
   /* Android: evitar nested scroll en secciones (rompe pan vertical/horizontal sobre cards) */
   .explore-container.android-mobile .section-container {
     overflow: visible !important;
@@ -2302,6 +2347,7 @@ function Section({
   sectionId,
   subline,
   sectionMinHeight,
+  headerAction,
 }: {
   title: string;
   children: React.ReactNode;
@@ -2309,6 +2355,7 @@ function Section({
   sectionId?: string;
   subline?: string;
   sectionMinHeight?: number;
+  headerAction?: React.ReactNode;
 }) {
   return (
     <motion.section
@@ -2325,7 +2372,7 @@ function Section({
       }}
     >
       <div className="section-container__main">
-        <SectionHeader title={title} count={count} subline={subline} />
+        <SectionHeader title={title} count={count} subline={subline} actionSlot={headerAction} />
         {children}
       </div>
     </motion.section>
@@ -2360,7 +2407,6 @@ export default function ExploreHomeScreen() {
     return window.innerWidth < 768;
   });
   const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-  const isDesktop = !isMobile;
   const [hasAppliedDefaults, setHasAppliedDefaults] = React.useState(false);
   const [usingFavoriteFilters, setUsingFavoriteFilters] = React.useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = React.useState<string | null>(null);
@@ -3738,6 +3784,24 @@ export default function ExploreHomeScreen() {
     __DEV_LOG("branches", devBranches);
   }, [__DEV__, __DEV_LOG, devBranches]);
 
+  const filtersHeaderAction = (
+    <button
+      type="button"
+      className="filters-hero-trigger"
+      onClick={() => setFiltersPanelOpen((prev) => !prev)}
+      aria-label={t('filters') || 'Filtros'}
+      aria-expanded={filtersPanelOpen}
+      title={t('filters') || 'Filtros'}
+    >
+      <span aria-hidden style={{ fontSize: 17, lineHeight: 1 }}>🔍</span>
+      {activeFiltersCount > 0 && (
+        <span className="filters-hero-trigger__badge">
+          {activeFiltersCount > 99 ? '99+' : activeFiltersCount}
+        </span>
+      )}
+    </button>
+  );
+
   return (
     <>
       <SeoHead section="explore" />
@@ -3745,90 +3809,14 @@ export default function ExploreHomeScreen() {
 
       <div className={`explore-container${isMobile && isAndroid ? ' android-mobile' : ''}`}>
         <div className="wrap">
-          <section className="filters-panel" role="region" aria-label={t('filters')}>
-            {/* Mobile: botón Filtros que abre panel desplegable */}
-            {isMobile && (
-              <div className="filters-mobile-trigger-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 12 }}>
-                <button
-                  type="button"
-                  className="filters-mobile-btn"
-                  onClick={() => setFiltersPanelOpen(true)}
-                  aria-label={t('filters') || 'Filtros'}
-                  aria-expanded={filtersPanelOpen}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '12px 20px',
-                    borderRadius: 14,
-                    border: '1px solid rgba(41, 127, 150, 0.4)',
-                    background: 'linear-gradient(135deg, rgba(41, 127, 150, 0.2) 0%, rgba(235, 55, 127, 0.1) 100%)',
-                    color: '#fff',
-                    fontSize: 15,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(41, 127, 150, 0.25)',
-                  }}
-                >
-                  <span aria-hidden>⚙</span>
-                  <span>{t('filters') || 'Filtros'}</span>
-                  {activeFiltersCount > 0 && (
-                    <span
-                      style={{
-                        minWidth: 22,
-                        height: 22,
-                        padding: '0 6px',
-                        borderRadius: 999,
-                        background: 'rgba(235, 55, 127, 0.9)',
-                        color: '#fff',
-                        fontSize: 12,
-                        fontWeight: 800,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </button>
-                {activeFiltersCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleFilterChange({
-                        ...filters,
-                        type: 'fechas',
-                        q: '',
-                        ritmos: [],
-                        zonas: [],
-                        datePreset: 'todos',
-                        dateFrom: undefined,
-                        dateTo: undefined,
-                      });
-                      setUsingFavoriteFilters(false);
-                      setOpenFilterDropdown(null);
-                      setFiltersPanelOpen(false);
-                    }}
-                    aria-label={t('clear_all_filters')}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: 12,
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      background: 'rgba(255,255,255,0.08)',
-                      color: '#fff',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {t('clear') || 'Limpiar'}
-                  </button>
-                )}
-              </div>
-            )}
-            {/* Filtros: desktop inline, móvil en drawer cuando filtersPanelOpen */}
-            {(isDesktop || (isMobile && filtersPanelOpen)) && (
+          <section
+            className={`filters-panel${filtersPanelOpen ? '' : ' is-collapsed'}`}
+            role="region"
+            aria-label={t('filters')}
+            aria-hidden={!filtersPanelOpen}
+          >
+            {/* Filtros colapsados globalmente: se despliegan desde icono de lupa en el hero header */}
+            {filtersPanelOpen && (
               <FiltersLayout
                 isMobile={isMobile}
                 onClose={() => setFiltersPanelOpen(false)}
@@ -4135,7 +4123,13 @@ export default function ExploreHomeScreen() {
           </section>
 
           {shouldRenderSection('fechas') && (((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
-            <Section title={t('section_upcoming_scene')} count={normalizedFechas.length} sectionId="fechas" sectionMinHeight={sectionMinHeight}>
+            <Section
+              title={t('section_upcoming_scene')}
+              count={normalizedFechas.length}
+              sectionId="fechas"
+              sectionMinHeight={sectionMinHeight}
+              headerAction={filtersHeaderAction}
+            >
               {fechasTimedOut ? (
                 <InlineQueryError
                   title="La carga está tardando demasiado"
@@ -4167,7 +4161,13 @@ export default function ExploreHomeScreen() {
           )}
 
           {shouldRenderSection('clases') && (((showAll && ((academiasLoading || maestrosLoading) || hasClases || academiasError || maestrosError)) || selectedType === 'clases')) && (
-            <Section title={t('section_recommended_classes')} count={classesList.length} sectionId="clases" sectionMinHeight={sectionMinHeight}>
+            <Section
+              title={t('section_recommended_classes')}
+              count={classesList.length}
+              sectionId="clases"
+              sectionMinHeight={sectionMinHeight}
+              headerAction={filtersHeaderAction}
+            >
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
                 if (loading) return <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>;
@@ -4201,7 +4201,13 @@ export default function ExploreHomeScreen() {
           )}
 
           {shouldRenderSection('academias') && (((showAll && (academiasLoading || hasAcademias)) || selectedType === 'academias')) && (
-            <Section title={t('section_best_academies_zone')} count={academiasData.length} sectionId="academias" sectionMinHeight={sectionMinHeight}>
+            <Section
+              title={t('section_best_academies_zone')}
+              count={academiasData.length}
+              sectionId="academias"
+              sectionMinHeight={sectionMinHeight}
+              headerAction={filtersHeaderAction}
+            >
               <AcademiesSection
                 filters={filters}
                 q={qDeferred || undefined}
@@ -4219,7 +4225,13 @@ export default function ExploreHomeScreen() {
           )}
 
           {shouldRenderSection('maestros') && (((showAll && (maestrosLoading || hasMaestros || maestrosError)) || selectedType === 'maestros')) && (
-            <Section title={t('section_featured_teachers')} count={maestrosData.length} sectionId="maestros" sectionMinHeight={sectionMinHeight}>
+            <Section
+              title={t('section_featured_teachers')}
+              count={maestrosData.length}
+              sectionId="maestros"
+              sectionMinHeight={sectionMinHeight}
+              headerAction={filtersHeaderAction}
+            >
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : maestrosError ? (
@@ -4305,7 +4317,13 @@ export default function ExploreHomeScreen() {
           )}
 
           {shouldRenderSection('usuarios') && (((showAll && (usuariosLoading || hasUsuarios)) || selectedType === 'usuarios')) && (
-            <Section title={t('section_dancers_near_you')} count={validUsuarios.length} sectionId="usuarios" sectionMinHeight={sectionMinHeight}>
+            <Section
+              title={t('section_dancers_near_you')}
+              count={validUsuarios.length}
+              sectionId="usuarios"
+              sectionMinHeight={sectionMinHeight}
+              headerAction={filtersHeaderAction}
+            >
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
@@ -4403,7 +4421,13 @@ export default function ExploreHomeScreen() {
           )}
 
           {shouldRenderSection('organizadores') && (((showAll && (organizadoresLoading || organizadoresData.length > 0 || organizadoresError)) || selectedType === 'organizadores')) && (
-            <Section title={t('section_event_producers')} count={organizadoresData.length} sectionId="organizadores" sectionMinHeight={sectionMinHeight}>
+            <Section
+              title={t('section_event_producers')}
+              count={organizadoresData.length}
+              sectionId="organizadores"
+              sectionMinHeight={sectionMinHeight}
+              headerAction={filtersHeaderAction}
+            >
               {organizadoresLoading ? (
                 <div className="cards-grid">
                   {[...Array(6)].map((_, i) => (
@@ -4493,7 +4517,13 @@ export default function ExploreHomeScreen() {
           )}
 
           {shouldRenderSection('marcas') && (((showAll && (marcasLoading || hasMarcas)) || selectedType === 'marcas')) && (
-            <Section title={t('section_specialized_brands')} count={marcasData.length} sectionId="marcas" sectionMinHeight={sectionMinHeight}>
+            <Section
+              title={t('section_specialized_brands')}
+              count={marcasData.length}
+              sectionId="marcas"
+              sectionMinHeight={sectionMinHeight}
+              headerAction={filtersHeaderAction}
+            >
               {marcasLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
               ) : (
