@@ -37,6 +37,7 @@ export default function UserProfileEditor() {
   // ✅ Hooks always on top (no conditional calls)
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const isAndroid = typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
   const { user, loading: authLoading } = useAuth();
   const { profile, updateProfileFields, refetchProfile } = useUserProfile();
 
@@ -53,6 +54,20 @@ export default function UserProfileEditor() {
     }, 15000);
     return () => window.clearTimeout(timer);
   }, [authLoading]);
+
+  React.useEffect(() => {
+    if (!isAndroid) return;
+    const el = document.querySelector(".app-shell-content") as HTMLElement | null;
+    if (!el) return;
+    const prevTop = el.style.paddingTop;
+    const prevBottom = el.style.paddingBottom;
+    el.style.paddingTop = "0px";
+    el.style.paddingBottom = "0px";
+    return () => {
+      el.style.paddingTop = prevTop;
+      el.style.paddingBottom = prevBottom;
+    };
+  }, [isAndroid]);
 
   const { media, uploadToSlot, removeFromSlot } = useUserMediaSlots();
   const { showToast } = useToast();
@@ -329,7 +344,7 @@ const handleSave = async () => {
 
   return (
     <>
-      <div className="editor-container">
+      <div className={`editor-container${isAndroid ? " editor-container--android-tight" : ""}`}>
         <div className="editor-content">
           <div className="editor-header">
             <button onClick={() => navigate(-1)} className="editor-back-btn">

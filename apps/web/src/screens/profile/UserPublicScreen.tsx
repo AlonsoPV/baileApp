@@ -233,6 +233,7 @@ export const UserProfileLive: React.FC = () => {
   const navigate = useNavigate();
   const { data: allTags } = useTags();
   const { t } = useTranslation();
+  const isAndroid = typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
   const [copied, setCopied] = useState(false);
 
   // Fix media rendering + scroll reset
@@ -243,6 +244,20 @@ export const UserProfileLive: React.FC = () => {
       else window.scrollTo(0, 0);
     } catch {}
   }, [userId]);
+
+  useEffect(() => {
+    if (!isAndroid) return;
+    const el = document.querySelector(".app-shell-content") as HTMLElement | null;
+    if (!el) return;
+    const prevTop = el.style.paddingTop;
+    const prevBottom = el.style.paddingBottom;
+    el.style.paddingTop = "0px";
+    el.style.paddingBottom = "0px";
+    return () => {
+      el.style.paddingTop = prevTop;
+      el.style.paddingBottom = prevBottom;
+    };
+  }, [isAndroid]);
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['user-public', userId],
@@ -648,7 +663,7 @@ export const UserProfileLive: React.FC = () => {
   return (
     <>
      
-      <div className="page-shell" style={{
+      <div className={`page-shell${isAndroid ? " page-shell--android-tight" : ""}`} style={{
         position: 'relative',
         width: '100%',
         minHeight: '100vh',

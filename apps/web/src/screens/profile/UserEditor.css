@@ -15,6 +15,13 @@
     color: var(--db-light);
     padding: 2rem;
   }
+
+  @media (max-width: 768px) {
+    .editor-container--android-tight .section-container {
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
+  }
   
   .editor-content {
     max-width: 1200px;

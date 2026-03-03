@@ -233,6 +233,7 @@ export const UserProfileLive: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const isAndroid = typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
   const { markUIReady } = useProfileSwitchMetrics();
   const { profile, isLoading: profileLoading, updateProfileFields } = useUserProfile();
   const { data: allTags } = useTags();
@@ -258,6 +259,20 @@ export const UserProfileLive: React.FC = () => {
       });
     }
   }, [profileLoading, profile, markUIReady]);
+
+  useEffect(() => {
+    if (!isAndroid) return;
+    const el = document.querySelector(".app-shell-content") as HTMLElement | null;
+    if (!el) return;
+    const prevTop = el.style.paddingTop;
+    const prevBottom = el.style.paddingBottom;
+    el.style.paddingTop = "0px";
+    el.style.paddingBottom = "0px";
+    return () => {
+      el.style.paddingTop = prevTop;
+      el.style.paddingBottom = prevBottom;
+    };
+  }, [isAndroid]);
   const goToProfile = useCallback((id?: string) => {
     if (id) {
       navigate(`/u/${id}`);
@@ -539,8 +554,15 @@ export const UserProfileLive: React.FC = () => {
 
   return (
     <>
-      
-      <div style={{
+      <style>{`
+        @media (max-width: 768px) {
+          .page-shell--user-live-android .section-container {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+          }
+        }
+      `}</style>
+      <div className={isAndroid ? "page-shell--user-live-android" : undefined} style={{
         position: 'relative',
         width: '100%',
         minHeight: '100vh',

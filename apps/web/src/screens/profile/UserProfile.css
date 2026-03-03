@@ -6,6 +6,10 @@
   }
   @media (max-width: 768px) {
     .page-shell { padding-top: 0; }
+    .page-shell--android-tight .section-container {
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
   }
   .profile-banner {
     width: 100%;
