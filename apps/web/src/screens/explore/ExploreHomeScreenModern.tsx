@@ -645,6 +645,10 @@ const STYLES = `
     cursor: pointer;
     transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
     box-shadow: 0 6px 16px rgba(0,0,0,.28);
+    z-index: 2;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .filters-hero-trigger:hover {
     transform: translateY(-1px);
@@ -670,6 +674,15 @@ const STYLES = `
     text-align: center;
     border: 1px solid rgba(12, 14, 19, 0.65);
     box-shadow: 0 2px 8px rgba(0,0,0,.32);
+  }
+  .filters-hero-trigger__icon {
+    width: 18px;
+    height: 18px;
+    display: block;
+    color: #fff;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    fill: none;
   }
   .section-title-text {
     font-size: 1.875rem;
@@ -3793,7 +3806,14 @@ export default function ExploreHomeScreen() {
       aria-expanded={filtersPanelOpen}
       title={t('filters') || 'Filtros'}
     >
-      <span aria-hidden style={{ fontSize: 17, lineHeight: 1 }}>🔍</span>
+      <svg
+        aria-hidden
+        viewBox="0 0 24 24"
+        className="filters-hero-trigger__icon"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20L16.65 16.65" strokeLinecap="round" />
+      </svg>
       {activeFiltersCount > 0 && (
         <span className="filters-hero-trigger__badge">
           {activeFiltersCount > 99 ? '99+' : activeFiltersCount}
