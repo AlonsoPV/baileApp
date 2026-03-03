@@ -158,8 +158,10 @@ function SectionHeader({
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 12,
+        position: 'relative',
         paddingTop: 10,
         paddingBottom: 12,
+        paddingRight: actionSlot ? 56 : 0,
         marginBottom: 8,
         borderBottom: '3px solid transparent',
         borderImage: 'linear-gradient(90deg, rgba(255,157,28,0.6), rgba(168,85,247,0.4), transparent) 1',
@@ -185,7 +187,19 @@ function SectionHeader({
           <span style={{ fontSize: 0.8, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{subline}</span>
         )}
       </div>
-      {actionSlot && <div className="section-header-actions">{actionSlot}</div>}
+      {actionSlot && (
+        <div
+          className="section-header-actions"
+          style={{
+            position: 'absolute',
+            right: 'max(4px, env(safe-area-inset-right, 0px))',
+            top: '50%',
+            transform: 'translateY(-50%)',
+          }}
+        >
+          {actionSlot}
+        </div>
+      )}
     </div>
   );
 }
@@ -622,6 +636,10 @@ const STYLES = `
     margin-bottom: 2rem;
     padding: 0 0.5rem;
   }
+  .section-header--hero {
+    position: relative;
+    z-index: 12;
+  }
   .section-header-link {
     flex-shrink: 0;
   }
@@ -630,6 +648,9 @@ const STYLES = `
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    position: relative;
+    z-index: 14;
+    pointer-events: auto;
   }
   .filters-hero-trigger {
     position: relative;
@@ -645,7 +666,7 @@ const STYLES = `
     cursor: pointer;
     transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
     box-shadow: 0 6px 16px rgba(0,0,0,.28);
-    z-index: 2;
+    z-index: 15;
     -webkit-appearance: none;
     appearance: none;
     -webkit-tap-highlight-color: transparent;
@@ -683,6 +704,10 @@ const STYLES = `
     stroke: currentColor;
     stroke-width: 2.25;
     fill: none;
+  }
+  .section-container__main {
+    position: relative;
+    z-index: 1;
   }
   .section-title-text {
     font-size: 1.875rem;

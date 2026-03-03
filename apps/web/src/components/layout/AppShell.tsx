@@ -121,11 +121,16 @@ export default function AppShell() {
           color: #e5e7eb;
           display: flex;
           flex-direction: column;
-          padding-top: env(safe-area-inset-top);
+          padding-top: 0;
           padding-bottom: 0;
           /* Asegurar que no haya overflow que cause problemas de stacking */
           overflow-x: hidden;
           overflow-y: hidden;
+        }
+        .app-shell-root.android-edge-to-nav {
+          /* body ya puede traer safe-area; en Android esto crea hueco extra bajo navbar */
+          margin-top: calc(-1 * max(env(safe-area-inset-top), 0px));
+          padding-top: 0 !important;
         }
         .app-shell-content {
           flex: 1;
@@ -403,7 +408,7 @@ export default function AppShell() {
           }
         }
       `}</style>
-      <div className="app-shell-root">
+      <div className={`app-shell-root${isAndroid ? ' android-edge-to-nav' : ''}`}>
         <Navbar onMenuToggle={user ? () => setMenuOpen(true) : undefined} isMenuOpen={menuOpen} />
         <div className={`app-shell-content${isAndroid ? ' android-tight-top' : ''}`}>
           <AppBootstrap>
