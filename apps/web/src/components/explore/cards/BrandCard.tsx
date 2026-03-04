@@ -4,6 +4,7 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 
@@ -48,12 +49,10 @@ export default function BrandCard({ item }: Props) {
     (item.nombre_publico as string | undefined) ||
     '';
 
-  const coverWithCacheBust = React.useMemo(() => {
-    if (!cover) return undefined;
-    const separator = String(cover).includes('?') ? '&' : '?';
-    const key = encodeURIComponent(String(coverCacheKey ?? ''));
-    return `${cover}${separator}_t=${key}`;
-  }, [cover, coverCacheKey]);
+  const coverWithCacheBust = React.useMemo(
+    () => withStableCacheBust(cover, coverCacheKey || null),
+    [cover, coverCacheKey]
+  );
 
   const [imageError, setImageError] = React.useState(false);
   const imageUrlFinal = coverWithCacheBust || cover;

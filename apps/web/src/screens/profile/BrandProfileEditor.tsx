@@ -424,7 +424,7 @@ export default function BrandProfileEditor() {
       const ext = processedFile.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `brand/${brandId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from('media').upload(path, processedFile, {
-        cacheControl: '3600', 
+        cacheControl: '31536000', 
         upsert: false, 
         contentType: processedFile.type || undefined,
       });
@@ -466,7 +466,7 @@ export default function BrandProfileEditor() {
     
     const ext = processedFile.name.split('.').pop()?.toLowerCase() || 'png';
     const path = `${brandId}/logo-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('media').upload(path, processedFile, { upsert: true, cacheControl: '3600', contentType: processedFile.type || undefined });
+    const { error } = await supabase.storage.from('media').upload(path, processedFile, { upsert: true, cacheControl: '31536000', contentType: processedFile.type || undefined });
     if (error) { alert(error.message); return; }
     const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
     dispatch({ type:'SET_AVATAR', url: pub.publicUrl });

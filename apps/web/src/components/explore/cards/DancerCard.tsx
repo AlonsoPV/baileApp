@@ -5,6 +5,7 @@ import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 import { resolveSupabaseStoragePublicUrl } from "../../../utils/supabaseStoragePublicUrl";
 // no se usa urls.userLive, pedimos navegar a /app/profile con query
@@ -65,12 +66,10 @@ export default function DancerCard({ item, to }: Props) {
     '';
 
   const coverUrlDirect = toDirectPublicStorageUrl(coverUrl) ?? coverUrl;
-  const coverUrlWithCacheBust = React.useMemo(() => {
-    if (!coverUrlDirect) return undefined;
-    const separator = String(coverUrlDirect).includes('?') ? '&' : '?';
-    const key = encodeURIComponent(String(coverCacheKey ?? ''));
-    return `${coverUrlDirect}${separator}_t=${key}`;
-  }, [coverUrlDirect, coverCacheKey]);
+  const coverUrlWithCacheBust = React.useMemo(
+    () => withStableCacheBust(coverUrlDirect, coverCacheKey || null),
+    [coverUrlDirect, coverCacheKey]
+  );
 
   const [imageError, setImageError] = React.useState(false);
   const imageUrlFinal = coverUrlWithCacheBust || coverUrlDirect;

@@ -26,6 +26,7 @@ import "../../components/events/EventDetail/eventDetailScreen.css";
 import { useToast } from "../../components/Toast";
 // import RequireLogin from "@/components/auth/RequireLogin"; // TEMP: desactivado para permitir acciones sin login
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../utils/imageOptimization";
+import { withStableCacheBust } from "../../utils/cacheBuster";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
@@ -371,13 +372,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     ((date as any)?.updated_at as string | undefined) ||
     (date.created_at as string | undefined) ||
     '';
-  const flyerUrlCacheBusted = React.useMemo(() => {
-    if (!baseFlyerUrl) return null;
-    const separator = baseFlyerUrl.includes('?') ? '&' : '?';
-    // Usar created_at/updated_at como parte del key para que cambie solo cuando cambie en BD
-    const key = encodeURIComponent(flyerCacheKey || '');
-    return `${baseFlyerUrl}${separator}_t=${key}`;
-  }, [baseFlyerUrl, flyerCacheKey]);
+  const flyerUrlCacheBusted = React.useMemo(
+    () => withStableCacheBust(baseFlyerUrl, flyerCacheKey || null) ?? null,
+    [baseFlyerUrl, flyerCacheKey]
+  );
 
   const getRitmoName = (id: number) => {
     return ritmos?.find(r => r.id === id)?.nombre || `Ritmo ${id}`;

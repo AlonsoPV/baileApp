@@ -6,6 +6,7 @@ import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../../utils/mediaSlots";
 import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
 interface AcademyCardProps {
@@ -46,12 +47,10 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
     (item.nombre_publico as string | undefined) ||
     '';
 
-  const primaryAvatarWithCacheBust = React.useMemo(() => {
-    if (!primaryAvatar) return null;
-    const separator = String(primaryAvatar).includes('?') ? '&' : '?';
-    const key = encodeURIComponent(String(avatarCacheKey ?? ''));
-    return `${primaryAvatar}${separator}_t=${key}`;
-  }, [primaryAvatar, avatarCacheKey]);
+  const primaryAvatarWithCacheBust = React.useMemo(
+    () => withStableCacheBust(primaryAvatar, avatarCacheKey || null) ?? null,
+    [primaryAvatar, avatarCacheKey]
+  );
 
   const [imageError, setImageError] = React.useState(false);
   const imageUrlFinal = primaryAvatarWithCacheBust || primaryAvatar;

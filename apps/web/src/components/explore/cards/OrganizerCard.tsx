@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
@@ -28,12 +29,10 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
     (item.nombre_publico as string | undefined) ||
     '';
 
-  const bannerUrlWithCacheBust = React.useMemo(() => {
-    if (!bannerUrl) return undefined;
-    const separator = String(bannerUrl).includes('?') ? '&' : '?';
-    const key = encodeURIComponent(String(bannerCacheKey ?? ''));
-    return `${bannerUrl}${separator}_t=${key}`;
-  }, [bannerUrl, bannerCacheKey]);
+  const bannerUrlWithCacheBust = React.useMemo(
+    () => withStableCacheBust(bannerUrl, bannerCacheKey || null),
+    [bannerUrl, bannerCacheKey]
+  );
 
   const [imageError, setImageError] = React.useState(false);
   const imageUrlFinal = bannerUrlWithCacheBust || bannerUrl;

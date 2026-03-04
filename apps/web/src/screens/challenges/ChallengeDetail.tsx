@@ -127,7 +127,7 @@ export default function ChallengeDetail() {
         const path = `challenges/${id}/submissions/${currentUserId}/${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from('media').upload(path, pendingEditFile, {
           upsert: true,
-          cacheControl: '3600',
+          cacheControl: '31536000',
           contentType: pendingEditFile.type || undefined
         });
         if (upErr) throw upErr;
@@ -160,7 +160,7 @@ export default function ChallengeDetail() {
     
     const { error } = await supabase.storage.from('media').upload(path, processedFile, {
       upsert: true,
-      cacheControl: '3600',
+      cacheControl: '31536000',
       contentType: processedFile.type || undefined
     });
     if (error) throw error;

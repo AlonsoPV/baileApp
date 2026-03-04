@@ -6,6 +6,7 @@ import { useTags } from "../../../hooks/useTags";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { fmtDate } from "../../../utils/format";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
 import { resolveEventDateYmd } from "../../../utils/eventDateDisplay";
@@ -53,11 +54,10 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
     (item._original_id as string | number | undefined) ||
     (item.id as string | number | undefined) ||
     "";
-  const flyerWithCacheBust = React.useMemo(() => {
-    if (!ui.flyerUrl) return undefined;
-    const separator = String(ui.flyerUrl).includes("?") ? "&" : "?";
-    return `${ui.flyerUrl}${separator}_t=${encodeURIComponent(String(flyerCacheKey ?? ""))}`;
-  }, [ui.flyerUrl, flyerCacheKey]);
+  const flyerWithCacheBust = React.useMemo(
+    () => withStableCacheBust(ui.flyerUrl, flyerCacheKey || null),
+    [ui.flyerUrl, flyerCacheKey]
+  );
   const imageUrlFinal = flyerWithCacheBust || ui.flyerUrl;
 
   const [imageError, setImageError] = React.useState(false);
@@ -220,11 +220,10 @@ function EventCardWithTags({ item, priority = false, allTags: allTagsProp }: Eve
     (item._original_id as string | number | undefined) ||
     (item.id as string | number | undefined) ||
     "";
-  const flyerWithCacheBust = React.useMemo(() => {
-    if (!flyer) return undefined;
-    const separator = String(flyer).includes("?") ? "&" : "?";
-    return `${flyer}${separator}_t=${encodeURIComponent(String(flyerCacheKey ?? ""))}`;
-  }, [flyer, flyerCacheKey]);
+  const flyerWithCacheBust = React.useMemo(
+    () => withStableCacheBust(flyer, flyerCacheKey || null),
+    [flyer, flyerCacheKey]
+  );
   const imageUrlFinal = flyerWithCacheBust || flyer;
 
   const [imageError, setImageError] = React.useState(false);

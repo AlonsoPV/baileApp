@@ -19,7 +19,7 @@ async function uploadEventFile(eventId: number, file: File): Promise<MediaItem> 
   console.log('[EventMedia] Uploading file:', { eventId, fileName: processedFile.name, type, path, originalSize: file.size, processedSize: processedFile.size });
 
   const { data, error } = await supabase.storage.from(BUCKET).upload(path, processedFile, {
-    cacheControl: "3600",
+    cacheControl: "31536000",
     upsert: false,
     contentType: processedFile.type || undefined,
   });

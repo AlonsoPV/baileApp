@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useMemo, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@ui/index';
 import { colors, borderRadius, theme } from '../../theme/colors';
@@ -10,6 +10,7 @@ import { useMyOrganizer } from '../../hooks/useOrganizer';
 import { TagChip } from '../../components/TagChip';
 import { isValidDisplayName } from '../../utils/validation';
 import { supabase } from '../../lib/supabase';
+import { withStableCacheBust } from '../../utils/cacheBuster';
 
 const spacing = theme.spacing;
 
@@ -35,6 +36,11 @@ export function Profile() {
   });
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const avatarDisplayUrl = useMemo(
+    () => withStableCacheBust(profile?.avatar_url, profile?.updated_at ?? profile?.created_at ?? (profile as any)?.id) ?? profile?.avatar_url ?? '',
+    [profile?.avatar_url, profile?.updated_at, profile?.created_at, (profile as any)?.id]
+  );
 
   // Initialize form when toggling edit mode
   const startEditing = () => {
@@ -112,8 +118,6 @@ export function Profile() {
         }
 
         avatarUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
-        // Add timestamp to force cache refresh
-        avatarUrl += `?t=${Date.now()}`;
       }
 
       // Preparar patch para guardar (el hook se encarga de merge y normalización)
@@ -224,7 +228,7 @@ export function Profile() {
                 />
               ) : profile?.avatar_url ? (
                 <img
-                  src={profile.avatar_url}
+                  src={avatarDisplayUrl}
                   alt="Avatar"
                   style={{
                     width: '100px',
@@ -257,7 +261,7 @@ export function Profile() {
               // In view mode, always show saved avatar
               profile?.avatar_url ? (
                 <img
-                  src={profile.avatar_url}
+                  src={avatarDisplayUrl}
                   alt="Avatar"
                   style={{
                     width: '100px',

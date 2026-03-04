@@ -86,7 +86,7 @@ export default function ChallengeNew() {
         const path = `challenges/${id}/cover-${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from('media').upload(path, processedCoverFile, {
           upsert: true,
-          cacheControl: '3600',
+          cacheControl: '31536000',
           contentType: processedCoverFile.type || undefined
         });
         if (upErr) {
@@ -105,7 +105,7 @@ export default function ChallengeNew() {
         const path = `challenges/${id}/owner-video-${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from('media').upload(path, pendingVideoFile, {
           upsert: true,
-          cacheControl: '3600',
+          cacheControl: '31536000',
           contentType: pendingVideoFile.type || undefined
         });
         if (upErr) {

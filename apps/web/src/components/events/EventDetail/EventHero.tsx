@@ -1,5 +1,6 @@
 import React from "react";
 import { Share2 } from "lucide-react";
+import { withStableCacheBust } from "@/utils/cacheBuster";
 export interface EventHeroProps {
   title: string;
   flyerUrl?: string | null;
@@ -27,7 +28,7 @@ export function EventHero({
   toDirectUrl = (u) => u,
 }: EventHeroProps) {
   const displayUrl = flyerUrl
-    ? (flyerCacheKey ? `${flyerUrl}${flyerUrl.includes("?") ? "&" : "?"}_t=${encodeURIComponent(flyerCacheKey)}` : flyerUrl)
+    ? (withStableCacheBust(flyerUrl, flyerCacheKey || null) ?? flyerUrl)
     : null;
   const src = displayUrl ? toDirectUrl(displayUrl) || displayUrl : null;
 

@@ -33,6 +33,7 @@ import {
   ExternalLink,
   MapPin,
   Music2,
+  Share2,
 } from 'lucide-react';
 
 type SourceType = 'teacher' | 'academy';
@@ -673,6 +674,26 @@ export default function ClassPublicScreen() {
   const mapsQuery = encodeURIComponent(`${(ubicacion as any)?.nombre ?? ''} ${(ubicacion as any)?.direccion ?? ''} ${(ubicacion as any)?.ciudad ?? ''}`.trim());
   const mapsHref = mapsQuery ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}` : undefined;
 
+  const handleShare = React.useCallback(async () => {
+    const title = `${classTitle} | ${creatorName}`;
+    const text = t('class_with_creator', { title: classTitle, creator: creatorName });
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title, text, url: classUrl });
+        showToast(t('shared_successfully', 'Enlace compartido'), 'success');
+      } catch (e) {
+        if ((e as Error)?.name !== 'AbortError') showToast(t('share_failed', 'No se pudo compartir'), 'info');
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(classUrl);
+      showToast(t('link_copied', 'Enlace copiado'), 'success');
+    } catch {
+      showToast(t('share_failed', 'No se pudo compartir'), 'info');
+    }
+  }, [classTitle, creatorName, classUrl, showToast, t]);
+
   return (
     <>
       <SeoHead
@@ -1131,9 +1152,12 @@ export default function ClassPublicScreen() {
           border: 1px solid rgba(255,255,255,0.08);
           background: linear-gradient(180deg, #1C2B3D 0%, #18273A 100%);
           box-shadow: 0 22px 60px rgba(0,0,0,0.55);
-          height: clamp(220px, 30vw, 320px);
+          min-height: clamp(280px, 38vw, 360px);
           margin-bottom: 16px;
-          --class-hero-avatar-size: clamp(120px, 16vw, 152px);
+          --class-hero-avatar-size: clamp(100px, 18vw, 168px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
         .class-hero__bg {
           position: absolute;
@@ -1162,11 +1186,49 @@ export default function ClassPublicScreen() {
         .class-hero__inner {
           position: relative;
           z-index: 1;
-          height: 100%;
-          padding: 18px 18px 18px 18px;
-          display: grid;
-          grid-template-columns: 1fr;
+          width: 100%;
+          min-height: 100%;
+          padding: 18px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 10px;
+          box-sizing: border-box;
+          flex-shrink: 0;
+        }
+        .class-hero__top {
+          display: flex;
+          justify-content: space-between;
           align-items: center;
+          flex-shrink: 0;
+        }
+        .class-hero__back,
+        .class-hero__share {
+          min-width: 36px;
+          min-height: 36px;
+          padding: 0 10px;
+          font-size: 0.85rem;
+          font-weight: 800;
+        }
+        .class-hero__share { padding: 0; }
+        .class-hero__main {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          gap: 20px;
+          align-items: center;
+          min-width: 0;
+          flex-shrink: 0;
+        }
+        .class-hero__title {
+          margin: 0;
+          color: #fff;
+          font-weight: 900;
+          letter-spacing: -0.03em;
+          line-height: 1.06;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-size: clamp(3rem, 4.2vw, 2.6rem);
+          min-width: 0;
         }
         .class-hero__avatar {
           width: var(--class-hero-avatar-size);
@@ -1177,7 +1239,6 @@ export default function ClassPublicScreen() {
           box-shadow: 0 18px 46px rgba(0,0,0,0.55);
           overflow: hidden;
           justify-self: end;
-          align-self: center;
         }
         .class-hero__avatar img {
           width: 100%;
@@ -1185,43 +1246,27 @@ export default function ClassPublicScreen() {
           object-fit: cover;
           display: block;
         }
-        .class-hero__text {
-          display: grid;
-          grid-template-columns: 1fr var(--class-hero-avatar-size);
-          gap: 16px;
-          align-items: start;
-          min-width: 0;
+        .class-hero__creator {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.68);
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          flex-shrink: 0;
         }
-        .class-hero__copy { min-width: 0; }
+        .class-hero__creator a {
+          color: rgba(255,255,255,0.86);
+          text-decoration: none;
+          font-weight: 700;
+          border-bottom: 2px solid rgba(255,255,255,0.18);
+        }
         @media (max-width: 520px) {
-          .class-hero__text {
+          .class-hero__main {
             grid-template-columns: 1fr;
           }
           .class-hero__avatar {
             justify-self: start;
           }
-        }
-        .class-hero__title {
-          margin: 0 0 6px 0;
-          color: #fff;
-          font-weight: 900;
-          letter-spacing: -0.03em;
-          line-height: 1.06;
-          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          font-size: clamp(1.65rem, 4.2vw, 2.6rem);
-        }
-        .class-hero__subtitle {
-          margin: 0 0 12px 0;
-          color: rgba(255,255,255,0.68);
-          font-size: 0.95rem;
-          font-weight: 600;
-          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        }
-        .class-hero__subtitle a {
-          color: rgba(255,255,255,0.86);
-          text-decoration: none;
-          font-weight: 700;
-          border-bottom: 2px solid rgba(255,255,255,0.18);
         }
         .class-chips-row {
           display: flex;
@@ -1291,9 +1336,9 @@ export default function ClassPublicScreen() {
           border-radius: 14px;
           display: grid;
           place-items: center;
-          background: rgba(122, 108, 255, 0.14);
-          border: 1px solid rgba(122, 108, 255, 0.20);
-          color: rgba(122, 108, 255, 0.98);
+          background: #297F96;
+          border: 1px solid rgba(41, 127, 150, 0.4);
+          color: #fff;
           box-shadow: 0 12px 26px rgba(0,0,0,0.22);
         }
         .class-info-meta {
@@ -1345,6 +1390,7 @@ export default function ClassPublicScreen() {
           gap: 12px;
           flex-wrap: wrap;
           align-items: center;
+          justify-content: center;
         }
 
         /* Ocultar media del card (solo esta pantalla) */
@@ -1366,71 +1412,35 @@ export default function ClassPublicScreen() {
           <div className="class-hero__accent" aria-hidden />
 
           <div className="class-hero__inner">
-            <div className="class-hero__text">
-              <div className="class-hero__copy">
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate(creatorLink)}
-                    className="class-info-action"
-                    aria-label={t('back', 'Volver')}
-                    title={t('back', 'Volver')}
-                    style={{ padding: '0 14px', fontWeight: 900 }}
-                  >
-                    ← {t('back')}
-                  </motion.button>
-                </div>
+            {/* Fila 1: Volver (izq) | Compartir (der) */}
+            <div className="class-hero__top">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate(creatorLink)}
+                className="class-info-action class-hero__back"
+                aria-label={t('back', 'Volver')}
+                title={t('back', 'Volver')}
+              >
+                ← {t('back')}
+              </motion.button>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleShare}
+                className="class-info-action class-hero__share"
+                aria-label={t('share', 'Compartir')}
+                title={t('share', 'Compartir')}
+              >
+                <Share2 size={20} aria-hidden />
+              </motion.button>
+            </div>
 
-                <h1 className="class-hero__title">{classTitle}</h1>
-                <p className="class-hero__subtitle">
-                  {t('by', 'por')}{' '}
-                  <Link to={creatorLink}>
-                    {creatorName}
-                  </Link>
-                </p>
-
-                <ul className="class-chips-row" aria-label={t('filters', 'Detalles')}>
-                  {ritmoPrincipalLabel && (
-                    <li className="class-chip class-chip--ritmo" title={ritmoPrincipalLabel}>
-                      <Music2 size={18} aria-hidden />
-                      <span>{ritmoPrincipalLabel}</span>
-                    </li>
-                  )}
-                  {nivelLabel && (
-                    <li className="class-chip class-chip--nivel" title={nivelLabel}>
-                      <BarChart3 size={18} aria-hidden />
-                      <span>{nivelLabel}</span>
-                    </li>
-                  )}
-                  {!!dayLabelLong && (
-                    <li className="class-chip class-chip--date" title={dayLabelLong}>
-                      <CalendarDays size={18} aria-hidden />
-                      <span>{dayLabelLong}</span>
-                    </li>
-                  )}
-                  {!!timeLabel && (
-                    <li className="class-chip class-chip--time" title={timeLabel}>
-                      <Clock size={18} aria-hidden />
-                      <span>{timeLabel}</span>
-                    </li>
-                  )}
-                  {!!locationLabel && (
-                    <li className="class-chip class-chip--location" title={locationLabel}>
-                      <MapPin size={18} aria-hidden />
-                      <span>{locationLabel}</span>
-                    </li>
-                  )}
-                  {!!costLabel && (
-                    <li className="class-chip class-chip--cost" title={costLabel}>
-                      <DollarSign size={18} aria-hidden />
-                      <span>{costLabel}</span>
-                    </li>
-                  )}
-                </ul>
-              </div>
-
+            {/* Fila 2: Nombre clase (col 1) | Imagen (col 2) */}
+            <div className="class-hero__main">
+              <h1 className="class-hero__title">{classTitle}</h1>
               <div className="class-hero__avatar">
                 <img
                   src={heroAvatarError ? SEO_LOGO_URL : avatarUri}
@@ -1439,6 +1449,14 @@ export default function ClassPublicScreen() {
                 />
               </div>
             </div>
+
+            {/* Fila 3: Academia o maestro */}
+            <p className="class-hero__creator">
+              {t('by', 'por')}{' '}
+              <Link to={creatorLink}>
+                {creatorName}
+              </Link>
+            </p>
           </div>
         </motion.section>
 

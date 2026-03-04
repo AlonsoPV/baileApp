@@ -18,7 +18,7 @@ async function uploadTeacherFile(teacherId: number, file: File): Promise<MediaIt
   const path = `teacher/${teacherId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
   const { data, error } = await supabase.storage.from(BUCKET).upload(path, processedFile, {
-    cacheControl: "3600",
+    cacheControl: "31536000",
     upsert: false,
     contentType: processedFile.type || undefined,
   });

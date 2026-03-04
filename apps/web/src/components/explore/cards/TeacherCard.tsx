@@ -5,6 +5,7 @@ import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
 import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
 export default function TeacherCard({ item }: { item: any }) {
@@ -44,12 +45,10 @@ export default function TeacherCard({ item }: { item: any }) {
     (item.nombre_publico as string | undefined) ||
     '';
 
-  const bannerUrlWithCacheBust = React.useMemo(() => {
-    if (!bannerUrl) return undefined;
-    const separator = String(bannerUrl).includes('?') ? '&' : '?';
-    const key = encodeURIComponent(String(bannerCacheKey ?? ''));
-    return `${bannerUrl}${separator}_t=${key}`;
-  }, [bannerUrl, bannerCacheKey]);
+  const bannerUrlWithCacheBust = React.useMemo(
+    () => withStableCacheBust(bannerUrl, bannerCacheKey || null),
+    [bannerUrl, bannerCacheKey]
+  );
 
   const [imageError, setImageError] = React.useState(false);
   const imageUrlFinal = bannerUrlWithCacheBust || bannerUrl;

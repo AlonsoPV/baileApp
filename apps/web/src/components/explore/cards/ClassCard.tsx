@@ -4,6 +4,7 @@ import LiveLink from '../../LiveLink';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
 import { toDirectPublicStorageUrl, logCardImage } from '../../../utils/imageOptimization';
+import { withStableCacheBust } from '../../../utils/cacheBuster';
 import { getLocaleFromI18n } from '../../../utils/locale';
 import { useTranslation } from 'react-i18next';
 import "./Card.css";
@@ -87,12 +88,10 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
     (item.titulo as string | undefined) ||
     '';
 
-  const bgWithCacheBust = React.useMemo(() => {
-    if (!bg) return undefined;
-    const separator = String(bg).includes('?') ? '&' : '?';
-    const key = encodeURIComponent(String(bgCacheKey ?? ''));
-    return `${bg}${separator}_t=${key}`;
-  }, [bg, bgCacheKey]);
+  const bgWithCacheBust = React.useMemo(
+    () => withStableCacheBust(bg, bgCacheKey || null),
+    [bg, bgCacheKey]
+  );
 
   const [imageError, setImageError] = React.useState(false);
   const imageUrlFinal = bgWithCacheBust || bg;

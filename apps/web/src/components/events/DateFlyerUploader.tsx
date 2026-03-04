@@ -1,11 +1,14 @@
 import React, { useRef, useState, useMemo } from "react";
 import { uploadEventFlyer } from "../../lib/uploadEventFlyer";
+import { withStableCacheBust } from "../../utils/cacheBuster";
 
 type Props = {
   value?: string | null;
   onChange: (url: string | null) => void;
   dateId?: number;     // opcional para nombrado
   parentId?: number;   // opcional para nombrado
+  /** Versión estable para cache-bust (ej. date.updated_at). Si no se pasa, la URL se muestra sin query. */
+  version?: string | number | null;
   onStatusChange?: (status: 'PENDING' | 'UPLOADING' | 'DONE' | 'ERROR', errorMessage?: string) => void;
   /**
    * Permite que el contenedor espere a que termine el upload antes de guardar (evita guardar sin flyer).
@@ -19,21 +22,18 @@ export default function DateFlyerUploader({
   onChange,
   dateId,
   parentId,
+  version,
   onStatusChange,
   onUploadPromiseChange,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  
-  // Agregar timestamp solo cuando cambia el valor para evitar caché del navegador
-  const imageUrlWithCacheBust = useMemo(() => {
-    if (!value) return null;
-    // Si la URL ya tiene query params, agregar el timestamp como otro param
-    // Si no, agregarlo como el primer query param
-    const separator = value.includes('?') ? '&' : '?';
-    return `${value}${separator}_t=${Date.now()}`;
-  }, [value]);
+
+  const imageUrlWithCacheBust = useMemo(
+    () => (value ? (withStableCacheBust(value, version ?? null) ?? value) : null),
+    [value, version]
+  );
 
   const handlePick = () => inputRef.current?.click();
 
@@ -113,7 +113,7 @@ export default function DateFlyerUploader({
                 console.error('[DateFlyerUploader] Error loading image:', imageUrlWithCacheBust);
                 // Si falla con cache bust, intentar sin él
                 const img = e.currentTarget;
-                if (img.src.includes('_t=')) {
+                if (value && (img.src.includes('_t=') || img.src.includes('v='))) {
                   img.src = value;
                 }
               }}
