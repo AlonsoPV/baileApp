@@ -10,6 +10,16 @@ type MediaItemWithSlot = MediaItem & { slot?: string };
 // Usar el bucket 'media' existente con prefijo 'academy/'
 const BUCKET = "media";
 
+function safeRandomId(): string {
+  try {
+    const c = (globalThis as any)?.crypto;
+    if (c?.randomUUID && typeof c.randomUUID === "function") {
+      return c.randomUUID();
+    }
+  } catch {}
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 // Helper to upload to media bucket with academy prefix
 async function uploadAcademyFile(academyId: number, file: File): Promise<MediaItem> {
   // Redimensionar imagen si es necesario (máximo 800px de ancho)
@@ -17,7 +27,7 @@ async function uploadAcademyFile(academyId: number, file: File): Promise<MediaIt
   
   const ext = processedFile.name.split(".").pop()?.toLowerCase() || "bin";
   const type: "image" | "video" = processedFile.type.startsWith("image/") ? "image" : "video";
-  const path = `academy/${academyId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const path = `academy/${academyId}/${Date.now()}-${safeRandomId()}.${ext}`;
 
   console.log('[AcademyMediaStorage] Uploading file:', { academyId, fileName: processedFile.name, type, path, originalSize: file.size, processedSize: processedFile.size });
 

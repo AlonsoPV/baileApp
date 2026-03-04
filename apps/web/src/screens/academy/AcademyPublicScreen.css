@@ -7,6 +7,43 @@
   border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: rgba(0, 0, 0, 0.3) 0px 8px 32px; backdrop-filter: blur(10px); transform: none;
 }
+.academy-banner.glass-card-container {
+  overflow: hidden;
+  background: linear-gradient(
+    165deg,
+    rgba(8, 8, 14, 0.98) 0%,
+    rgba(14, 12, 22, 0.97) 35%,
+    rgba(10, 8, 16, 0.98) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.academy-banner.glass-card-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(125deg, rgba(255,255,255,0.06) 0%, transparent 25%, transparent 60%),
+    linear-gradient(145deg, rgba(255,255,255,0.08) 0%, transparent 30%),
+    linear-gradient(165deg, rgba(255,255,255,0.04) 0%, transparent 40%);
+  pointer-events: none;
+}
+.academy-banner.glass-card-container::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 45%;
+  height: 50%;
+  background: radial-gradient(
+    ellipse 80% 80% at 90% 100%,
+    rgba(255,255,255,0.03) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
 .academy-container h2,
 .academy-container h3 {
   color: #fff;
@@ -18,16 +55,51 @@
   display: flex; align-items: center; gap: 0.5rem;
   font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
-.academy-banner-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center; }
+.academy-banner-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: start;
+  text-align: left;
+}
 .academy-banner-avatar {
   width: 200px; height: 200px; border-radius: 50%; overflow: hidden;
-  border: 6px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  border: 4px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
   background: linear-gradient(135deg, #1E88E5, #FF7043);
-  display: flex; align-items: center; justifyContent: center;
+  display: flex; align-items: center; justify-content: center;
   font-size: 4rem; font-weight: 700; color: white;
 }
 .academy-banner-avatar-fallback { font-size: 6rem; }
+.academy-hero-top-actions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.academy-hero-share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(50, 50, 58, 0.8);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+}
+.academy-hero-share-btn:hover {
+  background: rgba(70, 70, 80, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+}
 @media (max-width: 768px) {
   .academy-container { max-width: 100% !important; padding: .25rem !important; }
   .academy-banner { border-radius: 16px !important; padding: 1.5rem 1rem !important; margin: 0 !important; }
@@ -105,7 +177,7 @@
   font-size: 0.9rem;
   opacity: 0.8;
   margin: 0.25rem 0 0 0;
-  fontWeight: 500;
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }

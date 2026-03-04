@@ -109,6 +109,7 @@ export default function UserProfileEditor() {
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [removing, setRemoving] = useState<{ [key: string]: boolean }>({});
   const [showFilterPreferences, setShowFilterPreferences] = useState(false);
+  const [isSocialSectionCollapsed, setIsSocialSectionCollapsed] = useState(false);
 
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => resolveSupabaseStoragePublicUrl(maybePath);
 
@@ -466,11 +467,24 @@ const handleSave = async () => {
 
                 <div className="row-bottom">
                   <div className="row-bottom-header">
-                    <h4 className="subtitle">{t("social_networks")}</h4>
-                    <span className="tag">{t("optional")}</span>
+                    <div className="row-bottom-title-group">
+                      <h4 className="subtitle">{t("social_networks")}</h4>
+                      <span className="tag">{t("optional")}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="row-bottom-toggle"
+                      onClick={() => setIsSocialSectionCollapsed((prev) => !prev)}
+                      aria-expanded={!isSocialSectionCollapsed}
+                      aria-controls="user-social-networks-list"
+                      title={isSocialSectionCollapsed ? "Expandir" : "Colapsar"}
+                    >
+                      {isSocialSectionCollapsed ? "▾" : "▴"}
+                    </button>
                   </div>
 
-                  <div className="social-list">
+                  {!isSocialSectionCollapsed && (
+                  <div className="social-list" id="user-social-networks-list">
                     <label className="field">
                       <span className="field-icon">
                         <FaInstagram size={18} />
@@ -551,6 +565,7 @@ const handleSave = async () => {
                       </div>
                     </label>
                   </div>
+                  )}
                 </div>
               </div>
             </div>

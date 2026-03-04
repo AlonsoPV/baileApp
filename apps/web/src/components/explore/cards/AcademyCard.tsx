@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
-import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../../utils/mediaSlots";
 import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
@@ -61,23 +60,6 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
   const placeholderReason = !primaryAvatar ? 'URL vacía' : imageError ? 'Image load failed' : '';
   logCardImage('academia', id, imageUrlFinal ?? undefined, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
 
-  // Mapear ritmos por catálogo (ritmos_seleccionados) o por ids numéricos (ritmos/estilos)
-  const ritmoNombres: string[] = (() => {
-    try {
-      const labelByCatalogId = new Map<string, string>();
-      RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
-      const selectedCatalog: string[] = Array.isArray(item?.ritmos_seleccionados) ? item.ritmos_seleccionados : [];
-      if (selectedCatalog.length > 0) {
-        return selectedCatalog.map((id: string) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
-      }
-      const ritmoIds: number[] = (item.ritmos && Array.isArray(item.ritmos) ? item.ritmos : (item.estilos && Array.isArray(item.estilos) ? item.estilos : []));
-      return (ritmoIds || [])
-        .map((rid: number) => allTags?.find((t: any) => t.id === rid && t.tipo === 'ritmo')?.nombre)
-        .filter(Boolean);
-    } catch {
-      return [];
-    }
-  })();
   const zonaNombres: string[] = (item.zonas || [])
     .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
     .filter(Boolean);
@@ -133,9 +115,6 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
             <div className="explore-card-meta">
               {zonaNombres.slice(0, 1).map((z: string, i: number) => (
                 <div key={`z-${i}`} className="explore-card-tag">📍 {z}</div>
-              ))}
-              {ritmoNombres.slice(0, 1).map((r: string, i: number) => (
-                <div key={`r-${i}`} className="explore-card-tag">🎵 {r}</div>
               ))}
             </div>
           </div>

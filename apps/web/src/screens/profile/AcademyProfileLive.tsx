@@ -701,7 +701,10 @@ export default function AcademyProfileLive() {
           style={{
             position: 'relative',
             margin: '0 auto',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            background: 'linear-gradient(165deg, rgba(8, 8, 14, 0.98) 0%, rgba(14, 12, 22, 0.97) 35%, rgba(10, 8, 16, 0.98) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)'
           }}
         >
           {/* Botón Volver a inicio */}
@@ -751,7 +754,41 @@ export default function AcademyProfileLive() {
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </motion.button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
+          <div
+            className="academy-hero-top-actions"
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              zIndex: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <button
+              aria-label="Compartir perfil"
+              title="Compartir"
+              onClick={onShare}
+              className="academy-hero-share-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(50, 50, 58, 0.8)',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: '1.1rem'
+              }}
+            >
+              📤
+            </button>
+          </div>
+          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 64, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
           <div className="academy-banner-grid">
             <div style={{
               display: 'flex',
@@ -786,7 +823,7 @@ export default function AcademyProfileLive() {
                   </div>
                 )}
               </div>
-              {/* Badge de verificación y botón de compartir inline */}
+              {/* Badge de verificación inline */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -822,28 +859,6 @@ export default function AcademyProfileLive() {
                     <span>Verificado</span>
                   </div>
                 )}
-                <button
-                  aria-label="Compartir perfil"
-                  title="Compartir"
-                  onClick={onShare}
-                  className="share-button"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    background: 'rgba(255,255,255,0.10)',
-                    border: '1px solid rgba(255,255,255,0.25)',
-                    color: '#fff',
-                    borderRadius: 999,
-                    backdropFilter: 'blur(8px)',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: 700
-                  }}
-                >
-                  📤 Compartir
-                </button>
               </div>
             </div>
 
@@ -898,24 +913,20 @@ export default function AcademyProfileLive() {
                   mode="display"
                 />
               </div>
+
+            </div>
+            <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '1rem' }}>
+              <BioSection 
+                bio={academy.bio}
+                redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
+                variant="banner"
+              />
             </div>
           </div>
         </motion.div>
 
         {/* Contenido Principal */}
         <div style={{ padding: '2rem 0' }}>
-          {/* Biografía y Redes Sociales */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            <BioSection 
-              bio={academy.bio}
-              redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
-            />
-          </motion.div>
-
           {/* Ritmos de Baile */}
           {/*   {academy.ritmos && academy.ritmos.length > 0 && (
             <motion.section

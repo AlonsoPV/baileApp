@@ -8,6 +8,16 @@ const BUCKET = "media"; // ✅ Bucket unificado
 
 type MediaItemWithSlot = MediaItem & { slot?: string };
 
+function safeRandomId(): string {
+  try {
+    const c = (globalThis as any)?.crypto;
+    if (c?.randomUUID && typeof c.randomUUID === "function") {
+      return c.randomUUID();
+    }
+  } catch {}
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 // Helper to upload to media bucket (organizer media)
 async function uploadOrgFile(orgId: number, file: File): Promise<MediaItem> {
   // Redimensionar imagen si es necesario (máximo 800px de ancho)
@@ -15,7 +25,8 @@ async function uploadOrgFile(orgId: number, file: File): Promise<MediaItem> {
   
   const ext = processedFile.name.split(".").pop()?.toLowerCase() || "bin";
   const type: "image" | "video" = processedFile.type.startsWith("image/") ? "image" : "video";
-  const path = `media/organizer-media/${orgId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  // `BUCKET` ya es "media", así que el key NO debe volver a incluir "media/".
+  const path = `organizer-media/${orgId}/${Date.now()}-${safeRandomId()}.${ext}`;
 
   console.log('[OrgStorage] Uploading file:', { orgId, fileName: processedFile.name, type, path, originalSize: file.size, processedSize: processedFile.size });
 
@@ -115,7 +126,8 @@ export function useOrganizerMedia() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (next) => {
+      qc.setQueryData(["organizer", "media", orgId], next);
       console.log('[useOrganizerMedia] Invalidating queries...');
       // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["organizer", "media", orgId] });
@@ -150,7 +162,8 @@ export function useOrganizerMedia() {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (next) => {
+      qc.setQueryData(["organizer", "media", orgId], next);
       console.log('[useOrganizerMedia] Invalidating queries after media removal');
       // Invalidar queries de media y del perfil para forzar recarga
       qc.invalidateQueries({ queryKey: ["organizer", "media", orgId] });

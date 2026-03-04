@@ -18,6 +18,7 @@ type ImageWithFallbackProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, "l
 
 const SUPABASE_PUBLIC_PATH = "/storage/v1/object/public/";
 const SUPABASE_RENDER_PATH = "/storage/v1/render/image/public/";
+const ENABLE_SUPABASE_TRANSFORMS = import.meta.env.VITE_SUPABASE_IMAGE_TRANSFORMS === "true";
 
 function buildSupabaseOptimizedUrl(src: string | undefined, format: "webp" | "avif", width?: number) {
   if (!src) return null;
@@ -54,8 +55,8 @@ export default function ImageWithFallback({
   const resolvedLoading = priority ? "eager" : "lazy";
   // Para mejorar LCP: si es imagen prioritaria, pedirla con mayor prioridad de red.
   const resolvedFetchPriority = priority ? "high" : (rest as any).fetchPriority;
-  const optimizedWebp = buildSupabaseOptimizedUrl(finalSrc, "webp", width);
-  const optimizedAvif = buildSupabaseOptimizedUrl(finalSrc, "avif", width);
+  const optimizedWebp = ENABLE_SUPABASE_TRANSFORMS ? buildSupabaseOptimizedUrl(finalSrc, "webp", width) : null;
+  const optimizedAvif = ENABLE_SUPABASE_TRANSFORMS ? buildSupabaseOptimizedUrl(finalSrc, "avif", width) : null;
 
   // Si el estilo tiene width o height en porcentajes, no aplicar dimensiones fijas
   const styleWidth = typeof style?.width === 'string' && style.width.includes('%') ? undefined : (width ? `${width}px` : undefined);

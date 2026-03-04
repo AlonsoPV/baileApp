@@ -1,7 +1,9 @@
 import React from 'react';
-import { PHOTO_SLOTS, getMediaBySlot } from '../../utils/mediaSlots';
+import { getMediaBySlot, normalizeMediaArray } from '../../utils/mediaSlots';
 import ImageWithFallback from '../ImageWithFallback';
 import { getDisplayImageUrl } from '../../utils/storageUrl';
+import { resolveSupabaseStoragePublicUrl } from '../../utils/supabaseStoragePublicUrl';
+import { toDirectPublicStorageUrl } from '../../utils/imageOptimization';
 
 interface PhotoManagementSectionProps {
   media: any;
@@ -35,6 +37,36 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
   verticalLayout = false,
   imageVersion,
 }) => {
+  const normalizedMedia = React.useMemo(() => normalizeMediaArray(media), [media]);
+  const normalizeSlotUrl = React.useCallback((raw?: string | null) => {
+    if (!raw) return undefined;
+    const input = String(raw).trim();
+    if (!input) return undefined;
+    if (input.startsWith("data:")) return input;
+
+    const storagePathMatch = input.match(
+      /\/storage\/v1\/(?:object\/public|render\/image\/public)\/([^?#]+)/i
+    );
+
+    let candidate = storagePathMatch?.[1] || input;
+
+    // Compatibilidad con registros legacy y formatos mezclados.
+    candidate = candidate
+      .replace(/^\/?storage\/v1\/object\/public\//i, "")
+      .replace(/^\/?storage\/v1\/render\/image\/public\//i, "")
+      .replace(/^public\/media\//i, "media/")
+      .replace(/^media\/media\//i, "media/")
+      .replace(/^\/+/, "");
+
+    const pathInBucket = candidate.startsWith("media/") ? candidate.slice("media/".length) : candidate;
+    const resolved =
+      resolveSupabaseStoragePublicUrl(pathInBucket, { defaultBucket: "media" }) ||
+      resolveSupabaseStoragePublicUrl(input, { defaultBucket: "media" }) ||
+      input;
+
+    return toDirectPublicStorageUrl(resolved) || resolved;
+  }, []);
+
   return (
     <>
       <style>{`
@@ -291,8 +323,14 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
             // NO usar fallback a otras fotos (p2, p3, etc.) para evitar mostrar la última foto disponible
             const targetSlot = isMainPhoto ? 'p1' : slot;
             const mediaItem = isMainPhoto 
-              ? getMediaBySlot(media, 'p1') // Solo buscar p1, sin fallback
-              : getMediaBySlot(media, slot);
+              ? getMediaBySlot(normalizedMedia, 'p1') // Solo buscar p1, sin fallback
+              : getMediaBySlot(normalizedMedia, slot);
+            const slotImageUrl = mediaItem
+              ? getDisplayImageUrl(
+                  normalizeSlotUrl((mediaItem as any).url || (mediaItem as any).path),
+                  imageVersion
+                )
+              : '';
             
             // Debug: verificar que estamos usando el slot correcto
             if (isMainPhoto && process.env.NODE_ENV === 'development') {
@@ -324,20 +362,22 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
               
               <div 
                 className={`photo-container ${isMainPhoto ? 'photo-container-main' : ''} ${verticalLayout ? 'photo-container-vertical' : ''}`}
-                style={isMainPhoto && mediaItem ? {
-                  backgroundImage: `url(${getDisplayImageUrl(mediaItem.url, imageVersion)})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center top',
-                  backgroundRepeat: 'no-repeat'
-                } : {}}
               >
               {mediaItem ? (
                 isMainPhoto ? (
-                  // Para foto principal, la imagen se muestra como fondo del contenedor
-                  null
+                  <ImageWithFallback
+                    src={slotImageUrl}
+                    alt="Avatar / Foto principal"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center top'
+                    }}
+                  />
                 ) : (
                 <ImageWithFallback
-                    src={getDisplayImageUrl(mediaItem.url, imageVersion)}
+                    src={slotImageUrl}
                     alt={`Foto ${slot}`}
                   style={{
                     width: '100%',

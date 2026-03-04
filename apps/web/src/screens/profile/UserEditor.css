@@ -281,6 +281,43 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+  gap: 0.75rem;
+}
+
+.row-bottom-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.row-bottom-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--db-light);
+  border-radius: 999px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.row-bottom-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.row-bottom-toggle:focus-visible {
+  outline: 2px solid rgba(76, 173, 255, 0.65);
+  outline-offset: 2px;
+}
+
+.row-bottom-toggle:active {
+  transform: scale(0.97);
   }
   
   .subtitle {

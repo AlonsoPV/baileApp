@@ -32,8 +32,8 @@ export interface BioSectionRedes {
 interface BioSectionProps {
   bio?: string;
   redes?: BioSectionRedes | null;
-  /** Modo hero: solo muestra iconos de redes, sin card ni título */
-  variant?: 'default' | 'hero';
+  /** Modo hero: solo iconos. Modo banner: integrado al hero, con bio + redes. */
+  variant?: 'default' | 'hero' | 'banner';
 }
 
 export const BioSection: React.FC<BioSectionProps> = ({ bio, redes, variant = 'default' }) => {
@@ -219,6 +219,85 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes, variant = 'd
             {getSocialIcon(platform)}
           </a>
         ))}
+      </div>
+    );
+  }
+
+  // Modo banner: integrado al contenedor hero (sin card adicional).
+  if (variant === 'banner') {
+    return (
+      <div style={{ width: '100%', textAlign: 'left' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          marginBottom: bio ? '0.6rem' : 0,
+        }}>
+          <h3 style={{
+            margin: 0,
+            fontSize: '1.1rem',
+            fontWeight: 800,
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+          }}>
+            <span>📝</span>
+            <span>{t('about_me')}</span>
+          </h3>
+          {availableSocials.length > 0 && (
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              {availableSocials.map(([platform, username]) => (
+                <a
+                  key={platform}
+                  href={getSocialUrl(platform, username as string)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bio-social-icon"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: 'rgba(50, 50, 58, 0.85)',
+                    color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                  }}
+                  title={`${platform}: ${username}`}
+                >
+                  {getSocialIcon(platform)}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+        {bio ? (
+          <p style={{
+            margin: 0,
+            fontSize: '0.98rem',
+            lineHeight: 1.6,
+            color: 'rgba(255, 255, 255, 0.92)',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word',
+          }}>
+            {bio}
+          </p>
+        ) : (
+          <p style={{
+            margin: 0,
+            fontSize: '0.92rem',
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontStyle: 'italic',
+          }}>
+            {availableSocials.length > 0 ? '¡Sígueme en mis redes sociales!' : 'Aún no hay biografía disponible'}
+          </p>
+        )}
       </div>
     );
   }

@@ -11,7 +11,7 @@ import RitmosChips from "../../components/RitmosChips";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
@@ -1108,8 +1108,19 @@ export function OrganizerProfileLive() {
     }
   }, [isLoading, org, isError, navigate]);
 
-  // Memoizar datos derivados
-  const safeMedia = useMemo(() => media || [], [media]);
+  const toWeekdayNumber = useCallback((value: unknown): number | null => {
+    const n = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(n) || n < 0 || n > 6) return null;
+    return n;
+  }, []);
+
+  // Unificar media del hook y del perfil para mantener consistencia con pantalla pública/card
+  const safeMedia = useMemo(() => {
+    const hookMedia = normalizeMediaArray(media as any);
+    const profileMedia = normalizeMediaArray((org as any)?.media);
+    // Combinar ambas fuentes para no perder slots cuando una viene incompleta.
+    return [...hookMedia, ...profileMedia];
+  }, [media, org]);
   
   const carouselPhotos = useMemo(() => {
     return PHOTO_SLOTS
@@ -1124,6 +1135,41 @@ export function OrganizerProfileLive() {
       .filter((m): m is any => !!m && m.kind === 'video' && !!m.url && typeof m.url === 'string' && m.url.trim() !== '' && !m.url.includes('undefined') && m.url !== '/default-media.png')
       .map((m) => toDirectPublicStorageUrl(m.url) || m.url);
   }, [safeMedia]);
+
+  // Resolver candidates de avatar con null checks; intenta fallback automático si una URL falla.
+  const avatarCandidates = useMemo(() => {
+    const resolve = (raw?: string | null) => {
+      if (!raw || typeof raw !== 'string') return undefined;
+      const v = raw.trim();
+      if (!v || v.includes('undefined') || v === '/default-media.png') return undefined;
+      return toDirectPublicStorageUrl(v) || v;
+    };
+
+    const fromAvatarSlot = (() => {
+      const slot = getMediaBySlot(safeMedia as any, 'avatar') as any;
+      return resolve(slot?.url || slot?.path || null);
+    })();
+    const fromP1 = (() => {
+      const slot = getMediaBySlot(safeMedia as any, 'p1') as any;
+      return resolve(slot?.url || slot?.path || null);
+    })();
+    const fromCover = (() => {
+      const slot = getMediaBySlot(safeMedia as any, 'cover') as any;
+      return resolve(slot?.url || slot?.path || null);
+    })();
+    const fromProfile = resolve((org as any)?.avatar_url || (org as any)?.logo_url || null);
+
+    const list = [fromAvatarSlot, fromP1, fromCover, fromProfile].filter(Boolean) as string[];
+    return Array.from(new Set(list));
+  }, [org, safeMedia]);
+
+  const [failedAvatarUrls, setFailedAvatarUrls] = useState<string[]>([]);
+  React.useEffect(() => { setFailedAvatarUrls([]); }, [avatarCandidates]);
+
+  const avatarUrl = useMemo(() => {
+    const failed = new Set(failedAvatarUrls);
+    return avatarCandidates.find((u) => !failed.has(u));
+  }, [avatarCandidates, failedAvatarUrls]);
 
   // Agregar agregación de ubicaciones desde los sociales (events_parent)
   const aggregatedLocations = useMemo(() => {
@@ -1188,12 +1234,13 @@ export function OrganizerProfileLive() {
     // Expandir eventos recurrentes en múltiples ocurrencias (similar a ExploreHome y OrganizerPublicScreen)
     const expandedDates: any[] = [];
     (eventDates as any[] || []).forEach((d: any) => {
-      if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+      const weekday = toWeekdayNumber((d as any)?.dia_semana);
+      if (weekday !== null) {
         try {
           const horaInicioStr = d.hora_inicio || '20:00';
 
           for (let i = 0; i < 4; i++) {
-            const primeraFecha = calculateNextDateWithTime(d.dia_semana, horaInicioStr);
+            const primeraFecha = calculateNextDateWithTime(weekday, horaInicioStr);
             const fechaOcurrencia = new Date(primeraFecha);
             fechaOcurrencia.setDate(primeraFecha.getDate() + (i * 7));
 
@@ -1222,7 +1269,7 @@ export function OrganizerProfileLive() {
     const futureDates = expandedDates.filter((d: any) => {
       try {
         // Si es recurrente expandido, ya sabemos que la fecha es futura
-        if (d._recurrence_index !== undefined && d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
+        if (d._recurrence_index !== undefined && toWeekdayNumber((d as any)?.dia_semana) !== null) {
           return true;
         }
 
@@ -1277,13 +1324,19 @@ export function OrganizerProfileLive() {
         time: horaFormateada,
         place: date.lugar || date.ciudad || '',
         href: `/social/fecha/${date._original_id || date.id}`,
-        cover: Array.isArray(date.media) && date.media.length > 0
-          ? (date.media[0] as any)?.url || date.media[0]
-          : undefined,
-        flyer: (date as any).flyer_url
-          || (Array.isArray(date.media) && date.media.length > 0
+        cover: (() => {
+          const raw = Array.isArray(date.media) && date.media.length > 0
             ? (date.media[0] as any)?.url || date.media[0]
-            : undefined),
+            : undefined;
+          return raw ? (toDirectPublicStorageUrl(raw) || raw) : undefined;
+        })(),
+        flyer: (() => {
+          const raw = (date as any).flyer_url
+            || (Array.isArray(date.media) && date.media.length > 0
+              ? (date.media[0] as any)?.url || date.media[0]
+              : undefined);
+          return raw ? (toDirectPublicStorageUrl(raw) || raw) : undefined;
+        })(),
         price: (() => {
           const costos = (date as any)?.costos;
           if (Array.isArray(costos) && costos.length) {
@@ -1300,12 +1353,12 @@ export function OrganizerProfileLive() {
         hora_fin: date.hora_fin,
         lugar: date.lugar || date.ciudad || date.direccion,
         biografia: (date as any).biografia,
-        dia_semana: (date as any).dia_semana !== null && (date as any).dia_semana !== undefined ? (date as any).dia_semana : null
+        dia_semana: toWeekdayNumber((date as any).dia_semana)
       });
     });
 
     return items;
-  }, [eventDates]);
+  }, [eventDates, toWeekdayNumber]);
 
   const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
     const [idx, setIdx] = React.useState(0);
@@ -1365,7 +1418,7 @@ export function OrganizerProfileLive() {
           <div style={{ width: 350, maxWidth: '80vw' }}>
             <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.3)' }}>
               {ev.flyer && (
-                <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+                <img src={toDirectPublicStorageUrl(ev.flyer) || ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
               )}
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing[4], background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
                 <div style={{ 
@@ -1391,6 +1444,7 @@ export function OrganizerProfileLive() {
                       location={ev.lugar}
                       start={calendarStart}
                       end={calendarEnd}
+                      diaSemana={ev.dia_semana !== null && ev.dia_semana !== undefined ? ev.dia_semana : undefined}
                       showAsIcon={true}
                     />
                   </RequireLogin>
@@ -1507,28 +1561,6 @@ export function OrganizerProfileLive() {
       </>
     );
   }
-
-  // Resolver avatar URL con null checks; excluir URLs inválidas para no mostrar placeholder roto
-  const avatarUrl = useMemo(() => {
-    const resolve = (raw?: string | null) => {
-      if (!raw || typeof raw !== 'string') return undefined;
-      const v = raw.trim();
-      if (!v || v.includes('undefined') || v === '/default-media.png') return undefined;
-      return toDirectPublicStorageUrl(v) || v;
-    };
-
-    // Prioridad requerida:
-    // 1) profile.avatar_url  2) media slot "avatar"  3) media slot "p1"  4) fallback cover/inicial
-    const fromProfile =
-      resolve((org as any)?.avatar_url || (org as any)?.logo_url || null);
-    const fromAvatarSlot = resolve(getMediaBySlot(safeMedia as any, 'avatar')?.url || null);
-    const fromP1 = resolve(getMediaBySlot(safeMedia as any, 'p1')?.url || null);
-    const fromCover = resolve(getMediaBySlot(safeMedia as any, 'cover')?.url || null);
-    return fromProfile || fromAvatarSlot || fromP1 || fromCover;
-  }, [safeMedia]);
-
-  const [avatarError, setAvatarError] = useState(false);
-  React.useEffect(() => { setAvatarError(false); }, [avatarUrl]);
 
   return (
     <>
@@ -1668,6 +1700,7 @@ export function OrganizerProfileLive() {
             >
               <div
                 id="organizer-avatar"
+                data-baile-id="organizer-avatar"
                 data-test-id="organizer-avatar"
                 className="org-banner-avatar"
                 style={{
@@ -1681,15 +1714,21 @@ export function OrganizerProfileLive() {
                   position: 'relative'
                 }}
               >
-                {avatarUrl && !avatarError ? (
-                  <ImageWithFallback
+                {avatarUrl ? (
+                  <img
                     src={avatarUrl}
-                    alt="Logo del organizador"
-                    onError={() => setAvatarError(true)}
+                    alt={t("avatar")}
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                    onError={() => {
+                      setFailedAvatarUrls((prev) => (avatarUrl && !prev.includes(avatarUrl) ? [...prev, avatarUrl] : prev));
+                    }}
                     style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover'
+                      objectFit: 'cover',
+                      objectPosition: 'center top'
                     }}
                   />
                 ) : (
@@ -1699,9 +1738,9 @@ export function OrganizerProfileLive() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '6rem',
-                    fontWeight: typography.fontWeight.black,
-                    color: colors.light
+                    fontSize: '5rem',
+                    fontWeight: 700,
+                    color: 'white'
                   }}>
                     {(org as any)?.nombre_publico?.[0]?.toUpperCase() || '🎤'}
                   </div>

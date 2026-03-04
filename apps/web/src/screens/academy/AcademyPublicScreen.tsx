@@ -1008,24 +1008,20 @@ export default function AcademyPublicScreen() {
                   mode="display"
                 />
               </div>
+
+            </div>
+            <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '1rem' }}>
+              <BioSection 
+                bio={(academy as any)?.bio}
+                redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
+                variant="banner"
+              />
             </div>
           </div>
         </motion.div>
 
         {/* Contenido */}
         <div style={{ padding: '2rem 0' }}>
-          {/* Biografía y Redes Sociales */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            <BioSection 
-              bio={(academy as any)?.bio}
-              redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
-            />
-          </motion.div>
-
           {(() => {
             // Verificar si hay clases para mostrar
             const hasClassesFromTables = classesFromTables && classesFromTables.length > 0;

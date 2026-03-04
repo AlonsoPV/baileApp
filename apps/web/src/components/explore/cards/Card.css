@@ -142,10 +142,10 @@
     max-width: calc(100% - 24px);
     padding: 7px 12px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(17, 21, 32, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: #ED339A;
     backdrop-filter: blur(8px);
-    color: #fff;
+    color: #FFFFFF;
     font-size: 12px;
     font-weight: 800;
     text-align: center;

@@ -580,6 +580,7 @@ export default function OrganizerProfileEditor() {
   const [activeTab, setActiveTab] = useState<"perfil" | "metricas">("perfil");
   const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
   const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
+  const [isSocialSectionCollapsed, setIsSocialSectionCollapsed] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -633,6 +634,7 @@ export default function OrganizerProfileEditor() {
 
   // Estados para carga de media
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
+  const [removing, setRemoving] = useState<{ [key: string]: boolean }>({});
   // Estado local para edición de ubicaciones por social (no se guarda en profiles_organizer)
   const [locationsDraftByParent, setLocationsDraftByParent] = useState<Record<number, any[]>>({});
 
@@ -977,6 +979,7 @@ export default function OrganizerProfileEditor() {
 
   // Función para eliminar archivo
   const removeFile = async (slot: string) => {
+    setRemoving(prev => ({ ...prev, [slot]: true }));
     try {
       // Buscar el media item por slot
       const mediaItem = media.find(m => (m as any).slot === slot);
@@ -989,6 +992,8 @@ export default function OrganizerProfileEditor() {
     } catch (error) {
       console.error('Error removing file:', error);
       showToast('Error al eliminar el archivo', 'error');
+    } finally {
+      setRemoving(prev => ({ ...prev, [slot]: false }));
     }
   };
 
@@ -3797,6 +3802,38 @@ export default function OrganizerProfileEditor() {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 0.75rem;
+        }
+        .row-bottom-title-group {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          min-width: 0;
+        }
+        .row-bottom-toggle {
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          background: rgba(255, 255, 255, 0.08);
+          color: ${colors.light};
+          border-radius: 999px;
+          width: 30px;
+          height: 30px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+          flex-shrink: 0;
+        }
+        .row-bottom-toggle:hover {
+          background: rgba(255, 255, 255, 0.14);
+          border-color: rgba(255, 255, 255, 0.35);
+        }
+        .row-bottom-toggle:focus-visible {
+          outline: 2px solid rgba(76, 173, 255, 0.65);
+          outline-offset: 2px;
+        }
+        .row-bottom-toggle:active {
+          transform: scale(0.97);
         }
         .subtitle {
           font-size: 1rem;
@@ -4192,11 +4229,24 @@ export default function OrganizerProfileEditor() {
                     {/* REDES SOCIALES */}
                     <div className="row-bottom">
                       <div className="row-bottom-header">
-                        <h4 className="subtitle">{t('social_networks')}</h4>
-                        <span className="tag">{t('optional')}</span>
+                        <div className="row-bottom-title-group">
+                          <h4 className="subtitle">{t('social_networks')}</h4>
+                          <span className="tag">{t('optional')}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="row-bottom-toggle"
+                          onClick={() => setIsSocialSectionCollapsed((prev) => !prev)}
+                          aria-expanded={!isSocialSectionCollapsed}
+                          aria-controls="organizer-social-networks-list"
+                          title={isSocialSectionCollapsed ? 'Expandir' : 'Colapsar'}
+                        >
+                          {isSocialSectionCollapsed ? '▾' : '▴'}
+                        </button>
                       </div>
 
-                      <div className="social-list">
+                      {!isSocialSectionCollapsed && (
+                      <div className="social-list" id="organizer-social-networks-list">
                         {/* Instagram */}
                         <label className="field">
                           <span className="field-icon">
@@ -4282,6 +4332,7 @@ export default function OrganizerProfileEditor() {
                           </div>
                         </label>
                       </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -5751,18 +5802,21 @@ export default function OrganizerProfileEditor() {
             <PhotoManagementSection
               media={media}
               uploading={uploading}
+              removing={removing}
               uploadFile={uploadFile}
               removeFile={removeFile}
               title="📷 Gestión de Fotos"
               description="👤 Avatar / Foto Principal (p1)"
               slots={['p1']}
               isMainPhoto={true}
+              imageVersion={(org as any)?.updated_at}
             />
 
             {/* Columna 2: Fotos Destacadas */}
             <PhotoManagementSection
               media={media}
               uploading={uploading}
+              removing={removing}
               uploadFile={uploadFile}
               removeFile={removeFile}
               title="📷 Fotos Destacadas (p2 - p3)"
@@ -5770,6 +5824,7 @@ export default function OrganizerProfileEditor() {
               slots={['p2', 'p3']}
               isMainPhoto={false}
               verticalLayout={true}
+              imageVersion={(org as any)?.updated_at}
             />
           </div>
 
@@ -5777,18 +5832,21 @@ export default function OrganizerProfileEditor() {
           <PhotoManagementSection
             media={media}
             uploading={uploading}
+            removing={removing}
             uploadFile={uploadFile}
             removeFile={removeFile}
             title="📷 Fotos Adicionales (p4-p10)"
             description="Estas fotos aparecerán en la galería de tu perfil"
             slots={['p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
             isMainPhoto={false}
+            imageVersion={(org as any)?.updated_at}
           />
 
           {/* Sección de Videos */}
           <VideoManagementSection
             media={media}
             uploading={uploading}
+            removing={removing}
             uploadFile={uploadFile}
             removeFile={removeFile}
             title="🎥 Gestión de Videos"
