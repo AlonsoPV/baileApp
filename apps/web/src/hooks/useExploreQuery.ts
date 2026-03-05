@@ -53,6 +53,17 @@ function includesLower(haystack: any, needleLower: string) {
   return String(haystack).toLowerCase().includes(needleLower);
 }
 
+function isAuthLockAbortError(error: any): boolean {
+  const msg = String(error?.message || "");
+  const details = String(error?.details || "");
+  const hint = String(error?.hint || "");
+  return (
+    msg.includes("Lock broken by another request with the 'steal' option") ||
+    details.includes("Lock broken by another request with the 'steal' option") ||
+    hint.toLowerCase().includes("request was aborted")
+  );
+}
+
 function matchesFechaSearch(row: any, needleLower: string, organizerIdSet?: Set<number> | null) {
   if (!needleLower) return true;
 
@@ -400,6 +411,11 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
   perfLog({ hook: 'useExploreQuery', step: 'main_events_query', duration_ms: mainEnd - mainStart, rows: (data as any[])?.length ?? 0, data, error, extra: { count: count ?? 0, type } });
   
   if (error) {
+    if (isAuthLockAbortError(error)) {
+      // Evita romper explore por aborts transitorios durante contención de lock auth.
+      console.warn('[useExploreQuery] Abort transitorio de lock auth; devolviendo página vacía para recuperación.');
+      return { data: [], nextPage: undefined, count: 0 };
+    }
     console.error('[useExploreQuery] Error:', error);
     throw error;
   }

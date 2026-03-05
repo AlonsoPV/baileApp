@@ -197,19 +197,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
           
           if (isRefreshTokenError) {
             console.warn('[supabaseClient] Refresh token inválido detectado, limpiando sesión...');
-            // Limpiar sesión local sin hacer otra petición
+            // NO llamar auth.signOut() aquí: este código corre dentro del pipeline de
+            // refresh de GoTrue y puede competir por el mismo lock (steal/orphan lock).
+            // Limpiamos storage local de forma síncrona y dejamos que GoTrue continúe su flujo.
             try {
-              // Usar signOut con scope 'local' para evitar hacer otra petición al servidor
-              await supabase.auth.signOut({ scope: 'local' });
-            } catch (signOutError) {
-              // Si falla signOut, limpiar localStorage manualmente
-              try {
-                const storageKey = `sb-${supabaseUrl.split('//')[1]?.split('.')[0]}-auth-token`;
-                if (typeof localStorage !== 'undefined') {
-                  localStorage.removeItem(storageKey);
-                }
-              } catch {}
-            }
+              const projectRef = supabaseUrl.split('//')[1]?.split('.')[0];
+              const storageKey = `sb-${projectRef}-auth-token`;
+              if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem(storageKey);
+              }
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem(storageKey);
+              }
+            } catch {}
             // No forzar redirect aquí: puede causar "rebotes" en localhost.
             // Dejamos que el router/guards reaccionen al estado de sesión nulo.
           }
