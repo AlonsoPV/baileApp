@@ -3121,18 +3121,33 @@ export default function ExploreHomeScreen() {
     () => normalizeEventsForCards(filteredFechas, allTags as any[]),
     [filteredFechas, allTags]
   );
+  const hasExactDateFilter = React.useMemo(
+    () =>
+      selectedType === 'fechas' &&
+      !!filters.dateFrom &&
+      !!filters.dateTo &&
+      filters.dateFrom === filters.dateTo,
+    [selectedType, filters.dateFrom, filters.dateTo],
+  );
 
   React.useEffect(() => {
     setVisibleCount(INITIAL_LIMIT);
   }, [selectedType, qDeferred, filters.ritmos, filters.zonas, filters.dateFrom, filters.dateTo, filters.datePreset]);
 
+  // Fecha especifica: traer todas las paginas para no ocultar eventos despues de las primeras cards.
+  React.useEffect(() => {
+    if (!hasExactDateFilter) return;
+    if (!fechasQuery.hasNextPage || fechasQuery.isFetchingNextPage) return;
+    void fechasQuery.fetchNextPage();
+  }, [hasExactDateFilter, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.fetchNextPage]);
+
   const visibleFechas = React.useMemo(
-    () => normalizedFechas.slice(0, visibleCount),
-    [normalizedFechas, visibleCount]
+    () => (hasExactDateFilter ? normalizedFechas : normalizedFechas.slice(0, visibleCount)),
+    [normalizedFechas, visibleCount, hasExactDateFilter]
   );
   const hasMoreServer = !!fechasQuery.hasNextPage;
   const hasMoreClient = normalizedFechas.length > visibleCount;
-  const showLoadMoreCard = selectedType === 'fechas' && (hasMoreClient || hasMoreServer);
+  const showLoadMoreCard = selectedType === 'fechas' && !hasExactDateFilter && (hasMoreClient || hasMoreServer);
 
   const onLoadMoreFechas = React.useCallback(async () => {
     const nextCount = visibleCount + NEXT_LIMIT;
