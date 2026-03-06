@@ -8,6 +8,8 @@ import { Chip } from "./profile/Chip";
 import type { ExploreFilters } from "../state/exploreFilters";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
 import { useUsedFilterTags } from "@/hooks/useUsedFilterTags";
+import { useUsedRhythmsByContext } from "@/hooks/useUsedRhythms";
+import { mapExploreTypeToContext } from "@/filters/exploreContext";
 
 // Debounce simple (sin dependencias externas)
 function useDebouncedCallback<T extends any[]>(
@@ -134,24 +136,36 @@ export default function FilterBar({
   });
 
   const { ritmos: allRitmos, zonas: allZonas } = useTags();
-  const { usedRitmoIds, usedZonaIds, isLoading: loadingUsed, error: usedError } = useUsedFilterTags();
+  const rhythmContext = React.useMemo(() => mapExploreTypeToContext(filters.type), [filters.type]);
+  const {
+    rhythmIds: usedRitmoIds,
+    isLoading: loadingUsedRhythms,
+    isFetched: usedRhythmsFetched,
+  } = useUsedRhythmsByContext(rhythmContext);
+  const {
+    usedZonaIds,
+    isLoading: loadingUsedZones,
+    isFetched: usedZonesFetched,
+  } = useUsedFilterTags();
 
   const ritmos = React.useMemo(() => {
-    // Mientras la query carga o si falla, mostrar todos los ritmos del catálogo
-    if (loadingUsed || usedError) return allRitmos;
+    // Sin contexto (ej. "all"), mantener catálogo.
+    if (!rhythmContext) return allRitmos;
+    // Mientras carga, mantener catálogo para evitar parpadeos.
+    if (loadingUsedRhythms || !usedRhythmsFetched) return allRitmos;
     const set = new Set(usedRitmoIds);
-    // Si el RPC no devolvió ninguno usado, mostrar todos los disponibles (catálogo) para que siempre aparezcan en filtros
-    if (set.size === 0) return allRitmos;
+    // Contexto sin ritmos disponibles => lista vacía (no mezclar contextos).
+    if (set.size === 0) return [];
     return allRitmos.filter((r) => set.has(r.id));
-  }, [allRitmos, usedRitmoIds, loadingUsed, usedError]);
+  }, [allRitmos, usedRitmoIds, loadingUsedRhythms, usedRhythmsFetched, rhythmContext]);
 
   const zonas = React.useMemo(() => {
-    if (loadingUsed || usedError) return allZonas;
+    if (loadingUsedZones || !usedZonesFetched) return allZonas;
     const set = new Set(usedZonaIds);
-    // Si el RPC no devolvió ninguna usada, mostrar todas las disponibles (catálogo)
-    if (set.size === 0) return allZonas;
+    // Si no hay zonas usadas para el contexto/dataset, no mostrar catálogo completo.
+    if (set.size === 0) return [];
     return allZonas.filter((z) => set.has(z.id));
-  }, [allZonas, usedZonaIds, loadingUsed, usedError]);
+  }, [allZonas, usedZonaIds, loadingUsedZones, usedZonesFetched]);
 
   const availableRitmoSet = React.useMemo(
     () => new Set<number>((availableRitmos || []).map((r) => r.id)),
@@ -215,6 +229,21 @@ export default function FilterBar({
       });
     return { groups, tagIdByName };
   }, [ritmosForCatalog, availableRitmoCountById]);
+  const hasRhythmOptions = catalogGroups.groups.length > 0;
+
+  React.useEffect(() => {
+    if (!rhythmContext || loadingUsedRhythms) return;
+    const allowed = new Set((ritmosForCatalog || []).map((r) => r.id));
+    const nextRitmos = (filters.ritmos || []).filter((id) => allowed.has(id));
+    if (nextRitmos.length === (filters.ritmos || []).length) return;
+    onFiltersChange({ ...filters, ritmos: nextRitmos });
+  }, [rhythmContext, loadingUsedRhythms, ritmosForCatalog, filters, onFiltersChange]);
+
+  React.useEffect(() => {
+    if (openDropdown === "ritmos" && !hasRhythmOptions) {
+      setOpenDropdown(null);
+    }
+  }, [openDropdown, hasRhythmOptions]);
 
   const activeFilterCount = React.useMemo(() => {
     let count = 0;
@@ -707,16 +736,18 @@ export default function FilterBar({
             )}
 
             {/* Botón Ritmos */}
-            <FilterButton
-              label={t('rhythms')}
-              icon="🎵"
-              isOpen={openDropdown === 'ritmos'}
-              onClick={() => toggleDropdown('ritmos')}
-              activeCount={filters.ritmos.length}
-              iconOnly
-              ariaLabel={t('rhythms')}
-              ariaControlsId="dropdown-ritmos"
-            />
+            {(hasRhythmOptions || rhythmContext !== 'marcas') && (
+              <FilterButton
+                label={t('rhythms')}
+                icon="🎵"
+                isOpen={openDropdown === 'ritmos'}
+                onClick={() => hasRhythmOptions && toggleDropdown('ritmos')}
+                activeCount={filters.ritmos.length}
+                iconOnly
+                ariaLabel={hasRhythmOptions ? t('rhythms') : t('no_rhythms_available', 'No aplica')}
+                ariaControlsId="dropdown-ritmos"
+              />
+            )}
 
             {/* Botón Zonas */}
             <FilterButton
@@ -907,7 +938,7 @@ export default function FilterBar({
             )}
 
             {/* Dropdown Ritmos */}
-            {openDropdown === 'ritmos' && (
+            {openDropdown === 'ritmos' && hasRhythmOptions && (
               (shouldPortal
                 ? createPortal(
                     <DropdownPanel

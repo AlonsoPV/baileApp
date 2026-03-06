@@ -177,15 +177,23 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           const tagsStart = performance.now();
           const { data: tagRows, error: tagErr } = await supabase
             .from('tags')
-            .select('id,nombre,tipo')
+            .select('id,nombre,slug,tipo')
             .in('id', ritmos as any)
             .eq('tipo', 'ritmo');
           const tagsEnd = performance.now();
           perfLog({ hook: 'useExploreQuery', step: 'tags_mapping', duration_ms: tagsEnd - tagsStart, rows: tagRows?.length ?? 0, data: tagRows, error: tagErr });
           if (!tagErr && tagRows && tagRows.length > 0) {
-            const labelToId = new Map<string, string>();
-            RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToId.set(i.label, i.id)));
-            selectedCatalogIds.push(...(tagRows as any[]).map(r => labelToId.get(r.nombre)).filter(Boolean) as string[]);
+            const bySlug = (tagRows as any[])
+              .map((r: any) => (typeof r?.slug === 'string' ? String(r.slug).trim().toLowerCase() : ''))
+              .filter(Boolean);
+            if (bySlug.length > 0) {
+              selectedCatalogIds.push(...bySlug);
+            } else {
+              // Fallback legacy por nombre -> catalog id
+              const labelToId = new Map<string, string>();
+              RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelToId.set(i.label, i.id)));
+              selectedCatalogIds.push(...(tagRows as any[]).map(r => labelToId.get(r.nombre)).filter(Boolean) as string[]);
+            }
           }
         } catch (e) {
           console.warn('[useExploreQuery] Catalog mapping failed, continuing with numeric only', e);
@@ -274,10 +282,17 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
     
     // Ritmos: preferimos filtrar por IDs numéricos (`estilos int[]`).
     // Si el esquema/registro usa slugs (`ritmos_seleccionados text[]`) y no hay IDs, usamos overlaps ahí.
-    if ((ritmos?.length || 0) > 0) {
-      query = query.overlaps("estilos", ritmos as any);
-    } else if ((selectedCatalogIds?.length || 0) > 0) {
-      query = query.overlaps("ritmos_seleccionados", selectedCatalogIds as any);
+    if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+      const parts: string[] = [];
+      if ((ritmos?.length || 0) > 0) {
+        const set = `{${(ritmos as number[]).join(',')}}`;
+        parts.push(`estilos.ov.${set}`);
+      }
+      if ((selectedCatalogIds?.length || 0) > 0) {
+        const setCat = `{${selectedCatalogIds.join(',')}}`;
+        parts.push(`ritmos_seleccionados.ov.${setCat}`);
+      }
+      if (parts.length > 0) query = query.or(parts.join(','));
     }
 
     // zonas específicas de la fecha (campo zona numérico)
@@ -320,7 +335,6 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       if ((ritmos?.length || 0) > 0) {
         const set = `{${(ritmos as number[]).join(',')}}`;
         parts.push(`ritmos.ov.${set}`);
-        if (type === 'academias') parts.push(`estilos.ov.${set}`);
       }
       if ((selectedCatalogIds?.length || 0) > 0) {
         const setCat = `{${selectedCatalogIds.join(',')}}`;
@@ -483,10 +497,17 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       }
       
       // Aplicar filtros de ritmos (mismo criterio que query principal)
-      if ((ritmos?.length || 0) > 0) {
-        parentQuery = parentQuery.overlaps("estilos", ritmos as any);
-      } else if ((selectedCatalogIds?.length || 0) > 0) {
-        parentQuery = parentQuery.overlaps("ritmos_seleccionados", selectedCatalogIds as any);
+      if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+        const parts: string[] = [];
+        if ((ritmos?.length || 0) > 0) {
+          const set = `{${(ritmos as number[]).join(',')}}`;
+          parts.push(`estilos.ov.${set}`);
+        }
+        if ((selectedCatalogIds?.length || 0) > 0) {
+          const setCat = `{${selectedCatalogIds.join(',')}}`;
+          parts.push(`ritmos_seleccionados.ov.${setCat}`);
+        }
+        if (parts.length > 0) parentQuery = parentQuery.or(parts.join(','));
       }
       
       const pmStart = performance.now();
@@ -560,13 +581,32 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
         const rangeFrom = dateFrom || todayStr;
         const rangeTo = dateTo || addDaysYmd(rangeFrom, 84);
         const occStart = performance.now();
-        const { data: occRows, error: occErr } = await supabase
+        let occQuery = supabase
           .from("events_date")
           .select(select as any)
           .eq("estado_publicacion", "publicado")
           .in("parent_id", recurringParentIds as any)
           .gte("fecha", rangeFrom)
-          .lte("fecha", rangeTo)
+          .lte("fecha", rangeTo);
+
+        // Mantener consistencia con los filtros activos al materializar ocurrencias.
+        if (zonas?.length) {
+          occQuery = occQuery.in("zona", zonas as any);
+        }
+        if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+          const parts: string[] = [];
+          if ((ritmos?.length || 0) > 0) {
+            const set = `{${(ritmos as number[]).join(',')}}`;
+            parts.push(`estilos.ov.${set}`);
+          }
+          if ((selectedCatalogIds?.length || 0) > 0) {
+            const setCat = `{${selectedCatalogIds.join(',')}}`;
+            parts.push(`ritmos_seleccionados.ov.${setCat}`);
+          }
+          if (parts.length > 0) occQuery = occQuery.or(parts.join(','));
+        }
+
+        const { data: occRows, error: occErr } = await (occQuery as any)
           .order("fecha", { ascending: true, nullsFirst: false })
           .order("hora_inicio", { ascending: true, nullsFirst: false })
           .order("id", { ascending: true });
@@ -615,6 +655,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
     finalData.forEach((row: any) => {
       const hasDiaSemana = row.dia_semana !== null && row.dia_semana !== undefined && typeof row.dia_semana === 'number';
       const parentId = typeof row?.parent_id === "number" ? row.parent_id : null;
+      let usesLegacyNextOccurrence = false;
 
       // ✅ Regla de fuente única:
       // - Si `fecha` existe, se usa esa fecha y se filtra como evento normal (aunque exista dia_semana).
@@ -635,6 +676,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           const month = String(next.getMonth() + 1).padStart(2, '0');
           const day = String(next.getDate()).padStart(2, '0');
           ymd = `${year}-${month}-${day}`;
+          usesLegacyNextOccurrence = true;
         } catch (e) {
           console.error('Error calculando next occurrence para evento recurrente legacy:', e);
           ymd = '';
@@ -642,10 +684,35 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       }
 
       if (!ymd) return;
+      // Fallback robusto: algunos eventos recurrentes mantienen una `fecha` histórica.
+      // Si esa fecha no entra al rango actual y no hay ocurrencias reales del mismo parent
+      // en el rango, sintetizamos la próxima ocurrencia para no perder la card.
+      if (hasDiaSemana && !shouldIncludeByYmd(ymd)) {
+        const hasRealInRangeForParent =
+          parentId != null &&
+          finalData.some((r: any) => {
+            if (r?.parent_id !== parentId) return false;
+            const realYmd = toYmd(r?.fecha || (r as any)?.fecha_inicio);
+            return !!realYmd && shouldIncludeByYmd(realYmd);
+          });
+        if (!hasRealInRangeForParent) {
+          try {
+            const horaInicioStr = row.hora_inicio || '20:00';
+            const next = calculateNextDateWithTime(row.dia_semana, horaInicioStr);
+            const year = next.getFullYear();
+            const month = String(next.getMonth() + 1).padStart(2, '0');
+            const day = String(next.getDate()).padStart(2, '0');
+            ymd = `${year}-${month}-${day}`;
+            usesLegacyNextOccurrence = true;
+          } catch (e) {
+            console.error('Error recalculando next occurrence para evento recurrente con fecha legacy:', e);
+          }
+        }
+      }
       if (!shouldIncludeByYmd(ymd)) return;
 
       // Solo en fallback legacy (fecha vacía) inyectamos la fecha display para orden/UI.
-      const out = hasDiaSemana && !toYmd(row?.fecha || (row as any)?.fecha_inicio)
+      const out = usesLegacyNextOccurrence || (hasDiaSemana && !toYmd(row?.fecha || (row as any)?.fecha_inicio))
         ? { ...row, fecha: ymd, _legacy_next_occurrence: true }
         : row;
 

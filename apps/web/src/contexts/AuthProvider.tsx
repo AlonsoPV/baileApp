@@ -230,7 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (evt, sess) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((evt, sess) => {
       if (!mounted) return;
       
       // 🔄 Detectar errores de refresh token
@@ -247,9 +247,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(sess ?? null);
       setUser(sess?.user ?? null);
       setLoading(false);
+      // ⚠️ IMPORTANTE:
+      // No bloquear este callback con awaits largos. GoTrue mantiene un lock interno
+      // durante onAuthStateChange; si tardamos >5s aparecen warnings de lock huérfano.
+      // Ejecutamos trabajo pesado de forma diferida.
+      void (async () => {
+        try {
+          // ✅ Single source of truth: on ANY userId change, fully reset + rehydrate.
+          await applyUserContext(sess?.user?.id ?? null);
+        } catch (err) {
+          console.warn('[AuthProvider] Error aplicando contexto de usuario:', err);
+        }
 
-      // ✅ Single source of truth: on ANY userId change, fully reset + rehydrate.
-      await applyUserContext(sess?.user?.id ?? null);
+        // 🔁 Invalidar queries de perfiles cuando cambia auth
+        if (sess?.user) {
+          try {
+            await qc.invalidateQueries({ queryKey: ["profile"] });
+            await qc.invalidateQueries({ queryKey: ["profile", "me", sess.user.id] });
+            await qc.invalidateQueries({ queryKey: ["academy"] });
+            await qc.invalidateQueries({ queryKey: ["academy", "my"] });
+            await qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+            await qc.invalidateQueries({ queryKey: ["organizer"] });
+            await qc.invalidateQueries({ queryKey: ["organizer", "mine"] });
+            await qc.invalidateQueries({ queryKey: ["teacher"] });
+            await qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
+            await qc.invalidateQueries({ queryKey: ["brand"] });
+            await qc.invalidateQueries({ queryKey: ["brand", "mine"] });
+          } catch (err) {
+            console.warn('[AuthProvider] Error invalidando queries:', err);
+          }
+        }
+      })();
 
       // 🔍 Identificar usuario en Hotjar cuando hay sesión (lazy loaded, no bloquea)
       if (sess?.user && evt === 'SIGNED_IN') {
@@ -262,25 +290,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => {
           // Silently fail if Hotjar not loaded yet
         });
-      }
-      
-      // 🔁 Invalidar todas las queries de perfiles cuando cambia el estado de autenticación
-      if (sess?.user) {
-        try {
-          await qc.invalidateQueries({ queryKey: ["profile"] });
-          await qc.invalidateQueries({ queryKey: ["profile", "me", sess.user.id] });
-          await qc.invalidateQueries({ queryKey: ["academy"] });
-          await qc.invalidateQueries({ queryKey: ["academy", "my"] });
-          await qc.invalidateQueries({ queryKey: ["academy", "mine"] });
-          await qc.invalidateQueries({ queryKey: ["organizer"] });
-          await qc.invalidateQueries({ queryKey: ["organizer", "mine"] });
-          await qc.invalidateQueries({ queryKey: ["teacher"] });
-          await qc.invalidateQueries({ queryKey: ["teacher", "mine"] });
-          await qc.invalidateQueries({ queryKey: ["brand"] });
-          await qc.invalidateQueries({ queryKey: ["brand", "mine"] });
-        } catch (err) {
-          console.warn('[AuthProvider] Error invalidando queries:', err);
-        }
       }
       
       // 🎭 Resetear a usuario si se cierra sesión

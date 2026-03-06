@@ -674,7 +674,7 @@ export default function ClassPublicScreen() {
   const mapsQuery = encodeURIComponent(`${(ubicacion as any)?.nombre ?? ''} ${(ubicacion as any)?.direccion ?? ''} ${(ubicacion as any)?.ciudad ?? ''}`.trim());
   const mapsHref = mapsQuery ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}` : undefined;
 
-  const handleShare = React.useCallback(async () => {
+  const handleShare = async () => {
     const title = `${classTitle} | ${creatorName}`;
     const text = t('class_with_creator', { title: classTitle, creator: creatorName });
     if (typeof navigator !== 'undefined' && navigator.share) {
@@ -692,7 +692,7 @@ export default function ClassPublicScreen() {
     } catch {
       showToast(t('share_failed', 'No se pudo compartir'), 'info');
     }
-  }, [classTitle, creatorName, classUrl, showToast, t]);
+  };
 
   return (
     <>

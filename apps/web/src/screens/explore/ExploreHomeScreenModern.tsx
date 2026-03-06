@@ -6,7 +6,9 @@ import { useTranslation } from "react-i18next";
 import { useExploreFilters, type DatePreset, type ExploreType } from "../../state/exploreFilters";
 import { useExploreQuery } from "../../hooks/useExploreQuery";
 import { useUsedFilterTags } from "@/hooks/useUsedFilterTags";
+import { useUsedRhythmsByContext } from "@/hooks/useUsedRhythms";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
+import { mapExploreTypeToContext } from "@/filters/exploreContext";
 import { groupRitmos, zonaGroupsToTreeGroups } from "@/filters/exploreFilterGroups";
 import { MultiSelectTreeDropdown } from "@/components/explore/MultiSelectTreeDropdown";
 import { DateFilterDropdown } from "@/components/explore/DateFilterDropdown";
@@ -2487,9 +2489,12 @@ export default function ExploreHomeScreen() {
     set({ type: 'fechas' as ExploreType });
   }, [filters.type, set]);
 
-  // Cerrar dropdowns de tipo y fechas al hacer scroll (que no sigan fijos en pantalla)
+  // Cerrar SOLO dropdowns de tipo y fechas al hacer scroll (que no sigan fijos en pantalla).
+  // Ritmos/Zonas usan panel interactivo con scroll interno y no deben cerrarse al interactuar.
   React.useEffect(() => {
     if (!openFilterDropdown) return;
+    const shouldCloseOnScroll = openFilterDropdown === "type" || openFilterDropdown === "fechas";
+    if (!shouldCloseOnScroll) return;
     const closeOnScroll = () => setOpenFilterDropdown(null);
     window.addEventListener("scroll", closeOnScroll, { passive: true, capture: true });
     const container = document.querySelector(".explore-container");
@@ -2533,37 +2538,37 @@ export default function ExploreHomeScreen() {
   }, []);
 
   const { data: allTags } = useTags();
-  const { usedRitmoIds, usedZonaIds } = useUsedFilterTags();
+  const rhythmContext = React.useMemo(() => mapExploreTypeToContext(filters.type), [filters.type]);
+  const {
+    rhythmIds: contextRhythmIds,
+    isLoading: contextRhythmsLoading,
+    isFetched: contextRhythmsFetched,
+  } = useUsedRhythmsByContext(rhythmContext);
+  const {
+    usedZonaIds,
+    isLoading: usedZonesLoading,
+    isFetched: usedZonesFetched,
+  } = useUsedFilterTags();
   const { groups: zonaCatalogGroups } = useZonaCatalogGroups(
     (allTags as any[])?.filter((t: any) => t?.tipo === "zona") ?? null,
   );
 
-  const usedRitmos = React.useMemo(() => {
-    const ritmos = (allTags as any[])?.filter((t: any) => t?.tipo === "ritmo") ?? [];
-    if (!usedRitmoIds?.length) return ritmos;
-    const set = new Set(usedRitmoIds);
-    return ritmos.filter((r: any) => set.has(r.id));
-  }, [allTags, usedRitmoIds]);
-
   const usedZonas = React.useMemo(() => {
     const zonas = (allTags as any[])?.filter((t: any) => t?.tipo === "zona") ?? [];
-    if (!usedZonaIds?.length) return zonas;
+    if (usedZonesLoading || !usedZonesFetched) return zonas;
+    if (!usedZonaIds?.length) return [];
     const set = new Set(usedZonaIds);
     return zonas.filter((z: any) => set.has(z.id));
-  }, [allTags, usedZonaIds]);
-
-  const ritmoTreeGroups = React.useMemo(
-    () => groupRitmos(usedRitmos.map((r: any) => ({ id: r.id, nombre: r.nombre, slug: r.slug }))),
-    [usedRitmos],
-  );
+  }, [allTags, usedZonaIds, usedZonesLoading, usedZonesFetched]);
 
   const zonaTreeGroups = React.useMemo(() => {
     const usedSet = new Set(usedZonaIds);
     const filtered = zonaCatalogGroups
       .map((g) => ({ ...g, items: g.items.filter((it) => usedSet.has(it.id)) }))
       .filter((g) => g.items.length > 0);
-    return usedZonaIds.length ? zonaGroupsToTreeGroups(filtered) : zonaGroupsToTreeGroups(zonaCatalogGroups);
-  }, [zonaCatalogGroups, usedZonaIds]);
+    if (usedZonesLoading || !usedZonesFetched) return zonaGroupsToTreeGroups(zonaCatalogGroups);
+    return zonaGroupsToTreeGroups(filtered);
+  }, [zonaCatalogGroups, usedZonaIds, usedZonesLoading, usedZonesFetched]);
 
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
   const { showToast } = useToast();
@@ -3017,11 +3022,30 @@ export default function ExploreHomeScreen() {
     const dateFrom = filters.dateFrom ? parseYmdToDate(filters.dateFrom) : null;
     const dateTo = filters.dateTo ? parseYmdToDate(filters.dateTo) : null;
     const hasDateRange = dateFrom !== null || dateTo !== null;
+    const nextRecurringYmd = (dayValue: any) => {
+      if (!todayBase) return null;
+      const day = Number(dayValue);
+      if (!Number.isFinite(day) || day < 0 || day > 6) return null;
+      const currentDay = todayBase.getUTCDay();
+      let offset = day - currentDay;
+      if (offset < 0) offset += 7;
+      const next = new Date(Date.UTC(
+        todayBase.getUTCFullYear(),
+        todayBase.getUTCMonth(),
+        todayBase.getUTCDate() + offset,
+        12, 0, 0
+      ));
+      const year = next.getUTCFullYear();
+      const month = String(next.getUTCMonth() + 1).padStart(2, '0');
+      const dayNum = String(next.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${dayNum}`;
+    };
 
     const upcoming = allFechas.filter((fecha: any) => {
       if (includePastEvents) return true;
 
       const fechaDate = parseYmdToDate(fecha?.fecha);
+      const hasDiaSemana = fecha?.dia_semana !== null && fecha?.dia_semana !== undefined && typeof fecha?.dia_semana === 'number';
       if (!fechaDate || !todayBase) return true;
 
       // Extraer fecha en formato YYYY-MM-DD para comparación directa (evita problemas de zona horaria)
@@ -3039,6 +3063,19 @@ export default function ExploreHomeScreen() {
       // - Eventos que empiezan hoy se muestran en "Hoy" aunque ya haya pasado la hora de inicio.
       // - Eventos que empiezan sábado y terminan domingo 2am no se muestran en "Domingo".
       if (hasDateRange) {
+        // Recurrentes: si no vienen como ocurrencia materializada, evaluar por próxima ocurrencia.
+        if (hasDiaSemana && fecha._recurrence_index === undefined) {
+          try {
+            const nextYmd = nextRecurringYmd(fecha.dia_semana);
+            if (!nextYmd) return true;
+            if (filters.dateFrom && nextYmd < filters.dateFrom) return false;
+            if (filters.dateTo && nextYmd > filters.dateTo) return false;
+            return true;
+          } catch {
+            // Si falla el cálculo, no ocultar agresivamente un recurrente.
+            return true;
+          }
+        }
         if (fecha._recurrence_index !== undefined) {
           if (filters.dateFrom && fechaDateStr < filters.dateFrom) return false;
           if (filters.dateTo && fechaDateStr > filters.dateTo) return false;
@@ -3052,6 +3089,10 @@ export default function ExploreHomeScreen() {
       // Si no hay rango de fechas, solo mostrar eventos futuros
       if (fecha._recurrence_index !== undefined) {
         // Eventos recurrentes siempre futuros si tienen _recurrence_index
+        return true;
+      }
+      if (hasDiaSemana) {
+        // Plantilla recurrente sin ocurrencia materializada: sigue vigente por dia_semana.
         return true;
       }
       
@@ -3312,6 +3353,14 @@ export default function ExploreHomeScreen() {
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const allA = academiasData;
     const allM = maestrosData;
+    const selectedRitmoSet = new Set<number>(filters.ritmos || []);
+    const selectedZonaSet = new Set<number>(filters.zonas || []);
+    const ritmoIdBySlugLocal = new Map<string, number>();
+    for (const t of (allTags || []) as any[]) {
+      if (t?.tipo === 'ritmo' && typeof t?.id === 'number' && typeof t?.slug === 'string') {
+        ritmoIdBySlugLocal.set(String(t.slug).trim().toLowerCase(), t.id);
+      }
+    }
 
     const parseYmdToDate = (value?: string | null) => {
       if (!value) return null;
@@ -3371,6 +3420,14 @@ export default function ExploreHomeScreen() {
         diasSemana: c?.diasSemana || (typeof c?.diaSemana === 'number' ? [dayNames[c.diaSemana] || ''] : undefined),
         inicio: c?.inicio,
         fin: c?.fin,
+        // Campos para construir filtros dinámicos (ritmos/zonas realmente visibles).
+        // No hacer fallback al owner para evitar ritmos sobrantes en contexto "clases".
+        ritmos: c?.ritmos ?? [],
+        ritmoId: c?.ritmoId,
+        ritmoIds: c?.ritmoIds ?? [],
+        estilos: c?.estilos ?? [],
+        ritmos_seleccionados: c?.ritmosSeleccionados ?? c?.ritmos_seleccionados ?? [],
+        zonas: c?.zonas ?? owner?.zonas ?? [],
         ubicacion: c?.ubicacion || owner?.ubicaciones?.[0]?.nombre || owner?.ciudad || owner?.direccion || '',
         ownerType,
         ownerId: owner?.id,
@@ -3411,6 +3468,57 @@ export default function ExploreHomeScreen() {
     });
 
     const merged = [...fromAcademies, ...fromTeachers].filter(x => x && (x.titulo || x.fecha || (x.diasSemana && x.diasSemana[0])));
+    const classMatchesSelectedFilters = (item: any) => {
+      if (selectedRitmoSet.size > 0) {
+        const itemRitmoIds = new Set<number>();
+        const addNum = (v: any) => {
+          const n = Number(v);
+          if (Number.isFinite(n) && n > 0) itemRitmoIds.add(Math.trunc(n));
+        };
+        const addArr = (arr: any) => {
+          if (!Array.isArray(arr)) return;
+          arr.forEach(addNum);
+        };
+        addNum(item?.ritmoId);
+        addArr(item?.ritmoIds);
+        addArr(item?.ritmos);
+        addArr(item?.estilos);
+        const slugs = [
+          ...(Array.isArray(item?.ritmos_seleccionados) ? item.ritmos_seleccionados : []),
+          ...(Array.isArray(item?.ritmosSeleccionados) ? item.ritmosSeleccionados : []),
+        ];
+        for (const raw of slugs) {
+          const key = String(raw ?? '').trim().toLowerCase();
+          if (!key) continue;
+          const mapped = ritmoIdBySlugLocal.get(key);
+          if (typeof mapped === 'number') itemRitmoIds.add(mapped);
+        }
+        let hit = false;
+        itemRitmoIds.forEach((id) => {
+          if (selectedRitmoSet.has(id)) hit = true;
+        });
+        if (!hit) return false;
+      }
+
+      if (selectedZonaSet.size > 0) {
+        const itemZonaIds = new Set<number>();
+        const addZona = (v: any) => {
+          const n = Number(v);
+          if (Number.isFinite(n) && n > 0) itemZonaIds.add(Math.trunc(n));
+        };
+        addZona(item?.zonaId);
+        addZona(item?.zona);
+        if (Array.isArray(item?.zonas)) item.zonas.forEach(addZona);
+        if (Array.isArray(item?.zonaIds)) item.zonaIds.forEach(addZona);
+        let hit = false;
+        itemZonaIds.forEach((id) => {
+          if (selectedZonaSet.has(id)) hit = true;
+        });
+        if (!hit) return false;
+      }
+      return true;
+    };
+    const mergedByRhythmAndZone = merged.filter(classMatchesSelectedFilters);
     const weekdayIndex = (name: string) => dayNames.findIndex(d => d.toLowerCase() === String(name).toLowerCase());
     const nextOccurrence = (c: any): Date | null => {
       try {
@@ -3478,7 +3586,7 @@ export default function ExploreHomeScreen() {
       return true;
     };
 
-    const filtered = merged.filter(matchesPresetAndRange);
+    const filtered = mergedByRhythmAndZone.filter(matchesPresetAndRange);
     
     // Función helper para convertir hora HH:MM a minutos desde medianoche para comparación
     const timeToMinutes = (timeStr?: string | null): number | null => {
@@ -3525,7 +3633,18 @@ export default function ExploreHomeScreen() {
       return dateDiff;
     });
     return sorted;
-  }, [academiasData, maestrosData, filters.datePreset, filters.dateFrom, filters.dateTo, qDeferred, todayYmd]);
+  }, [
+    academiasData,
+    maestrosData,
+    allTags,
+    filters.ritmos,
+    filters.zonas,
+    filters.datePreset,
+    filters.dateFrom,
+    filters.dateTo,
+    qDeferred,
+    todayYmd,
+  ]);
 
   const validUsuarios = React.useMemo(
     () =>
@@ -3570,40 +3689,101 @@ export default function ExploreHomeScreen() {
     [itemsForAvailableFilters, ritmoNameById, zonaNameById, ritmoIdBySlug, zonaIdBySlug],
   );
 
-  const prevContextRef = React.useRef<string>('');
-  const contextKey = React.useMemo(() => {
+  const availableRitmoIdSet = React.useMemo(() => {
+    // Sin contexto específico, usar lo visible en pantalla.
+    if (!rhythmContext) return availableFilters.ritmoIdSet;
+    // Mientras carga el contexto, mantener visibles para evitar parpadeos/vacíos.
+    if (contextRhythmsLoading || !contextRhythmsFetched) return availableFilters.ritmoIdSet;
+    // Contexto cargado: intersección entre backend contextual y resultados visibles.
+    const contextSet = new Set<number>(contextRhythmIds || []);
+    // Si aún no hay dataset visible materializado, no vaciar con intersección.
+    if (availableFilters.ritmoIdSet.size === 0) return contextSet;
+    const out = new Set<number>();
+    availableFilters.ritmoIdSet.forEach((id) => {
+      if (contextSet.has(id)) out.add(id);
+    });
+    return out;
+  }, [rhythmContext, contextRhythmsLoading, contextRhythmsFetched, contextRhythmIds, availableFilters.ritmoIdSet]);
+
+  const ritmoTagsForVisibleItems = React.useMemo(() => {
+    const ritmoIds = availableRitmoIdSet;
+    if (!ritmoIds.size) return [];
+    const ritmos = (allTags as any[])?.filter((t: any) => t?.tipo === "ritmo") ?? [];
+    return ritmos.filter((r: any) => ritmoIds.has(r.id));
+  }, [allTags, availableRitmoIdSet]);
+
+  const ritmoTreeGroups = React.useMemo(
+    () =>
+      groupRitmos(
+        ritmoTagsForVisibleItems.map((r: any) => ({ id: r.id, nombre: r.nombre, slug: r.slug })),
+      ),
+    [ritmoTagsForVisibleItems],
+  );
+
+  React.useEffect(() => {
+    if (openFilterDropdown === "ritmos" && ritmoTreeGroups.length === 0) {
+      setOpenFilterDropdown(null);
+    }
+  }, [openFilterDropdown, ritmoTreeGroups.length]);
+
+  const baseFilterContextKey = React.useMemo(() => {
     const qKey = String(qDeferred || '').trim().toLowerCase();
     return [
-      filters.type,
+      filters.type ?? '',
       filters.datePreset ?? '',
       filters.dateFrom ?? '',
       filters.dateTo ?? '',
       qKey,
     ].join('|');
   }, [filters.type, filters.datePreset, filters.dateFrom, filters.dateTo, qDeferred]);
+  const prevBaseFilterContextRef = React.useRef<string>('');
+  const pendingTrimContextRef = React.useRef<string>('');
 
   React.useEffect(() => {
-    // Solo ajustar automáticamente cuando cambia el “contexto base” (tipo/when/búsqueda),
-    // no cuando el usuario cambia ritmos/zonas directamente.
-    if (!prevContextRef.current) {
-      prevContextRef.current = contextKey;
-      return;
+    const contextChanged = prevBaseFilterContextRef.current !== baseFilterContextKey;
+    if (contextChanged) {
+      pendingTrimContextRef.current = baseFilterContextKey;
     }
-    if (prevContextRef.current === contextKey) return;
-    prevContextRef.current = contextKey;
 
-    const nextRitmos = (filters.ritmos || []).filter((id) => availableFilters.ritmoIdSet.has(id));
+    const contextRhythmsReady = !rhythmContext || !contextRhythmsLoading || contextRhythmsFetched;
+    const zonesReady = !usedZonesLoading || usedZonesFetched;
+    const readyToTrim = contextRhythmsReady && zonesReady;
+    if (!readyToTrim) return;
+
+    const shouldRun =
+      contextChanged || pendingTrimContextRef.current === baseFilterContextKey;
+    if (!shouldRun) return;
+
+    const shouldTrimRitmos = !rhythmContext || (!contextRhythmsLoading && contextRhythmsFetched);
+    const nextRitmos = shouldTrimRitmos
+      ? (filters.ritmos || []).filter((id) => availableRitmoIdSet.has(id))
+      : (filters.ritmos || []);
     const nextZonas = (filters.zonas || []).filter((id) => availableFilters.zonaIdSet.has(id));
-    const changed = nextRitmos.length !== (filters.ritmos || []).length || nextZonas.length !== (filters.zonas || []).length;
-    if (!changed) return;
-
-    set({ ritmos: nextRitmos, zonas: nextZonas });
-    try {
-      showToast?.('Filtros ajustados', 'info');
-    } catch {
-      // ignore
+    const sameRitmos =
+      nextRitmos.length === (filters.ritmos || []).length &&
+      nextRitmos.every((id, idx) => id === (filters.ritmos || [])[idx]);
+    const sameZonas =
+      nextZonas.length === (filters.zonas || []).length &&
+      nextZonas.every((id, idx) => id === (filters.zonas || [])[idx]);
+    const changed = !sameRitmos || !sameZonas;
+    if (changed) {
+      set({ ritmos: nextRitmos, zonas: nextZonas });
     }
-  }, [contextKey, availableFilters.ritmoIdSet, availableFilters.zonaIdSet, filters.ritmos, filters.zonas, set, showToast]);
+    prevBaseFilterContextRef.current = baseFilterContextKey;
+    pendingTrimContextRef.current = '';
+  }, [
+    baseFilterContextKey,
+    rhythmContext,
+    contextRhythmsLoading,
+    contextRhythmsFetched,
+    usedZonesLoading,
+    usedZonesFetched,
+    availableRitmoIdSet,
+    availableFilters.zonaIdSet,
+    filters.ritmos,
+    filters.zonas,
+    set,
+  ]);
 
   // Calcular índices aleatorios estables para insertar CTAs
   const clasesCTIndex = useStableRandomIndex(classesList.length, 'clases');
@@ -4058,11 +4238,22 @@ export default function ExploreHomeScreen() {
                   ref={ritmosPillRef}
                   type="button"
                   className={`filter-pill ${openFilterDropdown === "ritmos" ? "filter-pill--active" : ""}`}
-                  onClick={() => setOpenFilterDropdown(openFilterDropdown === "ritmos" ? null : "ritmos")}
+                  onClick={() => {
+                    if (ritmoTreeGroups.length === 0) return;
+                    setOpenFilterDropdown(openFilterDropdown === "ritmos" ? null : "ritmos");
+                  }}
+                  disabled={ritmoTreeGroups.length === 0}
                   aria-pressed={openFilterDropdown === "ritmos"}
                   aria-expanded={openFilterDropdown === "ritmos"}
                   aria-controls="filters-ritmos-panel"
-                  style={{ flex: '1 1 0', minWidth: 0, justifyContent: "space-between" }}
+                  title={ritmoTreeGroups.length === 0 ? (t("no_rhythms_available", "No hay ritmos disponibles para este tipo")) : undefined}
+                  style={{
+                    flex: '1 1 0',
+                    minWidth: 0,
+                    justifyContent: "space-between",
+                    opacity: ritmoTreeGroups.length === 0 ? 0.6 : 1,
+                    cursor: ritmoTreeGroups.length === 0 ? "not-allowed" : "pointer",
+                  }}
                 >
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <span className="pill-icon" aria-hidden="true">🎵</span>

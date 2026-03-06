@@ -59,6 +59,7 @@ export function extractRitmoIds(item: any, input: Pick<BuildAvailableFiltersInpu
   if (!item) return [];
 
   const ids: number[] = [];
+  const idsFromSlugs: number[] = [];
 
   // Campos comunes en perfiles
   ids.push(...toNumberArray(item.ritmos));
@@ -77,8 +78,19 @@ export function extractRitmoIds(item: any, input: Pick<BuildAvailableFiltersInpu
     for (const raw of slugCandidates) {
       const slug = String(raw).trim().toLowerCase();
       const id = input.ritmoIdBySlug.get(slug);
-      if (typeof id === 'number') ids.push(id);
+      if (typeof id === 'number') idsFromSlugs.push(id);
     }
+  }
+
+  // Priorizar slugs cuando existan (suelen ser la fuente vigente).
+  if (idsFromSlugs.length > 0) {
+    ids.push(...idsFromSlugs);
+  } else {
+    // Fallback a campos legacy numéricos.
+    ids.push(...toNumberArray(item.ritmos));
+    ids.push(...toNumberArray(item.estilos));
+    ids.push(...toNumberArray(item.ritmoId));
+    ids.push(...toNumberArray(item.ritmoIds));
   }
 
   // Eventos: relación anidada

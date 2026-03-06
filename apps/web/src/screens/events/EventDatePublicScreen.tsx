@@ -14,7 +14,6 @@ import {
   type StickyRsvpState,
   InfoGrid,
   ExpandableText,
-  CostsSection,
   Timeline,
   LocationAccordion,
   ContactSection,
@@ -546,6 +545,9 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         <div className="eds-content">
           <InfoGrid
             costsSummary={costsSummary}
+            costsItems={Array.isArray(date.costos) ? date.costos : []}
+            costsDisclaimer={t('price_disclaimer', 'Precios sujetos a cambios')}
+            freeLabel={t('free', 'Gratis')}
             dateStr={dateStr}
             timeRange={timeRange}
             venueName={venueName}
@@ -565,15 +567,6 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                 expandLabel={t('see_more', 'Ver más')}
                 collapseLabel={t('see_less', 'Ver menos')}
               />
-            </>
-          )}
-          {Array.isArray(date.costos) && date.costos.length > 0 && (
-            <>
-              <div className="eds-section-header">
-                <h2 className="eds-section-title">{t('costs', 'Costos')}</h2>
-                <div className="eds-section-underline" aria-hidden />
-              </div>
-              <CostsSection items={date.costos} disclaimer={t('price_disclaimer', 'Precios sujetos a cambios')} freeLabel={t('free', 'Gratis')} />
             </>
           )}
           {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (

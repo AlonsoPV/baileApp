@@ -580,14 +580,12 @@
   border: 1px solid var(--eds-card-border);
   border-radius: var(--eds-radius);
   margin: 16px 0;
+  padding: 16px;
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .eds-accordion:hover {
   border-color: rgba(41, 127, 150, 0.25);
-}
-.eds-accordion__body {
-  padding: 0 16px 16px;
 }
 .eds-accordion__text {
   font-size: 15px;
