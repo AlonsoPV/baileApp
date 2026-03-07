@@ -1,9 +1,10 @@
 import { calculateNextDateWithTime } from "./calculateRecurringDates";
+import { getEffectiveEventDate } from "./effectiveEventDate";
 
 /** Devuelve YYYY-MM-DD para mostrar en UI. */
 export function resolveEventDateYmd(item: any): string | null {
-  // 1) Fuente de verdad: fecha real en row de events_date
-  const fecha = item?.fecha || item?.evento_fecha || item?.fecha_inicio;
+  // 1) Fuente de verdad compartida en todo Explore/Event cards.
+  const fecha = getEffectiveEventDate(item) || item?.evento_fecha || null;
   if (fecha) return String(fecha).split("T")[0] ?? null;
 
   // 2) Si no hay fecha, y es recurrente legacy:

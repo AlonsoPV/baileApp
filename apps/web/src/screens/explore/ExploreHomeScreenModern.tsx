@@ -35,6 +35,7 @@ import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
 import { useToast } from "../../components/Toast";
 import { mark, notifyError, notifyReady } from "@/utils/performanceLogger";
 import { normalizeEventsForCards } from "@/utils/normalizeEventsForCards";
+import { getEffectiveEventDate, getEffectiveEventDateYmd, normalizeDateOnly } from "@/utils/effectiveEventDate";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -61,36 +62,11 @@ function getTodayCDMX(): string {
   return formatter.format(new Date());
 }
 
-function toYmd(value?: string | null): string {
-  if (!value) return "";
-  return String(value).split("T")[0] || "";
-}
-
-function normalizeDateOnly(dateValue?: string | null): Date | null {
-  if (!dateValue) return null;
-  const ymd = toYmd(dateValue);
-  if (!ymd) return null;
-  const parts = ymd.split("-").map((part) => Number(part));
-  if (parts.length === 3) {
-    const [year, month, day] = parts;
-    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
-      return new Date(year, month - 1, day);
-    }
-  }
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
-}
-
-function getEffectiveEventDateRaw(event: any): string | null {
-  return event?.instance_date || event?.fecha || event?.fecha_inicio || null;
-}
-
 function buildEventOccurrenceKey(event: any): string {
   const instanceId = event?.instance_id;
   if (instanceId) return `instance_${String(instanceId)}`;
 
-  const effectiveDate = toYmd(getEffectiveEventDateRaw(event));
+  const effectiveDate = getEffectiveEventDateYmd(event);
   const horaInicio = String(event?.hora_inicio || event?.evento_hora_inicio || "");
   const parentOrOwn = String(event?.parent_id ?? event?.id ?? "no_id");
   if (effectiveDate) return `${parentOrOwn}_${effectiveDate}_${horaInicio}`;
@@ -2761,6 +2737,16 @@ export default function ExploreHomeScreen() {
       // No hacer nada, mantener las fechas manuales
       return;
     }
+
+    // Preset legado removido de filtros rápidos: limpiar estado persistido antiguo.
+    if (filters.datePreset === "siguientes") {
+      if (filters.dateFrom !== undefined || filters.dateTo !== undefined) {
+        set({ datePreset: "todos", dateFrom: undefined, dateTo: undefined });
+      } else {
+        set({ datePreset: "todos" });
+      }
+      return;
+    }
     
     const preset = filters.datePreset || 'todos';
     const { from, to } = computePresetRange(preset);
@@ -3044,6 +3030,17 @@ export default function ExploreHomeScreen() {
     }
   }, [fechasError]);
 
+  React.useEffect(() => {
+    if (!import.meta.env?.DEV) return;
+    if (selectedType !== "fechas") return;
+    console.log("[DATE FILTER STATE]", {
+      selectedDateFilter: filters.datePreset ?? null,
+      dateFrom: filters.dateFrom ?? null,
+      dateTo: filters.dateTo ?? null,
+      query: qDeferred || "",
+    });
+  }, [selectedType, filters.datePreset, filters.dateFrom, filters.dateTo, qDeferred]);
+
   const filteredFechas = React.useMemo(() => {
     const isValidDiaSemana = (value: any): value is number =>
       Number.isInteger(value) && value >= 0 && value <= 6;
@@ -3071,14 +3068,14 @@ export default function ExploreHomeScreen() {
     const upcoming = allFechas.filter((fecha: any) => {
       if (includePastEvents) return true;
       const hasDiaSemana = isValidDiaSemana(fecha?.dia_semana);
-      let eventDateOnly = normalizeDateOnly(getEffectiveEventDateRaw(fecha));
+      let eventDateOnly = normalizeDateOnly(getEffectiveEventDate(fecha));
 
       // Si hay rango de fechas (ej. "Hoy" con from=to=hoy), usar solo la fecha de INICIO del evento.
       // - Eventos que empiezan hoy se muestran en "Hoy" aunque ya haya pasado la hora de inicio.
       // - Eventos que empiezan sábado y terminan domingo 2am no se muestran en "Domingo".
       if (hasDateRange) {
         // Recurrentes: si no vienen como ocurrencia materializada, evaluar por próxima ocurrencia.
-        if (hasDiaSemana && fecha._recurrence_index === undefined) {
+        if (!eventDateOnly && hasDiaSemana && fecha._recurrence_index === undefined) {
           try {
             const nextYmd = nextRecurringYmd(fecha.dia_semana);
             eventDateOnly = normalizeDateOnly(nextYmd);
@@ -3112,30 +3109,58 @@ export default function ExploreHomeScreen() {
     })();
 
     if (import.meta.env?.DEV) {
+      const selectedDateFilter = filters.datePreset ?? null;
+      const isSiguientesPreset = selectedDateFilter === "siguientes";
       const hasTodayFilter = !!filters.dateFrom && !!filters.dateTo && filters.dateFrom === filters.dateTo && !!todayOnly;
       const tomorrowOnly = todayOnly
         ? new Date(todayOnly.getFullYear(), todayOnly.getMonth(), todayOnly.getDate() + 1)
         : null;
       const todayEvents = hasTodayFilter
         ? deduped.filter((event: any) => {
-            const d = normalizeDateOnly(getEffectiveEventDateRaw(event));
+            const d = normalizeDateOnly(getEffectiveEventDate(event));
             return !!d && !!todayOnly && d.getTime() === todayOnly.getTime();
           })
         : [];
       const upcomingEvents = tomorrowOnly
         ? deduped.filter((event: any) => {
-            const d = normalizeDateOnly(getEffectiveEventDateRaw(event));
+            const d = normalizeDateOnly(getEffectiveEventDate(event));
             return !!d && d.getTime() >= tomorrowOnly.getTime();
           })
         : [];
       console.log("[ExploreFechas] hoy normalizado:", todayOnly);
       console.log("[ExploreFechas] manana normalizado:", tomorrowOnly);
       console.log("[ExploreFechas] eventos originales:", allFechas.length);
+      console.log("[ExploreFechas] eventos generados:", upcoming.length);
       console.log("[ExploreFechas] eventos deduplicados:", deduped.length);
-      if (hasTodayFilter) {
-        console.log("[ExploreFechas] eventos HOY:", todayEvents);
+      console.log("[ExploreFechas] eventos HOY:", todayEvents);
+      console.log("[ExploreFechas] eventos FUTUROS:", upcomingEvents);
+      console.log("[DATE FILTER APPLIED]", {
+        selectedDateFilter,
+        totalEventsBeforeFilter: allFechas.length,
+        totalEventsAfterFilter: deduped.length,
+      });
+
+      if (isSiguientesPreset) {
+        console.log("[RAW EVENTS]", allFechas.length, allFechas.slice(0, 10));
+        console.log("[GENERATED EVENTS]", upcoming.length, upcoming.slice(0, 10));
+        console.log("[FILTER PREVIOUS COUNT]", allFechas.length);
+        console.log("[FUTURE FILTER RESULT]", deduped.length, deduped.slice(0, 20));
+        deduped.slice(0, 60).forEach((event: any) => {
+          const effective = getEffectiveEventDate(event);
+          const normalized = normalizeDateOnly(effective);
+          console.log("[EVENT DATE CHECK]", {
+            id: event?.id,
+            parent_id: event?.parent_id,
+            nombre: event?.nombre,
+            instance_date: event?.instance_date,
+            fecha: event?.fecha,
+            fecha_inicio: event?.fecha_inicio,
+            effectiveDate: effective,
+            normalized,
+            hora_inicio: event?.hora_inicio,
+          });
+        });
       }
-      console.log("[ExploreFechas] eventos FUTUROS:", upcomingEvents.length);
     }
 
     // Orden robusto en UI: primero por fecha, luego por hora, luego por id.
@@ -3153,20 +3178,25 @@ export default function ExploreHomeScreen() {
     };
 
     return [...deduped].sort((a: any, b: any) => {
-      const ymdA = toYmd(getEffectiveEventDateRaw(a));
-      const ymdB = toYmd(getEffectiveEventDateRaw(b));
+      const ymdA = getEffectiveEventDateYmd(a);
+      const ymdB = getEffectiveEventDateYmd(b);
       if (ymdA !== ymdB) return ymdA < ymdB ? -1 : 1;
 
       const horaA = toSortableHora(a?.hora_inicio ?? a?.evento_hora_inicio);
       const horaB = toSortableHora(b?.hora_inicio ?? b?.evento_hora_inicio);
       if (horaA !== horaB) return horaA < horaB ? -1 : 1;
 
+      const nameA = String(a?.nombre || a?.events_parent?.nombre || "");
+      const nameB = String(b?.nombre || b?.events_parent?.nombre || "");
+      const byName = nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
+      if (byName !== 0) return byName;
+
       const idA = Number(a?.id ?? 0);
       const idB = Number(b?.id ?? 0);
       if (Number.isFinite(idA) && Number.isFinite(idB) && idA !== idB) return idA - idB;
       return String(a?.id ?? "").localeCompare(String(b?.id ?? ""));
     });
-  }, [fechasData, todayYmd, qDeferred, filters.dateFrom, filters.dateTo]);
+  }, [fechasData, todayYmd, qDeferred, filters.dateFrom, filters.dateTo, filters.datePreset, selectedType]);
 
   /** Eventos con __ui precomputado: cero hooks/queries por card en Explore. */
   const normalizedFechas = React.useMemo(
@@ -3251,7 +3281,7 @@ export default function ExploreHomeScreen() {
 
     const key =
       (fechaEvento as any)?._recurrence_index !== undefined
-        ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}_${toYmd(getEffectiveEventDateRaw(fechaEvento))}_${String(fechaEvento?.hora_inicio || fechaEvento?.evento_hora_inicio || "")}`
+        ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}_${getEffectiveEventDateYmd(fechaEvento)}_${String(fechaEvento?.hora_inicio || fechaEvento?.evento_hora_inicio || "")}`
         : buildEventOccurrenceKey(fechaEvento);
 
     const card = (

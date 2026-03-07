@@ -5,6 +5,7 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { SELECT_EVENTS_CARD } from "@/lib/eventSelects";
 import { calculateNextDateWithTime, firstOccurrenceInRange } from "../utils/calculateRecurringDates";
 import { perfLog } from "../utils/perfLog";
+import { getEffectiveEventDate, getEffectiveEventDateYmd, normalizeDateOnly } from "@/utils/effectiveEventDate";
 
 const PAGE_LIMIT = 12;
 
@@ -442,7 +443,13 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
   // Supabase typed client may infer `GenericStringError[]` for complex selects.
   // We normalize to `any[]` because downstream code operates dynamically by `type`.
   let finalData: any[] = (data as any[]) || [];
+  const rawDataSnapshot: any[] = [...finalData];
   let searchOrganizerIdSet: Set<number> | null = null;
+  const debugIsFutureRange = type === "fechas" && !!dateFrom && !dateTo;
+
+  if (import.meta.env?.DEV && type === "fechas") {
+    console.log("[RAW EVENTS]", rawDataSnapshot.length, rawDataSnapshot.slice(0, 10));
+  }
 
   // Usar resultados de búsqueda paralela (search_events_parent + search_v_organizers ya ejecutados)
   if (type === 'fechas' && search) {
@@ -528,6 +535,10 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
         const existingIds = new Set(finalData.map((r: any) => r.id));
         const newMatches = (parentMatches as any[]).filter((r: any) => !existingIds.has(r.id));
         finalData = [...finalData, ...newMatches];
+      }
+
+      if (import.meta.env?.DEV) {
+        console.log("[GENERATED EVENTS]", finalData.length, finalData.slice(0, 10));
       }
       }
     } catch (error) {
@@ -635,18 +646,17 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           occRows.forEach((r) => byId.set((r as any)?.id, r));
           finalData = Array.from(byId.values());
         }
+
+        if (import.meta.env?.DEV) {
+          console.log("[GENERATED EVENTS]", finalData.length, finalData.slice(0, 10));
+        }
       } catch (e) {
         console.warn("[useExploreQuery] re-fetch occurrences failed", e);
       }
     }
 
     const nextData: any[] = [];
-    const toYmd = (raw: any) => {
-      if (!raw) return '';
-      const plain = String(raw).split('T')[0];
-      return plain || '';
-    };
-    const effectiveYmd = (row: any) => toYmd((row as any)?.instance_date || row?.fecha || (row as any)?.fecha_inicio);
+    const effectiveYmd = (row: any) => getEffectiveEventDateYmd(row);
     const occurrenceKey = (row: any) => {
       const instanceId = (row as any)?.instance_id;
       if (instanceId) return `instance_${String(instanceId)}`;
@@ -678,6 +688,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       return !(fechaDate < todayDate);
     };
 
+    const beforeFutureFilterCount = finalData.length;
     finalData.forEach((row: any) => {
       const hasDiaSemana = isValidDiaSemana(row?.dia_semana);
       const parentId = typeof row?.parent_id === "number" ? row.parent_id : null;
@@ -686,16 +697,16 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       // ✅ Regla de fuente única:
       // - Si `fecha` existe, se usa esa fecha y se filtra como evento normal (aunque exista dia_semana).
       // - Solo si `fecha` NO existe, se calcula una "next occurrence" para display usando dia_semana.
-      let ymd = toYmd(row?.fecha || (row as any)?.fecha_inicio);
+      let ymd = getEffectiveEventDateYmd(row);
 
       if (!ymd && hasDiaSemana) {
         // Si ya hay ocurrencias reales para este parent/serie, NO mostrar la plantilla sin fecha.
         const orgId = row?.organizer_id ?? row?.events_parent?.organizer_id;
         if (parentId != null) {
-          const hasRealForParent = finalData.some((r: any) => r?.parent_id === parentId && !!toYmd(r?.fecha || (r as any)?.fecha_inicio));
+          const hasRealForParent = finalData.some((r: any) => r?.parent_id === parentId && !!getEffectiveEventDateYmd(r));
           if (hasRealForParent) return;
         } else if (orgId != null && Number.isFinite(Number(orgId))) {
-          const hasRealForOrphan = finalData.some((r: any) => (r?.parent_id == null || r?.parent_id === '') && r?.organizer_id === Number(orgId) && !!toYmd(r?.fecha || (r as any)?.fecha_inicio));
+          const hasRealForOrphan = finalData.some((r: any) => (r?.parent_id == null || r?.parent_id === '') && r?.organizer_id === Number(orgId) && !!getEffectiveEventDateYmd(r));
           if (hasRealForOrphan) return;
         }
         try {
@@ -731,13 +742,13 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           (parentId != null &&
             finalData.some((r: any) => {
               if (r?.parent_id !== parentId) return false;
-              const realYmd = toYmd(r?.fecha || (r as any)?.fecha_inicio);
+              const realYmd = getEffectiveEventDateYmd(r);
               return !!realYmd && shouldIncludeByYmd(realYmd);
             })) ||
           (orgIdForRange != null && (parentId == null || parentId === '') &&
             finalData.some((r: any) => {
               if ((r?.parent_id != null && r?.parent_id !== '') || r?.organizer_id !== Number(orgIdForRange)) return false;
-              const realYmd = toYmd(r?.fecha || (r as any)?.fecha_inicio);
+              const realYmd = getEffectiveEventDateYmd(r);
               return !!realYmd && shouldIncludeByYmd(realYmd);
             }));
         if (!hasRealInRangeForParent && params.dateFrom && params.dateTo) {
@@ -763,13 +774,18 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       if (!shouldIncludeByYmd(ymd)) return;
 
       // Solo en fallback legacy (fecha vacía) inyectamos la fecha display para orden/UI.
-      const out = usesLegacyNextOccurrence || (hasDiaSemana && !toYmd(row?.fecha || (row as any)?.fecha_inicio))
+      const out = usesLegacyNextOccurrence || (hasDiaSemana && !getEffectiveEventDate(row))
         ? { ...row, fecha: ymd, _legacy_next_occurrence: true }
         : row;
 
       // Recurrentes: mostrar cada ocurrencia (cada fecha) como card propia, no colapsar a una sola.
       nextData.push(out);
     });
+
+    if (import.meta.env?.DEV) {
+      console.log("[FILTER PREVIOUS COUNT]", beforeFutureFilterCount);
+      console.log("[FUTURE FILTER RESULT]", nextData.length, nextData.slice(0, 20));
+    }
 
     const dedupedByOccurrence = (() => {
       const map = new Map<string, any>();
@@ -779,6 +795,26 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       }
       return Array.from(map.values());
     })();
+
+    if (import.meta.env?.DEV) {
+      console.log("[DEDUPE RESULT]", dedupedByOccurrence.length, dedupedByOccurrence.slice(0, 20));
+      if (debugIsFutureRange) {
+        dedupedByOccurrence.slice(0, 80).forEach((event: any) => {
+          const effectiveDate = getEffectiveEventDate(event);
+          console.log("[EVENT DATE CHECK]", {
+            id: event?.id,
+            parent_id: event?.parent_id,
+            nombre: event?.nombre,
+            instance_date: event?.instance_date,
+            fecha: event?.fecha,
+            fecha_inicio: event?.fecha_inicio,
+            effectiveDate,
+            normalized: normalizeDateOnly(effectiveDate),
+            hora_inicio: event?.hora_inicio,
+          });
+        });
+      }
+    }
 
     finalData = dedupedByOccurrence;
     
@@ -790,6 +826,10 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       const horaA = toSortableHora(a.hora_inicio);
       const horaB = toSortableHora(b.hora_inicio);
       if (horaA !== horaB) return horaA < horaB ? -1 : 1;
+      const nameA = String(a?.nombre || a?.events_parent?.nombre || "");
+      const nameB = String(b?.nombre || b?.events_parent?.nombre || "");
+      const byName = nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
+      if (byName !== 0) return byName;
       return (a.id ?? 0) - (b.id ?? 0);
     });
   }
@@ -818,6 +858,9 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
   
   const fetchEnd = performance.now();
   perfLog({ hook: 'useExploreQuery', step: 'fetchPage_total', duration_ms: fetchEnd - fetchStart, rows: finalData.length, data: finalData, extra: { count: count ?? 0, type } });
+  if (import.meta.env?.DEV && type === "fechas") {
+    console.log("[RENDER FINAL]", finalData.length, finalData.slice(0, 20));
+  }
   
   return { 
     data: finalData, 
