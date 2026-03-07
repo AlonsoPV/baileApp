@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase";
 import type { ExploreFilters, ExploreType } from "../state/exploreFilters";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { SELECT_EVENTS_CARD } from "@/lib/eventSelects";
-import { calculateNextDateWithTime } from "../utils/calculateRecurringDates";
+import { calculateNextDateWithTime, firstOccurrenceInRange } from "../utils/calculateRecurringDates";
 import { perfLog } from "../utils/perfLog";
 
 const PAGE_LIMIT = 12;
@@ -53,6 +53,10 @@ function includesLower(haystack: any, needleLower: string) {
   return String(haystack).toLowerCase().includes(needleLower);
 }
 
+function isValidDiaSemana(value: any): value is number {
+  return Number.isInteger(value) && value >= 0 && value <= 6;
+}
+
 function isAuthLockAbortError(error: any): boolean {
   const msg = String(error?.message || "");
   const details = String(error?.details || "");
@@ -67,19 +71,20 @@ function isAuthLockAbortError(error: any): boolean {
 function matchesFechaSearch(row: any, needleLower: string, organizerIdSet?: Set<number> | null) {
   if (!needleLower) return true;
 
-  const organizerId = row?.events_parent?.organizer_id;
+  const organizerId = row?.events_parent?.organizer_id ?? row?.organizer_id;
   const organizerIdNum = typeof organizerId === "number" ? organizerId : Number(organizerId);
   const organizerMatch =
     !!organizerIdSet &&
     Number.isFinite(organizerIdNum) &&
     organizerIdSet.has(organizerIdNum);
+  const eventNombre = row?.events_parent?.nombre ?? row?.nombre;
 
   return (
     includesLower(row?.nombre, needleLower) ||
     includesLower(row?.lugar, needleLower) ||
     includesLower(row?.ciudad, needleLower) ||
     includesLower(row?.direccion, needleLower) ||
-    includesLower(row?.events_parent?.nombre, needleLower) ||
+    includesLower(eventNombre, needleLower) ||
     organizerMatch
   );
 }
@@ -267,17 +272,17 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       // En Supabase, múltiples .or() se combinan con AND, así que:
       // (dia_semana.not.is.null OR fecha.gte.dateFrom) AND (dia_semana.not.is.null OR fecha.lte.dateTo)
       // Para eventos sin dia_semana: fecha.gte.dateFrom AND fecha.lte.dateTo ✅
-      query = query.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
-      query = query.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
+      query = query.or(`dia_semana.not.is.null,fecha.gte.${dateFrom},fecha.is.null`);
+      query = query.or(`dia_semana.not.is.null,fecha.lte.${dateTo},fecha.is.null`);
     } else if (dateFrom) {
       // Solo dateFrom: eventos con dia_semana O eventos con fecha >= dateFrom
-      query = query.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
+      query = query.or(`dia_semana.not.is.null,fecha.gte.${dateFrom},fecha.is.null`);
     } else if (dateTo) {
       // Solo dateTo: eventos con dia_semana O eventos con fecha <= dateTo
-      query = query.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
+      query = query.or(`dia_semana.not.is.null,fecha.lte.${dateTo},fecha.is.null`);
     } else {
       // Para "todos", mostrar solo eventos futuros (>= hoy en CDMX) O eventos con dia_semana
-      query = query.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX}`);
+      query = query.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX},fecha.is.null`);
     }
     
     // Ritmos: preferimos filtrar por IDs numéricos (`estilos int[]`).
@@ -481,14 +486,14 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       
       // Aplicar los mismos filtros de fecha que la query principal
       if (dateFrom && dateTo) {
-        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
-        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${dateFrom},fecha.is.null`);
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.lte.${dateTo},fecha.is.null`);
       } else if (dateFrom) {
-        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${dateFrom}`);
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${dateFrom},fecha.is.null`);
       } else if (dateTo) {
-        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.lte.${dateTo}`);
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.lte.${dateTo},fecha.is.null`);
       } else {
-        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX}`);
+        parentQuery = parentQuery.or(`dia_semana.not.is.null,fecha.gte.${todayCDMX},fecha.is.null`);
       }
       
       // Aplicar filtros de zonas
@@ -558,17 +563,29 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
     const recurringParentIds = Array.from(
       new Set(
         finalData
-          .filter((row: any) => row?.parent_id && typeof row?.dia_semana === "number")
+          .filter((row: any) => row?.parent_id && isValidDiaSemana(row?.dia_semana))
           .map((row: any) => Number(row.parent_id))
           .filter((n: any) => Number.isFinite(n))
       )
     );
-
     if (recurringParentIds.length > 0) {
+      // Sin rango de fechas: materializar 30 semanas para que se vean fechas futuras (p. ej. más de 2 semanas).
+      let weeksAhead = 30;
+      if (dateFrom && dateTo) {
+        const endYmd = dateTo >= dateFrom ? dateTo : dateFrom;
+        const [ey, em, ed] = endYmd.split("-").map((x) => parseInt(x, 10));
+        if (Number.isFinite(ey) && Number.isFinite(em) && Number.isFinite(ed)) {
+          const endDate = new Date(Date.UTC(ey, em - 1, ed, 12, 0, 0));
+          const todayDate = new Date(todayStr + "T12:00:00Z");
+          const diffMs = Math.max(0, endDate.getTime() - todayDate.getTime());
+          const diffWeeks = Math.ceil(diffMs / (7 * 24 * 60 * 60 * 1000));
+          weeksAhead = Math.min(Math.max(1, diffWeeks), 30);
+        }
+      }
       const rpcStart = performance.now();
       for (const pid of recurringParentIds) {
         try {
-          await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: 12 } as any);
+          await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: weeksAhead } as any);
         } catch (e) {
           console.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
         }
@@ -576,47 +593,46 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       const rpcEnd = performance.now();
       perfLog({ hook: 'useExploreQuery', step: 'ensure_weekly_occurrences_rpc', duration_ms: rpcEnd - rpcStart, rows: 0, extra: { parents_count: recurringParentIds.length } });
 
-      // Re-fetch ocurrencias reales (rango: dateFrom/dateTo o hoy + 84 días)
+      // Re-fetch ocurrencias reales (rango: dateFrom/dateTo o hoy + 30 semanas para cubrir fechas futuras)
       try {
         const rangeFrom = dateFrom || todayStr;
-        const rangeTo = dateTo || addDaysYmd(rangeFrom, 84);
+        const rangeTo = dateTo || addDaysYmd(rangeFrom, 30 * 7);
         const occStart = performance.now();
-        let occQuery = supabase
-          .from("events_date")
-          .select(select as any)
-          .eq("estado_publicacion", "publicado")
-          .in("parent_id", recurringParentIds as any)
-          .gte("fecha", rangeFrom)
-          .lte("fecha", rangeTo);
-
-        // Mantener consistencia con los filtros activos al materializar ocurrencias.
-        if (zonas?.length) {
-          occQuery = occQuery.in("zona", zonas as any);
-        }
-        if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
-          const parts: string[] = [];
-          if ((ritmos?.length || 0) > 0) {
-            const set = `{${(ritmos as number[]).join(',')}}`;
-            parts.push(`estilos.ov.${set}`);
+        const buildOccQuery = (parentIds: number[]) => {
+          let q = supabase
+            .from("events_date")
+            .select(select as any)
+            .eq("estado_publicacion", "publicado")
+            .in("parent_id", parentIds)
+            .gte("fecha", rangeFrom)
+            .lte("fecha", rangeTo);
+          if (zonas?.length) q = q.in("zona", zonas as any);
+          if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+            const parts: string[] = [];
+            if ((ritmos?.length || 0) > 0) {
+              parts.push(`estilos.ov.{${(ritmos as number[]).join(',')}}`);
+            }
+            if ((selectedCatalogIds?.length || 0) > 0) {
+              parts.push(`ritmos_seleccionados.ov.{${selectedCatalogIds.join(',')}}`);
+            }
+            if (parts.length > 0) q = q.or(parts.join(','));
           }
-          if ((selectedCatalogIds?.length || 0) > 0) {
-            const setCat = `{${selectedCatalogIds.join(',')}}`;
-            parts.push(`ritmos_seleccionados.ov.${setCat}`);
-          }
-          if (parts.length > 0) occQuery = occQuery.or(parts.join(','));
+          return q.order("fecha", { ascending: true, nullsFirst: false })
+            .order("hora_inicio", { ascending: true, nullsFirst: false })
+            .order("id", { ascending: true });
+        };
+        let occRows: any[] = [];
+        if (recurringParentIds.length > 0) {
+          const { data: r1, error: e1 } = await buildOccQuery(recurringParentIds);
+          if (!e1 && Array.isArray(r1)) occRows = [...occRows, ...r1];
         }
-
-        const { data: occRows, error: occErr } = await (occQuery as any)
-          .order("fecha", { ascending: true, nullsFirst: false })
-          .order("hora_inicio", { ascending: true, nullsFirst: false })
-          .order("id", { ascending: true });
         const occEnd = performance.now();
-        perfLog({ hook: 'useExploreQuery', step: 'refetch_recurring_occurrences', duration_ms: occEnd - occStart, rows: occRows?.length ?? 0, data: occRows, error: occErr });
+        perfLog({ hook: 'useExploreQuery', step: 'refetch_recurring_occurrences', duration_ms: occEnd - occStart, rows: occRows?.length ?? 0, data: occRows });
 
-        if (!occErr && Array.isArray(occRows) && occRows.length > 0) {
+        if (occRows.length > 0) {
           const byId = new Map<any, any>();
           (finalData as any[]).forEach((r) => byId.set((r as any)?.id, r));
-          (occRows as any[]).forEach((r) => byId.set((r as any)?.id, r));
+          occRows.forEach((r) => byId.set((r as any)?.id, r));
           finalData = Array.from(byId.values());
         }
       } catch (e) {
@@ -629,6 +645,16 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       if (!raw) return '';
       const plain = String(raw).split('T')[0];
       return plain || '';
+    };
+    const effectiveYmd = (row: any) => toYmd((row as any)?.instance_date || row?.fecha || (row as any)?.fecha_inicio);
+    const occurrenceKey = (row: any) => {
+      const instanceId = (row as any)?.instance_id;
+      if (instanceId) return `instance_${String(instanceId)}`;
+      const ymd = effectiveYmd(row);
+      const hora = String(row?.hora_inicio || row?.evento_hora_inicio || '');
+      const parentOrOwn = String(row?.parent_id ?? row?.id ?? 'no_id');
+      if (ymd) return `${parentOrOwn}_${ymd}_${hora}`;
+      return `id_${String(row?.id ?? 'no_id')}`;
     };
     const shouldIncludeByYmd = (fechaStr: string) => {
       if (!fechaStr) return false;
@@ -653,7 +679,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
     };
 
     finalData.forEach((row: any) => {
-      const hasDiaSemana = row.dia_semana !== null && row.dia_semana !== undefined && typeof row.dia_semana === 'number';
+      const hasDiaSemana = isValidDiaSemana(row?.dia_semana);
       const parentId = typeof row?.parent_id === "number" ? row.parent_id : null;
       let usesLegacyNextOccurrence = false;
 
@@ -663,20 +689,32 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       let ymd = toYmd(row?.fecha || (row as any)?.fecha_inicio);
 
       if (!ymd && hasDiaSemana) {
-        // Si ya hay ocurrencias reales para este parent, NO mostrar la plantilla sin fecha.
-        // (La navegación debe ser por occurrences reales con fecha.)
+        // Si ya hay ocurrencias reales para este parent/serie, NO mostrar la plantilla sin fecha.
+        const orgId = row?.organizer_id ?? row?.events_parent?.organizer_id;
         if (parentId != null) {
           const hasRealForParent = finalData.some((r: any) => r?.parent_id === parentId && !!toYmd(r?.fecha || (r as any)?.fecha_inicio));
           if (hasRealForParent) return;
+        } else if (orgId != null && Number.isFinite(Number(orgId))) {
+          const hasRealForOrphan = finalData.some((r: any) => (r?.parent_id == null || r?.parent_id === '') && r?.organizer_id === Number(orgId) && !!toYmd(r?.fecha || (r as any)?.fecha_inicio));
+          if (hasRealForOrphan) return;
         }
         try {
-          const horaInicioStr = row.hora_inicio || '20:00';
-          const next = calculateNextDateWithTime(row.dia_semana, horaInicioStr);
-          const year = next.getFullYear();
-          const month = String(next.getMonth() + 1).padStart(2, '0');
-          const day = String(next.getDate()).padStart(2, '0');
-          ymd = `${year}-${month}-${day}`;
-          usesLegacyNextOccurrence = true;
+          if (params.dateFrom && params.dateTo) {
+            const inRange = firstOccurrenceInRange(row.dia_semana, params.dateFrom, params.dateTo);
+            if (inRange) {
+              ymd = inRange;
+              usesLegacyNextOccurrence = true;
+            }
+          }
+          if (!ymd) {
+            const horaInicioStr = row.hora_inicio || '20:00';
+            const next = calculateNextDateWithTime(row.dia_semana, horaInicioStr);
+            const year = next.getFullYear();
+            const month = String(next.getMonth() + 1).padStart(2, '0');
+            const day = String(next.getDate()).padStart(2, '0');
+            ymd = `${year}-${month}-${day}`;
+            usesLegacyNextOccurrence = true;
+          }
         } catch (e) {
           console.error('Error calculando next occurrence para evento recurrente legacy:', e);
           ymd = '';
@@ -688,14 +726,27 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       // Si esa fecha no entra al rango actual y no hay ocurrencias reales del mismo parent
       // en el rango, sintetizamos la próxima ocurrencia para no perder la card.
       if (hasDiaSemana && !shouldIncludeByYmd(ymd)) {
+        const orgIdForRange = row?.organizer_id ?? row?.events_parent?.organizer_id;
         const hasRealInRangeForParent =
-          parentId != null &&
-          finalData.some((r: any) => {
-            if (r?.parent_id !== parentId) return false;
-            const realYmd = toYmd(r?.fecha || (r as any)?.fecha_inicio);
-            return !!realYmd && shouldIncludeByYmd(realYmd);
-          });
-        if (!hasRealInRangeForParent) {
+          (parentId != null &&
+            finalData.some((r: any) => {
+              if (r?.parent_id !== parentId) return false;
+              const realYmd = toYmd(r?.fecha || (r as any)?.fecha_inicio);
+              return !!realYmd && shouldIncludeByYmd(realYmd);
+            })) ||
+          (orgIdForRange != null && (parentId == null || parentId === '') &&
+            finalData.some((r: any) => {
+              if ((r?.parent_id != null && r?.parent_id !== '') || r?.organizer_id !== Number(orgIdForRange)) return false;
+              const realYmd = toYmd(r?.fecha || (r as any)?.fecha_inicio);
+              return !!realYmd && shouldIncludeByYmd(realYmd);
+            }));
+        if (!hasRealInRangeForParent && params.dateFrom && params.dateTo) {
+          const inRange = firstOccurrenceInRange(row.dia_semana, params.dateFrom, params.dateTo);
+          if (inRange) {
+            ymd = inRange;
+            usesLegacyNextOccurrence = true;
+          }
+        } else if (!hasRealInRangeForParent) {
           try {
             const horaInicioStr = row.hora_inicio || '20:00';
             const next = calculateNextDateWithTime(row.dia_semana, horaInicioStr);
@@ -716,15 +767,25 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
         ? { ...row, fecha: ymd, _legacy_next_occurrence: true }
         : row;
 
+      // Recurrentes: mostrar cada ocurrencia (cada fecha) como card propia, no colapsar a una sola.
       nextData.push(out);
     });
 
-    finalData = nextData;
+    const dedupedByOccurrence = (() => {
+      const map = new Map<string, any>();
+      for (const row of nextData) {
+        const key = occurrenceKey(row);
+        if (!map.has(key)) map.set(key, row);
+      }
+      return Array.from(map.values());
+    })();
+
+    finalData = dedupedByOccurrence;
     
     // Ordenar por fecha, hora_inicio, id (alineado con ORDER del servidor)
     finalData.sort((a, b) => {
-      const fechaA = (a.fecha || '').toString().split('T')[0];
-      const fechaB = (b.fecha || '').toString().split('T')[0];
+      const fechaA = effectiveYmd(a);
+      const fechaB = effectiveYmd(b);
       if (fechaA !== fechaB) return fechaA < fechaB ? -1 : 1;
       const horaA = toSortableHora(a.hora_inicio);
       const horaB = toSortableHora(b.hora_inicio);

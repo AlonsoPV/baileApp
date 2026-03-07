@@ -35,9 +35,19 @@ export function useEventDatesBulk(organizerId?: number) {
           ].join(",")
         )
         .eq("organizer_id", organizerId)
-        .order("fecha", { ascending: true });
+        .order("fecha", { ascending: true })
+        .order("hora_inicio", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true });
       if (error) throw error;
-      return data || [];
+      return [...(data || [])].sort((a: any, b: any) => {
+        const ymdA = String(a?.fecha || a?.fecha_inicio || '').split('T')[0];
+        const ymdB = String(b?.fecha || b?.fecha_inicio || '').split('T')[0];
+        if (ymdA !== ymdB) return ymdA < ymdB ? -1 : 1;
+        const horaA = String(a?.hora_inicio || '99:99');
+        const horaB = String(b?.hora_inicio || '99:99');
+        if (horaA !== horaB) return horaA.localeCompare(horaB);
+        return Number(a?.id || 0) - Number(b?.id || 0);
+      });
     },
   });
 }

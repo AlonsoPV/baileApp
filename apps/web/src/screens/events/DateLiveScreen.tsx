@@ -36,9 +36,10 @@ export function DateLiveScreen() {
   const { userStatus, stats, toggleInterested, isUpdating } = useEventRSVP(dateId);
   const { showToast } = useToast();
   
-  // Verificar si el usuario puede editar esta fecha
-  const canEdit = social?.organizer_id && user?.id && 
-    social.organizer_id === parseInt(user.id);
+  // Verificar si el usuario puede editar esta fecha (organizer desde parent o desde fecha sin parent)
+  const organizerId = social?.organizer_id ?? (date as any)?.organizer_id;
+  const canEdit = organizerId != null && user?.id &&
+    Number(organizerId) === parseInt(user.id);
 
   // Get tag names from IDs
   const getRitmoNombres = () => {

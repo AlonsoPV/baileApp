@@ -11,13 +11,24 @@ export function useEventDatesByParent(parentId?: number) {
         .from("events_date")
         .select("*")
         .eq("parent_id", parentId)
-        .order("fecha", { ascending: true });
+        .order("fecha", { ascending: true })
+        .order("hora_inicio", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true });
       if (error) {
         console.error('[useEventDatesByParent] Error:', error);
         throw error;
       }
-      console.log('[useEventDatesByParent] Success:', data);
-      return data || [];
+      const rows = [...(data || [])].sort((a: any, b: any) => {
+        const ymdA = String(a?.fecha || a?.fecha_inicio || '').split('T')[0];
+        const ymdB = String(b?.fecha || b?.fecha_inicio || '').split('T')[0];
+        if (ymdA !== ymdB) return ymdA < ymdB ? -1 : 1;
+        const horaA = String(a?.hora_inicio || '99:99');
+        const horaB = String(b?.hora_inicio || '99:99');
+        if (horaA !== horaB) return horaA.localeCompare(horaB);
+        return Number(a?.id || 0) - Number(b?.id || 0);
+      });
+      console.log('[useEventDatesByParent] Success:', rows);
+      return rows;
     },
     enabled: !!parentId
   });
@@ -49,31 +60,93 @@ export function useCreateEventDate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: any | any[]) => {
-      // Soporte para crear una fecha o múltiples fechas en batch
       const isArray = Array.isArray(payload);
-      const payloads = isArray ? payload : [payload];
-      
+      let payloads = isArray ? [...payload] : [{ ...payload }];
+
+      // Usar organizer_id como "parent": si viene organizer_id y no parent_id, buscar o crear
+      // un events_parent para ese organizador y usar su id como parent_id (una fecha = un parent por org).
+      const organizerIdsNeedingParent = [...new Set(
+        payloads
+          .filter((p: any) => (p.organizer_id != null && p.organizer_id !== '') && (p.parent_id == null || p.parent_id === ''))
+          .map((p: any) => Number(p.organizer_id))
+          .filter((id: number) => Number.isFinite(id))
+      )];
+      const firstParentByOrganizer: Record<number, number> = {};
+
+      if (organizerIdsNeedingParent.length > 0) {
+        const { data: parents } = await supabase
+          .from("events_parent")
+          .select("id, organizer_id")
+          .in("organizer_id", organizerIdsNeedingParent)
+          .order("created_at", { ascending: false });
+        (parents || []).forEach((p: any) => {
+          const oid = Number(p.organizer_id);
+          if (Number.isFinite(oid) && !(oid in firstParentByOrganizer) && p.id != null) {
+            firstParentByOrganizer[oid] = Number(p.id);
+          }
+        });
+
+        for (const oid of organizerIdsNeedingParent) {
+          if (firstParentByOrganizer[oid] != null) continue;
+          const firstPayload = payloads.find((p: any) => Number(p.organizer_id) === oid);
+          const { data: newParent, error: parentErr } = await supabase
+            .from("events_parent")
+            .insert({
+              organizer_id: oid,
+              nombre: firstPayload?.nombre ?? "Mi evento",
+              descripcion: firstPayload?.biografia ?? null,
+              estilos: firstPayload?.estilos ?? [],
+              zonas: firstPayload?.zonas ?? [],
+              media: [],
+            })
+            .select("id")
+            .single();
+          if (parentErr) {
+            console.error("[useCreateEventDate] Error creating parent for organizer", oid, parentErr);
+            throw parentErr;
+          }
+          if (newParent?.id != null) firstParentByOrganizer[oid] = Number(newParent.id);
+        }
+
+        payloads = payloads.map((p: any) => {
+          const oid = p.organizer_id != null ? Number(p.organizer_id) : null;
+          const needParent = oid != null && Number.isFinite(oid) && (p.parent_id == null || p.parent_id === '');
+          const resolvedParentId = needParent ? firstParentByOrganizer[oid] : undefined;
+          if (resolvedParentId != null) {
+            return { ...p, parent_id: resolvedParentId };
+          }
+          return p;
+        });
+      }
+
       console.log(`[useCreateEventDate] Creating ${payloads.length} date(s)`);
-      
-      // Insertar todas las fechas en una sola operación (más eficiente)
+
       const { data, error } = await supabase
         .from("events_date")
         .insert(payloads)
         .select("*");
-      
+
       if (error) {
         console.error('[useCreateEventDate] Supabase error:', error);
-        console.error('[useCreateEventDate] Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
         throw error;
       }
-      
+
+      // Materializar ocurrencias recurrentes (todas las fechas tienen parent_id ahora)
+      const parentIdsRecurring = [...new Set(
+        (data || [])
+          .filter((r: any) => r?.parent_id != null && typeof r?.dia_semana === 'number')
+          .map((r: any) => Number(r.parent_id))
+          .filter((n: number) => Number.isFinite(n))
+      )];
+      for (const pid of parentIdsRecurring) {
+        try {
+          await supabase.rpc('ensure_weekly_occurrences', { p_parent_id: pid, p_weeks_ahead: 13 });
+        } catch (e) {
+          console.warn('[useCreateEventDate] ensure_weekly_occurrences failed for parent', pid, e);
+        }
+      }
+
       console.log(`[useCreateEventDate] Success: ${data?.length || 0} date(s) created`);
-      // Retornar array si se insertaron múltiples, o el primer elemento si fue uno solo
       return isArray ? (data || []) : (data?.[0] || null);
     },
     onMutate: async (payload) => {

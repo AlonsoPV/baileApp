@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useCreateEventDate } from "../../hooks/useEventDate";
 import { useEventParent } from "../../hooks/useEventParent";
+import { useEventParentsByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
 import { useTags } from "../../hooks/useTags";
@@ -44,10 +45,11 @@ const toAcademyLocation = (loc?: OrganizerLocation | null): AcademyLocation | nu
 export default function OrganizerEventDateCreateScreen() {
   const navigate = useNavigate();
   const { parentId } = useParams<{ parentId: string }>();
-  const parentIdNum = parentId ? parseInt(parentId) : undefined;
-  
+  const parentIdNum = parentId && /^\d+$/.test(parentId) ? parseInt(parentId, 10) : undefined;
+
   const { data: parent, isLoading } = useEventParent(parentIdNum);
   const { data: org } = useMyOrganizer();
+  const { data: parents = [] } = useEventParentsByOrganizer((org as any)?.id);
   const { data: orgLocations = [] } = useOrganizerLocations((org as any)?.id);
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
@@ -208,8 +210,19 @@ export default function OrganizerEventDateCreateScreen() {
       const resolvedZona = resolvedZonaFromLocation();
       const resolvedZonas = resolvedZonasFromLocations();
 
+      // parent_id obligatorio: URL, o primer evento del organizador si la URL no trae parent válido
+      const effectiveParentId =
+        (parentIdNum != null && Number.isFinite(parentIdNum) ? parentIdNum : null) ??
+        (parents?.length ? Number((parents[0] as any)?.id) : null);
+
+      if (effectiveParentId == null) {
+        showToast('Selecciona un evento (social) o crea uno antes de agregar una fecha', 'error');
+        return;
+      }
+
       const basePayload = {
-        parent_id: parentIdNum ? Number(parentIdNum) : null,
+        parent_id: effectiveParentId,
+        organizer_id: (org as any)?.id ?? null,
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
         djs: dateForm.djs || null,
@@ -294,7 +307,7 @@ export default function OrganizerEventDateCreateScreen() {
       if (best?.id) {
         navigate(`/social/fecha/${best.id}`);
       } else {
-        navigate(`/social/${parentIdNum}`);
+        navigate(`/social/${effectiveParentId}`);
       }
     } catch (err: any) {
       console.error('Error creating date:', err);
@@ -303,8 +316,11 @@ export default function OrganizerEventDateCreateScreen() {
   };
 
   const handleCancel = () => {
-    if (parentIdNum) {
-      navigate(`/social/${parentIdNum}`);
+    const effectiveParentId =
+      (parentIdNum != null && Number.isFinite(parentIdNum) ? parentIdNum : null) ??
+      (parents?.length ? Number((parents[0] as any)?.id) : null);
+    if (effectiveParentId != null) {
+      navigate(`/social/${effectiveParentId}`);
     } else {
       navigate('/profile/organizer/edit');
     }

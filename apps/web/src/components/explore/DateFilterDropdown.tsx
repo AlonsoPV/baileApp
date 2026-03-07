@@ -180,17 +180,22 @@ export function DateFilterDropdown({
         <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
           {t("date_to_determine")}
         </span>
-        <div className="date-filter-dropdown__range" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-          <div>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
+        <div className="date-filter-dropdown__range" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14, minWidth: 0 }}>
+          <div style={{ minWidth: 0 }}>
+            <label id="explore-date-from-label" htmlFor="explore-date-from" style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
               {t("from")}
             </label>
             <input
+              id="explore-date-from"
+              name="dateFrom"
               type="date"
               value={rangeFrom}
               onChange={(e) => setRangeFrom(e.target.value)}
               style={{
                 width: "100%",
+                minWidth: 0,
+                maxWidth: "100%",
+                boxSizing: "border-box",
                 padding: "10px 12px",
                 borderRadius: 12,
                 border: "1px solid rgba(255,255,255,0.12)",
@@ -200,16 +205,21 @@ export function DateFilterDropdown({
               }}
             />
           </div>
-          <div>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
+          <div style={{ minWidth: 0 }}>
+            <label id="explore-date-to-label" htmlFor="explore-date-to" style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
               {t("to")}
             </label>
             <input
+              id="explore-date-to"
+              name="dateTo"
               type="date"
               value={rangeTo}
               onChange={(e) => setRangeTo(e.target.value)}
               style={{
                 width: "100%",
+                minWidth: 0,
+                maxWidth: "100%",
+                boxSizing: "border-box",
                 padding: "10px 12px",
                 borderRadius: 12,
                 border: "1px solid rgba(255,255,255,0.12)",

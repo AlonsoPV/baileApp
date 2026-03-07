@@ -79,11 +79,28 @@ export function useEventFullByDateId(eventDateId?: number) {
         return null;
       }
 
-      const { data: parent, error: e2 } = await supabase
-        .from("events_parent").select("*").eq("id", date.parent_id).maybeSingle();
-      if (e2) {
-        console.error('[useEventFullByDateId] Error fetching parent:', e2);
-        throw e2;
+      let parent: EventParent | null = null;
+      if (date.parent_id != null) {
+        const { data: parentRow, error: e2 } = await supabase
+          .from("events_parent").select("*").eq("id", date.parent_id).maybeSingle();
+        if (e2) {
+          console.error('[useEventFullByDateId] Error fetching parent:', e2);
+          throw e2;
+        }
+        parent = parentRow as EventParent | null;
+      }
+      // Sin parent (primer evento del organizador): usar datos de la fecha como parent sintético
+      if (!parent && date) {
+        parent = {
+          id: 0,
+          organizer_id: (date as any).organizer_id ?? 0,
+          nombre: (date as any).nombre ?? '',
+          descripcion: (date as any).biografia ?? null,
+          estilos: (date as any).estilos ?? [],
+          sede_general: null,
+          media: (date as any).media ?? [],
+          created_at: (date as any).created_at ?? new Date().toISOString(),
+        } as EventParent;
       }
 
       // Nuevo formato: cronograma/costos dentro de events_date (JSON)
@@ -130,7 +147,7 @@ export function useEventFullByDateId(eventDateId?: number) {
       });
 
       return {
-        parent: parent as EventParent,
+        parent: parent!,
         date: date as EventDate,
         schedules: (schedules || []) as EventSchedule[],
         prices: (prices || []) as EventPrice[],

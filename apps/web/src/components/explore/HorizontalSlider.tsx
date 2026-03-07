@@ -688,7 +688,7 @@ export default function HorizontalSlider<T>({
             zIndex: 3,
             pointerEvents: "none",
           }}
-          aria-hidden
+          role="presentation"
         >
           {navButtons}
         </div>
@@ -880,11 +880,16 @@ export default function HorizontalSlider<T>({
             WebkitPerspective: "1000px"
           }}
         >
-          {items?.map((it, idx) => (
-            <div key={(it as any)?.id ?? idx} data-carousel-item className={`horizontal-slider-item${idx === activeIndex ? " is-active" : ""}`} style={{ minWidth: 0 }}>
-              {renderItem(it, idx)}
-            </div>
-          ))}
+          {items?.map((it, idx) => {
+            const rawId = (it as any)?._original_id ?? (it as any)?.id ?? "item";
+            const recurrence = (it as any)?._recurrence_index ?? "base";
+            const itemKey = `${String(rawId)}_${String(recurrence)}_${idx}`;
+            return (
+              <div key={itemKey} data-carousel-item className={`horizontal-slider-item${idx === activeIndex ? " is-active" : ""}`} style={{ minWidth: 0 }}>
+                {renderItem(it, idx)}
+              </div>
+            );
+          })}
         </div>
       </div>
 

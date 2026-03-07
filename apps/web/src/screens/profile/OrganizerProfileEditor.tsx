@@ -1251,9 +1251,10 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      // Las fechas pueden ser independientes (parent_id puede ser null)
-      // Solo usar el parent_id si el usuario lo seleccionó explícitamente
-      const parentIdToUse: number | null = selectedParentId ? Number(selectedParentId) : null;
+      // Asegurar parent_id: si hay evento(s) y no hay selección, usar el primero para que la fecha quede vinculada
+      const parentIdToUse: number | null = selectedParentId
+        ? Number(selectedParentId)
+        : (parents && parents.length > 0 ? Number((parents[0] as any).id) : null);
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -1398,7 +1399,10 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      const parentIdToUse: number | null = selectedParentId ? Number(selectedParentId) : null;
+      // Asegurar parent_id cuando hay eventos (igual que en crear fecha única)
+      const parentIdToUse: number | null = selectedParentId
+        ? Number(selectedParentId)
+        : (parents && parents.length > 0 ? Number((parents[0] as any).id) : null);
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -4447,8 +4451,9 @@ export default function OrganizerProfileEditor() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       setShowDateForm(!showDateForm);
-                      if (!showDateForm && parents && parents.length === 1) {
-                        setSelectedParentId(parents[0].id);
+                      // Al abrir el formulario, fijar parent por defecto si hay al menos uno (así parent_id nunca queda null)
+                      if (!showDateForm && parents && parents.length > 0 && !selectedParentId) {
+                        setSelectedParentId((parents[0] as any).id);
                       }
                     }}
                     className={`org-events-action-button ${showDateForm ? 'org-events-action-button--active' : 'org-events-action-button--primary'}`}

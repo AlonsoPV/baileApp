@@ -92,3 +92,40 @@ export function calculateNextDateWithTime(
   return proximaFecha;
 }
 
+/**
+ * Devuelve la primera fecha en el rango [dateFromYmd, dateToYmd] que coincide con el día de la semana.
+ * Útil para mostrar un evento recurrente cuando el usuario filtra por una fecha futura específica.
+ * @param diaSemana - 0=Domingo, 1=Lunes, ..., 6=Sábado
+ * @param dateFromYmd - YYYY-MM-DD (inclusive)
+ * @param dateToYmd - YYYY-MM-DD (inclusive)
+ * @returns YYYY-MM-DD o null si no hay ocurrencia en el rango
+ */
+export function firstOccurrenceInRange(
+  diaSemana: number,
+  dateFromYmd: string,
+  dateToYmd: string
+): string | null {
+  if (!dateFromYmd || !dateToYmd) return null;
+  const [yFrom, mFrom, dFrom] = dateFromYmd.split("-").map((x) => parseInt(x, 10));
+  const [yTo, mTo, dTo] = dateToYmd.split("-").map((x) => parseInt(x, 10));
+  if (!Number.isFinite(yFrom) || !Number.isFinite(mFrom) || !Number.isFinite(dFrom)) return null;
+  if (!Number.isFinite(yTo) || !Number.isFinite(mTo) || !Number.isFinite(dTo)) return null;
+
+  const fromDate = new Date(Date.UTC(yFrom, mFrom - 1, dFrom, 12, 0, 0));
+  const toDate = new Date(Date.UTC(yTo, mTo - 1, dTo, 12, 0, 0));
+  if (fromDate > toDate) return null;
+
+  const dayOfWeek = fromDate.getUTCDay();
+  let daysToAdd = (diaSemana - dayOfWeek + 7) % 7;
+  let candidate = new Date(fromDate);
+  candidate.setUTCDate(candidate.getUTCDate() + daysToAdd);
+
+  if (candidate <= toDate) {
+    const y = candidate.getUTCFullYear();
+    const m = String(candidate.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(candidate.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  return null;
+}
+

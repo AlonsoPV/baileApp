@@ -57,7 +57,8 @@ export type EventDate = {
   organizer_id?: number | null;
   nombre?: string|null; // Nombre de la fecha
   biografia?: string|null; // Biografía de la fecha
-  fecha: string; 
+  fecha?: string | null;
+  fecha_inicio?: string | null;
   hora_inicio?: string|null; 
   hora_fin?: string|null;
   lugar?: string|null; 
@@ -77,6 +78,7 @@ export type EventDate = {
    * Si es null/undefined, la fecha NO es recurrente semanal.
    */
   dia_semana?: number | null;
+  ritmos?: number[];
   /**
    * Ritmos seleccionados usando IDs de catálogo (RITMOS_CATALOG).
    * Se usa en filtros de explore.

@@ -7,6 +7,7 @@
 export const SELECT_EVENTS_CARD = `
   id,
   parent_id,
+  organizer_id,
   nombre,
   djs,
   fecha,
@@ -32,6 +33,7 @@ export const SELECT_EVENTS_CARD = `
 export const SELECT_EVENTS_DETAIL = `
   id,
   parent_id,
+  organizer_id,
   nombre,
   fecha,
   dia_semana,

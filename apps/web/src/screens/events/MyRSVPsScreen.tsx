@@ -134,8 +134,10 @@ export function MyRSVPsScreen() {
           {availableRsvpEvents.map((rsvp: any) => {
             const eventDate = rsvp.events_date;
             const parentEvent = eventDate?.events_parent;
+            const eventName = parentEvent?.nombre ?? eventDate?.nombre;
 
-            if (!eventDate || !parentEvent) return null;
+            if (!eventDate) return null;
+            if (!parentEvent && !eventDate.organizer_id) return null;
 
             let fechaFormateada = '';
             if (eventDate.fecha) {
@@ -207,7 +209,7 @@ export function MyRSVPsScreen() {
                         color: colors.light,
                       }}
                     >
-                      {parentEvent.nombre}
+                      {eventName}
                     </h3>
                     <div
                       style={{

@@ -135,31 +135,34 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const date = useEventDateSuspense(dateId);
   const displayYmd = React.useMemo(() => resolveEventDateYmd(date), [date]);
 
-  // ✅ Si abrimos una "plantilla" legacy (dia_semana sin fecha), materializar ocurrencias y redirigir
+  // ✅ Si abrimos una "plantilla" recurrente (dia_semana sin fecha), materializar ocurrencias y redirigir
   // a la primera ocurrencia real futura para navegar por un events_date.id real.
   React.useEffect(() => {
-    if (!date?.parent_id) return;
     const hasDiaSemana = typeof (date as any)?.dia_semana === "number";
     const hasFecha = !!(date as any)?.fecha || !!(date as any)?.fecha_inicio;
     if (!hasDiaSemana) return;
     if (hasFecha) return;
 
+    const parentId = date?.parent_id;
+    if (!parentId) return;
+
     let cancelled = false;
     (async () => {
       try {
-        await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: Number(date.parent_id), p_weeks_ahead: 12 } as any);
+        await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: Number(parentId), p_weeks_ahead: 13 } as any);
         const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
         const { data: nextRows, error } = await supabase
           .from("events_date")
           .select("id,fecha")
-          .eq("parent_id", Number(date.parent_id))
+          .eq("parent_id", Number(parentId))
           .not("fecha", "is", null)
           .gte("fecha", today)
           .order("fecha", { ascending: true })
           .limit(1);
+        if (error) return;
 
         if (cancelled) return;
-        if (!error && Array.isArray(nextRows) && nextRows[0]?.id) {
+        if (Array.isArray(nextRows) && nextRows[0]?.id) {
           const nextId = Number((nextRows[0] as any).id);
           if (Number.isFinite(nextId) && nextId !== dateId) {
             navigate(`/social/fecha/${nextId}`, { replace: true });
@@ -173,7 +176,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     return () => {
       cancelled = true;
     };
-  }, [date?.parent_id, (date as any)?.dia_semana, (date as any)?.fecha, (date as any)?.fecha_inicio, dateId, navigate]);
+  }, [date?.parent_id, (date as any)?.organizer_id, (date as any)?.dia_semana, (date as any)?.fecha, (date as any)?.fecha_inicio, dateId, navigate]);
   
   // Estas queries pueden ser opcionales (no usan Suspense)
   const { data: parent } = useEventParent(date?.parent_id ?? undefined);

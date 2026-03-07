@@ -61,6 +61,42 @@ function getTodayCDMX(): string {
   return formatter.format(new Date());
 }
 
+function toYmd(value?: string | null): string {
+  if (!value) return "";
+  return String(value).split("T")[0] || "";
+}
+
+function normalizeDateOnly(dateValue?: string | null): Date | null {
+  if (!dateValue) return null;
+  const ymd = toYmd(dateValue);
+  if (!ymd) return null;
+  const parts = ymd.split("-").map((part) => Number(part));
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+      return new Date(year, month - 1, day);
+    }
+  }
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
+function getEffectiveEventDateRaw(event: any): string | null {
+  return event?.instance_date || event?.fecha || event?.fecha_inicio || null;
+}
+
+function buildEventOccurrenceKey(event: any): string {
+  const instanceId = event?.instance_id;
+  if (instanceId) return `instance_${String(instanceId)}`;
+
+  const effectiveDate = toYmd(getEffectiveEventDateRaw(event));
+  const horaInicio = String(event?.hora_inicio || event?.evento_hora_inicio || "");
+  const parentOrOwn = String(event?.parent_id ?? event?.id ?? "no_id");
+  if (effectiveDate) return `${parentOrOwn}_${effectiveDate}_${horaInicio}`;
+  return `id_${String(event?.id ?? "no_id")}`;
+}
+
 function flattenQueryData(data?: { pages?: Array<{ data?: any[] }> }) {
   if (!data?.pages?.length) return [];
   return data.pages.flatMap((page) => (page?.data as any[]) || []);
@@ -849,9 +885,12 @@ const STYLES = `
   }
   .date-filter-dropdown__range {
     min-width: 0;
+    overflow: hidden;
   }
   .date-filter-dropdown__range input {
     min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
     font-size: 16px;
   }
   @media (max-width: 400px) {
@@ -859,6 +898,8 @@ const STYLES = `
       padding: 12px !important;
       border-radius: 14px !important;
       font-size: 13px !important;
+      max-width: calc(100vw - 24px) !important;
+      box-sizing: border-box !important;
     }
     .date-filter-dropdown__presets span {
       font-size: 9px !important;
@@ -876,6 +917,7 @@ const STYLES = `
       grid-template-columns: 1fr !important;
       gap: 8px !important;
       margin-bottom: 10px !important;
+      min-width: 0 !important;
     }
     .date-filter-dropdown__range label {
       font-size: 11px !important;
@@ -883,6 +925,8 @@ const STYLES = `
     .date-filter-dropdown__range input {
       padding: 8px 10px !important;
       font-size: 16px !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
     }
     .date-filter-dropdown__custom > div:last-of-type {
       gap: 8px !important;
@@ -2703,7 +2747,8 @@ export default function ExploreHomeScreen() {
       };
     }
     if (preset === "siguientes") {
-      const from = addDays(todayDate, 7).toISOString().slice(0, 10);
+      // "Posteriores" = desde manana en adelante (no desde la proxima semana).
+      const from = addDays(todayDate, 1).toISOString().slice(0, 10);
       return { from, to: undefined };
     }
     return { from: undefined, to: undefined };
@@ -3000,64 +3045,33 @@ export default function ExploreHomeScreen() {
   }, [fechasError]);
 
   const filteredFechas = React.useMemo(() => {
-    const parseYmdToDate = (value?: string | null) => {
-      if (!value) return null;
-      const plain = String(value).split('T')[0];
-      const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
-      if (
-        Number.isFinite(year) &&
-        Number.isFinite(month) &&
-        Number.isFinite(day)
-      ) {
-        return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      }
-      const parsed = new Date(value);
-      return Number.isNaN(parsed.getTime()) ? null : parsed;
-    };
-
-    const todayBase = parseYmdToDate(todayYmd);
+    const isValidDiaSemana = (value: any): value is number =>
+      Number.isInteger(value) && value >= 0 && value <= 6;
+    const todayOnly = normalizeDateOnly(todayYmd);
     // Server ya filtra por estado_publicacion=publicado; si no viene el campo, incluimos igual
     const allFechas = fechasData.filter((d: any) => !d?.estado_publicacion || d.estado_publicacion === 'publicado');
     const includePastEvents = !!qDeferred && qDeferred.trim().length > 0;
-    const dateFrom = filters.dateFrom ? parseYmdToDate(filters.dateFrom) : null;
-    const dateTo = filters.dateTo ? parseYmdToDate(filters.dateTo) : null;
+    const dateFrom = filters.dateFrom ? normalizeDateOnly(filters.dateFrom) : null;
+    const dateTo = filters.dateTo ? normalizeDateOnly(filters.dateTo) : null;
     const hasDateRange = dateFrom !== null || dateTo !== null;
     const nextRecurringYmd = (dayValue: any) => {
-      if (!todayBase) return null;
+      if (!todayOnly) return null;
       const day = Number(dayValue);
       if (!Number.isFinite(day) || day < 0 || day > 6) return null;
-      const currentDay = todayBase.getUTCDay();
+      const currentDay = todayOnly.getDay();
       let offset = day - currentDay;
       if (offset < 0) offset += 7;
-      const next = new Date(Date.UTC(
-        todayBase.getUTCFullYear(),
-        todayBase.getUTCMonth(),
-        todayBase.getUTCDate() + offset,
-        12, 0, 0
-      ));
-      const year = next.getUTCFullYear();
-      const month = String(next.getUTCMonth() + 1).padStart(2, '0');
-      const dayNum = String(next.getUTCDate()).padStart(2, '0');
+      const next = new Date(todayOnly.getFullYear(), todayOnly.getMonth(), todayOnly.getDate() + offset);
+      const year = next.getFullYear();
+      const month = String(next.getMonth() + 1).padStart(2, '0');
+      const dayNum = String(next.getDate()).padStart(2, '0');
       return `${year}-${month}-${dayNum}`;
     };
 
     const upcoming = allFechas.filter((fecha: any) => {
       if (includePastEvents) return true;
-
-      const fechaDate = parseYmdToDate(fecha?.fecha);
-      const hasDiaSemana = fecha?.dia_semana !== null && fecha?.dia_semana !== undefined && typeof fecha?.dia_semana === 'number';
-      if (!fechaDate || !todayBase) return true;
-
-      // Extraer fecha en formato YYYY-MM-DD para comparación directa (evita problemas de zona horaria)
-      const fechaDateStr = fecha?.fecha ? String(fecha.fecha).split('T')[0] : null;
-      if (!fechaDateStr) return true; // Si no hay fecha, incluir
-
-      const todayDateOnly = new Date(Date.UTC(
-        todayBase.getUTCFullYear(),
-        todayBase.getUTCMonth(),
-        todayBase.getUTCDate(),
-        0, 0, 0
-      ));
+      const hasDiaSemana = isValidDiaSemana(fecha?.dia_semana);
+      let eventDateOnly = normalizeDateOnly(getEffectiveEventDateRaw(fecha));
 
       // Si hay rango de fechas (ej. "Hoy" con from=to=hoy), usar solo la fecha de INICIO del evento.
       // - Eventos que empiezan hoy se muestran en "Hoy" aunque ya haya pasado la hora de inicio.
@@ -3067,53 +3081,91 @@ export default function ExploreHomeScreen() {
         if (hasDiaSemana && fecha._recurrence_index === undefined) {
           try {
             const nextYmd = nextRecurringYmd(fecha.dia_semana);
-            if (!nextYmd) return true;
-            if (filters.dateFrom && nextYmd < filters.dateFrom) return false;
-            if (filters.dateTo && nextYmd > filters.dateTo) return false;
-            return true;
+            eventDateOnly = normalizeDateOnly(nextYmd);
           } catch {
             // Si falla el cálculo, no ocultar agresivamente un recurrente.
             return true;
           }
         }
-        if (fecha._recurrence_index !== undefined) {
-          if (filters.dateFrom && fechaDateStr < filters.dateFrom) return false;
-          if (filters.dateTo && fechaDateStr > filters.dateTo) return false;
-          return true;
-        }
-        if (filters.dateFrom && fechaDateStr < filters.dateFrom) return false;
-        if (filters.dateTo && fechaDateStr > filters.dateTo) return false;
+        if (!eventDateOnly) return false;
+        if (dateFrom && eventDateOnly < dateFrom) return false;
+        if (dateTo && eventDateOnly > dateTo) return false;
         return true;
       }
 
       // Si no hay rango de fechas, solo mostrar eventos futuros
-      if (fecha._recurrence_index !== undefined) {
-        // Eventos recurrentes siempre futuros si tienen _recurrence_index
-        return true;
-      }
-      if (hasDiaSemana) {
+      if (!eventDateOnly && hasDiaSemana) {
         // Plantilla recurrente sin ocurrencia materializada: sigue vigente por dia_semana.
         return true;
       }
-      
-      // Comparar fechas para eventos futuros (usar fechaDateStr si está disponible)
-      if (fechaDateStr) {
-        const todayStr = getTodayCDMX();
-        return fechaDateStr >= todayStr;
-      }
-      
-      // Fallback a comparación de Date si no hay fechaDateStr
-      const fechaDateOnly = new Date(Date.UTC(
-        fechaDate.getUTCFullYear(),
-        fechaDate.getUTCMonth(),
-        fechaDate.getUTCDate(),
-        0, 0, 0
-      ));
-      return fechaDateOnly >= todayDateOnly;
+      if (!eventDateOnly || !todayOnly) return false;
+      return eventDateOnly >= todayOnly;
     });
 
-    // Orden ya viene del servidor (fecha, hora_inicio, id); el filter preserva orden
-    return upcoming;
+    const deduped = (() => {
+      const map = new Map<string, any>();
+      for (const event of upcoming) {
+        const key = buildEventOccurrenceKey(event);
+        if (!map.has(key)) map.set(key, event);
+      }
+      return Array.from(map.values());
+    })();
+
+    if (import.meta.env?.DEV) {
+      const hasTodayFilter = !!filters.dateFrom && !!filters.dateTo && filters.dateFrom === filters.dateTo && !!todayOnly;
+      const tomorrowOnly = todayOnly
+        ? new Date(todayOnly.getFullYear(), todayOnly.getMonth(), todayOnly.getDate() + 1)
+        : null;
+      const todayEvents = hasTodayFilter
+        ? deduped.filter((event: any) => {
+            const d = normalizeDateOnly(getEffectiveEventDateRaw(event));
+            return !!d && !!todayOnly && d.getTime() === todayOnly.getTime();
+          })
+        : [];
+      const upcomingEvents = tomorrowOnly
+        ? deduped.filter((event: any) => {
+            const d = normalizeDateOnly(getEffectiveEventDateRaw(event));
+            return !!d && d.getTime() >= tomorrowOnly.getTime();
+          })
+        : [];
+      console.log("[ExploreFechas] hoy normalizado:", todayOnly);
+      console.log("[ExploreFechas] manana normalizado:", tomorrowOnly);
+      console.log("[ExploreFechas] eventos originales:", allFechas.length);
+      console.log("[ExploreFechas] eventos deduplicados:", deduped.length);
+      if (hasTodayFilter) {
+        console.log("[ExploreFechas] eventos HOY:", todayEvents);
+      }
+      console.log("[ExploreFechas] eventos FUTUROS:", upcomingEvents.length);
+    }
+
+    // Orden robusto en UI: primero por fecha, luego por hora, luego por id.
+    // Esto evita mezclas cuando los datos vienen de múltiples fuentes/páginas.
+    const toSortableHora = (raw?: string | null) => {
+      if (!raw) return "99:99";
+      const s = String(raw).trim();
+      if (!s) return "99:99";
+      if (s.includes(":")) {
+        const [hh = "99", mm = "99"] = s.split(":");
+        return `${hh.padStart(2, "0").slice(-2)}:${mm.padStart(2, "0").slice(0, 2)}`;
+      }
+      if (s.length === 4) return `${s.slice(0, 2)}:${s.slice(2, 4)}`;
+      return "99:99";
+    };
+
+    return [...deduped].sort((a: any, b: any) => {
+      const ymdA = toYmd(getEffectiveEventDateRaw(a));
+      const ymdB = toYmd(getEffectiveEventDateRaw(b));
+      if (ymdA !== ymdB) return ymdA < ymdB ? -1 : 1;
+
+      const horaA = toSortableHora(a?.hora_inicio ?? a?.evento_hora_inicio);
+      const horaB = toSortableHora(b?.hora_inicio ?? b?.evento_hora_inicio);
+      if (horaA !== horaB) return horaA < horaB ? -1 : 1;
+
+      const idA = Number(a?.id ?? 0);
+      const idB = Number(b?.id ?? 0);
+      if (Number.isFinite(idA) && Number.isFinite(idB) && idA !== idB) return idA - idB;
+      return String(a?.id ?? "").localeCompare(String(b?.id ?? ""));
+    });
   }, [fechasData, todayYmd, qDeferred, filters.dateFrom, filters.dateTo]);
 
   /** Eventos con __ui precomputado: cero hooks/queries por card en Explore. */
@@ -3137,9 +3189,17 @@ export default function ExploreHomeScreen() {
   // Fecha especifica: traer todas las paginas para no ocultar eventos despues de las primeras cards.
   React.useEffect(() => {
     if (!hasExactDateFilter) return;
-    if (!fechasQuery.hasNextPage || fechasQuery.isFetchingNextPage) return;
-    void fechasQuery.fetchNextPage();
-  }, [hasExactDateFilter, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.fetchNextPage]);
+    if (!fechasQuery.hasNextPage || fechasQuery.isFetchingNextPage || fechasQuery.isFetching) return;
+    let cancelled = false;
+    const loadAllPages = async () => {
+      let r: { hasNextPage?: boolean } | undefined = await fechasQuery.fetchNextPage();
+      while (!cancelled && r?.hasNextPage) {
+        r = await fechasQuery.fetchNextPage();
+      }
+    };
+    void loadAllPages();
+    return () => { cancelled = true; };
+  }, [hasExactDateFilter, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.isFetching, fechasQuery.fetchNextPage]);
 
   const visibleFechas = React.useMemo(
     () => (hasExactDateFilter ? normalizedFechas : normalizedFechas.slice(0, visibleCount)),
@@ -3191,8 +3251,8 @@ export default function ExploreHomeScreen() {
 
     const key =
       (fechaEvento as any)?._recurrence_index !== undefined
-        ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}`
-        : (fechaEvento?.id ?? `fecha_${idx}`);
+        ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}_${toYmd(getEffectiveEventDateRaw(fechaEvento))}_${String(fechaEvento?.hora_inicio || fechaEvento?.evento_hora_inicio || "")}`
+        : buildEventOccurrenceKey(fechaEvento);
 
     const card = (
       <div

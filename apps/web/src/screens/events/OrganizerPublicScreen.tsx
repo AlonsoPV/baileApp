@@ -296,9 +296,25 @@ export function OrganizerPublicScreen() {
       return new Date(y, m - 1, d);
     };
 
+    // Deduplicar por serie recurrente: el backfill creó muchas filas pasadas por (parent_id, dia_semana, nombre).
+    // Para recurrentes usamos una sola plantilla por serie; para fechas específicas usamos cada fila.
+    const allDates = (eventDates as any[] || []) as any[];
+    const datesToExpand: any[] = [];
+    const recurringKey = (d: any) => `${d.parent_id}|${d.dia_semana}|${(d.nombre ?? '')}`;
+    const seenRecurring = new Set<string>();
+    for (const d of allDates) {
+      const isRecurring = d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number';
+      if (isRecurring) {
+        const key = recurringKey(d);
+        if (seenRecurring.has(key)) continue;
+        seenRecurring.add(key);
+      }
+      datesToExpand.push(d);
+    }
+
     // Expandir eventos recurrentes en múltiples ocurrencias
     const expandedDates: any[] = [];
-    (eventDates as any[] || []).forEach((d: any) => {
+    datesToExpand.forEach((d: any) => {
       // Si tiene dia_semana, expandir en 4 ocurrencias
       if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === 'number') {
         try {
