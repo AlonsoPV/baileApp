@@ -555,6 +555,7 @@ const STYLES = `
     }
   }
   .explore-container { 
+    --explore-bottom-space: max(104px, calc(env(safe-area-inset-bottom, 0px) + 88px));
     min-height: 100vh; 
     min-height: 100dvh;
     /* IMPORTANT: This screen is styled for a dark UI (cards/text assume dark background). */
@@ -605,7 +606,7 @@ const STYLES = `
   .wrap { 
     max-width: 1280px; 
     margin: 0 auto; 
-    padding: 0 ${spacing[6]} ${spacing[10]};
+    padding: 0 ${spacing[6]} var(--explore-bottom-space);
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -668,27 +669,28 @@ const STYLES = `
   }
   .filters-hero-trigger {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: linear-gradient(135deg, rgba(41,127,150,0.22) 0%, rgba(235,55,127,0.14) 100%);
+    border: 1px solid rgba(255,255,255,0.34);
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.22), rgba(255,255,255,0.06) 35%), linear-gradient(135deg, rgba(41,127,150,0.38) 0%, rgba(235,55,127,0.26) 100%);
     color: #fff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
-    box-shadow: 0 6px 16px rgba(0,0,0,.28);
+    box-shadow: 0 10px 24px rgba(0,0,0,.34), 0 0 0 1px rgba(255,255,255,.08) inset, 0 0 18px rgba(125, 96, 255, .22);
     z-index: 15;
     -webkit-appearance: none;
     appearance: none;
     -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(6px);
   }
   .filters-hero-trigger:hover {
     transform: translateY(-1px);
-    border-color: rgba(255,255,255,0.32);
-    box-shadow: 0 10px 24px rgba(0,0,0,.34);
+    border-color: rgba(255,255,255,0.48);
+    box-shadow: 0 14px 28px rgba(0,0,0,.38), 0 0 0 1px rgba(255,255,255,.1) inset, 0 0 24px rgba(125, 96, 255, .28);
   }
   .filters-hero-trigger:active {
     transform: translateY(0);
@@ -711,8 +713,8 @@ const STYLES = `
     box-shadow: 0 2px 8px rgba(0,0,0,.32);
   }
   .filters-hero-trigger__icon {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     display: block;
     color: #fff;
     stroke: currentColor;
@@ -725,9 +727,10 @@ const STYLES = `
     z-index: 30;
     display: flex;
     justify-content: flex-end;
-    padding-right: max(4px, env(safe-area-inset-right, 0px));
+    padding-right: max(calc(.5rem + env(safe-area-inset-right, 0px)), 8px);
     margin-bottom: 6px;
     pointer-events: none;
+    align-items: center;
   }
   .filters-hero-trigger-persistent .filters-hero-trigger {
     pointer-events: auto;
@@ -1922,7 +1925,7 @@ const STYLES = `
       padding: 0.75rem 0 !important;
     }
     .wrap {
-      padding: 0 1rem 2rem !important;
+      padding: 0 1rem var(--explore-bottom-space) !important;
     }
     .panel {
       margin: 1rem 0 !important;
@@ -2131,7 +2134,7 @@ const STYLES = `
       padding: 0.5rem 0 !important;
     }
     .wrap {
-      padding: 0 0.75rem 1.5rem !important;
+      padding: 0 0.75rem var(--explore-bottom-space) !important;
     }
     .panel {
       margin: 0.75rem 0 !important;
@@ -2153,7 +2156,7 @@ const STYLES = `
   }
   @media (max-width: 430px) {
     .wrap {
-      padding: 0 0.75rem 1.5rem !important;
+      padding: 0 0.75rem var(--explore-bottom-space) !important;
     }
     .section-container {
       margin-bottom: 2.25rem !important;
@@ -2274,6 +2277,7 @@ const STYLES = `
   .explore-container.android-mobile .wrap {
     padding-top: 0 !important;
     margin-top: 0 !important;
+    padding-bottom: var(--explore-bottom-space) !important;
   }
   .explore-container.android-mobile .filters-panel {
     position: relative !important;
@@ -2299,6 +2303,12 @@ const STYLES = `
     display: block !important;
     flex: initial !important;
     min-height: auto !important;
+  }
+  .explore-bottom-spacer {
+    height: max(20px, env(safe-area-inset-bottom, 0px));
+    width: 100%;
+    pointer-events: none;
+    flex-shrink: 0;
   }
 `;
 
@@ -4978,6 +4988,7 @@ export default function ExploreHomeScreen() {
               </p>
             </div>
           )}
+          <div className="explore-bottom-spacer" aria-hidden="true" />
         </div>
       </div>
     </>

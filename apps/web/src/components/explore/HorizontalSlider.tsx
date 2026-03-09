@@ -722,7 +722,9 @@ export default function HorizontalSlider<T>({
           padding: 0,
           // Optimizaciones de scroll para móvil
           WebkitOverflowScrolling: "touch",
-          scrollBehavior: "smooth",
+          // Durante scroll activo usamos "auto" para evitar micro-jank;
+          // fuera de scroll mantenemos smooth para navegación por botones.
+          scrollBehavior: isScrolling ? "auto" : "smooth",
           overscrollBehaviorX: "contain",
           overscrollBehaviorY: "auto",
           scrollSnapType: "x mandatory",
@@ -881,9 +883,14 @@ export default function HorizontalSlider<T>({
           }}
         >
           {items?.map((it, idx) => {
-            const rawId = (it as any)?._original_id ?? (it as any)?.id ?? "item";
-            const recurrence = (it as any)?._recurrence_index ?? "base";
-            const itemKey = `${String(rawId)}_${String(recurrence)}_${idx}`;
+            const row = it as any;
+            const rawId = row?._original_id ?? row?.id ?? "item";
+            const effectiveDate = row?.instance_date || row?.fecha || row?.fecha_inicio || "";
+            const horaInicio = row?.hora_inicio || row?.evento_hora_inicio || "";
+            const stableOccurrence =
+              row?.instance_id ??
+              `${String(row?.parent_id ?? rawId)}_${String(effectiveDate)}_${String(horaInicio)}_${String(row?._recurrence_index ?? "base")}`;
+            const itemKey = String(stableOccurrence || `${String(rawId)}_${idx}`);
             return (
               <div key={itemKey} data-carousel-item className={`horizontal-slider-item${idx === activeIndex ? " is-active" : ""}`} style={{ minWidth: 0 }}>
                 {renderItem(it, idx)}
