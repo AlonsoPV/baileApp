@@ -723,7 +723,8 @@ const STYLES = `
   }
   .filters-hero-trigger-persistent {
     position: sticky;
-    top: calc(var(--topbar-offset, 64px) + 10px);
+    top: 50px;
+    height: 5px;
     z-index: 30;
     display: flex;
     justify-content: flex-end;
@@ -3248,18 +3249,36 @@ export default function ExploreHomeScreen() {
   const hasMoreServer = !!fechasQuery.hasNextPage;
   const hasMoreClient = normalizedFechas.length > visibleCount;
   const showLoadMoreCard = selectedType === 'fechas' && !hasExactDateFilter && (hasMoreClient || hasMoreServer);
+  const loadMoreBusyRef = React.useRef(false);
 
   const onLoadMoreFechas = React.useCallback(async () => {
+    if (loadMoreBusyRef.current) return;
+    loadMoreBusyRef.current = true;
     const nextCount = visibleCount + NEXT_LIMIT;
-    if (normalizedFechas.length >= nextCount) {
+    try {
+      if (import.meta.env?.DEV) {
+        console.log("[LOAD_MORE] click", {
+          visibleCount,
+          normalizedCount: normalizedFechas.length,
+          nextCount,
+          hasNextPage: !!fechasQuery.hasNextPage,
+          isFetchingNextPage: !!fechasQuery.isFetchingNextPage,
+        });
+      }
+      if (normalizedFechas.length >= nextCount) {
+        setVisibleCount(nextCount);
+        return;
+      }
+      if (fechasQuery.hasNextPage && !fechasQuery.isFetchingNextPage) {
+        await fechasQuery.fetchNextPage();
+      }
       setVisibleCount(nextCount);
-      return;
+    } catch (error) {
+      console.warn("[LOAD_MORE] fetchNextPage failed", error);
+    } finally {
+      loadMoreBusyRef.current = false;
     }
-    if (fechasQuery.hasNextPage && !fechasQuery.isFetchingNextPage) {
-      await fechasQuery.fetchNextPage();
-    }
-    setVisibleCount(nextCount);
-  }, [visibleCount, normalizedFechas.length, fechasQuery]);
+  }, [visibleCount, normalizedFechas.length, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.fetchNextPage]);
 
   const fechasSliderItems = React.useMemo(
     () => (showLoadMoreCard ? [...visibleFechas, { __type: "load_more" as const }] : visibleFechas),

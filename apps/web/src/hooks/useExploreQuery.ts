@@ -569,6 +569,73 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       }
     };
 
+    // Sin rango de fechas: materializar 30 semanas para que se vean fechas futuras (p. ej. más de 2 semanas).
+    let weeksAhead = 30;
+    if (dateFrom && dateTo) {
+      const endYmd = dateTo >= dateFrom ? dateTo : dateFrom;
+      const [ey, em, ed] = endYmd.split("-").map((x) => parseInt(x, 10));
+      if (Number.isFinite(ey) && Number.isFinite(em) && Number.isFinite(ed)) {
+        const endDate = new Date(Date.UTC(ey, em - 1, ed, 12, 0, 0));
+        const todayDate = new Date(todayStr + "T12:00:00Z");
+        const diffMs = Math.max(0, endDate.getTime() - todayDate.getTime());
+        const diffWeeks = Math.ceil(diffMs / (7 * 24 * 60 * 60 * 1000));
+        weeksAhead = Math.min(Math.max(1, diffWeeks), 30);
+      }
+    }
+
+    // Pre-paso: descubrir todos los parent_id recurrentes y organizer_id huérfanos (sin parent)
+    // para materializar ocurrencias aunque no salgan en la página actual (así las 184+ se ven al paginar).
+    try {
+      const rangeFrom = dateFrom || todayStr;
+      const rangeTo = dateTo || addDaysYmd(rangeFrom, 30 * 7);
+      let discoverParents: number[] = [];
+      let discoverOrphans: number[] = [];
+      const dateOrFrom = `dia_semana.not.is.null,fecha.gte.${rangeFrom},fecha.is.null`;
+      const dateOrTo = `dia_semana.not.is.null,fecha.lte.${rangeTo},fecha.is.null`;
+      const { data: parentRows } = await supabase
+        .from("events_date")
+        .select("parent_id")
+        .eq("estado_publicacion", "publicado")
+        .not("parent_id", "is", null)
+        .not("dia_semana", "is", null)
+        .or(dateOrFrom)
+        .or(dateOrTo)
+        .limit(500);
+      if (Array.isArray(parentRows)) {
+        discoverParents = [...new Set((parentRows as any[]).map((r: any) => r?.parent_id).filter((n: any) => Number.isFinite(Number(n))).map((n: any) => Number(n)))].slice(0, 200);
+      }
+      const { data: orphanRows } = await supabase
+        .from("events_date")
+        .select("organizer_id")
+        .eq("estado_publicacion", "publicado")
+        .is("parent_id", null)
+        .not("dia_semana", "is", null)
+        .or(dateOrFrom)
+        .or(dateOrTo)
+        .limit(200);
+      if (Array.isArray(orphanRows)) {
+        discoverOrphans = [...new Set((orphanRows as any[]).map((r: any) => r?.organizer_id).filter((n: any) => Number.isFinite(Number(n))).map((n: any) => Number(n)))].slice(0, 50);
+      }
+      const rpcPreStart = performance.now();
+      for (const pid of discoverParents) {
+        try {
+          await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: weeksAhead } as any);
+        } catch (e) {
+          console.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
+        }
+      }
+      for (const oid of discoverOrphans) {
+        try {
+          await supabase.rpc("ensure_weekly_occurrences_orphan", { p_organizer_id: oid, p_weeks_ahead: weeksAhead } as any);
+        } catch (e) {
+          console.warn("[useExploreQuery] ensure_weekly_occurrences_orphan failed for organizer", oid, e);
+        }
+      }
+      perfLog({ hook: 'useExploreQuery', step: 'ensure_weekly_occurrences_pre_discover', duration_ms: performance.now() - rpcPreStart, rows: 0, extra: { parents: discoverParents.length, orphans: discoverOrphans.length } });
+    } catch (e) {
+      console.warn("[useExploreQuery] pre-discover recurring/orphan RPC failed (non-fatal)", e);
+    }
+
     // ✅ Materializar ocurrencias reales para plantillas recurrentes (dia_semana no-null)
     // Esto evita "inventar" IDs/fechas en frontend y permite navegación 1:1 con events_date.id real.
     const recurringParentIds = Array.from(
@@ -579,20 +646,25 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           .filter((n: any) => Number.isFinite(n))
       )
     );
-    if (recurringParentIds.length > 0) {
-      // Sin rango de fechas: materializar 30 semanas para que se vean fechas futuras (p. ej. más de 2 semanas).
-      let weeksAhead = 30;
-      if (dateFrom && dateTo) {
-        const endYmd = dateTo >= dateFrom ? dateTo : dateFrom;
-        const [ey, em, ed] = endYmd.split("-").map((x) => parseInt(x, 10));
-        if (Number.isFinite(ey) && Number.isFinite(em) && Number.isFinite(ed)) {
-          const endDate = new Date(Date.UTC(ey, em - 1, ed, 12, 0, 0));
-          const todayDate = new Date(todayStr + "T12:00:00Z");
-          const diffMs = Math.max(0, endDate.getTime() - todayDate.getTime());
-          const diffWeeks = Math.ceil(diffMs / (7 * 24 * 60 * 60 * 1000));
-          weeksAhead = Math.min(Math.max(1, diffWeeks), 30);
+    const orphanOrganizerIds = Array.from(
+      new Set(
+        finalData
+          .filter((row: any) => (row?.parent_id == null || row?.parent_id === '') && isValidDiaSemana(row?.dia_semana) && Number.isFinite(Number(row?.organizer_id)))
+          .map((row: any) => Number(row.organizer_id))
+          .filter((n: any) => Number.isFinite(n))
+      )
+    );
+    // Materializar ocurrencias huérfanas de la página actual (por si el pre-discover no las incluyó, ej. 12604)
+    if (orphanOrganizerIds.length > 0) {
+      for (const oid of orphanOrganizerIds) {
+        try {
+          await supabase.rpc("ensure_weekly_occurrences_orphan", { p_organizer_id: oid, p_weeks_ahead: weeksAhead } as any);
+        } catch (e) {
+          console.warn("[useExploreQuery] ensure_weekly_occurrences_orphan (page) failed for organizer", oid, e);
         }
       }
+    }
+    if (recurringParentIds.length > 0) {
       const rpcStart = performance.now();
       for (const pid of recurringParentIds) {
         try {
@@ -652,6 +724,46 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
         }
       } catch (e) {
         console.warn("[useExploreQuery] re-fetch occurrences failed", e);
+      }
+    }
+
+    // Re-fetch ocurrencias huérfanas (parent_id null, organizer_id + dia_semana) y fusionar en la página actual
+    if (orphanOrganizerIds.length > 0) {
+      try {
+        const rangeFrom = dateFrom || todayStr;
+        const rangeTo = dateTo || addDaysYmd(rangeFrom, 30 * 7);
+        let qOrphan = supabase
+          .from("events_date")
+          .select(select as any)
+          .eq("estado_publicacion", "publicado")
+          .is("parent_id", null)
+          .in("organizer_id", orphanOrganizerIds as any)
+          .gte("fecha", rangeFrom)
+          .lte("fecha", rangeTo);
+        if (zonas?.length) qOrphan = qOrphan.in("zona", zonas as any);
+        if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+          const parts: string[] = [];
+          if ((ritmos?.length || 0) > 0) {
+            parts.push(`estilos.ov.{${(ritmos as number[]).join(',')}}`);
+          }
+          if ((selectedCatalogIds?.length || 0) > 0) {
+            parts.push(`ritmos_seleccionados.ov.{${selectedCatalogIds.join(',')}}`);
+          }
+          if (parts.length > 0) qOrphan = qOrphan.or(parts.join(','));
+        }
+        const { data: orphanRows, error: eOrphan } = await qOrphan
+          .order("fecha", { ascending: true, nullsFirst: false })
+          .order("hora_inicio", { ascending: true, nullsFirst: false })
+          .order("id", { ascending: true });
+        if (!eOrphan && Array.isArray(orphanRows) && orphanRows.length > 0) {
+          const byId = new Map<any, any>();
+          (finalData as any[]).forEach((r) => byId.set((r as any)?.id, r));
+          orphanRows.forEach((r) => byId.set((r as any)?.id, r));
+          finalData = Array.from(byId.values());
+          perfLog({ hook: 'useExploreQuery', step: 'refetch_orphan_occurrences', duration_ms: 0, rows: orphanRows.length });
+        }
+      } catch (e) {
+        console.warn("[useExploreQuery] re-fetch orphan occurrences failed", e);
       }
     }
 
