@@ -22,6 +22,7 @@ import { supabase } from '@/lib/supabase';
 import { useCreateCheckoutSession } from '@/hooks/useStripeCheckout';
 import { getLocaleFromI18n } from '@/utils/locale';
 import { resolveSupabaseStoragePublicUrl } from '@/utils/supabaseStoragePublicUrl';
+import { useUserFavorites } from '@/hooks/useUserFavorites';
 import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 import { normalizeRitmosToSlugs, TAG_NAME_TO_SLUG } from '@/utils/normalizeRitmos';
 import {
@@ -32,6 +33,7 @@ import {
   DollarSign,
   ExternalLink,
   MapPin,
+  Heart,
   Music2,
   Share2,
 } from 'lucide-react';
@@ -44,6 +46,7 @@ export default function ClassPublicScreen() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { isClassFavorite, toggleClassFavorite, togglingClass } = useUserFavorites();
   const createCheckout = useCreateCheckoutSession();
   const { t } = useTranslation();
   const locale = getLocaleFromI18n();
@@ -132,6 +135,29 @@ export default function ClassPublicScreen() {
     return 0;
   })();
   const selectedClass = classesArr[selectedClassIndex] ?? classesArr[0];
+  const classFavoriteActive = isClassFavorite(sourceType as SourceType, idNum, selectedClassIndex);
+  const onToggleFavorite = React.useCallback(async () => {
+    if (!user) {
+      navigate('/auth/login');
+      return;
+    }
+    if (!Number.isFinite(idNum) || idNum < 0) {
+      showToast(t('action_failed', 'No se pudo completar la acción'), 'error');
+      return;
+    }
+    try {
+      const next = await toggleClassFavorite({
+        sourceType: sourceType as SourceType,
+        sourceId: idNum,
+        cronogramaIndex: selectedClassIndex,
+        classItemId: Number.isFinite(Number((selectedClass as any)?.id)) ? Number((selectedClass as any).id) : null,
+      });
+      showToast(next ? t('added_to_favorites', 'Agregado a favoritos') : t('removed_from_favorites', 'Eliminado de favoritos'), 'success');
+    } catch (e: any) {
+      const message = e?.message || e?.error_description || (e?.code ? String(e.code) : null);
+      showToast(message || t('action_failed', 'No se pudo completar la acción'), 'error');
+    }
+  }, [user, navigate, toggleClassFavorite, sourceType, idNum, selectedClassIndex, selectedClass, showToast, t]);
   const ritmoCatalogMaps = React.useMemo(() => {
     const idToLabel = new Map<string, string>();
     const labelToIdLower = new Map<string, string>();
@@ -1198,19 +1224,24 @@ export default function ClassPublicScreen() {
         }
         .class-hero__top {
           display: flex;
-          justify-content: space-between;
+          justify-content: flex-end;
           align-items: center;
+          gap: 12px;
           flex-shrink: 0;
+          margin-top: 12px;
         }
-        .class-hero__back,
-        .class-hero__share {
-          min-width: 36px;
-          min-height: 36px;
-          padding: 0 10px;
-          font-size: 0.85rem;
-          font-weight: 800;
+        .class-hero__top .class-info-action {
+          min-width: 44px;
+          min-height: 44px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.85);
+          background: rgba(122,108,255,0.10);
+          color: rgba(255,255,255,0.98);
         }
-        .class-hero__share { padding: 0; }
+        .class-hero__top .class-info-action:hover {
+          border-color: rgba(255,255,255,1);
+          background: rgba(122,108,255,0.18);
+        }
         .class-hero__main {
           display: flex;
           flex-direction: row;
@@ -1412,33 +1443,7 @@ export default function ClassPublicScreen() {
           <div className="class-hero__accent" aria-hidden />
 
           <div className="class-hero__inner">
-            {/* Fila 1: Volver (izq) | Compartir (der) */}
-            <div className="class-hero__top">
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(creatorLink)}
-                className="class-info-action class-hero__back"
-                aria-label={t('back', 'Volver')}
-                title={t('back', 'Volver')}
-              >
-                ← {t('back')}
-              </motion.button>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleShare}
-                className="class-info-action class-hero__share"
-                aria-label={t('share', 'Compartir')}
-                title={t('share', 'Compartir')}
-              >
-                <Share2 size={20} aria-hidden />
-              </motion.button>
-            </div>
-
-            {/* Fila 2: Nombre clase (col 1) | Imagen (col 2) */}
+            {/* Fila 1: Nombre clase (col 1) | Imagen (col 2) */}
             <div className="class-hero__main">
               <h1 className="class-hero__title">{classTitle}</h1>
               <div className="class-hero__avatar">
@@ -1450,13 +1455,45 @@ export default function ClassPublicScreen() {
               </div>
             </div>
 
-            {/* Fila 3: Academia o maestro */}
+            {/* Fila 2: Academia o maestro */}
             <p className="class-hero__creator">
               {t('by', 'por')}{' '}
               <Link to={creatorLink}>
                 {creatorName}
               </Link>
             </p>
+
+            {/* Botones centrados: Compartir | Favorito (corazón) */}
+            <div className="class-hero__top">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleShare}
+                className="class-info-action"
+                aria-label={t('share', 'Compartir')}
+                title={t('share', 'Compartir')}
+              >
+                <Share2 size={20} aria-hidden />
+              </motion.button>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onToggleFavorite}
+                disabled={togglingClass}
+                className="class-info-action"
+                aria-label={classFavoriteActive ? t('remove_favorite', 'Quitar favorito') : t('add_favorite', 'Agregar favorito')}
+                title={classFavoriteActive ? t('remove_favorite', 'Quitar favorito') : t('add_favorite', 'Agregar favorito')}
+                style={{
+                  opacity: togglingClass ? 0.75 : 1,
+                  cursor: togglingClass ? 'not-allowed' : 'pointer',
+                  color: classFavoriteActive ? '#F42F7E' : undefined,
+                }}
+              >
+                {classFavoriteActive ? <Heart size={20} fill="currentColor" aria-hidden /> : <Heart size={20} aria-hidden />}
+              </motion.button>
+            </div>
           </div>
         </motion.section>
 

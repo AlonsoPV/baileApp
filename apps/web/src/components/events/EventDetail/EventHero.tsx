@@ -1,5 +1,5 @@
 import React from "react";
-import { Share2 } from "lucide-react";
+import { Heart, Share2 } from "lucide-react";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 export interface EventHeroProps {
   title: string;
@@ -8,8 +8,10 @@ export interface EventHeroProps {
   dateStr: string;
   timeRange: string;
   venueName: string;
-  onBack: () => void;
   onShare: () => void;
+  onToggleFavorite?: () => void;
+  favoriteActive?: boolean;
+  togglingEvent?: boolean;
   toDirectUrl?: (url: string) => string;
 }
 
@@ -23,8 +25,10 @@ export function EventHero({
   dateStr,
   timeRange,
   venueName,
-  onBack,
   onShare,
+  onToggleFavorite,
+  favoriteActive = false,
+  togglingEvent = false,
   toDirectUrl = (u) => u,
 }: EventHeroProps) {
   const displayUrl = flyerUrl
@@ -56,14 +60,22 @@ export function EventHero({
       )}
       <div className="eds-hero__overlay" aria-hidden />
       <div className="eds-hero__actions">
-        <button
-          type="button"
-          className="eds-hero__btn"
-          onClick={onBack}
-          aria-label="Volver"
-        >
-          ← Volver
-        </button>
+        {onToggleFavorite && (
+          <button
+            type="button"
+            className="eds-hero__btn"
+            onClick={onToggleFavorite}
+            disabled={togglingEvent}
+            aria-label={favoriteActive ? "Quitar favorito" : "Agregar favorito"}
+            style={{
+              opacity: togglingEvent ? 0.75 : 1,
+              cursor: togglingEvent ? "not-allowed" : "pointer",
+              color: favoriteActive ? "#F42F7E" : undefined,
+            }}
+          >
+            {favoriteActive ? <Heart size={20} fill="currentColor" strokeWidth={2} /> : <Heart size={20} strokeWidth={2} />}
+          </button>
+        )}
         <button
           type="button"
           className="eds-hero__btn"

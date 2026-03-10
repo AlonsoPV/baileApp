@@ -35,6 +35,7 @@ import { getLocaleFromI18n } from "../../utils/locale";
 import { routes } from "../../routes/registry";
 import { resolveEventDateYmd } from "../../utils/eventDateDisplay";
 import { supabase } from "../../lib/supabase";
+import { useUserFavorites } from "@/hooks/useUserFavorites";
 
 const colors = {
   coral: '#FF3D57',
@@ -130,6 +131,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const { user } = useAuth();
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const { isEventFavorite, toggleEventFavorite, togglingEvent } = useUserFavorites();
   
   // Con Suspense, date siempre existe cuando se renderiza
   const date = useEventDateSuspense(dateId);
@@ -250,6 +252,20 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     : effectiveStatus === 'interesado' || effectiveStatus === 'going'
       ? 'active'
       : 'idle';
+
+  const favoriteActive = isEventFavorite(dateId);
+  const onToggleFavorite = React.useCallback(async () => {
+    if (!user) {
+      navigate("/auth/login");
+      return;
+    }
+    try {
+      const next = await toggleEventFavorite(dateId);
+      showToast(next ? t("added_to_favorites", "Agregado a favoritos") : t("removed_from_favorites", "Eliminado de favoritos"), "success");
+    } catch {
+      showToast(t("action_failed", "No se pudo completar la acción"), "error");
+    }
+  }, [user, navigate, toggleEventFavorite, dateId, showToast, t]);
 
   const handleStatusChange = React.useCallback(
     (s: RSVPStatus | null) => {
@@ -533,8 +549,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           dateStr={dateStr}
           timeRange={timeRange}
           venueName={venueName}
-          onBack={() => navigate(routes.app.explore)}
           onShare={handleShare}
+          onToggleFavorite={onToggleFavorite}
+          favoriteActive={favoriteActive}
+          togglingEvent={togglingEvent}
           toDirectUrl={toDirectPublicStorageUrl}
         />
         <StickyCtaBar

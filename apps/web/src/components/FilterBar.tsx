@@ -7,9 +7,9 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { Chip } from "./profile/Chip";
 import type { ExploreFilters } from "../state/exploreFilters";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
-import { useUsedFilterTags } from "@/hooks/useUsedFilterTags";
 import { useUsedRhythmsByContext } from "@/hooks/useUsedRhythms";
-import { mapExploreTypeToContext } from "@/filters/exploreContext";
+import { useUsedZonesByContext } from "@/hooks/useUsedZones";
+import { mapExploreTypeToContext, mapExploreTypeToZoneContext } from "@/filters/exploreContext";
 
 // Debounce simple (sin dependencias externas)
 function useDebouncedCallback<T extends any[]>(
@@ -137,16 +137,17 @@ export default function FilterBar({
 
   const { ritmos: allRitmos, zonas: allZonas } = useTags();
   const rhythmContext = React.useMemo(() => mapExploreTypeToContext(filters.type), [filters.type]);
+  const zoneContext = React.useMemo(() => mapExploreTypeToZoneContext(filters.type), [filters.type]);
   const {
     rhythmIds: usedRitmoIds,
     isLoading: loadingUsedRhythms,
     isFetched: usedRhythmsFetched,
   } = useUsedRhythmsByContext(rhythmContext);
   const {
-    usedZonaIds,
+    zoneIds: usedZonaIds,
     isLoading: loadingUsedZones,
     isFetched: usedZonesFetched,
-  } = useUsedFilterTags();
+  } = useUsedZonesByContext(zoneContext);
 
   const ritmos = React.useMemo(() => {
     // Sin contexto (ej. "all"), mantener catálogo.
@@ -160,12 +161,13 @@ export default function FilterBar({
   }, [allRitmos, usedRitmoIds, loadingUsedRhythms, usedRhythmsFetched, rhythmContext]);
 
   const zonas = React.useMemo(() => {
+    if (!zoneContext) return allZonas;
     if (loadingUsedZones || !usedZonesFetched) return allZonas;
     const set = new Set(usedZonaIds);
     // Si no hay zonas usadas para el contexto/dataset, no mostrar catálogo completo.
     if (set.size === 0) return [];
     return allZonas.filter((z) => set.has(z.id));
-  }, [allZonas, usedZonaIds, loadingUsedZones, usedZonesFetched]);
+  }, [allZonas, usedZonaIds, loadingUsedZones, usedZonesFetched, zoneContext]);
 
   const availableRitmoSet = React.useMemo(
     () => new Set<number>((availableRitmos || []).map((r) => r.id)),
@@ -193,10 +195,9 @@ export default function FilterBar({
   }, [ritmos, availableRitmoSet, availableRitmos]);
 
   const zonasForCatalog = React.useMemo(() => {
-    const availabilityProvided = availableZonas !== undefined;
-    if (!availabilityProvided) return zonas;
-    return (zonas || []).filter((z) => availableZonaSet.has(z.id));
-  }, [zonas, availableZonaSet, availableZonas]);
+    // Mostrar todas las zonas del contexto actual, no solo las visibles del dataset.
+    return zonas;
+  }, [zonas]);
 
   const { groups: zonaGroups } = useZonaCatalogGroups(zonasForCatalog);
 

@@ -63,6 +63,8 @@ export type FechaMetric = {
 
 export type GlobalFechaMetrics = {
   totalRsvps: number;
+  /** Personas únicas (un usuario que RSVP en 3 eventos cuenta como 1 asistente). */
+  totalAsistentes: number;
   porRol: RolCounts;
   zonas: ZonaMetric[];
   ritmos: RitmoMetric[];
@@ -167,6 +169,7 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
         return {
           global: {
             totalRsvps: 0,
+            totalAsistentes: 0,
             porRol: { leader: 0, follower: 0, ambos: 0, otros: 0 },
             zonas: [],
             ritmos: [],
@@ -206,6 +209,7 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
         return {
           global: {
             totalRsvps: 0,
+            totalAsistentes: 0,
             porRol: { leader: 0, follower: 0, ambos: 0, otros: 0 },
             zonas: [],
             ritmos: [],
@@ -304,6 +308,7 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
       // Procesar RSVPs
       const global: GlobalFechaMetrics = {
         totalRsvps: 0,
+        totalAsistentes: 0,
         porRol: { leader: 0, follower: 0, ambos: 0, otros: 0 },
         zonas: [],
         ritmos: [],
@@ -313,10 +318,10 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
 
       const perRSVP: EventRSVPMetric[] = [];
 
+      // Contar RSVPs (filas) y construir perRSVP / byDate
       rsvpData.forEach((rsvp: any) => {
         const userInfo = userInfoMap.get(rsvp.user_id) || { name: `Usuario ${rsvp.user_id.substring(0, 8)}`, role: "otro", zones: [] };
         
-        // Normalizar role
         let normalizedRole: "leader" | "follower" | "ambos" | "otro" = "otro";
         const role = userInfo.role;
         if (role === 'lead' || role === 'leader') normalizedRole = 'leader';
@@ -324,21 +329,10 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
         else if (role === 'ambos') normalizedRole = 'ambos';
         else normalizedRole = 'otro';
 
-        // Actualizar métricas globales
         global.totalRsvps += 1;
-        global.porRol[normalizedRole] = (global.porRol[normalizedRole] || 0) + 1;
-
-        // Por zona
-        userInfo.zones.forEach((zonaId: any) => {
-          if (typeof zonaId === 'number' && zonaInfoMap.has(zonaId)) {
-            const zonaNombre = zonaInfoMap.get(zonaId)!;
-            global.byZone[zonaNombre] = (global.byZone[zonaNombre] || 0) + 1;
-          }
-        });
 
         const eventDateInfo = eventDateMap.get(rsvp.event_date_id) || { nombre: "Fecha desconocida", fecha: null };
 
-        // Agregar a perRSVP
         perRSVP.push({
           id: rsvp.id,
           eventDateId: rsvp.event_date_id,
@@ -352,6 +346,28 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
             : undefined,
           createdAt: rsvp.created_at,
         });
+      });
+
+      // Métricas por persona única: total asistentes, por rol (1 por usuario), por zona (1 zona por usuario)
+      const uniqueUserIds = new Set(rsvpData.map((r: any) => r.user_id));
+      global.totalAsistentes = uniqueUserIds.size;
+
+      uniqueUserIds.forEach((uid) => {
+        const userInfo = userInfoMap.get(uid) || { name: `Usuario ${uid.substring(0, 8)}`, role: "otro", zones: [] };
+        let normalizedRole: "leader" | "follower" | "ambos" | "otro" = "otro";
+        const role = userInfo.role;
+        if (role === 'lead' || role === 'leader') normalizedRole = 'leader';
+        else if (role === 'follow' || role === 'follower') normalizedRole = 'follower';
+        else if (role === 'ambos') normalizedRole = 'ambos';
+        else normalizedRole = 'otro';
+        global.porRol[normalizedRole] = (global.porRol[normalizedRole] || 0) + 1;
+
+        // Una zona por usuario: contar solo la primera zona del perfil
+        const firstZonaId = Array.isArray(userInfo.zones) && typeof userInfo.zones[0] === 'number' ? userInfo.zones[0] : null;
+        if (firstZonaId != null && zonaInfoMap.has(firstZonaId)) {
+          const zonaNombre = zonaInfoMap.get(firstZonaId)!;
+          global.byZone[zonaNombre] = (global.byZone[zonaNombre] || 0) + 1;
+        }
       });
 
       // Agrupar por fecha de evento

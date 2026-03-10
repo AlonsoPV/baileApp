@@ -24,6 +24,7 @@ import { useProfileSwitchMetrics } from "../../hooks/useProfileSwitchMetrics";
 import { isEventUpcomingOrToday, getEventPrimaryDate } from "../../utils/eventDateExpiration";
 import { Modal } from "../../components/ui/Modal";
 import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
+import { useUserFavorites } from "@/hooks/useUserFavorites";
 import "./UserProfile.css";
 
 
@@ -248,6 +249,7 @@ export const UserProfileLive: React.FC = () => {
   const [showAllNetworkModal, setShowAllNetworkModal] = useState(false);
   const [verMasModal, setVerMasModal] = useState<{ title: string; text: string } | null>(null);
   const [communityAvatarErrors, setCommunityAvatarErrors] = useState<Set<string>>(new Set());
+  const [favoritesTab, setFavoritesTab] = useState<'social' | 'class'>('social');
 
   // Mark UI as ready when profile is loaded and component has rendered
   useEffect(() => {
@@ -291,6 +293,11 @@ export const UserProfileLive: React.FC = () => {
     isLoading: rsvpsLoading,
     error: rsvpsError,
   } = useUserRSVPEvents();
+  const {
+    events: favoriteEvents,
+    classes: favoriteClasses,
+    isLoading: favoritesLoading,
+  } = useUserFavorites();
 
   // Logs temporales (solo dev): validar RSVPs -> EventDate
   React.useEffect(() => {
@@ -615,7 +622,8 @@ export const UserProfileLive: React.FC = () => {
           }}
         >
 
-          <motion.section
+          {/* Funcionalidad "seguir perfil" / comunidad deshabilitada temporalmente - class="community-card-container" */}
+          {/* <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -750,6 +758,198 @@ export const UserProfileLive: React.FC = () => {
                 </div>
               </>
             )}
+          </motion.section> */}
+
+          <motion.section
+            id="user-profile-favorites"
+            data-baile-id="user-profile-favorites"
+            data-test-id="user-profile-favorites"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+            className="events-section glass-card-container"
+          >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '1rem',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
+            }}>
+              <h3 className="section-title" style={{ margin: 0 }}>❤️ {t('favorites', 'Favoritos')}</h3>
+              <div style={{
+                padding: '0.45rem 0.9rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '20px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                color: colors.light,
+              }}>
+                {(favoriteEvents?.length || 0) + (favoriteClasses?.length || 0)} {t('items', 'items')}
+              </div>
+            </div>
+
+            {/* Tabs Sociales | Clases */}
+            <div style={{
+              display: 'flex',
+              gap: 4,
+              marginBottom: '1.25rem',
+              padding: 4,
+              background: 'rgba(255,255,255,0.06)',
+              borderRadius: 12,
+              width: 'fit-content',
+            }}>
+              <button
+                type="button"
+                onClick={() => setFavoritesTab('social')}
+                aria-selected={favoritesTab === 'social'}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: favoritesTab === 'social' ? 'rgba(255,255,255,0.18)' : 'transparent',
+                  color: colors.light,
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                }}
+              >
+                🎉 {t('social', 'Sociales')} {(favoriteEvents?.length || 0) > 0 ? `(${favoriteEvents?.length})` : ''}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFavoritesTab('class')}
+                aria-selected={favoritesTab === 'class'}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: favoritesTab === 'class' ? 'rgba(255,255,255,0.18)' : 'transparent',
+                  color: colors.light,
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                }}
+              >
+                🧑‍🏫 {t('classes', 'Clases')} {(favoriteClasses?.length || 0) > 0 ? `(${favoriteClasses?.length})` : ''}
+              </button>
+            </div>
+
+            {favoritesLoading ? (
+              <div style={{ opacity: 0.8 }}>{t('loading', 'Cargando...')}</div>
+            ) : (() => {
+              const eventItems = (favoriteEvents || []).map((ev: any) => ({
+                key: `event_${ev.id}`,
+                type: 'event' as const,
+                title: String(ev?.nombre || t('event', 'Evento')),
+                subtitle: [ev?.fecha, ev?.hora_inicio].filter(Boolean).join(' · '),
+                meta: [ev?.lugar, ev?.ciudad].filter(Boolean).join(' · '),
+                image: toDirectPublicStorageUrl(ev?.flyer_url) || ev?.flyer_url || null,
+                route: `/social/fecha/${ev.id}`,
+              }));
+              const classItems = (favoriteClasses || []).map((cl: any) => {
+                const basePath = cl?.sourceType === 'academy' ? '/clase/academy' : '/clase/teacher';
+                const route = (cl?.href && String(cl.href).startsWith('/clase/')) ? cl.href : `${basePath}/${cl?.sourceId ?? ''}?i=${cl?.cronogramaIndex ?? 0}`;
+                return {
+                  key: `class_${cl?.favorite_id ?? ''}_${cl?.sourceType}_${cl?.sourceId}_${cl?.cronogramaIndex}`,
+                  type: 'class' as const,
+                  title: String(cl?.title || t('class', 'Clase')),
+                  subtitle: String(cl?.ownerName || ''),
+                  meta: [cl?.dayLabel, cl?.timeLabel, cl?.locationLabel].filter(Boolean).join(' · '),
+                  image: toDirectPublicStorageUrl(cl?.coverUrl) || cl?.coverUrl || null,
+                  route,
+                };
+              });
+              const items = favoritesTab === 'social' ? eventItems : classItems;
+
+              if (items.length === 0) {
+                return (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '2rem 1rem',
+                    border: '2px dashed rgba(255,255,255,0.2)',
+                    borderRadius: 14,
+                    opacity: 0.9,
+                    background: 'rgba(255,255,255,0.03)',
+                  }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{favoritesTab === 'social' ? '🎉' : '🧑‍🏫'}</div>
+                    <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                      {favoritesTab === 'social'
+                        ? t('no_event_favorites_yet', 'Aún no tienes eventos favoritos')
+                        : t('no_class_favorites_yet', 'Aún no tienes clases favoritas')}
+                    </div>
+                    <div style={{ opacity: 0.72, fontSize: 13 }}>
+                      {favoritesTab === 'social'
+                        ? t('save_event_favorites_prompt', 'Guarda eventos para verlos aquí')
+                        : t('save_class_favorites_prompt', 'Guarda clases para verlas aquí')}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {items.map((it, idx) => (
+                    <motion.button
+                      key={it.key}
+                      type="button"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.995 }}
+                      onClick={() => navigate(it.route)}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        display: 'grid',
+                        gridTemplateColumns: '56px 1fr auto',
+                        gap: 12,
+                        alignItems: 'center',
+                        borderRadius: 14,
+                        border: '1px solid rgba(255,255,255,0.16)',
+                        background: 'linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))',
+                        padding: '0.7rem',
+                        cursor: 'pointer',
+                        color: colors.light,
+                      }}
+                    >
+                      <div style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 10,
+                        overflow: 'hidden',
+                        background: 'rgba(255,255,255,0.08)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                      }}>
+                        {it.image ? (
+                          <img src={it.image} alt={it.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <span aria-hidden>{it.type === 'event' ? '🎉' : '🧑‍🏫'}</span>
+                        )}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'inline-flex', marginBottom: 4, padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700, background: it.type === 'event' ? 'rgba(251,140,0,0.18)' : 'rgba(39,195,255,0.18)' }}>
+                          {it.type === 'event' ? t('event', 'Evento') : t('class', 'Clase')}
+                        </div>
+                        <div style={{ fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.title}</div>
+                        {it.subtitle ? (
+                          <div style={{ fontSize: 12, opacity: 0.82, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.subtitle}</div>
+                        ) : null}
+                        {it.meta ? (
+                          <div style={{ fontSize: 12, opacity: 0.72, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.meta}</div>
+                        ) : null}
+                      </div>
+                      <div aria-hidden style={{ opacity: 0.6, fontSize: 20, paddingRight: 4 }}>›</div>
+                    </motion.button>
+                  ))}
+                </div>
+              );
+            })()}
           </motion.section>
 
           <Modal open={showAllNetworkModal} onClose={() => setShowAllNetworkModal(false)} title={networkTab === 'followers' ? t('followers') : t('following')}>
@@ -792,7 +992,7 @@ export const UserProfileLive: React.FC = () => {
               );})}
             </div>
           </Modal>
-
+{/* 
           {(() => {
             const fotoP2 = getMediaBySlot(safeMedia as any, 'p2');
             const fotoP3 = getMediaBySlot(safeMedia as any, 'p3');
@@ -856,7 +1056,7 @@ export const UserProfileLive: React.FC = () => {
               </motion.section>
             );
           })()}
-
+ */}
           <Modal open={!!verMasModal} onClose={() => setVerMasModal(null)} title={verMasModal?.title}>
             {verMasModal && <p style={{ margin: 0, lineHeight: 1.6, color: 'rgba(255,255,255,0.95)' }}>{verMasModal.text}</p>}
           </Modal>
@@ -882,7 +1082,7 @@ export const UserProfileLive: React.FC = () => {
               gap: '0.75rem'
             }}>
               <h3 id="user-profile-interested-events-title" className="section-title" style={{ margin: 0 }}>
-                ✨ {t('interested_events_title')}
+                 {t('interested_events_title')}
               </h3>
               {availableRsvpEvents.length > 0 && (
                 <div style={{
@@ -1106,7 +1306,7 @@ export const UserProfileLive: React.FC = () => {
             </motion.section>
           )} */}
 
-          {carouselPhotos && carouselPhotos.length > 0 && carouselPhotos.some(url => url && url.trim() !== '') && (
+        {/*   {carouselPhotos && carouselPhotos.length > 0 && carouselPhotos.some(url => url && url.trim() !== '') && (
             <motion.section
               id="user-profile-photo-gallery"
               data-baile-id="user-profile-photo-gallery"
@@ -1140,7 +1340,7 @@ export const UserProfileLive: React.FC = () => {
 
               <CarouselComponent photos={carouselPhotos} />
             </motion.section>
-          )}
+          )} */}
         </div>
       </div>
     </>

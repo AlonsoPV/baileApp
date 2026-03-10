@@ -780,7 +780,7 @@ const handleSave = async () => {
             </div>
           </div>
 
-          <div className="editor-section glass-card-container">
+         {/*  <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">💬 {t("custom_questions")}</h2>
 
             <div className="editor-grid">
@@ -812,7 +812,7 @@ const handleSave = async () => {
                 />
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">⭐ {t("filter_preferences")}</h2>
@@ -869,7 +869,7 @@ const handleSave = async () => {
               imageVersion={profile?.updated_at}
             />
 
-            <PhotoManagementSection
+           {/*  <PhotoManagementSection
               media={mediaWithAvatarFallback}
               uploading={uploading}
               removing={removing}
@@ -881,10 +881,10 @@ const handleSave = async () => {
               isMainPhoto={false}
               verticalLayout={true}
               imageVersion={profile?.updated_at}
-            />
+            /> */}
           </div>
 
-          <PhotoManagementSection
+          {/* <PhotoManagementSection
             media={mediaWithAvatarFallback}
             uploading={uploading}
             removing={removing}
@@ -895,7 +895,7 @@ const handleSave = async () => {
             slots={["p4", "p5", "p6", "p7", "p8", "p9", "p10"]}
             isMainPhoto={false}
             imageVersion={profile?.updated_at}
-          />
+          /> */}
 
           {/*
           <VideoManagementSection

@@ -2683,7 +2683,7 @@ export default function TeacherProfileEditor() {
         </div>
 
         {/* Fotos Adicionales */}
-        <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de fotos...</div>}>
+   {/*      <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de fotos...</div>}>
           <PhotoManagementSection
             media={media}
             uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending]))}
@@ -2693,7 +2693,7 @@ export default function TeacherProfileEditor() {
             description="Más fotos para mostrar diferentes aspectos de tu Maestro"
             slots={PHOTO_SLOTS.slice(3)} // p4-p10
           />
-        </React.Suspense>
+        </React.Suspense> */}
 
         {/* Gestión de Videos */}
       {/*   <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de videos...</div>}>

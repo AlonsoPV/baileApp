@@ -19,6 +19,7 @@ import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { colors } from "../../theme/colors";
 import { useCompetitionGroupsByTeacher } from "../../hooks/useCompetitionGroups";
+import { Share2 } from "lucide-react";
 import "./TeacherProfileLive.css";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 
@@ -744,6 +745,7 @@ export default function TeacherProfileLive() {
                   </div>
                 )}
                 <button
+                  id="profile-hero-share"
                   aria-label="Compartir perfil"
                   title="Compartir"
                   onClick={handleShare}
@@ -763,14 +765,14 @@ export default function TeacherProfileLive() {
                     fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                   }}
                 >
-                  📤 Compartir
+                  <Share2 size={18} strokeWidth={2} aria-hidden />
                 </button>
               </div>
             </div>
 
             <div>
 
-              <h1 style={{
+              <h1 id="profile-hero-name" style={{
                 fontSize: '3rem',
                 display: 'inline',
                 fontWeight: '800',
@@ -797,50 +799,44 @@ export default function TeacherProfileLive() {
                   ✅
                 </span>
               )} */}
-              <p style={{
+              <p id="profile-hero-type" style={{
                 fontSize: '1.25rem',
                 color: 'rgba(255, 255, 255, 0.9)',
-                margin: '0 0 1.5rem 0',
+                margin: '0 0 0.75rem 0',
                 lineHeight: 1.4,
                 fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 Maestro
               </p>
 
-              {/* Chips de Ritmos y Zonas dentro del banner */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {(() => {
-                  const slugs = normalizeRitmosToSlugs(teacher, allTags);
-                  return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
-                  ) : null;
-                })()}
-                <ZonaGroupedChips
-                  selectedIds={(teacher as any)?.zonas}
-                  allTags={allTags}
-                  mode="display"
-                />
+              <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
+                <Suspense fallback={null}>
+                  <BioSection 
+                    bio={teacher?.bio}
+                    redes={teacher?.redes_sociales || (teacher as any)?.respuestas?.redes}
+                    variant="banner"
+                  />
+                </Suspense>
               </div>
             </div>
+          </div>
+          <div id="profile-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', width: '100%' }}>
+            {(() => {
+              const slugs = normalizeRitmosToSlugs(teacher, allTags);
+              return slugs.length > 0 ? (
+                <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
+              ) : null;
+            })()}
+            <ZonaGroupedChips
+              selectedIds={(teacher as any)?.zonas}
+              allTags={allTags}
+              mode="display"
+            />
           </div>
         </motion.div>
 
         {/* Contenido Principal */}
         <div style={{ padding: '2rem 0' }}>
-          {/* Biografía y Redes Sociales */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            <Suspense fallback={<div role="status" style={{ padding: '1rem', textAlign: 'center', opacity: 0.8 }}>Cargando…</div>}>
-              <BioSection 
-                bio={teacher?.bio}
-                redes={teacher?.redes_sociales || (teacher as any)?.respuestas?.redes}
-              />
-            </Suspense>
-          </motion.div>
-
           {/* Ritmos de Baile */}
           {/*   {academy.ritmos && academy.ritmos.length > 0 && (
             <motion.section

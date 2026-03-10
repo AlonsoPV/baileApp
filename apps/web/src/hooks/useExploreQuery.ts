@@ -253,6 +253,8 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
 
   await Promise.all(parallelPromises);
 
+  let zoneMatchedParentIds: number[] = [];
+
   // Filtros por tipo
   if (type === "fechas") {
     // Obtener fecha de hoy en zona horaria CDMX
@@ -301,8 +303,30 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       if (parts.length > 0) query = query.or(parts.join(','));
     }
 
-    // zonas específicas de la fecha (campo zona numérico)
-    if (zonas?.length)   query = query.in("zona", zonas as any);
+    // Zonas para eventos: soportar zona(single), zonas(array) y zonas heredadas del parent.
+    if (zonas?.length) {
+      try {
+        const { data: parentZoneRows } = await supabase
+          .from("events_parent")
+          .select("id")
+          .overlaps("zonas", zonas as any)
+          .limit(500);
+        zoneMatchedParentIds = ((parentZoneRows || []) as any[])
+          .map((r: any) => Number(r?.id))
+          .filter((n) => Number.isFinite(n));
+      } catch (e) {
+        console.warn("[useExploreQuery] parent zones prefetch failed (non-fatal)", e);
+      }
+      const zoneCsv = (zonas as number[]).join(",");
+      const zoneParts = [
+        `zona.in.(${zoneCsv})`,
+        `zonas.ov.{${zoneCsv}}`,
+      ];
+      if (zoneMatchedParentIds.length > 0) {
+        zoneParts.push(`parent_id.in.(${zoneMatchedParentIds.join(",")})`);
+      }
+      query = query.or(zoneParts.join(","));
+    }
     
     // Búsqueda textual (solo si hay texto). Importante: usar %...% y escapar comas.
     if (search) {
@@ -505,7 +529,15 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       
       // Aplicar filtros de zonas
       if (zonas?.length) {
-        parentQuery = parentQuery.in("zona", zonas as any);
+        const zoneCsv = (zonas as number[]).join(",");
+        const zoneParts = [
+          `zona.in.(${zoneCsv})`,
+          `zonas.ov.{${zoneCsv}}`,
+        ];
+        if (zoneMatchedParentIds.length > 0) {
+          zoneParts.push(`parent_id.in.(${zoneMatchedParentIds.join(",")})`);
+        }
+        parentQuery = parentQuery.or(zoneParts.join(","));
       }
       
       // Aplicar filtros de ritmos (mismo criterio que query principal)
@@ -689,7 +721,17 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
             .in("parent_id", parentIds)
             .gte("fecha", rangeFrom)
             .lte("fecha", rangeTo);
-          if (zonas?.length) q = q.in("zona", zonas as any);
+          if (zonas?.length) {
+            const zoneCsv = (zonas as number[]).join(",");
+            const zoneParts = [
+              `zona.in.(${zoneCsv})`,
+              `zonas.ov.{${zoneCsv}}`,
+            ];
+            if (zoneMatchedParentIds.length > 0) {
+              zoneParts.push(`parent_id.in.(${zoneMatchedParentIds.join(",")})`);
+            }
+            q = q.or(zoneParts.join(","));
+          }
           if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
             const parts: string[] = [];
             if ((ritmos?.length || 0) > 0) {
@@ -740,7 +782,13 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           .in("organizer_id", orphanOrganizerIds as any)
           .gte("fecha", rangeFrom)
           .lte("fecha", rangeTo);
-        if (zonas?.length) qOrphan = qOrphan.in("zona", zonas as any);
+        if (zonas?.length) {
+          const zoneCsv = (zonas as number[]).join(",");
+          qOrphan = qOrphan.or([
+            `zona.in.(${zoneCsv})`,
+            `zonas.ov.{${zoneCsv}}`,
+          ].join(","));
+        }
         if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
           const parts: string[] = [];
           if ((ritmos?.length || 0) > 0) {

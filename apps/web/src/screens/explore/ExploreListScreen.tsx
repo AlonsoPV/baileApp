@@ -151,16 +151,7 @@ export default function ExploreListScreen() {
   );
 
   const prevContextRef = React.useRef<string>('');
-  const contextKey = React.useMemo(() => {
-    const qKey = String(filters.q || '').trim().toLowerCase();
-    return [
-      filters.type,
-      filters.datePreset ?? '',
-      filters.dateFrom ?? '',
-      filters.dateTo ?? '',
-      qKey,
-    ].join('|');
-  }, [filters.type, filters.datePreset, filters.dateFrom, filters.dateTo, filters.q]);
+  const contextKey = React.useMemo(() => String(filters.type || ''), [filters.type]);
 
   React.useEffect(() => {
     if (!prevContextRef.current) {

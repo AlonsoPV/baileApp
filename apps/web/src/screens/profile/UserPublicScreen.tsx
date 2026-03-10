@@ -708,7 +708,8 @@ export const UserProfileLive: React.FC = () => {
           }}
         >
 
-          <motion.section
+          {/* Funcionalidad "seguir perfil" / comunidad deshabilitada temporalmente - class="community-card-container" */}
+          {/* <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -851,7 +852,7 @@ export const UserProfileLive: React.FC = () => {
                 </div>
               </>
             )}
-          </motion.section>
+          </motion.section> */}
 
           <Modal
             open={showAllNetworkModal}
@@ -901,8 +902,8 @@ export const UserProfileLive: React.FC = () => {
               );})}
             </div>
           </Modal>
-
-          {(() => {
+{/* Preguntas curiosas y gusta bailar */}
+         {/*  {(() => {
             const fotoP2 = getMediaBySlot(effectiveMedia as any, 'p2');
             const fotoP3 = getMediaBySlot(effectiveMedia as any, 'p3');
             const datoCurioso = (effectiveRespuestas as any)?.dato_curioso;
@@ -976,7 +977,7 @@ export const UserProfileLive: React.FC = () => {
             </div>
           </motion.section>
             );
-          })()}
+          })()} */}
 
           <Modal
             open={!!verMasModal}
@@ -1250,7 +1251,7 @@ export const UserProfileLive: React.FC = () => {
             );
           })() */}
 
-          {carouselPhotos && Array.isArray(carouselPhotos) && carouselPhotos.length > 0 && (
+        {/*   {carouselPhotos && Array.isArray(carouselPhotos) && carouselPhotos.length > 0 && (
             <motion.section
               id="user-profile-photo-gallery"
               data-baile-id="user-profile-photo-gallery"
@@ -1283,7 +1284,7 @@ export const UserProfileLive: React.FC = () => {
 
               <CarouselComponent photos={carouselPhotos} />
             </motion.section>
-          )}
+          )} */}
         </div>
       </div>
     </>

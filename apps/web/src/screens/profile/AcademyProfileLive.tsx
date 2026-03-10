@@ -25,6 +25,7 @@ import { useCompetitionGroupsByAcademy } from "../../hooks/useCompetitionGroups"
 import { useAuth } from "@/contexts/AuthProvider";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
+import { Share2 } from "lucide-react";
 import "./AcademyProfileLive.css";
 
 // Lazy load heavy components
@@ -767,6 +768,7 @@ export default function AcademyProfileLive() {
             }}
           >
             <button
+              id="profile-hero-share"
               aria-label="Compartir perfil"
               title="Compartir"
               onClick={onShare}
@@ -785,7 +787,7 @@ export default function AcademyProfileLive() {
                 fontSize: '1.1rem'
               }}
             >
-              📤
+              <Share2 size={20} strokeWidth={2} aria-hidden />
             </button>
           </div>
           {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 64, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
@@ -864,7 +866,7 @@ export default function AcademyProfileLive() {
 
             <div>
 
-              <h1 style={{
+              <h1 id="profile-hero-name" style={{
                 fontSize: '3rem',
                 display: 'inline',
                 fontWeight: '800',
@@ -890,38 +892,37 @@ export default function AcademyProfileLive() {
                   ✅
                 </span>
               )} */}
-              <p style={{
+              <p id="profile-hero-type" style={{
                 fontSize: '1.25rem',
                 color: 'rgba(255, 255, 255, 0.9)',
-                margin: '0 0 1.5rem 0',
+                margin: '0 0 0.75rem 0',
                 lineHeight: 1.4
               }}>
                 Academia de Baile
               </p>
 
-              {/* Chips de Ritmos y Zonas dentro del banner */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {(() => {
-                  const slugs = normalizeRitmosToSlugs(academy, allTags);
-                  return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
-                  ) : null;
-                })()}
-                <ZonaGroupedChips
-                  selectedIds={academy.zonas}
-                  allTags={allTags}
-                  mode="display"
+              <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
+                <BioSection 
+                  bio={academy.bio}
+                  redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
+                  variant="banner"
                 />
               </div>
 
             </div>
-            <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '1rem' }}>
-              <BioSection 
-                bio={academy.bio}
-                redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
-                variant="banner"
-              />
-            </div>
+          </div>
+          <div id="profile-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', width: '100%' }}>
+            {(() => {
+              const slugs = normalizeRitmosToSlugs(academy, allTags);
+              return slugs.length > 0 ? (
+                <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
+              ) : null;
+            })()}
+            <ZonaGroupedChips
+              selectedIds={academy.zonas}
+              allTags={allTags}
+              mode="display"
+            />
           </div>
         </motion.div>
 

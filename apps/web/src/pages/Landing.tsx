@@ -39,7 +39,8 @@ export default function Landing() {
 
       <B2BLeadForm />
 
-      <LandingMetrics />
+      {/* Sección landing-metrics comentada temporalmente */}
+      {/* <LandingMetrics /> */}
 
       <PainSolution />
 
@@ -57,7 +58,8 @@ export default function Landing() {
 
       <MidCTA onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
 
-      <SocialProof />
+      {/* Sección landing-social-proof comentada temporalmente */}
+      {/* <SocialProof /> */}
 
       <FAQ />
 

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { Share2 } from "lucide-react";
 import RitmosChips from "../RitmosChips";
 import ZonaGroupedChips from "./ZonaGroupedChips";
 import { BioSection } from "./BioSection";
@@ -440,13 +441,10 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
             aria-label={t("share_profile")}
             title={t("share")}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
+            <Share2 size={20} strokeWidth={2} aria-hidden />
           </motion.button>
-          {showFollowButton && (
+          {/* Funcionalidad "seguir perfil" deshabilitada temporalmente - class="user-profile-hero-follow-btn" */}
+          {/* {showFollowButton && (
             <motion.button
               type="button"
               className="user-profile-hero-follow-btn"
@@ -464,7 +462,7 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
               </svg>
               {followState.isFollowing ? t("following") : t("follow")}
             </motion.button>
-          )}
+          )} */}
         </div>
 
         {copied && (
@@ -545,8 +543,8 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
               {displayName}
             </h1>
 
-            {/* Seguidores / Siguiendo: "1405 Seguidores  289 Siguiendo" */}
-            <div className="user-profile-hero-metrics">
+            {/* Funcionalidad "seguir perfil" deshabilitada temporalmente - class="user-profile-hero-metrics" (Seguidores / Siguiendo) */}
+            {/* <div className="user-profile-hero-metrics">
               <div className="user-profile-hero-metric-chip">
                 <strong>{followState.followers.toLocaleString("es-MX")}</strong>
                 <span>{t("followers")}</span>
@@ -555,7 +553,7 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
                 <strong>{followState.following.toLocaleString("es-MX")}</strong>
                 <span>{t("following")}</span>
               </div>
-            </div>
+            </div> */}
 
             {/* Chips Ritmos + Zonas */}
             <div className="user-profile-hero-chips">

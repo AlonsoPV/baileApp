@@ -223,60 +223,10 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes, variant = 'd
     );
   }
 
-  // Modo banner: integrado al contenedor hero (sin card adicional).
+  // Modo banner: integrado al contenedor hero (sin card adicional). Sin título "Sobre mí".
   if (variant === 'banner') {
     return (
-      <div style={{ width: '100%', textAlign: 'left' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          marginBottom: bio ? '0.6rem' : 0,
-        }}>
-          <h3 style={{
-            margin: 0,
-            fontSize: '1.1rem',
-            fontWeight: 800,
-            color: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-          }}>
-            <span>📝</span>
-            <span>{t('about_me')}</span>
-          </h3>
-          {availableSocials.length > 0 && (
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              {availableSocials.map(([platform, username]) => (
-                <a
-                  key={platform}
-                  href={getSocialUrl(platform, username as string)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bio-social-icon"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    background: 'rgba(50, 50, 58, 0.85)',
-                    color: '#fff',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    textDecoration: 'none',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                  }}
-                  title={`${platform}: ${username}`}
-                >
-                  {getSocialIcon(platform)}
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
+      <div style={{ width: '100%', textAlign: 'center' }}>
         {bio ? (
           <p style={{
             margin: 0,
@@ -285,6 +235,7 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes, variant = 'd
             color: 'rgba(255, 255, 255, 0.92)',
             whiteSpace: 'pre-wrap',
             wordWrap: 'break-word',
+            marginBottom: availableSocials.length > 0 ? '0.75rem' : 0,
           }}>
             {bio}
           </p>
@@ -294,9 +245,39 @@ export const BioSection: React.FC<BioSectionProps> = ({ bio, redes, variant = 'd
             fontSize: '0.92rem',
             color: 'rgba(255, 255, 255, 0.7)',
             fontStyle: 'italic',
+            marginBottom: availableSocials.length > 0 ? '0.75rem' : 0,
           }}>
             {availableSocials.length > 0 ? '¡Sígueme en mis redes sociales!' : 'Aún no hay biografía disponible'}
           </p>
+        )}
+        {availableSocials.length > 0 && (
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
+            {availableSocials.map(([platform, username]) => (
+              <a
+                key={platform}
+                href={getSocialUrl(platform, username as string)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bio-social-icon"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: 'rgba(50, 50, 58, 0.85)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                }}
+                title={`${platform}: ${username}`}
+              >
+                {getSocialIcon(platform)}
+              </a>
+            ))}
+          </div>
         )}
       </div>
     );

@@ -5,10 +5,10 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useExploreFilters, type DatePreset, type ExploreType } from "../../state/exploreFilters";
 import { useExploreQuery } from "../../hooks/useExploreQuery";
-import { useUsedFilterTags } from "@/hooks/useUsedFilterTags";
 import { useUsedRhythmsByContext } from "@/hooks/useUsedRhythms";
+import { useUsedZonesByContext } from "@/hooks/useUsedZones";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
-import { mapExploreTypeToContext } from "@/filters/exploreContext";
+import { mapExploreTypeToContext, mapExploreTypeToZoneContext } from "@/filters/exploreContext";
 import { groupRitmos, zonaGroupsToTreeGroups } from "@/filters/exploreFilterGroups";
 import { MultiSelectTreeDropdown } from "@/components/explore/MultiSelectTreeDropdown";
 import { DateFilterDropdown } from "@/components/explore/DateFilterDropdown";
@@ -1276,6 +1276,7 @@ const STYLES = `
   .filters-search-toggle {
     border-radius: 50%;
     width: 44px;
+    position: relative;
     height: 44px;
     background: linear-gradient(135deg, rgba(41, 127, 150, 0.25) 0%, rgba(236, 72, 153, 0.2) 100%);
     border: 1px solid rgba(41, 127, 150, 0.4);
@@ -1285,6 +1286,17 @@ const STYLES = `
     background: linear-gradient(135deg, rgba(41, 127, 150, 0.35) 0%, rgba(236, 72, 153, 0.3) 100%);
     border-color: rgba(41, 127, 150, 0.6);
     box-shadow: 0 0 14px rgba(41, 127, 150, 0.35);
+  }
+  .filters-search-toggle__content-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(236, 72, 153, 0.95);
+    border: 1.5px solid rgba(255,255,255,0.9);
+    pointer-events: none;
   }
   .filters-type-dropdown-panel button:hover {
     background: rgba(255,255,255,.08) !important;
@@ -2570,36 +2582,20 @@ export default function ExploreHomeScreen() {
 
   const { data: allTags } = useTags();
   const rhythmContext = React.useMemo(() => mapExploreTypeToContext(filters.type), [filters.type]);
+  const zoneContext = React.useMemo(() => mapExploreTypeToZoneContext(filters.type), [filters.type]);
   const {
     rhythmIds: contextRhythmIds,
     isLoading: contextRhythmsLoading,
     isFetched: contextRhythmsFetched,
   } = useUsedRhythmsByContext(rhythmContext);
   const {
-    usedZonaIds,
-    isLoading: usedZonesLoading,
-    isFetched: usedZonesFetched,
-  } = useUsedFilterTags();
+    zoneIds: contextZoneIds,
+    isLoading: contextZonesLoading,
+    isFetched: contextZonesFetched,
+  } = useUsedZonesByContext(zoneContext);
   const { groups: zonaCatalogGroups } = useZonaCatalogGroups(
     (allTags as any[])?.filter((t: any) => t?.tipo === "zona") ?? null,
   );
-
-  const usedZonas = React.useMemo(() => {
-    const zonas = (allTags as any[])?.filter((t: any) => t?.tipo === "zona") ?? [];
-    if (usedZonesLoading || !usedZonesFetched) return zonas;
-    if (!usedZonaIds?.length) return [];
-    const set = new Set(usedZonaIds);
-    return zonas.filter((z: any) => set.has(z.id));
-  }, [allTags, usedZonaIds, usedZonesLoading, usedZonesFetched]);
-
-  const zonaTreeGroups = React.useMemo(() => {
-    const usedSet = new Set(usedZonaIds);
-    const filtered = zonaCatalogGroups
-      .map((g) => ({ ...g, items: g.items.filter((it) => usedSet.has(it.id)) }))
-      .filter((g) => g.items.length > 0);
-    if (usedZonesLoading || !usedZonesFetched) return zonaGroupsToTreeGroups(zonaCatalogGroups);
-    return zonaGroupsToTreeGroups(filtered);
-  }, [zonaCatalogGroups, usedZonaIds, usedZonesLoading, usedZonesFetched]);
 
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
   const { showToast } = useToast();
@@ -3428,6 +3424,84 @@ export default function ExploreHomeScreen() {
     return flattenQueryData(usuariosQuery.data);
   }, [usuariosQuery.data, shouldLoadUsuarios]);
 
+  // Si hay filtro de zonas activo, cargar todas las páginas del contexto visible
+  // para que también aparezcan resultados no visibles en la primera página.
+  const hasZoneFilter = (filters.zonas?.length || 0) > 0;
+  const zoneAutoLoadBusyRef = React.useRef<Record<string, boolean>>({});
+  const runAutoLoadAllPages = React.useCallback(async (key: string, queryLike: any) => {
+    if (!queryLike) return;
+    if (zoneAutoLoadBusyRef.current[key]) return;
+    if (!queryLike.hasNextPage || queryLike.isFetchingNextPage || queryLike.isLoading) return;
+    zoneAutoLoadBusyRef.current[key] = true;
+    try {
+      let r: { hasNextPage?: boolean } | undefined = await queryLike.fetchNextPage();
+      while (r?.hasNextPage) {
+        r = await queryLike.fetchNextPage();
+      }
+    } catch (err) {
+      if (import.meta.env?.DEV) {
+        console.warn(`[ExploreHomeScreen] Auto load failed for ${key}:`, err);
+      }
+    } finally {
+      zoneAutoLoadBusyRef.current[key] = false;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!hasZoneFilter) return;
+    if (selectedType !== 'fechas') return;
+    void runAutoLoadAllPages('fechas', fechasQuery);
+  }, [hasZoneFilter, selectedType, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.isLoading, fechasQuery.fetchNextPage, runAutoLoadAllPages]);
+
+  React.useEffect(() => {
+    if (!hasZoneFilter) return;
+    if (selectedType !== 'academias') return;
+    void runAutoLoadAllPages('academias', academiasQuery);
+  }, [hasZoneFilter, selectedType, academiasQuery.hasNextPage, academiasQuery.isFetchingNextPage, academiasQuery.isLoading, academiasQuery.fetchNextPage, runAutoLoadAllPages]);
+
+  React.useEffect(() => {
+    if (!hasZoneFilter) return;
+    if (selectedType !== 'maestros') return;
+    void runAutoLoadAllPages('maestros', maestrosQuery);
+  }, [hasZoneFilter, selectedType, maestrosQuery.hasNextPage, maestrosQuery.isFetchingNextPage, maestrosQuery.isLoading, maestrosQuery.fetchNextPage, runAutoLoadAllPages]);
+
+  React.useEffect(() => {
+    if (!hasZoneFilter) return;
+    if (selectedType !== 'organizadores') return;
+    void runAutoLoadAllPages('organizadores', organizadoresQuery);
+  }, [hasZoneFilter, selectedType, organizadoresQuery.hasNextPage, organizadoresQuery.isFetchingNextPage, organizadoresQuery.isLoading, organizadoresQuery.fetchNextPage, runAutoLoadAllPages]);
+
+  React.useEffect(() => {
+    if (!hasZoneFilter) return;
+    if (selectedType !== 'marcas') return;
+    void runAutoLoadAllPages('marcas', marcasQuery);
+  }, [hasZoneFilter, selectedType, marcasQuery.hasNextPage, marcasQuery.isFetchingNextPage, marcasQuery.isLoading, marcasQuery.fetchNextPage, runAutoLoadAllPages]);
+
+  React.useEffect(() => {
+    if (!hasZoneFilter) return;
+    if (selectedType !== 'usuarios') return;
+    void runAutoLoadAllPages('usuarios', usuariosQuery);
+  }, [hasZoneFilter, selectedType, usuariosQuery.hasNextPage, usuariosQuery.isFetchingNextPage, usuariosQuery.isLoading, usuariosQuery.fetchNextPage, runAutoLoadAllPages]);
+
+  React.useEffect(() => {
+    if (!hasZoneFilter) return;
+    if (selectedType !== 'clases') return;
+    void runAutoLoadAllPages('clases_academias', academiasQuery);
+    void runAutoLoadAllPages('clases_maestros', maestrosQuery);
+  }, [
+    hasZoneFilter,
+    selectedType,
+    academiasQuery.hasNextPage,
+    academiasQuery.isFetchingNextPage,
+    academiasQuery.isLoading,
+    academiasQuery.fetchNextPage,
+    maestrosQuery.hasNextPage,
+    maestrosQuery.isFetchingNextPage,
+    maestrosQuery.isLoading,
+    maestrosQuery.fetchNextPage,
+    runAutoLoadAllPages,
+  ]);
+
   // Cargar automáticamente todas las páginas de usuarios para mostrar todos sin límite
   const usuariosAutoLoadRef = React.useRef(false);
   React.useEffect(() => {
@@ -3839,6 +3913,23 @@ export default function ExploreHomeScreen() {
     return out;
   }, [rhythmContext, contextRhythmsLoading, contextRhythmsFetched, contextRhythmIds, availableFilters.ritmoIdSet]);
 
+  const availableZonaIdSet = React.useMemo(() => {
+    if (!zoneContext) return availableFilters.zonaIdSet;
+    // Mientras carga, no vaciar opciones: conservar visibles temporalmente.
+    if (contextZonesLoading || !contextZonesFetched) return availableFilters.zonaIdSet;
+    const contextSet = new Set<number>(contextZoneIds || []);
+    // Mostrar TODAS las zonas del contexto, no solo las visibles en la página.
+    return contextSet;
+  }, [zoneContext, contextZonesLoading, contextZonesFetched, contextZoneIds, availableFilters.zonaIdSet]);
+
+  const zonaTreeGroups = React.useMemo(() => {
+    const filtered = zonaCatalogGroups
+      .map((g) => ({ ...g, items: g.items.filter((it) => availableZonaIdSet.has(it.id)) }))
+      .filter((g) => g.items.length > 0);
+    if (contextZonesLoading || !contextZonesFetched) return zonaGroupsToTreeGroups(zonaCatalogGroups);
+    return zonaGroupsToTreeGroups(filtered);
+  }, [zonaCatalogGroups, availableZonaIdSet, contextZonesLoading, contextZonesFetched]);
+
   const ritmoTagsForVisibleItems = React.useMemo(() => {
     const ritmoIds = availableRitmoIdSet;
     if (!ritmoIds.size) return [];
@@ -3860,16 +3951,10 @@ export default function ExploreHomeScreen() {
     }
   }, [openFilterDropdown, ritmoTreeGroups.length]);
 
-  const baseFilterContextKey = React.useMemo(() => {
-    const qKey = String(qDeferred || '').trim().toLowerCase();
-    return [
-      filters.type ?? '',
-      filters.datePreset ?? '',
-      filters.dateFrom ?? '',
-      filters.dateTo ?? '',
-      qKey,
-    ].join('|');
-  }, [filters.type, filters.datePreset, filters.dateFrom, filters.dateTo, qDeferred]);
+  const baseFilterContextKey = React.useMemo(
+    () => String(filters.type ?? ''),
+    [filters.type],
+  );
   const prevBaseFilterContextRef = React.useRef<string>('');
   const pendingTrimContextRef = React.useRef<string>('');
 
@@ -3880,7 +3965,7 @@ export default function ExploreHomeScreen() {
     }
 
     const contextRhythmsReady = !rhythmContext || !contextRhythmsLoading || contextRhythmsFetched;
-    const zonesReady = !usedZonesLoading || usedZonesFetched;
+    const zonesReady = !zoneContext || !contextZonesLoading || contextZonesFetched;
     const readyToTrim = contextRhythmsReady && zonesReady;
     if (!readyToTrim) return;
 
@@ -3892,7 +3977,7 @@ export default function ExploreHomeScreen() {
     const nextRitmos = shouldTrimRitmos
       ? (filters.ritmos || []).filter((id) => availableRitmoIdSet.has(id))
       : (filters.ritmos || []);
-    const nextZonas = (filters.zonas || []).filter((id) => availableFilters.zonaIdSet.has(id));
+    const nextZonas = (filters.zonas || []).filter((id) => availableZonaIdSet.has(id));
     const sameRitmos =
       nextRitmos.length === (filters.ritmos || []).length &&
       nextRitmos.every((id, idx) => id === (filters.ritmos || [])[idx]);
@@ -3910,10 +3995,11 @@ export default function ExploreHomeScreen() {
     rhythmContext,
     contextRhythmsLoading,
     contextRhythmsFetched,
-    usedZonesLoading,
-    usedZonesFetched,
+    zoneContext,
+    contextZonesLoading,
+    contextZonesFetched,
     availableRitmoIdSet,
-    availableFilters.zonaIdSet,
+    availableZonaIdSet,
     filters.ritmos,
     filters.zonas,
     set,
@@ -4418,7 +4504,7 @@ export default function ExploreHomeScreen() {
                 <button
                   ref={searchToggleRef}
                   type="button"
-                  className={`filter-pill filters-search-toggle ${searchOpen ? "filter-pill--active" : ""}`}
+                  className={`filter-pill filters-search-toggle ${searchOpen ? "filter-pill--active" : ""} ${!searchOpen && (filters.q ?? "").trim() ? "filters-search-toggle--has-content" : ""}`}
                   onClick={() => setSearchOpen((v) => !v)}
                   aria-label={t('search') || 'Buscar'}
                   aria-expanded={searchOpen}
@@ -4426,6 +4512,9 @@ export default function ExploreHomeScreen() {
                   style={{ flex: '0 0 auto', width: 44, height: 44, padding: 0, justifyContent: 'center' }}
                 >
                   <span aria-hidden>🔍</span>
+                  {!searchOpen && (filters.q ?? "").trim() && (
+                    <span className="filters-search-toggle__content-dot" aria-hidden title={(filters.q ?? "").trim()} />
+                  )}
                 </button>
               </div>
 

@@ -1311,7 +1311,7 @@ export function OrganizerPublicScreen() {
             )}
           </motion.section>
 
-          {/* Slot Video */}
+          {/* Slot Video comentado
           {videoSrc && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -1325,7 +1325,6 @@ export function OrganizerPublicScreen() {
                 overflow: 'hidden'
               }}
             >
-              {/* Header con gradiente superior */}
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -1336,7 +1335,6 @@ export function OrganizerPublicScreen() {
                 borderRadius: '20px 20px 0 0'
               }} />
               
-              {/* Header compacto */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1376,7 +1374,6 @@ export function OrganizerPublicScreen() {
                 </div>
               </div>
 
-              {/* Contenedor del video compacto */}
               <div style={{
                 position: 'relative',
                 width: '100%',
@@ -1389,7 +1386,6 @@ export function OrganizerPublicScreen() {
                 boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
                 padding: '3px'
               }}>
-                {/* Borde interno con gradiente */}
                 <div style={{
                   position: 'absolute',
                   inset: '3px',
@@ -1399,7 +1395,6 @@ export function OrganizerPublicScreen() {
                   zIndex: 1
                 }} />
                 
-                {/* Video */}
                 <div style={{
                   position: 'relative',
                   width: '100%',
@@ -1423,7 +1418,6 @@ export function OrganizerPublicScreen() {
                   />
                 </div>
 
-                {/* Efecto de brillo en las esquinas */}
                 <div style={{
                   position: 'absolute',
                   top: '5px',
@@ -1449,9 +1443,10 @@ export function OrganizerPublicScreen() {
               </div>
             </motion.section>
           )}
+          */}
 
           {/* Galería de Fotos Mejorada */}
-          {carouselPhotos.length > 0 && (
+         {/*  {carouselPhotos.length > 0 && (
             <motion.section
               id="organizer-profile-photo-gallery"
               data-baile-id="organizer-profile-photo-gallery"
@@ -1485,7 +1480,7 @@ export function OrganizerPublicScreen() {
               <CarouselComponent photos={carouselPhotos} />
             </motion.section>
           )}
-
+ */}
           {/* FAQ */}
           {((org as any)?.respuestas?.musica_tocaran || (org as any)?.respuestas?.hay_estacionamiento) && (
             <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>

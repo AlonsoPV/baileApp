@@ -2050,6 +2050,7 @@ export function OrganizerProfileLive() {
             </motion.section>
           )}
 
+          {/* Sección de videos comentada
           {videos.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -2132,8 +2133,9 @@ export function OrganizerProfileLive() {
               </div>
             </motion.section>
           )}
+          */}
 
-          {carouselPhotos.length > 0 && (
+          {/* {carouselPhotos.length > 0 && (
             <motion.section
               id="organizer-profile-photo-gallery"
               data-baile-id="organizer-profile-photo-gallery"
@@ -2166,7 +2168,7 @@ export function OrganizerProfileLive() {
 
               <CarouselComponent photos={carouselPhotos} />
             </motion.section>
-          )}
+          )} */}
 
           {((org as any)?.respuestas?.musica_tocaran || (org as any)?.respuestas?.hay_estacionamiento) && (
             <motion.section

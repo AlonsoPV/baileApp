@@ -32,6 +32,7 @@ import { ProfileSkeleton } from "../../components/skeletons/ProfileSkeleton";
 import { RefreshingIndicator } from "../../components/loading/RefreshingIndicator";
 import { useSmartLoading } from "../../hooks/useSmartLoading";
 import { useTranslation } from "react-i18next";
+import { Share2 } from "lucide-react";
 import { getLocaleFromI18n } from "../../utils/locale";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import "./AcademyPublicScreen.css";
@@ -941,6 +942,7 @@ export default function AcademyPublicScreen() {
                   </div>
                 )}
                 <button
+                  id="profile-hero-share"
                   aria-label={t('share_profile')}
                   title={t('share')}
                   onClick={() => {
@@ -971,13 +973,13 @@ export default function AcademyPublicScreen() {
                     fontWeight: 700
                   }}
                 >
-                  📤 {t('share')}
+                  <Share2 size={18} strokeWidth={2} aria-hidden />
                 </button>
               </div>
             </div>
 
             <div>
-              <h1 style={{
+              <h1 id="profile-hero-name" style={{
                 fontSize: '3rem', display: 'inline', fontWeight: 800, color: 'white',
                 margin: '0 0 0.5rem 0', textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
                 fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
@@ -985,38 +987,38 @@ export default function AcademyPublicScreen() {
                 {academy.nombre_publico}
               </h1>
 
-              <p style={{ 
+              <p id="profile-hero-type" style={{ 
                 fontSize: '1.25rem', 
                 color: 'rgba(255, 255, 255, 0.9)', 
-                margin: '0 0 1.5rem 0', 
+                margin: '0 0 0.75rem 0', 
                 lineHeight: 1.4,
                 fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
               }}>
                 {t('dance_academy')}
               </p>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {(() => {
-                  const slugs = normalizeRitmosToSlugs(academy, allTags);
-                  return slugs.length > 0 ? (
-                    <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
-                  ) : null;
-                })()}
-                <ZonaGroupedChips
-                  selectedIds={academy.zonas}
-                  allTags={allTags}
-                  mode="display"
+              <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
+                <BioSection 
+                  bio={(academy as any)?.bio}
+                  redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
+                  variant="banner"
                 />
               </div>
 
             </div>
-            <div style={{ gridColumn: '1 / -1', width: '100%', marginTop: '1rem' }}>
-              <BioSection 
-                bio={(academy as any)?.bio}
-                redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
-                variant="banner"
-              />
-            </div>
+          </div>
+          <div id="profile-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', width: '100%' }}>
+            {(() => {
+              const slugs = normalizeRitmosToSlugs(academy, allTags);
+              return slugs.length > 0 ? (
+                <RitmosChips selected={slugs} onChange={() => {}} readOnly size="compact" />
+              ) : null;
+            })()}
+            <ZonaGroupedChips
+              selectedIds={academy.zonas}
+              allTags={allTags}
+              mode="display"
+            />
           </div>
         </motion.div>
 

@@ -5818,7 +5818,7 @@ export default function OrganizerProfileEditor() {
             />
 
             {/* Columna 2: Fotos Destacadas */}
-            <PhotoManagementSection
+          {/*   <PhotoManagementSection
               media={media}
               uploading={uploading}
               removing={removing}
@@ -5830,11 +5830,11 @@ export default function OrganizerProfileEditor() {
               isMainPhoto={false}
               verticalLayout={true}
               imageVersion={(org as any)?.updated_at}
-            />
+            /> */}
           </div>
 
           {/* Sección de Fotos Adicionales */}
-          <PhotoManagementSection
+      {/*     <PhotoManagementSection
             media={media}
             uploading={uploading}
             removing={removing}
@@ -5845,9 +5845,9 @@ export default function OrganizerProfileEditor() {
             slots={['p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
             isMainPhoto={false}
             imageVersion={(org as any)?.updated_at}
-          />
+          /> */}
 
-          {/* Sección de Videos */}
+          {/* Sección de Videos comentada
           <VideoManagementSection
             media={media}
             uploading={uploading}
@@ -5858,6 +5858,7 @@ export default function OrganizerProfileEditor() {
             description="Los videos aparecerán en la sección de videos de tu perfil"
             slots={['v1', 'v2', 'v3']}
           />
+          */}
 
           {/* Estado y Acciones - Solo mostrar si el perfil ya existe */}
           {!isNewProfile && (

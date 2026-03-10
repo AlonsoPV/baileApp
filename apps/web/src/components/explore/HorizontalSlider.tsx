@@ -890,7 +890,8 @@ export default function HorizontalSlider<T>({
             const stableOccurrence =
               row?.instance_id ??
               `${String(row?.parent_id ?? rawId)}_${String(effectiveDate)}_${String(horaInicio)}_${String(row?._recurrence_index ?? "base")}`;
-            const itemKey = String(stableOccurrence || `${String(rawId)}_${idx}`);
+            const baseKey = String(stableOccurrence || `${String(rawId)}_${idx}`);
+            const itemKey = `${baseKey}_${idx}`;
             return (
               <div key={itemKey} data-carousel-item className={`horizontal-slider-item${idx === activeIndex ? " is-active" : ""}`} style={{ minWidth: 0 }}>
                 {renderItem(it, idx)}

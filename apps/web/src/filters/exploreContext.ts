@@ -31,3 +31,20 @@ export function mapExploreTypeToContext(type?: ExploreType | null): ExploreConte
       return null;
   }
 }
+
+export type ZoneContext =
+  | "eventos"
+  | "clases"
+  | "academias"
+  | "maestros"
+  | "organizadores"
+  | "bailarines"
+  | "marcas";
+
+export function mapExploreTypeToZoneContext(type?: ExploreType | null): ZoneContext | null {
+  const context = mapExploreTypeToContext(type);
+  if (!context) return null;
+  // Zonas usa "eventos" como contexto agregado para fechas/sociales.
+  if (context === "sociales") return "eventos";
+  return context as ZoneContext;
+}
