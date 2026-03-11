@@ -447,7 +447,7 @@ export function Login() {
             <button
               type="button"
               className="login-home-button"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/explore')}
               style={{
                 position: 'absolute',
                 top: spacing[3],
@@ -490,7 +490,7 @@ export function Login() {
                   Accede a tu cuenta
                 </p>
               </div>
-          <form onSubmit={handlePasswordLogin}>
+          <form id="login-form" onSubmit={handlePasswordLogin}>
             <div style={{ marginBottom: spacing[3] }}>
               <label
                 htmlFor="email"
@@ -589,8 +589,52 @@ export function Login() {
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2], marginBottom: spacing[3] }}>
+            <div id="login-actions" style={{ display: 'flex', flexDirection: 'column', gap: spacing[2], marginBottom: spacing[3] }}>
               <Button
+                id="login-password"
+                type="submit"
+                disabled={isPasswordLoading || isMagicLinkLoading || isGoogleLoading || isAppleLoading}
+                style={{
+                  width: '100%',
+                  opacity: isPasswordLoading || isMagicLinkLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                  background: brandGradientPrimary,
+                }}
+              >
+                {isPasswordLoading ? '⏳ Verificando...' : '🔓 Entrar con contraseña'}
+              </Button>
+
+              <Button
+                id="login-magic-link"
+                type="button"
+                onClick={handleMagicLink}
+                disabled={isPasswordLoading || isMagicLinkLoading || isGoogleLoading || isAppleLoading}
+                style={{
+                  width: '100%',
+                  opacity: isPasswordLoading || isMagicLinkLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                  background: brandGradientSecondary,
+                }}
+              >
+                {isMagicLinkLoading ? '⏳ Enviando...' : '📬 Enlace de inicio'}
+              </Button>
+
+              <div
+                id="login-divider"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                  margin: `${spacing[2]} 0`,
+                  color: colors.gray[400],
+                  fontSize: '0.875rem',
+                }}
+              >
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                <span>o</span>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+              </div>
+
+              <Button
+                id="login-apple"
                 type="button"
                 onClick={() => handleAppleAuth(false)}
                 disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading}
@@ -620,6 +664,7 @@ export function Login() {
               </Button>
 
               <Button
+                id="login-google"
                 type="button"
                 onClick={() => handleGoogleAuth(false)}
                 disabled={(activeTab === 'login' ? isLoading : isSignUpLoading) || isGoogleLoading || isAppleLoading}
@@ -661,46 +706,6 @@ export function Login() {
                     Continuar con Google
                   </>
                 )}
-              </Button>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: spacing[2],
-                  margin: `${spacing[2]} 0`,
-                  color: colors.gray[400],
-                  fontSize: '0.875rem',
-                }}
-              >
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
-                <span>o</span>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isPasswordLoading || isMagicLinkLoading || isGoogleLoading}
-                style={{
-                  width: '100%',
-                  opacity: isPasswordLoading || isMagicLinkLoading || isGoogleLoading ? 0.5 : 1,
-                  background: brandGradientPrimary,
-                }}
-              >
-                {isPasswordLoading ? '⏳ Verificando...' : '🔓 Entrar con contraseña'}
-              </Button>
-
-              <Button
-                type="button"
-                onClick={handleMagicLink}
-                disabled={isPasswordLoading || isMagicLinkLoading || isGoogleLoading}
-                style={{
-                  width: '100%',
-                  opacity: isPasswordLoading || isMagicLinkLoading || isGoogleLoading ? 0.5 : 1,
-                  background: brandGradientSecondary,
-                }}
-              >
-                {isMagicLinkLoading ? '⏳ Enviando...' : '📬 Enlace de inicio'}
               </Button>
             </div>
           </form>

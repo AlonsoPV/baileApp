@@ -1458,7 +1458,7 @@ export default function TeacherProfileLive() {
           )}
  */}
           {/* Galería de Fotos Mejorada */}
-          {carouselPhotos.length > 0 && (
+        {/*   {carouselPhotos.length > 0 && (
             <motion.section
               id="user-profile-photo-gallery"
               data-baile-id="user-profile-photo-gallery"
@@ -1492,7 +1492,7 @@ export default function TeacherProfileLive() {
 
               <CarouselComponent photos={carouselPhotos} />
             </motion.section>
-          )}
+          )} */}
 
         </div>
       </div>

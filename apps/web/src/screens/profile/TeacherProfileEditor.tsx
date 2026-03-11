@@ -2667,7 +2667,7 @@ export default function TeacherProfileEditor() {
           </React.Suspense>
 
           {/* Columna 2: Fotos Destacadas */}
-          <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de fotos...</div>}>
+        {/*   <React.Suspense fallback={<div role="status" aria-live="polite">Cargando gestión de fotos...</div>}>
             <PhotoManagementSection
               media={media}
               uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending]))}
@@ -2679,7 +2679,7 @@ export default function TeacherProfileEditor() {
               isMainPhoto={false}
               verticalLayout={true}
             />
-          </React.Suspense>
+          </React.Suspense> */}
         </div>
 
         {/* Fotos Adicionales */}

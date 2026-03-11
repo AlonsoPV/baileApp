@@ -59,7 +59,7 @@ export async function listTrendings(status?: Trending["status"]) {
 }
 
 export async function getTrending(id: number) {
-  const { data, error } = await supabase.from("trendings").select("*").eq("id", id).single();
+  const { data, error } = await supabase.from("trendings").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   return data as Trending;
 }

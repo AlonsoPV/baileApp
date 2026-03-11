@@ -959,7 +959,7 @@ export default function AcademyProfileEditor() {
   // Hook para cambio de rol
   useRoleChange();
 
-  const { form, setField, setNested, setAll } = useHydratedForm({
+  const { form, setField, setNested, setAll, setFromServer } = useHydratedForm({
     draftKey: getDraftKey(user?.id, 'academy'),
     serverData: academy,
     defaults: {
@@ -1137,8 +1137,11 @@ export default function AcademyProfileEditor() {
       const payload: any = { id: profileId, ...sectionData };
       await upsert.mutateAsync(payload);
       
-      // Refetch para actualizar el estado
-      await refetchAcademy();
+      // Refetch para actualizar el estado y sincronizar el formulario con el servidor
+      const refetched = await refetchAcademy();
+      if (refetched?.data) {
+        setFromServer(refetched.data as any);
+      }
       
       setSectionStatus(prev => ({
         ...prev,
@@ -1160,7 +1163,7 @@ export default function AcademyProfileEditor() {
     } finally {
       setSectionSaving(prev => ({ ...prev, [sectionName]: false }));
     }
-  }, [profileId, upsert, refetchAcademy]);
+  }, [profileId, upsert, refetchAcademy, setFromServer]);
 
   // Guardado específico por sección
   const handleSavePersonalInfo = useCallback(async () => {

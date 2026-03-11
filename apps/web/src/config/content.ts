@@ -59,14 +59,16 @@ export const landingContent = {
   /** Usuario buscador: no se vende descubrimiento, se vende decisión */
   decisionNotDiscovery: {
     overline: "Para quien busca",
-    headline: "Decidir con datos, no perderse en el feed.",
-    subline: "Quien busca salsa, bachata o un social concreto no quiere descubrimiento: quiere comparar, elegir y planear.",
+    headline: "Toda la info para decidir. Sin scroll infinito.",
+    subline: "Clases y eventos por fecha, zona, ritmo y precio. Comparas, eliges y planificas en minutos.",
     points: [
-      { label: "Datos que importan", text: "Fecha, zona, precio y ritmo en un solo lugar. Sin historias que se borran ni flyers perdidos." },
-      { label: "Comparar de verdad", text: "Ves todas las opciones del día o la semana. Eliges por información real, no por likes." },
-      { label: "Agenda, no scroll", text: "Planificas tu semana de baile en minutos. Menos tiempo buscando, más tiempo bailando." },
+      { label: "Todo en un solo lugar", text: "Fecha, zona, precio y ritmo. Sin flyers perdidos ni historias que desaparecen." },
+      { label: "Compara y elige", text: "Ves las opciones del día o la semana. Decides con información real, no por likes." },
+      { label: "Planifica tu semana", text: "Menos tiempo buscando, más tiempo bailando. Tu agenda de baile lista en minutos." },
     ],
-    closing: "La propuesta es clara: información que te ayuda a decidir.",
+    closing: "Información clara que te ayuda a decidir.",
+    ctaPrimary: "Descargar la app",
+    ctaSecondary: "Explorar en la web",
   },
 
   /** Retención: lock-in funcional + comunidad */

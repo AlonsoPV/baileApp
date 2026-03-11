@@ -18,21 +18,14 @@ export function LandingNav({ onOpenDownload, onOpenB2B }: LandingNavProps) {
     <header className="landing-nav" role="banner">
       <div className="landing-container">
         <div className="landing-nav__inner">
-          
-
-          <nav className="landing-brand__name" aria-label="Secciones">
-            {/* <a href="#funciones">Funciones</a> */}
-            <a href="https://dondebailar.com.mx/explore" target="_blank" rel="noopener noreferrer">Explorar el mundo del baile</a>
-            {/* <a href="#negocios" onClick={(e) => { e.preventDefault(); onOpenB2B(); }}>Para Negocios</a> */}
+          <nav className="landing-brand__name" aria-label="Buscar">
+            <a href="https://dondebailar.com.mx/explore" target="_blank" rel="noopener noreferrer" aria-label="Explorar">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </a>
           </nav>
           <a className="landing-brand" href="#descargar" aria-label="Donde Bailar MX inicio">
             <div className="landing-brand__icon" aria-hidden>
               <img src={BRAND_ICON_URL} alt="" width={45} height={45} />
-            </div>
-            <div className="landing-brand__name">
-              <span>DONDE</span>
-              <em>BAILAR</em>
-              <span>MX</span>
             </div>
           </a>
           <div className="landing-nav__cta">

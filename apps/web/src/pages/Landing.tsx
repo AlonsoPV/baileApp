@@ -46,7 +46,7 @@ export default function Landing() {
 
       <FactorWow />
 
-      <DecisionNotDiscovery />
+      <DecisionNotDiscovery onOpenDownload={openDownload} />
 
       <Retention />
 

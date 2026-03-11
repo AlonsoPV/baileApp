@@ -1,12 +1,17 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Database, GitCompare, CalendarCheck, ArrowRight } from "lucide-react";
+import { Database, GitCompare, CalendarCheck } from "lucide-react";
 import { landingContent } from "@/config/content";
 
 const POINT_ICONS = [Database, GitCompare, CalendarCheck];
 
-export function DecisionNotDiscovery() {
-  const { overline, headline, subline, points, closing } =
+interface DecisionNotDiscoveryProps {
+  onOpenDownload?: () => void;
+}
+
+export function DecisionNotDiscovery({ onOpenDownload }: DecisionNotDiscoveryProps) {
+  const { overline, headline, subline, points, closing, ctaPrimary, ctaSecondary } =
     landingContent.decisionNotDiscovery;
 
   return (
@@ -28,9 +33,25 @@ export function DecisionNotDiscovery() {
           {subline && (
             <p className="landing-decision__subline">{subline}</p>
           )}
-          <div className="landing-decision__closing-wrapper">
-            <p className="landing-decision__closing">{closing}</p>
-            <ArrowRight size={18} strokeWidth={2} className="landing-decision__closing-icon" aria-hidden />
+          <p className="landing-decision__closing">{closing}</p>
+          <div className="landing-decision__cta">
+            {onOpenDownload && ctaPrimary && (
+              <button
+                type="button"
+                className="landing-decision__cta-primary btn btn-primary"
+                onClick={onOpenDownload}
+              >
+                {ctaPrimary}
+              </button>
+            )}
+            {ctaSecondary && (
+              <Link
+                to="/explore"
+                className="landing-decision__cta-secondary btn btn-ghost"
+              >
+                {ctaSecondary}
+              </Link>
+            )}
           </div>
         </header>
         <ul className="landing-decision__list">

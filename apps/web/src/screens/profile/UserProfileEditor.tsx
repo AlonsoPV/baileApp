@@ -91,14 +91,14 @@ export default function UserProfileEditor() {
       ritmos_seleccionados: [] as string[],
       ritmos: [] as number[],
       zonas: [] as number[],
+      redes_sociales: {
+        instagram: "",
+        tiktok: "",
+        youtube: "",
+        facebook: "",
+        whatsapp: "",
+      },
       respuestas: {
-        redes: {
-          instagram: "",
-          tiktok: "",
-          youtube: "",
-          facebook: "",
-          whatsapp: "",
-        },
         dato_curioso: "",
         gusta_bailar: "",
       },
@@ -110,6 +110,19 @@ export default function UserProfileEditor() {
   const [removing, setRemoving] = useState<{ [key: string]: boolean }>({});
   const [showFilterPreferences, setShowFilterPreferences] = useState(false);
   const [isSocialSectionCollapsed, setIsSocialSectionCollapsed] = useState(false);
+
+  // Asegurar que redes_sociales siempre sea un objeto para que al volver se vea lo guardado
+  React.useEffect(() => {
+    if ((form as any).redes_sociales === null || typeof (form as any).redes_sociales !== "object") {
+      setField("redes_sociales" as any, {
+        instagram: "",
+        tiktok: "",
+        youtube: "",
+        facebook: "",
+        whatsapp: "",
+      });
+    }
+  }, [(form as any).redes_sociales, setField]);
 
   const toSupabasePublicUrl = (maybePath?: string): string | undefined => resolveSupabaseStoragePublicUrl(maybePath);
 
@@ -186,8 +199,8 @@ const handleSave = async () => {
 
   setIsSaving(true);
   try {
-    // ✅ redes solo para columna redes_sociales
-    const redes = normalizeSocialInput(form.respuestas?.redes || {});
+    // ✅ redes solo para columna redes_sociales (edición en form.redes_sociales para que al volver se vea lo guardado)
+    const redes = normalizeSocialInput((form as any).redes_sociales || {});
 
     // Ritmos seleccionados (igual que antes)
     let outRitmosSeleccionados = (((form as any).ritmos_seleccionados ?? []) as string[]).filter(Boolean);
@@ -494,8 +507,8 @@ const handleSave = async () => {
                         <input
                           type="text"
                           name="instagram"
-                          value={form.respuestas?.redes?.instagram || ""}
-                          onChange={(e) => setNested("respuestas.redes.instagram", e.target.value)}
+                          value={(form as any).redes_sociales?.instagram || ""}
+                          onChange={(e) => setNested("redes_sociales.instagram", e.target.value)}
                           placeholder="usuario"
                         />
                       </div>
@@ -510,8 +523,8 @@ const handleSave = async () => {
                         <input
                           type="text"
                           name="tiktok"
-                          value={form.respuestas?.redes?.tiktok || ""}
-                          onChange={(e) => setNested("respuestas.redes.tiktok", e.target.value)}
+                          value={(form as any).redes_sociales?.tiktok || ""}
+                          onChange={(e) => setNested("redes_sociales.tiktok", e.target.value)}
                           placeholder="usuario"
                         />
                       </div>
@@ -526,8 +539,8 @@ const handleSave = async () => {
                         <input
                           type="text"
                           name="youtube"
-                          value={form.respuestas?.redes?.youtube || ""}
-                          onChange={(e) => setNested("respuestas.redes.youtube", e.target.value)}
+                          value={(form as any).redes_sociales?.youtube || ""}
+                          onChange={(e) => setNested("redes_sociales.youtube", e.target.value)}
                           placeholder="canal o handle"
                         />
                       </div>
@@ -542,8 +555,8 @@ const handleSave = async () => {
                         <input
                           type="text"
                           name="facebook"
-                          value={form.respuestas?.redes?.facebook || ""}
-                          onChange={(e) => setNested("respuestas.redes.facebook", e.target.value)}
+                          value={(form as any).redes_sociales?.facebook || ""}
+                          onChange={(e) => setNested("redes_sociales.facebook", e.target.value)}
                           placeholder="usuario o página"
                         />
                       </div>
@@ -558,8 +571,8 @@ const handleSave = async () => {
                         <input
                           type="tel"
                           name="whatsapp"
-                          value={form.respuestas?.redes?.whatsapp || ""}
-                          onChange={(e) => setNested("respuestas.redes.whatsapp", e.target.value)}
+                          value={(form as any).redes_sociales?.whatsapp || ""}
+                          onChange={(e) => setNested("redes_sociales.whatsapp", e.target.value)}
                           placeholder="55 1234 5678"
                         />
                       </div>

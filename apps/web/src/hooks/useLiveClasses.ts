@@ -294,15 +294,15 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
           .from("v_academies_public")
           .select("id, cronograma, ubicaciones")
           .eq("id", opts.academyId)
-          .single();
+          .maybeSingle();
 
-        if (academyError) {
-          // Si falla la vista, intentar directamente desde profiles_academy
+        if (academyError || !academyData) {
+          // Si falla la vista o 0 rows (ej. academia en borrador), intentar directamente desde profiles_academy
           const { data: directData, error: directError } = await supabase
             .from("profiles_academy")
             .select("id, cronograma, ubicaciones")
             .eq("id", opts.academyId)
-            .single();
+            .maybeSingle();
 
           if (directError) {
             error = directError;
@@ -323,7 +323,7 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
           .from("profiles_teacher")
           .select("id, cronograma, ubicaciones")
           .eq("id", opts.teacherId)
-          .single();
+          .maybeSingle();
 
         if (teacherError) {
           error = teacherError;
@@ -349,7 +349,7 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
           .from("v_academies_public")
           .select("costos")
           .eq("id", opts.academyId)
-          .single();
+          .maybeSingle();
         if (academyDataWithCostos?.costos && Array.isArray(academyDataWithCostos.costos)) {
           costos = academyDataWithCostos.costos;
         } else {
@@ -358,7 +358,7 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
             .from("profiles_academy")
             .select("costos")
             .eq("id", opts.academyId)
-            .single();
+            .maybeSingle();
           if (directDataWithCostos?.costos && Array.isArray(directDataWithCostos.costos)) {
             costos = directDataWithCostos.costos;
           }
@@ -368,7 +368,7 @@ export function useLiveClasses(opts?: { academyId?: number; teacherId?: number }
           .from("profiles_teacher")
           .select("costos")
           .eq("id", opts.teacherId)
-          .single();
+          .maybeSingle();
         if (teacherDataWithCostos?.costos && Array.isArray(teacherDataWithCostos.costos)) {
           costos = teacherDataWithCostos.costos;
         }

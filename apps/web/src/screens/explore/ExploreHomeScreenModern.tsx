@@ -606,7 +606,7 @@ const STYLES = `
   .wrap { 
     max-width: 1280px; 
     margin: 0 auto; 
-    padding: 0 ${spacing[6]} var(--explore-bottom-space);
+    padding: 0 ${spacing[6]};
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -640,7 +640,7 @@ const STYLES = `
     opacity: 0.9;
   }
   .section-container {
-    margin-bottom: 4rem;
+    margin-bottom: 0;
     position: relative;
     /* Optimizaciones de rendimiento durante scroll */
     contain: layout style paint;
@@ -1938,7 +1938,7 @@ const STYLES = `
       padding: 0.75rem 0 !important;
     }
     .wrap {
-      padding: 0 1rem var(--explore-bottom-space) !important;
+      padding: 0 1rem !important;
     }
     .panel {
       margin: 1rem 0 !important;
@@ -1961,7 +1961,7 @@ const STYLES = `
       flex-shrink: 0;
     }
     .section-container {
-      margin-bottom: 2rem !important;
+      margin-bottom: 0 !important;
       /* Mobile: pantalla completa, card centrada, fila de navegación */
       padding: 6px;
       display: grid;
@@ -2147,7 +2147,7 @@ const STYLES = `
       padding: 0.5rem 0 !important;
     }
     .wrap {
-      padding: 0 0.75rem var(--explore-bottom-space) !important;
+      padding: 0 0.75rem !important;
     }
     .panel {
       margin: 0.75rem 0 !important;
@@ -2169,10 +2169,10 @@ const STYLES = `
   }
   @media (max-width: 430px) {
     .wrap {
-      padding: 0 0.75rem var(--explore-bottom-space) !important;
+      padding: 0 0.75rem !important;
     }
     .section-container {
-      margin-bottom: 2.25rem !important;
+      margin-bottom: 0 !important;
     }
     .section-header {
       margin-bottom: 1.25rem !important;
@@ -2290,7 +2290,6 @@ const STYLES = `
   .explore-container.android-mobile .wrap {
     padding-top: 0 !important;
     margin-top: 0 !important;
-    padding-bottom: var(--explore-bottom-space) !important;
   }
   .explore-container.android-mobile .filters-panel {
     position: relative !important;
