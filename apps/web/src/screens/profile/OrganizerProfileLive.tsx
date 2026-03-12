@@ -22,6 +22,7 @@ import { BioSection } from "../../components/profile/BioSection";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
+import { buildShareUrl } from "@/utils/shareUrls";
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
 const STYLES = `
@@ -1795,7 +1796,8 @@ export function OrganizerProfileLive() {
                   title="Compartir"
                   onClick={() => {
                     try {
-                      const publicUrl = (org as any)?.id ? `${window.location.origin}/organizer/${(org as any).id}` : '';
+                      const orgId = (org as any)?.id;
+                      const publicUrl = orgId != null ? buildShareUrl('organizer', String(orgId)) : '';
                       const title = (org as any)?.nombre_publico || 'Organizador';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);

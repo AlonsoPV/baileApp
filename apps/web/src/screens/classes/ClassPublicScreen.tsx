@@ -12,6 +12,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { urls } from '@/lib/urls';
 import SeoHead from '@/components/SeoHead';
 import { SEO_BASE_URL, SEO_LOGO_URL } from '@/lib/seoConfig';
+import { buildShareUrl } from '@/utils/shareUrls';
 import { toDirectPublicStorageUrl } from '@/utils/imageOptimization';
 import { getMediaBySlot, normalizeMediaArray } from '@/utils/mediaSlots';
 import { calculateNextDateWithTime } from '@/utils/calculateRecurringDates';
@@ -618,6 +619,10 @@ export default function ClassPublicScreen() {
     SEO_LOGO_URL;
   const seoImage = seoImageRaw === SEO_LOGO_URL ? SEO_LOGO_URL : (toDirectPublicStorageUrl(seoImageRaw) || seoImageRaw);
   const classUrl = `${SEO_BASE_URL}/clase/${isTeacher ? 'teacher' : 'academy'}/${idNum}${classIndexParam ? `?i=${classIndexParam}` : classIdParam ? `?classId=${classIdParam}` : ''}`;
+  const shareUrl = buildShareUrl('clase', String(idNum), {
+    type: isTeacher ? 'teacher' : 'academy',
+    index: classIndexParam != null && classIndexParam !== '' ? parseInt(classIndexParam, 10) : undefined,
+  });
 
   // Avatar del hero (OBLIGATORIO: academia/maestro que imparte la clase)
   const avatarUri = (() => {
@@ -705,7 +710,7 @@ export default function ClassPublicScreen() {
     const text = t('class_with_creator', { title: classTitle, creator: creatorName });
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title, text, url: classUrl });
+        await navigator.share({ title, text, url: shareUrl });
         showToast(t('shared_successfully', 'Enlace compartido'), 'success');
       } catch (e) {
         if ((e as Error)?.name !== 'AbortError') showToast(t('share_failed', 'No se pudo compartir'), 'info');
@@ -713,7 +718,7 @@ export default function ClassPublicScreen() {
       return;
     }
     try {
-      await navigator.clipboard.writeText(classUrl);
+      await navigator.clipboard.writeText(shareUrl);
       showToast(t('link_copied', 'Enlace copiado'), 'success');
     } catch {
       showToast(t('share_failed', 'No se pudo compartir'), 'info');

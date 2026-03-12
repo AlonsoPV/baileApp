@@ -21,6 +21,7 @@ import { Chip } from "../../components/profile/Chip";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
 import { colors } from "../../theme/colors";
+import { buildShareUrl } from "@/utils/shareUrls";
 import { useCompetitionGroupsByAcademy } from "../../hooks/useCompetitionGroups";
 import { useAuth } from "@/contexts/AuthProvider";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
@@ -522,24 +523,24 @@ export default function AcademyProfileLive() {
   );
 
   // Handler para compartir
+  const shareUrl = academyId ? buildShareUrl('academia', String(academyId)) : '';
   const onShare = useCallback(() => {
     if (navigator.share && academyId && (academy as any)?.nombre_publico) {
       navigator.share({
         title: (academy as any).nombre_publico,
         text: `Mira el perfil de ${(academy as any).nombre_publico} en Donde Bailar MX`,
-        url: window.location.href,
+        url: shareUrl,
       }).catch(() => {
-        // Fallback a copiar al portapapeles
-        navigator.clipboard.writeText(window.location.href);
+        navigator.clipboard.writeText(shareUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       });
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [academyId, academy]);
+  }, [academyId, academy, shareUrl]);
 
   if (isLoading) {
     return (

@@ -11,6 +11,7 @@ import {
   FaWhatsapp,
   FaGlobe
 } from 'react-icons/fa';
+import { buildShareUrl } from "@/utils/shareUrls";
 import "./BrandProfileLive.css";
 
 // Lazy load components
@@ -187,7 +188,7 @@ export default function BrandProfileLive() {
     try {
       const brandId = brand?.id;
       if (!brandId || typeof window === 'undefined') return;
-      const publicUrl = `${window.location.origin}/marca/${brandId}`;
+      const publicUrl = buildShareUrl('marca', String(brandId));
       const title = brand?.nombre_publico || 'Marca';
       const text = `Mira el perfil de ${title}`;
       const navAny = navigator as any;

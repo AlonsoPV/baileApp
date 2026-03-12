@@ -143,15 +143,52 @@ export default function WebAppScreen() {
 
   const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
     try {
-      // Custom scheme deep link from Supabase redirect (e.g. dondebailarmx://auth/callback?code=...)
+      // Custom scheme deep link: auth, evento, clase
       if (incomingUrl.startsWith("dondebailarmx://")) {
         const u = new URL(incomingUrl);
-        // For custom schemes, `host` is usually the first segment after `//` (e.g. "auth")
-        const host = u.host ? `/${u.host}` : "";
-        const path = u.pathname || "";
+        const host = (u.host || "").toLowerCase();
+        const path = (u.pathname || "").replace(/^\/+/, "") || "";
         const qs = u.search || "";
         const hash = u.hash || "";
-        const mappedPath = `${host}${path}` || "/auth/callback";
+
+        // dondebailarmx://evento/:id -> canonical web /social/fecha/:id
+        if (host === "evento" && path) {
+          const id = path.split("/")[0];
+          if (id) return `${WEB_APP_URL}/social/fecha/${id}${qs}${hash}`;
+        }
+        // dondebailarmx://clase/:type/:id -> canonical web /clase/:type/:id
+        if (host === "clase" && path) {
+          const parts = path.split("/").filter(Boolean);
+          if (parts.length >= 2) {
+            const [type, id] = parts;
+            return `${WEB_APP_URL}/clase/${type}/${id}${qs}${hash}`;
+          }
+        }
+        // Perfiles -> canonical web paths
+        if (host === "academia" && path) {
+          const id = path.split("/")[0];
+          if (id) return `${WEB_APP_URL}/academia/${id}${qs}${hash}`;
+        }
+        if (host === "maestro" && path) {
+          const id = path.split("/")[0];
+          if (id) return `${WEB_APP_URL}/maestro/${id}${qs}${hash}`;
+        }
+        if (host === "organizer" && path) {
+          const id = path.split("/")[0];
+          if (id) return `${WEB_APP_URL}/organizer/${id}${qs}${hash}`;
+        }
+        if (host === "u" && path) {
+          const id = path.split("/")[0];
+          if (id) return `${WEB_APP_URL}/u/${id}${qs}${hash}`;
+        }
+        if (host === "marca" && path) {
+          const id = path.split("/")[0];
+          if (id) return `${WEB_APP_URL}/marca/${id}${qs}${hash}`;
+        }
+
+        // Auth callback (e.g. dondebailarmx://auth/callback?code=...)
+        const hostSlash = u.host ? `/${u.host}` : "";
+        const mappedPath = `${hostSlash}${u.pathname || ""}` || "/auth/callback";
         return `${WEB_APP_URL}${mappedPath}${qs}${hash}`;
       }
 

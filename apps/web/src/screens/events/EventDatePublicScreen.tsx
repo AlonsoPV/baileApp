@@ -29,6 +29,7 @@ import { withStableCacheBust } from "../../utils/cacheBuster";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { buildShareUrl } from "@/utils/shareUrls";
 import { EventDateSkeleton } from "../../components/skeletons/EventDateSkeleton";
 import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
 import { getLocaleFromI18n } from "../../utils/locale";
@@ -459,9 +460,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     SEO_LOGO_URL;
   const seoImage = seoImageRaw === SEO_LOGO_URL ? SEO_LOGO_URL : (toDirectPublicStorageUrl(seoImageRaw) || seoImageRaw);
   const dateUrl = `${SEO_BASE_URL}/social/fecha/${dateIdParam ?? date.id}`;
+  const shareUrl = buildShareUrl("evento", String(dateIdParam ?? date.id));
 
   const handleShare = React.useCallback(async () => {
-    const shareData = { url: dateUrl, title: dateName, text: t('check_this_event', { name: dateName }) };
+    const shareData = { url: shareUrl, title: dateName, text: t('check_this_event', { name: dateName }) };
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share(shareData);
@@ -471,12 +473,12 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       }
     }
     try {
-      await navigator.clipboard.writeText(dateUrl);
+      await navigator.clipboard.writeText(shareUrl);
       showToast(t('link_copied', 'Link copiado'), 'success');
     } catch {
       showToast(t('copy_failed', 'No se pudo copiar'), 'error');
     }
-  }, [dateUrl, dateName, t, showToast]);
+  }, [shareUrl, dateName, t, showToast]);
 
   const dateStr = formatHeaderDate(displayYmd || '');
   const timeRange = formatHeaderTimeRange(date.hora_inicio, date.hora_fin);

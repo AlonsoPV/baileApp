@@ -12,6 +12,7 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import { useToast } from "../../components/Toast";
 import { useEventRSVP } from "../../hooks/useRSVP";
+import { buildShareUrl } from "../../utils/shareUrls";
 
 const colors = {
   coral: '#FF3D57',
@@ -51,7 +52,7 @@ export function DateLiveScreen() {
   };
 
   const handleShare = async () => {
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareUrl = buildShareUrl("evento", String(dateId));
     const shareData: ShareData = {
       title: date?.nombre || social?.nombre || 'Dónde Bailar',
       text: date?.biografia || social?.biografia || 'Mira este evento en Dónde Bailar',

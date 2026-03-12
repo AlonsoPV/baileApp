@@ -25,6 +25,7 @@ import { isEventUpcomingOrToday, getEventPrimaryDate } from "../../utils/eventDa
 import { Modal } from "../../components/ui/Modal";
 import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
+import { buildShareUrl } from "@/utils/shareUrls";
 import "./UserProfile.css";
 
 
@@ -486,7 +487,7 @@ export const UserProfileLive: React.FC = () => {
         console.warn('[UserProfileLive] No se pudo compartir: user.id indefinido');
         return;
       }
-      const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${user.id}`;
+      const publicUrl = buildShareUrl('user', user.id);
       const title = profile?.display_name || 'Perfil';
       const text = `Mira el perfil de ${title}`;
       const navAny = navigator as { share?: (opts: { title: string; text: string; url: string }) => Promise<void> };

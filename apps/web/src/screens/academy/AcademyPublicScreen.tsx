@@ -12,6 +12,7 @@ import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { buildShareUrl } from "@/utils/shareUrls";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import ClasesLive from "../../components/events/ClasesLive";
 import ClasesLiveTabs from "../../components/classes/ClasesLiveTabs";
@@ -947,7 +948,7 @@ export default function AcademyPublicScreen() {
                   title={t('share')}
                   onClick={() => {
                     try {
-                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const url = buildShareUrl('academia', String(id));
                       const title = (academy as any)?.nombre_publico || t('academy');
                       const text = t('check_academy_profile', { name: title });
                       const navAny = (navigator as any);

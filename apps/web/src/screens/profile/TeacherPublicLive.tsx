@@ -21,6 +21,7 @@ import "./TeacherPublicLive.css";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import { getLocaleFromI18n } from "../../utils/locale";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
+import { buildShareUrl } from "@/utils/shareUrls";
 
 // Lazy load heavy components
 const BioSection = lazy(() => import("../../components/profile/BioSection").then(m => ({ default: m.BioSection })));
@@ -771,7 +772,7 @@ export default function TeacherProfileLive() {
                   title={t('share')}
                   onClick={() => {
                     try {
-                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const url = teacherId ? buildShareUrl('maestro', teacherId) : (typeof window !== 'undefined' ? window.location.href : '');
                       const title = (teacher as PublicTeacher)?.nombre_publico || t('teacher');
                       const text = t('check_teacher_profile', { name: title });
                       const navAny = (navigator as any);

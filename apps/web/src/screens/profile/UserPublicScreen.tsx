@@ -20,6 +20,7 @@ import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import { isEventUpcomingOrToday, getEventPrimaryDate } from "../../utils/eventDateExpiration";
 import { Modal } from "../../components/ui/Modal";
 import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
+import { buildShareUrl } from "@/utils/shareUrls";
 import "./UserProfile.css";
 
 const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
@@ -601,7 +602,7 @@ export const UserProfileLive: React.FC = () => {
 
   const handleShareProfile = async () => {
     try {
-      const url = typeof window !== 'undefined' ? window.location.href : '';
+      const url = profileUserId ? buildShareUrl('user', profileUserId) : (typeof window !== 'undefined' ? window.location.href : '');
       const title = profile?.display_name || t('profile');
       const text = t('check_teacher_profile', { name: profile?.display_name || t('user') });
       const navAny = (navigator as any);

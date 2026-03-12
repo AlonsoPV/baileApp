@@ -6,6 +6,7 @@ import { groupClassesByWeekday } from "@/utils/classesByWeekday";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import AddToCalendarWithStats from "@/components/AddToCalendarWithStats";
 import ShareButton from "@/components/events/ShareButton";
+import { buildShareUrl } from "@/utils/shareUrls";
 import RequireLogin from "@/components/auth/RequireLogin";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useTags } from "@/hooks/useTags";
@@ -612,10 +613,10 @@ export default function ClasesLiveTabs({
                               const cronogramaIndex = c.cronogramaIndex !== null && c.cronogramaIndex !== undefined 
                                 ? c.cronogramaIndex 
                                 : Math.floor((c.id || 0) / 1000);
-                              const shareUrl = isClickable && sourceType && sourceId 
-                                ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${cronogramaIndex}`
-                                : (sourceType && sourceId 
-                                  ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
+                              const shareUrl = isClickable && sourceType && sourceId
+                                ? buildShareUrl("clase", String(sourceId), { type: sourceType, index: cronogramaIndex })
+                                : (sourceType && sourceId
+                                  ? buildShareUrl("clase", String(sourceId), { type: sourceType })
                                   : window.location.href);
                               
                               return (
@@ -1173,10 +1174,10 @@ export default function ClasesLiveTabs({
                         const cronogramaIndex = c.cronogramaIndex !== null && c.cronogramaIndex !== undefined 
                           ? c.cronogramaIndex 
                           : Math.floor((c.id || 0) / 1000);
-                        const shareUrl = isClickable && sourceType && sourceId 
-                          ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${cronogramaIndex}`
-                          : (sourceType && sourceId 
-                            ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
+                        const shareUrl = isClickable && sourceType && sourceId
+                          ? buildShareUrl("clase", String(sourceId), { type: sourceType, index: cronogramaIndex })
+                          : (sourceType && sourceId
+                            ? buildShareUrl("clase", String(sourceId), { type: sourceType })
                             : window.location.href);
                         
                         return (
@@ -1389,10 +1390,10 @@ export default function ClasesLiveTabs({
                         ? c.cronogramaIndex 
                         : Math.floor((c.id || 0) / 1000);
                       
-                      const shareUrl = isClickable && sourceType && sourceId 
-                        ? `${window.location.origin}/clase/${sourceType}/${sourceId}?i=${cronogramaIndex}`
-                        : (sourceType && sourceId 
-                          ? `${window.location.origin}/clase/${sourceType}/${sourceId}`
+                      const shareUrl = isClickable && sourceType && sourceId
+                        ? buildShareUrl("clase", String(sourceId), { type: sourceType, index: cronogramaIndex })
+                        : (sourceType && sourceId
+                          ? buildShareUrl("clase", String(sourceId), { type: sourceType })
                           : window.location.href);
 
                       return (

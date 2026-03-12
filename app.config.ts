@@ -259,6 +259,35 @@ const config: ExpoConfig = {
         ],
         category: ["BROWSABLE", "DEFAULT"],
       },
+      // dondebailarmx://evento/:id (events_date.id) -> abrir detalle evento en WebView
+      {
+        action: "VIEW",
+        data: [
+          {
+            scheme: "dondebailarmx",
+            host: "evento",
+            pathPrefix: "/",
+          },
+        ],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+      // dondebailarmx://clase/:type/:id -> abrir detalle clase en WebView
+      {
+        action: "VIEW",
+        data: [
+          {
+            scheme: "dondebailarmx",
+            host: "clase",
+            pathPrefix: "/",
+          },
+        ],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+      { action: "VIEW", data: [{ scheme: "dondebailarmx", host: "academia", pathPrefix: "/" }], category: ["BROWSABLE", "DEFAULT"] },
+      { action: "VIEW", data: [{ scheme: "dondebailarmx", host: "maestro", pathPrefix: "/" }], category: ["BROWSABLE", "DEFAULT"] },
+      { action: "VIEW", data: [{ scheme: "dondebailarmx", host: "organizer", pathPrefix: "/" }], category: ["BROWSABLE", "DEFAULT"] },
+      { action: "VIEW", data: [{ scheme: "dondebailarmx", host: "u", pathPrefix: "/" }], category: ["BROWSABLE", "DEFAULT"] },
+      { action: "VIEW", data: [{ scheme: "dondebailarmx", host: "marca", pathPrefix: "/" }], category: ["BROWSABLE", "DEFAULT"] },
       {
         action: "VIEW",
         data: [

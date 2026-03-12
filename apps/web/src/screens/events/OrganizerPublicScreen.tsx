@@ -23,6 +23,7 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { BioSection } from "../../components/profile/BioSection";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { buildShareUrl } from "@/utils/shareUrls";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
@@ -1079,12 +1080,12 @@ export function OrganizerPublicScreen() {
                   title="Compartir"
                   onClick={async () => {
                     try {
-                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const orgId = (org as any)?.id;
+                      const url = orgId != null ? buildShareUrl('organizer', String(orgId)) : (typeof window !== 'undefined' ? window.location.href : '');
                       const title = (org as any)?.nombre_publico || 'Organizador';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);
                       
-                      // Intentar Web Share API (móvil)
                       if (navAny && typeof navAny.share === 'function') {
                         try {
                           await navAny.share({ title, text, url });
@@ -1093,13 +1094,11 @@ export function OrganizerPublicScreen() {
                           throw shareError;
                         }
                       } else {
-                        // Fallback: Clipboard API (escritorio)
                         if (navigator.clipboard && navigator.clipboard.writeText) {
                           await navigator.clipboard.writeText(url);
                           setCopied(true);
                           setTimeout(() => setCopied(false), 1500);
                         } else {
-                          // Fallback antiguo
                           const textArea = document.createElement('textarea');
                           textArea.value = url;
                           textArea.style.position = 'fixed';

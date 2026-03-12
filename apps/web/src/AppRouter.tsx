@@ -98,6 +98,7 @@ const ChallengesList = React.lazy(() => import('./screens/challenges/ChallengesL
 const ChallengeNew = React.lazy(() => import('./screens/challenges/ChallengeNew'));
 const ChallengeDetail = React.lazy(() => import('./screens/challenges/ChallengeDetail'));
 const ClassPublicScreen = React.lazy(() => import('./screens/classes/ClassPublicScreen'));
+const OpenEntityScreen = React.lazy(() => import('./screens/open/OpenEntityScreen'));
 const TeacherPublicLive = React.lazy(() => import('./screens/profile/TeacherPublicLive'));
 const TrendingDetail = React.lazy(() => import('./pages/trending/TrendingDetail'));
 const TrendingAdmin = React.lazy(() => import('./pages/trending/TrendingAdmin'));
@@ -172,6 +173,15 @@ export default function AppRouter() {
       <Route path="/" element={<HomeEntry />} />
       <Route path="/propuesta-academias" element={<RouteSuspense><AcademyProposalScreen /></RouteSuspense>} />
       <Route path="/academias/propuesta" element={<RouteSuspense><AcademyProposalScreen /></RouteSuspense>} />
+
+      {/* Smart share pages (open in app / view in browser) - sin AppShell */}
+      <Route path="/open/evento/:id" element={<RouteSuspense><OpenEntityScreen entityType="evento" /></RouteSuspense>} />
+      <Route path="/open/clase/:type/:id" element={<RouteSuspense><OpenEntityScreen entityType="clase" /></RouteSuspense>} />
+      <Route path="/open/academia/:id" element={<RouteSuspense><OpenEntityScreen entityType="academia" /></RouteSuspense>} />
+      <Route path="/open/maestro/:id" element={<RouteSuspense><OpenEntityScreen entityType="maestro" /></RouteSuspense>} />
+      <Route path="/open/organizer/:id" element={<RouteSuspense><OpenEntityScreen entityType="organizer" /></RouteSuspense>} />
+      <Route path="/open/u/:id" element={<RouteSuspense><OpenEntityScreen entityType="user" /></RouteSuspense>} />
+      <Route path="/open/marca/:id" element={<RouteSuspense><OpenEntityScreen entityType="marca" /></RouteSuspense>} />
 
       {/* AppShell layout */}
       <Route element={<AppShell />}>
