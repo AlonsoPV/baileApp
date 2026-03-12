@@ -10,11 +10,15 @@ import { useBrandPublic } from "@/hooks/useBrand";
 import { supabase } from "@/lib/supabase";
 import { buildCanonicalUrl, buildDeepLink, type ShareEntityType } from "@/utils/shareUrls";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
-import { SEO_LOGO_URL } from "@/lib/seoConfig";
-import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
-import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
+import {
+  resolveOpenEntityImageEvento,
+  resolveOpenEntityImageClase,
+  resolveOpenEntityImageProfile,
+  getOpenEntityImageForMeta,
+} from "@/utils/resolveOpenEntityImage";
 import { formatHeaderDate, formatHeaderTimeRange } from "@/components/events/EventDetail/helpers";
 import { resolveEventDateYmd } from "@/utils/eventDateDisplay";
+import SeoHead from "@/components/SeoHead";
 
 const PROFILE_ENTITY_TYPES: ShareEntityType[] = [
   "academia",
@@ -87,16 +91,10 @@ function OpenEventoContent({ dateId, dateIdParam }: { dateId: number; dateIdPara
     return <OpenLoading />;
   }
 
-  const dateMedia = normalizeMediaArray((date as any)?.media);
-  const parentMedia = normalizeMediaArray((parent as any)?.media);
-  const bannerUrl =
-    getMediaBySlot(dateMedia, "cover")?.url ||
-    getMediaBySlot(parentMedia, "cover")?.url ||
-    getMediaBySlot(dateMedia, "p1")?.url ||
-    getMediaBySlot(parentMedia, "p1")?.url;
-  const imageUrl = bannerUrl
-    ? (toDirectPublicStorageUrl(bannerUrl) || bannerUrl)
-    : SEO_LOGO_URL;
+  const imageResult = resolveOpenEntityImageEvento({
+    date: date as Record<string, unknown>,
+    parent: parent as Record<string, unknown> | undefined,
+  });
 
   const displayYmd = resolveEventDateYmd(date);
   const title = (date as any).nombre || (parent as any)?.nombre || "Evento de baile";
@@ -119,9 +117,13 @@ function OpenEventoContent({ dateId, dateIdParam }: { dateId: number; dateIdPara
       title={title}
       subtitle={[dateStr, timeStr].filter(Boolean).join(" · ")}
       place={place}
-      imageUrl={imageUrl}
+      imageUrl={imageResult.imageUrl}
       canonicalUrl={canonicalUrl}
       deepLink={deepLink}
+      seoTitle={title}
+      seoDescription={[dateStr, timeStr, place].filter(Boolean).join(" · ")}
+      seoImage={getOpenEntityImageForMeta(imageResult)}
+      seoUrl={canonicalUrl}
     />
   );
 }
@@ -163,14 +165,10 @@ function OpenClaseContent({
     (profile as any)?.ciudad ||
     "";
 
-  const mediaList = (profile as any)?.media;
-  const coverUrl =
-    getMediaBySlot(Array.isArray(mediaList) ? mediaList : [], "cover")?.url ||
-    (profile as any)?.avatar_url ||
-    (profile as any)?.banner_url;
-  const imageUrl = coverUrl
-    ? (toDirectPublicStorageUrl(coverUrl) || coverUrl)
-    : SEO_LOGO_URL;
+  const imageResult = resolveOpenEntityImageClase({
+    profile: profile as Record<string, unknown>,
+    sourceType,
+  });
 
   const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
   const diaNum = (entry as any)?.diaSemana ?? (entry as any)?.dia_semana;
@@ -201,9 +199,13 @@ function OpenClaseContent({
       title={classTitle}
       subtitle={subtitle || (profile as any)?.nombre_publico}
       place={place}
-      imageUrl={imageUrl}
+      imageUrl={imageResult.imageUrl}
       canonicalUrl={canonicalUrl}
       deepLink={deepLink}
+      seoTitle={classTitle}
+      seoDescription={[subtitle, place].filter(Boolean).join(" · ") || "Clase de baile"}
+      seoImage={getOpenEntityImageForMeta(imageResult)}
+      seoUrl={canonicalUrl}
     />
   );
 }
@@ -254,17 +256,9 @@ function OpenProfileContent({
     return <OpenLoading />;
   }
 
-  const mediaList = (profile as any)?.media;
-  const mediaArr = Array.isArray(mediaList) ? mediaList : [];
-  const avatarUrl =
-    getMediaBySlot(mediaArr, "avatar")?.url ||
-    (profile as any)?.avatar_url ||
-    (profile as any)?.logo_url ||
-    getMediaBySlot(mediaArr, "cover")?.url ||
-    (profile as any)?.banner_url;
-  const imageUrl = avatarUrl
-    ? (toDirectPublicStorageUrl(avatarUrl) || avatarUrl)
-    : SEO_LOGO_URL;
+  const imageResult = resolveOpenEntityImageProfile({
+    profile: profile as Record<string, unknown>,
+  });
 
   const title =
     (profile as any)?.nombre_publico ||
@@ -274,12 +268,6 @@ function OpenProfileContent({
     (profile as any)?.nombre_marca ||
     "Perfil";
 
-  const place =
-    (profile as any)?.ciudad ||
-    (profile as any)?.ciudad_principal ||
-    (profile as any)?.ubicacion_principal ||
-    "";
-
   const canonicalUrl = buildCanonicalUrl(profileType, id);
   const deepLink = buildDeepLink(profileType, id);
 
@@ -288,10 +276,14 @@ function OpenProfileContent({
       entityType={profileType}
       title={title}
       subtitle={undefined}
-      place={place}
-      imageUrl={imageUrl}
+      place={undefined}
+      imageUrl={imageResult.imageUrl}
       canonicalUrl={canonicalUrl}
       deepLink={deepLink}
+      seoTitle={title}
+      seoDescription={`Perfil de ${title} en Dónde Bailar`}
+      seoImage={getOpenEntityImageForMeta(imageResult)}
+      seoUrl={canonicalUrl}
     />
   );
 }
@@ -339,6 +331,10 @@ function OpenLayout({
   imageUrl,
   canonicalUrl,
   deepLink,
+  seoTitle,
+  seoDescription,
+  seoImage,
+  seoUrl,
 }: {
   entityType: ShareEntityType;
   title: string;
@@ -347,8 +343,21 @@ function OpenLayout({
   imageUrl: string;
   canonicalUrl: string;
   deepLink: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoImage?: string;
+  seoUrl?: string;
 }) {
   return (
+    <>
+      {seoTitle != null && (
+        <SeoHead
+          title={seoTitle}
+          description={seoDescription ?? title}
+          image={seoImage}
+          url={seoUrl}
+        />
+      )}
     <div
       style={{
         minHeight: "100vh",
@@ -378,7 +387,9 @@ function OpenLayout({
             width: "100%",
             aspectRatio: "16/10",
             background: "#1a1a24",
-            objectFit: "cover",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <img
@@ -387,7 +398,7 @@ function OpenLayout({
             style={{
               width: "100%",
               height: "100%",
-              objectFit: "cover",
+              objectFit: "contain",
             }}
           />
         </div>
@@ -563,6 +574,7 @@ function OpenLayout({
         Dónde Bailar · Clases y eventos de baile
       </p>
     </div>
+    </>
   );
 }
 
