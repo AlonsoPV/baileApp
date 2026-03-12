@@ -374,7 +374,7 @@ function OpenLayout({
             >
               {subtitle}
             </p>
-          }
+          )}
           {place && (
             <p
               style={{
