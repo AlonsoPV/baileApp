@@ -89,11 +89,13 @@ function OpenEventoContent({ dateId, dateIdParam }: { dateId: number; dateIdPara
 
   const dateMedia = normalizeMediaArray((date as any)?.media);
   const parentMedia = normalizeMediaArray((parent as any)?.media);
-  const flyerUrl =
+  const bannerUrl =
+    getMediaBySlot(dateMedia, "cover")?.url ||
+    getMediaBySlot(parentMedia, "cover")?.url ||
     getMediaBySlot(dateMedia, "p1")?.url ||
     getMediaBySlot(parentMedia, "p1")?.url;
-  const imageUrl = flyerUrl
-    ? (toDirectPublicStorageUrl(flyerUrl) || flyerUrl)
+  const imageUrl = bannerUrl
+    ? (toDirectPublicStorageUrl(bannerUrl) || bannerUrl)
     : SEO_LOGO_URL;
 
   const displayYmd = resolveEventDateYmd(date);
@@ -103,11 +105,10 @@ function OpenEventoContent({ dateId, dateIdParam }: { dateId: number; dateIdPara
     (date as any).hora_inicio,
     (date as any).hora_fin
   );
-  const place =
-    (date as any).lugar ||
-    (date as any).ciudad ||
-    (parent as any)?.sede_general ||
-    "";
+  const lugar = (date as any).lugar;
+  const ciudad = (date as any).ciudad;
+  const parentSede = (parent as any)?.sede_general;
+  const place = [lugar, ciudad].filter(Boolean).join(", ") || parentSede || "";
 
   const canonicalUrl = buildCanonicalUrl("evento", String(dateId));
   const deepLink = buildDeepLink("evento", String(dateId));
@@ -157,8 +158,8 @@ function OpenClaseContent({
   const ubicaciones = (profile as any)?.ubicaciones || [];
   const firstUbicacion = Array.isArray(ubicaciones) ? ubicaciones[0] : null;
   const place =
-    (firstUbicacion as any)?.ciudad ||
     (firstUbicacion as any)?.nombre ||
+    (firstUbicacion as any)?.ciudad ||
     (profile as any)?.ciudad ||
     "";
 
@@ -171,13 +172,19 @@ function OpenClaseContent({
     ? (toDirectPublicStorageUrl(coverUrl) || coverUrl)
     : SEO_LOGO_URL;
 
-  const subtitle = (entry as any)?.diaSemana != null
-    ? `Día ${(entry as any).diaSemana}`
+  const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const diaNum = (entry as any)?.diaSemana ?? (entry as any)?.dia_semana;
+  const dayLabel =
+    typeof diaNum === "number" && diaNum >= 0 && diaNum <= 6
+      ? dayNames[diaNum]
+      : null;
+  const subtitle = dayLabel
+    ? dayLabel + ((entry as any)?.hora ? ` · ${String((entry as any).hora)}` : "")
     : (entry as any)?.hora
-    ? String((entry as any).hora)
-    : (profile as any)?.nombre_publico
-    ? ""
-    : "Clase";
+      ? String((entry as any).hora)
+      : (profile as any)?.nombre_publico
+        ? ""
+        : "Clase";
 
   const canonicalUrl = buildCanonicalUrl("clase", String(profileId), {
     type: sourceType,
@@ -248,13 +255,15 @@ function OpenProfileContent({
   }
 
   const mediaList = (profile as any)?.media;
-  const coverUrl =
-    getMediaBySlot(Array.isArray(mediaList) ? mediaList : [], "cover")?.url ||
+  const mediaArr = Array.isArray(mediaList) ? mediaList : [];
+  const avatarUrl =
+    getMediaBySlot(mediaArr, "avatar")?.url ||
     (profile as any)?.avatar_url ||
-    (profile as any)?.banner_url ||
-    (profile as any)?.logo_url;
-  const imageUrl = coverUrl
-    ? (toDirectPublicStorageUrl(coverUrl) || coverUrl)
+    (profile as any)?.logo_url ||
+    getMediaBySlot(mediaArr, "cover")?.url ||
+    (profile as any)?.banner_url;
+  const imageUrl = avatarUrl
+    ? (toDirectPublicStorageUrl(avatarUrl) || avatarUrl)
     : SEO_LOGO_URL;
 
   const title =
@@ -304,10 +313,6 @@ function OpenLayout({
   canonicalUrl: string;
   deepLink: string;
 }) {
-  const handleOpenInApp = () => {
-    window.location.href = deepLink;
-  };
-
   return (
     <div
       style={{
@@ -395,10 +400,10 @@ function OpenLayout({
             gap: "0.75rem",
           }}
         >
-          <button
-            type="button"
-            onClick={handleOpenInApp}
+          <a
+            href={deepLink}
             style={{
+              display: "block",
               width: "100%",
               padding: "1rem 1.25rem",
               borderRadius: 999,
@@ -408,11 +413,14 @@ function OpenLayout({
               fontWeight: 700,
               fontSize: "1rem",
               cursor: "pointer",
+              textAlign: "center",
+              textDecoration: "none",
+              boxSizing: "border-box",
               boxShadow: "0 4px 20px rgba(39,126,146,0.4)",
             }}
           >
             Abrir en la app
-          </button>
+          </a>
           <a
             href={canonicalUrl}
             style={{
