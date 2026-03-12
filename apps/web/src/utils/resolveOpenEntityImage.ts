@@ -178,6 +178,12 @@ export function resolveOpenEntityImageProfile(data: {
     if (url) return { imageUrl: url, imageSourceType: "cover" };
   }
 
+  const avatarSlot = getMediaBySlot(normalized, "avatar")?.url;
+  if (avatarSlot) {
+    const url = resolveUrl(avatarSlot);
+    if (url) return { imageUrl: url, imageSourceType: "avatar" };
+  }
+
   const firstFromMedia = extractFirstValidImageUrl(mediaArr) || extractFirstValidImageUrl(profile);
   if (firstFromMedia) {
     const url = resolveUrl(firstFromMedia);

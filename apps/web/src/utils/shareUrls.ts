@@ -45,7 +45,7 @@ export function buildShareUrl(
   if (entityType === "academia") return `${OPEN_BASE}/academia/${id}`;
   if (entityType === "maestro") return `${OPEN_BASE}/maestro/${id}`;
   if (entityType === "organizer") return `${OPEN_BASE}/organizer/${id}`;
-  if (entityType === "user") return `${OPEN_BASE}/u/${id}`;
+  if (entityType === "user") return `${OPEN_BASE}/u/${encodeURIComponent(id)}`;
   if (entityType === "marca") return `${OPEN_BASE}/marca/${id}`;
   return `${OPEN_BASE}/evento/${id}`;
 }
@@ -69,7 +69,7 @@ export function buildCanonicalUrl(
   if (entityType === "academia") return `${SEO_BASE_URL}/academia/${id}`;
   if (entityType === "maestro") return `${SEO_BASE_URL}/maestro/${id}`;
   if (entityType === "organizer") return `${SEO_BASE_URL}/organizer/${id}`;
-  if (entityType === "user") return `${SEO_BASE_URL}/u/${id}`;
+  if (entityType === "user") return `${SEO_BASE_URL}/u/${encodeURIComponent(id)}`;
   if (entityType === "marca") return `${SEO_BASE_URL}/marca/${id}`;
   return `${SEO_BASE_URL}/social/fecha/${id}`;
 }
@@ -93,7 +93,7 @@ export function buildDeepLink(
   if (entityType === "academia") return `${DEEP_LINK_SCHEME}://academia/${id}`;
   if (entityType === "maestro") return `${DEEP_LINK_SCHEME}://maestro/${id}`;
   if (entityType === "organizer") return `${DEEP_LINK_SCHEME}://organizer/${id}`;
-  if (entityType === "user") return `${DEEP_LINK_SCHEME}://u/${id}`;
+  if (entityType === "user") return `${DEEP_LINK_SCHEME}://u/${encodeURIComponent(id)}`;
   if (entityType === "marca") return `${DEEP_LINK_SCHEME}://marca/${id}`;
   return `${DEEP_LINK_SCHEME}://evento/${id}`;
 }

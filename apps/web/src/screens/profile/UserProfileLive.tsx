@@ -487,7 +487,7 @@ export const UserProfileLive: React.FC = () => {
         console.warn('[UserProfileLive] No se pudo compartir: user.id indefinido');
         return;
       }
-      const publicUrl = buildShareUrl('user', user.id);
+      const publicUrl = buildShareUrl('user', String(user.id));
       const title = profile?.display_name || 'Perfil';
       const text = `Mira el perfil de ${title}`;
       const navAny = navigator as { share?: (opts: { title: string; text: string; url: string }) => Promise<void> };

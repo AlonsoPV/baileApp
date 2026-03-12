@@ -261,6 +261,7 @@ function OpenProfileContent({
   });
 
   const title =
+    (profile as any)?.display_name ||
     (profile as any)?.nombre_publico ||
     (profile as any)?.nombre ||
     (profile as any)?.nombre_organizador ||
