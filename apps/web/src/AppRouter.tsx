@@ -4,6 +4,7 @@ import AppShell from './components/layout/AppShell';
 import { routes } from './routes/registry';
 import { isNativeApp } from './utils/isNativeApp';
 import LoadingScreen from './components/LoadingScreen';
+import { RouteLoadErrorBoundary } from './components/RouteLoadErrorBoundary';
 
 // Guards
 import OnboardingGate from './guards/OnboardingGate';
@@ -110,9 +111,11 @@ const MyPurchasesScreen = React.lazy(() => import('./screens/payments/MyPurchase
 
 function RouteSuspense({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={<LoadingScreen message="Cargando pantalla..." />}>
-      {children}
-    </Suspense>
+    <RouteLoadErrorBoundary>
+      <Suspense fallback={<LoadingScreen message="Cargando pantalla..." />}>
+        {children}
+      </Suspense>
+    </RouteLoadErrorBoundary>
   );
 }
 

@@ -296,6 +296,41 @@ function OpenProfileContent({
   );
 }
 
+function OpenInAppIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+      <line x1="12" y1="18" x2="12.01" y2="18" />
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  );
+}
+
+function AppleLogoIconSmall() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+    </svg>
+  );
+}
+
+function GooglePlayIconSmall() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L13.792 12l3.906-3.491zM5.864 2.658L16.802 8.99l-2.302 2.302-8.636-8.635z" />
+    </svg>
+  );
+}
+
 function OpenLayout({
   entityType,
   title,
@@ -397,40 +432,47 @@ function OpenLayout({
             padding: "0 1.25rem 1.5rem",
             display: "flex",
             flexDirection: "column",
-            gap: "0.75rem",
+            gap: "0.875rem",
           }}
         >
           <a
             href={deepLink}
             style={{
-              display: "block",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
               width: "100%",
               padding: "1rem 1.25rem",
-              borderRadius: 999,
+              borderRadius: 14,
               border: "none",
-              background: "linear-gradient(135deg, #277e92, #2d9cdb)",
+              background: "linear-gradient(135deg, #1a7a8c 0%, #2d9cdb 100%)",
               color: "#fff",
               fontWeight: 700,
-              fontSize: "1rem",
+              fontSize: "1.05rem",
               cursor: "pointer",
               textAlign: "center",
               textDecoration: "none",
               boxSizing: "border-box",
-              boxShadow: "0 4px 20px rgba(39,126,146,0.4)",
+              boxShadow: "0 4px 16px rgba(45,156,219,0.35), 0 1px 3px rgba(0,0,0,0.2)",
             }}
           >
+            <OpenInAppIcon />
             Abrir en la app
           </a>
           <a
             href={canonicalUrl}
             style={{
-              display: "block",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
               width: "100%",
-              padding: "1rem 1.25rem",
-              borderRadius: 999,
-              border: "2px solid rgba(255,255,255,0.2)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#f5f5f5",
+              padding: "0.95rem 1.25rem",
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(255,255,255,0.08)",
+              color: "#f0f0f0",
               fontWeight: 600,
               fontSize: "1rem",
               textAlign: "center",
@@ -438,48 +480,75 @@ function OpenLayout({
               boxSizing: "border-box",
             }}
           >
+            <GlobeIcon />
             Ver en navegador
           </a>
+          <p
+            style={{
+              margin: "0.5rem 0 0",
+              fontSize: "0.8rem",
+              color: "rgba(255,255,255,0.5)",
+              textAlign: "center",
+            }}
+          >
+            ¿No tienes la app?
+          </p>
           <div
             style={{
               display: "flex",
-              gap: "0.5rem",
+              gap: "0.75rem",
               justifyContent: "center",
               flexWrap: "wrap",
-              marginTop: "0.25rem",
+              alignItems: "center",
             }}
           >
             <a
               href={APP_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Descargar en App Store"
               style={{
-                padding: "0.6rem 1rem",
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "rgba(255,255,255,0.9)",
-                fontSize: "0.875rem",
-                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                height: 40,
+                padding: "0 14px",
+                borderRadius: 8,
+                background: "#000",
+                color: "#fff",
+                fontSize: "0.75rem",
                 fontWeight: 600,
+                textDecoration: "none",
+                letterSpacing: "0.01em",
+                boxSizing: "border-box",
               }}
             >
-              App Store
+              <AppleLogoIconSmall />
+              <span>App Store</span>
             </a>
             <a
               href={PLAY_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Disponible en Google Play"
               style={{
-                padding: "0.6rem 1rem",
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "rgba(255,255,255,0.9)",
-                fontSize: "0.875rem",
-                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                height: 40,
+                padding: "0 14px",
+                borderRadius: 8,
+                background: "#000",
+                color: "#fff",
+                fontSize: "0.75rem",
                 fontWeight: 600,
+                textDecoration: "none",
+                letterSpacing: "0.01em",
+                boxSizing: "border-box",
               }}
             >
-              Google Play
+              <GooglePlayIconSmall />
+              <span>Google Play</span>
             </a>
           </div>
         </div>
