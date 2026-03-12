@@ -10,6 +10,15 @@ import { useBrandPublic } from "@/hooks/useBrand";
 import { supabase } from "@/lib/supabase";
 import { buildCanonicalUrl, buildDeepLink, type ShareEntityType } from "@/utils/shareUrls";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
+import { SEO_LOGO_URL } from "@/lib/seoConfig";
+
+function getStoreUrl(): string {
+  if (typeof navigator === "undefined") return APP_STORE_URL;
+  const ua = navigator.userAgent.toLowerCase();
+  if (/android/.test(ua)) return PLAY_STORE_URL;
+  if (/iphone|ipad|ipod/.test(ua)) return APP_STORE_URL;
+  return APP_STORE_URL;
+}
 import {
   resolveOpenEntityImageEvento,
   resolveOpenEntityImageClase,
@@ -349,6 +358,34 @@ function OpenLayout({
   seoImage?: string;
   seoUrl?: string;
 }) {
+  const [showFallback, setShowFallback] = React.useState(false);
+  const openTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleOpenInApp = React.useCallback(() => {
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = null;
+    }
+    setShowFallback(false);
+    window.location.href = deepLink;
+    openTimeoutRef.current = setTimeout(() => {
+      openTimeoutRef.current = null;
+      setShowFallback(true);
+    }, 2000);
+  }, [deepLink]);
+
+  React.useEffect(() => {
+    return () => {
+      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!showFallback) return;
+    const t = setTimeout(() => setShowFallback(false), 8000);
+    return () => clearTimeout(t);
+  }, [showFallback]);
+
   return (
     <>
       {seoTitle != null && (
@@ -447,8 +484,9 @@ function OpenLayout({
             gap: "0.875rem",
           }}
         >
-          <a
-            href={deepLink}
+          <button
+            type="button"
+            onClick={handleOpenInApp}
             style={{
               display: "flex",
               alignItems: "center",
@@ -464,14 +502,45 @@ function OpenLayout({
               fontSize: "1.05rem",
               cursor: "pointer",
               textAlign: "center",
-              textDecoration: "none",
               boxSizing: "border-box",
               boxShadow: "0 4px 16px rgba(45,156,219,0.35), 0 1px 3px rgba(0,0,0,0.2)",
             }}
           >
+            <img
+              src={SEO_LOGO_URL}
+              alt=""
+              aria-hidden
+              style={{ width: 22, height: 22, borderRadius: 6, objectFit: "contain", flexShrink: 0 }}
+            />
             <OpenInAppIcon />
             Abrir en la app
-          </a>
+          </button>
+          {showFallback && (
+            <a
+              href={getStoreUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                width: "100%",
+                padding: "0.85rem 1.25rem",
+                borderRadius: 14,
+                border: "none",
+                background: "rgba(255,255,255,0.12)",
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                textAlign: "center",
+                textDecoration: "none",
+                boxSizing: "border-box",
+              }}
+            >
+              No tienes la app · Descargar aquí
+            </a>
+          )}
           <a
             href={canonicalUrl}
             style={{
