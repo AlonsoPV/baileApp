@@ -1,16 +1,16 @@
 import React, { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import "@/styles/landing.css";
+import SeoHead from "@/components/SeoHead";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Hero, DownloadModal } from "@/components/landing/Hero";
 import { B2BLeadForm } from "@/components/landing/B2BLeadForm";
-import { LandingMetrics } from "@/components/landing/LandingMetrics";
 import { PainSolution } from "@/components/landing/PainSolution";
 import { FactorWow } from "@/components/landing/FactorWow";
 import { DecisionNotDiscovery } from "@/components/landing/DecisionNotDiscovery";
 import { Retention } from "@/components/landing/Retention";
 import { BusinessCase } from "@/components/landing/BusinessCase";
-import { BenefitGrid } from "@/components/landing/BenefitGrid"; 
+import { BenefitGrid } from "@/components/landing/BenefitGrid";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { MidCTA } from "@/components/landing/MidCTA";
 import { SocialProof } from "@/components/landing/SocialProof";
@@ -18,6 +18,22 @@ import { FAQ } from "@/components/landing/FAQ";
 import { Footer } from "@/components/landing/Footer";
 import { ResponsivePreview } from "@/components/landing/ResponsivePreview";
 import { useLandingOverflowDebug } from "@/hooks/useLandingOverflowDebug";
+import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
+
+const jsonLdApp = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Donde Bailar",
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Android, iOS",
+  description:
+    "Encuentra dónde bailar: eventos de salsa y bachata, clases de baile, academias y maestros. Filtra por ritmo, zona y fecha.",
+  url: SEO_BASE_URL,
+  image: SEO_LOGO_URL,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "MXN" },
+  downloadUrl: [PLAY_STORE_URL, APP_STORE_URL],
+};
 
 export default function Landing() {
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
@@ -33,14 +49,15 @@ export default function Landing() {
 
   return (
     <div className="landing landing-body-bg min-h-screen">
+      <SeoHead section="landing" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }}
+      />
+
       <LandingNav onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
 
       <Hero onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
-
-      <B2BLeadForm />
-
-      {/* Sección landing-metrics comentada temporalmente */}
-      {/* <LandingMetrics /> */}
 
       <PainSolution />
 
@@ -56,10 +73,11 @@ export default function Landing() {
 
       <HowItWorks />
 
+      <B2BLeadForm />
+
       <MidCTA onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
 
-      {/* Sección landing-social-proof comentada temporalmente */}
-      {/* <SocialProof /> */}
+      <SocialProof />
 
       <FAQ />
 

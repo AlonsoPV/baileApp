@@ -25,7 +25,7 @@ export function LandingNav({ onOpenDownload, onOpenB2B }: LandingNavProps) {
           </nav>
           <a className="landing-brand" href="#descargar" aria-label="Donde Bailar MX inicio">
             <div className="landing-brand__icon" aria-hidden>
-              <img src={BRAND_ICON_URL} alt="" width={45} height={45} />
+              <img src={BRAND_ICON_URL} alt="Donde Bailar" width={45} height={45} />
             </div>
           </a>
           <div className="landing-nav__cta">

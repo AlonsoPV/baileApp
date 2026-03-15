@@ -5,32 +5,36 @@
 
 export const landingContent = {
   hero: {
-    /** Dolor + resultado en una línea */
-    headline: "Deja de perderte en flyers y stories.",
-    headlineHighlight: "Encuentra salsa, bachata y más con información real.",
-    /** Visión corta para retener */
+    /** Badge de posicionamiento sobre el título */
+    kicker: "La comunidad de baile en México",
+    /** Headline con "Dónde Bailar" en gradiente */
+    headlineBefore: "Encuentra con ",
+    headlineGrad: "Dónde Bailar",
+    headlineAfter: " eventos y clases de baile cerca de ti",
+    /** Subheadline orientado a conversión */
     subheadline:
-      "La plataforma donde personas, academias y maestros se encuentran con intención real. Eventos y clases ordenados, filtros por ritmo y zona, actualizado diario.",
-    ctaPrimary: "Descargar",
+      "Eventos, clases y academias de baile filtradas por ritmo, zona y fecha.",
+    ctaPrimary: "Descargar la app gratis",
     ctaSecondary: "Soy academia o maestro",
     ctaMicrocopy: "Gratis · Sin spam · Descarga en segundos",
     badges: [
-      "Datos reales, no algoritmo",
-      "Filtros por ritmo y zona",
-      "Comunidad con intención",
+      "Eventos verificados",
+      "Filtra por zona",
+      "Salsa, bachata, kizomba",
+      "Descubre qué bailar hoy",
     ],
   },
 
-  /** Bloque dolor → solución (marketing) */
+  /** Bloque problema → solución (emocional y claro) */
   painSolution: {
-    painHeadline: "¿Cansado de depender del algoritmo?",
+    painHeadline: "¿No sabes dónde bailar hoy?",
     painSubline:
-      "Flyers perdidos, historias que se borran, grupos llenos de ruido. La industria del baile merece un sistema propio.",
-    solutionHeadline: "Aquí tienes infraestructura, no solo una app.",
+      "Flyers perdidos, historias que se borran, grupos llenos de ruido. Encuentra eventos y clases de baile con información real, en un solo lugar.",
+    solutionHeadline: "Todo lo que necesitas para decidir dónde bailar.",
     solutionPoints: [
-      "Eventos y clases en un solo lugar, con datos verificados",
-      "Decisiones guiadas por información real, no por likes",
-      "Una comunidad que busca bailar, no scroll infinito",
+      "Eventos y clases en un solo lugar, con fechas y lugares verificados",
+      "Filtra por ritmo, zona y fecha — encuentra salsa, bachata y más al instante",
+      "Una comunidad que busca bailar; información clara, sin scroll infinito",
     ],
   },
 

@@ -1,90 +1,108 @@
-import React from "react";
-import { Smartphone, Building2, Check, Zap, Shield, Download } from "lucide-react";
+import React, { useRef, useCallback } from "react";
+import { Smartphone, Check, MapPin, Music, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { landingContent } from "@/config/content";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
 import { track, LANDING_EVENTS } from "@/lib/track";
 import { Modal } from "@/components/ui/Modal";
+import EventCard from "@/components/explore/cards/EventCard";
+import { SEO_LOGO_URL } from "@/lib/seoConfig";
+import "@/components/explore/cards/Card.css";
 
 const { hero } = landingContent;
+
+const BADGE_ICONS = [Check, MapPin, Music, Zap] as const;
+
+/** Mock para el slider del hero: misma forma que EventCard (item.__ui) — diseño idéntico a EventCard */
+const HERO_MOCK_SLIDER_EVENTS = [
+  { id: 0, nombre: "Salsa Night", hora_inicio: "21:00", __ui: { flyerUrl: undefined, fechaYmd: "2025-03-14", costoMonto: 0, hasDiscount: false, lugarNombre: "Roma Norte" } },
+  { id: 0, nombre: "Bachata Night", hora_inicio: "20:30", __ui: { flyerUrl: undefined, fechaYmd: "2025-03-15", costoMonto: 0, hasDiscount: false, lugarNombre: "Condesa" } },
+  { id: 0, nombre: "Kizomba Night", hora_inicio: "19:00", __ui: { flyerUrl: undefined, fechaYmd: "2025-03-16", costoMonto: 0, hasDiscount: false, lugarNombre: "Polanco" } },
+];
 
 interface HeroProps {
   onOpenDownload: () => void;
   onOpenB2B: () => void;
 }
 
-export function Hero({ onOpenDownload, onOpenB2B }: HeroProps) {
+export function Hero({ onOpenDownload }: HeroProps) {
+  const sliderRef = useRef<HTMLDivElement>(null);
+
   const handleDownloadClick = () => {
     track(LANDING_EVENTS.CTA_DOWNLOAD, { location: "hero" });
     onOpenDownload();
   };
 
-  const handleB2BClick = () => {
-    track(LANDING_EVENTS.CTA_B2B, { location: "hero" });
-    onOpenB2B();
-  };
+  const scrollSlider = useCallback((dir: "prev" | "next") => {
+    const el = sliderRef.current;
+    if (!el) return;
+    const firstSlide = el.firstElementChild as HTMLElement | null;
+    const slideWidth = firstSlide?.offsetWidth ?? el.clientWidth;
+    const gap = 10;
+    el.scrollBy({ left: dir === "next" ? slideWidth + gap : -(slideWidth + gap), behavior: "smooth" });
+  }, []);
 
   return (
     <main className="landing-hero bg-grid landing-body-bg min-h-[100dvh] min-h-[100vh] flex flex-col justify-center" id="descargar" aria-label="Presentación principal">
-      <div className="landing-container relative z-10">
-        <div className="landing-hero__kicker">
-          <div className="pill">
-            <span className="pill-dot" aria-hidden />
-            <span>CDMX + EXPANSIÓN NACIONAL</span>
+      <div className="landing-container landing-hero__inner relative z-10">
+        <div className="landing-hero__row1">
+          <div className="landing-hero__col1">
+            <div className="landing-hero__kicker">
+              <div className="pill">
+                <span className="pill-dot" aria-hidden />
+                <span>{hero.kicker}</span>
+              </div>
+            </div>
+            <h1 className="landing-hero__title">
+              <span className="white">{hero.headlineBefore}</span>
+              <span className="landing-hero__title-grad">{hero.headlineGrad}</span>
+              <span className="white">{hero.headlineAfter}</span>
+            </h1>
+            <p className="landing-hero__sub">
+              {hero.subheadline}
+            </p>
+            <div className="landing-hero__ctas">
+              <button type="button" className="btn btn-primary" onClick={handleDownloadClick}>
+                <Smartphone size={20} strokeWidth={2} aria-hidden />
+                {hero.ctaPrimary}
+              </button>
+            </div>
+          </div>
+          <div className="landing-hero__col2">
+            <div className="hero-mockup" aria-hidden>
+              <div className="hero-mockup__device">
+                <div className="hero-mockup__screen" style={{ ["--hero-screen-bg" as string]: `url(${SEO_LOGO_URL})` }}>
+                  <div className="hero-mockup__slider-wrap">
+                    <div className="hero-mockup__slider" ref={sliderRef} role="list" style={{ pointerEvents: "none" }}>
+                      {HERO_MOCK_SLIDER_EVENTS.map((item, idx) => (
+                        <div key={idx} className="hero-mockup__slide">
+                          <EventCard item={item} priority />
+                        </div>
+                      ))}
+                    </div>
+                    <nav className="hero-mockup__nav" aria-label="Navegar eventos">
+                      <button type="button" className="hero-mockup__nav-btn" onClick={() => scrollSlider("prev")} aria-label="Anterior">
+                        <ChevronLeft size={18} strokeWidth={2.5} />
+                      </button>
+                      <button type="button" className="hero-mockup__nav-btn" onClick={() => scrollSlider("next")} aria-label="Siguiente">
+                        <ChevronRight size={18} strokeWidth={2.5} />
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <h1 className="landing-hero__title">
-          <span className="white">ENCUENTRA </span><br />
-          <span className="grad">DÓNDE BAILAR</span>
-          <br />
-          <span className="white">HOY MISMO</span>
-        </h1>
-
-        <p className="landing-hero__sub">
-          La guía definitiva de eventos, clases y academias. Filtra por ritmo, zona y fecha
-          para que nunca te quedes sin pista.
-        </p>
-
-        <div className="landing-hero__ctas">
-          <button type="button" className="btn btn-primary" onClick={handleDownloadClick}>
-            <Smartphone size={18} strokeWidth={2} aria-hidden />
-            Descargar
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={handleB2BClick}>
-            ¿Dónde Bailar?
-          </button>
-        </div>
-
-        <ul className="hero-microcopy" aria-label="Beneficios de la app">
-          <li>
-            <Zap size={14} strokeWidth={2.5} aria-hidden />
-            <span>Gratis</span>
-          </li>
-          <li>
-            <Shield size={14} strokeWidth={2.5} aria-hidden />
-            <span>Sin spam</span>
-          </li>
-          <li>
-            <Download size={14} strokeWidth={2.5} aria-hidden />
-            <span>Descarga en segundos</span>
-          </li>
-        </ul>
-
-        <ul className="hero-benefits" id="funciones" aria-label="Qué ofrece la app">
-          {hero.badges.map((badge, index) => {
-            const parts = badge.split(", ");
-            const isFirst = index === 0 && parts.length === 2;
+        <ul className="hero-benefits" id="funciones" aria-label="Beneficios de la app">
+          {hero.badges.map((badge, i) => {
+            const Icon = BADGE_ICONS[i] ?? Check;
             return (
               <li key={badge} className="hero-benefit">
-                <span className="hero-benefit__dot" aria-hidden />
-                {isFirst ? (
-                  <>
-                    <strong>{parts[0]}</strong>
-                    <span>, {parts[1]}</span>
-                  </>
-                ) : (
-                  <span>{badge}</span>
-                )}
+                <span className="hero-benefit__icon" aria-hidden>
+                  <Icon size={16} strokeWidth={2.5} />
+                </span>
+                <span>{badge}</span>
               </li>
             );
           })}

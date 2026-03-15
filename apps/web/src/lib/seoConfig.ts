@@ -29,16 +29,38 @@ export interface SeoMeta {
 
 type SeoConfig = Record<string, Partial<SeoMeta>>;
 
+const LANDING_KEYWORDS = [
+  'donde bailar',
+  'clases de baile',
+  'eventos de baile',
+  'salsa',
+  'bachata',
+  'academias de baile',
+  'lugares para bailar',
+  'maestros de baile',
+  'baile en México',
+  'eventos de salsa',
+  'eventos de bachata',
+  'ritmos latinos',
+];
+
 const SEO_CONFIG: SeoConfig = {
   default: {
-    title: 'Dónde Bailar | Clases, sociales y academias de baile en México',
+    title: 'Donde Bailar | Encuentra eventos, clases y academias de baile cerca de ti',
     description:
-      'Descubre clases, sociales, academias y maestros de baile en México. Encuentra tu próximo plan de salsa, bachata y más con Dónde Bailar.',
-    keywords: DEFAULT_KEYWORDS,
+      'Encuentra dónde bailar hoy: eventos de salsa y bachata, clases de baile, academias y maestros. Filtra por ritmo, zona y fecha en CDMX y México.',
+    keywords: LANDING_KEYWORDS.length ? LANDING_KEYWORDS : DEFAULT_KEYWORDS,
     image: LOGO_URL,
     icon: ICON_URL,
     url: BASE_URL,
-    siteName: 'Dónde Bailar',
+    siteName: 'Donde Bailar',
+  },
+  landing: {
+    title: 'Donde Bailar | Encuentra eventos, clases y academias de baile cerca de ti',
+    description:
+      'Encuentra dónde bailar hoy: eventos de salsa y bachata, clases de baile, academias y maestros. Filtra por ritmo, zona y fecha en CDMX y México.',
+    keywords: LANDING_KEYWORDS,
+    url: BASE_URL,
   },
   explore: {
     title: 'Explorar Dónde Bailar | Encuentra eventos y clases de baile',
