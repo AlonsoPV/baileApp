@@ -239,7 +239,7 @@ const config: ExpoConfig = {
     package: "com.tuorg.dondebailarmx.app",
     // versionCode debe ser MAYOR que el último subido a Google Play.
     // en Consola → tu app → Producción/Prueba interna → revisa "Código de versión" del último AAB y pon aquí un número mayor.
-    versionCode: 16,
+    versionCode: 17,
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#000000",
