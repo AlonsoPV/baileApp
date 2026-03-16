@@ -123,11 +123,9 @@ const ClassRow = React.memo(function ClassRow({
   return (
     <div
       className="eds-grid eds-row"
+      role="row"
       style={{
-        display: "grid",
-        gap: 10,
         alignItems: "center",
-        padding: "10px 10px",
         borderRadius: 12,
         border: "1px solid rgba(255,255,255,0.10)",
         background: "rgba(255,255,255,0.04)",
@@ -316,26 +314,71 @@ export default function ClassDatesSheet({
           overflow: auto;
           -webkit-overflow-scrolling: touch;
           max-height: 70vh;
+          min-height: 140px;
+          width: 100%;
+          max-width: 100%;
           /* Don't trap scroll on desktop; allow scroll to bubble to the page when needed */
           overscroll-behavior: auto;
           scrollbar-gutter: stable;
         }
-        .eds-minWidth { min-width: 930px; }
+        @media (max-height: 500px) {
+          .eds-scroll { max-height: 55vh; }
+        }
+        /* Table structure: header + body of rows, full width, aligned columns */
+        .eds-scroll .eds-minWidth {
+          min-width: 930px;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+        .eds-table {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          min-width: 0;
+        }
+        .eds-table__body {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          width: 100%;
+          min-width: 0;
+        }
         .eds-grid {
           /* Column widths for header + rows */
           --eds-actions-col: 140px;
-          --eds-att-col: 120px;
+          --eds-att-col: 140px;
           /* ↓ Reduce Evento/Lugar widths and let them wrap to 2 lines */
           --eds-event-col: 165px;
           --eds-date-col: 140px;
           --eds-time-col: 72px;
           --eds-place-col: minmax(120px, 1fr);
-          --eds-att-col: 140px;
           --eds-cols: var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-place-col) var(--eds-att-col) var(--eds-actions-col);
         }
-        /* Explicit grid-template-columns per request */
-        .eds-grid.eds-row { grid-template-columns: var(--eds-cols); }
-        .eds-grid.eds-header { grid-template-columns: var(--eds-cols); }
+        /* Regla crítica: header y filas usan el mismo grid y padding para alineación exacta. */
+        .eds-grid.eds-header,
+        .eds-grid.eds-row {
+          display: grid;
+          grid-template-columns: var(--eds-cols);
+          gap: 10px;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          padding-left: 10px;
+          padding-right: 10px;
+        }
+        .eds-grid.eds-row {
+          grid-template-rows: auto;
+          grid-auto-flow: column;
+          flex-shrink: 0;
+          padding-top: 10px;
+          padding-bottom: 10px;
+        }
+        .eds-grid.eds-header {
+          padding-top: 10px;
+          padding-bottom: 10px;
+        }
         /* Ensure Acciones never collapse */
         .eds-cellActions { min-width: var(--eds-actions-col); }
         .eds-hActions { min-width: var(--eds-actions-col); }
@@ -348,7 +391,6 @@ export default function ClassDatesSheet({
           background: rgba(18,18,18,0.92);
           backdrop-filter: blur(10px);
           border-radius: 12px;
-          padding: 8px 10px;
           border: 1px solid rgba(255,255,255,0.10);
         }
         .eds-iconBtn{
@@ -403,7 +445,8 @@ export default function ClassDatesSheet({
         @media (max-width: 520px) {
           .eds-minWidth { min-width: 620px; }
           .eds-place { display: none; }
-          .eds-grid { --eds-actions-col: 132px; --eds-att-col: 130px; --eds-event-col: minmax(180px, 1fr); --eds-date-col: 110px; --eds-time-col: 64px; --eds-cols: var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-att-col) var(--eds-actions-col); }
+          /* Keep 7 columns so row children stay on one line; place column has zero width when hidden */
+          .eds-grid { --eds-actions-col: 132px; --eds-att-col: 130px; --eds-event-col: minmax(180px, 1fr); --eds-date-col: 110px; --eds-time-col: 64px; --eds-place-col: 0; --eds-cols: var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-place-col) var(--eds-att-col) var(--eds-actions-col); }
         }
 
         .delete-confirm-modal {
@@ -479,26 +522,27 @@ export default function ClassDatesSheet({
         }
       `}</style>
 
-      {/* Table */}
+      {/* Table: header (sticky) + body of full-width rows aligned to columns */}
       <div className="eds-scroll">
         <div className="eds-minWidth">
-          <div className="eds-grid eds-header" style={{ display: "grid", gap: 10, opacity: 0.9, fontSize: 12, marginBottom: 8, color: "#fff" }}>
-            <div>Evento</div>
-            <div>Fecha</div>
-            <div>Inicio</div>
-            <div>Fin</div>
-            <div className="eds-place">Ubicación</div>
-            <div className="eds-hAttendance">Asistencia</div>
-            <div className="eds-hActions">Acciones</div>
-          </div>
-          {isLoading && (
-            <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>Cargando…</div>
-          )}
-          {!isLoading && sortedClasses.length === 0 && (
-            <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>No hay clases.</div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {sortedClasses.map((cls) => {
+          <div className="eds-table" role="table" aria-label="Clases">
+            <div className="eds-grid eds-header" style={{ display: "grid", opacity: 0.9, fontSize: 12, marginBottom: 8, color: "#fff" }} role="row">
+              <div role="columnheader">Evento</div>
+              <div role="columnheader">Fecha</div>
+              <div role="columnheader">Inicio</div>
+              <div role="columnheader">Fin</div>
+              <div className="eds-place" role="columnheader">Ubicación</div>
+              <div className="eds-hAttendance" role="columnheader">Asistencia</div>
+              <div className="eds-hActions" role="columnheader">Acciones</div>
+            </div>
+            {isLoading && (
+              <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>Cargando…</div>
+            )}
+            {!isLoading && sortedClasses.length === 0 && (
+              <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>No hay clases.</div>
+            )}
+            <div className="eds-table__body" role="rowgroup">
+            {!isLoading && sortedClasses.map((cls) => {
               const originalIndex = (cls as any)._originalIndex ?? classes.findIndex(c => c.id === cls.id);
               return (
                 <ClassRow
@@ -514,6 +558,7 @@ export default function ClassDatesSheet({
                 />
               );
             })}
+            </div>
           </div>
         </div>
       </div>

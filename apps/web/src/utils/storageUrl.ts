@@ -36,6 +36,12 @@ export function extractStoragePathFromPublicUrl(
   }
 }
 
+/** Versión segura para query (?v=): evita : y + que pueden causar 400 en Supabase Storage. */
+function toSafeVersion(version: string | number): string {
+  const v = String(version).trim();
+  return v.replace(/[:+]/g, "-").replace(/\s/g, "-") || v;
+}
+
 /**
  * Añade cache-busting a una URL de imagen para evitar que el navegador/CDN muestre una versión vieja.
  * No modifica URLs que no parezcan de imagen o que ya tengan query.
@@ -51,5 +57,5 @@ export function getDisplayImageUrl(
   if (!u) return "";
   if (version === undefined || version === null) return u;
   const separator = u.includes("?") ? "&" : "?";
-  return `${u}${separator}v=${encodeURIComponent(String(version))}`;
+  return `${u}${separator}v=${encodeURIComponent(toSafeVersion(version))}`;
 }

@@ -58,7 +58,7 @@ const SEO_CONFIG: SeoConfig = {
   landing: {
     title: 'Donde Bailar | Encuentra eventos, clases y academias de baile cerca de ti',
     description:
-      'Encuentra dónde bailar hoy: eventos de salsa y bachata, clases de baile, academias y maestros. Filtra por ritmo, zona y fecha en CDMX y México.',
+      'Descubre eventos de baile, clases, academias y sociales cerca de ti. Encuentra dónde bailar salsa, bachata y más con la comunidad de Donde Bailar.',
     keywords: LANDING_KEYWORDS,
     url: BASE_URL,
   },

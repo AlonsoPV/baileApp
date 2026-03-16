@@ -543,7 +543,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           'Dónde Bailar',
         ].filter(Boolean) as string[]}
       />
-      <div className="event-detail-screen">
+      <div id="event-detail-page" className="event-detail-screen">
         <EventHero
           title={dateName}
           flyerUrl={flyerUrlCacheBusted || date.flyer_url}
@@ -565,55 +565,63 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           onShare={handleShare}
           calendarButton={calendarButton}
         />
-        <div className="eds-content">
-          <InfoGrid
-            costsSummary={costsSummary}
-            costsItems={Array.isArray(date.costos) ? date.costos : []}
-            costsDisclaimer={t('price_disclaimer', 'Precios sujetos a cambios')}
-            freeLabel={t('free', 'Gratis')}
-            dateStr={dateStr}
-            timeRange={timeRange}
-            venueName={venueName}
-            city={date.ciudad || undefined}
-            mapsUrl={mapsUrl}
-            fullAddress={fullAddress || undefined}
-            onCopyAddress={fullAddress ? handleCopyAddress : undefined}
-          />
-          {(date.biografia || parent?.descripcion) && (
-            <>
-              <div className="eds-section-header">
-                <h2 className="eds-section-title">{t('about_event', 'Acerca del evento')}</h2>
-                <div className="eds-section-underline" aria-hidden />
-              </div>
-              <ExpandableText
-                text={date.biografia || parent?.descripcion || ''}
-                expandLabel={t('see_more', 'Ver más')}
-                collapseLabel={t('see_less', 'Ver menos')}
-              />
-            </>
-          )}
+        <div id="event-detail-content" className="eds-content">
+          <section id="event-section-info" className="eds-section eds-section--info">
+            <InfoGrid
+              costsSummary={costsSummary}
+              costsItems={Array.isArray(date.costos) ? date.costos : []}
+              costsDisclaimer={t('price_disclaimer', 'Precios sujetos a cambios')}
+              freeLabel={t('free', 'Gratis')}
+              dateStr={dateStr}
+              timeRange={timeRange}
+              venueName={venueName}
+              city={date.ciudad || undefined}
+              mapsUrl={mapsUrl}
+              fullAddress={fullAddress || undefined}
+              onCopyAddress={fullAddress ? handleCopyAddress : undefined}
+            />
+          </section>
+          {(() => {
+            const bioText = (date.biografia || parent?.descripcion || '').trim();
+            if (!bioText) return null;
+            return (
+              <section id="event-section-about" className="eds-section eds-section--about">
+                <div className="eds-section-header">
+                  <h2 className="eds-section-title">{t('about_event', 'Acerca del evento')}</h2>
+                  <div className="eds-section-underline" aria-hidden />
+                </div>
+                <ExpandableText
+                  text={bioText}
+                  expandLabel={t('see_more', 'Ver más')}
+                  collapseLabel={t('see_less', 'Ver menos')}
+                />
+              </section>
+            );
+          })()}
           {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
-            <>
+            <section id="event-section-schedule" className="eds-section eds-section--schedule">
               <div className="eds-section-header">
                 <h2 className="eds-section-title">{t('schedule', 'Cronograma')}</h2>
                 <div className="eds-section-underline" aria-hidden />
               </div>
               <Timeline items={date.cronograma} byLabel={t('by')} conductedByLabel={t('conducted_by')} levelLabel={t('level')} />
-            </>
+            </section>
           )}
           {(date.lugar || date.direccion || date.ciudad) && (
-            <LocationAccordion
-              venueName={date.lugar || date.ciudad || t('place')}
-              address={[date.direccion, date.ciudad].filter(Boolean).join(', ')}
-              references={date.referencias ?? undefined}
-              mapsUrl={mapsUrl}
-              mapsLabel={t('view_on_maps', 'Abrir en Google Maps')}
-              copyLabel={t('copy_address')}
-              copiedLabel={t('copied')}
-            />
+            <section id="event-section-location" className="eds-section eds-section--location">
+              <LocationAccordion
+                venueName={date.lugar || date.ciudad || t('place')}
+                address={[date.direccion, date.ciudad].filter(Boolean).join(', ')}
+                references={date.referencias ?? undefined}
+                mapsUrl={mapsUrl}
+                mapsLabel={t('view_on_maps', 'Abrir en Google Maps')}
+                copyLabel={t('copy_address')}
+                copiedLabel={t('copied')}
+              />
+            </section>
           )}
           {date.requisitos && (
-            <>
+            <section id="event-section-requirements" className="eds-section eds-section--requirements">
               <div className="eds-section-header">
                 <h2 className="eds-section-title">{t('requirements', 'Requisitos')}</h2>
                 <div className="eds-section-underline" aria-hidden />
@@ -621,10 +629,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
               <div className="eds-expandable">
                 <p className="eds-expandable__text">{date.requisitos}</p>
               </div>
-            </>
+            </section>
           )}
           {date.telefono_contacto && (
-            <>
+            <section id="event-section-contact" className="eds-section eds-section--contact">
               <div className="eds-section-header">
                 <h2 className="eds-section-title">{t('contact', 'Contacto')}</h2>
                 <div className="eds-section-underline" aria-hidden />
@@ -634,16 +642,16 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                 whatsappLabel={t('consult_whatsapp', 'Contactar por WhatsApp')}
                 organizerName={parent?.nombre}
               />
-            </>
+            </section>
           )}
           {hasMedia && (
-            <>
+            <section id="event-section-gallery" className="eds-section eds-section--gallery">
               <div className="eds-section-header">
                 <h2 className="eds-section-title">{t('photo_gallery', 'Galería')}</h2>
                 <div className="eds-section-underline" aria-hidden />
               </div>
               <MediaGallery photos={carouselPhotos} videos={videos} toDirectUrl={toDirectPublicStorageUrl} />
-            </>
+            </section>
           )}
         </div>
       </div>

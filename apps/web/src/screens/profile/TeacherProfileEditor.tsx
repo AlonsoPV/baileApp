@@ -547,6 +547,7 @@ const STYLES = `
     .rhythms-zones-two-columns {
       grid-template-columns: 1fr !important;
       gap: 1rem !important;
+      padding-inline: .25rem;
     }
     .academy-editor-container {
       padding: 1rem 0.75rem !important;

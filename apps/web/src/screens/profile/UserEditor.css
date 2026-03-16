@@ -429,6 +429,7 @@
       gap: 1rem !important;
       position: relative !important;
       z-index: 1 !important;
+      padding-inline: .25rem;
     }
   
     .editor-container {

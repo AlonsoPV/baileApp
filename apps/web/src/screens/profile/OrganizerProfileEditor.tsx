@@ -293,6 +293,7 @@ function EventParentCard({
   const location = useLocation();
   const { data: dates } = useDatesByParent(parent.id);
   const [expanded, setExpanded] = useState(false);
+  const [datesSearch, setDatesSearch] = useState('');
 
   const startFrecuentesFromDate = (fromDateId: number) => {
     const params = new URLSearchParams(location.search);
@@ -401,6 +402,28 @@ function EventParentCard({
       return db.getTime() - da.getTime();
     });
 
+  const matchDatesSearch = useCallback((d: any, q: string) => {
+    if (!q || !q.trim()) return true;
+    const term = q.trim().toLowerCase();
+    const nombre = (d?.nombre ?? d?.events_parent?.nombre ?? '').toString().toLowerCase();
+    const fechaYmd = getDisplayFechaYmd(d) ?? '';
+    const fechaFormatted = formatEsDate(fechaYmd).toLowerCase();
+    const lugar = (d?.lugar ?? '').toString().toLowerCase();
+    const ciudad = (d?.ciudad ?? '').toString().toLowerCase();
+    const direccion = (d?.direccion ?? '').toString().toLowerCase();
+    const hora = (d?.hora_inicio ?? '').toString().toLowerCase();
+    return [nombre, fechaYmd, fechaFormatted, lugar, ciudad, direccion, hora].some((s) => s.includes(term));
+  }, []);
+
+  const availableDatesFiltered = useMemo(
+    () => availableDates.filter((d: any) => matchDatesSearch(d, datesSearch)),
+    [availableDates, datesSearch, matchDatesSearch]
+  );
+  const pastDatesFiltered = useMemo(
+    () => pastDates.filter((d: any) => matchDatesSearch(d, datesSearch)),
+    [pastDates, datesSearch, matchDatesSearch]
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -459,6 +482,28 @@ function EventParentCard({
             {expanded && (
               <div style={{ marginTop: '1rem' }}>
                 <div className="dates-block">
+                  {/* Barra de búsqueda de eventos */}
+                  {(availableDates.length > 0 || pastDates.length > 0) && (
+                    <div className="dates-section-search-wrap" style={{ marginBottom: 10 }}>
+                      <input
+                        type="search"
+                        className="dates-section-search"
+                        placeholder="Buscar por nombre, fecha, lugar..."
+                        value={datesSearch}
+                        onChange={(e) => setDatesSearch(e.target.value)}
+                        aria-label="Buscar eventos"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: 10,
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          background: 'rgba(255,255,255,0.06)',
+                          color: '#fff',
+                          fontSize: '0.9rem',
+                        }}
+                      />
+                    </div>
+                  )}
                   {/* Fechas disponibles */}
                   {availableDates.length > 0 && (
                     <details className="dates-section" open>
@@ -467,7 +512,7 @@ function EventParentCard({
                           <span className="dates-section-icon available">✓</span>
                           Fechas disponibles
                           <span className="dates-section-count">
-                            ({availableDates.length})
+                            ({availableDatesFiltered.length}{datesSearch.trim() ? ` de ${availableDates.length}` : ''})
                           </span>
                         </span>
                         <span className="dates-chevron">▼</span>
@@ -475,7 +520,7 @@ function EventParentCard({
 
                       <div style={{ marginTop: 12 }}>
                         <EventDatesSheet
-                          rows={availableDates.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
+                          rows={availableDatesFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                           variant="embedded"
                           showHeader={false}
                           onOpenRow={(id) => {
@@ -502,7 +547,7 @@ function EventParentCard({
                           <span className="dates-section-icon past">⏱</span>
                           Fechas pasadas
                           <span className="dates-section-count">
-                            ({pastDates.length})
+                            ({pastDatesFiltered.length}{datesSearch.trim() ? ` de ${pastDates.length}` : ''})
                           </span>
                         </span>
                         <span className="dates-chevron">▼</span>
@@ -510,7 +555,7 @@ function EventParentCard({
 
                       <div style={{ marginTop: 12 }}>
                         <EventDatesSheet
-                          rows={pastDates.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
+                          rows={pastDatesFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                           variant="embedded"
                           showHeader={false}
                           onOpenRow={(id) => {
@@ -678,6 +723,7 @@ export default function OrganizerProfileEditor() {
   // Drawer para edición individual desde tabla bulk (override flyer + ajustes puntuales)
   const [drawerDateId, setDrawerDateId] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [independentDatesSearch, setIndependentDatesSearch] = useState('');
 
   const bulkOrganizerId = (org as any)?.id ? Number((org as any).id) : undefined;
   const patchBulkCache = useCallback((ids: number[], patch: Record<string, any>) => {
@@ -2155,6 +2201,23 @@ export default function OrganizerProfileEditor() {
           gap: 0.5rem;
         }
         
+        .ritmos-selected-chips,
+        .zona-selected-chips {
+          margin-top: 0.5rem !important;
+          gap: 0.35rem !important;
+          display: flex;
+          flex-wrap: wrap;
+        }
+        .ritmos-selected-chips > *,
+        .zona-selected-chips > * {
+          transform-origin: center;
+        }
+        .academy-chips-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.35rem;
+        }
+        
         .org-events-section {
           margin-bottom: 3rem;
           padding: clamp(1.5rem, 3vw, 2.5rem);
@@ -2167,6 +2230,9 @@ export default function OrganizerProfileEditor() {
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           color: #FFFFFF;
+        }
+        #organizer-events-list {
+          padding-inline: 0.25rem;
         }
 
         .org-events-section::before {
@@ -2763,7 +2829,7 @@ export default function OrganizerProfileEditor() {
 
         @media (max-width: 600px) {
           .dates-block {
-            padding: 12px;
+            padding: 12px 2px 10px 2px;
           }
 
           .date-card {
@@ -3244,6 +3310,7 @@ export default function OrganizerProfileEditor() {
           .rhythms-zones-two-columns {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
+            padding-inline: .25rem;
           }
           
           .org-editor-wrapper {
@@ -3387,6 +3454,11 @@ export default function OrganizerProfileEditor() {
           .org-editor-chips {
             justify-content: center !important;
             gap: 0.4rem !important;
+          }
+          .ritmos-selected-chips,
+          .zona-selected-chips {
+            margin-top: 0.4rem !important;
+            gap: 0.28rem !important;
           }
           
           .org-events-section {
@@ -3629,6 +3701,11 @@ export default function OrganizerProfileEditor() {
           
           .org-editor-chips {
             gap: 0.3rem !important;
+          }
+          .ritmos-selected-chips,
+          .zona-selected-chips {
+            margin-top: 0.35rem !important;
+            gap: 0.25rem !important;
           }
           
           .org-events-section {
@@ -5609,6 +5686,21 @@ export default function OrganizerProfileEditor() {
                     if (!da || !db) return 0;
                     return db.getTime() - da.getTime();
                   });
+
+                const matchIndependentSearch = (d: any, q: string) => {
+                  if (!q || !q.trim()) return true;
+                  const term = q.trim().toLowerCase();
+                  const nombre = (d?.nombre ?? d?.events_parent?.nombre ?? '').toString().toLowerCase();
+                  const fechaYmd = getDisplayFechaYmd(d) ?? '';
+                  const fechaFormatted = formatEsDate(fechaYmd).toLowerCase();
+                  const lugar = (d?.lugar ?? '').toString().toLowerCase();
+                  const ciudad = (d?.ciudad ?? '').toString().toLowerCase();
+                  const direccion = (d?.direccion ?? '').toString().toLowerCase();
+                  const hora = (d?.hora_inicio ?? '').toString().toLowerCase();
+                  return [nombre, fechaYmd, fechaFormatted, lugar, ciudad, direccion, hora].some((s) => s.includes(term));
+                };
+                const independentAvailableFiltered = independentAvailable.filter((d: any) => matchIndependentSearch(d, independentDatesSearch));
+                const independentPastFiltered = independentPast.filter((d: any) => matchIndependentSearch(d, independentDatesSearch));
                 
                 return (
                   <>
@@ -5650,6 +5742,26 @@ export default function OrganizerProfileEditor() {
                     {independentDates.length > 0 && (
                       <div style={{ marginTop: parents && parents.length > 0 ? '2rem' : 0 }}>
                         <div className="dates-block">
+                          {/* Barra de búsqueda de eventos (fechas independientes) */}
+                          <div className="dates-section-search-wrap" style={{ marginBottom: 10 }}>
+                            <input
+                              type="search"
+                              className="dates-section-search"
+                              placeholder="Buscar por nombre, fecha, lugar..."
+                              value={independentDatesSearch}
+                              onChange={(e) => setIndependentDatesSearch(e.target.value)}
+                              aria-label="Buscar eventos"
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                borderRadius: 10,
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                background: 'rgba(255,255,255,0.06)',
+                                color: '#fff',
+                                fontSize: '0.9rem',
+                              }}
+                            />
+                          </div>
                           {/* Fechas disponibles */}
                           {independentAvailable.length > 0 && (
                             <details className="dates-section" open>
@@ -5658,14 +5770,14 @@ export default function OrganizerProfileEditor() {
                                   <span className="dates-section-icon available">✓</span>
                                   Fechas disponibles
                                   <span className="dates-section-count">
-                                    ({independentAvailable.length})
+                                    ({independentAvailableFiltered.length}{independentDatesSearch.trim() ? ` de ${independentAvailable.length}` : ''})
                                   </span>
                                 </span>
                                 <span className="dates-chevron">▼</span>
                               </summary>
                               <div style={{ marginTop: 12 }}>
                                 <EventDatesSheet
-                                  rows={independentAvailable.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
+                                  rows={independentAvailableFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                                   variant="embedded"
                                   showHeader={false}
                                   onOpenRow={(id) => {
@@ -5696,14 +5808,14 @@ export default function OrganizerProfileEditor() {
                                   <span className="dates-section-icon past">⏱</span>
                                   Fechas pasadas
                                   <span className="dates-section-count">
-                                    ({independentPast.length})
+                                    ({independentPastFiltered.length}{independentDatesSearch.trim() ? ` de ${independentPast.length}` : ''})
                                   </span>
                                 </span>
                                 <span className="dates-chevron">▼</span>
                               </summary>
                               <div style={{ marginTop: 12 }}>
                                 <EventDatesSheet
-                                  rows={independentPast.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
+                                  rows={independentPastFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                                   variant="embedded"
                                   showHeader={false}
                                   onOpenRow={(id) => {

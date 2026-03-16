@@ -148,6 +148,7 @@ export function DownloadModal({
   onClose: () => void;
 }) {
   const handleStoreClick = (store: "ios" | "android") => {
+    if (store === "android") return; // Android: próximamente
     track(LANDING_EVENTS.CTA_DOWNLOAD, { store });
     window.open(store === "ios" ? APP_STORE_URL : PLAY_STORE_URL, "_blank");
     onClose();
@@ -171,15 +172,15 @@ export function DownloadModal({
           </button>
           <button
             type="button"
-            onClick={() => handleStoreClick("android")}
-            className="download-modal-btn download-modal-btn--play"
-            aria-label="Descargar en Google Play para Android"
+            disabled
+            className="download-modal-btn download-modal-btn--play download-modal-btn--soon"
+            aria-label="Google Play próximamente"
           >
             <span className="download-modal-btn__icon download-modal-btn__icon--play">
               <GooglePlayIcon />
             </span>
             <span className="download-modal-btn__label">Google Play</span>
-
+            <span className="download-modal-btn__note">Próximamente</span>
           </button>
         </div>
       </div>

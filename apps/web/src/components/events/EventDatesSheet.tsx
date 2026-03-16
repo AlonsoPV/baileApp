@@ -189,11 +189,9 @@ const Row = React.memo(function Row({
   return (
     <div
       className="eds-grid eds-row"
+      role="row"
       style={{
-        display: "grid",
-        gap: 10,
         alignItems: "center",
-        padding: "10px 10px",
         borderRadius: 12,
         border: "1px solid rgba(255,255,255,0.10)",
         background: "rgba(255,255,255,0.04)",
@@ -947,11 +945,37 @@ export default function EventDatesSheet({
           overflow: auto;
           -webkit-overflow-scrolling: touch;
           max-height: 70vh;
+          min-height: 140px;
+          width: 100%;
+          max-width: 100%;
           /* Don't trap scroll on desktop; allow scroll to bubble to the page when needed */
           overscroll-behavior: auto;
           scrollbar-gutter: stable;
         }
-        .eds-minWidth { min-width: 930px; }
+        @media (max-height: 500px) {
+          .eds-scroll { max-height: 55vh; }
+        }
+        /* Table structure: header + body of rows, full width, aligned columns */
+        .eds-scroll .eds-minWidth {
+          min-width: 930px;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+        .eds-table {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          min-width: 0;
+        }
+        .eds-table__body {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          width: 100%;
+          min-width: 0;
+        }
         .eds-grid {
           /* Column widths for header + rows */
           --eds-flyer-col: 64px;
@@ -964,9 +988,29 @@ export default function EventDatesSheet({
           --eds-place-col: minmax(160px, 1fr);
           --eds-cols: 42px var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-place-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col);
         }
-        /* Explicit grid-template-columns per request */
-        .eds-grid.eds-row { grid-template-columns: var(--eds-cols); }
-        .eds-grid.eds-header { grid-template-columns: var(--eds-cols); }
+        /* Regla crítica: header y filas usan el mismo grid y padding para alineación exacta. */
+        .eds-grid.eds-header,
+        .eds-grid.eds-row {
+          display: grid;
+          grid-template-columns: var(--eds-cols);
+          gap: 10px;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          padding-left: 10px;
+          padding-right: 10px;
+        }
+        .eds-grid.eds-row {
+          grid-template-rows: auto;
+          grid-auto-flow: column;
+          flex-shrink: 0;
+          padding-top: 10px;
+          padding-bottom: 10px;
+        }
+        .eds-grid.eds-header {
+          padding-top: 10px;
+          padding-bottom: 10px;
+        }
         /* Ensure Estado/Acciones never collapse */
         .eds-cellFlyer { min-width: var(--eds-flyer-col); }
         .eds-cellEstado { min-width: var(--eds-estado-col); }
@@ -981,7 +1025,6 @@ export default function EventDatesSheet({
           background: rgba(18,18,18,0.92);
           backdrop-filter: blur(10px);
           border-radius: 12px;
-          padding: 8px 10px;
           border: 1px solid rgba(255,255,255,0.10);
         }
         .eds-iconBtn{
@@ -1046,11 +1089,17 @@ export default function EventDatesSheet({
           border: 1px solid rgba(255,255,255,0.10);
           background: rgba(255,255,255,0.04);
         }
-        .eds-actionsInputs{
+        /* Dos columnas por defecto; en pantallas estrechas pasa a una columna */
+        .eds-actionsInputs {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 10px;
           align-items: end;
+          width: 100%;
+          min-width: 0;
+        }
+        .eds-actionsInputs > * {
+          min-width: 0;
         }
         .eds-fieldLabel{
           font-size: 12px;
@@ -1100,12 +1149,12 @@ export default function EventDatesSheet({
           cursor: not-allowed;
         }
         @media (max-width: 720px) {
-          .eds-actionsInputs{ grid-template-columns: 1fr 1fr; }
-          .eds-actionBtn{ flex: 1 1 auto; }
+          .eds-actionsInputs { grid-template-columns: 1fr 1fr; }
+          .eds-actionBtn { flex: 1 1 auto; }
         }
         @media (max-width: 520px) {
-          .eds-actionsInputs{ grid-template-columns: 1fr; }
-          .eds-actionBtn{ width: 100%; justify-content: center; }
+          .eds-actionsInputs { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .eds-actionBtn { width: 100%; justify-content: center; }
         }
         @media (max-width: 720px) {
           .eds-minWidth { min-width: 780px; }
@@ -1277,37 +1326,38 @@ export default function EventDatesSheet({
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table: header (sticky) + body of full-width rows aligned to columns */}
       <div className="eds-scroll">
         <div className="eds-minWidth">
-          <div className="eds-grid eds-header" style={{ display: "grid", gap: 10, opacity: 0.9, fontSize: 12, marginBottom: 8, color: "#fff" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <input
-                ref={selectAllRef}
-                type="checkbox"
-                checked={allSelected}
-                onChange={(e) => setAll(e.target.checked)}
-                aria-label={allSelected ? "Deseleccionar todo" : "Seleccionar todo"}
-                style={{ width: 18, height: 18, cursor: "pointer" }}
-              />
+          <div className="eds-table" role="table" aria-label="Fechas del evento">
+            <div className="eds-grid eds-header" style={{ display: "grid", opacity: 0.9, fontSize: 12, marginBottom: 8, color: "#fff" }} role="row">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} role="columnheader">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={(e) => setAll(e.target.checked)}
+                  aria-label={allSelected ? "Deseleccionar todo" : "Seleccionar todo"}
+                  style={{ width: 18, height: 18, cursor: "pointer" }}
+                />
+              </div>
+              <div role="columnheader">Evento</div>
+              <div role="columnheader">Fecha</div>
+              <div role="columnheader">Inicio</div>
+              <div role="columnheader">Fin</div>
+              <div className="eds-place" role="columnheader">Lugar</div>
+              <div className="eds-hFlyer" role="columnheader">Flyer</div>
+              <div className="eds-hEstado" role="columnheader">Estado</div>
+              <div className="eds-hActions" role="columnheader">Acciones</div>
             </div>
-            <div>Evento</div>
-            <div>Fecha</div>
-            <div>Inicio</div>
-            <div>Fin</div>
-            <div className="eds-place">Lugar</div>
-            <div className="eds-hFlyer">Flyer</div>
-            <div className="eds-hEstado">Estado</div>
-            <div className="eds-hActions">Acciones</div>
-          </div>
-          {isLoading && (
-            <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>Cargando…</div>
-          )}
-          {!isLoading && sortedRows.length === 0 && (
-            <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>No hay fechas.</div>
-          )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {sortedRows.map((r) => (
+            {isLoading && (
+              <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>Cargando…</div>
+            )}
+            {!isLoading && sortedRows.length === 0 && (
+              <div style={{ color: "rgba(255,255,255,0.8)", padding: 12 }}>No hay fechas.</div>
+            )}
+            <div className="eds-table__body" role="rowgroup">
+            {!isLoading && sortedRows.map((r) => (
               <Row
                 key={r.id}
                 row={r}
@@ -1339,6 +1389,7 @@ export default function EventDatesSheet({
                 locations={locations}
               />
             ))}
+            </div>
           </div>
         </div>
       </div>
