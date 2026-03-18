@@ -1,5 +1,5 @@
 import React, { useRef, useCallback } from "react";
-import { Smartphone, Check, MapPin, Music, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Smartphone, Check, MapPin, Music, Zap, ChevronLeft, ChevronRight, Globe } from "lucide-react";
 import { landingContent } from "@/config/content";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
 import { track, LANDING_EVENTS } from "@/lib/track";
@@ -63,8 +63,18 @@ export function Hero({ onOpenDownload }: HeroProps) {
             <div className="landing-hero__ctas">
               <button type="button" className="btn btn-primary" onClick={handleDownloadClick}>
                 <Smartphone size={20} strokeWidth={2} aria-hidden />
-                {hero.ctaPrimary}
+                Descargar app
               </button>
+              <a
+                href="https://dondebailar.com.mx/explore"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost landing-hero__web-btn"
+                aria-label="Ir a la web"
+              >
+                <Globe size={20} strokeWidth={2} aria-hidden />
+                Web
+              </a>
             </div>
           </div>
           <div className="landing-hero__col2">

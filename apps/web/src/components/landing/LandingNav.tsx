@@ -18,9 +18,9 @@ export function LandingNav({ onOpenDownload, onOpenB2B }: LandingNavProps) {
     <header className="landing-nav" role="banner">
       <div className="landing-container">
         <div className="landing-nav__inner">
-          <nav className="landing-brand__name" aria-label="Buscar">
-            <a href="https://dondebailar.com.mx/explore" target="_blank" rel="noopener noreferrer" aria-label="Explorar">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <nav className="landing-brand__name" aria-label="Web">
+            <a href="https://dondebailar.com.mx/explore" target="_blank" rel="noopener noreferrer" aria-label="Ir al sitio web / Explorar">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </a>
           </nav>
           <a className="landing-brand" href="#descargar" aria-label="Donde Bailar MX inicio">
