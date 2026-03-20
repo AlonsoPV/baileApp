@@ -2719,12 +2719,22 @@ export default function ExploreHomeScreen() {
       return { from, to };
     }
     if (preset === "fin_de_semana") {
-      const day = todayDate.getDay();
-      const daysUntilSat = day <= 6 ? (6 - day + 7) % 7 : 0;
-      const sat = addDays(todayDate, daysUntilSat === 0 ? 7 : daysUntilSat);
-      const sun = addDays(sat, 1);
+      // Fin de semana = viernes + sábado + domingo (no solo sáb-dom).
+      const day = todayDate.getDay(); // 0=Dom .. 6=Sáb
+      let daysToFriday: number;
+      if (day === 0) {
+        daysToFriday = -2; // Domingo → viernes de ese mismo fin
+      } else if (day === 6) {
+        daysToFriday = -1; // Sábado → viernes anterior
+      } else if (day >= 1 && day <= 4) {
+        daysToFriday = 5 - day; // Lun–Jue → viernes de la misma semana calendario
+      } else {
+        daysToFriday = 0; // Viernes
+      }
+      const fri = addDays(todayDate, daysToFriday);
+      const sun = addDays(fri, 2);
       return {
-        from: sat.toISOString().slice(0, 10),
+        from: fri.toISOString().slice(0, 10),
         to: sun.toISOString().slice(0, 10),
       };
     }
@@ -4602,6 +4612,32 @@ export default function ExploreHomeScreen() {
               count={normalizedFechas.length}
               sectionId="fechas"
               sectionMinHeight={sectionMinHeight}
+              headerAction={
+                (filters.datePreset === 'hoy' || filters.datePreset === 'fin_de_semana' || filters.datePreset === 'semana') ? (
+                <div
+                  aria-label={`${normalizedFechas.length} eventos`}
+                  title="Eventos según filtros actuales"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 32,
+                    height: 28,
+                    padding: '0 10px',
+                    borderRadius: 999,
+                    border: '1px solid rgba(255,255,255,0.22)',
+                    background: 'rgba(255,255,255,0.08)',
+                    color: '#fff',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    lineHeight: 1,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {normalizedFechas.length}
+                </div>
+                ) : undefined
+              }
             >
               {fechasTimedOut ? (
                 <InlineQueryError

@@ -120,7 +120,10 @@ function formatYmdWithWeekdayEs(value?: string | null) {
     if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return ymd;
     const dt = new Date(y, m - 1, d);
     const weekday = dt.toLocaleDateString("es-MX", { weekday: "long" });
-    return `${weekday} · ${ymd}`;
+    const yy = String(y).slice(-2);
+    const mm = String(m).padStart(2, "0");
+    const dd = String(d).padStart(2, "0");
+    return `${weekday} ${dd}-${mm}-${yy}`;
   } catch {
     return ymd;
   }
@@ -801,21 +804,74 @@ export default function EventDatesSheet({
     try {
       let updated = 0;
       let skipped = 0;
+      const updatedParentIds = new Set<number>();
       for (const r of selectedRows) {
         const dia = makeDiaSemanaFromFecha((r as any)?.fecha);
         if (dia === null) {
           skipped += 1;
           continue;
         }
+        // Recurrente semanal: solo dia_semana (fecha debe seguir presente por NOT NULL en BD).
         await updateRow(r.id, { dia_semana: dia });
         updated += 1;
+        const pid = (r as any)?.parent_id;
+        if (pid != null && Number.isFinite(Number(pid))) updatedParentIds.add(Number(pid));
       }
-      if (updated > 0) showToast(`Recurrentes ✅ (${updated})`, "success");
+      // Materializar próximas ocurrencias para cada parent afectado.
+      for (const parentId of updatedParentIds) {
+        try {
+          await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: parentId, p_weeks_ahead: 13 });
+        } catch (e) {
+          console.warn("[EventDatesSheet] ensure_weekly_occurrences failed for parent", parentId, e);
+        }
+      }
+      if (updated > 0) {
+        qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+        qc.invalidateQueries({ queryKey: ["dates"] });
+        showToast(`Recurrentes ✅ (${updated})`, "success");
+      }
       if (skipped > 0) showToast(`Algunas filas no tenían fecha válida (omitidas: ${skipped})`, "info");
     } catch (e: any) {
       showToast(e?.message || "Error convirtiendo a recurrente", "error");
     }
-  }, [canRun, makeDiaSemanaFromFecha, selectedIds, sortedRows, updateRow, showToast]);
+  }, [canRun, makeDiaSemanaFromFecha, selectedIds, sortedRows, updateRow, showToast, qc]);
+
+  const removeRecurrenceFromSelected = useCallback(async () => {
+    if (!canRun) return;
+    const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
+    const recurrentRows = selectedRows.filter(
+      (r) => (r as any)?.dia_semana != null && typeof (r as any).dia_semana === "number"
+    );
+    if (!recurrentRows.length) {
+      showToast("Ninguna fila seleccionada es recurrente", "info");
+      return;
+    }
+    const ok = window.confirm(
+      `¿Quitar recurrencia en ${recurrentRows.length} fecha(s)? Se asignará la próxima ocurrencia como fecha fija.`
+    );
+    if (!ok) return;
+    try {
+      let updated = 0;
+      for (const r of recurrentRows) {
+        const dia = (r as any).dia_semana as number;
+        const hora = (r as any).hora_inicio || "20:00";
+        const next = calculateNextDateWithTime(dia, hora);
+        const y = next.getFullYear();
+        const m = String(next.getMonth() + 1).padStart(2, "0");
+        const d = String(next.getDate()).padStart(2, "0");
+        const fechaYmd = `${y}-${m}-${d}`;
+        await updateRow(r.id, { dia_semana: null, fecha: fechaYmd });
+        updated += 1;
+      }
+      if (updated > 0) {
+        qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+        qc.invalidateQueries({ queryKey: ["dates"] });
+        showToast(`Recurrencia quitada ✅ (${updated})`, "success");
+      }
+    } catch (e: any) {
+      showToast(e?.message || "Error quitando recurrencia", "error");
+    }
+  }, [canRun, selectedIds, sortedRows, updateRow, showToast, qc]);
 
   const startFrecuentesFromSelection = useCallback(() => {
     if (!onStartFrecuentes) return;
@@ -1274,8 +1330,8 @@ export default function EventDatesSheet({
             className="eds-actionBtn"
             type="button"
             disabled={!canRun}
-            onClick={() => applyPatch({ dia_semana: null })}
-            title="Quitar recurrencia semanal (dia_semana = null) en seleccionadas"
+            onClick={removeRecurrenceFromSelected}
+            title="Quitar recurrencia semanal: asigna la próxima ocurrencia como fecha fija"
           >
             🚫 Quitar recurrencia
           </button>

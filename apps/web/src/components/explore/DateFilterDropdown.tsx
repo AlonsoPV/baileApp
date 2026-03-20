@@ -23,6 +23,7 @@ const DATE_PRESETS: { id: DatePreset; labelKey: string }[] = [
   { id: "todos", labelKey: "all" },
   { id: "hoy", labelKey: "today" },
   { id: "semana", labelKey: "this_week" },
+  { id: "fin_de_semana", labelKey: "weekend" },
 ];
 
 export type DateFilterDropdownProps = {

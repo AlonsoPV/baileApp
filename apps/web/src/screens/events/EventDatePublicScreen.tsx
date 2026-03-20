@@ -47,6 +47,24 @@ const colors = {
   light: '#F5F5F5',
 };
 
+/** Texto “Acerca del evento”: prioridad fecha → biografía del parent → descripción (evita omitir biografia del parent). */
+function resolveEventAboutText(date: any, parent: any): string {
+  const nested = date?.events_parent;
+  const candidates = [
+    date?.biografia,
+    parent?.biografia,
+    nested?.biografia,
+    parent?.descripcion,
+    nested?.descripcion,
+  ];
+  for (const raw of candidates) {
+    if (typeof raw !== "string") continue;
+    const s = raw.trim();
+    if (s.length > 0) return s;
+  }
+  return "";
+}
+
 function buildWhatsAppUrl(phone?: string | null, message?: string | null, eventName?: string | null) {
   if (!phone) return undefined;
   const cleanedPhone = phone.replace(/[^\d]/g, ''); // usar solo dígitos en el número
@@ -354,11 +372,12 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
 
   const dateName = date.nombre || parent?.nombre || 'Fecha de baile';
+  const aboutText = React.useMemo(() => resolveEventAboutText(date, parent), [date, parent]);
   const calendarButton = (
     <AddToCalendarWithStats
       eventId={dateId}
       title={dateName}
-      description={date.biografia || parent?.descripcion}
+      description={aboutText || undefined}
       location={date.lugar || date.ciudad}
       start={calendarStart}
       end={calendarEnd}
@@ -582,8 +601,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
             />
           </section>
           {(() => {
-            const bioText = (date.biografia || parent?.descripcion || '').trim();
-            if (!bioText) return null;
+            if (!aboutText) return null;
             return (
               <section id="event-section-about" className="eds-section eds-section--about">
                 <div className="eds-section-header">
@@ -591,7 +609,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                   <div className="eds-section-underline" aria-hidden />
                 </div>
                 <ExpandableText
-                  text={bioText}
+                  text={aboutText}
                   expandLabel={t('see_more', 'Ver más')}
                   collapseLabel={t('see_less', 'Ver menos')}
                 />
