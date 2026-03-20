@@ -823,7 +823,8 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       const ymd = effectiveYmd(row);
       const hora = String(row?.hora_inicio || row?.evento_hora_inicio || '');
       const parentOrOwn = String(row?.parent_id ?? row?.id ?? 'no_id');
-      if (ymd) return `${parentOrOwn}_${ymd}_${hora}`;
+      // Incluir id de events_date: evita colapsar dos filas distintas con mismo parent/fecha/hora.
+      if (ymd) return `${parentOrOwn}_${ymd}_${hora}_${String(row?.id ?? 'no_id')}`;
       return `id_${String(row?.id ?? 'no_id')}`;
     };
     const shouldIncludeByYmd = (fechaStr: string) => {
