@@ -325,14 +325,6 @@ function AppleLogoIconSmall() {
   );
 }
 
-function GooglePlayIconSmall() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L13.792 12l3.906-3.491zM5.864 2.658L16.802 8.99l-2.302 2.302-8.636-8.635z" />
-    </svg>
-  );
-}
-
 function OpenLayout({
   entityType,
   title,
@@ -360,16 +352,19 @@ function OpenLayout({
 }) {
   const [showFallback, setShowFallback] = React.useState(false);
   const openTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didBackgroundRef = React.useRef(false);
 
   const handleOpenInApp = React.useCallback(() => {
     if (openTimeoutRef.current) {
       clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = null;
     }
+    didBackgroundRef.current = false;
     setShowFallback(false);
     window.location.href = deepLink;
     openTimeoutRef.current = setTimeout(() => {
       openTimeoutRef.current = null;
+      if (didBackgroundRef.current) return;
       setShowFallback(true);
     }, 2000);
   }, [deepLink]);
@@ -385,6 +380,31 @@ function OpenLayout({
     const t = setTimeout(() => setShowFallback(false), 8000);
     return () => clearTimeout(t);
   }, [showFallback]);
+
+  React.useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        didBackgroundRef.current = true;
+        if (openTimeoutRef.current) {
+          clearTimeout(openTimeoutRef.current);
+          openTimeoutRef.current = null;
+        }
+      }
+    };
+    const onPageHide = () => {
+      didBackgroundRef.current = true;
+      if (openTimeoutRef.current) {
+        clearTimeout(openTimeoutRef.current);
+        openTimeoutRef.current = null;
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, []);
 
   return (
     <>
@@ -606,30 +626,6 @@ function OpenLayout({
             >
               <AppleLogoIconSmall />
               <span>App Store</span>
-            </a>
-            <a
-              href={PLAY_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Disponible en Google Play"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                height: 40,
-                padding: "0 14px",
-                borderRadius: 8,
-                background: "#000",
-                color: "#fff",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textDecoration: "none",
-                letterSpacing: "0.01em",
-                boxSizing: "border-box",
-              }}
-            >
-              <GooglePlayIconSmall />
-              <span>Google Play</span>
             </a>
           </div>
         </div>
