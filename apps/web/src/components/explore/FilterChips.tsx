@@ -8,7 +8,7 @@ const TYPES: { key: ExploreType; label: string }[] = [
   { key: "organizadores", label: "organizers" },
   { key: "maestros", label: "teachers" },
   { key: "academias", label: "academies" },
-  { key: "marcas", label: "brands" },
+  // { key: "marcas", label: "brands" },
   { key: "usuarios", label: "users" },
 ];
 

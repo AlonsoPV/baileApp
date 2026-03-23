@@ -5,6 +5,8 @@
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  /* Navbar fijo (.nav-root): padding + fila ~42px + padding + notch. AppShell lo sobrescribe tras medir (useLayoutEffect). */
+  --app-navbar-offset: calc(0.75rem + 42px + 0.75rem + max(env(safe-area-inset-top), 0px));
 }
 
 * {

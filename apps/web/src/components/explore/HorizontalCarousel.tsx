@@ -21,6 +21,8 @@ type Props<T = any> = {
   navPosition?: 'overlay' | 'bottom';
   /** 0..1 del ancho visible a desplazar por click */
   scrollStep?: number;
+  /** Prioriza scroll vertical de página frente al carrusel (p. ej. Explore vista cuadrícula). */
+  preferVerticalScroll?: boolean;
 };
 
 /** Wrapper estandarizado para todos los carousels horizontales (Explore). */
@@ -37,6 +39,7 @@ export default function HorizontalCarousel<T>({
   showNavButtons = true,
   navPosition = 'overlay',
   scrollStep = 0.85,
+  preferVerticalScroll = false,
 }: Props<T>) {
   return (
     <HorizontalSlider
@@ -52,6 +55,7 @@ export default function HorizontalCarousel<T>({
       showNavButtons={showNavButtons}
       navPosition={navPosition}
       scrollStep={scrollStep}
+      preferVerticalScroll={preferVerticalScroll}
     />
   );
 }

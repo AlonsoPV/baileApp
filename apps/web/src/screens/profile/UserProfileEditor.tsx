@@ -743,6 +743,7 @@ const handleSave = async () => {
                     selected={(((form as any)?.ritmos_seleccionados) || []) as string[]}
                     ritmoTags={ritmoTags}
                     setField={setField as any}
+                    size="compact"
                   />
                 </div>
               </div>
@@ -787,6 +788,7 @@ const handleSave = async () => {
                     onToggle={toggleZona}
                     icon="📍"
                     singleSelect={true}
+                    size="compact"
                   />
                 </div>
               </div>

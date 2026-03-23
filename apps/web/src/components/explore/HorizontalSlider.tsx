@@ -38,6 +38,11 @@ type Props<T = any> = {
   itemHeight?: number;
   /** Ancho fijo de cada item en mobile (hero cards). Si > 0, se usa como gridAutoColumns. */
   itemWidth?: number;
+  /**
+   * Si true, el gesto táctil prioriza el scroll vertical de la página (Explore cuadrícula con 2 filas).
+   * Umbrales más estrictos para bloquear en horizontal; mejor para no “atascar” el pan vertical.
+   */
+  preferVerticalScroll?: boolean;
 };
 
 export default function HorizontalSlider<T>({
@@ -53,6 +58,7 @@ export default function HorizontalSlider<T>({
   navPosition = 'overlay',
   itemHeight,
   itemWidth,
+  preferVerticalScroll = false,
 }: Props<T>) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   // Cache geometry to avoid forced reflow in hot paths (wheel/drag).
@@ -343,8 +349,13 @@ export default function HorizontalSlider<T>({
         if (absDx < 8 && absDy < 8) return;
 
         // Priorizar vertical para no bloquear scroll de página por ruido horizontal.
-        const horizontalDominant = absDx > 18 && absDx > absDy * 1.8;
-        const verticalDominant = absDy > 8 && absDy > absDx * 1.05;
+        // preferVerticalScroll: umbrales más exigentes en X (vista cuadrícula Explore, 2 carruseles).
+        const horizontalDominant = preferVerticalScroll
+          ? absDx > 26 && absDx > absDy * 2.25
+          : absDx > 18 && absDx > absDy * 1.8;
+        const verticalDominant = preferVerticalScroll
+          ? absDy > 6 && absDy > absDx * 0.92
+          : absDy > 8 && absDy > absDx * 1.05;
 
         if (horizontalDominant) {
           axisLock = "x";
@@ -358,7 +369,8 @@ export default function HorizontalSlider<T>({
 
       if (axisLock === "x") {
         // Si el gesto muta a vertical tras iniciar, ceder inmediatamente al scroll de página.
-        if (absDy > absDx * 1.15) {
+        const yieldToVertical = preferVerticalScroll ? absDy > absDx * 1.05 : absDy > absDx * 1.15;
+        if (yieldToVertical) {
           axisLock = "y";
           return;
         }
@@ -452,7 +464,15 @@ export default function HorizontalSlider<T>({
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [allowUserScroll, getCarouselItems, getNearestItemIndex, getScrollPaddingLeftPx, items?.length, scheduleNavStateUpdate]);
+  }, [
+    allowUserScroll,
+    getCarouselItems,
+    getNearestItemIndex,
+    getScrollPaddingLeftPx,
+    items?.length,
+    scheduleNavStateUpdate,
+    preferVerticalScroll,
+  ]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const el = scrollerRef.current;
@@ -911,7 +931,6 @@ export default function HorizontalSlider<T>({
             justifyContent: "center",
             gap: 16,
             flexShrink: 0,
-            width: itemWidth && itemWidth > 0 ? itemWidth : 295,
             maxWidth: "100%",
             boxSizing: "border-box",
             backdropFilter: "blur(12px)",

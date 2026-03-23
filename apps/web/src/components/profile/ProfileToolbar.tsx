@@ -13,7 +13,7 @@ const ROLES: RoleMeta[] = [
   { key: "organizador",  label: "Organizador", icon: "🎤", requireApproval: true },
   { key: "maestro",      label: "Maestro",     icon: "🎓", requireApproval: true },
   { key: "academia",     label: "Academia",    icon: "🏫", requireApproval: true },
-  { key: "marca",        label: "Marca",       icon: "🏷️", requireApproval: true },
+  // { key: "marca",        label: "Marca",       icon: "🏷️", requireApproval: true },
 ];
 
 export default function ProfileToolbar() {

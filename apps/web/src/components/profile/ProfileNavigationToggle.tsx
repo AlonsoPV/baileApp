@@ -158,7 +158,7 @@ export const ProfileNavigationToggle: React.FC<ProfileNavigationToggleProps> = (
     { id: 'organizer', name: 'Organizador', icon: '🎤', route: '/profile/organizer' },
     { id: 'academy', name: 'Academia', icon: '🎓', route: '/profile/academy' },
     { id: 'teacher', name: 'Maestro', icon: '👨‍🏫', route: '/profile/teacher' },
-    { id: 'brand', name: 'Marca', icon: '🏷️', route: '/profile/brand' },
+    // { id: 'brand', name: 'Marca', icon: '🏷️', route: '/profile/brand' },
   ];
 
   // Filtrar solo roles disponibles para el usuario

@@ -49,6 +49,9 @@ export default function ExploreListScreen() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { filters, set } = useExploreFilters();
+  React.useEffect(() => {
+    if (filters.type === "marcas") set({ type: "fechas" });
+  }, [filters.type, set]);
   const { showToast } = useToast();
   const currentLabel = typeLabels[filters.type] || 'Resultados';
   const seoTitle = `${currentLabel} | Dónde Bailar`;

@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
 import { routes } from './routes/registry';
 import { isNativeApp } from './utils/isNativeApp';
-import LoadingScreen from './components/LoadingScreen';
+import { RouteLoadingFallback, type RouteLoadingLayout } from './components/RouteLoadingFallback';
 import { RouteLoadErrorBoundary } from './components/RouteLoadErrorBoundary';
 
 // Guards
@@ -109,10 +109,16 @@ const CompetitionGroupDetail = React.lazy(() => import('./components/competition
 const CompetitionGroupForm = React.lazy(() => import('./components/competitionGroups/CompetitionGroupForm'));
 const MyPurchasesScreen = React.lazy(() => import('./screens/payments/MyPurchasesScreen'));
 
-function RouteSuspense({ children }: { children: React.ReactNode }) {
+function RouteSuspense({
+  children,
+  layout = 'fullscreen',
+}: {
+  children: React.ReactNode;
+  layout?: RouteLoadingLayout;
+}) {
   return (
     <RouteLoadErrorBoundary>
-      <Suspense fallback={<LoadingScreen message="Cargando pantalla..." />}>
+      <Suspense fallback={<RouteLoadingFallback layout={layout} />}>
         {children}
       </Suspense>
     </RouteLoadErrorBoundary>
@@ -188,7 +194,7 @@ export default function AppRouter() {
 
       {/* AppShell layout */}
       <Route element={<AppShell />}>
-        <Route element={<RouteSuspense><Outlet /></RouteSuspense>}>
+        <Route element={<RouteSuspense layout="appContent"><Outlet /></RouteSuspense>}>
           {/* Public */}
           <Route path="/explore" element={<ExploreHomeScreen />} />
           <Route path="/explore/list" element={<ExploreListScreen />} />

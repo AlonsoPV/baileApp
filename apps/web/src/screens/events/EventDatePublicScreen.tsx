@@ -19,6 +19,7 @@ import {
   ContactSection,
   MediaGallery,
   formatHeaderDate,
+  formatHeaderTime,
   formatHeaderTimeRange,
 } from "../../components/events/EventDetail";
 import "../../components/events/EventDetail/eventDetailScreen.css";
@@ -500,7 +501,27 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   }, [shareUrl, dateName, t, showToast]);
 
   const dateStr = formatHeaderDate(displayYmd || '');
-  const timeRange = formatHeaderTimeRange(date.hora_inicio, date.hora_fin);
+  /** Rango visible en hero + eds-info-card: inicio y fin; si no hay hora_fin en BD, el fin coincide con Add to calendar (+2h si aplica). */
+  const timeRange = React.useMemo(() => {
+    const hi = date.hora_inicio;
+    const hf = date.hora_fin;
+    if (hf) {
+      return formatHeaderTimeRange(hi, hf);
+    }
+    if (!hi) {
+      return formatHeaderTimeRange(hi, hf);
+    }
+    const startFmt = formatHeaderTime(hi);
+    if (!startFmt) return "";
+    const locale = getLocaleFromI18n();
+    const endFmt = calendarEnd.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "America/Mexico_City",
+    });
+    return `${startFmt} - ${endFmt}`;
+  }, [date.hora_inicio, date.hora_fin, calendarEnd]);
   const venueName = date.lugar || '';
   const costsSummary = React.useMemo(() => {
     const items = Array.isArray((date as any)?.costos) ? (date as any).costos : [];

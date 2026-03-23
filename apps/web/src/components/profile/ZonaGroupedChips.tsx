@@ -164,12 +164,28 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
           childPadding: "5px 10px",
           childFont: "0.72rem",
           parentFont: "0.78rem",
+          selectedChipsMarginTop: "0.5rem",
+          selectedChipsGap: "0.35rem",
+          selectedChipFlexGap: 4,
+          selectedChipPadding: "5px 11px",
+          selectedChipFontSize: "0.78rem",
+          selectedChipFontWeight: 600,
+          selectedChipBoxShadow: "0 2px 8px rgba(76,173,255,0.22)",
+          selectedChipCloseFontSize: "0.8rem",
         }
       : {
           wrapperGap: "0.75rem",
           childPadding: "5px 10px",
           childFont: "0.82rem",
           parentFont: "0.9rem",
+          selectedChipsMarginTop: "1rem",
+          selectedChipsGap: "0.5rem",
+          selectedChipFlexGap: 6,
+          selectedChipPadding: "12px 18px",
+          selectedChipFontSize: "0.95rem",
+          selectedChipFontWeight: 700,
+          selectedChipBoxShadow: "0 6px 16px rgba(76,173,255,0.25)",
+          selectedChipCloseFontSize: "0.9rem",
         };
 
   // Modo display: sólo chips elegidas (sin chips padre)
@@ -487,7 +503,12 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
         {normalizedSelected.length > 0 && (
           <div
             className="zona-selected-chips"
-            style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
+            style={{
+              marginTop: metrics.selectedChipsMarginTop,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: metrics.selectedChipsGap,
+            }}
           >
             {relevantGroups.flatMap((g) => g.items)
               .filter((z) => selectedSet.has(z.id))
@@ -497,17 +518,17 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '12px 18px',
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: metrics.selectedChipFlexGap,
+                    padding: metrics.selectedChipPadding,
                     borderRadius: 999,
-                    background: 'rgba(76,173,255,0.18)',
-                    border: '1px solid rgba(76,173,255,0.6)',
-                    color: 'rgba(255,255,255,0.9)',
-                    fontSize: '0.95rem',
-                    fontWeight: 700,
-                    boxShadow: '0 6px 16px rgba(76,173,255,0.25)',
+                    background: "rgba(76,173,255,0.18)",
+                    border: "1px solid rgba(76,173,255,0.6)",
+                    color: "rgba(255,255,255,0.9)",
+                    fontSize: metrics.selectedChipFontSize,
+                    fontWeight: metrics.selectedChipFontWeight,
+                    boxShadow: metrics.selectedChipBoxShadow,
                   }}
                 >
                   <span>{icon} {z.label}</span>
@@ -515,12 +536,12 @@ const ZonaGroupedChips: React.FC<ZonaGroupedChipsProps> = ({
                     type="button"
                     onClick={() => handleChipClick(z.id)}
                     style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      padding: '0 0.25rem',
-                      fontSize: '0.9rem',
+                      background: "transparent",
+                      border: "none",
+                      color: "#fff",
+                      cursor: "pointer",
+                      padding: "0 0.25rem",
+                      fontSize: metrics.selectedChipCloseFontSize,
                       lineHeight: 1,
                     }}
                   >

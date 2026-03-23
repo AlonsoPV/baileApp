@@ -610,7 +610,38 @@ export default function RolesInfoScreen() {
                 </ul>
 
                 {/* Botones según estado de autenticación */}
-                {user && role.id !== 'usuario' && (
+                {user && role.id !== 'usuario' && role.id === 'brand' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 + index * 0.1 }}
+                    style={{
+                      width: '100%',
+                      marginTop: '1.5rem',
+                      padding: '0.875rem 1.5rem',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      background: 'rgba(255,255,255,0.08)',
+                      color: 'rgba(255,255,255,0.85)',
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                      cursor: 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      boxSizing: 'border-box',
+                    }}
+                    aria-disabled="true"
+                  >
+                    <span>⏳</span>
+                    <span>{t('coming_soon')}</span>
+                  </motion.div>
+                )}
+                {user && role.id !== 'usuario' && role.id !== 'brand' && (
                   <motion.button
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}

@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useExploreFilters, type DatePreset, type ExploreType } from "../../state/exploreFilters";
@@ -12,7 +12,10 @@ import { mapExploreTypeToContext, mapExploreTypeToZoneContext } from "@/filters/
 import { groupRitmos, zonaGroupsToTreeGroups } from "@/filters/exploreFilterGroups";
 import { MultiSelectTreeDropdown } from "@/components/explore/MultiSelectTreeDropdown";
 import { DateFilterDropdown } from "@/components/explore/DateFilterDropdown";
-import EventCard from "../../components/explore/cards/EventCard";
+import EventListRow from "@/components/explore/EventListRow";
+import EventSocialGridCard from "@/components/explore/EventSocialGridCard";
+import { readFechasViewMode, writeFechasViewMode, type FechasViewMode } from "@/utils/fechasViewModeStorage";
+import { LayoutGrid, List } from "lucide-react";
 import OrganizerCard from "../../components/explore/cards/OrganizerCard";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
@@ -36,6 +39,7 @@ import { useToast } from "../../components/Toast";
 import { mark, notifyError, notifyReady } from "@/utils/performanceLogger";
 import { normalizeEventsForCards } from "@/utils/normalizeEventsForCards";
 import { getEffectiveEventDate, getEffectiveEventDateYmd, normalizeDateOnly } from "@/utils/effectiveEventDate";
+import { sortFechasByRecentFirst } from "@/utils/exploreFechasGrid";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -150,6 +154,47 @@ function useExploreCardDimensions(isMobile: boolean) {
       sectionMinHeight: dimensions.height > 0 ? dimensions.height + 52 + 24 + 20 : undefined,
     }),
     [dimensions.height, dimensions.width]
+  );
+}
+
+/** Dimensiones vista cuadrícula sociales: ~2 cards visibles en viewport, proporción compacta. */
+function useExploreFechasGridDimensions(isMobile: boolean) {
+  const compute = React.useCallback(() => {
+    if (typeof window === "undefined") return { width: 0, height: 0, gap: 10 };
+    const vw = window.innerWidth;
+    const paddingX = 32;
+    const gap = 10;
+    // 2 cards + 1 hueco entre ellas: 2*w + gap = vw - paddingX
+    const rawW = Math.floor((vw - paddingX - gap) / 2);
+    const cardW = vw >= 769 ? Math.max(120, Math.min(320, rawW)) : Math.max(100, rawW);
+    const posterH = Math.round(cardW * 1.05);
+    const bodyH = 92;
+    const cardH = posterH + bodyH;
+    return { width: cardW, height: cardH, gap };
+  }, [isMobile]);
+
+  const [dimensions, setDimensions] = React.useState(compute);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    setDimensions(compute());
+    const handler = () => setDimensions(compute());
+    window.addEventListener("resize", handler);
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", handler);
+    return () => {
+      window.removeEventListener("resize", handler);
+      vv?.removeEventListener("resize", handler);
+    };
+  }, [compute]);
+
+  return React.useMemo(
+    () => ({
+      gridCardWidth: dimensions.width,
+      gridCardHeight: dimensions.height,
+      gridGap: dimensions.gap,
+    }),
+    [dimensions.width, dimensions.height, dimensions.gap]
   );
 }
 
@@ -2476,12 +2521,16 @@ function Section({
 }
 
 export default function ExploreHomeScreen() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const { filters, set } = useExploreFilters();
+  // "Marcas" oculto en el selector: si quedó persistido, volver a un tipo visible.
+  React.useEffect(() => {
+    if (filters.type === "marcas") set({ type: "fechas" });
+  }, [filters.type, set]);
   const selectedType = (!filters.type || filters.type === 'all' ? 'fechas' : filters.type) as ExploreType;
   const showAll = false;
+
   // DEV-only instrumentation helper (safe in prod)
   // Note: Vite does not define __DEV__ by default; we emulate it here.
   const __DEV__ = import.meta.env.DEV;
@@ -2509,6 +2558,14 @@ export default function ExploreHomeScreen() {
   const [filtersPanelOpen, setFiltersPanelOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [visibleCount, setVisibleCount] = React.useState(INITIAL_LIMIT);
+  const [fechasViewMode, setFechasViewModeState] = React.useState<FechasViewMode>(() => {
+    if (typeof window === "undefined") return "carousel";
+    return readFechasViewMode() ?? "carousel";
+  });
+  const setFechasViewMode = React.useCallback((mode: FechasViewMode) => {
+    setFechasViewModeState(mode);
+    writeFechasViewMode(mode);
+  }, []);
   const [mountedSections, setMountedSections] = React.useState<Set<ExploreSectionId>>(
     () => new Set(ABOVE_FOLD_SECTIONS)
   );
@@ -2609,6 +2666,7 @@ export default function ExploreHomeScreen() {
   );
 
   const { cardHeight, cardWidth, sectionMinHeight } = useExploreCardDimensions(isMobile);
+  const { gridCardWidth, gridCardHeight, gridGap } = useExploreFechasGridDimensions(isMobile);
 
   React.useEffect(() => {
     if (!showAll) {
@@ -3254,7 +3312,7 @@ export default function ExploreHomeScreen() {
   );
   const hasMoreServer = !!fechasQuery.hasNextPage;
   const hasMoreClient = normalizedFechas.length > visibleCount;
-  const showLoadMoreCard = selectedType === 'fechas' && !hasExactDateFilter && (hasMoreClient || hasMoreServer);
+  const showLoadMoreCard = selectedType === 'fechas' && (hasMoreClient || hasMoreServer);
   const loadMoreBusyRef = React.useRef(false);
 
   const onLoadMoreFechas = React.useCallback(async () => {
@@ -3291,62 +3349,122 @@ export default function ExploreHomeScreen() {
     [showLoadMoreCard, visibleFechas]
   );
 
-  const renderFechaItem = React.useCallback((fechaEvento: any, idx: number) => {
-    if ((fechaEvento as any)?.__type === "load_more") {
-      return (
-        <LoadMoreCard
-          key="load-more-fechas"
-          onClick={onLoadMoreFechas}
-          loading={!!fechasQuery.isFetchingNextPage}
-          title={t("load_more") || "Cargar más"}
-          subtitle={t("explore_type_sociales") || "Ver más sociales"}
-        />
-      );
-    }
+  /** Fila 1 — recién cargados (created_at / updated_at desc). */
+  const fechasRowRecent = React.useMemo(() => sortFechasByRecentFirst(visibleFechas), [visibleFechas]);
 
-    if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-      __DEV_LOG("renderItem", {
-        type: "fechas",
-        idx,
-        id: fechaEvento?.id,
-        original: (fechaEvento as any)?._original_id,
-        rec: (fechaEvento as any)?._recurrence_index,
-      });
-    }
+  const fechasGridSliderProps = React.useMemo(
+    () => ({
+      className: isMobile
+        ? "explore-slider explore-slider--mobile explore-slider--fechas-grid"
+        : "explore-slider explore-slider--fechas-grid",
+      autoColumns: undefined,
+      disableDesktopScroll: true,
+      showNavButtons: true,
+      navPosition: (isMobile ? "bottom" : "overlay") as "bottom" | "overlay",
+      gap: gridGap,
+      itemHeight: gridCardHeight > 0 ? gridCardHeight : undefined,
+      itemWidth: gridCardWidth > 0 ? gridCardWidth : undefined,
+      scrollStep: 0.82,
+      /** Scroll vertical de página fluido sobre la zona del carrusel (app-shell / Android). */
+      preferVerticalScroll: true,
+    }),
+    [isMobile, gridCardHeight, gridCardWidth, gridGap]
+  );
 
-    const key =
-      (fechaEvento as any)?._recurrence_index !== undefined
-        ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}_${getEffectiveEventDateYmd(fechaEvento)}_${String(fechaEvento?.hora_inicio || fechaEvento?.evento_hora_inicio || "")}`
-        : buildEventOccurrenceKey(fechaEvento);
+  const fechasGridSectionMinHeight = React.useMemo(() => {
+    if (gridCardHeight <= 0) return undefined;
+    return gridCardHeight * 2 + 140;
+  }, [gridCardHeight]);
 
-    const card = (
-      <div
-        key={key}
-        onClickCapture={handlePreNavigate}
-        style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 16,
-          padding: 0,
-          overflow: 'hidden',
-          boxShadow: 'none'
-        }}
-      >
-        <EventCard item={fechaEvento} priority={idx < EAGER_MAIN} />
-      </div>
-    );
-
-    if (__DEV__) {
-      try {
-        return card;
-      } catch (e) {
-        __DEV_LOG("renderItem_error", { type: "fechas", idx, id: fechaEvento?.id, error: (e as any)?.message || e });
-        return null;
+  /** Vista cuadrícula: cards compactas + misma fila “cargar más” solo en fila 2 (orden fecha/hora). */
+  const renderFechaGridItem = React.useCallback(
+    (fechaEvento: any, idx: number) => {
+      if ((fechaEvento as any)?.__type === "load_more") {
+        return (
+          <LoadMoreCard
+            key="load-more-fechas"
+            onClick={onLoadMoreFechas}
+            loading={!!fechasQuery.isFetchingNextPage}
+            title={t("load_more") || "Cargar más"}
+            subtitle={t("explore_type_sociales") || "Ver más sociales"}
+          />
+        );
       }
-    }
 
-    return card;
-  }, [__DEV__, __DEV_LOG, handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]);
+      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+        __DEV_LOG("renderItem", {
+          type: "fechas_grid",
+          idx,
+          id: fechaEvento?.id,
+          original: (fechaEvento as any)?._original_id,
+          rec: (fechaEvento as any)?._recurrence_index,
+        });
+      }
+
+      const card = (
+        <div
+          onClickCapture={handlePreNavigate}
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 16,
+            padding: 0,
+            overflow: "hidden",
+            boxShadow: "none",
+            height: "100%",
+          }}
+        >
+          <EventSocialGridCard item={fechaEvento} priority={idx < 3} />
+        </div>
+      );
+
+      if (__DEV__) {
+        try {
+          return card;
+        } catch (e) {
+          __DEV_LOG("renderItem_error", { type: "fechas_grid", idx, id: fechaEvento?.id, error: (e as any)?.message || e });
+          return null;
+        }
+      }
+
+      return card;
+    },
+    [__DEV__, __DEV_LOG, handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
+  );
+
+  const renderFechaListItem = React.useCallback(
+    (fechaEvento: any, idx: number) => {
+      if ((fechaEvento as any)?.__type === "load_more") {
+        return (
+          <div key="load-more-fechas" className="explore-fechas-list__load-more" role="listitem">
+            <LoadMoreCard
+              onClick={onLoadMoreFechas}
+              loading={!!fechasQuery.isFetchingNextPage}
+              title={t("load_more") || "Cargar más"}
+              subtitle={t("explore_type_sociales") || "Ver más sociales"}
+            />
+          </div>
+        );
+      }
+
+      const key =
+        (fechaEvento as any)?._recurrence_index !== undefined
+          ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}_${getEffectiveEventDateYmd(fechaEvento)}_${String(fechaEvento?.hora_inicio || fechaEvento?.evento_hora_inicio || "")}`
+          : buildEventOccurrenceKey(fechaEvento);
+
+      return (
+        <div
+          key={key}
+          role="listitem"
+          onClickCapture={handlePreNavigate}
+          style={{ width: "100%" }}
+        >
+          <EventListRow item={fechaEvento} priority={idx < EAGER_MAIN} allTags={allTags as any[]} />
+        </div>
+      );
+    },
+    [handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t, allTags]
+  );
 
   const shouldLoadMaestros = selectedType === 'maestros' || selectedType === 'clases';
   const maestrosQuery = useExploreQuery({
@@ -4077,7 +4195,7 @@ export default function ExploreHomeScreen() {
     { id: 'maestros', labelKey: 'teachers' },
     { id: 'usuarios', labelKey: 'dancers' },
     { id: 'organizadores', labelKey: 'organizers' },
-    { id: 'marcas', labelKey: 'brands' },
+    // { id: 'marcas', labelKey: 'brands' },
   ];
 
   const setTypeAndClearDatesIfNeeded = React.useCallback(
@@ -4612,34 +4730,105 @@ export default function ExploreHomeScreen() {
               title={t('section_upcoming_scene')}
               count={normalizedFechas.length}
               sectionId="fechas"
-              sectionMinHeight={sectionMinHeight}
+              sectionMinHeight={
+                fechasViewMode === "list" ? undefined : fechasGridSectionMinHeight ?? sectionMinHeight
+              }
               headerAction={
                 (filters.datePreset === 'hoy' || filters.datePreset === 'fin_de_semana' || filters.datePreset === 'semana') ? (
-                <div
-                  aria-label={`${normalizedFechas.length} eventos`}
-                  title="Eventos según filtros actuales"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: 32,
-                    height: 28,
-                    padding: '0 10px',
-                    borderRadius: 999,
-                    border: '1px solid rgba(255,255,255,0.22)',
-                    background: 'rgba(255,255,255,0.08)',
-                    color: '#fff',
-                    fontSize: 13,
-                    fontWeight: 800,
-                    lineHeight: 1,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {normalizedFechas.length}
-                </div>
+                  <div
+                    aria-label={`${normalizedFechas.length} eventos`}
+                    title="Eventos según filtros actuales"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: 32,
+                      height: 28,
+                      padding: '0 10px',
+                      borderRadius: 999,
+                      border: '1px solid rgba(255,255,255,0.22)',
+                      background: 'rgba(255,255,255,0.08)',
+                      color: '#fff',
+                      fontSize: 13,
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {normalizedFechas.length}
+                  </div>
                 ) : undefined
               }
             >
+              <>
+              <div
+                className="explore-fechas-view-toggle-row"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  width: '100%',
+                  marginTop: -4,
+                  marginBottom: 14,
+                  paddingLeft: 2,
+                  paddingRight: 2,
+                }}
+              >
+                <div
+                  role="group"
+                  aria-label={t('explore_fechas_view_group') || 'Vista de sociales'}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0,
+                    borderRadius: 999,
+                    border: '1px solid rgba(255,255,255,0.22)',
+                    background: 'rgba(0,0,0,0.2)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <button
+                    type="button"
+                    aria-pressed={fechasViewMode === 'carousel'}
+                    onClick={() => setFechasViewMode('carousel')}
+                    title={t('explore_fechas_view_cards') || 'Tarjetas'}
+                    aria-label={t('explore_fechas_view_cards') || 'Vista en tarjetas'}
+                    style={{
+                      border: 'none',
+                      background: fechasViewMode === 'carousel' ? 'rgba(255,255,255,0.18)' : 'transparent',
+                      color: '#fff',
+                      padding: '8px 14px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 0,
+                    }}
+                  >
+                    <LayoutGrid size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={fechasViewMode === 'list'}
+                    onClick={() => setFechasViewMode('list')}
+                    title={t('explore_fechas_view_list') || 'Lista'}
+                    aria-label={t('explore_fechas_view_list') || 'Vista en lista'}
+                    style={{
+                      border: 'none',
+                      background: fechasViewMode === 'list' ? 'rgba(255,255,255,0.18)' : 'transparent',
+                      color: '#fff',
+                      padding: '8px 14px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 0,
+                    }}
+                  >
+                    <List size={18} />
+                  </button>
+                </div>
+              </div>
               {fechasTimedOut ? (
                 <InlineQueryError
                   title="La carga está tardando demasiado"
@@ -4657,16 +4846,46 @@ export default function ExploreHomeScreen() {
               ) : (
                 <>
                   {normalizedFechas.length > 0 ? (
-                    <HorizontalCarousel
-                      {...sliderProps}
-                      items={fechasSliderItems}
-                      renderItem={renderFechaItem}
-                    />
+                    fechasViewMode === 'list' ? (
+                      <div className="explore-fechas-list" role="list">
+                        {fechasSliderItems.map((item, idx) => renderFechaListItem(item, idx))}
+                      </div>
+                    ) : (
+                      <div className="explore-fechas-grid">
+                        <div className="explore-fechas-grid__row">
+                          <div className="explore-fechas-grid__row-head">
+                            <h3 className="explore-fechas-grid__row-title">
+                              {t('explore_fechas_row_recent')}
+                            </h3>
+                          </div>
+                          {fechasRowRecent.length > 0 ? (
+                            <HorizontalCarousel
+                              {...fechasGridSliderProps}
+                              items={fechasRowRecent}
+                              renderItem={renderFechaGridItem}
+                            />
+                          ) : null}
+                        </div>
+                        <div className="explore-fechas-grid__row">
+                          <div className="explore-fechas-grid__row-head">
+                            <h3 className="explore-fechas-grid__row-title">
+                              {t('explore_fechas_row_date_time')}
+                            </h3>
+                          </div>
+                          <HorizontalCarousel
+                            {...fechasGridSliderProps}
+                            items={fechasSliderItems}
+                            renderItem={renderFechaGridItem}
+                          />
+                        </div>
+                      </div>
+                    )
                   ) : (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
                   )}
                 </>
               )}
+              </>
             </Section>
           )}
 

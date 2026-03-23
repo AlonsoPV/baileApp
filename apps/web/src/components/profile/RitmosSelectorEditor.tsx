@@ -9,9 +9,11 @@ type RitmosSelectorEditorProps = {
   ritmoTags: Tag[];
   setField: (key: string, value: any) => void;
   allowedIds?: string[];
+  /** Chips seleccionadas y dropdown más compactos (p. ej. perfil usuario) */
+  size?: "default" | "compact";
 };
 
-export default function RitmosSelectorEditor({ selected, ritmoTags, setField, allowedIds }: RitmosSelectorEditorProps) {
+export default function RitmosSelectorEditor({ selected, ritmoTags, setField, allowedIds, size = "default" }: RitmosSelectorEditorProps) {
   const onChangeCatalog = (ids: string[]) => {
     // Guardar selección de catálogo directamente
     setField('ritmos_seleccionados' as any, ids as any);
@@ -30,7 +32,7 @@ export default function RitmosSelectorEditor({ selected, ritmoTags, setField, al
   };
 
   return (
-    <RitmosChips selected={selected} onChange={onChangeCatalog} allowedIds={allowedIds} />
+    <RitmosChips selected={selected} onChange={onChangeCatalog} allowedIds={allowedIds} size={size} />
   );
 }
 

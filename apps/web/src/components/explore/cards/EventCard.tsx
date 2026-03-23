@@ -1,9 +1,7 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
-import { useTags } from "../../../hooks/useTags";
-import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { fmtDate } from "../../../utils/format";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { withStableCacheBust } from "../../../utils/cacheBuster";
@@ -21,12 +19,7 @@ interface EventCardProps {
 }
 
 const resolveEventSetlist = (item: any): string => {
-  const candidates = [
-    item?.djs,
-    item?.evento_djs,
-    item?.events_date?.djs,
-    item?.__ui?.djs,
-  ];
+  const candidates = [item?.djs, item?.evento_djs, item?.events_date?.djs, item?.__ui?.djs];
   for (const value of candidates) {
     if (typeof value !== "string") continue;
     const normalized = value.replace(/\s+/g, " ").trim();
@@ -35,16 +28,46 @@ const resolveEventSetlist = (item: any): string => {
   return "";
 };
 
+function formatHHMM(t?: string) {
+  if (!t) return "";
+  try {
+    const s = String(t);
+    if (s.includes(":")) {
+      const [hh = "", mm = ""] = s.split(":");
+      return `${hh.padStart(2, "0").slice(-2)}:${mm.padStart(2, "0").slice(-2)}`;
+    }
+    if (s.length === 4) return `${s.slice(0, 2)}:${s.slice(2, 4)}`;
+  } catch {
+    /* ignore */
+  }
+  return String(t);
+}
+
+const toNumericId = (v: any): number | null => {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && /^\d+$/.test(v)) return Number(v);
+  return null;
+};
+
+function useEventCardMotion() {
+  const reduceMotion = useReducedMotion();
+  return React.useMemo(
+    () => ({
+      reduceMotion,
+      initial: reduceMotion ? (false as const) : ({ opacity: 0, scale: 0.98 } as const),
+      hover: reduceMotion ? undefined : { scale: 1.02, y: -6, transition: { duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] as const } },
+      tap: reduceMotion ? undefined : { scale: 0.99 },
+    }),
+    [reduceMotion]
+  );
+}
+
 /** Card "tonta": usa solo item.__ui precomputado. Cero hooks de datos, cero queries. */
 function EventCardDumb({ item, priority = false }: EventCardProps) {
   const ui = item?.__ui!;
-  const toNumericId = (v: any): number | null => {
-    if (typeof v === "number" && Number.isFinite(v)) return v;
-    if (typeof v === "string" && /^\d+$/.test(v)) return Number(v);
-    return null;
-  };
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
+  const motionPrefs = useEventCardMotion();
 
   const flyerCacheKey =
     ((item as any)?.updated_at as string | undefined) ||
@@ -71,27 +94,14 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
   const organizador = item.organizador_nombre || item.organizer_name;
   const setlist = React.useMemo(() => resolveEventSetlist(item), [item]);
 
-  const formatHHMM = (t?: string) => {
-    if (!t) return "";
-    try {
-      const s = String(t);
-      if (s.includes(":")) {
-        const [hh = "", mm = ""] = s.split(":");
-        return `${hh.padStart(2, "0").slice(-2)}:${mm.padStart(2, "0").slice(-2)}`;
-      }
-      if (s.length === 4) return `${s.slice(0, 2)}:${s.slice(2, 4)}`;
-    } catch {}
-    return String(t);
-  };
-
   return (
     <LiveLink to={linkTo} asCard={false}>
       <motion.article
         className="card event-card-mobile"
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={motionPrefs.initial}
         animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={motionPrefs.hover}
+        whileTap={motionPrefs.tap}
       >
         {setlist && (
           <div className="event-setlist-top" title={setlist}>
@@ -118,7 +128,10 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
                 loading={priority ? "eager" : "lazy"}
                 fetchPriority={priority ? "high" : "auto"}
                 decoding="async"
-                onLoad={() => { logCardImage("evento", eventId, imageUrlFinal, true, "load"); setImageError(false); }}
+                onLoad={() => {
+                  logCardImage("evento", eventId, imageUrlFinal, true, "load");
+                  setImageError(false);
+                }}
                 onError={() => setImageError(true)}
               />
             ) : null}
@@ -127,9 +140,9 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
         <div className="content">
           <h3 className="event-title">{nombre}</h3>
           {item.ownerName && (
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginBottom: 8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000" }}>
-            por <strong style={{ color: "#fff", fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000" }}>{item.ownerName}</strong>
-          </div>
+            <p className="event-card__owner">
+              por <strong>{item.ownerName}</strong>
+            </p>
           )}
           <div className="meta">
             {ui.fechaYmd && (
@@ -140,54 +153,61 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
             <div className="meta-row--time-zone">
               {horaInicio && <div className="tag">🕗 {formatHHMM(horaInicio)}</div>}
               <div className="tag tag--cost" aria-label={ui.costoMonto === 0 ? "Entrada gratis" : `Costo taquilla ${formatCostoMonto(ui.costoMonto)}`}>
-                {ui.costoMonto === 0 ? <span>Gratis</span> : (
-                  <><span className="tag__cost-icon" aria-hidden>$</span><span>{ui.costoMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span></>
+                {ui.costoMonto === 0 ? (
+                  <span>Gratis</span>
+                ) : (
+                  <>
+                    <span className="tag__cost-icon" aria-hidden>
+                      $
+                    </span>
+                    <span>{ui.costoMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+                  </>
                 )}
-                {ui.hasDiscount && <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">%</span>}
+                {ui.hasDiscount && (
+                  <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">
+                    %
+                  </span>
+                )}
               </div>
               {ui.lugarNombre && <div className="tag tag--location">📍 {ui.lugarNombre}</div>}
             </div>
           </div>
           {organizador && (
-            <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)", fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>👤</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.92)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }} title={organizador}>{organizador}</div>
-                <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Organizador</div>
+            <div className="event-card__organizer">
+              <div className="event-card__organizer-avatar" aria-hidden>
+                👤
+              </div>
+              <div className="event-card__organizer-text">
+                <div className="event-card__organizer-name" title={organizador}>
+                  {organizador}
+                </div>
+                <div className="event-card__organizer-label">Organizador</div>
               </div>
             </div>
           )}
         </div>
-        <div aria-hidden style={{ pointerEvents: "none", position: "absolute", inset: -2, borderRadius: 18, boxShadow: "0 0 0 0px rgba(255,255,255,0)", transition: "box-shadow .2s ease" }} className="card-focus-ring" />
+        <div
+          aria-hidden
+          className="card-focus-ring"
+          style={{
+            pointerEvents: "none",
+            position: "absolute",
+            inset: -2,
+            borderRadius: 18,
+            boxShadow: "0 0 0 0px rgba(255,255,255,0)",
+            transition: "box-shadow .2s ease",
+          }}
+        />
       </motion.article>
     </LiveLink>
   );
 }
 
 /** Card con fallback: usa useTags cuando item.__ui no existe (pantallas fuera de Explore). */
-function EventCardWithTags({ item, priority = false, allTags: allTagsProp }: EventCardProps) {
-  const toNumericId = (v: any): number | null => {
-    if (typeof v === "number" && Number.isFinite(v)) return v;
-    if (typeof v === "string" && /^\d+$/.test(v)) return Number(v);
-    return null;
-  };
+function EventCardWithTags({ item, priority = false }: EventCardProps) {
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
-  const { data: allTagsFromHook } = useTags() as any;
-  const allTags = allTagsProp ?? allTagsFromHook;
-
-  const formatHHMM = (t?: string) => {
-    if (!t) return "";
-    try {
-      const s = String(t);
-      if (s.includes(":")) {
-        const [hh = "", mm = ""] = s.split(":");
-        return `${hh.padStart(2, "0").slice(-2)}:${mm.padStart(2, "0").slice(-2)}`;
-      }
-      if (s.length === 4) return `${s.slice(0, 2)}:${s.slice(2, 4)}`;
-    } catch {}
-    return String(t);
-  };
+  const motionPrefs = useEventCardMotion();
 
   const toUrl = (u: string | null | undefined) =>
     u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined;
@@ -257,39 +277,15 @@ function EventCardWithTags({ item, priority = false, allTags: allTagsProp }: Eve
     }
     return m ?? 0;
   }, [item, primaryCost]);
-  const ritmoNames = React.useMemo(() => {
-    try {
-      const labelByCatalogId = new Map<string, string>();
-      RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
-      const selectedCatalog: string[] =
-        (Array.isArray(item?.ritmos_seleccionados) && item.ritmos_seleccionados) ||
-        (Array.isArray(item?.events_parent?.ritmos_seleccionados) && item.events_parent?.ritmos_seleccionados) ||
-        [];
-      if (selectedCatalog.length > 0) {
-        return selectedCatalog.map((id) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
-      }
-      const estilosNums: number[] =
-        (Array.isArray(item?.estilos) && item.estilos) ||
-        (Array.isArray(item?.events_parent?.estilos) && item.events_parent?.estilos) ||
-        [];
-      if (Array.isArray(allTags) && estilosNums.length > 0) {
-        return estilosNums
-          .map((id: number) => allTags.find((t: any) => t.id === id && t.tipo === "ritmo"))
-          .filter(Boolean)
-          .map((t: any) => t.nombre as string);
-      }
-    } catch {}
-    return [] as string[];
-  }, [item, allTags]);
 
   return (
     <LiveLink to={linkTo} asCard={false}>
       <motion.article
         className="card event-card-mobile"
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={motionPrefs.initial}
         animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={motionPrefs.hover}
+        whileTap={motionPrefs.tap}
       >
         {setlist && (
           <div className="event-setlist-top" title={setlist}>
@@ -316,7 +312,10 @@ function EventCardWithTags({ item, priority = false, allTags: allTagsProp }: Eve
                 loading={priority ? "eager" : "lazy"}
                 fetchPriority={priority ? "high" : "auto"}
                 decoding="async"
-                onLoad={() => { logCardImage("evento", eventId, imageUrlFinal, true, "load"); setImageError(false); }}
+                onLoad={() => {
+                  logCardImage("evento", eventId, imageUrlFinal, true, "load");
+                  setImageError(false);
+                }}
                 onError={(e) => {
                   const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? "Image load failed";
                   console.warn("[CardImageError] type=evento id=", eventId, "uri=", imageUrlFinal?.slice(0, 80), "error=", msg);
@@ -329,9 +328,9 @@ function EventCardWithTags({ item, priority = false, allTags: allTagsProp }: Eve
         <div className="content">
           <h3 className="event-title">{nombre}</h3>
           {item.ownerName && (
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", marginBottom: 8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000" }}>
-            por <strong style={{ color: "#fff", fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000" }}>{item.ownerName}</strong>
-          </div>
+            <p className="event-card__owner">
+              por <strong>{item.ownerName}</strong>
+            </p>
           )}
           <div className="meta">
             {fecha && (
@@ -342,25 +341,51 @@ function EventCardWithTags({ item, priority = false, allTags: allTagsProp }: Eve
             <div className="meta-row--time-zone">
               {horaInicio && <div className="tag">🕗 {formatHHMM(horaInicio)}</div>}
               <div className="tag tag--cost" aria-label={costMonto === 0 ? "Entrada gratis" : `Costo taquilla ${formatCostoMonto(costMonto)}`}>
-                {costMonto === 0 ? <span>Gratis</span> : (
-                  <><span className="tag__cost-icon" aria-hidden>$</span><span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span></>
+                {costMonto === 0 ? (
+                  <span>Gratis</span>
+                ) : (
+                  <>
+                    <span className="tag__cost-icon" aria-hidden>
+                      $
+                    </span>
+                    <span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+                  </>
                 )}
-                {showDiscount && <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">%</span>}
+                {showDiscount && (
+                  <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">
+                    %
+                  </span>
+                )}
               </div>
               {lugarSoloNombre && <div className="tag tag--location">📍 {lugarSoloNombre}</div>}
             </div>
           </div>
           {organizador && (
-            <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)", fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>👤</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.92)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }} title={organizador}>{organizador}</div>
-                <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Organizador</div>
+            <div className="event-card__organizer">
+              <div className="event-card__organizer-avatar" aria-hidden>
+                👤
+              </div>
+              <div className="event-card__organizer-text">
+                <div className="event-card__organizer-name" title={organizador}>
+                  {organizador}
+                </div>
+                <div className="event-card__organizer-label">Organizador</div>
               </div>
             </div>
           )}
         </div>
-        <div aria-hidden style={{ pointerEvents: "none", position: "absolute", inset: -2, borderRadius: 18, boxShadow: "0 0 0 0px rgba(255,255,255,0)", transition: "box-shadow .2s ease" }} className="card-focus-ring" />
+        <div
+          aria-hidden
+          className="card-focus-ring"
+          style={{
+            pointerEvents: "none",
+            position: "absolute",
+            inset: -2,
+            borderRadius: 18,
+            boxShadow: "0 0 0 0px rgba(255,255,255,0)",
+            transition: "box-shadow .2s ease",
+          }}
+        />
       </motion.article>
     </LiveLink>
   );
@@ -375,4 +400,3 @@ const EventCard = React.memo(function EventCard(props: EventCardProps) {
 });
 
 export default EventCard;
-
