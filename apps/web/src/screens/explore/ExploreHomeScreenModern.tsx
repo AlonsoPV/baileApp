@@ -17,15 +17,21 @@ import EventSocialGridCard from "@/components/explore/EventSocialGridCard";
 import EventCarteleraCard from "@/components/explore/EventCarteleraCard";
 import "@/components/explore/exploreFechasCartelera.css";
 import { readFechasViewMode, writeFechasViewMode, type FechasViewMode } from "@/utils/fechasViewModeStorage";
+import {
+  readExploreSectionViewModes,
+  patchExploreSectionViewMode,
+  type ExploreListableSectionId,
+  type ExploreSectionViewMode,
+} from "@/utils/exploreSectionViewModeStorage";
+import { ExploreSectionViewToggle } from "@/components/explore/ExploreSectionViewToggle";
+import ClaseListRow from "@/components/explore/ClaseListRow";
+import ExploreProfileListRow from "@/components/explore/ExploreProfileListRow";
+import ExploreEntityCarteleraCard from "@/components/explore/ExploreEntityCarteleraCard";
 import { LayoutGrid, List, Images } from "lucide-react";
-import OrganizerCard from "../../components/explore/cards/OrganizerCard";
-import TeacherCard from "../../components/explore/cards/TeacherCard";
-import AcademyCard from "../../components/explore/cards/AcademyCard";
 import HorizontalCarousel from "../../components/explore/HorizontalCarousel";
+import ClassExploreGridCard from "@/components/explore/ClassExploreGridCard";
 import BrandCard from "../../components/explore/cards/BrandCard";
-import ClassCard from "../../components/explore/cards/ClassCard";
 import SocialCard from "../../components/explore/cards/SocialCard";
-import DancerCard from "../../components/explore/cards/DancerCard";
 import { LoadMoreCard } from "@/components/explore/cards/LoadMoreCard";
 import { urls } from "../../lib/urls";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
@@ -323,17 +329,6 @@ function InlineQueryError({
   );
 }
 
-
-/**
- * ClaseItem - Componente memoizado optimizado para scroll fluido
- * 
- * Optimizaciones:
- * - Memoización con comparación personalizada por ownerType/ownerId/titulo
- * - Reducción de animaciones en mobile (solo primeras 10 cards en desktop)
- * - CSS contain para limitar repaints
- * - Aceleración de hardware con translateZ(0)
- * - Comparación estable por clave única del item
- */
 type ExploreSectionId = 'fechas' | 'clases' | 'academias' | 'maestros' | 'usuarios' | 'organizadores' | 'marcas';
 const ABOVE_FOLD_SECTIONS: ExploreSectionId[] = ['fechas', 'clases'];
 const ALL_EXPLORE_SECTIONS: ExploreSectionId[] = [
@@ -365,58 +360,6 @@ function runWhenIdle(callback: () => void, timeoutMs = 350): () => void {
   const id = window.setTimeout(callback, 120);
   return () => window.clearTimeout(id);
 }
-
-const ClaseItem = React.memo(({ clase, idx, handlePreNavigate, eagerPerCarousel = 0 }: { clase: any; idx: number; handlePreNavigate: () => void; eagerPerCarousel?: number }) => {
-  const stableKey =
-    `${clase.ownerType || 'owner'}-${clase.ownerId ?? 'unknown'}-${clase.titulo ?? 'class'}-${clase.fecha ?? (Array.isArray(clase.diasSemana) ? clase.diasSemana.join('-') : 'semana')}-${idx}`;
-
-  // Reducir animaciones en mobile para mejor rendimiento
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const shouldAnimate = !isMobile && idx < 10; // Solo animar primeras 10 cards
-
-  return (
-    <div
-      key={stableKey}
-      onClickCapture={handlePreNavigate}
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 16,
-        padding: 0,
-        overflow: 'hidden',
-        boxShadow: 'none',
-        // Optimizaciones de rendimiento
-        transform: 'translateZ(0)',
-        willChange: 'auto',
-        contain: 'layout style paint',
-        // Mejorar rendimiento en mobile
-        WebkitTransform: 'translateZ(0)',
-        backfaceVisibility: 'hidden',
-        WebkitBackfaceVisibility: 'hidden'
-      }}
-    >
-      {shouldAnimate ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.05, duration: 0.3 }}
-          whileHover={{ y: -4, scale: 1.02 }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <ClassCard item={clase} fillHeight priority={idx < eagerPerCarousel} />
-        </motion.div>
-      ) : (
-        <ClassCard item={clase} fillHeight priority={idx < eagerPerCarousel} />
-      )}
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  const prevKey = `${prevProps.clase.ownerType || 'owner'}-${prevProps.clase.ownerId ?? 'unknown'}-${prevProps.clase.titulo ?? 'class'}`;
-  const nextKey = `${nextProps.clase.ownerType || 'owner'}-${nextProps.clase.ownerId ?? 'unknown'}-${nextProps.clase.titulo ?? 'class'}`;
-  return prevKey === nextKey && prevProps.idx === nextProps.idx && prevProps.eagerPerCarousel === nextProps.eagerPerCarousel;
-});
-
-ClaseItem.displayName = 'ClaseItem';
 
 // Hook para generar un índice aleatorio estable basado en la longitud del array
 function useStableRandomIndex(length: number, sectionId: string): number {
@@ -470,7 +413,7 @@ const CTACard = React.memo(({
   return (
     <>
       <style>{`
-        /* En escritorio, igualar ALTURA con las ClassCard (que ahora usan fillHeight en el slider).
+        /* En escritorio, igualar altura con las tarjetas de carrusel/cartelera.
            En mobile mantenemos la proporción 4/5 para que se vea consistente. */
         .cta-card-mobile {
           width: 100%;
@@ -2568,6 +2511,11 @@ export default function ExploreHomeScreen() {
     setFechasViewModeState(mode);
     writeFechasViewMode(mode);
   }, []);
+
+  const [exploreSectionViews, setExploreSectionViews] = React.useState(() => readExploreSectionViewModes());
+  const setExploreSectionView = React.useCallback((id: ExploreListableSectionId, mode: ExploreSectionViewMode) => {
+    setExploreSectionViews((prev) => patchExploreSectionViewMode(id, mode, prev));
+  }, []);
   const [mountedSections, setMountedSections] = React.useState<Set<ExploreSectionId>>(
     () => new Set(ABOVE_FOLD_SECTIONS)
   );
@@ -2721,25 +2669,6 @@ export default function ExploreHomeScreen() {
       // Botones Anterior/Siguiente visibles en escritorio y móvil
       showNavButtons: true,
       // En mobile: fila inferior dedicada; en desktop: overlay lateral
-      navPosition: (isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay',
-      itemHeight: cardHeight > 0 ? cardHeight : undefined,
-      itemWidth: cardWidth > 0 ? cardWidth : undefined,
-    }),
-    [isMobile, cardHeight, cardWidth]
-  );
-
-  // ✅ Opción A (RECOMENDADA): autoColumns explícito SOLO para maestros en mobile
-  const maestrosSliderProps = React.useMemo(
-    () => ({
-      className: isMobile ? 'explore-slider explore-slider--mobile' : 'explore-slider',
-      // Ajusta el valor según lo que acepte tu HorizontalSlider:
-      // - si acepta string CSS: '80%' / 'min(320px, 85vw)'
-      // - si acepta número: 280 / 320
-      autoColumns: isMobile && cardWidth <= 0 ? '80%' : undefined,
-      // En escritorio, deshabilitar scroll dentro del carrusel (evita que se “trabe” la interacción/scroll de la página)
-      disableDesktopScroll: true,
-      // Botones Anterior/Siguiente visibles en escritorio y móvil
-      showNavButtons: true,
       navPosition: (isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay',
       itemHeight: cardHeight > 0 ? cardHeight : undefined,
       itemWidth: cardWidth > 0 ? cardWidth : undefined,
@@ -3014,43 +2943,6 @@ export default function ExploreHomeScreen() {
     try { if ('scrollRestoration' in window.history) { (window.history as any).scrollRestoration = 'manual'; } } catch { }
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
   }, []);
-
-
-  const renderClaseItem = React.useCallback((item: any, idx: number) => {
-    if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-      __DEV_LOG("renderItem", { type: "clases", idx, ownerType: item?.ownerType, ownerId: item?.ownerId, titulo: item?.titulo });
-    }
-    if (item?.__isCTA) {
-      return (
-        <motion.div
-          key="cta-clases"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.05, duration: 0.3 }}
-          whileHover={{ y: -4, scale: 1.02 }}
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 16,
-            padding: 0,
-            overflow: 'hidden',
-            boxShadow: 'none'
-          }}
-        >
-          <CTACard text={t('cta_classes')} sectionType="clases" idx={idx} />
-        </motion.div>
-      );
-    }
-    return (
-      <ClaseItem 
-        key={`${item.ownerType || 'owner'}-${item.ownerId ?? 'unknown'}-${item.titulo ?? 'class'}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join('-') : 'semana')}-${idx}`} 
-        clase={item} 
-        idx={idx} 
-        handlePreNavigate={handlePreNavigate}
-        eagerPerCarousel={EAGER_OTHERS}
-      />
-    );
-  }, [__DEV__, __DEV_LOG, handlePreNavigate, t]);
 
   const shouldLoadFechas = selectedType === 'fechas';
   const fechasQuery = useExploreQuery({
@@ -3432,6 +3324,52 @@ export default function ExploreHomeScreen() {
       return card;
     },
     [__DEV__, __DEV_LOG, handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
+  );
+
+  const renderClaseCarouselItem = React.useCallback(
+    (item: any, idx: number) => {
+      if (item?.__isCTA) {
+        return (
+          <motion.div
+            key="cta-clases"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05, duration: 0.3 }}
+            whileHover={{ y: -4, scale: 1.02 }}
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16,
+              padding: 0,
+              overflow: "hidden",
+              boxShadow: "none",
+              height: "100%",
+            }}
+          >
+            <CTACard text={t("cta_classes")} sectionType="clases" idx={idx} />
+          </motion.div>
+        );
+      }
+      const rowKey = `${item.ownerType || "owner"}-${item.ownerId ?? "unknown"}-${item.titulo ?? "class"}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join("-") : "semana")}-${idx}`;
+      return (
+        <div
+          key={rowKey}
+          onClickCapture={handlePreNavigate}
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 16,
+            padding: 0,
+            overflow: "hidden",
+            boxShadow: "none",
+            height: "100%",
+          }}
+        >
+          <ClassExploreGridCard item={item} priority={idx < 3} />
+        </div>
+      );
+    },
+    [handlePreNavigate, t]
   );
 
   const renderFechaListItem = React.useCallback(
@@ -4953,7 +4891,11 @@ export default function ExploreHomeScreen() {
               title={t('section_recommended_classes')}
               count={classesList.length}
               sectionId="clases"
-              sectionMinHeight={sectionMinHeight}
+              sectionMinHeight={
+                exploreSectionViews.clases === "list" || exploreSectionViews.clases === "cartelera"
+                  ? undefined
+                  : fechasGridSectionMinHeight ?? sectionMinHeight
+              }
             >
               {(() => {
                 const loading = academiasLoading || maestrosLoading;
@@ -4974,13 +4916,76 @@ export default function ExploreHomeScreen() {
                   return <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>;
                 }
 
+                const clasesVm = exploreSectionViews.clases;
                 return (
                   <>
-                    <HorizontalCarousel
-                      {...sliderProps}
-                      items={classesListWithCTA}
-                      renderItem={renderClaseItem}
+                    <ExploreSectionViewToggle
+                      value={clasesVm}
+                      onChange={(mode) => setExploreSectionView("clases", mode)}
+                      likeFechas
+                      groupLabel={t("explore_classes_view_group") || t("explore_fechas_view_group")}
                     />
+                    {clasesVm === "list" ? (
+                      <div className="explore-fechas-list" role="list">
+                        {classesListWithCTA.map((item: any, idx: number) => {
+                          if (item?.__isCTA) {
+                            return (
+                              <div key="cta-clases" role="listitem" style={{ width: "100%" }}>
+                                <div
+                                  style={{
+                                    background: "rgba(255,255,255,0.04)",
+                                    border: "1px solid rgba(255,255,255,0.08)",
+                                    borderRadius: 14,
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <CTACard text={t("cta_classes")} sectionType="clases" idx={idx} />
+                                </div>
+                              </div>
+                            );
+                          }
+                          const rowKey = `${item.ownerType || "owner"}-${item.ownerId ?? "unknown"}-${item.titulo ?? "class"}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join("-") : "semana")}-${idx}`;
+                          return (
+                            <div key={rowKey} role="listitem" onClickCapture={handlePreNavigate} style={{ width: "100%" }}>
+                              <ClaseListRow item={item} priority={idx < EAGER_OTHERS} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : clasesVm === "cartelera" ? (
+                      <div className="explore-fechas-cartelera" role="list">
+                        {classesListWithCTA.map((item: any, idx: number) => {
+                          if (item?.__isCTA) {
+                            return (
+                              <div key="cta-clases" className="explore-fechas-cartelera__load-more" role="listitem">
+                                <div
+                                  style={{
+                                    background: "rgba(255,255,255,0.04)",
+                                    border: "1px solid rgba(255,255,255,0.08)",
+                                    borderRadius: 14,
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <CTACard text={t("cta_classes")} sectionType="clases" idx={idx} />
+                                </div>
+                              </div>
+                            );
+                          }
+                          const rowKey = `${item.ownerType || "owner"}-${item.ownerId ?? "unknown"}-${item.titulo ?? "class"}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join("-") : "semana")}-${idx}`;
+                          return (
+                            <div key={rowKey} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
+                              <ExploreEntityCarteleraCard variant="clase" item={item} priority={idx < EAGER_OTHERS} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <HorizontalCarousel
+                        {...fechasGridSliderProps}
+                        items={classesListWithCTA}
+                        renderItem={renderClaseCarouselItem}
+                      />
+                    )}
                   </>
                 );
               })()}
@@ -4994,15 +4999,21 @@ export default function ExploreHomeScreen() {
               sectionId="academias"
               sectionMinHeight={sectionMinHeight}
             >
+              <ExploreSectionViewToggle
+                value={exploreSectionViews.academias}
+                onChange={(mode) => setExploreSectionView("academias", mode)}
+              />
               <AcademiesSection
                 filters={filters}
                 q={qDeferred || undefined}
                 enabled={showAll || selectedType === 'academias'}
                 maxItems={12}
+                renderAs={exploreSectionViews.academias === "list" ? "list" : "cartelera"}
                 itemHeight={cardHeight > 0 ? cardHeight : undefined}
                 itemWidth={cardWidth > 0 ? cardWidth : undefined}
                 navPosition={(isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay'}
                 eagerPerCarousel={EAGER_OTHERS}
+                onNavigatePrepare={handlePreNavigate}
               />
               {!academiasLoading && academiasData.length === 0 && (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
@@ -5030,71 +5041,70 @@ export default function ExploreHomeScreen() {
                   {maestrosData.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
                   ) : (
-                  <HorizontalCarousel
-                    {...maestrosSliderProps}
-                    items={maestrosDataWithCTA}
-                    renderItem={(item: any, idx: number) => {
-                      if (item?.__isCTA) {
-                        return (
-                          <div
-                            key="cta-maestros"
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              borderRadius: 16,
-                              padding: 0,
-                              overflow: 'hidden',
-                              boxShadow: 'none'
-                            }}
-                          >
-                            <CTACard text={t('cta_teachers')} sectionType="maestros" idx={idx} />
-                          </div>
-                        );
-                      }
-                      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-                        __DEV_LOG("renderItem", { type: "maestros", idx, id: item?.id, nombre: item?.nombre_publico });
-                      }
-                      if (__DEV__) {
-                        try {
+                  <>
+                    <ExploreSectionViewToggle
+                      value={exploreSectionViews.maestros}
+                      onChange={(mode) => setExploreSectionView("maestros", mode)}
+                    />
+                    {exploreSectionViews.maestros === "list" ? (
+                      <div className="explore-fechas-list" role="list">
+                        {maestrosDataWithCTA.map((item: any, idx: number) => {
+                          if (item?.__isCTA) {
+                            return (
+                              <div key="cta-maestros" role="listitem" style={{ width: "100%" }}>
+                                <div
+                                  style={{
+                                    background: "rgba(255,255,255,0.04)",
+                                    border: "1px solid rgba(255,255,255,0.08)",
+                                    borderRadius: 14,
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <CTACard text={t("cta_teachers")} sectionType="maestros" idx={idx} />
+                                </div>
+                              </div>
+                            );
+                          }
                           return (
                             <div
                               key={item.id ?? idx}
+                              role="listitem"
                               onClickCapture={handlePreNavigate}
-                              style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.08)',
-                                borderRadius: 16,
-                                padding: 0,
-                                overflow: 'hidden',
-                                boxShadow: 'none'
-                              }}
+                              style={{ width: "100%" }}
                             >
-                              <TeacherCard item={item} />
+                              <ExploreProfileListRow variant="teacher" item={item} priority={idx < EAGER_OTHERS} />
                             </div>
                           );
-                        } catch (e) {
-                          __DEV_LOG("renderItem_error", { type: "maestros", idx, id: item?.id, error: (e as any)?.message || e });
-                          return null;
-                        }
-                      }
-                      return (
-                        <div
-                          key={item.id ?? idx}
-                          onClickCapture={handlePreNavigate}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: 'none'
-                          }}
-                        >
-                          <TeacherCard item={item} />
-                        </div>
-                      );
-                    }}
-                  />
+                        })}
+                      </div>
+                    ) : (
+                      <div className="explore-fechas-cartelera" role="list">
+                        {maestrosDataWithCTA.map((item: any, idx: number) => {
+                          if (item?.__isCTA) {
+                            return (
+                              <div key="cta-maestros" className="explore-fechas-cartelera__load-more" role="listitem">
+                                <div
+                                  style={{
+                                    background: "rgba(255,255,255,0.04)",
+                                    border: "1px solid rgba(255,255,255,0.08)",
+                                    borderRadius: 14,
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  <CTACard text={t("cta_teachers")} sectionType="maestros" idx={idx} />
+                                </div>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div key={item.id ?? idx} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
+                              <ExploreEntityCarteleraCard variant="teacher" item={item} priority={idx < EAGER_OTHERS} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                   )}
                 </>
               )}
@@ -5114,76 +5124,51 @@ export default function ExploreHomeScreen() {
                 <>
                   {validUsuarios.length > 0 ? (
                     <>
-                      <HorizontalCarousel
-                        {...sliderProps}
-                        items={validUsuarios}
-                        renderItem={(u: any, idx: number) => {
-                          if (__DEV__ && (idx === 0 || idx % 30 === 0)) {
-                            __DEV_LOG("renderItem", { type: "usuarios", idx, user_id: u?.user_id, display_name: u?.display_name });
-                          }
-                          if (__DEV__) {
-                            try {
-                              return (
-                                <div
-                                  key={u.user_id ?? idx}
-                                  onClickCapture={handlePreNavigate}
-                                  style={{
-                                    background: 'rgba(255,255,255,0.04)',
-                                    border: '1px solid rgba(255,255,255,0.08)',
-                                    borderRadius: 16,
-                                    padding: 0,
-                                    overflow: 'hidden',
-                                    boxShadow: 'none'
-                                  }}
-                                >
-                                  <DancerCard item={{
-                                    id: u.user_id,
-                                    display_name: u.display_name,
-                                    bio: u.bio,
-                                    avatar_url: u.avatar_url,
-                                    banner_url: u.banner_url,
-                                    portada_url: u.portada_url,
-                                    media: u.media,
-                                    ritmos: u.ritmos,
-                                    ritmosSeleccionados: u.ritmos_seleccionados,
-                                    zonas: u.zonas
-                                  }} to={`/u/${encodeURIComponent(u.user_id)}`} />
-                                </div>
-                              );
-                            } catch (e) {
-                              __DEV_LOG("renderItem_error", { type: "usuarios", idx, user_id: u?.user_id, error: (e as any)?.message || e });
-                              return null;
-                            }
-                          }
-                          return (
+                      <ExploreSectionViewToggle
+                        value={exploreSectionViews.usuarios}
+                        onChange={(mode) => setExploreSectionView("usuarios", mode)}
+                      />
+                      {exploreSectionViews.usuarios === "list" ? (
+                        <div className="explore-fechas-list" role="list">
+                          {validUsuarios.map((u: any, idx: number) => (
                             <div
                               key={u.user_id ?? idx}
+                              role="listitem"
                               onClickCapture={handlePreNavigate}
-                              style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.08)',
-                                borderRadius: 16,
-                                padding: 0,
-                                overflow: 'hidden',
-                                boxShadow: 'none'
-                              }}
+                              style={{ width: "100%" }}
                             >
-                              <DancerCard item={{
-                                id: u.user_id,
-                                display_name: u.display_name,
-                                bio: u.bio,
-                                avatar_url: u.avatar_url,
-                                banner_url: u.banner_url,
-                                portada_url: u.portada_url,
-                                media: u.media,
-                                ritmos: u.ritmos,
-                                ritmosSeleccionados: u.ritmos_seleccionados,
-                                zonas: u.zonas
-                              }} to={`/u/${encodeURIComponent(u.user_id)}`} />
+                              <ExploreProfileListRow
+                                variant="dancer"
+                                item={{
+                                  ...u,
+                                  id: u.user_id,
+                                }}
+                                priority={idx < EAGER_OTHERS}
+                              />
                             </div>
-                          );
-                        }}
-                      />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="explore-fechas-cartelera" role="list">
+                          {validUsuarios.map((u: any, idx: number) => (
+                            <div
+                              key={u.user_id ?? idx}
+                              role="listitem"
+                              onClickCapture={handlePreNavigate}
+                              style={{ minWidth: 0 }}
+                            >
+                              <ExploreEntityCarteleraCard
+                                variant="dancer"
+                                item={{
+                                  ...u,
+                                  id: u.user_id,
+                                }}
+                                priority={idx < EAGER_OTHERS}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       {/* Mostrar indicador de carga mientras se cargan más usuarios automáticamente */}
                       {usuariosQuery.isFetchingNextPage && (
                         <div style={{ 
@@ -5227,71 +5212,68 @@ export default function ExploreHomeScreen() {
                 />
               ) : organizadoresData.length > 0 ? (
                 <>
-                  <HorizontalCarousel
-                    {...sliderProps}
-                    items={organizadoresDataWithCTA}
-                    renderItem={(item: any, idx: number) => {
-                      if (item?.__isCTA) {
-                        return (
-                          <div
-                            key="cta-organizadores"
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              borderRadius: 16,
-                              padding: 0,
-                              overflow: 'hidden',
-                              boxShadow: 'none'
-                            }}
-                          >
-                            <CTACard text={t('cta_organizers')} sectionType="organizadores" idx={idx} />
-                          </div>
-                        );
-                      }
-                      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-                        __DEV_LOG("renderItem", { type: "organizadores", idx, id: item?.id, nombre: item?.nombre_publico || item?.nombre });
-                      }
-                      if (__DEV__) {
-                        try {
+                  <ExploreSectionViewToggle
+                    value={exploreSectionViews.organizadores}
+                    onChange={(mode) => setExploreSectionView("organizadores", mode)}
+                  />
+                  {exploreSectionViews.organizadores === "list" ? (
+                    <div className="explore-fechas-list" role="list">
+                      {organizadoresDataWithCTA.map((item: any, idx: number) => {
+                        if (item?.__isCTA) {
                           return (
-                            <div
-                              key={item.id ?? idx}
-                              onClickCapture={handlePreNavigate}
-                              style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.08)',
-                                borderRadius: 16,
-                                padding: 0,
-                                overflow: 'hidden',
-                                boxShadow: 'none'
-                              }}
-                            >
-                              <OrganizerCard item={item} />
+                            <div key="cta-organizadores" role="listitem" style={{ width: "100%" }}>
+                              <div
+                                style={{
+                                  background: "rgba(255,255,255,0.04)",
+                                  border: "1px solid rgba(255,255,255,0.08)",
+                                  borderRadius: 14,
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
+                              </div>
                             </div>
                           );
-                        } catch (e) {
-                          __DEV_LOG("renderItem_error", { type: "organizadores", idx, id: item?.id, error: (e as any)?.message || e });
-                          return null;
                         }
-                      }
-                      return (
-                        <div
-                          key={item.id ?? idx}
-                          onClickCapture={handlePreNavigate}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: 'none'
-                          }}
-                        >
-                          <OrganizerCard item={item} />
-                        </div>
-                      );
-                    }}
-                  />
+                        return (
+                          <div
+                            key={item.id ?? idx}
+                            role="listitem"
+                            onClickCapture={handlePreNavigate}
+                            style={{ width: "100%" }}
+                          >
+                            <ExploreProfileListRow variant="organizer" item={item} priority={idx < EAGER_OTHERS} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="explore-fechas-cartelera" role="list">
+                      {organizadoresDataWithCTA.map((item: any, idx: number) => {
+                        if (item?.__isCTA) {
+                          return (
+                            <div key="cta-organizadores" className="explore-fechas-cartelera__load-more" role="listitem">
+                              <div
+                                style={{
+                                  background: "rgba(255,255,255,0.04)",
+                                  border: "1px solid rgba(255,255,255,0.08)",
+                                  borderRadius: 14,
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
+                              </div>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={item.id ?? idx} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
+                            <ExploreEntityCarteleraCard variant="organizer" item={item} priority={idx < EAGER_OTHERS} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>

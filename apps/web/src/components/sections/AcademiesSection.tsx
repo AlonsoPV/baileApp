@@ -3,6 +3,9 @@ import { useExploreQuery } from '../../hooks/useExploreQuery';
 import { GridSkeleton } from '../skeletons/GridSkeleton';
 import AcademyCard from '../explore/cards/AcademyCard';
 import HorizontalCarousel from '../explore/HorizontalCarousel';
+import ExploreProfileListRow from '../explore/ExploreProfileListRow';
+import ExploreEntityCarteleraCard from '../explore/ExploreEntityCarteleraCard';
+import '../explore/exploreFechasCartelera.css';
 import type { ExploreFilters } from '../../state/exploreFilters';
 import { useSmartLoading } from '../../hooks/useSmartLoading';
 import { RefreshingIndicator } from '../loading/RefreshingIndicator';
@@ -11,7 +14,7 @@ interface AcademiesSectionProps {
   filters: ExploreFilters;
   q?: string;
   enabled?: boolean;
-  renderAs?: 'grid' | 'slider';
+  renderAs?: 'grid' | 'slider' | 'list' | 'cartelera';
   maxItems?: number;
   itemHeight?: number;
   itemWidth?: number;
@@ -19,12 +22,14 @@ interface AcademiesSectionProps {
   navPosition?: 'overlay' | 'bottom';
   /** Número de imágenes eager (loading="eager") por carrusel; 0 = todas lazy */
   eagerPerCarousel?: number;
+  /** Scroll al detalle (Explore): mismo patrón que carrusel */
+  onNavigatePrepare?: () => void;
 }
 
 /**
  * Componente wrapper para sección de academias con loading inteligente
  */
-function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, itemHeight, itemWidth, navPosition = 'overlay', eagerPerCarousel = 0 }: AcademiesSectionProps) {
+function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, itemHeight, itemWidth, navPosition = 'overlay', eagerPerCarousel = 0, onNavigatePrepare }: AcademiesSectionProps) {
   const academiasQuery = useExploreQuery({
     type: 'academias',
     q: q || undefined,
@@ -74,6 +79,46 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
           </div>
         ))}
       </div>
+    );
+  }
+
+  if (renderAs === 'list') {
+    return (
+      <>
+        <RefreshingIndicator isFetching={isRefetching} />
+        <div className="explore-fechas-list" role="list">
+          {itemsToShow.map((academia: any, idx: number) => (
+            <div
+              key={academia.id ?? idx}
+              role="listitem"
+              onClickCapture={() => onNavigatePrepare?.()}
+              style={{ width: '100%' }}
+            >
+              <ExploreProfileListRow variant="academy" item={academia} priority={idx < eagerPerCarousel} />
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (renderAs === 'cartelera') {
+    return (
+      <>
+        <RefreshingIndicator isFetching={isRefetching} />
+        <div className="explore-fechas-cartelera" role="list">
+          {itemsToShow.map((academia: any, idx: number) => (
+            <div
+              key={academia.id ?? idx}
+              role="listitem"
+              onClickCapture={() => onNavigatePrepare?.()}
+              style={{ minWidth: 0 }}
+            >
+              <ExploreEntityCarteleraCard variant="academy" item={academia} priority={idx < eagerPerCarousel} />
+            </div>
+          ))}
+        </div>
+      </>
     );
   }
 
