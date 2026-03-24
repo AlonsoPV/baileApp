@@ -1582,9 +1582,9 @@ export default function OrganizerEventDateEditScreen() {
           <div className="org-editor-card">
                     <ScheduleEditor
               schedule={form.cronograma || []}
-              onChangeSchedule={(cronograma) => setForm({ ...form, cronograma })}
+              onChangeSchedule={(cronograma) => setForm((prev) => ({ ...prev, cronograma }))}
               costos={form.costos || []}
-              onChangeCostos={(costos) => setForm({ ...form, costos })}
+              onChangeCostos={(costos) => setForm((prev) => ({ ...prev, costos }))}
                       ritmos={ritmoTags}
                       zonas={zonaTags}
               eventFecha={form.fecha}

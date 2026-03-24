@@ -1365,9 +1365,9 @@ export function EventDateEditScreen() {
       <div className="org-editor-card">
         <ScheduleEditor
           schedule={form.cronograma || []}
-          onChangeSchedule={(cronograma) => setForm({ ...form, cronograma })}
+          onChangeSchedule={(cronograma) => setForm((prev) => ({ ...prev, cronograma }))}
           costos={form.costos || []}
-          onChangeCostos={(costos) => setForm({ ...form, costos })}
+          onChangeCostos={(costos) => setForm((prev) => ({ ...prev, costos }))}
           eventFecha={form.fecha}
           ritmos={ritmoTags}
           zonas={zonaTags}

@@ -4825,9 +4825,9 @@ export default function OrganizerProfileEditor() {
                     </h3>
                     <ScheduleEditor
                       schedule={dateForm.cronograma || []}
-                      onChangeSchedule={(cronograma) => setDateForm({ ...dateForm, cronograma })}
+                      onChangeSchedule={(cronograma) => setDateForm((prev) => ({ ...prev, cronograma }))}
                       costos={dateForm.costos || []}
-                      onChangeCostos={(costos) => setDateForm({ ...dateForm, costos })}
+                      onChangeCostos={(costos) => setDateForm((prev) => ({ ...prev, costos }))}
                       ritmos={ritmoTags}
                       zonas={zonaTags}
                       eventFecha={dateForm.fecha}

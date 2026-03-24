@@ -1,0 +1,165 @@
+/* Cartelera / mosaico de flyers — Explore sociales (mobile-first, 2 columnas) */
+
+.event-cartelera-card {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 12, 18, 0.92);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  cursor: pointer;
+  min-width: 0;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.event-cartelera-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.event-cartelera-card:active {
+  transform: translateY(0) scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-cartelera-card,
+  .event-cartelera-card:hover,
+  .event-cartelera-card:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Póster vertical — flyers legibles sin deformar */
+.event-cartelera-card__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 78 / 100;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.event-cartelera-card__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.event-cartelera-card__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.event-cartelera-card__placeholder svg {
+  width: 40%;
+  max-width: 56px;
+  height: auto;
+}
+
+.event-cartelera-card__overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28px 10px 10px;
+  background: linear-gradient(
+    to top,
+    rgba(6, 8, 14, 0.96) 0%,
+    rgba(6, 8, 14, 0.72) 42%,
+    rgba(6, 8, 14, 0.2) 78%,
+    transparent 100%
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.event-cartelera-card__title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+  font-family: "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+
+.event-cartelera-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.event-cartelera-card__dot {
+  opacity: 0.55;
+  user-select: none;
+}
+
+.event-cartelera-card__place {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.event-cartelera-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.event-cartelera-card__price {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
+}
+
+.event-cartelera-card__currency {
+  font-size: 0.65rem;
+  opacity: 0.9;
+}
+
+.event-cartelera-card__discount {
+  margin-left: 2px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #7bed9f;
+}

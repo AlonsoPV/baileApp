@@ -14,8 +14,10 @@ import { MultiSelectTreeDropdown } from "@/components/explore/MultiSelectTreeDro
 import { DateFilterDropdown } from "@/components/explore/DateFilterDropdown";
 import EventListRow from "@/components/explore/EventListRow";
 import EventSocialGridCard from "@/components/explore/EventSocialGridCard";
+import EventCarteleraCard from "@/components/explore/EventCarteleraCard";
+import "@/components/explore/exploreFechasCartelera.css";
 import { readFechasViewMode, writeFechasViewMode, type FechasViewMode } from "@/utils/fechasViewModeStorage";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, Images } from "lucide-react";
 import OrganizerCard from "../../components/explore/cards/OrganizerCard";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import AcademyCard from "../../components/explore/cards/AcademyCard";
@@ -3466,6 +3468,35 @@ export default function ExploreHomeScreen() {
     [handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t, allTags]
   );
 
+  const renderFechaCarteleraItem = React.useCallback(
+    (fechaEvento: any, idx: number) => {
+      if ((fechaEvento as any)?.__type === "load_more") {
+        return (
+          <div key="load-more-fechas" className="explore-fechas-cartelera__load-more" role="listitem">
+            <LoadMoreCard
+              onClick={onLoadMoreFechas}
+              loading={!!fechasQuery.isFetchingNextPage}
+              title={t("load_more") || "Cargar más"}
+              subtitle={t("explore_type_sociales") || "Ver más sociales"}
+            />
+          </div>
+        );
+      }
+
+      const key =
+        (fechaEvento as any)?._recurrence_index !== undefined
+          ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}_${getEffectiveEventDateYmd(fechaEvento)}_${String(fechaEvento?.hora_inicio || fechaEvento?.evento_hora_inicio || "")}`
+          : buildEventOccurrenceKey(fechaEvento);
+
+      return (
+        <div key={key} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
+          <EventCarteleraCard item={fechaEvento} priority={idx < 4} />
+        </div>
+      );
+    },
+    [handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
+  );
+
   const shouldLoadMaestros = selectedType === 'maestros' || selectedType === 'clases';
   const maestrosQuery = useExploreQuery({
     type: 'maestros',
@@ -4731,7 +4762,9 @@ export default function ExploreHomeScreen() {
               count={normalizedFechas.length}
               sectionId="fechas"
               sectionMinHeight={
-                fechasViewMode === "list" ? undefined : fechasGridSectionMinHeight ?? sectionMinHeight
+                fechasViewMode === "list" || fechasViewMode === "cartelera"
+                  ? undefined
+                  : fechasGridSectionMinHeight ?? sectionMinHeight
               }
               headerAction={
                 (filters.datePreset === 'hoy' || filters.datePreset === 'fin_de_semana' || filters.datePreset === 'semana') ? (
@@ -4809,12 +4842,34 @@ export default function ExploreHomeScreen() {
                   </button>
                   <button
                     type="button"
+                    aria-pressed={fechasViewMode === 'cartelera'}
+                    onClick={() => setFechasViewMode('cartelera')}
+                    title={t('explore_fechas_view_cartelera') || 'Cartelera'}
+                    aria-label={t('explore_fechas_view_cartelera') || 'Vista cartelera'}
+                    style={{
+                      border: 'none',
+                      borderLeft: '1px solid rgba(255,255,255,0.12)',
+                      background: fechasViewMode === 'cartelera' ? 'rgba(255,255,255,0.18)' : 'transparent',
+                      color: '#fff',
+                      padding: '8px 14px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 0,
+                    }}
+                  >
+                    <Images size={18} />
+                  </button>
+                  <button
+                    type="button"
                     aria-pressed={fechasViewMode === 'list'}
                     onClick={() => setFechasViewMode('list')}
                     title={t('explore_fechas_view_list') || 'Lista'}
                     aria-label={t('explore_fechas_view_list') || 'Vista en lista'}
                     style={{
                       border: 'none',
+                      borderLeft: '1px solid rgba(255,255,255,0.12)',
                       background: fechasViewMode === 'list' ? 'rgba(255,255,255,0.18)' : 'transparent',
                       color: '#fff',
                       padding: '8px 14px',
@@ -4849,6 +4904,10 @@ export default function ExploreHomeScreen() {
                     fechasViewMode === 'list' ? (
                       <div className="explore-fechas-list" role="list">
                         {fechasSliderItems.map((item, idx) => renderFechaListItem(item, idx))}
+                      </div>
+                    ) : fechasViewMode === 'cartelera' ? (
+                      <div className="explore-fechas-cartelera" role="list">
+                        {fechasSliderItems.map((item, idx) => renderFechaCarteleraItem(item, idx))}
                       </div>
                     ) : (
                       <div className="explore-fechas-grid">

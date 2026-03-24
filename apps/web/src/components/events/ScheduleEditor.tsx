@@ -234,9 +234,19 @@ export default function ScheduleEditorPlus({
     const nextSchedule = schedule.map((s) => (s.__ui_id ? s : { ...s, __ui_id: makeUiId() }));
     const nextCostos = costos.map((c) => (c.__ui_id ? c : normalizeCostoForForm(c)));
 
-    // Only call setters if actually changed
-    if (nextSchedule.some((s, i) => s.__ui_id !== schedule[i].__ui_id)) onChangeSchedule(nextSchedule);
-    if (nextCostos.some((c, i) => c.__ui_id !== costos[i].__ui_id)) onChangeCostos(nextCostos);
+    const scheduleChanged = nextSchedule.some((s, i) => s.__ui_id !== schedule[i].__ui_id);
+    const costosChanged = nextCostos.some((c, i) => c.__ui_id !== costos[i].__ui_id);
+
+    // Si ambos cambian y el padre usa setState({ ...state, ... }), la 2.ª llamada puede pisar la 1.ª.
+    // Preferimos: (1) actualizaciones funcionales en el padre; (2) diferir costos si también hubo cronograma.
+    if (scheduleChanged) onChangeSchedule(nextSchedule);
+    if (costosChanged) {
+      if (scheduleChanged) {
+        queueMicrotask(() => onChangeCostos(nextCostos));
+      } else {
+        onChangeCostos(nextCostos);
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // only once on mount
 
