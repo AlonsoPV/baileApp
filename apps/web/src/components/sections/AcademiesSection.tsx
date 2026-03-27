@@ -1,20 +1,24 @@
 import React from 'react';
+import type { ComponentProps } from 'react';
 import { useExploreQuery } from '../../hooks/useExploreQuery';
 import { GridSkeleton } from '../skeletons/GridSkeleton';
 import AcademyCard from '../explore/cards/AcademyCard';
 import HorizontalCarousel from '../explore/HorizontalCarousel';
 import ExploreProfileListRow from '../explore/ExploreProfileListRow';
 import ExploreEntityCarteleraCard from '../explore/ExploreEntityCarteleraCard';
+import ProfileExploreGridCard from '../explore/ProfileExploreGridCard';
 import '../explore/exploreFechasCartelera.css';
 import type { ExploreFilters } from '../../state/exploreFilters';
 import { useSmartLoading } from '../../hooks/useSmartLoading';
 import { RefreshingIndicator } from '../loading/RefreshingIndicator';
 
+type HorizontalCarouselPassthrough = Omit<ComponentProps<typeof HorizontalCarousel>, 'items' | 'renderItem'>;
+
 interface AcademiesSectionProps {
   filters: ExploreFilters;
   q?: string;
   enabled?: boolean;
-  renderAs?: 'grid' | 'slider' | 'list' | 'cartelera';
+  renderAs?: 'grid' | 'slider' | 'list' | 'cartelera' | 'carousel';
   maxItems?: number;
   itemHeight?: number;
   itemWidth?: number;
@@ -24,12 +28,14 @@ interface AcademiesSectionProps {
   eagerPerCarousel?: number;
   /** Scroll al detalle (Explore): mismo patrón que carrusel */
   onNavigatePrepare?: () => void;
+  /** Vista `carousel`: mismas props que el carrusel de clases/fechas (fechasGridSliderProps). */
+  gridCarouselProps?: HorizontalCarouselPassthrough;
 }
 
 /**
  * Componente wrapper para sección de academias con loading inteligente
  */
-function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, itemHeight, itemWidth, navPosition = 'overlay', eagerPerCarousel = 0, onNavigatePrepare }: AcademiesSectionProps) {
+function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, itemHeight, itemWidth, navPosition = 'overlay', eagerPerCarousel = 0, onNavigatePrepare, gridCarouselProps }: AcademiesSectionProps) {
   const academiasQuery = useExploreQuery({
     type: 'academias',
     q: q || undefined,
@@ -118,6 +124,36 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
             </div>
           ))}
         </div>
+      </>
+    );
+  }
+
+  if (renderAs === 'carousel') {
+    const wrapStyle: React.CSSProperties = {
+      background: 'rgba(255,255,255,0.04)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 16,
+      padding: 0,
+      overflow: 'hidden',
+      boxShadow: 'none',
+      height: '100%',
+    };
+    return (
+      <>
+        <RefreshingIndicator isFetching={isRefetching} />
+        <HorizontalCarousel
+          {...(gridCarouselProps ?? {})}
+          items={itemsToShow}
+          renderItem={(academia: any, idx: number) => (
+            <div
+              key={academia.id ?? idx}
+              onClickCapture={() => onNavigatePrepare?.()}
+              style={wrapStyle}
+            >
+              <ProfileExploreGridCard variant="academy" item={academia} priority={idx < 3} />
+            </div>
+          )}
+        />
       </>
     );
   }

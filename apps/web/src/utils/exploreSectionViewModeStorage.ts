@@ -1,6 +1,5 @@
 /**
- * Modos de vista Explore: `list`, `cartelera` (mosaico), y `carousel` (cuadrícula de tarjetas, solo clases — alineado con Sociales).
- * `carousel` solo aplica a clases; en otras secciones se normaliza a `cartelera`.
+ * Modos de vista Explore: `list`, `cartelera` (mosaico), `carousel` (carrusel horizontal tipo Sociales/Clases).
  */
 
 export const EXPLORE_SECTION_VIEW_MODES_KEY = "explore:sectionViewModes";
@@ -22,14 +21,11 @@ function isListableSectionId(v: string): v is ExploreListableSectionId {
 }
 
 function normalizeStoredModeForSection(
-  sectionId: ExploreListableSectionId,
+  _sectionId: ExploreListableSectionId,
   v: string | undefined
 ): ExploreSectionViewMode | null {
-  if (v === "list" || v === "cartelera") return v;
-  if (v === "grid") return sectionId === "clases" ? "carousel" : "cartelera";
-  if (v === "carousel") {
-    return sectionId === "clases" ? "carousel" : "cartelera";
-  }
+  if (v === "list" || v === "cartelera" || v === "carousel") return v;
+  if (v === "grid") return "carousel";
   return null;
 }
 
@@ -63,8 +59,7 @@ export function patchExploreSectionViewMode(
   mode: ExploreSectionViewMode,
   prev: Record<ExploreListableSectionId, ExploreSectionViewMode>
 ): Record<ExploreListableSectionId, ExploreSectionViewMode> {
-  const safe = id !== "clases" && mode === "carousel" ? "cartelera" : mode;
-  const next = { ...prev, [id]: safe };
+  const next = { ...prev, [id]: mode };
   writeExploreSectionViewModes(next);
   return next;
 }

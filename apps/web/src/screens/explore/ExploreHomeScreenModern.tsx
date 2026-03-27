@@ -30,6 +30,7 @@ import ExploreEntityCarteleraCard from "@/components/explore/ExploreEntityCartel
 import { LayoutGrid, List, Images } from "lucide-react";
 import HorizontalCarousel from "../../components/explore/HorizontalCarousel";
 import ClassExploreGridCard from "@/components/explore/ClassExploreGridCard";
+import ProfileExploreGridCard from "@/components/explore/ProfileExploreGridCard";
 import BrandCard from "../../components/explore/cards/BrandCard";
 import SocialCard from "../../components/explore/cards/SocialCard";
 import { LoadMoreCard } from "@/components/explore/cards/LoadMoreCard";
@@ -3372,6 +3373,121 @@ export default function ExploreHomeScreen() {
     [handlePreNavigate, t]
   );
 
+  const renderMaestroCarouselItem = React.useCallback(
+    (item: any, idx: number) => {
+      if (item?.__isCTA) {
+        return (
+          <motion.div
+            key="cta-maestros"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05, duration: 0.3 }}
+            whileHover={{ y: -4, scale: 1.02 }}
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16,
+              padding: 0,
+              overflow: "hidden",
+              boxShadow: "none",
+              height: "100%",
+            }}
+          >
+            <CTACard text={t("cta_teachers")} sectionType="maestros" idx={idx} />
+          </motion.div>
+        );
+      }
+      return (
+        <div
+          key={item.id ?? idx}
+          onClickCapture={handlePreNavigate}
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 16,
+            padding: 0,
+            overflow: "hidden",
+            boxShadow: "none",
+            height: "100%",
+          }}
+        >
+          <ProfileExploreGridCard variant="teacher" item={item} priority={idx < 3} />
+        </div>
+      );
+    },
+    [handlePreNavigate, t]
+  );
+
+  const renderUsuarioCarouselItem = React.useCallback(
+    (u: any, idx: number) => (
+      <div
+        key={u.user_id ?? idx}
+        onClickCapture={handlePreNavigate}
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 16,
+          padding: 0,
+          overflow: "hidden",
+          boxShadow: "none",
+          height: "100%",
+        }}
+      >
+        <ProfileExploreGridCard
+          variant="dancer"
+          item={{ ...u, id: u.user_id }}
+          priority={idx < 3}
+        />
+      </div>
+    ),
+    [handlePreNavigate]
+  );
+
+  const renderOrganizerCarouselItem = React.useCallback(
+    (item: any, idx: number) => {
+      if (item?.__isCTA) {
+        return (
+          <motion.div
+            key="cta-organizadores"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05, duration: 0.3 }}
+            whileHover={{ y: -4, scale: 1.02 }}
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16,
+              padding: 0,
+              overflow: "hidden",
+              boxShadow: "none",
+              height: "100%",
+            }}
+          >
+            <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
+          </motion.div>
+        );
+      }
+      return (
+        <div
+          key={item.id ?? idx}
+          onClickCapture={handlePreNavigate}
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 16,
+            padding: 0,
+            overflow: "hidden",
+            boxShadow: "none",
+            height: "100%",
+          }}
+        >
+          <ProfileExploreGridCard variant="organizer" item={item} priority={idx < 3} />
+        </div>
+      );
+    },
+    [handlePreNavigate, t]
+  );
+
   const renderFechaListItem = React.useCallback(
     (fechaEvento: any, idx: number) => {
       if ((fechaEvento as any)?.__type === "load_more") {
@@ -4997,18 +5113,31 @@ export default function ExploreHomeScreen() {
               title={t('section_best_academies_zone')}
               count={academiasData.length}
               sectionId="academias"
-              sectionMinHeight={sectionMinHeight}
+              sectionMinHeight={
+                exploreSectionViews.academias === "list" || exploreSectionViews.academias === "cartelera"
+                  ? undefined
+                  : fechasGridSectionMinHeight ?? sectionMinHeight
+              }
             >
               <ExploreSectionViewToggle
                 value={exploreSectionViews.academias}
                 onChange={(mode) => setExploreSectionView("academias", mode)}
+                likeFechas
+                groupLabel={t("explore_academies_view_group") || t("explore_classes_view_group")}
               />
               <AcademiesSection
                 filters={filters}
                 q={qDeferred || undefined}
                 enabled={showAll || selectedType === 'academias'}
                 maxItems={12}
-                renderAs={exploreSectionViews.academias === "list" ? "list" : "cartelera"}
+                renderAs={
+                  exploreSectionViews.academias === "list"
+                    ? "list"
+                    : exploreSectionViews.academias === "cartelera"
+                      ? "cartelera"
+                      : "carousel"
+                }
+                gridCarouselProps={{ ...fechasGridSliderProps }}
                 itemHeight={cardHeight > 0 ? cardHeight : undefined}
                 itemWidth={cardWidth > 0 ? cardWidth : undefined}
                 navPosition={(isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay'}
@@ -5026,7 +5155,11 @@ export default function ExploreHomeScreen() {
               title={t('section_featured_teachers')}
               count={maestrosData.length}
               sectionId="maestros"
-              sectionMinHeight={sectionMinHeight}
+              sectionMinHeight={
+                exploreSectionViews.maestros === "list" || exploreSectionViews.maestros === "cartelera"
+                  ? undefined
+                  : fechasGridSectionMinHeight ?? sectionMinHeight
+              }
             >
               {maestrosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>
@@ -5045,6 +5178,8 @@ export default function ExploreHomeScreen() {
                     <ExploreSectionViewToggle
                       value={exploreSectionViews.maestros}
                       onChange={(mode) => setExploreSectionView("maestros", mode)}
+                      likeFechas
+                      groupLabel={t("explore_maestros_view_group") || t("explore_classes_view_group")}
                     />
                     {exploreSectionViews.maestros === "list" ? (
                       <div className="explore-fechas-list" role="list">
@@ -5077,7 +5212,7 @@ export default function ExploreHomeScreen() {
                           );
                         })}
                       </div>
-                    ) : (
+                    ) : exploreSectionViews.maestros === "cartelera" ? (
                       <div className="explore-fechas-cartelera" role="list">
                         {maestrosDataWithCTA.map((item: any, idx: number) => {
                           if (item?.__isCTA) {
@@ -5103,6 +5238,12 @@ export default function ExploreHomeScreen() {
                           );
                         })}
                       </div>
+                    ) : (
+                      <HorizontalCarousel
+                        {...fechasGridSliderProps}
+                        items={maestrosDataWithCTA}
+                        renderItem={renderMaestroCarouselItem}
+                      />
                     )}
                   </>
                   )}
@@ -5116,7 +5257,11 @@ export default function ExploreHomeScreen() {
               title={t('section_dancers_near_you')}
               count={validUsuarios.length}
               sectionId="usuarios"
-              sectionMinHeight={sectionMinHeight}
+              sectionMinHeight={
+                exploreSectionViews.usuarios === "list" || exploreSectionViews.usuarios === "cartelera"
+                  ? undefined
+                  : fechasGridSectionMinHeight ?? sectionMinHeight
+              }
             >
               {usuariosLoading ? (
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
@@ -5127,6 +5272,8 @@ export default function ExploreHomeScreen() {
                       <ExploreSectionViewToggle
                         value={exploreSectionViews.usuarios}
                         onChange={(mode) => setExploreSectionView("usuarios", mode)}
+                        likeFechas
+                        groupLabel={t("explore_usuarios_view_group") || t("explore_classes_view_group")}
                       />
                       {exploreSectionViews.usuarios === "list" ? (
                         <div className="explore-fechas-list" role="list">
@@ -5148,7 +5295,7 @@ export default function ExploreHomeScreen() {
                             </div>
                           ))}
                         </div>
-                      ) : (
+                      ) : exploreSectionViews.usuarios === "cartelera" ? (
                         <div className="explore-fechas-cartelera" role="list">
                           {validUsuarios.map((u: any, idx: number) => (
                             <div
@@ -5168,6 +5315,12 @@ export default function ExploreHomeScreen() {
                             </div>
                           ))}
                         </div>
+                      ) : (
+                        <HorizontalCarousel
+                          {...fechasGridSliderProps}
+                          items={validUsuarios}
+                          renderItem={renderUsuarioCarouselItem}
+                        />
                       )}
                       {/* Mostrar indicador de carga mientras se cargan más usuarios automáticamente */}
                       {usuariosQuery.isFetchingNextPage && (
@@ -5194,7 +5347,11 @@ export default function ExploreHomeScreen() {
               title={t('section_event_producers')}
               count={organizadoresData.length}
               sectionId="organizadores"
-              sectionMinHeight={sectionMinHeight}
+              sectionMinHeight={
+                exploreSectionViews.organizadores === "list" || exploreSectionViews.organizadores === "cartelera"
+                  ? undefined
+                  : fechasGridSectionMinHeight ?? sectionMinHeight
+              }
             >
               {organizadoresLoading ? (
                 <div className="cards-grid">
@@ -5215,6 +5372,8 @@ export default function ExploreHomeScreen() {
                   <ExploreSectionViewToggle
                     value={exploreSectionViews.organizadores}
                     onChange={(mode) => setExploreSectionView("organizadores", mode)}
+                    likeFechas
+                    groupLabel={t("explore_organizadores_view_group") || t("explore_classes_view_group")}
                   />
                   {exploreSectionViews.organizadores === "list" ? (
                     <div className="explore-fechas-list" role="list">
@@ -5247,7 +5406,7 @@ export default function ExploreHomeScreen() {
                         );
                       })}
                     </div>
-                  ) : (
+                  ) : exploreSectionViews.organizadores === "cartelera" ? (
                     <div className="explore-fechas-cartelera" role="list">
                       {organizadoresDataWithCTA.map((item: any, idx: number) => {
                         if (item?.__isCTA) {
@@ -5273,6 +5432,12 @@ export default function ExploreHomeScreen() {
                         );
                       })}
                     </div>
+                  ) : (
+                    <HorizontalCarousel
+                      {...fechasGridSliderProps}
+                      items={organizadoresDataWithCTA}
+                      renderItem={renderOrganizerCarouselItem}
+                    />
                   )}
                 </>
               ) : (

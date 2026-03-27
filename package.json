@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "npm run dev -w @baileapp/web",
     "start": "expo start",
     "start:tunnel": "expo start --tunnel",
     "dev:web": "pnpm --filter @baileapp/web dev",
