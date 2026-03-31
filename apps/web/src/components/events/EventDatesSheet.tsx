@@ -6,14 +6,13 @@ import { useBulkUpdateEventDates } from "../../hooks/useBulkUpdateEventDates";
 import { uploadEventFlyer } from "../../lib/uploadEventFlyer";
 import { supabase } from "../../lib/supabase";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
-
-type OrganizerLocationLite = {
-  id?: number;
-  nombre?: string | null;
-  direccion?: string | null;
-  ciudad?: string | null;
-  referencias?: string | null;
-};
+import {
+  buildLocationBulkPatchFromFilled,
+  isWeeklyRecurrentRow,
+  validateHoraOrder,
+} from "../../hooks/useBulkEventDateActions";
+import { useTags } from "../../hooks/useTags";
+import ZonaGroupedChips from "../profile/ZonaGroupedChips";
 
 export type EventDateRow = {
   id: number;
@@ -34,14 +33,7 @@ export type EventDateRow = {
   updated_at?: string | null;
 };
 
-type BulkDraft = {
-  hora_inicio?: string;
-  hora_fin?: string;
-  lugar?: string;
-  direccion?: string;
-  ciudad?: string;
-  referencias?: string;
-};
+type BulkPanelId = "time" | "date" | "location" | "estado" | "flyer" | "more";
 
 type Props = {
   rows: EventDateRow[];
@@ -56,7 +48,6 @@ type Props = {
   onDeleteRow?: (row: EventDateRow) => void;
   onDeleteRows?: (rows: EventDateRow[]) => Promise<void> | void;
   deletingRowId?: number | null;
-  locations?: OrganizerLocationLite[];
 };
 
 const Badge = ({ children, tone }: { children: React.ReactNode; tone: "ok" | "warn" | "muted" }) => {
@@ -82,11 +73,74 @@ const Badge = ({ children, tone }: { children: React.ReactNode; tone: "ok" | "wa
   );
 };
 
+type ConfirmDialogConfig = {
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  danger?: boolean;
+  onConfirm: () => void | Promise<void>;
+};
+
+function BulkSheetOverlay({
+  title,
+  children,
+  onClose,
+  footer,
+  overlayClassName = "eds-bulkOverlay",
+  titleId = "eds-bulk-sheet-title",
+}: {
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
+  footer?: React.ReactNode;
+  overlayClassName?: string;
+  titleId?: string;
+}) {
+  return (
+    <div
+      className={overlayClassName}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className="eds-bulkSheet"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="eds-bulkSheet__head">
+          <h2 id={titleId} className="eds-bulkSheet__title">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="eds-bulkSheet__close"
+          >
+            ×
+          </button>
+        </div>
+        <div className="eds-bulkSheet__body">{children}</div>
+        {footer ? <div className="eds-bulkSheet__footer">{footer}</div> : null}
+      </div>
+    </div>
+  );
+}
+
 function toHHmm(value?: string | null) {
   if (!value) return "—";
   const parts = String(value).split(":");
   if (parts.length >= 2) return `${parts[0] || "00"}:${parts[1] || "00"}`;
   return String(value);
+}
+
+/** Inicio y fin en una sola cadena para la columna "Hora" (edición masiva sigue usando hora_inicio / hora_fin). */
+function formatHoraRange(horaInicio?: string | null, horaFin?: string | null) {
+  const a = toHHmm(horaInicio);
+  const b = toHHmm(horaFin);
+  if (a === "—" && b === "—") return "—";
+  return `${a} – ${b}`;
 }
 
 function toWeekdayNumber(value: unknown): number | null {
@@ -150,13 +204,8 @@ const Row = React.memo(function Row({
   onChangeEditFecha,
   onSaveFecha,
   onCancelFecha,
-  isEditingLocation,
-  onStartEditLocation,
-  onCancelLocation,
-  onSaveLocation,
-  locationDraft,
-  onLocationDraftChange,
-  locations,
+  onToggleEstadoPublicacion,
+  estadoRowBusyId,
 }: {
   row: EventDateRow;
   selected: boolean;
@@ -178,13 +227,8 @@ const Row = React.memo(function Row({
   onChangeEditFecha: (value: string) => void;
   onSaveFecha: () => void;
   onCancelFecha: () => void;
-  isEditingLocation: boolean;
-  onStartEditLocation: (row: EventDateRow) => void;
-  onCancelLocation: () => void;
-  onSaveLocation: () => void;
-  locationDraft: { locationId: string; lugar: string; direccion: string; ciudad: string; referencias: string };
-  onLocationDraftChange: (patch: Partial<{ locationId: string; lugar: string; direccion: string; ciudad: string; referencias: string }>) => void;
-  locations: OrganizerLocationLite[];
+  onToggleEstadoPublicacion: (row: EventDateRow) => void;
+  estadoRowBusyId: number | null;
 }) {
   const flyerTone = row.flyer_url ? "ok" : "warn";
   const pubTone = row.estado_publicacion === "publicado" ? "ok" : "muted";
@@ -316,8 +360,21 @@ const Row = React.memo(function Row({
           </div>
         )}
       </div>
-      <div style={{ color: "#fff", fontSize: 13, opacity: 0.9 }}>{toHHmm(row.hora_inicio)}</div>
-      <div style={{ color: "#fff", fontSize: 13, opacity: 0.9 }}>{toHHmm(row.hora_fin)}</div>
+      <div
+        className="eds-cellHora"
+        style={{
+          color: "#fff",
+          fontSize: 13,
+          opacity: 0.9,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+        title={formatHoraRange(row.hora_inicio, row.hora_fin)}
+      >
+        {formatHoraRange(row.hora_inicio, row.hora_fin)}
+      </div>
       <div
         className="eds-place"
         style={{
@@ -359,21 +416,43 @@ const Row = React.memo(function Row({
           </Badge>
         </motion.button>
       </div>
-      <div className="eds-cellEstado" title={row.estado_publicacion === "publicado" ? "Publicado" : "Borrador"}>
-        <Badge tone={pubTone}>{row.estado_publicacion === "publicado" ? "🌐" : "📝"}</Badge>
+      <div className="eds-cellEstado">
+        <motion.button
+          type="button"
+          whileHover={{ scale: estadoRowBusyId != null ? 1 : 1.02 }}
+          whileTap={{ scale: estadoRowBusyId != null ? 1 : 0.98 }}
+          onClick={() => onToggleEstadoPublicacion(row)}
+          disabled={estadoRowBusyId != null}
+          title={
+            estadoRowBusyId === row.id
+              ? "Guardando…"
+              : estadoRowBusyId != null
+                ? "Otra fecha se está guardando…"
+                : row.estado_publicacion === "publicado"
+                  ? "Publicado — clic para pasar a borrador"
+                  : "Borrador — clic para publicar"
+          }
+          aria-label={
+            row.estado_publicacion === "publicado"
+              ? "Cambiar a borrador"
+              : "Publicar fecha"
+          }
+          style={{
+            border: "none",
+            background: "transparent",
+            padding: 0,
+            cursor: estadoRowBusyId != null ? "wait" : "pointer",
+            opacity: estadoRowBusyId != null && estadoRowBusyId !== row.id ? 0.55 : estadoRowBusyId === row.id ? 0.65 : 1,
+            width: "fit-content",
+          }}
+        >
+          <Badge tone={pubTone}>
+            {estadoRowBusyId === row.id ? "⏳" : row.estado_publicacion === "publicado" ? "🌐" : "📝"}
+          </Badge>
+        </motion.button>
       </div>
       <div className="eds-cellActions" style={{ display: "flex", justifyContent: "flex-end" }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "nowrap", justifyContent: "flex-end" }}>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            type="button"
-            onClick={() => (isEditingLocation ? onCancelLocation() : onStartEditLocation(row))}
-            className="eds-iconBtn"
-            title={isEditingLocation ? "Cerrar ubicación" : "Editar ubicación"}
-          >
-            📍
-          </motion.button>
           {onView && (
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -410,145 +489,6 @@ const Row = React.memo(function Row({
           )}
         </div>
       </div>
-
-      {isEditingLocation && (
-        <div
-          style={{
-            gridColumn: "1 / -1",
-            marginTop: 8,
-            padding: 10,
-            borderRadius: 12,
-            border: "1px solid rgba(255,255,255,0.10)",
-            background: "rgba(0,0,0,0.20)",
-            display: "grid",
-            gap: 10,
-          }}
-        >
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div>
-              <div style={{ fontSize: 12, opacity: 0.85, color: "#fff", marginBottom: 6 }}>Ubicación (reutilizable)</div>
-              <select
-                value={locationDraft.locationId}
-                onChange={(e) => {
-                  const nextId = e.target.value;
-                  if (!nextId) {
-                    onLocationDraftChange({ locationId: "", lugar: "", direccion: "", ciudad: "", referencias: "" });
-                    return;
-                  }
-                  const found = locations.find((l) => String(l.id ?? "") === nextId);
-                  onLocationDraftChange({
-                    locationId: nextId,
-                    lugar: String(found?.nombre || ""),
-                    direccion: String(found?.direccion || ""),
-                    ciudad: String(found?.ciudad || ""),
-                    referencias: String(found?.referencias || ""),
-                  });
-                }}
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  background: "#2b2b2b",
-                  color: "#fff",
-                }}
-              >
-                <option value="">— Escribir manualmente —</option>
-                {locations.map((loc) => (
-                  <option key={String(loc.id)} value={String(loc.id)} style={{ background: "#2b2b2b", color: "#fff" }}>
-                    {loc.nombre || loc.direccion || "Ubicación"}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <div style={{ fontSize: 12, opacity: 0.85, color: "#fff", marginBottom: 6 }}>Nombre (lugar)</div>
-              <input
-                type="text"
-                value={locationDraft.lugar}
-                onChange={(e) => onLocationDraftChange({ lugar: e.target.value })}
-                placeholder="Ej. Salón principal"
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  background: "rgba(0,0,0,0.25)",
-                  color: "#fff",
-                }}
-              />
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div>
-              <div style={{ fontSize: 12, opacity: 0.85, color: "#fff", marginBottom: 6 }}>Dirección</div>
-              <input
-                type="text"
-                value={locationDraft.direccion}
-                onChange={(e) => onLocationDraftChange({ direccion: e.target.value })}
-                placeholder="Calle, número"
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  background: "rgba(0,0,0,0.25)",
-                  color: "#fff",
-                }}
-              />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, opacity: 0.85, color: "#fff", marginBottom: 6 }}>Ciudad</div>
-              <input
-                type="text"
-                value={locationDraft.ciudad}
-                onChange={(e) => onLocationDraftChange({ ciudad: e.target.value })}
-                placeholder="Ciudad"
-                style={{
-                  width: "100%",
-                  padding: "8px 10px",
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  background: "rgba(0,0,0,0.25)",
-                  color: "#fff",
-                }}
-              />
-            </div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-            <button
-              type="button"
-              onClick={onCancelLocation}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 12,
-                border: "1px solid rgba(255,255,255,0.18)",
-                background: "rgba(255,255,255,0.06)",
-                color: "#fff",
-                cursor: "pointer",
-                fontWeight: 900,
-              }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={onSaveLocation}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 12,
-                border: "1px solid rgba(39,195,255,0.40)",
-                background: "rgba(39,195,255,0.10)",
-                color: "#fff",
-                cursor: "pointer",
-                fontWeight: 900,
-              }}
-            >
-              Guardar ubicación
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 });
@@ -566,28 +506,47 @@ export default function EventDatesSheet({
   onDeleteRow,
   onDeleteRows,
   deletingRowId,
-  locations = [],
 }: Props) {
   const { showToast } = useToast();
   const qc = useQueryClient();
   const bulkUpdate = useBulkUpdateEventDates();
+  const { zonas: zonaCatalog = [] } = useTags("zona");
+  const zonaTagsForBulk = useMemo(
+    () =>
+      (zonaCatalog || []).map((t: { id: number; nombre?: string; slug?: string; tipo?: string }) => ({
+        id: t.id,
+        nombre: t.nombre,
+        slug: t.slug,
+        tipo: t.tipo,
+      })),
+    [zonaCatalog]
+  );
 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [bulkDraft, setBulkDraft] = useState<BulkDraft>({});
+  const [bulkPanel, setBulkPanel] = useState<BulkPanelId | null>(null);
+  const [bulkTimeHi, setBulkTimeHi] = useState("");
+  const [bulkTimeHf, setBulkTimeHf] = useState("");
+  const [bulkDateYmd, setBulkDateYmd] = useState("");
+  const [bulkLoc, setBulkLoc] = useState({
+    lugar: "",
+    direccion: "",
+    ciudad: "",
+    referencias: "",
+    zonas: [] as number[],
+  });
+  const [bulkZonasTouched, setBulkZonasTouched] = useState(false);
+  const [bulkFlyerFile, setBulkFlyerFile] = useState<File | null>(null);
+  const [bulkFlyerPreviewUrl, setBulkFlyerPreviewUrl] = useState<string | null>(null);
+  const [bulkFlyerBusy, setBulkFlyerBusy] = useState(false);
+  const bulkFlyerInputRef = useRef<HTMLInputElement | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogConfig | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [flyerTarget, setFlyerTarget] = useState<EventDateRow | null>(null);
   const [flyerUploadingById, setFlyerUploadingById] = useState<Record<number, boolean>>({});
   const [flyerErrorById, setFlyerErrorById] = useState<Record<number, boolean>>({});
   const [editingFechaId, setEditingFechaId] = useState<number | null>(null);
   const [editingFechaValue, setEditingFechaValue] = useState<string>("");
-  const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
-  const [locationDraft, setLocationDraft] = useState({
-    locationId: "",
-    lugar: "",
-    direccion: "",
-    ciudad: "",
-    referencias: "",
-  });
+  const [estadoSavingId, setEstadoSavingId] = useState<number | null>(null);
   // Optimistic UI patches per row id so actions reflect immediately even if parent doesn't pass onRowsPatched.
   const [localPatchById, setLocalPatchById] = useState<Record<number, Record<string, any>>>({});
 
@@ -732,20 +691,99 @@ export default function EventDatesSheet({
     });
   }, [sortedRows]);
 
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
   const applyPatch = useCallback(
-    async (patch: Record<string, any>) => {
+    async (patch: Record<string, any>, successMsg = "Actualizado ✅") => {
       if (!selectedList.length) return;
       try {
         const res = await bulkUpdate.mutateAsync({ dateIds: selectedList, patch });
-        onRowsPatched?.(res.updatedIds, patch);
-        applyLocalPatch(res.updatedIds, patch);
-        showToast("Actualizado ✅", "success");
+        const ids = res.updatedIds || [];
+        onRowsPatched?.(ids, patch);
+        applyLocalPatch(ids, patch);
+        ids.forEach((id) => {
+          qc.invalidateQueries({ queryKey: ["event", "date", id] });
+          qc.invalidateQueries({ queryKey: ["date", id] });
+        });
+        qc.invalidateQueries({ queryKey: ["dates"] });
+        qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+        qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+        const parentSet = new Set<number>();
+        sortedRows.forEach((r) => {
+          if (ids.includes(r.id) && r.parent_id != null) parentSet.add(Number(r.parent_id));
+        });
+        parentSet.forEach((pid) => {
+          qc.invalidateQueries({ queryKey: ["dates", pid] });
+          qc.invalidateQueries({ queryKey: ["event", "dates", pid] });
+        });
+        showToast(successMsg, "success");
       } catch (e: any) {
         showToast(e?.message || "Error en bulk update", "error");
       }
     },
-    [bulkUpdate, selectedList, onRowsPatched, showToast, applyLocalPatch]
+    [bulkUpdate, selectedList, onRowsPatched, showToast, applyLocalPatch, qc, sortedRows]
   );
+
+  const selectedRowsForBulk = useMemo(
+    () => sortedRows.filter((r) => selectedIds.has(r.id)),
+    [sortedRows, selectedIds]
+  );
+
+  const selectedRowsForBulkRef = useRef(selectedRowsForBulk);
+  selectedRowsForBulkRef.current = selectedRowsForBulk;
+
+  /** Al abrir un panel masivo (time / date / location), precargar con la primera fila seleccionada (orden de la tabla). */
+  useEffect(() => {
+    if (!bulkPanel) return;
+    const rows = selectedRowsForBulkRef.current;
+    const first = rows[0];
+    if (!first) return;
+
+    if (bulkPanel === "location") {
+      setBulkZonasTouched(false);
+      const zonasRaw = (first as any).zonas;
+      const zonas = Array.isArray(zonasRaw)
+        ? zonasRaw.map((n: unknown) => Number(n)).filter((n) => Number.isFinite(n))
+        : [];
+      setBulkLoc({
+        lugar: String((first as any).lugar ?? ""),
+        direccion: String((first as any).direccion ?? ""),
+        ciudad: String((first as any).ciudad ?? ""),
+        referencias: String((first as any).referencias ?? ""),
+        zonas,
+      });
+      return;
+    }
+    if (bulkPanel === "time") {
+      const hi = first.hora_inicio ? String(first.hora_inicio).slice(0, 5) : "";
+      const hf = first.hora_fin ? String(first.hora_fin).slice(0, 5) : "";
+      setBulkTimeHi(hi);
+      setBulkTimeHf(hf);
+      return;
+    }
+    if (bulkPanel === "date") {
+      const ymd = resolveDisplayYmd(first);
+      setBulkDateYmd(String(ymd || "").split("T")[0] || "");
+    }
+  }, [bulkPanel]);
+
+  const recurrentSelectedCount = useMemo(
+    () => selectedRowsForBulk.filter((r) => isWeeklyRecurrentRow(r as any)).length,
+    [selectedRowsForBulk]
+  );
+
+  useEffect(() => {
+    if (!bulkPanel && !confirmDialog) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (confirmDialog) setConfirmDialog(null);
+      else if (bulkPanel) setBulkPanel(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [bulkPanel, confirmDialog]);
 
   const canRun = selectedCount > 0 && !bulkUpdate.isPending && !bulkDeleting;
 
@@ -778,6 +816,25 @@ export default function EventDatesSheet({
     [onRowsPatched, showToast, qc, sortedRows, applyLocalPatch]
   );
 
+  const toggleEstadoPublicacion = useCallback(
+    async (row: EventDateRow) => {
+      if (!row?.id || estadoSavingId != null) return;
+      const next: "borrador" | "publicado" =
+        row.estado_publicacion === "publicado" ? "borrador" : "publicado";
+      setEstadoSavingId(row.id);
+      try {
+        await updateRow(
+          row.id,
+          { estado_publicacion: next },
+          next === "publicado" ? "Fecha publicada ✅" : "Guardado como borrador ✅"
+        );
+      } finally {
+        setEstadoSavingId(null);
+      }
+    },
+    [updateRow, estadoSavingId]
+  );
+
   const makeDiaSemanaFromFecha = useCallback((fechaValue: any): number | null => {
     try {
       if (!fechaValue) return null;
@@ -792,15 +849,10 @@ export default function EventDatesSheet({
     }
   }, []);
 
-  const makeSelectedRecurrentWeekly = useCallback(async () => {
+  const executeRecurrentWeekly = useCallback(async () => {
     if (!canRun) return;
     const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
     if (!selectedRows.length) return;
-    const ok = window.confirm(
-      `¿Convertir ${selectedRows.length} fecha(s) a evento recurrente semanal?\n\nEsto marcará la(s) fecha(s) como recurrente (se bloqueará editar la fecha).`
-    );
-    if (!ok) return;
-
     try {
       let updated = 0;
       let skipped = 0;
@@ -811,13 +863,11 @@ export default function EventDatesSheet({
           skipped += 1;
           continue;
         }
-        // Recurrente semanal: solo dia_semana (fecha debe seguir presente por NOT NULL en BD).
         await updateRow(r.id, { dia_semana: dia });
         updated += 1;
         const pid = (r as any)?.parent_id;
         if (pid != null && Number.isFinite(Number(pid))) updatedParentIds.add(Number(pid));
       }
-      // Materializar próximas ocurrencias para cada parent afectado.
       for (const parentId of updatedParentIds) {
         try {
           await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: parentId, p_weeks_ahead: 13 });
@@ -836,7 +886,18 @@ export default function EventDatesSheet({
     }
   }, [canRun, makeDiaSemanaFromFecha, selectedIds, sortedRows, updateRow, showToast, qc]);
 
-  const removeRecurrenceFromSelected = useCallback(async () => {
+  const makeSelectedRecurrentWeekly = useCallback(() => {
+    const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
+    if (!selectedRows.length) return;
+    setConfirmDialog({
+      title: "Recurrente semanal",
+      message: `¿Convertir ${selectedRows.length} fecha(s) a evento recurrente semanal?\n\nEsto marcará las fechas como recurrente (se limita editar la fecha).`,
+      confirmLabel: "Convertir",
+      onConfirm: () => executeRecurrentWeekly(),
+    });
+  }, [sortedRows, selectedIds, executeRecurrentWeekly]);
+
+  const executeRemoveRecurrence = useCallback(async () => {
     if (!canRun) return;
     const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
     const recurrentRows = selectedRows.filter(
@@ -846,10 +907,6 @@ export default function EventDatesSheet({
       showToast("Ninguna fila seleccionada es recurrente", "info");
       return;
     }
-    const ok = window.confirm(
-      `¿Quitar recurrencia en ${recurrentRows.length} fecha(s)? Se asignará la próxima ocurrencia como fecha fija.`
-    );
-    if (!ok) return;
     try {
       let updated = 0;
       for (const r of recurrentRows) {
@@ -872,6 +929,24 @@ export default function EventDatesSheet({
       showToast(e?.message || "Error quitando recurrencia", "error");
     }
   }, [canRun, selectedIds, sortedRows, updateRow, showToast, qc]);
+
+  const removeRecurrenceFromSelected = useCallback(() => {
+    const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
+    const recurrentRows = selectedRows.filter(
+      (r) => (r as any)?.dia_semana != null && typeof (r as any).dia_semana === "number"
+    );
+    if (!recurrentRows.length) {
+      showToast("Ninguna fila seleccionada es recurrente", "info");
+      return;
+    }
+    setConfirmDialog({
+      title: "Quitar recurrencia",
+      message: `¿Quitar recurrencia en ${recurrentRows.length} fecha(s)? Se asignará la próxima ocurrencia como fecha fija.`,
+      confirmLabel: "Quitar recurrencia",
+      danger: true,
+      onConfirm: () => executeRemoveRecurrence(),
+    });
+  }, [sortedRows, selectedIds, executeRemoveRecurrence, showToast]);
 
   const startFrecuentesFromSelection = useCallback(() => {
     if (!onStartFrecuentes) return;
@@ -920,37 +995,6 @@ export default function EventDatesSheet({
     setEditingFechaValue("");
   }, []);
 
-  const startEditLocation = useCallback((row: EventDateRow) => {
-    setEditingLocationId(row.id);
-    setLocationDraft({
-      locationId: "",
-      lugar: row.lugar || "",
-      direccion: row.direccion || "",
-      ciudad: row.ciudad || "",
-      referencias: row.referencias || "",
-    });
-  }, []);
-
-  const cancelLocation = useCallback(() => {
-    setEditingLocationId(null);
-    setLocationDraft({ locationId: "", lugar: "", direccion: "", ciudad: "", referencias: "" });
-  }, []);
-
-  const saveLocation = useCallback(async () => {
-    if (!editingLocationId) return;
-    await updateRow(
-      editingLocationId,
-      {
-        lugar: locationDraft.lugar || null,
-        direccion: locationDraft.direccion || null,
-        ciudad: locationDraft.ciudad || null,
-        referencias: locationDraft.referencias || null,
-      },
-      "Ubicación guardada ✅"
-    );
-    setEditingLocationId(null);
-  }, [editingLocationId, locationDraft, updateRow]);
-
   const pickFlyer = useCallback((row: EventDateRow) => {
     setFlyerTarget(row);
     const el = document.getElementById("eds-flyer-input") as HTMLInputElement | null;
@@ -984,6 +1028,179 @@ export default function EventDatesSheet({
     [flyerTarget, onRowsPatched, showToast]
   );
 
+  const handleBulkFlyerPick = useCallback(() => {
+    bulkFlyerInputRef.current?.click();
+  }, []);
+
+  const handleBulkFlyerFileChange = useCallback((file?: File | null) => {
+    if (!file) return;
+    setBulkFlyerFile(file);
+    setBulkFlyerPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  }, []);
+
+  const closeBulkFlyerPanel = useCallback(() => {
+    setBulkFlyerPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setBulkFlyerFile(null);
+    if (bulkFlyerInputRef.current) bulkFlyerInputRef.current.value = "";
+    setBulkPanel(null);
+  }, []);
+
+  const executeBulkFlyerUpload = useCallback(async () => {
+    if (!bulkFlyerFile || !selectedList.length) return;
+    setBulkFlyerBusy(true);
+    try {
+      const first = sortedRows.find((r) => r.id === selectedList[0]);
+      if (!first) return;
+      const url = await uploadEventFlyer({
+        file: bulkFlyerFile,
+        parentId: first.parent_id ?? null,
+        dateId: first.id,
+      });
+      const { error } = await supabase.from("events_date").update({ flyer_url: url }).in("id", selectedList);
+      if (error) throw error;
+      onRowsPatched?.(selectedList, { flyer_url: url });
+      applyLocalPatch(selectedList, { flyer_url: url });
+      selectedList.forEach((id) => {
+        qc.invalidateQueries({ queryKey: ["event", "date", id] });
+        qc.invalidateQueries({ queryKey: ["date", id] });
+      });
+      qc.invalidateQueries({ queryKey: ["dates"] });
+      qc.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
+      qc.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
+      const parentSet = new Set<number>();
+      sortedRows.forEach((r) => {
+        if (selectedList.includes(r.id) && r.parent_id != null) parentSet.add(Number(r.parent_id));
+      });
+      parentSet.forEach((pid) => {
+        qc.invalidateQueries({ queryKey: ["dates", pid] });
+        qc.invalidateQueries({ queryKey: ["event", "dates", pid] });
+      });
+      showToast("Flyer aplicado a todas las fechas seleccionadas ✅", "success");
+      closeBulkFlyerPanel();
+    } catch (e: any) {
+      console.error("[EventDatesSheet] bulk flyer error:", e);
+      showToast(e?.message || "Error subiendo flyer", "error");
+    } finally {
+      setBulkFlyerBusy(false);
+    }
+  }, [
+    bulkFlyerFile,
+    selectedList,
+    sortedRows,
+    onRowsPatched,
+    applyLocalPatch,
+    qc,
+    showToast,
+    closeBulkFlyerPanel,
+  ]);
+
+  const applyBulkFlyer = useCallback(() => {
+    if (!bulkFlyerFile || !selectedList.length) {
+      showToast("Selecciona una imagen", "info");
+      return;
+    }
+    setConfirmDialog({
+      title: "Aplicar flyer",
+      message: `¿Aplicar este flyer a ${selectedList.length} fecha(s)? Se reemplazará la imagen en todas.`,
+      confirmLabel: "Aplicar flyer",
+      onConfirm: () => executeBulkFlyerUpload(),
+    });
+  }, [bulkFlyerFile, selectedList.length, showToast, executeBulkFlyerUpload]);
+
+  const applyBulkTime = useCallback(() => {
+    const patch: Record<string, any> = {};
+    if (bulkTimeHi) patch.hora_inicio = bulkTimeHi;
+    if (bulkTimeHf) patch.hora_fin = bulkTimeHf;
+    if (!Object.keys(patch).length) {
+      showToast("Indica al menos hora de inicio o fin", "info");
+      return;
+    }
+    const err = validateHoraOrder(
+      patch.hora_inicio ?? undefined,
+      patch.hora_fin ?? undefined
+    );
+    if (err) {
+      showToast(err, "error");
+      return;
+    }
+    void applyPatch(patch, "Horario actualizado ✅");
+    setBulkPanel(null);
+  }, [bulkTimeHi, bulkTimeHf, applyPatch, showToast]);
+
+  const applyBulkDate = useCallback(() => {
+    const ymd = bulkDateYmd.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+      showToast("Fecha inválida (usa YYYY-MM-DD)", "error");
+      return;
+    }
+    let message = `¿Aplicar la fecha ${ymd} a ${selectedList.length} evento(s)?`;
+    if (recurrentSelectedCount > 0) {
+      message += `\n\n${recurrentSelectedCount} ${
+        recurrentSelectedCount === 1 ? "es recurrente" : "son recurrentes"
+      }: se quitará la recurrencia semanal (pasan a fecha fija).`;
+    }
+    setConfirmDialog({
+      title: "Cambiar fecha",
+      message,
+      confirmLabel: "Aplicar",
+      onConfirm: async () => {
+        await applyPatch({ fecha: ymd, dia_semana: null }, "Fechas actualizadas ✅");
+        setBulkPanel(null);
+      },
+    });
+  }, [bulkDateYmd, selectedList.length, recurrentSelectedCount, applyPatch, showToast]);
+
+  const applyBulkLocation = useCallback(() => {
+    const textPatch = buildLocationBulkPatchFromFilled({
+      lugar: bulkLoc.lugar,
+      direccion: bulkLoc.direccion,
+      ciudad: bulkLoc.ciudad,
+      referencias: bulkLoc.referencias,
+    });
+    const patch: Record<string, any> = { ...textPatch };
+    if (bulkZonasTouched) {
+      patch.zonas = bulkLoc.zonas;
+    }
+    if (!Object.keys(patch).length) {
+      showToast("Completa al menos un campo de ubicación o elige una o más zonas", "info");
+      return;
+    }
+    setConfirmDialog({
+      title: "Cambiar ubicación",
+      message: `¿Aplicar estos datos a ${selectedList.length} evento(s)? Solo se actualizan los campos que indiques (texto y/o zonas).`,
+      confirmLabel: "Aplicar",
+      onConfirm: async () => {
+        await applyPatch(patch as Record<string, any>, "Ubicación actualizada ✅");
+        setBulkPanel(null);
+      },
+    });
+  }, [bulkLoc, bulkZonasTouched, selectedList.length, applyPatch, showToast]);
+
+  const applyBulkEstado = useCallback(
+    (est: "publicado" | "borrador") => {
+      const isPub = est === "publicado";
+      setConfirmDialog({
+        title: isPub ? "Publicar eventos" : "Pasar a borrador",
+        message: `Se actualizará el estado de ${selectedList.length} evento(s) a ${isPub ? "publicado" : "borrador"}.`,
+        confirmLabel: isPub ? "Publicar" : "Usar borrador",
+        onConfirm: async () => {
+          await applyPatch(
+            { estado_publicacion: est },
+            isPub ? "Eventos publicados ✅" : "Guardados como borrador ✅"
+          );
+          setBulkPanel(null);
+        },
+      });
+    },
+    [selectedList.length, applyPatch]
+  );
+
   const Wrapper: React.FC<React.PropsWithChildren> = ({ children }) => {
     if (variant === "embedded") return <div>{children}</div>;
     return (
@@ -1013,7 +1230,7 @@ export default function EventDatesSheet({
         }
         /* Table structure: header + body of rows, full width, aligned columns */
         .eds-scroll .eds-minWidth {
-          min-width: 930px;
+          min-width: 860px;
           width: 100%;
           display: flex;
           flex-direction: column;
@@ -1040,9 +1257,9 @@ export default function EventDatesSheet({
           /* ↓ Reduce Evento/Lugar widths and let them wrap to 2 lines */
           --eds-event-col: 165px;
           --eds-date-col: 140px;
-          --eds-time-col: 72px;
+          --eds-hora-col: minmax(120px, 1fr);
           --eds-place-col: minmax(160px, 1fr);
-          --eds-cols: 42px var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-place-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col);
+          --eds-cols: 42px var(--eds-event-col) var(--eds-date-col) var(--eds-hora-col) var(--eds-place-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col);
         }
         /* Regla crítica: header y filas usan el mismo grid y padding para alineación exacta. */
         .eds-grid.eds-header,
@@ -1071,6 +1288,8 @@ export default function EventDatesSheet({
         .eds-cellFlyer { min-width: var(--eds-flyer-col); }
         .eds-cellEstado { min-width: var(--eds-estado-col); }
         .eds-cellActions { min-width: var(--eds-actions-col); }
+        .eds-cellHora { min-width: var(--eds-hora-col); }
+        .eds-hHora { min-width: var(--eds-hora-col); }
         .eds-hFlyer { min-width: var(--eds-flyer-col); }
         .eds-hEstado { min-width: var(--eds-estado-col); }
         .eds-hActions { min-width: var(--eds-actions-col); }
@@ -1134,7 +1353,7 @@ export default function EventDatesSheet({
           background: rgba(255,255,255,0.05);
         }
 
-        /* Bulk actions (responsive) */
+        /* Bulk actions (responsive) — OrganizerProfileEditor: selección múltiple */
         .eds-actionsBar{
           display: grid;
           grid-template-columns: 1fr;
@@ -1145,6 +1364,140 @@ export default function EventDatesSheet({
           border: 1px solid rgba(255,255,255,0.10);
           background: rgba(255,255,255,0.04);
         }
+        .eds-actionsBar--sticky {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          backdrop-filter: blur(10px);
+        }
+        .eds-actionsBar__top {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+        @media (max-width: 520px) {
+          .eds-actionsBar__top {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .eds-actionsBar__cancel {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+        .eds-actionsBar__count {
+          font-size: 14px;
+          font-weight: 800;
+          color: #fff;
+        }
+        .eds-actionsBar__cancel {
+          min-height: 44px;
+          padding: 10px 14px;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.22);
+          background: rgba(255,255,255,0.06);
+          color: #fff;
+          cursor: pointer;
+          font-weight: 800;
+          font-size: 13px;
+        }
+        .eds-actionsChips {
+          display: flex;
+          flex-wrap: nowrap;
+          gap: 8px;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-x: contain;
+          scroll-snap-type: x proximity;
+          padding: 4px 4px 8px;
+          scrollbar-width: thin;
+        }
+        .eds-chipBtn {
+          flex: 0 0 auto;
+          min-height: 44px;
+          padding: 10px 14px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.22);
+          background: #1a1f2b;
+          color: #fff;
+          cursor: pointer;
+          font-weight: 900;
+          font-size: 13px;
+          white-space: nowrap;
+          scroll-snap-align: start;
+          touch-action: manipulation;
+        }
+        .eds-chipBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .eds-chipBtnPrimary {
+          border-color: rgba(39,195,255,0.75);
+          background: #1E88E5;
+        }
+        .eds-chipBtnDanger {
+          border-color: rgba(255,61,87,0.75);
+          background: #FF3D57;
+        }
+        .eds-bulkOverlay {
+          position: fixed;
+          inset: 0;
+          z-index: 60;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          background: rgba(0,0,0,0.55);
+          padding: 0;
+        }
+        @media (min-width: 560px) {
+          .eds-bulkOverlay { align-items: center; padding: 16px; }
+        }
+        .eds-bulkOverlay.eds-bulkOverlay--confirm {
+          z-index: 70;
+        }
+        .eds-bulkSheet {
+          width: 100%;
+          max-width: 440px;
+          max-height: min(88vh, 620px);
+          overflow: auto;
+          -webkit-overflow-scrolling: touch;
+          background: #1a1f2b;
+          border-top-left-radius: 18px;
+          border-top-right-radius: 18px;
+          border: 1px solid rgba(255,255,255,0.12);
+          box-shadow: 0 -12px 40px rgba(0,0,0,0.45);
+        }
+        @media (min-width: 560px) {
+          .eds-bulkSheet { border-radius: 18px; }
+        }
+        .eds-bulkSheet__head {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          padding: 14px 16px;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+          position: sticky;
+          top: 0;
+          background: rgba(26,31,43,0.96);
+          z-index: 1;
+        }
+        .eds-bulkSheet__title { margin: 0; font-size: 17px; font-weight: 900; color: #fff; }
+        .eds-bulkSheet__close {
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.06);
+          color: #fff;
+          cursor: pointer;
+          font-size: 22px;
+          line-height: 1;
+          flex-shrink: 0;
+        }
+        .eds-bulkSheet__body { padding: 0 16px 16px; }
+        .eds-bulkSheet__footer { padding: 12px 16px 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .eds-bulkHint { font-size: 12px; opacity: 0.85; color: #fff; margin: 0 0 10px; line-height: 1.4; }
+        .eds-bulkField { margin-bottom: 12px; }
         /* Dos columnas por defecto; en pantallas estrechas pasa a una columna */
         .eds-actionsInputs {
           display: grid;
@@ -1213,15 +1566,15 @@ export default function EventDatesSheet({
           .eds-actionBtn { width: 100%; justify-content: center; }
         }
         @media (max-width: 720px) {
-          .eds-minWidth { min-width: 780px; }
+          .eds-minWidth { min-width: 710px; }
           /* Give more room to "Evento" on mobile */
-          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-event-col: 160px; --eds-date-col: 132px; --eds-time-col: 64px; --eds-place-col: minmax(160px, 1fr); --eds-cols: 36px var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-place-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
+          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-event-col: 160px; --eds-date-col: 132px; --eds-hora-col: minmax(108px, 1fr); --eds-place-col: minmax(160px, 1fr); --eds-cols: 36px var(--eds-event-col) var(--eds-date-col) var(--eds-hora-col) var(--eds-place-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
           .eds-iconBtn{ width: 36px; height: 36px; border-radius: 999px; }
         }
         @media (max-width: 520px) {
-          .eds-minWidth { min-width: 620px; }
+          .eds-minWidth { min-width: 560px; }
           .eds-place { display: none; }
-          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-event-col: minmax(180px, 1fr); --eds-date-col: 110px; --eds-time-col: 64px; --eds-cols: 36px var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
+          .eds-grid { --eds-flyer-col: 56px; --eds-estado-col: 56px; --eds-actions-col: 132px; --eds-event-col: minmax(180px, 1fr); --eds-date-col: 110px; --eds-hora-col: minmax(100px, 1fr); --eds-cols: 36px var(--eds-event-col) var(--eds-date-col) var(--eds-hora-col) var(--eds-flyer-col) var(--eds-estado-col) var(--eds-actions-col); }
           .eds-editableDate{ padding: 6px 8px; }
         }
       `}</style>
@@ -1248,9 +1601,11 @@ export default function EventDatesSheet({
       </div>
       )}
 
-      <div style={{ fontSize: 12, opacity: 0.85, color: "#fff", marginBottom: 12 }}>
-        Seleccionadas: <b>{selectedCount}</b>. Bulk no se bloquea por uploads (flyers se manejan aparte).
-      </div>
+      {selectedCount === 0 ? (
+        <div style={{ fontSize: 12, opacity: 0.85, color: "#fff", marginBottom: 12 }} role="status" aria-live="polite">
+          Selecciona una o más fechas con la casilla para ver acciones masivas.
+        </div>
+      ) : null}
 
       <input
         id="eds-flyer-input"
@@ -1260,127 +1615,77 @@ export default function EventDatesSheet({
         onChange={(e) => handleFlyerFile(e.target.files?.[0])}
       />
 
-      {/* Bulk actions bar */}
-      <div className="eds-actionsBar">
-        <div className="eds-actionsInputs">
-          <div>
-            <div className="eds-fieldLabel">Hora inicio</div>
-            <input
-              className="eds-timeInput"
-              type="time"
-              value={bulkDraft.hora_inicio || ""}
-              onChange={(e) => setBulkDraft((p) => ({ ...p, hora_inicio: e.target.value }))}
-            />
+      <input
+        ref={bulkFlyerInputRef}
+        type="file"
+        accept="image/png, image/jpeg, image/webp"
+        style={{ display: "none" }}
+        aria-hidden
+        onChange={(e) => handleBulkFlyerFileChange(e.target.files?.[0])}
+      />
+
+      {selectedCount > 0 ? (
+        <div className="eds-actionsBar eds-actionsBar--sticky" role="region" aria-label="Acciones masivas">
+          <div className="eds-actionsBar__top">
+            <div className="eds-actionsBar__count" aria-live="polite">
+              {selectedCount === 1 ? "1 evento seleccionado" : `${selectedCount} eventos seleccionados`}
+            </div>
+            <button type="button" className="eds-actionsBar__cancel" onClick={clearSelection}>
+              Cancelar selección
+            </button>
           </div>
-          <div>
-            <div className="eds-fieldLabel">Hora fin</div>
-            <input
-              className="eds-timeInput"
-              type="time"
-              value={bulkDraft.hora_fin || ""}
-              onChange={(e) => setBulkDraft((p) => ({ ...p, hora_fin: e.target.value }))}
-            />
+          <div className="eds-actionsChips" role="toolbar" aria-label="Acciones en lote">
+            <button
+              type="button"
+              className="eds-chipBtn eds-chipBtnPrimary"
+              disabled={!canRun}
+              onClick={() => setBulkPanel("time")}
+            >
+              🕐 Horario
+            </button>
+            <button
+              type="button"
+              className="eds-chipBtn eds-chipBtnPrimary"
+              disabled={!canRun}
+              onClick={() => setBulkPanel("date")}
+            >
+              📅 Día
+            </button>
+            <button
+              type="button"
+              className="eds-chipBtn"
+              disabled={!canRun}
+              onClick={() => setBulkPanel("location")}
+            >
+              📍 Ubicación
+            </button>
+            <button
+              type="button"
+              className="eds-chipBtn"
+              disabled={!canRun}
+              onClick={() => setBulkPanel("estado")}
+            >
+              🌐 Estado
+            </button>
+            <button
+              type="button"
+              className="eds-chipBtn"
+              disabled={!canRun}
+              onClick={() => setBulkPanel("flyer")}
+            >
+              🖼 Flyer
+            </button>
+            <button
+              type="button"
+              className="eds-chipBtn"
+              disabled={!canRun}
+              onClick={() => setBulkPanel("more")}
+            >
+              ⋯ Más
+            </button>
           </div>
         </div>
-
-        <div className="eds-actionsBtns">
-          <button
-            className="eds-actionBtn eds-actionBtnPrimary"
-            type="button"
-            disabled={!canRun || (!bulkDraft.hora_inicio && !bulkDraft.hora_fin)}
-            onClick={() =>
-              applyPatch({
-                ...(bulkDraft.hora_inicio ? { hora_inicio: bulkDraft.hora_inicio } : {}),
-                ...(bulkDraft.hora_fin ? { hora_fin: bulkDraft.hora_fin } : {}),
-              })
-            }
-            title="Aplicar hora a seleccionadas"
-          >
-            {bulkUpdate.isPending ? "Aplicando…" : "Aplicar hora"}
-          </button>
-
-          <button
-            className="eds-actionBtn"
-            type="button"
-            disabled={!canRun}
-            onClick={() => applyPatch({ estado_publicacion: "publicado" })}
-          >
-            🌐 Publicar
-          </button>
-          <button
-            className="eds-actionBtn"
-            type="button"
-            disabled={!canRun}
-            onClick={() => applyPatch({ estado_publicacion: "borrador" })}
-          >
-            📝 Borrador
-          </button>
-
-          <button
-            className="eds-actionBtn"
-            type="button"
-            disabled={!canRun}
-            onClick={makeSelectedRecurrentWeekly}
-            title="Convierte las fechas seleccionadas a recurrente semanal (usa el día de la semana de cada fecha)"
-          >
-            🔁 Recurrente
-          </button>
-
-          <button
-            className="eds-actionBtn"
-            type="button"
-            disabled={!canRun}
-            onClick={removeRecurrenceFromSelected}
-            title="Quitar recurrencia semanal: asigna la próxima ocurrencia como fecha fija"
-          >
-            🚫 Quitar recurrencia
-          </button>
-
-          <button
-            className="eds-actionBtn eds-actionBtnPrimary"
-            type="button"
-            disabled={!canRun || !onStartFrecuentes}
-            onClick={startFrecuentesFromSelection}
-            title={onStartFrecuentes ? "Usar esta fecha como plantilla para planificador de frecuentes" : "No disponible aquí"}
-          >
-            📋 Frecuente
-          </button>
-
-          <button
-            className="eds-actionBtn eds-actionBtnDanger"
-            type="button"
-            disabled={!canRun || (!onDeleteRow && !onDeleteRows)}
-            onClick={async () => {
-              if (!selectedList.length) return;
-              if (!onDeleteRow && !onDeleteRows) return;
-              const ok = window.confirm(
-                `¿Eliminar ${selectedList.length} fecha(s) seleccionada(s)? Esta acción no se puede deshacer.`
-              );
-              if (!ok) return;
-              try {
-                setBulkDeleting(true);
-                const selectedRows = sortedRows.filter((r) => selectedIds.has(r.id));
-                // Prefer a dedicated bulk-delete callback when provided (avoids single-row modal flows).
-                if (onDeleteRows) {
-                  await Promise.resolve(onDeleteRows(selectedRows));
-                } else if (onDeleteRow) {
-                  for (const r of selectedRows) {
-                    await Promise.resolve(onDeleteRow(r));
-                  }
-                }
-                setSelectedIds(new Set());
-                showToast("Eliminadas ✅", "success");
-              } catch (e: any) {
-                showToast(e?.message || "Error eliminando seleccionadas", "error");
-              } finally {
-                setBulkDeleting(false);
-              }
-            }}
-          >
-            {bulkDeleting ? "Eliminando…" : "🗑️ Eliminar"}
-          </button>
-        </div>
-      </div>
+      ) : null}
 
       {/* Table: header (sticky) + body of full-width rows aligned to columns */}
       <div className="eds-scroll">
@@ -1399,8 +1704,9 @@ export default function EventDatesSheet({
               </div>
               <div role="columnheader">Evento</div>
               <div role="columnheader">Fecha</div>
-              <div role="columnheader">Inicio</div>
-              <div role="columnheader">Fin</div>
+              <div className="eds-hHora" role="columnheader">
+                Hora
+              </div>
               <div className="eds-place" role="columnheader">Lugar</div>
               <div className="eds-hFlyer" role="columnheader">Flyer</div>
               <div className="eds-hEstado" role="columnheader">Estado</div>
@@ -1436,19 +1742,390 @@ export default function EventDatesSheet({
                 onChangeEditFecha={setEditingFechaValue}
                 onSaveFecha={saveFecha}
                 onCancelFecha={cancelFecha}
-                isEditingLocation={editingLocationId === r.id}
-                onStartEditLocation={startEditLocation}
-                onCancelLocation={cancelLocation}
-                onSaveLocation={saveLocation}
-                locationDraft={locationDraft}
-                onLocationDraftChange={(patch) => setLocationDraft((p) => ({ ...p, ...patch }))}
-                locations={locations}
+                onToggleEstadoPublicacion={toggleEstadoPublicacion}
+                estadoRowBusyId={estadoSavingId}
               />
             ))}
             </div>
           </div>
         </div>
       </div>
+
+      {bulkPanel === "time" && (
+        <BulkSheetOverlay
+          title="Cambiar horario"
+          onClose={() => setBulkPanel(null)}
+          footer={
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <button type="button" className="eds-actionBtn" onClick={() => setBulkPanel(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="eds-actionBtn eds-actionBtnPrimary"
+                disabled={bulkUpdate.isPending}
+                onClick={applyBulkTime}
+              >
+                {bulkUpdate.isPending ? "Aplicando…" : "Aplicar a seleccionadas"}
+              </button>
+            </div>
+          }
+        >
+          <p className="eds-bulkHint">
+            Deja vacío lo que no quieras cambiar. Si indicas inicio y fin, el fin debe ser posterior al inicio.
+          </p>
+          {selectedRowsForBulk.length > 1 ? (
+            <p className="eds-bulkHint" style={{ opacity: 0.9 }}>
+              Valores iniciales según la primera fila seleccionada (orden actual de la tabla).
+            </p>
+          ) : null}
+          <div className="eds-actionsInputs" style={{ marginTop: 8 }}>
+            <div>
+              <div className="eds-fieldLabel">Hora inicio</div>
+              <input
+                className="eds-timeInput"
+                type="time"
+                value={bulkTimeHi}
+                onChange={(e) => setBulkTimeHi(e.target.value)}
+                aria-label="Nueva hora de inicio"
+              />
+            </div>
+            <div>
+              <div className="eds-fieldLabel">Hora fin</div>
+              <input
+                className="eds-timeInput"
+                type="time"
+                value={bulkTimeHf}
+                onChange={(e) => setBulkTimeHf(e.target.value)}
+                aria-label="Nueva hora de fin"
+              />
+            </div>
+          </div>
+        </BulkSheetOverlay>
+      )}
+
+      {bulkPanel === "date" && (
+        <BulkSheetOverlay
+          title="Cambiar día / fecha"
+          onClose={() => setBulkPanel(null)}
+          footer={
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <button type="button" className="eds-actionBtn" onClick={() => setBulkPanel(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="eds-actionBtn eds-actionBtnPrimary"
+                disabled={bulkUpdate.isPending}
+                onClick={applyBulkDate}
+              >
+                {bulkUpdate.isPending ? "Aplicando…" : "Aplicar a seleccionadas"}
+              </button>
+            </div>
+          }
+        >
+          <p className="eds-bulkHint">Nueva fecha aplicada a todas las filas seleccionadas (formato del calendario).</p>
+          {selectedRowsForBulk.length > 1 ? (
+            <p className="eds-bulkHint" style={{ opacity: 0.9 }}>
+              Fecha inicial según la primera fila seleccionada (orden actual de la tabla).
+            </p>
+          ) : null}
+          {recurrentSelectedCount > 0 ? (
+            <p className="eds-bulkHint" style={{ color: "#ffd166" }}>
+              Incluyes {recurrentSelectedCount} fecha(s) recurrentes: al guardar se quita la recurrencia semanal y quedan como
+              fecha fija.
+            </p>
+          ) : null}
+          <div className="eds-bulkField">
+            <div className="eds-fieldLabel">Nueva fecha</div>
+            <input
+              className="eds-timeInput"
+              type="date"
+              value={bulkDateYmd}
+              onChange={(e) => setBulkDateYmd(e.target.value)}
+              aria-label="Nueva fecha para eventos seleccionados"
+            />
+          </div>
+        </BulkSheetOverlay>
+      )}
+
+      {bulkPanel === "location" && (
+        <BulkSheetOverlay
+          title="Cambiar ubicación"
+          onClose={() => setBulkPanel(null)}
+          footer={
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <button type="button" className="eds-actionBtn" onClick={() => setBulkPanel(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="eds-actionBtn eds-actionBtnPrimary"
+                disabled={bulkUpdate.isPending}
+                onClick={applyBulkLocation}
+              >
+                {bulkUpdate.isPending ? "Aplicando…" : "Aplicar a seleccionadas"}
+              </button>
+            </div>
+          }
+        >
+          <p className="eds-bulkHint">
+            Solo se actualizan los campos que rellenes (lugar, dirección, ciudad, referencias y/o zonas en la base de datos).
+          </p>
+          {selectedRowsForBulk.length > 1 ? (
+            <p className="eds-bulkHint" style={{ opacity: 0.9 }}>
+              Valores iniciales según la primera fila seleccionada (orden actual de la tabla).
+            </p>
+          ) : null}
+          <div className="eds-bulkField">
+            <div className="eds-fieldLabel">Zonas</div>
+            <p className="eds-bulkHint" style={{ marginTop: 0, marginBottom: 8 }}>
+              Opcional. Si eliges zonas, se aplican a todas las fechas seleccionadas (reemplazan las zonas de esas filas).
+            </p>
+            <div style={{ marginTop: 4 }}>
+              <ZonaGroupedChips
+                mode="edit"
+                allTags={zonaTagsForBulk}
+                selectedIds={bulkLoc.zonas}
+                onToggle={(id) => {
+                  setBulkZonasTouched(true);
+                  setBulkLoc((p) => {
+                    const cur = p.zonas || [];
+                    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+                    return { ...p, zonas: next };
+                  });
+                }}
+                size="compact"
+              />
+            </div>
+          </div>
+          <div className="eds-bulkField">
+            <div className="eds-fieldLabel">Lugar</div>
+            <input
+              className="eds-timeInput"
+              value={bulkLoc.lugar}
+              onChange={(e) => setBulkLoc((p) => ({ ...p, lugar: e.target.value }))}
+              autoComplete="off"
+            />
+          </div>
+          <div className="eds-bulkField">
+            <div className="eds-fieldLabel">Dirección</div>
+            <input
+              className="eds-timeInput"
+              value={bulkLoc.direccion}
+              onChange={(e) => setBulkLoc((p) => ({ ...p, direccion: e.target.value }))}
+              autoComplete="street-address"
+            />
+          </div>
+          <div className="eds-bulkField">
+            <div className="eds-fieldLabel">Ciudad</div>
+            <input
+              className="eds-timeInput"
+              value={bulkLoc.ciudad}
+              onChange={(e) => setBulkLoc((p) => ({ ...p, ciudad: e.target.value }))}
+              autoComplete="address-level2"
+            />
+          </div>
+          <div className="eds-bulkField">
+            <div className="eds-fieldLabel">Referencias</div>
+            <input
+              className="eds-timeInput"
+              value={bulkLoc.referencias}
+              onChange={(e) => setBulkLoc((p) => ({ ...p, referencias: e.target.value }))}
+              autoComplete="off"
+            />
+          </div>
+        </BulkSheetOverlay>
+      )}
+
+      {bulkPanel === "estado" && (
+        <BulkSheetOverlay title="Estado de publicación" onClose={() => setBulkPanel(null)}>
+          <p className="eds-bulkHint">Se pedirá confirmación antes de aplicar a todas las fechas seleccionadas.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+            <button
+              type="button"
+              className="eds-actionBtn eds-actionBtnPrimary"
+              style={{ minHeight: 48, width: "100%" }}
+              disabled={bulkUpdate.isPending}
+              onClick={() => applyBulkEstado("publicado")}
+            >
+              🌐 Publicado
+            </button>
+            <button
+              type="button"
+              className="eds-actionBtn"
+              style={{ minHeight: 48, width: "100%" }}
+              disabled={bulkUpdate.isPending}
+              onClick={() => applyBulkEstado("borrador")}
+            >
+              📝 Borrador
+            </button>
+          </div>
+        </BulkSheetOverlay>
+      )}
+
+      {bulkPanel === "flyer" && (
+        <BulkSheetOverlay
+          title="Cambiar flyer"
+          onClose={closeBulkFlyerPanel}
+          footer={
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                className="eds-actionBtn"
+                onClick={closeBulkFlyerPanel}
+                disabled={bulkFlyerBusy}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="eds-actionBtn eds-actionBtnPrimary"
+                disabled={bulkFlyerBusy || !bulkFlyerFile}
+                onClick={() => void applyBulkFlyer()}
+              >
+                {bulkFlyerBusy ? "Subiendo…" : "Aplicar a todas"}
+              </button>
+            </div>
+          }
+        >
+          <p className="eds-bulkHint">
+            Se usa el mismo flujo de subida que el flyer por fila: una sola subida y la misma URL en todas las fechas
+            seleccionadas.
+          </p>
+          <button type="button" className="eds-actionBtn eds-actionBtnPrimary" style={{ width: "100%", minHeight: 44 }} onClick={handleBulkFlyerPick}>
+            Elegir imagen
+          </button>
+          {bulkFlyerPreviewUrl ? (
+            <img
+              src={bulkFlyerPreviewUrl}
+              alt="Vista previa del flyer"
+              style={{ width: "100%", maxHeight: 220, objectFit: "contain", marginTop: 12, borderRadius: 12 }}
+            />
+          ) : (
+            <p className="eds-bulkHint" style={{ marginTop: 10 }}>
+              Sin imagen aún.
+            </p>
+          )}
+        </BulkSheetOverlay>
+      )}
+
+      {confirmDialog && (
+        <BulkSheetOverlay
+          title={confirmDialog.title}
+          titleId="eds-confirm-title"
+          overlayClassName="eds-bulkOverlay eds-bulkOverlay--confirm"
+          onClose={() => setConfirmDialog(null)}
+          footer={
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <button type="button" className="eds-actionBtn" onClick={() => setConfirmDialog(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={
+                  confirmDialog.danger ? "eds-actionBtn eds-actionBtnDanger" : "eds-actionBtn eds-actionBtnPrimary"
+                }
+                onClick={async () => {
+                  const cfg = confirmDialog;
+                  setConfirmDialog(null);
+                  await Promise.resolve(cfg.onConfirm());
+                }}
+              >
+                {confirmDialog.confirmLabel || "Confirmar"}
+              </button>
+            </div>
+          }
+        >
+          <p className="eds-bulkHint" style={{ whiteSpace: "pre-line" }}>
+            {confirmDialog.message}
+          </p>
+        </BulkSheetOverlay>
+      )}
+
+      {bulkPanel === "more" && (
+        <BulkSheetOverlay title="Más acciones" onClose={() => setBulkPanel(null)}>
+          <p className="eds-bulkHint">
+            Recurrencia y &quot;frecuente&quot; tienen reglas especiales; el detalle técnico para futuros cambios está en el
+            hook useBulkEventDateActions. Aquí están las mismas acciones que antes en la barra completa.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+            <button
+              type="button"
+              className="eds-actionBtn"
+              disabled={!canRun}
+              onClick={() => {
+                setBulkPanel(null);
+                queueMicrotask(() => void makeSelectedRecurrentWeekly());
+              }}
+              title="Convierte las fechas seleccionadas a recurrente semanal (usa el día de la semana de cada fecha)"
+            >
+              🔁 Recurrente
+            </button>
+            <button
+              type="button"
+              className="eds-actionBtn"
+              disabled={!canRun}
+              onClick={() => {
+                setBulkPanel(null);
+                queueMicrotask(() => void removeRecurrenceFromSelected());
+              }}
+              title="Quitar recurrencia semanal: asigna la próxima ocurrencia como fecha fija"
+            >
+              🚫 Quitar recurrencia
+            </button>
+            <button
+              type="button"
+              className="eds-actionBtn eds-actionBtnPrimary"
+              disabled={!canRun || !onStartFrecuentes}
+              onClick={() => {
+                setBulkPanel(null);
+                queueMicrotask(() => startFrecuentesFromSelection());
+              }}
+              title={onStartFrecuentes ? "Usar una fecha como plantilla para planificador de frecuentes" : "No disponible aquí"}
+            >
+              📋 Frecuente
+            </button>
+            <button
+              type="button"
+              className="eds-actionBtn eds-actionBtnDanger"
+              disabled={!canRun || (!onDeleteRow && !onDeleteRows)}
+              onClick={() => {
+                setBulkPanel(null);
+                if (!selectedList.length) return;
+                if (!onDeleteRow && !onDeleteRows) return;
+                setConfirmDialog({
+                  title: "Eliminar fechas",
+                  message: `¿Eliminar ${selectedList.length} fecha(s) seleccionada(s)? Esta acción no se puede deshacer.`,
+                  confirmLabel: "Eliminar",
+                  danger: true,
+                  onConfirm: async () => {
+                    try {
+                      setBulkDeleting(true);
+                      const selRows = sortedRows.filter((r) => selectedIds.has(r.id));
+                      if (onDeleteRows) {
+                        await Promise.resolve(onDeleteRows(selRows));
+                      } else if (onDeleteRow) {
+                        for (const r of selRows) {
+                          await Promise.resolve(onDeleteRow(r));
+                        }
+                      }
+                      setSelectedIds(new Set());
+                      showToast("Eliminadas ✅", "success");
+                    } catch (e: any) {
+                      showToast(e?.message || "Error eliminando seleccionadas", "error");
+                    } finally {
+                      setBulkDeleting(false);
+                    }
+                  },
+                });
+              }}
+            >
+              {bulkDeleting ? "Eliminando…" : "🗑️ Eliminar seleccionadas"}
+            </button>
+          </div>
+        </BulkSheetOverlay>
+      )}
     </Wrapper>
   );
 }

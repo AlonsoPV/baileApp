@@ -484,23 +484,23 @@ function EventParentCard({
                 <div className="dates-block">
                   {/* Barra de búsqueda de eventos */}
                   {(availableDates.length > 0 || pastDates.length > 0) && (
-                    <div className="dates-section-search-wrap" style={{ marginBottom: 10 }}>
+                    <div className="dates-section-search-wrap">
                       <input
-                        type="search"
+                        id="org-dates-filter-social"
+                        type="text"
+                        role="searchbox"
+                        inputMode="search"
+                        enterKeyHint="search"
                         className="dates-section-search"
                         placeholder="Buscar por nombre, fecha, lugar..."
                         value={datesSearch}
                         onChange={(e) => setDatesSearch(e.target.value)}
                         aria-label="Buscar eventos"
-                        style={{
-                          width: '100%',
-                          padding: '8px 12px',
-                          borderRadius: 10,
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          background: 'rgba(255,255,255,0.06)',
-                          color: '#fff',
-                          fontSize: '0.9rem',
-                        }}
+                        name="org-dates-filter-social"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        data-lpignore="true"
                       />
                     </div>
                   )}
@@ -533,7 +533,6 @@ function EventParentCard({
                           onDeleteRow={(row) => onDeleteDate(row as any)}
                           onDeleteRows={onDeleteDatesBulk}
                           deletingRowId={deletingDateId as any}
-                          locations={orgLocations || []}
                         />
                       </div>
                     </details>
@@ -568,7 +567,6 @@ function EventParentCard({
                           onDeleteRow={(row) => onDeleteDate(row as any)}
                           onDeleteRows={onDeleteDatesBulk}
                           deletingRowId={deletingDateId as any}
-                          locations={orgLocations || []}
                         />
                       </div>
                     </details>
@@ -2475,6 +2473,27 @@ export default function OrganizerProfileEditor() {
           color: var(--text-main);
           font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           font-size: 14px;
+        }
+
+        .dates-section-search-wrap {
+          margin-bottom: 10px;
+        }
+        .dates-section-search {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 8px 12px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.06);
+          color: #fff;
+          font-size: 0.9rem;
+        }
+        .dates-section-search::placeholder {
+          color: rgba(255, 255, 255, 0.45);
+        }
+        .dates-section-search:focus {
+          outline: 2px solid rgba(39, 195, 255, 0.45);
+          outline-offset: 1px;
         }
 
         .dates-section {
@@ -5047,12 +5066,31 @@ export default function OrganizerProfileEditor() {
                           } as const;
                           const tip = baseReady ? undefined : t('configure_base_date_tooltip');
 
+                          const touchPad = isMobile
+                            ? { minHeight: 44, padding: '12px 12px', fontSize: 13 as const }
+                            : { padding: '8px 12px' };
                           return (
                             <>
                         <div style={{ fontWeight: 800, marginBottom: 8 }}>{t('quick_actions')}</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 12, opacity: 0.85 }}>{t('weeks')}</span>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            flexWrap: isMobile ? 'nowrap' : 'wrap',
+                            gap: isMobile ? 12 : 10,
+                            alignItems: isMobile ? 'stretch' : 'center',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              width: isMobile ? '100%' : 'auto',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <span style={{ fontSize: 12, opacity: 0.85, flexShrink: 0 }}>{t('weeks')}</span>
                             <input
                               type="number"
                               min="1"
@@ -5066,16 +5104,34 @@ export default function OrganizerProfileEditor() {
                                 setDateForm({ ...dateForm, semanas_repetir: next });
                               }}
                               className="org-editor-input"
-                              style={{ width: 90, color: '#FFFFFF' }}
+                              inputMode="numeric"
+                              aria-label={t('weeks')}
+                              style={{
+                                width: isMobile ? '100%' : 90,
+                                maxWidth: isMobile ? 140 : undefined,
+                                minHeight: isMobile ? 44 : undefined,
+                                color: '#FFFFFF',
+                              }}
                             />
                           </div>
+                          <div
+                            style={{
+                              display: isMobile ? 'grid' : 'flex',
+                              gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : undefined,
+                              flexWrap: isMobile ? undefined : 'wrap',
+                              gap: 10,
+                              alignItems: isMobile ? 'stretch' : 'center',
+                              flex: isMobile ? undefined : 1,
+                              minWidth: 0,
+                            }}
+                          >
                           <button
                             type="button"
                             onClick={() => baseReady && addBulkRow()}
                             disabled={!baseReady}
                             title={tip}
                             style={{
-                              padding: '8px 12px',
+                              ...touchPad,
                               borderRadius: 10,
                               border: '1px solid rgba(255,255,255,0.18)',
                               background: 'rgba(255,255,255,0.06)',
@@ -5092,7 +5148,7 @@ export default function OrganizerProfileEditor() {
                             disabled={!baseReady}
                             title={tip}
                             style={{
-                              padding: '8px 12px',
+                              ...touchPad,
                               borderRadius: 10,
                               border: '1px solid rgba(39,195,255,0.40)',
                               background: 'rgba(39,195,255,0.10)',
@@ -5109,7 +5165,7 @@ export default function OrganizerProfileEditor() {
                             disabled={!baseReady}
                             title={tip}
                             style={{
-                              padding: '8px 12px',
+                              ...touchPad,
                               borderRadius: 10,
                               border: '1px solid rgba(255,255,255,0.18)',
                               background: 'rgba(255,255,255,0.06)',
@@ -5126,7 +5182,7 @@ export default function OrganizerProfileEditor() {
                             disabled={!baseReady}
                             title={tip}
                             style={{
-                              padding: '8px 12px',
+                              ...touchPad,
                               borderRadius: 10,
                               border: '1px solid rgba(255,255,255,0.18)',
                               background: 'rgba(255,255,255,0.06)',
@@ -5143,17 +5199,19 @@ export default function OrganizerProfileEditor() {
                             disabled={!baseReady}
                             title={tip}
                             style={{
-                              padding: '8px 12px',
+                              ...touchPad,
                               borderRadius: 10,
                               border: '1px solid rgba(255,61,87,0.35)',
                               background: 'rgba(255,61,87,0.10)',
                               color: '#fff',
                               fontWeight: 700,
+                              gridColumn: isMobile ? '1 / -1' : undefined,
                               ...(baseReady ? enabledStyle : disabledStyle),
                             }}
                           >
                             {t('clear_bulk')}
                           </button>
+                          </div>
                         </div>
                         {!baseReady && (
                           <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85 }}
@@ -5174,7 +5232,14 @@ export default function OrganizerProfileEditor() {
                           dangerouslySetInnerHTML={{ __html: t('selected', { count: bulkSelectedCount }) + (bulkPreview.count > 0 ? ` · ${t('preview', { first: bulkPreview.first, last: bulkPreview.last })}` : '') }}
                           />
 
-                          <div className="bulk-sheet" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+                          <div
+                            className="bulk-sheet"
+                            style={{
+                              overflowX: 'auto',
+                              WebkitOverflowScrolling: 'touch' as any,
+                              overscrollBehaviorX: 'contain' as any,
+                            }}
+                          >
                             <div
                               className="bulk-sheet-inner"
                               style={{
@@ -5217,13 +5282,24 @@ export default function OrganizerProfileEditor() {
                             </div>
                           </div>
 
-                          <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                          <div
+                            style={{
+                              marginTop: 14,
+                              display: 'flex',
+                              flexDirection: isMobile ? 'column' : 'row',
+                              flexWrap: isMobile ? 'nowrap' : 'wrap',
+                              gap: isMobile ? 12 : 10,
+                              alignItems: isMobile ? 'stretch' : 'center',
+                            }}
+                          >
                             <button
                               type="button"
                               onClick={handleBulkCreateDates}
                               disabled={createEventDate.isPending || bulkSelectedCount === 0}
                               style={{
-                                padding: '12px 16px',
+                                padding: isMobile ? '14px 16px' : '12px 16px',
+                                minHeight: isMobile ? 48 : undefined,
+                                width: isMobile ? '100%' : 'auto',
                                 borderRadius: 14,
                                 border: '1px solid rgba(39,195,255,0.55)',
                                 background: 'linear-gradient(135deg, rgba(39,195,255,0.22), rgba(30,136,229,0.22))',
@@ -5244,7 +5320,9 @@ export default function OrganizerProfileEditor() {
                               onClick={() => handleBulkPublish(true)}
                               disabled={Object.keys(createdDateIdByRow).length === 0}
                               style={{
-                                padding: '12px 16px',
+                                padding: isMobile ? '14px 16px' : '12px 16px',
+                                minHeight: isMobile ? 48 : undefined,
+                                width: isMobile ? '100%' : 'auto',
                                 borderRadius: 14,
                                 border: '1px solid rgba(255,255,255,0.28)',
                                 background: 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))',
@@ -5264,7 +5342,9 @@ export default function OrganizerProfileEditor() {
                               onClick={() => handleBulkPublish(false)}
                               disabled={Object.keys(createdDateIdByRow).length === 0}
                               style={{
-                                padding: '12px 16px',
+                                padding: isMobile ? '14px 16px' : '12px 16px',
+                                minHeight: isMobile ? 48 : undefined,
+                                width: isMobile ? '100%' : 'auto',
                                 borderRadius: 14,
                                 border: '1px solid rgba(255,61,87,0.55)',
                                 background: 'linear-gradient(135deg, rgba(255,61,87,0.22), rgba(255,140,66,0.18))',
@@ -5298,19 +5378,30 @@ export default function OrganizerProfileEditor() {
                             dateId={null}
                             parentId={selectedParentId || undefined}
                           />
-                          <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                          <div
+                            style={{
+                              marginTop: 10,
+                              display: isMobile ? 'grid' : 'flex',
+                              gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : undefined,
+                              flexWrap: isMobile ? undefined : 'wrap',
+                              gap: 10,
+                              alignItems: isMobile ? 'stretch' : 'center',
+                            }}
+                          >
                             <button
                               type="button"
                               onClick={() => applyBulkGeneralFlyerToCreated(true)}
                               disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
                               style={{
-                                padding: '8px 12px',
+                                padding: isMobile ? '12px 12px' : '8px 12px',
+                                minHeight: isMobile ? 44 : undefined,
                                 borderRadius: 10,
                                 border: '1px solid rgba(255,255,255,0.18)',
                                 background: 'rgba(255,255,255,0.06)',
                                 color: '#fff',
                                 cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
                                 fontWeight: 700,
+                                fontSize: isMobile ? 13 : undefined,
                                 opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
                               }}
                             >
@@ -5321,13 +5412,15 @@ export default function OrganizerProfileEditor() {
                               onClick={() => applyBulkGeneralFlyerToCreated(false)}
                               disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
                               style={{
-                                padding: '8px 12px',
+                                padding: isMobile ? '12px 12px' : '8px 12px',
+                                minHeight: isMobile ? 44 : undefined,
                                 borderRadius: 10,
                                 border: '1px solid rgba(255,255,255,0.18)',
                                 background: 'rgba(255,255,255,0.06)',
                                 color: '#fff',
                                 cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
                                 fontWeight: 700,
+                                fontSize: isMobile ? 13 : undefined,
                                 opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
                               }}
                             >
@@ -5338,14 +5431,17 @@ export default function OrganizerProfileEditor() {
                               onClick={() => setShowPendingFlyers((v) => !v)}
                               disabled={Object.keys(createdDateIdByRow).length === 0}
                               style={{
-                                padding: '8px 12px',
+                                padding: isMobile ? '12px 12px' : '8px 12px',
+                                minHeight: isMobile ? 44 : undefined,
                                 borderRadius: 10,
                                 border: '1px solid rgba(39,195,255,0.40)',
                                 background: 'rgba(39,195,255,0.10)',
                                 color: '#fff',
                                 cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
                                 fontWeight: 700,
+                                fontSize: isMobile ? 13 : undefined,
                                 opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
+                                gridColumn: isMobile ? '1 / -1' : undefined,
                               }}
                             >
                               🧾 {showPendingFlyers ? t('hide_individual_flyers') : t('open_individual_flyers')}
@@ -5541,7 +5637,7 @@ export default function OrganizerProfileEditor() {
                                 >
                                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 8 }}>
                                     <div style={{ fontWeight: 800 }}>
-                                      📅 {r.fecha} {r.hora_inicio ? `· ${r.hora_inicio}` : ''}
+                                      {r.fecha} {r.hora_inicio ? `· ${r.hora_inicio}` : ''}
                                     </div>
                                     <div style={{ fontSize: 12, opacity: 0.85 }}>
                                       {r.flyer_status === 'UPLOADING' ? '⏳ UPLOADING' : (r.flyer_url ? '✅ DONE' : (r.flyer_status === 'ERROR' ? '❌ ERROR' : '⏳ PENDING'))}
@@ -5743,23 +5839,23 @@ export default function OrganizerProfileEditor() {
                       <div style={{ marginTop: parents && parents.length > 0 ? '2rem' : 0 }}>
                         <div className="dates-block">
                           {/* Barra de búsqueda de eventos (fechas independientes) */}
-                          <div className="dates-section-search-wrap" style={{ marginBottom: 10 }}>
+                          <div className="dates-section-search-wrap">
                             <input
-                              type="search"
+                              id="org-dates-filter-independent"
+                              type="text"
+                              role="searchbox"
+                              inputMode="search"
+                              enterKeyHint="search"
                               className="dates-section-search"
                               placeholder="Buscar por nombre, fecha, lugar..."
                               value={independentDatesSearch}
                               onChange={(e) => setIndependentDatesSearch(e.target.value)}
                               aria-label="Buscar eventos"
-                              style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                borderRadius: 10,
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                background: 'rgba(255,255,255,0.06)',
-                                color: '#fff',
-                                fontSize: '0.9rem',
-                              }}
+                              name="org-dates-filter-independent"
+                              autoComplete="off"
+                              autoCorrect="off"
+                              spellCheck={false}
+                              data-lpignore="true"
                             />
                           </div>
                           {/* Fechas disponibles */}
@@ -5794,7 +5890,6 @@ export default function OrganizerProfileEditor() {
                                   onDeleteRow={(row) => handleDeleteDate(row as any)}
                                   onDeleteRows={deleteDatesBulk as any}
                                   deletingRowId={deletingDateId as any}
-                                  locations={orgLocations}
                                 />
                               </div>
                             </details>
@@ -5832,7 +5927,6 @@ export default function OrganizerProfileEditor() {
                                   onDeleteRow={(row) => handleDeleteDate(row as any)}
                                   onDeleteRows={deleteDatesBulk as any}
                                   deletingRowId={deletingDateId as any}
-                                  locations={orgLocations}
                                 />
                               </div>
                             </details>
