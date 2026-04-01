@@ -38,6 +38,7 @@ import { routes } from "../../routes/registry";
 import { resolveEventDateYmd } from "../../utils/eventDateDisplay";
 import { supabase } from "../../lib/supabase";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
+import { useGuestFavorites } from "@/hooks/useGuestFavorites";
 
 const colors = {
   coral: '#FF3D57',
@@ -152,6 +153,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const { t } = useTranslation();
   const { showToast } = useToast();
   const { isEventFavorite, toggleEventFavorite, togglingEvent } = useUserFavorites();
+  const guestFavorites = useGuestFavorites();
   
   // Con Suspense, date siempre existe cuando se renderiza
   const date = useEventDateSuspense(dateId);
@@ -273,10 +275,23 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       ? 'active'
       : 'idle';
 
-  const favoriteActive = isEventFavorite(dateId);
+  const favoriteActive = user ? isEventFavorite(dateId) : guestFavorites.isEventFavorite(dateId);
   const onToggleFavorite = React.useCallback(async () => {
     if (!user) {
-      navigate("/auth/login");
+      try {
+        const next = guestFavorites.toggleEventFavorite(dateId);
+        showToast(
+          next
+            ? `${t("added_to_favorites", "Agregado a favoritos")} · ${t(
+                "guest_favorites_device_only",
+                "Solo en este dispositivo (temporal). Crea una cuenta para guardarlos en la nube."
+              )}`
+            : t("removed_from_favorites", "Eliminado de favoritos"),
+          "success"
+        );
+      } catch {
+        showToast(t("action_failed", "No se pudo completar la acción"), "error");
+      }
       return;
     }
     try {
@@ -285,7 +300,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     } catch {
       showToast(t("action_failed", "No se pudo completar la acción"), "error");
     }
-  }, [user, navigate, toggleEventFavorite, dateId, showToast, t]);
+  }, [user, guestFavorites, toggleEventFavorite, dateId, showToast, t]);
 
   const handleStatusChange = React.useCallback(
     (s: RSVPStatus | null) => {
@@ -594,7 +609,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           onShare={handleShare}
           onToggleFavorite={onToggleFavorite}
           favoriteActive={favoriteActive}
-          togglingEvent={togglingEvent}
+          togglingEvent={user ? togglingEvent : false}
           toDirectUrl={toDirectPublicStorageUrl}
         />
         <StickyCtaBar

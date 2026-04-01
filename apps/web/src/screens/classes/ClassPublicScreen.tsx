@@ -24,6 +24,7 @@ import { useCreateCheckoutSession } from '@/hooks/useStripeCheckout';
 import { getLocaleFromI18n } from '@/utils/locale';
 import { resolveSupabaseStoragePublicUrl } from '@/utils/supabaseStoragePublicUrl';
 import { useUserFavorites } from '@/hooks/useUserFavorites';
+import { useGuestFavorites } from '@/hooks/useGuestFavorites';
 import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 import { normalizeRitmosToSlugs, TAG_NAME_TO_SLUG } from '@/utils/normalizeRitmos';
 import {
@@ -48,6 +49,7 @@ export default function ClassPublicScreen() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { isClassFavorite, toggleClassFavorite, togglingClass } = useUserFavorites();
+  const guestFavorites = useGuestFavorites();
   const createCheckout = useCreateCheckoutSession();
   const { t } = useTranslation();
   const locale = getLocaleFromI18n();
@@ -136,14 +138,33 @@ export default function ClassPublicScreen() {
     return 0;
   })();
   const selectedClass = classesArr[selectedClassIndex] ?? classesArr[0];
-  const classFavoriteActive = isClassFavorite(sourceType as SourceType, idNum, selectedClassIndex);
+  const classFavoriteActive = user
+    ? isClassFavorite(sourceType as SourceType, idNum, selectedClassIndex)
+    : guestFavorites.isClassFavorite(sourceType as SourceType, idNum, selectedClassIndex);
   const onToggleFavorite = React.useCallback(async () => {
-    if (!user) {
-      navigate('/auth/login');
-      return;
-    }
     if (!Number.isFinite(idNum) || idNum < 0) {
       showToast(t('action_failed', 'No se pudo completar la acción'), 'error');
+      return;
+    }
+    if (!user) {
+      try {
+        const next = guestFavorites.toggleClassFavorite({
+          sourceType: sourceType as SourceType,
+          sourceId: idNum,
+          cronogramaIndex: selectedClassIndex,
+        });
+        showToast(
+          next
+            ? `${t('added_to_favorites', 'Agregado a favoritos')} · ${t(
+                'guest_favorites_device_only',
+                'Solo en este dispositivo (temporal). Crea una cuenta para guardarlos en la nube.',
+              )}`
+            : t('removed_from_favorites', 'Eliminado de favoritos'),
+          'success',
+        );
+      } catch {
+        showToast(t('action_failed', 'No se pudo completar la acción'), 'error');
+      }
       return;
     }
     try {
@@ -158,7 +179,7 @@ export default function ClassPublicScreen() {
       const message = e?.message || e?.error_description || (e?.code ? String(e.code) : null);
       showToast(message || t('action_failed', 'No se pudo completar la acción'), 'error');
     }
-  }, [user, navigate, toggleClassFavorite, sourceType, idNum, selectedClassIndex, selectedClass, showToast, t]);
+  }, [user, guestFavorites, toggleClassFavorite, sourceType, idNum, selectedClassIndex, selectedClass, showToast, t]);
   const ritmoCatalogMaps = React.useMemo(() => {
     const idToLabel = new Map<string, string>();
     const labelToIdLower = new Map<string, string>();
@@ -1486,13 +1507,13 @@ export default function ClassPublicScreen() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onToggleFavorite}
-                disabled={togglingClass}
+                disabled={user ? togglingClass : false}
                 className="class-info-action"
                 aria-label={classFavoriteActive ? t('remove_favorite', 'Quitar favorito') : t('add_favorite', 'Agregar favorito')}
                 title={classFavoriteActive ? t('remove_favorite', 'Quitar favorito') : t('add_favorite', 'Agregar favorito')}
                 style={{
-                  opacity: togglingClass ? 0.75 : 1,
-                  cursor: togglingClass ? 'not-allowed' : 'pointer',
+                  opacity: user && togglingClass ? 0.75 : 1,
+                  cursor: user && togglingClass ? 'not-allowed' : 'pointer',
                   color: classFavoriteActive ? '#F42F7E' : undefined,
                 }}
               >
