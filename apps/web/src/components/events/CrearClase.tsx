@@ -109,7 +109,7 @@ const card: React.CSSProperties = {
   backdropFilter: 'blur(10px)'
 };
 
-const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 };
+/** Filas responsivas: 2 cols en desktop, 1 col en móvil (ver .crear-clase__row en <style>) */
 const label: React.CSSProperties = { fontSize: 12, color: colors.mut, marginBottom: 6, letterSpacing: .2 };
 
 const fieldShell = (invalid = false): React.CSSProperties => ({
@@ -728,20 +728,55 @@ export default function CrearClase({
 
   return (
     <div style={style} className={className}>
+      <style>{`
+        .crear-clase-shell { box-sizing: border-box; max-width: 100%; }
+        @media (max-width: 640px) {
+          .crear-clase-shell { padding: 14px 12px !important; border-radius: 16px !important; }
+        }
+        @media (max-width: 400px) {
+          .crear-clase-shell { padding: 12px 10px !important; }
+        }
+        .crear-clase__row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+          width: 100%;
+          min-width: 0;
+        }
+        .crear-clase__row > * { min-width: 0; }
+        @media (max-width: 640px) {
+          .crear-clase__row { grid-template-columns: 1fr; }
+        }
+        .crear-clase__actions {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+          margin-top: 8px;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 480px) {
+          .crear-clase__actions {
+            flex-direction: column-reverse;
+            align-items: stretch;
+          }
+          .crear-clase__actions button { width: 100%; }
+        }
+      `}</style>
       <motion.div 
         initial={{ opacity: 0, y: 10 }} 
         animate={{ opacity: 1, y: 0 }}
         style={card as any}
+        className="crear-clase-shell"
       >
         {/* Accent bar / progreso */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${colors.blue}, ${colors.purple})` }} />
         <div style={{ position: 'absolute', top: 0, left: 0, height: 4, background: colors.ok, width: `${completion}%`, transition: 'width .25s ease' }} />
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>➕</div>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: colors.text }}>{title}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)', flexShrink: 0 }}>➕</div>
+          <div style={{ minWidth: 0, flex: '1 1 200px' }}>
+            <h2 style={{ margin: 0, fontSize: 'clamp(1rem, 4vw, 1.25rem)', fontWeight: 900, color: colors.text }}>{title}</h2>
             <div style={{ fontSize: 12, color: colors.mut }}>Completa los campos — {completion}%</div>
           </div>
         </div>
@@ -750,7 +785,7 @@ export default function CrearClase({
           <>
             {/* NOMBRE + TIPO */}
             <div style={sectionHeader}><span>📝</span><b>Detalles</b></div>
-            <div style={row}>
+            <div className="crear-clase__row">
               <div>
                 <div style={label}>Nombre</div>
                 <div style={fieldShell(invalid.nombre)}>
@@ -784,7 +819,7 @@ export default function CrearClase({
 
             {/* PRECIO + REGLA */}
             <div style={sectionHeader}><span>💰</span><b>Precio</b></div>
-            <div style={row}>
+            <div className="crear-clase__row">
               <div>
                 <div style={label}>Precio (opcional)</div>
                 <div style={fieldShell()}>
@@ -872,7 +907,7 @@ export default function CrearClase({
             {enableDate && (
               <>
                 <div style={sectionHeader}><span>📅</span><b>Fecha</b></div>
-                <div style={row}>
+                <div className="crear-clase__row">
                   <div>
                     <div style={label}>Modo</div>
                     <div style={chipWrap}>
@@ -972,7 +1007,7 @@ export default function CrearClase({
             {!porAgendar && (
               <>
                 <div style={sectionHeader}><span>⏰</span><b>Horario</b></div>
-                <div style={row}>
+                <div className="crear-clase__row">
                   <div>
                     <div style={label}>Modo de horario</div>
                     <div style={chipWrap}>
@@ -995,7 +1030,7 @@ export default function CrearClase({
                 </div>
                 
                 {horarioModo === 'especifica' ? (
-                  <div style={row}>
+                  <div className="crear-clase__row">
                     <div>
                       <div style={label}>Hora inicio (HH:MM)</div>
                       <div style={fieldShell(invalid.inicio)}>
@@ -1027,7 +1062,7 @@ export default function CrearClase({
                     </div>
                   </div>
                 ) : (
-                  <div style={row}>
+                  <div className="crear-clase__row">
                     <div>
                       <div style={label}>Duración (horas)</div>
                       <div style={fieldShell(invalid.duracion)}>
@@ -1058,7 +1093,7 @@ export default function CrearClase({
             {porAgendar && (
               <>
                 <div style={sectionHeader}><span>⏰</span><b>Duración Estimada</b></div>
-                <div style={row}>
+                <div className="crear-clase__row">
                   <div>
                     <div style={label}>Duración (horas)</div>
                     <div style={fieldShell(invalid.duracion)}>
@@ -1165,7 +1200,7 @@ export default function CrearClase({
                 </div>
               </div>
             )}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="crear-clase__row">
               <div>
                 <div style={label}>Nombre de la ubicación</div>
                 <div style={fieldShell()}>
@@ -1252,7 +1287,7 @@ export default function CrearClase({
         )}
 
         {/* Acciones */}
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 8 }}>
+        <div className="crear-clase__actions">
           <button
             onClick={() => {
               setSubmitState('idle');

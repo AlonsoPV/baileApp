@@ -443,10 +443,21 @@ export default function ClassDatesSheet({
           .eds-iconBtn{ width: 36px; height: 36px; border-radius: 999px; }
         }
         @media (max-width: 520px) {
-          .eds-minWidth { min-width: 620px; }
+          .eds-minWidth { min-width: 560px; }
           .eds-place { display: none; }
           /* Keep 7 columns so row children stay on one line; place column has zero width when hidden */
           .eds-grid { --eds-actions-col: 132px; --eds-att-col: 130px; --eds-event-col: minmax(180px, 1fr); --eds-date-col: 110px; --eds-time-col: 64px; --eds-place-col: 0; --eds-cols: var(--eds-event-col) var(--eds-date-col) var(--eds-time-col) var(--eds-time-col) var(--eds-place-col) var(--eds-att-col) var(--eds-actions-col); }
+        }
+        .eds-scroll-hint {
+          display: none;
+          font-size: 12px;
+          color: rgba(255,255,255,0.65);
+          margin: 0 0 10px 0;
+          padding: 0 2px;
+          line-height: 1.35;
+        }
+        @media (max-width: 768px) {
+          .eds-scroll-hint { display: block; }
         }
 
         .delete-confirm-modal {
@@ -490,6 +501,23 @@ export default function ClassDatesSheet({
           display: flex;
           gap: 10px;
           justify-content: flex-end;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 480px) {
+          .delete-confirm-content {
+            padding: 18px 16px;
+            margin: 12px;
+            max-width: none;
+            width: calc(100% - 24px);
+          }
+          .delete-confirm-actions {
+            flex-direction: column-reverse;
+            align-items: stretch;
+          }
+          .delete-confirm-btn {
+            width: 100%;
+            justify-content: center;
+          }
         }
 
         .delete-confirm-btn {
@@ -522,6 +550,9 @@ export default function ClassDatesSheet({
         }
       `}</style>
 
+      <p className="eds-scroll-hint" role="note">
+        En pantallas pequeñas, desliza horizontalmente para ver fecha, horarios, asistencia y acciones.
+      </p>
       {/* Table: header (sticky) + body of full-width rows aligned to columns */}
       <div className="eds-scroll">
         <div className="eds-minWidth">

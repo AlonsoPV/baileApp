@@ -49,6 +49,7 @@ import { mark, notifyError, notifyReady } from "@/utils/performanceLogger";
 import { normalizeEventsForCards } from "@/utils/normalizeEventsForCards";
 import { getEffectiveEventDate, getEffectiveEventDateYmd, normalizeDateOnly } from "@/utils/effectiveEventDate";
 import { sortFechasByRecentFirst } from "@/utils/exploreFechasGrid";
+import { shouldHideExploreClassForBlackout } from "@/config/classBlackoutDates";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -4007,8 +4008,10 @@ export default function ExploreHomeScreen() {
       return true;
     };
 
-    const filtered = mergedByRhythmAndZone.filter(matchesPresetAndRange);
-    
+    const filtered = mergedByRhythmAndZone
+      .filter(matchesPresetAndRange)
+      .filter((item: any) => !shouldHideExploreClassForBlackout(item));
+
     // Función helper para convertir hora HH:MM a minutos desde medianoche para comparación
     const timeToMinutes = (timeStr?: string | null): number | null => {
       if (!timeStr) return null;

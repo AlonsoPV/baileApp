@@ -169,4 +169,25 @@
   font-size: 1rem;
 }
 
+/* Editor academia: tarjetas y bloque crear clases / lista — evita desbordes horizontales */
+@media (max-width: 768px) {
+  .org-editor__card {
+    padding: 1.25rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .org-editor__card {
+    padding: 1rem 0.75rem;
+    border-radius: 12px;
+  }
+}
+
+.academy-editor-classes-inner,
+.academy-editor-created-classes {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 

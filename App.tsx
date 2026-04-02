@@ -1,4 +1,5 @@
 import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 import { RootNavigator } from "./src/navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -17,6 +18,10 @@ import { markPerformance, logPerformanceReport } from "./src/lib/performance";
 import { AuthCoordinator } from "./src/auth/AuthCoordinator";
 import { formatFingerprint, getConfigFingerprint, getNativeGoogleConfigStatus, getRuntimeConfig } from "./src/config/runtimeConfig";
 import { PerformanceLogger } from "./src/utils/perf";
+import AppLoadingScreen from "./src/components/AppLoadingScreen";
+
+// Mantener splash nativo (iOS/Android) hasta que la capa JS pinte la pantalla negra + loader
+void SplashScreen.preventAutoHideAsync();
 
 // ✅ Generate ENV report at startup (logs to console for debugging)
 PerformanceLogger.mark("app_start");
@@ -374,6 +379,42 @@ function AppContent() {
   );
 }
 
-export default function App() {
+/**
+ * Arranque: splash nativo (#000) → AppLoadingScreen (#000 + spinner) → app.
+ * prepare() puede ampliarse (fuentes, caché, etc.) sin bloquear más de lo necesario.
+ */
+function AppBootstrap() {
+  const [appReady, setAppReady] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function prepare() {
+      try {
+        // Reservado: fuentes, precarga ligera, etc.
+        await Promise.resolve();
+      } catch (e) {
+        console.warn("[App] prepare:", e);
+      } finally {
+        if (!cancelled) setAppReady(true);
+      }
+    }
+    void prepare();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!appReady) {
+    return <AppLoadingScreen />;
+  }
+
   return <AppContent />;
+}
+
+export default function App() {
+  return (
+    <View style={{ flex: 1, backgroundColor: "#000000" }}>
+      <AppBootstrap />
+    </View>
+  );
 }

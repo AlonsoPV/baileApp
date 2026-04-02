@@ -2239,11 +2239,18 @@ export default function AcademyProfileEditor() {
 
               {/* Horarios, Costos y Ubicación (unificado) */}
               <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: colors.light }}>
+                <h2
+                  style={{
+                    fontSize: 'clamp(1.15rem, 4vw, 1.5rem)',
+                    marginBottom: '1.5rem',
+                    color: colors.light,
+                    lineHeight: 1.3,
+                  }}
+                >
                   🗓️ Horarios, Costos y Ubicación
                 </h2>
 
-                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gap: '1.5rem', minWidth: 0 }}>
                   {/* Ubicaciones */}
                   <UbicacionesEditor
                     value={(form as any).ubicaciones || []}
@@ -2252,7 +2259,7 @@ export default function AcademyProfileEditor() {
                     allowedZoneIds={((form as any).zonas || []) as number[]}
                   />
                   {/* Crear Clase rápida  */}
-                  <div ref={classFormRef}>
+                  <div ref={classFormRef} className="academy-editor-classes-inner">
                     {statusMsg && (
                       <div style={{
                         marginBottom: 12,
@@ -2488,7 +2495,17 @@ export default function AcademyProfileEditor() {
                     )}
 
                     {academy && (
-                      <div style={{ marginTop: 16 }}>
+                      <div style={{ marginTop: 16 }} className="academy-editor-created-classes">
+                        <h3
+                          style={{
+                            fontSize: 'clamp(1rem, 3.5vw, 1.2rem)',
+                            fontWeight: 800,
+                            color: colors.light,
+                            margin: '0 0 10px 0',
+                          }}
+                        >
+                          Clases creadas
+                        </h3>
                         <ClassDatesSheet
                           showToast={showToast}
                           attendanceByClassDateKey={attendanceQuery.data}

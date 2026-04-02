@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BackHandler, Platform } from "react-native";
 import {
+  DarkTheme,
   NavigationContainer,
   type NavigationContainerRef,
 } from "@react-navigation/native";
@@ -11,6 +12,20 @@ import WebAppScreen from "../screens/WebAppScreen";
 import { markPerformance, logPerformanceReport } from "../lib/performance";
 
 const Stack = createNativeStackNavigator();
+
+/** Evita flash blanco entre splash y WebView / stacks */
+const navigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: "#000000",
+    card: "#000000",
+    border: "#000000",
+    primary: "#ffffff",
+    text: "#ffffff",
+    notification: DarkTheme.colors.notification,
+  },
+};
 
 /** TODO: reemplazar con lógica real de sesión (Sprint 1) */
 const isLoggedIn = true;
@@ -71,6 +86,7 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer
+      theme={navigationTheme}
       ref={(ref) => {
         navigationRef.current = ref;
       }}
