@@ -227,7 +227,13 @@ export function Login() {
         );
       }
 
-      const redirectTo = getAuthRedirectUrl();
+      // Android WebView: usar callback visible de marca para evitar que el usuario
+      // se quede viendo el callback de Supabase como paso intermedio.
+      const redirectTo =
+        mobileWebView && providerPlatform === 'android'
+          ? 'https://dondebailar.com.mx/auth/callback'
+          : getAuthRedirectUrl();
+      logWeb('Google OAuth redirectTo resolved', { redirectTo, providerPlatform, mobileWebView });
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
