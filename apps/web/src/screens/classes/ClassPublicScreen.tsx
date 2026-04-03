@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSearchParams, useParams, Link, useNavigate } from 'react-router-dom';
+import { useSearchParams, useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import ClasesLive from '@/components/events/ClasesLive';
@@ -46,6 +46,7 @@ export default function ClassPublicScreen() {
   const [sp] = useSearchParams();
   const params = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { showToast } = useToast();
   const { isClassFavorite, toggleClassFavorite, togglingClass } = useUserFavorites();
@@ -153,15 +154,7 @@ export default function ClassPublicScreen() {
           sourceId: idNum,
           cronogramaIndex: selectedClassIndex,
         });
-        showToast(
-          next
-            ? `${t('added_to_favorites', 'Agregado a favoritos')} · ${t(
-                'guest_favorites_device_only',
-                'Solo en este dispositivo (temporal). Crea una cuenta para guardarlos en la nube.',
-              )}`
-            : t('removed_from_favorites', 'Eliminado de favoritos'),
-          'success',
-        );
+        showToast(next ? t('added_to_favorites', 'Agregado a favoritos') : t('removed_from_favorites', 'Eliminado de favoritos'), 'success');
       } catch {
         showToast(t('action_failed', 'No se pudo completar la acción'), 'error');
       }
@@ -1522,6 +1515,37 @@ export default function ClassPublicScreen() {
             </div>
           </div>
         </motion.section>
+
+        {!user && (
+          <div
+            role="note"
+            style={{
+              margin: '0 0 1.25rem',
+              padding: '14px 16px',
+              borderRadius: 14,
+              background: 'linear-gradient(135deg, rgba(240,147,251,.08), rgba(41,127,150,.08))',
+              border: '1px solid rgba(255,255,255,.12)',
+              fontSize: '0.9rem',
+              lineHeight: 1.45,
+              color: 'rgba(255,255,255,.85)',
+              textAlign: 'center',
+            }}
+          >
+            <Link
+              to="/auth/login"
+              state={{ from: `${location.pathname}${location.search || ''}` }}
+              style={{
+                color: '#f093fb',
+                fontWeight: 700,
+                textDecoration: 'none',
+                borderBottom: '1px solid rgba(240,147,251,.45)',
+              }}
+            >
+              {t('login', 'Iniciar sesión')}
+            </Link>
+            <span style={{ opacity: 0.92 }}>{' '}{t('guest_sync_favorites_only', 'para guardar tus favoritos en tu cuenta.')}</span>
+          </div>
+        )}
 
         {/* Grid de 4 cards (info) */}
         <section className="class-info-grid" aria-label={t('info', 'Información')}>

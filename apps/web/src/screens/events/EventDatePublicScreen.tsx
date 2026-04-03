@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useEventDateSuspense } from "../../hooks/useEventDateSuspense";
 import { useEventParent } from "../../hooks/useEventParent";
@@ -149,6 +149,7 @@ export default function EventDatePublicScreen() {
  */
 function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam: string | undefined }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -281,12 +282,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       try {
         const next = guestFavorites.toggleEventFavorite(dateId);
         showToast(
-          next
-            ? `${t("added_to_favorites", "Agregado a favoritos")} · ${t(
-                "guest_favorites_device_only",
-                "Solo en este dispositivo (temporal). Crea una cuenta para guardarlos en la nube."
-              )}`
-            : t("removed_from_favorites", "Eliminado de favoritos"),
+          next ? t("added_to_favorites", "Agregado a favoritos") : t("removed_from_favorites", "Eliminado de favoritos"),
           "success"
         );
       } catch {
@@ -313,6 +309,13 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           // ignore
         }
         setGuestRsvpStatus(s);
+        if (s === null) {
+          showToast(t("rsvp_guest_cleared", "Preferencia actualizada"), "success");
+        } else if (s === "interesado") {
+          showToast(t("rsvp_guest_interested", "Te interesa este evento"), "success");
+        } else if (s === "going") {
+          showToast(t("rsvp_guest_going", "¡Nos vemos en el evento!"), "success");
+        }
         return;
       }
       const previous = effectiveStatus;
@@ -620,6 +623,20 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           onShare={handleShare}
           calendarButton={calendarButton}
         />
+        {!user && (
+          <div className="eds-guest-sync-hint" role="note">
+            <Link
+              className="eds-guest-sync-hint__link"
+              to="/auth/login"
+              state={{ from: `${location.pathname}${location.search || ""}` }}
+            >
+              {t("login", "Iniciar sesión")}
+            </Link>
+            <span className="eds-guest-sync-hint__rest">
+              {t("guest_sync_continue", "para sincronizar favoritos y RSVPs en tu cuenta.")}
+            </span>
+          </div>
+        )}
         <div id="event-detail-content" className="eds-content">
           <section id="event-section-info" className="eds-section eds-section--info">
             <InfoGrid

@@ -34,9 +34,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const typeStyles: Record<ToastType, { bg: string; border: string; color: string }> = {
     success: {
-      bg: 'rgba(16, 185, 129, 0.15)',
-      border: 'rgba(16, 185, 129, 0.4)',
-      color: '#10b981',
+      bg: 'rgba(16, 185, 129, 0.12)',
+      border: 'rgba(16, 185, 129, 0.35)',
+      color: '#34d399',
     },
     error: {
       bg: 'rgba(239, 68, 68, 0.15)',
@@ -80,11 +80,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               style={{
                 background: styles.bg,
                 border: `1px solid ${styles.border}`,
+                borderLeft: toast.type === 'success' ? `4px solid ${styles.border}` : undefined,
                 borderRadius: borderRadius.md,
                 padding: spacing[2],
+                backdropFilter: 'blur(8px)',
                 color: styles.color,
                 fontSize: '0.875rem',
-                fontWeight: '500',
+                fontWeight: toast.type === 'success' ? '600' : '500',
                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
                 display: 'flex',
                 alignItems: 'center',

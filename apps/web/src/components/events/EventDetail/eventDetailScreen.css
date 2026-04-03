@@ -259,6 +259,34 @@
   color: var(--eds-accent);
 }
 
+/* Invitados: CTA discreto bajo el hero (sin copiar “guardado temporal”) */
+.eds-guest-sync-hint {
+  max-width: 680px;
+  margin: 12px auto 0;
+  padding: 12px 16px;
+  border-radius: var(--eds-radius-sm);
+  background: linear-gradient(135deg, rgba(41, 127, 150, 0.12), rgba(235, 55, 127, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--eds-text-muted);
+  text-align: center;
+}
+.eds-guest-sync-hint__link {
+  color: #7ec8d4;
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(126, 200, 212, 0.45);
+  transition: color 0.15s, border-color 0.15s;
+}
+.eds-guest-sync-hint__link:hover {
+  color: #fff;
+  border-bottom-color: rgba(235, 55, 127, 0.55);
+}
+.eds-guest-sync-hint__rest {
+  opacity: 0.92;
+}
+
 /* ===== CONTENT WRAPPER (spacer for sticky + footer) ===== */
 .eds-content {
   padding: 0 16px 180px;

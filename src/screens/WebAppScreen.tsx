@@ -459,6 +459,7 @@ export default function WebAppScreen() {
           injectWebSetSession(tokens);
         } catch (e: any) {
           // Normalizar mensajes de error para mejor UX
+          const currentPlatform = Platform.OS;
           const requestId = String(msg?.requestId || (e as any)?.requestId || "");
           const rawMessage = String(e?.message ?? e ?? "Error al iniciar sesión con Google.");
           const rawCode = String(e?.code ?? "");
@@ -469,6 +470,7 @@ export default function WebAppScreen() {
             try {
               // eslint-disable-next-line no-console
               console.log("[WebAppScreen] Google native auth error (raw)", {
+                platform: currentPlatform,
                 requestId,
                 code: rawCode || "(none)",
                 status: rawStatus || "(none)",
@@ -563,6 +565,7 @@ export default function WebAppScreen() {
 
           if (requestId || derivedCode || rawStatus) {
             const suffix = [
+              `platform: ${currentPlatform}`,
               derivedCode ? `code: ${derivedCode}` : null,
               rawStatus ? `status: ${rawStatus}` : null,
               requestId ? `req: ${requestId}` : null,
@@ -1025,7 +1028,7 @@ export default function WebAppScreen() {
                 return true;
               } else {
                 const msg =
-                  "Inicio de sesión: abre usando los botones nativos (Apple/Google). Si ves este error, actualiza la app.";
+                  "En iOS, inicia sesión con los botones nativos de Apple/Google dentro de la app. En Android este flujo usa OAuth web.";
                 setNativeAuthError(msg);
                 injectWebAuthError(msg);
                 // Navigation cancelled: make sure we don't leave native loader stuck.
