@@ -18,8 +18,8 @@ export function isValidEmail(email: string): boolean {
 export function isValidPassword(password: string): boolean {
   if (!password || typeof password !== 'string') return false;
   
-  // Minimum 8 characters
-  if (password.length < 8) return false;
+  // Minimum 6 characters
+  if (password.length < 6) return false;
   
   // At least one letter and one number
   const hasLetter = /[a-zA-Z]/.test(password);

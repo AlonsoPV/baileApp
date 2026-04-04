@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import RitmosChips from "../RitmosChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
+import CostsPhasesEditor from "./CostsPhasesEditor";
 
 const colors = {
   coral: "#FF3D57",
@@ -20,7 +21,7 @@ type ScheduleItem = {
   /** UI-only stable id (NOT persisted) */
   __ui_id?: string;
 
-  tipo: "clase" | "paquete" | "coreografia" | "show" | "otro";
+  tipo: "clase" | "inicio" | "social" | "taller" | "paquete" | "coreografia" | "show" | "otro";
   titulo?: string;
   ritmoId?: number | null;
   zonaId?: number | null;
@@ -36,7 +37,7 @@ type ScheduleItem = {
 type RitmoTag = { id: number; nombre: string };
 type ZonaTag = { id: number; nombre: string };
 
-export type CostoTipo = "taquilla" | "preventa" | "promocion" | "otro";
+export type CostoTipo = "taquilla" | "preventa" | "promocion" | "gratis" | "otro";
 
 type CostoItem = {
   /** UI-only stable id (NOT persisted) */
@@ -56,6 +57,7 @@ const TIPOS_COSTO: { id: CostoTipo; label: string }[] = [
   { id: "taquilla", label: "Taquilla" },
   { id: "preventa", label: "Preventa" },
   { id: "promocion", label: "Promoción" },
+  { id: "gratis", label: "Gratis" },
   { id: "otro", label: "Otro" },
 ];
 
@@ -80,6 +82,8 @@ function normalizeCostoForForm(c: any): CostoItem {
       ? "preventa"
       : tipoRaw === "promocion" || tipoRaw === "promoción" || tipoRaw === "promo"
       ? "promocion"
+      : tipoRaw === "gratis"
+      ? "gratis"
       : "otro";
 
   const monto =
@@ -92,7 +96,7 @@ function normalizeCostoForForm(c: any): CostoItem {
   return {
     __ui_id: typeof c?.__ui_id === "string" ? c.__ui_id : makeUiId(),
     tipo,
-    monto: monto >= 0 ? monto : 0,
+    monto: tipo === "gratis" ? 0 : (monto >= 0 ? monto : 0),
     descripcion: c?.descripcion ?? c?.regla ?? "",
     nombre: c?.nombre ?? "",
     precio: c?.precio ?? null,
@@ -146,6 +150,7 @@ type Props = {
 
   labelSchedule?: string;
   labelCostos?: string;
+  hideCostsSection?: boolean;
   style?: React.CSSProperties;
   className?: string;
 };
@@ -186,6 +191,22 @@ const pill = (active: boolean): React.CSSProperties => ({
   fontWeight: 600,
 });
 
+const SCHEDULE_TYPE_OPTIONS: Array<{ value: ScheduleItem["tipo"]; label: string }> = [
+  { value: "inicio", label: "Inicio" },
+  { value: "social", label: "Social" },
+  { value: "taller", label: "Taller" },
+  { value: "clase", label: "Clase" },
+  { value: "otro", label: "Otro" },
+];
+
+const isClaseType = (tipo?: ScheduleItem["tipo"]) => tipo === "clase";
+
+const getTipoLabel = (tipo?: ScheduleItem["tipo"]) => {
+  const found = SCHEDULE_TYPE_OPTIONS.find((o) => o.value === tipo);
+  if (found) return found.label;
+  return tipo ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : "Actividad";
+};
+
 export default function ScheduleEditorPlus({
   schedule = [],
   onChangeSchedule,
@@ -201,6 +222,7 @@ export default function ScheduleEditorPlus({
   onSaveCosto,
   labelSchedule = "Cronograma",
   labelCostos = "Costos y Promociones",
+  hideCostsSection = false,
   style,
   className,
 }: Props) {
@@ -227,23 +249,23 @@ export default function ScheduleEditorPlus({
   // ------------------------
   useEffect(() => {
     const needsFix =
-      schedule.some((s) => !s.__ui_id) || costos.some((c) => !c.__ui_id);
+      schedule.some((s) => !s.__ui_id) || (!hideCostsSection && costos.some((c) => !c.__ui_id));
     if (!needsFix) return;
 
     // Patch in-place via setters (best effort)
     const nextSchedule = schedule.map((s) => (s.__ui_id ? s : { ...s, __ui_id: makeUiId() }));
-    const nextCostos = costos.map((c) => (c.__ui_id ? c : normalizeCostoForForm(c)));
+    const nextCostos = hideCostsSection ? costos : costos.map((c) => (c.__ui_id ? c : normalizeCostoForForm(c)));
 
     const scheduleChanged = nextSchedule.some((s, i) => s.__ui_id !== schedule[i].__ui_id);
-    const costosChanged = nextCostos.some((c, i) => c.__ui_id !== costos[i].__ui_id);
+    const costosChanged = !hideCostsSection && nextCostos.some((c, i) => c.__ui_id !== costos[i].__ui_id);
 
     // Si ambos cambian y el padre usa setState({ ...state, ... }), la 2.ª llamada puede pisar la 1.ª.
     // Preferimos: (1) actualizaciones funcionales en el padre; (2) diferir costos si también hubo cronograma.
     if (scheduleChanged) onChangeSchedule(nextSchedule);
     if (costosChanged) {
-      if (scheduleChanged) {
+      if (!hideCostsSection && scheduleChanged) {
         queueMicrotask(() => onChangeCostos(nextCostos));
-      } else {
+      } else if (!hideCostsSection) {
         onChangeCostos(nextCostos);
       }
     }
@@ -270,7 +292,7 @@ export default function ScheduleEditorPlus({
 
   const [newItem, setNewItem] = useState<ScheduleItem>({
     __ui_id: makeUiId(),
-    tipo: "clase",
+    tipo: "inicio",
     titulo: "",
     ritmoId: selectedRitmoId ?? null,
     zonaId: selectedZonaId ?? null,
@@ -317,7 +339,7 @@ export default function ScheduleEditorPlus({
     // Reset new item (mantener defaults + fecha heredada)
     setNewItem({
       __ui_id: makeUiId(),
-      tipo: "clase",
+      tipo: "inicio",
       titulo: "",
       ritmoId: meta.ritmoId ?? null,
       zonaId: meta.zonaId ?? null,
@@ -336,6 +358,18 @@ export default function ScheduleEditorPlus({
   const updateItemByUiId = (uiId: string, field: keyof ScheduleItem, v: any) => {
     const next = schedule.map((it) => {
       if (it.__ui_id !== uiId) return it;
+      if (field === "tipo") {
+        const nextTipo = v as ScheduleItem["tipo"];
+        if (!isClaseType(nextTipo)) {
+          return {
+            ...it,
+            tipo: nextTipo,
+            nivel: "",
+            ritmoId: null,
+            realizadoPor: "",
+          };
+        }
+      }
       return {
         ...it,
         [field]: field === "inicio" || field === "fin" ? normalizeTime(v) : v,
@@ -389,6 +423,7 @@ export default function ScheduleEditorPlus({
     const next = costosNormalized.map((c) => {
       if (c.__ui_id !== uiId) return c;
       const merged = { ...c, ...patch };
+      if (patch.tipo === "gratis") merged.monto = 0;
 
       // Compat: si alguien sigue mandando precio/regla
       if ("precio" in patch && patch.precio !== undefined) (merged as any).monto = patch.precio as any;
@@ -504,18 +539,17 @@ export default function ScheduleEditorPlus({
               <div key={uiId} style={card}>
                 {isEditing ? (
                   <div style={{ display: "grid", gap: 12 }}>
-                    <div>
-                      <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nombre</div>
-                      <input
-                        type="text"
-                        value={item.titulo || ""}
-                        onChange={(e) => updateItemByUiId(uiId, "titulo", e.target.value)}
-                        placeholder="Nombre de la actividad"
-                        style={input}
-                      />
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(140px, 1fr)", gap: 10, alignItems: "end" }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nombre</div>
+                        <input
+                          type="text"
+                          value={item.titulo || ""}
+                          onChange={(e) => updateItemByUiId(uiId, "titulo", e.target.value)}
+                          placeholder="Nombre de la actividad"
+                          style={input}
+                        />
+                      </div>
                       <div>
                         <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Tipo</div>
                         <select
@@ -523,13 +557,16 @@ export default function ScheduleEditorPlus({
                           onChange={(e) => updateItemByUiId(uiId, "tipo", e.target.value as ScheduleItem["tipo"])}
                           style={input}
                         >
-                          <option value="clase">📚 Clase</option>
-                          <option value="paquete">🧾 Paquete</option>
-                          <option value="coreografia">🎬 Coreografía</option>
-                          <option value="show">🎭 Show</option>
-                          <option value="otro">📋 Otro</option>
+                          {SCHEDULE_TYPE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
                         </select>
                       </div>
+                    </div>
+
+                    {isClaseType(item.tipo) && (
                       <div>
                         <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nivel (opcional)</div>
                         <input
@@ -540,37 +577,41 @@ export default function ScheduleEditorPlus({
                           style={input}
                         />
                       </div>
-                    </div>
+                    )}
 
-                    <div>
-                      <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Se llevará a cabo por:</div>
-                      <input
-                        type="text"
-                        value={item.realizadoPor || ""}
-                        onChange={(e) => updateItemByUiId(uiId, "realizadoPor", e.target.value)}
-                        placeholder="Ej: Profesor, grupo o entidad responsable"
-                        style={input}
-                      />
-                    </div>
+                    {isClaseType(item.tipo) && (
+                      <div>
+                        <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Se llevará a cabo por:</div>
+                        <input
+                          type="text"
+                          value={item.realizadoPor || ""}
+                          onChange={(e) => updateItemByUiId(uiId, "realizadoPor", e.target.value)}
+                          placeholder="Ej: Profesor, grupo o entidad responsable"
+                          style={input}
+                        />
+                      </div>
+                    )}
 
-                    <div>
-                      <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
-                      <RitmosChips
-                        selected={(() => {
-                          if (!item.ritmoId) return [];
-                          const tagName = ritmoTagNameById.get(item.ritmoId);
-                          if (!tagName) return [];
-                          const catalogId = labelToCatalogId.get(tagName);
-                          return catalogId ? [catalogId] : [];
-                        })()}
-                        onChange={(ids) => {
-                          const first = ids[0];
-                          const label = first ? catalogIdToLabel.get(first) : undefined;
-                          const tagId = label ? ritmoTagIdByName.get(label) ?? null : null;
-                          updateItemByUiId(uiId, "ritmoId", tagId);
-                        }}
-                      />
-                    </div>
+                    {isClaseType(item.tipo) && (
+                      <div>
+                        <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
+                        <RitmosChips
+                          selected={(() => {
+                            if (!item.ritmoId) return [];
+                            const tagName = ritmoTagNameById.get(item.ritmoId);
+                            if (!tagName) return [];
+                            const catalogId = labelToCatalogId.get(tagName);
+                            return catalogId ? [catalogId] : [];
+                          })()}
+                          onChange={(ids) => {
+                            const first = ids[0];
+                            const label = first ? catalogIdToLabel.get(first) : undefined;
+                            const tagId = label ? ritmoTagIdByName.get(label) ?? null : null;
+                            updateItemByUiId(uiId, "ritmoId", tagId);
+                          }}
+                        />
+                      </div>
+                    )}
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                       <div>
@@ -637,7 +678,19 @@ export default function ScheduleEditorPlus({
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
                         <span style={{ fontSize: "1.2rem" }}>📚</span>
-                        {item.nivel && (
+                        <span
+                          style={{
+                            padding: "4px 8px",
+                            borderRadius: 12,
+                            background: `${colors.light}22`,
+                            color: colors.light,
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {getTipoLabel(item.tipo)}
+                        </span>
+                        {isClaseType(item.tipo) && item.nivel && (
                           <span
                             style={{
                               padding: "4px 8px",
@@ -661,7 +714,7 @@ export default function ScheduleEditorPlus({
                         🕐 {item.fin ? `${item.inicio} - ${item.fin}` : item.inicio}
                       </p>
 
-                      {item.realizadoPor && (
+                      {isClaseType(item.tipo) && item.realizadoPor && (
                         <p style={{ fontSize: "0.85rem", color: colors.light, opacity: 0.8 }}>
                           Se llevará a cabo por: {item.realizadoPor}
                         </p>
@@ -714,31 +767,41 @@ export default function ScheduleEditorPlus({
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...card, border: `1px solid ${colors.blue}33` }}>
           <h4 style={{ fontSize: "1rem", fontWeight: 600, color: colors.light, marginBottom: 12 }}>➕ Nueva Actividad</h4>
           <div style={{ display: "grid", gap: 12 }}>
-            <div>
-              <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nombre</div>
-              <input
-                type="text"
-                value={newItem.titulo}
-                onChange={(e) => setNewItem({ ...newItem, titulo: e.target.value })}
-                placeholder="Nombre de la actividad"
-                style={input}
-              />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(140px, 1fr)", gap: 10, alignItems: "end" }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nombre</div>
+                <input
+                  type="text"
+                  value={newItem.titulo}
+                  onChange={(e) => setNewItem({ ...newItem, titulo: e.target.value })}
+                  placeholder="Nombre de la actividad"
+                  style={input}
+                />
+              </div>
               <div>
                 <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Tipo</div>
                 <select
                   value={newItem.tipo}
-                  onChange={(e) => setNewItem({ ...newItem, tipo: e.target.value as ScheduleItem["tipo"] })}
+                  onChange={(e) => {
+                    const nextTipo = e.target.value as ScheduleItem["tipo"];
+                    setNewItem((prev) =>
+                      isClaseType(nextTipo)
+                        ? { ...prev, tipo: nextTipo }
+                        : { ...prev, tipo: nextTipo, nivel: "", ritmoId: null, realizadoPor: "" }
+                    );
+                  }}
                   style={input}
                 >
-                  <option value="clase">📚 Clase</option>
-                  <option value="show">🎭 Show</option>
-                  <option value="otro">📋 Otro</option>
+                  {SCHEDULE_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
               </div>
+            </div>
 
+            {isClaseType(newItem.tipo) && (
               <div>
                 <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nivel (opcional)</div>
                 <input
@@ -749,37 +812,41 @@ export default function ScheduleEditorPlus({
                   style={input}
                 />
               </div>
-            </div>
+            )}
 
-            <div>
-              <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Se llevará a cabo por:</div>
-              <input
-                type="text"
-                value={newItem.realizadoPor || ""}
-                onChange={(e) => setNewItem({ ...newItem, realizadoPor: e.target.value })}
-                placeholder="Ej: Profesor, grupo o entidad responsable"
-                style={input}
-              />
-            </div>
+            {isClaseType(newItem.tipo) && (
+              <div>
+                <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Se llevará a cabo por:</div>
+                <input
+                  type="text"
+                  value={newItem.realizadoPor || ""}
+                  onChange={(e) => setNewItem({ ...newItem, realizadoPor: e.target.value })}
+                  placeholder="Ej: Profesor, grupo o entidad responsable"
+                  style={input}
+                />
+              </div>
+            )}
 
-            <div>
-              <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
-              <RitmosChips
-                selected={(() => {
-                  if (!newItem.ritmoId) return [];
-                  const tagName = ritmoTagNameById.get(newItem.ritmoId);
-                  if (!tagName) return [];
-                  const catalogId = labelToCatalogId.get(tagName);
-                  return catalogId ? [catalogId] : [];
-                })()}
-                onChange={(ids) => {
-                  const first = ids[0];
-                  const label = first ? catalogIdToLabel.get(first) : undefined;
-                  const tagId = label ? ritmoTagIdByName.get(label) ?? null : null;
-                  setNewItem((s) => ({ ...s, ritmoId: tagId }));
-                }}
-              />
-            </div>
+            {isClaseType(newItem.tipo) && (
+              <div>
+                <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
+                <RitmosChips
+                  selected={(() => {
+                    if (!newItem.ritmoId) return [];
+                    const tagName = ritmoTagNameById.get(newItem.ritmoId);
+                    if (!tagName) return [];
+                    const catalogId = labelToCatalogId.get(tagName);
+                    return catalogId ? [catalogId] : [];
+                  })()}
+                  onChange={(ids) => {
+                    const first = ids[0];
+                    const label = first ? catalogIdToLabel.get(first) : undefined;
+                    const tagId = label ? ritmoTagIdByName.get(label) ?? null : null;
+                    setNewItem((s) => ({ ...s, ritmoId: tagId }));
+                  }}
+                />
+              </div>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div>
@@ -846,6 +913,7 @@ export default function ScheduleEditorPlus({
       )}
 
       {/* === Costos / Promos === */}
+      {!hideCostsSection && (
       <div style={{ marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <label style={{ fontSize: "1.1rem", fontWeight: 600, color: colors.light }}>{labelCostos}</label>
@@ -1165,6 +1233,13 @@ export default function ScheduleEditorPlus({
           </div>
         )}
       </div>
+      )}
+
+      {hideCostsSection && (
+        <div style={{ marginTop: 20 }}>
+          <CostsPhasesEditor value={costos as any[]} onChange={(next) => onChangeCostos(next as any)} />
+        </div>
+      )}
 
       {/* Nota opcional: si quieres forzar que NO se persistan __ui_id,
           puedes limpiar antes de mandar al backend:

@@ -1,5 +1,5 @@
 import React from "react";
-import { Heart, Share2 } from "lucide-react";
+import { ArrowLeft, Heart, Share2 } from "lucide-react";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 export interface EventHeroProps {
   title: string;
@@ -13,6 +13,8 @@ export interface EventHeroProps {
   favoriteActive?: boolean;
   togglingEvent?: boolean;
   toDirectUrl?: (url: string) => string;
+  /** Volver atrás (historial o pantalla anterior) */
+  onBack?: () => void;
 }
 
 const PLACEHOLDER_GRADIENT =
@@ -30,6 +32,7 @@ export function EventHero({
   favoriteActive = false,
   togglingEvent = false,
   toDirectUrl = (u) => u,
+  onBack,
 }: EventHeroProps) {
   const displayUrl = flyerUrl
     ? (withStableCacheBust(flyerUrl, flyerCacheKey || null) ?? flyerUrl)
@@ -60,30 +63,44 @@ export function EventHero({
       )}
       <div className="eds-hero__overlay" aria-hidden />
       <div className="eds-hero__actions">
-        {onToggleFavorite && (
+        <div className="eds-hero__actions-start">
+          {onBack && (
+            <button
+              type="button"
+              className="eds-hero__btn eds-hero__btn--back"
+              onClick={onBack}
+              aria-label="Volver"
+            >
+              <ArrowLeft size={22} strokeWidth={2.25} aria-hidden />
+            </button>
+          )}
+        </div>
+        <div className="eds-hero__actions-end">
+          {onToggleFavorite && (
+            <button
+              type="button"
+              className="eds-hero__btn"
+              onClick={onToggleFavorite}
+              disabled={togglingEvent}
+              aria-label={favoriteActive ? "Quitar favorito" : "Agregar favorito"}
+              style={{
+                opacity: togglingEvent ? 0.75 : 1,
+                cursor: togglingEvent ? "not-allowed" : "pointer",
+                color: favoriteActive ? "#F42F7E" : undefined,
+              }}
+            >
+              {favoriteActive ? <Heart size={20} fill="currentColor" strokeWidth={2} /> : <Heart size={20} strokeWidth={2} />}
+            </button>
+          )}
           <button
             type="button"
             className="eds-hero__btn"
-            onClick={onToggleFavorite}
-            disabled={togglingEvent}
-            aria-label={favoriteActive ? "Quitar favorito" : "Agregar favorito"}
-            style={{
-              opacity: togglingEvent ? 0.75 : 1,
-              cursor: togglingEvent ? "not-allowed" : "pointer",
-              color: favoriteActive ? "#F42F7E" : undefined,
-            }}
+            onClick={onShare}
+            aria-label="Compartir"
           >
-            {favoriteActive ? <Heart size={20} fill="currentColor" strokeWidth={2} /> : <Heart size={20} strokeWidth={2} />}
+            <Share2 size={20} strokeWidth={2} />
           </button>
-        )}
-        <button
-          type="button"
-          className="eds-hero__btn"
-          onClick={onShare}
-          aria-label="Compartir"
-        >
-          <Share2 size={20} strokeWidth={2} />
-        </button>
+        </div>
       </div>
       <div className="eds-hero__content">
         <div className="eds-hero__title-plate">

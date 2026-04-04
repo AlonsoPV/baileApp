@@ -170,3 +170,8 @@
     font-size: 0.75rem;
   }
 }
+
+/* Android WebView perf mode */
+.explore-container.android-mobile .event-social-grid-card {
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+}

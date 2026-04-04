@@ -922,6 +922,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                     ritmos={ritmoTags}
                     zonas={zonaTags}
                     eventFecha={(values as any)?.fecha || ""}
+                    hideCostsSection
                     onSaveCosto={() => showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', "info")}
                   />
                 </div>

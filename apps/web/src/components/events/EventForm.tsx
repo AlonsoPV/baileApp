@@ -519,6 +519,7 @@ export default function EventForm(props: Props) {
           ritmos={ritmos}
           zonas={zonas}
           eventFecha={d.fecha || ''}
+          hideCostsSection
         />
       </section>
 

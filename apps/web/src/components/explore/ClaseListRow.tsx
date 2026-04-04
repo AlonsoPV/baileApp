@@ -39,7 +39,7 @@ function buildClaseHref(item: any): string {
   return `/clase?type=${item.ownerType || "teacher"}`;
 }
 
-export default function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
+function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
   const { t } = useTranslation();
   const { data: allTags } = useTags() as any;
   const href = React.useMemo(() => buildClaseHref(item), [item]);
@@ -210,3 +210,7 @@ export default function ClaseListRow({ item, priority = false }: ClaseListRowPro
     </LiveLink>
   );
 }
+
+const MemoizedClaseListRow = React.memo(ClaseListRow);
+
+export default MemoizedClaseListRow;

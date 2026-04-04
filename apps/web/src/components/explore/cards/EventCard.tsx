@@ -68,6 +68,10 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
   const motionPrefs = useEventCardMotion();
+  const isAndroid = React.useMemo(
+    () => typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent),
+    []
+  );
 
   const flyerCacheKey =
     ((item as any)?.updated_at as string | undefined) ||
@@ -109,7 +113,7 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
           </div>
         )}
         <div className="media">
-          {imageUrlFinal && !imageError && (
+          {!isAndroid && imageUrlFinal && !imageError && (
             <div className="media__bg" style={{ backgroundImage: `url(${imageUrlFinal})` }} aria-hidden />
           )}
           <div className="media__frame">
@@ -208,6 +212,10 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
   const motionPrefs = useEventCardMotion();
+  const isAndroid = React.useMemo(
+    () => typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent),
+    []
+  );
 
   const toUrl = (u: string | null | undefined) =>
     u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined;
@@ -293,7 +301,7 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
           </div>
         )}
         <div className="media">
-          {imageUrlFinal && !imageError && (
+          {!isAndroid && imageUrlFinal && !imageError && (
             <div className="media__bg" style={{ backgroundImage: `url(${imageUrlFinal})` }} aria-hidden />
           )}
           <div className="media__frame">

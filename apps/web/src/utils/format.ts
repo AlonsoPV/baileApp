@@ -9,7 +9,7 @@ export const fmtDate = (iso: string, locale?: string) => {
         const { getLocaleFromI18n } = require('./locale');
         locale = getLocaleFromI18n();
       } catch {
-        locale = 'es-ES';
+        locale = 'es-MX';
       }
     }
 

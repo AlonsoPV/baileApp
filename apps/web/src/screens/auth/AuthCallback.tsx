@@ -21,6 +21,14 @@ export default function AuthCallback() {
           navigate(`/reset-password?token=${token}&type=${type}`, { replace: true });
           return;
         }
+
+        // Recovery por hash (#access_token=...&type=recovery): Supabase guarda la sesión y podemos ir a /reset-password
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        if (hashParams.get('type') === 'recovery') {
+          await supabase.auth.getSession();
+          navigate('/reset-password', { replace: true });
+          return;
+        }
         
         // Forzar lectura/establecimiento de sesión desde la URL (hash/callback)
         const { data, error } = await supabase.auth.getSession();

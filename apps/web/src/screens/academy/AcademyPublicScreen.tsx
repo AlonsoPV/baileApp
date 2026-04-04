@@ -35,6 +35,7 @@ import { useSmartLoading } from "../../hooks/useSmartLoading";
 import { useTranslation } from "react-i18next";
 import { Share2 } from "lucide-react";
 import { getLocaleFromI18n } from "../../utils/locale";
+import { routes } from "../../routes/registry";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import "./AcademyPublicScreen.css";
 
@@ -617,6 +618,13 @@ const formatCurrency = (value?: number | string | null) => {
 export default function AcademyPublicScreen() {
   const { academyId } = useParams();
   const navigate = useNavigate();
+  const handleBack = React.useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(routes.app.explore);
+    }
+  }, [navigate]);
   const { t } = useTranslation();
   const locale = getLocaleFromI18n();
   const id = Number(academyId);
@@ -842,7 +850,8 @@ export default function AcademyPublicScreen() {
         >
           {/* Botón Volver a inicio */}
           <motion.button
-            onClick={() => navigate('/explore')}
+            type="button"
+            onClick={handleBack}
             whileHover={{ scale: 1.1, x: -3 }}
             whileTap={{ scale: 0.95 }}
             aria-label={t('back_to_start')}

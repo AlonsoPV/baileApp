@@ -29,6 +29,7 @@ import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 import { normalizeRitmosToSlugs, TAG_NAME_TO_SLUG } from '@/utils/normalizeRitmos';
 import {
   Activity,
+  ArrowLeft,
   BarChart3,
   CalendarDays,
   Clock,
@@ -39,6 +40,7 @@ import {
   Music2,
   Share2,
 } from 'lucide-react';
+import { routes } from '@/routes/registry';
 
 type SourceType = 'teacher' | 'academy';
 
@@ -437,7 +439,7 @@ export default function ClassPublicScreen() {
           if (precio === 0) {
             return t('free');
           }
-          return new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', {
+          return new Intl.NumberFormat(locale, {
             style: 'currency',
             currency: 'MXN',
             minimumFractionDigits: 0,
@@ -575,7 +577,7 @@ export default function ClassPublicScreen() {
           if (precio === 0) {
             return t('free');
           }
-          return new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', {
+          return new Intl.NumberFormat(locale, {
             style: 'currency',
             currency: 'USD',
             minimumFractionDigits: 0,
@@ -590,7 +592,7 @@ export default function ClassPublicScreen() {
           if (min === 0) {
             return t('free');
           }
-          return new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', {
+          return new Intl.NumberFormat(locale, {
             style: 'currency',
             currency: 'MXN',
             minimumFractionDigits: 0,
@@ -719,6 +721,18 @@ export default function ClassPublicScreen() {
   const mapsQuery = encodeURIComponent(`${(ubicacion as any)?.nombre ?? ''} ${(ubicacion as any)?.direccion ?? ''} ${(ubicacion as any)?.ciudad ?? ''}`.trim());
   const mapsHref = mapsQuery ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}` : undefined;
 
+  const handleBack = React.useCallback(() => {
+    if (fromParam === '/me/compras' || fromParam === '/me/rsvps') {
+      navigate(fromParam);
+      return;
+    }
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(routes.app.explore);
+    }
+  }, [navigate, fromParam]);
+
   const handleShare = async () => {
     const title = `${classTitle} | ${creatorName}`;
     const text = t('class_with_creator', { title: classTitle, creator: creatorName });
@@ -757,38 +771,42 @@ export default function ClassPublicScreen() {
         ].filter(Boolean) as string[]}
       />
       <div className="date-public-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #2a1a2a)', padding: '24px 0', position: 'relative' }}>
-      {/* Botón de volver si viene de /me/compras o /me/rsvps */}
-      {(fromParam === '/me/compras' || fromParam === '/me/rsvps') && (
-        <div style={{
+      <div
+        style={{
           position: 'absolute',
-          top: '1rem',
-          left: '1rem',
+          top: 'max(1rem, env(safe-area-inset-top))',
+          left: 'max(1rem, env(safe-area-inset-left))',
           zIndex: 100,
-        }}>
-          <button
-            onClick={() => navigate(fromParam)}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '12px',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-            }}
-          >
-            {fromParam === '/me/compras' ? t('back_to_purchases') : t('back_to_rsvps')}
-          </button>
-        </div>
-      )}
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label={fromParam === '/me/compras' ? t('back_to_purchases') : fromParam === '/me/rsvps' ? t('back_to_rsvps') : t('back', 'Volver')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            padding: '0.65rem 0.9rem',
+            minHeight: 44,
+            minWidth: 44,
+            background: 'rgba(255, 255, 255, 0.1)',
+            color: '#fff',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: 12,
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <ArrowLeft size={20} strokeWidth={2.25} aria-hidden />
+          {(fromParam === '/me/compras' || fromParam === '/me/rsvps') ? (
+            <span>{fromParam === '/me/compras' ? t('back_to_purchases') : t('back_to_rsvps')}</span>
+          ) : null}
+        </button>
+      </div>
       <style>{`
         .date-public-root { padding: 24px 0; }
         .date-public-inner { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
@@ -1717,7 +1735,7 @@ export default function ClassPublicScreen() {
                 <span>
                   {createCheckout.isPending
                     ? t('processing')
-                    : `${t('pay')} ${new Intl.NumberFormat(locale === 'es-ES' ? 'es-MX' : 'en-US', { style: 'currency', currency: 'MXN' }).format(
+                    : `${t('pay')} ${new Intl.NumberFormat(locale, { style: 'currency', currency: 'MXN' }).format(
                         classPrice,
                       )}`}
                 </span>

@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase';
 export async function resetPassword(email: string) {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      // Supabase añade el hash con access_token y type=recovery; AuthCallback redirige a /reset-password
+      redirectTo: `${window.location.origin}/auth/callback`,
     });
     
     if (error) {

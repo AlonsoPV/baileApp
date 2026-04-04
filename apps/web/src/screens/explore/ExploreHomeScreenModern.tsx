@@ -50,6 +50,7 @@ import { normalizeEventsForCards } from "@/utils/normalizeEventsForCards";
 import { getEffectiveEventDate, getEffectiveEventDateYmd, normalizeDateOnly } from "@/utils/effectiveEventDate";
 import { sortFechasByRecentFirst } from "@/utils/exploreFechasGrid";
 import { shouldHideExploreClassForBlackout } from "@/config/classBlackoutDates";
+import { getLocaleFromI18n } from "@/utils/locale";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -1127,6 +1128,11 @@ const STYLES = `
   .filters-search-toggle { flex-shrink: 0; }
   .filters-search-input { color: #fff; }
   .filters-search-close { color: #fff; }
+  .filters-search-input-wrap {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+  }
   .filters-card__row--search {
     max-height: 0;
     opacity: 0;
@@ -1146,7 +1152,7 @@ const STYLES = `
   .filters-search-input {
     width: 100%;
     min-width: 0;
-    padding: 10px 14px;
+    padding: 10px 40px 10px 14px;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,.12);
     background: rgba(255,255,255,.06);
@@ -1158,6 +1164,29 @@ const STYLES = `
   .filters-search-input:focus {
     border-color: rgba(41, 127, 150, .5);
     box-shadow: 0 0 0 2px rgba(41, 127, 150, .2);
+  }
+  .filters-search-input-clear {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.10);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+  }
+  .filters-search-input-clear:hover {
+    background: rgba(255,255,255,.16);
+    border-color: rgba(255,255,255,.26);
   }
   .filters-search-close {
     flex: 0 0 auto;
@@ -2102,7 +2131,7 @@ const STYLES = `
     }
     .filters-search-input {
       font-size: 16px !important;
-      padding: 10px 12px !important;
+      padding: 10px 36px 10px 12px !important;
     }
     .filters-card__row--search.filters-card__row--search-open {
       max-height: 72px !important;
@@ -2494,6 +2523,7 @@ export default function ExploreHomeScreen() {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement | null>(null);
   const searchToggleRef = React.useRef<HTMLButtonElement | null>(null);
+  const hasSearchQuery = (filters.q ?? "").trim().length > 0;
   const [isMobile, setIsMobile] = React.useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 768;
@@ -2518,6 +2548,21 @@ export default function ExploreHomeScreen() {
   const setExploreSectionView = React.useCallback((id: ExploreListableSectionId, mode: ExploreSectionViewMode) => {
     setExploreSectionViews((prev) => patchExploreSectionViewMode(id, mode, prev));
   }, []);
+  const setClasesViewMode = React.useCallback((mode: ExploreSectionViewMode) => {
+    setExploreSectionView("clases", mode);
+  }, [setExploreSectionView]);
+  const setAcademiasViewMode = React.useCallback((mode: ExploreSectionViewMode) => {
+    setExploreSectionView("academias", mode);
+  }, [setExploreSectionView]);
+  const setMaestrosViewMode = React.useCallback((mode: ExploreSectionViewMode) => {
+    setExploreSectionView("maestros", mode);
+  }, [setExploreSectionView]);
+  const setUsuariosViewMode = React.useCallback((mode: ExploreSectionViewMode) => {
+    setExploreSectionView("usuarios", mode);
+  }, [setExploreSectionView]);
+  const setOrganizadoresViewMode = React.useCallback((mode: ExploreSectionViewMode) => {
+    setExploreSectionView("organizadores", mode);
+  }, [setExploreSectionView]);
   const [mountedSections, setMountedSections] = React.useState<Set<ExploreSectionId>>(
     () => new Set(ABOVE_FOLD_SECTIONS)
   );
@@ -2534,6 +2579,12 @@ export default function ExploreHomeScreen() {
     document.addEventListener("mousedown", handleClick, true);
     return () => document.removeEventListener("mousedown", handleClick, true);
   }, [openFilterDropdown]);
+
+  // Keep search bar expanded while there is typed content.
+  React.useEffect(() => {
+    if (!hasSearchQuery) return;
+    if (!searchOpen) setSearchOpen(true);
+  }, [hasSearchQuery, searchOpen]);
 
   // Default UX: siempre iniciar en Sociales (fechas), sin "Todos" en primera carga.
   React.useEffect(() => {
@@ -2674,6 +2725,8 @@ export default function ExploreHomeScreen() {
       navPosition: (isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay',
       itemHeight: cardHeight > 0 ? cardHeight : undefined,
       itemWidth: cardWidth > 0 ? cardWidth : undefined,
+      // Evita que un swipe corto en carrusel bloquee el scroll vertical del contenedor padre.
+      preferVerticalScroll: true,
     }),
     [isMobile, cardHeight, cardWidth]
   );
@@ -2903,6 +2956,12 @@ export default function ExploreHomeScreen() {
   );
 
   const dateSummaryText = React.useMemo(() => {
+    const locale = getLocaleFromI18n();
+    const fmtYmd = (s: string) => {
+      const [y, m, d] = s.split("-").map(Number);
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return s;
+      return new Date(y, m - 1, d).toLocaleDateString(locale, { day: "numeric", month: "short" });
+    };
     const preset = filters.datePreset ?? "todos";
     if (preset === "todos" && !filters.dateFrom && !filters.dateTo) return t("all");
     if (preset === "hoy") return t("today");
@@ -2913,16 +2972,11 @@ export default function ExploreHomeScreen() {
     if (filters.dateFrom && filters.dateTo) {
       const from = filters.dateFrom;
       const to = filters.dateTo;
-      if (from === to) return from;
-      const locale = i18n.language?.startsWith("es") ? "es-MX" : "en";
-      const fmt = (s: string) => {
-        const [y, m, d] = s.split("-").map(Number);
-        return new Date(y, m - 1, d).toLocaleDateString(locale, { day: "numeric", month: "short" });
-      };
-      return t("date_range_from_to", { from: fmt(from), to: fmt(to) });
+      if (from === to) return fmtYmd(from);
+      return t("date_range_from_to", { from: fmtYmd(from), to: fmtYmd(to) });
     }
-    if (filters.dateFrom) return `${t("from")} ${filters.dateFrom}`;
-    if (filters.dateTo) return `${t("to")} ${filters.dateTo}`;
+    if (filters.dateFrom) return `${t("from")} ${fmtYmd(filters.dateFrom)}`;
+    if (filters.dateTo) return `${t("to")} ${fmtYmd(filters.dateTo)}`;
     return t("all");
   }, [t, i18n.language, filters.datePreset, filters.dateFrom, filters.dateTo]);
 
@@ -3420,9 +3474,9 @@ export default function ExploreHomeScreen() {
   );
 
   const renderUsuarioCarouselItem = React.useCallback(
-    (u: any, idx: number) => (
+    (item: any, idx: number) => (
       <div
-        key={u.user_id ?? idx}
+        key={item.id ?? idx}
         onClickCapture={handlePreNavigate}
         style={{
           background: "rgba(255,255,255,0.04)",
@@ -3436,7 +3490,7 @@ export default function ExploreHomeScreen() {
       >
         <ProfileExploreGridCard
           variant="dancer"
-          item={{ ...u, id: u.user_id }}
+          item={item}
           priority={idx < 3}
         />
       </div>
@@ -3487,6 +3541,71 @@ export default function ExploreHomeScreen() {
       );
     },
     [handlePreNavigate, t]
+  );
+
+  const renderMarcaCarouselItem = React.useCallback(
+    (item: any, idx: number) => {
+      if (item?.__isCTA) {
+        return (
+          <div
+            key="cta-marcas"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 16,
+              padding: 0,
+              overflow: "hidden",
+              boxShadow: "none",
+            }}
+          >
+            <CTACard text={t("cta_brands")} sectionType="marcas" idx={idx} />
+          </div>
+        );
+      }
+      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
+        __DEV_LOG("renderItem", { type: "marcas", idx, id: item?.id, nombre: item?.nombre_publico || item?.nombre });
+      }
+      if (__DEV__) {
+        try {
+          return (
+            <div
+              key={item.id ?? idx}
+              onClickCapture={handlePreNavigate}
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 16,
+                padding: 0,
+                overflow: "hidden",
+                boxShadow: "none",
+              }}
+            >
+              <BrandCard item={item} />
+            </div>
+          );
+        } catch (e) {
+          __DEV_LOG("renderItem_error", { type: "marcas", idx, id: item?.id, error: (e as any)?.message || e });
+          return null;
+        }
+      }
+      return (
+        <div
+          key={item.id ?? idx}
+          onClickCapture={handlePreNavigate}
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 16,
+            padding: 0,
+            overflow: "hidden",
+            boxShadow: "none",
+          }}
+        >
+          <BrandCard item={item} />
+        </div>
+      );
+    },
+    [__DEV__, __DEV_LOG, handlePreNavigate, t]
   );
 
   const renderFechaListItem = React.useCallback(
@@ -3772,7 +3891,15 @@ export default function ExploreHomeScreen() {
   }, [filteredFechas.length, fechasLoading]);
 
   const classesList = React.useMemo(() => {
-    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const dayNames = [
+      t('sunday'),
+      t('monday'),
+      t('tuesday'),
+      t('wednesday'),
+      t('thursday'),
+      t('friday'),
+      t('saturday'),
+    ];
     const allA = academiasData;
     const allM = maestrosData;
     const selectedRitmoSet = new Set<number>(filters.ritmos || []);
@@ -4058,6 +4185,8 @@ export default function ExploreHomeScreen() {
     });
     return sorted;
   }, [
+    t,
+    i18n.language,
     academiasData,
     maestrosData,
     allTags,
@@ -4075,11 +4204,19 @@ export default function ExploreHomeScreen() {
       usuariosData.filter((u: any) => u && u.display_name && u.display_name.trim() !== ''),
     [usuariosData]
   );
+  const normalizedValidUsuarios = React.useMemo(
+    () =>
+      validUsuarios.map((u: any) => ({
+        ...u,
+        id: u.user_id ?? u.id,
+      })),
+    [validUsuarios]
+  );
 
   const hasFechas = filteredFechas.length > 0;
   const hasClases = classesList.length > 0;
   const hasAcademias = academiasData.length > 0;
-  const hasUsuarios = validUsuarios.length > 0;
+  const hasUsuarios = normalizedValidUsuarios.length > 0;
   const hasMaestros = maestrosData.length > 0;
   const hasOrganizadores = organizadoresData.length > 0;
   const hasMarcas = marcasData.length > 0;
@@ -4093,7 +4230,7 @@ export default function ExploreHomeScreen() {
         ...classesList,
         ...maestrosData,
         ...academiasData,
-        ...validUsuarios,
+        ...normalizedValidUsuarios,
         ...organizadoresData,
         ...marcasData,
       ];
@@ -4102,11 +4239,11 @@ export default function ExploreHomeScreen() {
     if (type === 'clases') return classesList;
     if (type === 'maestros') return maestrosData;
     if (type === 'academias') return academiasData;
-    if (type === 'usuarios') return validUsuarios;
+    if (type === 'usuarios') return normalizedValidUsuarios;
     if (type === 'organizadores') return organizadoresData;
     if (type === 'marcas') return marcasData;
     return [];
-  }, [filters.type, filteredFechas, classesList, maestrosData, academiasData, validUsuarios, organizadoresData, marcasData]);
+  }, [filters.type, filteredFechas, classesList, maestrosData, academiasData, normalizedValidUsuarios, organizadoresData, marcasData]);
 
   const availableFilters = React.useMemo(
     () => buildAvailableFilters(itemsForAvailableFilters, { ritmoNameById, zonaNameById, ritmoIdBySlug, zonaIdBySlug }),
@@ -4290,9 +4427,9 @@ export default function ExploreHomeScreen() {
     (typeId: typeof TYPE_OPTIONS[number]['id']) => {
       const exploreType = typeId as ExploreType;
       if (typeId !== 'fechas' && typeId !== 'clases') {
-        set({ type: exploreType, datePreset: 'todos', dateFrom: undefined, dateTo: undefined });
+        set({ type: exploreType, q: "", datePreset: 'todos', dateFrom: undefined, dateTo: undefined });
       } else {
-        set({ type: exploreType });
+        set({ type: exploreType, q: "" });
       }
       setOpenFilterDropdown(null);
     },
@@ -4721,7 +4858,12 @@ export default function ExploreHomeScreen() {
                   ref={searchToggleRef}
                   type="button"
                   className={`filter-pill filters-search-toggle ${searchOpen ? "filter-pill--active" : ""} ${!searchOpen && (filters.q ?? "").trim() ? "filters-search-toggle--has-content" : ""}`}
-                  onClick={() => setSearchOpen((v) => !v)}
+                  onClick={() =>
+                    setSearchOpen((v) => {
+                      if (v && hasSearchQuery) return true;
+                      return !v;
+                    })
+                  }
                   aria-label={t('search') || 'Buscar'}
                   aria-expanded={searchOpen}
                   aria-controls="filters-search-row"
@@ -4779,26 +4921,46 @@ export default function ExploreHomeScreen() {
                 <label className="visually-hidden" htmlFor="filters-search-input">
                   {t('search_placeholder_expanded') || 'Buscar (evento, lugar, maestro...)'}
                 </label>
-                <input
-                  ref={searchInputRef}
-                  id="filters-search-input"
-                  type="text"
-                  placeholder={t('search_placeholder_expanded') || 'Buscar (evento, lugar, maestro...)'}
-                  value={filters.q || ''}
-                  onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
-                  className="filters-search-input"
-                  autoComplete="off"
-                  style={{
-                    fontSize: 16,
-                    lineHeight: 1.2,
-                    height: 44,
-                    minHeight: 44,
-                  }}
-                />
+                <div className="filters-search-input-wrap">
+                  <input
+                    ref={searchInputRef}
+                    id="filters-search-input"
+                    type="text"
+                    placeholder={t('search_placeholder_expanded') || 'Buscar (evento, lugar, maestro...)'}
+                    value={filters.q || ''}
+                    onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
+                    className="filters-search-input"
+                    autoComplete="off"
+                    style={{
+                      fontSize: 16,
+                      lineHeight: 1.2,
+                      height: 44,
+                      minHeight: 44,
+                    }}
+                  />
+                  {hasSearchQuery && (
+                    <button
+                      type="button"
+                      className="filters-search-input-clear"
+                      onClick={() => {
+                        handleFilterChange({ ...filters, q: "" });
+                        searchInputRef.current?.focus();
+                      }}
+                      aria-label={t('clear') || 'Borrar búsqueda'}
+                      title={t('clear') || 'Borrar'}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
                 <button
                   type="button"
                   className="filters-search-close"
                   onClick={() => {
+                    if (hasSearchQuery) {
+                      handleFilterChange({ ...filters, q: "" });
+                      return;
+                    }
                     searchToggleRef.current?.focus();
                     requestAnimationFrame(() => setSearchOpen(false));
                   }}
@@ -5040,7 +5202,7 @@ export default function ExploreHomeScreen() {
                   <>
                     <ExploreSectionViewToggle
                       value={clasesVm}
-                      onChange={(mode) => setExploreSectionView("clases", mode)}
+                      onChange={setClasesViewMode}
                       likeFechas
                       groupLabel={t("explore_classes_view_group") || t("explore_fechas_view_group")}
                     />
@@ -5124,7 +5286,7 @@ export default function ExploreHomeScreen() {
             >
               <ExploreSectionViewToggle
                 value={exploreSectionViews.academias}
-                onChange={(mode) => setExploreSectionView("academias", mode)}
+                onChange={setAcademiasViewMode}
                 likeFechas
                 groupLabel={t("explore_academies_view_group") || t("explore_classes_view_group")}
               />
@@ -5140,7 +5302,7 @@ export default function ExploreHomeScreen() {
                       ? "cartelera"
                       : "carousel"
                 }
-                gridCarouselProps={{ ...fechasGridSliderProps }}
+                gridCarouselProps={fechasGridSliderProps}
                 itemHeight={cardHeight > 0 ? cardHeight : undefined}
                 itemWidth={cardWidth > 0 ? cardWidth : undefined}
                 navPosition={(isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay'}
@@ -5180,7 +5342,7 @@ export default function ExploreHomeScreen() {
                   <>
                     <ExploreSectionViewToggle
                       value={exploreSectionViews.maestros}
-                      onChange={(mode) => setExploreSectionView("maestros", mode)}
+                      onChange={setMaestrosViewMode}
                       likeFechas
                       groupLabel={t("explore_maestros_view_group") || t("explore_classes_view_group")}
                     />
@@ -5258,7 +5420,7 @@ export default function ExploreHomeScreen() {
           {shouldRenderSection('usuarios') && (((showAll && (usuariosLoading || hasUsuarios)) || selectedType === 'usuarios')) && (
             <Section
               title={t('section_dancers_near_you')}
-              count={validUsuarios.length}
+              count={normalizedValidUsuarios.length}
               sectionId="usuarios"
               sectionMinHeight={
                 exploreSectionViews.usuarios === "list" || exploreSectionViews.usuarios === "cartelera"
@@ -5270,29 +5432,26 @@ export default function ExploreHomeScreen() {
                 <div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">Cargando…</div>)}</div>
               ) : (
                 <>
-                  {validUsuarios.length > 0 ? (
+                  {normalizedValidUsuarios.length > 0 ? (
                     <>
                       <ExploreSectionViewToggle
                         value={exploreSectionViews.usuarios}
-                        onChange={(mode) => setExploreSectionView("usuarios", mode)}
+                        onChange={setUsuariosViewMode}
                         likeFechas
                         groupLabel={t("explore_usuarios_view_group") || t("explore_classes_view_group")}
                       />
                       {exploreSectionViews.usuarios === "list" ? (
                         <div className="explore-fechas-list" role="list">
-                          {validUsuarios.map((u: any, idx: number) => (
+                          {normalizedValidUsuarios.map((item: any, idx: number) => (
                             <div
-                              key={u.user_id ?? idx}
+                              key={item.id ?? idx}
                               role="listitem"
                               onClickCapture={handlePreNavigate}
                               style={{ width: "100%" }}
                             >
                               <ExploreProfileListRow
                                 variant="dancer"
-                                item={{
-                                  ...u,
-                                  id: u.user_id,
-                                }}
+                                item={item}
                                 priority={idx < EAGER_OTHERS}
                               />
                             </div>
@@ -5300,19 +5459,16 @@ export default function ExploreHomeScreen() {
                         </div>
                       ) : exploreSectionViews.usuarios === "cartelera" ? (
                         <div className="explore-fechas-cartelera" role="list">
-                          {validUsuarios.map((u: any, idx: number) => (
+                          {normalizedValidUsuarios.map((item: any, idx: number) => (
                             <div
-                              key={u.user_id ?? idx}
+                              key={item.id ?? idx}
                               role="listitem"
                               onClickCapture={handlePreNavigate}
                               style={{ minWidth: 0 }}
                             >
                               <ExploreEntityCarteleraCard
                                 variant="dancer"
-                                item={{
-                                  ...u,
-                                  id: u.user_id,
-                                }}
+                                item={item}
                                 priority={idx < EAGER_OTHERS}
                               />
                             </div>
@@ -5321,7 +5477,7 @@ export default function ExploreHomeScreen() {
                       ) : (
                         <HorizontalCarousel
                           {...fechasGridSliderProps}
-                          items={validUsuarios}
+                          items={normalizedValidUsuarios}
                           renderItem={renderUsuarioCarouselItem}
                         />
                       )}
@@ -5374,7 +5530,7 @@ export default function ExploreHomeScreen() {
                 <>
                   <ExploreSectionViewToggle
                     value={exploreSectionViews.organizadores}
-                    onChange={(mode) => setExploreSectionView("organizadores", mode)}
+                    onChange={setOrganizadoresViewMode}
                     likeFechas
                     groupLabel={t("explore_organizadores_view_group") || t("explore_classes_view_group")}
                   />
@@ -5466,67 +5622,7 @@ export default function ExploreHomeScreen() {
                     <HorizontalCarousel
                       {...sliderProps}
                       items={marcasDataWithCTA}
-                      renderItem={(item: any, idx: number) => {
-                      if (item?.__isCTA) {
-                        return (
-                          <div
-                            key="cta-marcas"
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                              borderRadius: 16,
-                              padding: 0,
-                              overflow: 'hidden',
-                              boxShadow: 'none'
-                            }}
-                          >
-                            <CTACard text={t('cta_brands')} sectionType="marcas" idx={idx} />
-                          </div>
-                        );
-                      }
-                      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-                        __DEV_LOG("renderItem", { type: "marcas", idx, id: item?.id, nombre: item?.nombre_publico || item?.nombre });
-                      }
-                      if (__DEV__) {
-                        try {
-                          return (
-                            <div
-                              key={item.id ?? idx}
-                              onClickCapture={handlePreNavigate}
-                              style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.08)',
-                                borderRadius: 16,
-                                padding: 0,
-                                overflow: 'hidden',
-                                boxShadow: 'none'
-                              }}
-                            >
-                              <BrandCard item={item} />
-                            </div>
-                          );
-                        } catch (e) {
-                          __DEV_LOG("renderItem_error", { type: "marcas", idx, id: item?.id, error: (e as any)?.message || e });
-                          return null;
-                        }
-                      }
-                      return (
-                        <div
-                          key={item.id ?? idx}
-                          onClickCapture={handlePreNavigate}
-                          style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 0,
-                            overflow: 'hidden',
-                            boxShadow: 'none'
-                          }}
-                        >
-                          <BrandCard item={item} />
-                        </div>
-                      );
-                      }}
+                      renderItem={renderMarcaCarouselItem}
                     />
                   )}
                 </>

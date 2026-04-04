@@ -93,7 +93,7 @@ function resolveDancerImage(item: any): string | undefined {
   );
 }
 
-export default function ExploreEntityCarteleraCard({ variant, item, priority = false }: ExploreEntityCarteleraCardProps) {
+function ExploreEntityCarteleraCard({ variant, item, priority = false }: ExploreEntityCarteleraCardProps) {
   const { t } = useTranslation();
   const { data: allTags } = useTags() as any;
 
@@ -347,3 +347,7 @@ export default function ExploreEntityCarteleraCard({ variant, item, priority = f
     </LiveLink>
   );
 }
+
+const MemoizedExploreEntityCarteleraCard = React.memo(ExploreEntityCarteleraCard);
+
+export default MemoizedExploreEntityCarteleraCard;

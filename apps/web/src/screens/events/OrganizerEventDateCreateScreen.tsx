@@ -870,6 +870,7 @@ export default function OrganizerEventDateCreateScreen() {
                 ritmos={ritmoTags}
                 zonas={zonaTags}
                 eventFecha={dateForm.fecha}
+                hideCostsSection
                 onSaveCosto={() => {
                   showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
                 }}

@@ -1,6 +1,28 @@
 export type Aprobacion = 'borrador'|'en_revision'|'aprobado'|'rechazado';
 
-export type EventCostoTipo = 'taquilla' | 'preventa' | 'promocion' | 'otro';
+export type EventCostoTipo = 'taquilla' | 'preventa' | 'promocion' | 'gratis' | 'otro';
+
+export type CostPhase = {
+  id: string;
+  name: string;
+  type?: EventCostoTipo | string;
+  description?: string;
+  price: number;
+  startDate?: string;
+  endDate?: string;
+  order: number;
+  isFinal?: boolean;
+};
+
+export type EventCost = {
+  id: string;
+  name: string;
+  type?: EventCostoTipo | string;
+  amount?: number;
+  description?: string;
+  currency: 'MXN';
+  phases: CostPhase[];
+};
 
 export type EventCosto = {
   tipo: EventCostoTipo | string;
@@ -69,7 +91,7 @@ export type EventDate = {
   referencias?: string|null; // Referencias de ubicación
   requisitos?: string|null; 
   cronograma?: any[]; // Cronograma de actividades
-  costos?: EventCosto[];
+  costos?: Array<EventCosto | EventCost>;
   flyer_url?: string|null; // URL del flyer del evento
   estilos: number[]; 
   media: any[]; 

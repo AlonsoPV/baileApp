@@ -92,13 +92,25 @@ export default function EventEditScreen() {
       console.log('[EventEditScreen] Updating date:', q.data.date.id);
       await updateDate.mutateAsync({
         id: q.data.date.id,
+        nombre: (date as any).nombre || null,
+        biografia: (date as any).biografia || null,
+        djs: (date as any).djs || null,
+        telefono_contacto: (date as any).telefono_contacto || null,
+        mensaje_contacto: (date as any).mensaje_contacto || null,
         fecha: date.fecha,
         hora_inicio: date.hora_inicio || null,
         hora_fin: date.hora_fin || null,
         lugar: date.lugar || null,
         ciudad: date.ciudad || null,
         direccion: date.direccion || null,
+        referencias: (date as any).referencias || null,
         requisitos: date.requisitos || null,
+        estilos: Array.isArray((date as any).estilos) ? (date as any).estilos : [],
+        ritmos_seleccionados: Array.isArray((date as any).ritmos_seleccionados) ? (date as any).ritmos_seleccionados : [],
+        zonas: Array.isArray((date as any).zonas) ? (date as any).zonas : [],
+        cronograma: Array.isArray((date as any).cronograma) ? (date as any).cronograma : [],
+        costos: Array.isArray((date as any).costos) ? (date as any).costos : [],
+        flyer_url: (date as any).flyer_url || null,
         estado_publicacion: date.estado_publicacion || "borrador"
       });
 

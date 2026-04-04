@@ -421,7 +421,7 @@ export default function AppShell() {
             <div className="footer-separator" />
             <Link to="/soporte" className="app-footer-link">
               <span>🛟</span>
-              <span className="footer-link-text">Soporte</span>
+              <span className="footer-link-text">{t('footer_support')}</span>
             </Link>
             <div className="footer-separator" />
             <Link to="/aviso-de-privacidad" className="app-footer-link">

@@ -453,6 +453,7 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
                   ritmos={ritmoTags}
                   zonas={zonaTags}
                   eventFecha={form.fecha}
+                  hideCostsSection
                   onSaveCosto={() => showToast("💰 Costo guardado en el formulario. Recuerda guardar cambios.", "info")}
                 />
               </div>

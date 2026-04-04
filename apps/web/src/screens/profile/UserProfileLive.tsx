@@ -26,6 +26,7 @@ import { Modal } from "../../components/ui/Modal";
 import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { buildShareUrl } from "@/utils/shareUrls";
+import { routes } from "../../routes/registry";
 import "./UserProfile.css";
 
 
@@ -280,6 +281,14 @@ export const UserProfileLive: React.FC = () => {
   const goToProfile = useCallback((id?: string) => {
     if (id) {
       navigate(`/u/${id}`);
+    }
+  }, [navigate]);
+
+  const handleBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(routes.app.explore);
     }
   }, [navigate]);
 
@@ -605,7 +614,7 @@ export const UserProfileLive: React.FC = () => {
             onFollowToggle={() => {}}
             onShare={handleShareProfile}
             copied={copied}
-            onBack={() => navigate('/explore')}
+            onBack={handleBack}
             showBackButton
             avatarError={avatarError}
             onAvatarError={() => setAvatarError(true)}

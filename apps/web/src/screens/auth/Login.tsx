@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
 import { Button } from '@ui/index';
 import { colors, typography, spacing, borderRadius, transitions } from '../../theme/colors';
-import { isValidEmail } from '../../utils/validation';
+import { isValidEmail, isValidPassword } from '../../utils/validation';
+import { resetPassword } from '../../utils/passwordReset';
 import { signInWithMagicLink, signUpWithMagicLink } from '../../utils/magicLinkAuth';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '@/contexts/AuthProvider';
@@ -34,6 +35,10 @@ export function Login() {
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isMagicLinkLoading, setIsMagicLinkLoading] = useState(false);
   const [isSignUpLoading, setIsSignUpLoading] = useState(false);
+  const [isSignUpPasswordLoading, setIsSignUpPasswordLoading] = useState(false);
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [signUpMessage, setSignUpMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -42,7 +47,7 @@ export function Login() {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
   const providerAvailability = getAuthProviderAvailability();
   const supportsAppleAuth = providerAvailability.apple;
 
@@ -133,7 +138,7 @@ export function Login() {
     e?.preventDefault();
     
     // Protección contra doble submit
-    if (isSignUpLoading) {
+    if (isSignUpLoading || isSignUpPasswordLoading) {
       console.warn('[Login] Intento de doble submit bloqueado (signup)');
       return;
     }
@@ -340,6 +345,91 @@ export function Login() {
     }
   };
 
+
+  const handleForgotPassword = async () => {
+    if (isForgotPasswordLoading || isPasswordLoading || isMagicLinkLoading) return;
+    setError('');
+    setMessage('');
+    setIsSuccess(false);
+
+    if (!email.trim()) {
+      setError('Ingresa el email de tu cuenta para enviarte el enlace de recuperación.');
+      showToast('Ingresa el email de tu cuenta.', 'error');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError('Email inválido');
+      showToast('Email inválido', 'error');
+      return;
+    }
+
+    setIsForgotPasswordLoading(true);
+    try {
+      const result = await resetPassword(email.trim());
+      if (result.success) {
+        setMessage(
+          'Si ese correo está registrado, recibirás un enlace para restablecer tu contraseña. Revisa también spam.'
+        );
+        setIsSuccess(true);
+        showToast('Revisa tu correo para restablecer la contraseña.', 'success');
+      } else {
+        const err = (result as { error?: { message?: string } }).error;
+        const msg = err?.message || 'No se pudo enviar el correo. Intenta de nuevo.';
+        setError(msg);
+        showToast(msg, 'error');
+      }
+    } catch (err: any) {
+      const msg = err?.message ?? 'Error al solicitar recuperación.';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setIsForgotPasswordLoading(false);
+    }
+  };
+
+  const handleSignUpWithPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    if (isSignUpPasswordLoading || isSignUpLoading) return;
+
+    setSignUpError('');
+    setSignUpMessage('');
+    setIsSignUpSuccess(false);
+
+    if (!signUpEmail.trim()) {
+      setSignUpError('Por favor ingresa tu email');
+      return;
+    }
+    if (!isValidEmail(signUpEmail)) {
+      setSignUpError('Email inválido');
+      return;
+    }
+    if (!isValidPassword(signUpPassword)) {
+      setSignUpError('La contraseña debe tener al menos 6 caracteres e incluir letras y números.');
+      return;
+    }
+    if (signUpPassword !== signUpConfirmPassword) {
+      setSignUpError('Las contraseñas no coinciden');
+      return;
+    }
+
+    setIsSignUpPasswordLoading(true);
+    try {
+      const { error: signUpErr } = await signUp(signUpEmail.trim(), signUpPassword);
+      if (signUpErr) {
+        setSignUpError(signUpErr.message);
+        showToast(signUpErr.message, 'error');
+      } else {
+        showToast('¡Cuenta creada! 🎉', 'success');
+        navigate('/onboarding/basics');
+      }
+    } catch (err: any) {
+      const msg = err?.message ?? 'Error al crear la cuenta.';
+      setSignUpError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setIsSignUpPasswordLoading(false);
+    }
+  };
 
   const handlePasswordLogin = async (e?: FormEvent) => {
     if (e) e.preventDefault();
@@ -615,6 +705,46 @@ export function Login() {
                 placeholder="Tu contraseña segura"
                 autoComplete="current-password"
               />
+              <div style={{ marginTop: spacing[2], textAlign: 'right' }}>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={
+                    isForgotPasswordLoading ||
+                    isPasswordLoading ||
+                    isMagicLinkLoading ||
+                    isGoogleLoading ||
+                    isAppleLoading
+                  }
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: brand.ice,
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    cursor:
+                      isForgotPasswordLoading ||
+                      isPasswordLoading ||
+                      isMagicLinkLoading ||
+                      isGoogleLoading ||
+                      isAppleLoading
+                        ? 'not-allowed'
+                        : 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0,
+                    opacity:
+                      isForgotPasswordLoading ||
+                      isPasswordLoading ||
+                      isMagicLinkLoading ||
+                      isGoogleLoading ||
+                      isAppleLoading
+                        ? 0.5
+                        : 1,
+                  }}
+                >
+                  {isForgotPasswordLoading ? 'Enviando…' : '¿Olvidaste tu contraseña?'}
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -653,10 +783,23 @@ export function Login() {
               <Button
                 id="login-password"
                 type="submit"
-                disabled={isPasswordLoading || isMagicLinkLoading || isGoogleLoading || isAppleLoading}
+                disabled={
+                  isPasswordLoading ||
+                  isMagicLinkLoading ||
+                  isGoogleLoading ||
+                  isAppleLoading ||
+                  isForgotPasswordLoading
+                }
                 style={{
                   width: '100%',
-                  opacity: isPasswordLoading || isMagicLinkLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                  opacity:
+                    isPasswordLoading ||
+                    isMagicLinkLoading ||
+                    isGoogleLoading ||
+                    isAppleLoading ||
+                    isForgotPasswordLoading
+                      ? 0.5
+                      : 1,
                   background: brandGradientPrimary,
                 }}
               >
@@ -667,10 +810,23 @@ export function Login() {
                 id="login-magic-link"
                 type="button"
                 onClick={handleMagicLink}
-                disabled={isPasswordLoading || isMagicLinkLoading || isGoogleLoading || isAppleLoading}
+                disabled={
+                  isPasswordLoading ||
+                  isMagicLinkLoading ||
+                  isGoogleLoading ||
+                  isAppleLoading ||
+                  isForgotPasswordLoading
+                }
                 style={{
                   width: '100%',
-                  opacity: isPasswordLoading || isMagicLinkLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                  opacity:
+                    isPasswordLoading ||
+                    isMagicLinkLoading ||
+                    isGoogleLoading ||
+                    isAppleLoading ||
+                    isForgotPasswordLoading
+                      ? 0.5
+                      : 1,
                   background: brandGradientSecondary,
                 }}
               >
@@ -787,39 +943,120 @@ export function Login() {
                   Únete a nuestra comunidad
                 </p>
               </div>
-              <form onSubmit={(e) => { e.preventDefault(); handleSignUpMagicLink(e); }}>
-            <div style={{ marginBottom: spacing[3] }}>
-              <label
-                htmlFor="signup-email"
-                style={{
-                  display: 'block',
-                  marginBottom: spacing[1],
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: colors.gray[400],
-                }}
-              >
-                📧 Tu Email
-              </label>
-              <input
-                id="signup-email"
-                type="email"
-                value={signUpEmail}
-                onChange={(e) => setSignUpEmail(e.target.value)}
-                required
-                disabled={isSignUpLoading}
-                style={{
-                  width: '100%',
-                  padding: spacing[2],
-                  background: colors.glass.medium,
-                  border: `1px solid ${colors.glass.medium}`,
-                  borderRadius: borderRadius.md,
-                  color: colors.gray[200],
-                  fontSize: '1rem',
-                }}
-                placeholder="tu@email.com"
-              />
-            </div>
+              <form onSubmit={handleSignUpWithPassword}>
+                <div style={{ marginBottom: spacing[3] }}>
+                  <label
+                    htmlFor="signup-email"
+                    style={{
+                      display: 'block',
+                      marginBottom: spacing[1],
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      color: colors.gray[400],
+                    }}
+                  >
+                    📧 Tu Email
+                  </label>
+                  <input
+                    id="signup-email"
+                    type="email"
+                    value={signUpEmail}
+                    onChange={(e) => setSignUpEmail(e.target.value)}
+                    required
+                    disabled={isSignUpLoading || isSignUpPasswordLoading}
+                    autoComplete="email"
+                    style={{
+                      width: '100%',
+                      padding: spacing[2],
+                      background: colors.glass.medium,
+                      border: `1px solid ${colors.glass.medium}`,
+                      borderRadius: borderRadius.md,
+                      color: colors.gray[200],
+                      fontSize: '1rem',
+                    }}
+                    placeholder="tu@email.com"
+                  />
+                </div>
+
+                <div style={{ marginBottom: spacing[3] }}>
+                  <label
+                    htmlFor="signup-password"
+                    style={{
+                      display: 'block',
+                      marginBottom: spacing[1],
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      color: colors.gray[400],
+                    }}
+                  >
+                    🔒 Contraseña
+                  </label>
+                  <input
+                    id="signup-password"
+                    type="password"
+                    value={signUpPassword}
+                    onChange={(e) => setSignUpPassword(e.target.value)}
+                    disabled={isSignUpLoading || isSignUpPasswordLoading}
+                    autoComplete="new-password"
+                    style={{
+                      width: '100%',
+                      padding: spacing[2],
+                      background: colors.glass.medium,
+                      border: `1px solid ${colors.glass.medium}`,
+                      borderRadius: borderRadius.md,
+                      color: colors.gray[200],
+                      fontSize: '1rem',
+                    }}
+                    placeholder="Mín. 6 caracteres, letras y números"
+                  />
+                </div>
+
+                <div style={{ marginBottom: spacing[3] }}>
+                  <label
+                    htmlFor="signup-confirm-password"
+                    style={{
+                      display: 'block',
+                      marginBottom: spacing[1],
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      color: colors.gray[400],
+                    }}
+                  >
+                    🔒 Confirmar contraseña
+                  </label>
+                  <input
+                    id="signup-confirm-password"
+                    type="password"
+                    value={signUpConfirmPassword}
+                    onChange={(e) => setSignUpConfirmPassword(e.target.value)}
+                    disabled={isSignUpLoading || isSignUpPasswordLoading}
+                    autoComplete="new-password"
+                    style={{
+                      width: '100%',
+                      padding: spacing[2],
+                      background: colors.glass.medium,
+                      border: `1px solid ${colors.glass.medium}`,
+                      borderRadius: borderRadius.md,
+                      color: colors.gray[200],
+                      fontSize: '1rem',
+                    }}
+                    placeholder="Repite la contraseña"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isSignUpLoading || isSignUpPasswordLoading || isGoogleLoading || isAppleLoading}
+                  style={{
+                    width: '100%',
+                    marginBottom: spacing[3],
+                    opacity: isSignUpLoading || isSignUpPasswordLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                    background: brandGradientPrimary,
+                  }}
+                >
+                  {isSignUpPasswordLoading ? '⏳ Creando cuenta...' : '✨ Crear cuenta con contraseña'}
+                </Button>
+              </form>
 
             {signUpError && (
               <div
@@ -853,15 +1090,30 @@ export function Login() {
               </div>
             )}
 
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                  margin: `${spacing[3]} 0`,
+                  color: colors.gray[400],
+                  fontSize: '0.875rem',
+                }}
+              >
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                <span>o continúa con</span>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+              </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2], marginBottom: spacing[3] }}>
               {providerAvailability.google && (
                 <Button
                   type="button"
                   onClick={() => handleGoogleAuth(true)}
-                    disabled={isSignUpLoading || isGoogleLoading || isAppleLoading}
+                    disabled={isSignUpLoading || isSignUpPasswordLoading || isGoogleLoading || isAppleLoading}
                   style={{
                     width: '100%',
-                      opacity: isSignUpLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                      opacity: isSignUpLoading || isSignUpPasswordLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
                     background: '#FFFFFF',
                     color: '#1F2937',
                     border: '1px solid rgba(0,0,0,0.1)',
@@ -904,10 +1156,10 @@ export function Login() {
                 <Button
                   type="button"
                   onClick={() => handleAppleAuth(true)}
-                    disabled={isSignUpLoading || isGoogleLoading || isAppleLoading}
+                    disabled={isSignUpLoading || isSignUpPasswordLoading || isGoogleLoading || isAppleLoading}
                   style={{
                     width: '100%',
-                      opacity: isSignUpLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
+                      opacity: isSignUpLoading || isSignUpPasswordLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
                     background: '#000000',
                     color: '#FFFFFF',
                     border: '1px solid rgba(255,255,255,0.18)',
@@ -949,10 +1201,10 @@ export function Login() {
               <Button
                 type="button"
                 onClick={handleSignUpMagicLink}
-                  disabled={isSignUpLoading || isGoogleLoading}
+                  disabled={isSignUpLoading || isSignUpPasswordLoading || isGoogleLoading || isAppleLoading}
                 style={{
                   width: '100%',
-                    opacity: isSignUpLoading || isGoogleLoading ? 0.5 : 1,
+                    opacity: isSignUpLoading || isSignUpPasswordLoading || isGoogleLoading || isAppleLoading ? 0.5 : 1,
                     background: (colors.gradients as any).tertiary ?? colors.gradients.secondary,
                 }}
               >
@@ -974,17 +1226,16 @@ export function Login() {
               <p style={{ margin: 0, fontSize: '0.8rem', marginBottom: spacing[1] }}>
                 💡 <strong>
                   {supportsAppleAuth
-                    ? 'Con Google, Apple o enlace mágico no necesitas contraseña.'
-                    : 'Con Google o enlace mágico no necesitas contraseña.'}
+                    ? 'Puedes registrarte con contraseña arriba, o con Google, Apple o enlace mágico sin contraseña.'
+                    : 'Puedes registrarte con contraseña arriba, o con Google o enlace mágico sin contraseña.'}
                 </strong>
               </p>
               <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.8 }}>
                 {supportsAppleAuth
-                  ? 'Si deseas iniciar sesión con email y contraseña después, podrás establecerla en tu perfil (si iniciaste con Google o Apple, también podrás configurar una contraseña).'
-                  : 'Si deseas iniciar sesión con email y contraseña después, podrás establecerla en tu perfil (si iniciaste con Google, también podrás configurar una contraseña).'}
+                  ? 'Si te registraste con Google o Apple, puedes añadir una contraseña después desde tu perfil.'
+                  : 'Si te registraste con Google, puedes añadir una contraseña después desde tu perfil.'}
               </p>
             </div>
-          </form>
           </>
           )}
           </motion.div>

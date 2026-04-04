@@ -71,7 +71,7 @@ function resolveDancerImage(item: any): string | undefined {
   );
 }
 
-export default function ExploreProfileListRow({ variant, item, priority = false }: ExploreProfileListRowProps) {
+function ExploreProfileListRow({ variant, item, priority = false }: ExploreProfileListRowProps) {
   const { data: allTags } = useTags() as any;
 
   const title = React.useMemo(() => {
@@ -192,3 +192,7 @@ export default function ExploreProfileListRow({ variant, item, priority = false 
     </LiveLink>
   );
 }
+
+const MemoizedExploreProfileListRow = React.memo(ExploreProfileListRow);
+
+export default MemoizedExploreProfileListRow;

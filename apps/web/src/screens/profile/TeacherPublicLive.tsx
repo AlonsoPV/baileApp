@@ -22,6 +22,7 @@ import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import { getLocaleFromI18n } from "../../utils/locale";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import { buildShareUrl } from "@/utils/shareUrls";
+import { routes } from "../../routes/registry";
 
 // Lazy load heavy components
 const BioSection = lazy(() => import("../../components/profile/BioSection").then(m => ({ default: m.BioSection })));
@@ -377,6 +378,13 @@ const formatCurrency = (value?: number | string | null) => {
 export default function TeacherProfileLive() {
   const { teacherId } = useParams<{ teacherId: string }>();
   const navigate = useNavigate();
+  const handleBack = React.useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(routes.app.explore);
+    }
+  }, [navigate]);
   const { data: allTags } = useTags();
   const { t } = useTranslation();
   const locale = getLocaleFromI18n();
@@ -643,7 +651,8 @@ export default function TeacherProfileLive() {
         >
           {/* Botón Volver a inicio */}
           <motion.button
-            onClick={() => navigate('/explore')}
+            type="button"
+            onClick={handleBack}
             whileHover={{ scale: 1.1, x: -3 }}
             whileTap={{ scale: 0.95 }}
             aria-label={t('back_to_start')}

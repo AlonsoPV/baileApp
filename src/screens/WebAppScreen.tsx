@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   Platform,
+  BackHandler,
   Text,
   TouchableOpacity,
   Linking,
@@ -115,6 +116,7 @@ export default function WebAppScreen() {
   const [webViewProgress, setWebViewProgress] = React.useState(0);
   const progressMarksRef = React.useRef<{ p25?: boolean; p50?: boolean; p75?: boolean; p100?: boolean }>({});
   const [debugOpen, setDebugOpen] = React.useState(false);
+  const [canGoBackInWebView, setCanGoBackInWebView] = React.useState(false);
 
   const clearLoadWatchdog = React.useCallback(() => {
     if (loadWatchdogRef.current) {
@@ -264,6 +266,23 @@ export default function WebAppScreen() {
       clearLoadWatchdog();
     };
   }, [clearLoadWatchdog]);
+
+  React.useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (canGoBackInWebView) {
+        webviewRef.current?.goBack?.();
+        return true;
+      }
+      // Keep existing app behavior at root: consume back press.
+      return true;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [canGoBackInWebView]);
 
   React.useEffect(() => {
     // Handle cold start URL
@@ -802,6 +821,9 @@ export default function WebAppScreen() {
             markPerformance("webview_load_end");
             PerformanceLogger.mark("webview_load_end");
             setLoading(false);
+          }}
+          onNavigationStateChange={(state: any) => {
+            setCanGoBackInWebView(Boolean(state?.canGoBack));
           }}
           onError={(e: any) => {
             const ev = e?.nativeEvent ?? {};

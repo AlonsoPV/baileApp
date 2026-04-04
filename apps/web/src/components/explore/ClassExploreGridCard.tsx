@@ -69,7 +69,7 @@ function formatHHMM(t?: string) {
 }
 
 /** Misma estructura y clases CSS que `EventSocialGridCard` (vista cuadrícula / carrusel Explore). */
-export default function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardProps) {
+function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardProps) {
   const { t } = useTranslation();
   const { data: allTags } = useTags() as any;
   const href = React.useMemo(() => buildClaseHref(item), [item]);
@@ -240,3 +240,7 @@ export default function ClassExploreGridCard({ item, priority = false }: ClassEx
     </LiveLink>
   );
 }
+
+const MemoizedClassExploreGridCard = React.memo(ClassExploreGridCard);
+
+export default MemoizedClassExploreGridCard;

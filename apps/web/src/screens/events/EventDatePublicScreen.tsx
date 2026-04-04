@@ -39,6 +39,7 @@ import { resolveEventDateYmd } from "../../utils/eventDateDisplay";
 import { supabase } from "../../lib/supabase";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useGuestFavorites } from "@/hooks/useGuestFavorites";
+import { normalizeEventCosts } from "../../utils/eventCosts";
 
 const colors = {
   coral: '#FF3D57',
@@ -500,6 +501,14 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const dateUrl = `${SEO_BASE_URL}/social/fecha/${dateIdParam ?? date.id}`;
   const shareUrl = buildShareUrl("evento", String(dateIdParam ?? date.id));
 
+  const handleBack = React.useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(routes.app.explore);
+    }
+  }, [navigate]);
+
   const handleShare = React.useCallback(async () => {
     const shareData = { url: shareUrl, title: dateName, text: t('check_this_event', { name: dateName }) };
     if (typeof navigator !== 'undefined' && navigator.share) {
@@ -542,25 +551,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   }, [date.hora_inicio, date.hora_fin, calendarEnd]);
   const venueName = date.lugar || '';
   const costsSummary = React.useMemo(() => {
-    const items = Array.isArray((date as any)?.costos) ? (date as any).costos : [];
-    if (!items.length) return "Por confirmar";
-
-    const values = items
-      .map((item: any) => item?.monto ?? item?.precio)
-      .map((raw: any) => {
-        if (raw === null || raw === undefined || raw === "") return 0;
-        if (typeof raw === "number") return Number.isFinite(raw) ? raw : NaN;
-        if (typeof raw === "string") {
-          if (raw.toLowerCase().trim() === "gratis") return 0;
-          const parsed = parseFloat(raw.replace(/[^\d.]/g, ""));
-          return Number.isFinite(parsed) ? parsed : NaN;
-        }
-        return NaN;
-      })
-      .filter((n: number) => Number.isFinite(n));
-
+    const normalized = normalizeEventCosts((date as any)?.costos || []);
+    const values = normalized.flatMap((c) => c.phases.map((p) => p.price)).filter((v) => Number.isFinite(v));
     if (!values.length) return "Por confirmar";
-    const minValue = Math.min(...values);
+    const minValue = Math.min(...values.map((v) => Number(v)));
     if (minValue <= 0) return "Gratis";
 
     return new Intl.NumberFormat("es-MX", {
@@ -610,6 +604,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           timeRange={timeRange}
           venueName={venueName}
           onShare={handleShare}
+          onBack={handleBack}
           onToggleFavorite={onToggleFavorite}
           favoriteActive={favoriteActive}
           togglingEvent={user ? togglingEvent : false}
@@ -641,7 +636,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           <section id="event-section-info" className="eds-section eds-section--info">
             <InfoGrid
               costsSummary={costsSummary}
-              costsItems={Array.isArray(date.costos) ? date.costos : []}
+              costsItems={Array.isArray(date.costos) ? (date.costos as any[]) : []}
               costsDisclaimer={t('price_disclaimer', 'Precios sujetos a cambios')}
               freeLabel={t('free', 'Gratis')}
               dateStr={dateStr}

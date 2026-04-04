@@ -37,6 +37,10 @@ interface Props {
 
 export default function ClassCard({ item, fillHeight = false, priority = false }: Props) {
   const { t } = useTranslation();
+  const isAndroid = React.useMemo(
+    () => typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent),
+    []
+  );
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
   // Construir la ruta correcta: /clase/:type/:id
   // Si hay ownerType y ownerId, usar la ruta con parámetros
@@ -167,8 +171,29 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           t('thursday'), t('friday'), t('saturday')
         ];
         const dayMap: Record<string, number> = {
-          'domingo': 0, 'lunes': 1, 'martes': 2, 'miércoles': 3, 'miercoles': 3,
-          'jueves': 4, 'viernes': 5, 'sábado': 6, 'sabado': 6
+          domingo: 0,
+          lunes: 1,
+          martes: 2,
+          miércoles: 3,
+          miercoles: 3,
+          jueves: 4,
+          viernes: 5,
+          sábado: 6,
+          sabado: 6,
+          sunday: 0,
+          monday: 1,
+          tuesday: 2,
+          wednesday: 3,
+          thursday: 4,
+          friday: 5,
+          saturday: 6,
+          sun: 0,
+          mon: 1,
+          tue: 2,
+          wed: 3,
+          thu: 4,
+          fri: 5,
+          sat: 6,
         };
         return item.diasSemana
           .map(d => {
@@ -222,7 +247,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
           style={fillHeight ? ({ height: '100%', alignSelf: 'stretch' } as React.CSSProperties) : undefined}
         >
           <div className="class-card-media">
-            {imageUrlFinal && !imageError && (
+            {!isAndroid && imageUrlFinal && !imageError && (
               <div
                 className="class-card-media__bg"
                 style={{ backgroundImage: `url(${imageUrlFinal})` }}

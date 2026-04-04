@@ -1,15 +1,15 @@
 /**
  * Obtiene el locale apropiado para formatear fechas según el idioma
  * @param lang - Idioma actual ('es' o 'en')
- * @returns Locale para formatear fechas ('es-ES' o 'en-US')
+ * @returns Locale para formatear fechas (es-MX por defecto para español, en-US para inglés)
  */
-export function getLocale(lang: string): 'es-ES' | 'en-US' {
+export function getLocale(lang: string): 'es-MX' | 'en-US' {
   // Si el idioma empieza con "en", usar "en-US"
   if (lang && lang.startsWith('en')) {
     return 'en-US';
   }
-  // Por defecto, usar "es-ES"
-  return 'es-ES';
+  // Español: es-MX alinea meses/días con el resto de la app (Explore, filtros)
+  return 'es-MX';
 }
 
 /**
@@ -17,7 +17,7 @@ export function getLocale(lang: string): 'es-ES' | 'en-US' {
  * Útil cuando no tienes acceso directo al idioma
  * Usa importación dinámica para evitar dependencias circulares
  */
-export function getLocaleFromI18n(): 'es-ES' | 'en-US' {
+export function getLocaleFromI18n(): 'es-MX' | 'en-US' {
   try {
     // Importación dinámica para evitar dependencias circulares
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -26,7 +26,7 @@ export function getLocaleFromI18n(): 'es-ES' | 'en-US' {
     return getLocale(lang);
   } catch {
     // Fallback si i18n no está disponible
-    return 'es-ES';
+    return 'es-MX';
   }
 }
 

@@ -34,8 +34,8 @@ export function email(value: string): string | undefined {
 export function password(value: string): string | undefined {
   if (!value) return undefined;
   
-  if (value.length < 8) {
-    return 'La contraseña debe tener al menos 8 caracteres';
+  if (value.length < 6) {
+    return 'La contraseña debe tener al menos 6 caracteres';
   }
   
   const hasLetter = /[a-zA-Z]/.test(value);

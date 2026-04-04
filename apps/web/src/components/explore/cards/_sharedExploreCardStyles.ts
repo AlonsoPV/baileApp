@@ -205,6 +205,20 @@ export const EXPLORE_CARD_STYLES = `
   .explore-card:hover .explore-card-cta svg {
     stroke: rgba(255, 255, 255, 1);
   }
+
+  /* Android WebView perf mode: lighter effects for dense card surfaces */
+  .explore-container.android-mobile .explore-card {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+  .explore-container.android-mobile .explore-card-tag,
+  .explore-container.android-mobile .explore-card-cta {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .explore-container.android-mobile .explore-card-title,
+  .explore-container.android-mobile .explore-card-subtitle {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  }
 `;
 
 

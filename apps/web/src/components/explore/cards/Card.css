@@ -737,3 +737,33 @@
   .class-card:hover .class-card-cta svg {
     stroke: rgba(255, 255, 255, 1);
   }
+
+  /* Android WebView perf mode: reduce expensive blur/shadow layers in dense Explore lists */
+  .explore-container.android-mobile .card,
+  .explore-container.android-mobile .class-card {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .explore-container.android-mobile .badge,
+  .explore-container.android-mobile .event-setlist-top,
+  .explore-container.android-mobile .meta .tag,
+  .explore-container.android-mobile .cta,
+  .explore-container.android-mobile .class-card-badge,
+  .explore-container.android-mobile .class-card-meta .tag,
+  .explore-container.android-mobile .class-card-cta {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(17, 21, 32, 0.82);
+  }
+
+  .explore-container.android-mobile .event-card-mobile .media::after,
+  .explore-container.android-mobile .class-card-media__overlay {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(8, 12, 20, 0.78) 100%);
+  }
+
+  .explore-container.android-mobile .event-title,
+  .explore-container.android-mobile .class-card-title,
+  .explore-container.android-mobile .event-card__owner,
+  .explore-container.android-mobile .event-card__owner strong {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  }

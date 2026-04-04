@@ -163,3 +163,23 @@
   font-weight: 900;
   color: #7bed9f;
 }
+
+/* Android WebView perf mode */
+.explore-container.android-mobile .event-cartelera-card {
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.32),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+}
+
+.explore-container.android-mobile .event-cartelera-card:hover,
+.explore-container.android-mobile .event-cartelera-card:active {
+  transform: none;
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.explore-container.android-mobile .event-cartelera-card__title,
+.explore-container.android-mobile .event-cartelera-card__meta {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}

@@ -120,7 +120,7 @@ function ritmoLabels(item: any, allTags: any[] | undefined): string[] {
 /**
  * Misma estructura y clases CSS que `ClassExploreGridCard` / `EventSocialGridCard` (carrusel Explore).
  */
-export default function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExploreGridCardProps) {
+function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExploreGridCardProps) {
   const { t } = useTranslation();
   const { data: allTags } = useTags() as any;
   const href = React.useMemo(() => profileHref(variant, item), [variant, item]);
@@ -237,3 +237,7 @@ export default function ProfileExploreGridCard({ variant, item, priority = false
     </LiveLink>
   );
 }
+
+const MemoizedProfileExploreGridCard = React.memo(ProfileExploreGridCard);
+
+export default MemoizedProfileExploreGridCard;

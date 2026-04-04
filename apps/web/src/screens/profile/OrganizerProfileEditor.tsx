@@ -435,45 +435,38 @@ function EventParentCard({
         {dates && dates.length > 0 ? (
           <>
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setExpanded(!expanded);
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px',
-                background: 'rgba(30, 136, 229, 0.1)',
-                border: '2px solid rgba(30, 136, 229, 0.2)',
-                color: colors.light,
-                cursor: 'pointer',
-                fontSize: '0.95rem',
-                fontWeight: '700',
-                marginBottom: expanded ? '1rem' : '0',
-                padding: '1rem 1.25rem',
-                borderRadius: '14px',
-                width: '100%',
-                textAlign: 'left',
-                transition: 'all 0.3s ease',
-                boxShadow: expanded ? '0 4px 16px rgba(30, 136, 229, 0.2)' : 'none'
-              }}
+              className={`org-dates-collapse-trigger${expanded ? ' org-dates-collapse-trigger--expanded' : ''}`}
+              aria-expanded={expanded}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.2rem' }}>📅</span>
-                <span>
-                  {availableDates.length} fecha
-                  {availableDates.length !== 1 ? 's' : ''} disponible
-                  {availableDates.length !== 1 ? 's' : ''} · {pastDates.length} pasada
-                  {pastDates.length !== 1 ? 's' : ''}
+              <div className="org-dates-collapse-trigger__left">
+                <span className="org-dates-collapse-trigger__icon" aria-hidden>
+                  📅
                 </span>
+                <div className="org-dates-collapse-trigger__stats">
+                  <span className="org-dates-stat-pill org-dates-stat-pill--avail">
+                    <span aria-hidden>✓</span>
+                    {availableDates.length} disponible
+                    {availableDates.length !== 1 ? 's' : ''}
+                  </span>
+                  <span className="org-dates-stat-pill org-dates-stat-pill--past">
+                    <span aria-hidden>⏱</span>
+                    {pastDates.length} pasada
+                    {pastDates.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
               </div>
               <motion.span
                 animate={{ rotate: expanded ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
-                style={{ fontSize: '0.875rem', opacity: 0.8 }}
+                transition={{ duration: 0.28 }}
+                className="org-dates-collapse-trigger__chevron"
+                aria-hidden
               >
                 ▼
               </motion.span>
@@ -506,7 +499,7 @@ function EventParentCard({
                   )}
                   {/* Fechas disponibles */}
                   {availableDates.length > 0 && (
-                    <details className="dates-section" open>
+                    <details className="dates-section dates-section--available" open>
                       <summary>
                         <span className="dates-section-title">
                           <span className="dates-section-icon available">✓</span>
@@ -518,7 +511,7 @@ function EventParentCard({
                         <span className="dates-chevron">▼</span>
                       </summary>
 
-                      <div style={{ marginTop: 12 }}>
+                      <div className="dates-section-inner">
                         <EventDatesSheet
                           rows={availableDatesFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                           variant="embedded"
@@ -540,7 +533,7 @@ function EventParentCard({
 
                   {/* Fechas pasadas */}
                   {pastDates.length > 0 && (
-                    <details className="dates-section">
+                    <details className="dates-section dates-section--past">
                       <summary>
                         <span className="dates-section-title">
                           <span className="dates-section-icon past">⏱</span>
@@ -552,7 +545,7 @@ function EventParentCard({
                         <span className="dates-chevron">▼</span>
                       </summary>
 
-                      <div style={{ marginTop: 12 }}>
+                      <div className="dates-section-inner">
                         <EventDatesSheet
                           rows={pastDatesFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                           variant="embedded"
@@ -2230,7 +2223,140 @@ export default function OrganizerProfileEditor() {
           color: #FFFFFF;
         }
         #organizer-events-list {
-          padding-inline: 0.25rem;
+          padding-inline: clamp(0.5rem, 2vw, 1rem);
+          padding-bottom: 0.25rem;
+        }
+
+        #organizer-events-list .org-events-list-inner {
+          position: relative;
+          z-index: 1;
+          border-radius: clamp(16px, 2.5vw, 24px);
+          padding: clamp(0.75rem, 2vw, 1.25rem);
+          background: linear-gradient(
+            165deg,
+            rgba(255, 255, 255, 0.06) 0%,
+            rgba(255, 255, 255, 0.02) 45%,
+            rgba(0, 0, 0, 0.12) 100%
+          );
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.06) inset,
+            0 24px 48px rgba(0, 0, 0, 0.22);
+        }
+
+        #organizer-events-list .org-events-grid {
+          gap: clamp(1.25rem, 3vw, 2rem);
+        }
+
+        /* Contenedor colapsado: resumen de fechas por social */
+        .org-dates-collapse-trigger {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          width: 100%;
+          text-align: left;
+          cursor: pointer;
+          padding: 14px 16px;
+          border-radius: 16px;
+          border: 1px solid rgba(39, 195, 255, 0.22);
+          background: linear-gradient(
+            135deg,
+            rgba(15, 22, 38, 0.95) 0%,
+            rgba(18, 26, 44, 0.88) 50%,
+            rgba(12, 16, 28, 0.92) 100%
+          );
+          box-shadow:
+            0 8px 28px rgba(0, 0, 0, 0.35),
+            0 0 0 1px rgba(39, 195, 255, 0.08) inset;
+          color: rgba(248, 251, 255, 0.95);
+          font-size: 0.9rem;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+          transition:
+            border-color 0.25s ease,
+            box-shadow 0.25s ease,
+            transform 0.2s ease;
+        }
+
+        .org-dates-collapse-trigger:hover {
+          border-color: rgba(39, 195, 255, 0.45);
+          box-shadow:
+            0 12px 36px rgba(30, 136, 229, 0.22),
+            0 0 0 1px rgba(39, 195, 255, 0.12) inset;
+        }
+
+        .org-dates-collapse-trigger--expanded {
+          margin-bottom: 1rem;
+          border-color: rgba(39, 195, 255, 0.38);
+          box-shadow:
+            0 10px 32px rgba(30, 136, 229, 0.2),
+            0 0 0 1px rgba(39, 195, 255, 0.14) inset;
+        }
+
+        .org-dates-collapse-trigger__left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+          flex: 1;
+        }
+
+        .org-dates-collapse-trigger__icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          display: grid;
+          place-items: center;
+          font-size: 1.15rem;
+          flex-shrink: 0;
+          background: linear-gradient(145deg, rgba(39, 195, 255, 0.2), rgba(30, 136, 229, 0.12));
+          border: 1px solid rgba(39, 195, 255, 0.35);
+          box-shadow: 0 4px 14px rgba(39, 195, 255, 0.15);
+        }
+
+        .org-dates-collapse-trigger__stats {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+        }
+
+        .org-dates-stat-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 10px;
+          border-radius: 999px;
+          font-size: 0.78rem;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(0, 0, 0, 0.25);
+        }
+
+        .org-dates-stat-pill--avail {
+          color: #7ee7ff;
+          border-color: rgba(39, 195, 255, 0.35);
+          background: rgba(39, 195, 255, 0.12);
+        }
+
+        .org-dates-stat-pill--past {
+          color: #ffc4a8;
+          border-color: rgba(255, 134, 94, 0.35);
+          background: rgba(255, 134, 94, 0.1);
+        }
+
+        .org-dates-collapse-trigger__chevron {
+          font-size: 0.7rem;
+          opacity: 0.85;
+          color: rgba(200, 210, 230, 0.95);
+          flex-shrink: 0;
+        }
+
+        .org-event-dates-wrapper {
+          width: 100%;
         }
 
         .org-events-section::before {
@@ -2466,58 +2592,131 @@ export default function OrganizerProfileEditor() {
         }
 
         .dates-block {
-          background: var(--bg-section);
-          border-radius: 18px;
-          border: 1px solid var(--border-soft);
-          padding: 14px 14px 10px;
+          background: linear-gradient(
+            160deg,
+            rgba(17, 20, 31, 0.98) 0%,
+            rgba(14, 17, 28, 0.95) 50%,
+            rgba(10, 12, 22, 0.98) 100%
+          );
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          padding: 16px 16px 12px;
           color: var(--text-main);
           font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           font-size: 14px;
+          box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.04) inset,
+            0 18px 40px rgba(0, 0, 0, 0.28);
         }
 
         .dates-section-search-wrap {
-          margin-bottom: 10px;
+          margin-bottom: 14px;
         }
         .dates-section-search {
           width: 100%;
           box-sizing: border-box;
-          padding: 8px 12px;
-          border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          background: rgba(255, 255, 255, 0.06);
+          padding: 11px 14px 11px 40px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background:
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='rgba(255,255,255,0.35)' stroke-width='2'%3E%3Ccircle cx='8' cy='8' r='6'/%3E%3Cpath d='M13 13l3 3'/%3E%3C/svg%3E")
+            12px center no-repeat,
+            rgba(255, 255, 255, 0.05);
           color: #fff;
           font-size: 0.9rem;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .dates-section-search::placeholder {
-          color: rgba(255, 255, 255, 0.45);
+          color: rgba(255, 255, 255, 0.42);
         }
         .dates-section-search:focus {
-          outline: 2px solid rgba(39, 195, 255, 0.45);
-          outline-offset: 1px;
+          outline: none;
+          border-color: rgba(39, 195, 255, 0.45);
+          box-shadow: 0 0 0 3px rgba(39, 195, 255, 0.15);
         }
 
         .dates-section {
-          background: #121623;
-          border-radius: 14px;
-          border: 1px solid var(--border-soft);
-          margin-bottom: 10px;
+          background: rgba(8, 10, 18, 0.55);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          margin-bottom: 12px;
           overflow: hidden;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .dates-section:last-child {
           margin-bottom: 0;
         }
 
+        .dates-section[open] {
+          border-color: rgba(39, 195, 255, 0.22);
+          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+        }
+
+        .dates-section--available:not([open]) {
+          border-color: rgba(39, 195, 255, 0.18);
+          box-shadow: 0 0 0 1px rgba(39, 195, 255, 0.06) inset;
+        }
+
+        .dates-section--past:not([open]) {
+          border-color: rgba(255, 134, 94, 0.14);
+        }
+
         .dates-section summary {
           list-style: none;
           cursor: pointer;
-          padding: 10px 12px;
+          padding: 14px 14px 14px 16px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 8px;
-          font-weight: 500;
-          background: rgba(255, 255, 255, 0.02);
+          gap: 12px;
+          font-weight: 600;
+          font-size: 0.92rem;
+          background: linear-gradient(
+            90deg,
+            rgba(39, 195, 255, 0.07) 0%,
+            rgba(255, 255, 255, 0.02) 48%,
+            rgba(0, 0, 0, 0.08) 100%
+          );
+          border-left: 3px solid transparent;
+          transition: background 0.2s ease, border-left-color 0.2s ease;
+        }
+
+        .dates-section--available summary {
+          border-left-color: rgba(39, 195, 255, 0.65);
+        }
+
+        .dates-section--past summary {
+          border-left-color: rgba(255, 134, 94, 0.5);
+          background: linear-gradient(
+            90deg,
+            rgba(255, 134, 94, 0.06) 0%,
+            rgba(255, 255, 255, 0.02) 50%,
+            rgba(0, 0, 0, 0.06) 100%
+          );
+        }
+
+        .dates-section summary:hover {
+          background: linear-gradient(
+            90deg,
+            rgba(39, 195, 255, 0.12) 0%,
+            rgba(255, 255, 255, 0.04) 50%,
+            rgba(0, 0, 0, 0.05) 100%
+          );
+        }
+
+        .dates-section--past summary:hover {
+          background: linear-gradient(
+            90deg,
+            rgba(255, 134, 94, 0.1) 0%,
+            rgba(255, 255, 255, 0.03) 55%,
+            rgba(0, 0, 0, 0.05) 100%
+          );
+        }
+
+        .dates-section[open] > summary {
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(255, 255, 255, 0.04);
         }
 
         .dates-section summary::-webkit-details-marker {
@@ -2527,37 +2726,263 @@ export default function OrganizerProfileEditor() {
         .dates-section-title {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
+          flex-wrap: wrap;
+          min-width: 0;
         }
 
         .dates-section-icon {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
+          width: 28px;
+          height: 28px;
+          border-radius: 10px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          font-size: 12px;
+          font-size: 13px;
+          flex-shrink: 0;
         }
 
         .dates-section-icon.available {
-          background: rgba(39, 195, 255, 0.16);
-          color: var(--accent-blue);
+          background: linear-gradient(145deg, rgba(39, 195, 255, 0.28), rgba(39, 195, 255, 0.08));
+          color: #9eedff;
+          border: 1px solid rgba(39, 195, 255, 0.35);
+          box-shadow: 0 2px 8px rgba(39, 195, 255, 0.15);
         }
 
         .dates-section-icon.past {
-          background: rgba(255, 134, 94, 0.12);
-          color: var(--accent-orange);
+          background: linear-gradient(145deg, rgba(255, 134, 94, 0.22), rgba(255, 61, 87, 0.08));
+          color: #ffc9b0;
+          border: 1px solid rgba(255, 134, 94, 0.28);
         }
 
         .dates-section-count {
           font-size: 12px;
-          color: var(--text-muted);
+          font-weight: 600;
+          color: rgba(180, 190, 215, 0.95);
+          padding: 3px 8px;
+          border-radius: 8px;
+          background: rgba(0, 0, 0, 0.28);
+          border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .dates-chevron {
-          font-size: 11px;
-          color: var(--text-muted);
+          font-size: 10px;
+          color: rgba(180, 190, 215, 0.9);
+          transition: transform 0.25s ease;
+          flex-shrink: 0;
+        }
+
+        .dates-section[open] .dates-chevron {
+          transform: rotate(180deg);
+        }
+
+        .dates-section-inner {
+          padding: 14px 12px 16px;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, transparent 32%);
+        }
+
+        /* —— Responsive: sección "Mis eventos" / fechas (móvil) —— */
+        @media (max-width: 640px) {
+          #organizer-events-list {
+            padding-inline: 0;
+            max-width: 100%;
+          }
+
+          #organizer-events-list.org-events-section {
+            padding: clamp(1rem, 4vw, 1.35rem);
+            border-radius: clamp(16px, 4vw, 24px);
+            margin-bottom: 2rem;
+          }
+
+          #organizer-events-list .org-events-list-inner {
+            padding: 10px 10px 12px;
+            border-radius: 14px;
+          }
+
+          #organizer-events-list .org-events-grid {
+            gap: 1.25rem;
+          }
+
+          .org-events-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+          }
+
+          .org-events-header-left {
+            gap: 0.75rem;
+            align-items: flex-start;
+          }
+
+          .org-events-header-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.35rem;
+          }
+
+          .org-events-header-text h2 {
+            font-size: 1.2rem;
+            line-height: 1.25;
+          }
+
+          .org-events-header-text p {
+            font-size: 0.85rem;
+            line-height: 1.45;
+          }
+
+          .org-events-header-actions {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+          }
+
+          .org-events-action-button {
+            width: 100%;
+            justify-content: center;
+            min-height: 48px;
+            padding: 12px 16px;
+            white-space: normal;
+            text-align: center;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.08);
+          }
+
+          .org-event-card {
+            padding: 1rem 0.9rem;
+            border-radius: 16px;
+            gap: 1rem;
+          }
+
+          .org-dates-collapse-trigger {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            padding: 12px 12px 10px;
+            border-radius: 14px;
+            min-height: 48px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(39, 195, 255, 0.12);
+          }
+
+          .org-dates-collapse-trigger__left {
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%;
+          }
+
+          .org-dates-collapse-trigger__icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+          }
+
+          .org-dates-collapse-trigger__stats {
+            flex: 1;
+            min-width: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+          }
+
+          .org-dates-stat-pill {
+            justify-content: center;
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 8px 6px;
+            min-height: 40px;
+            line-height: 1.2;
+          }
+
+          .org-dates-collapse-trigger__chevron {
+            align-self: center;
+            width: 100%;
+            text-align: center;
+            padding: 8px;
+            margin-top: 2px;
+            font-size: 0.65rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+          }
+
+          .dates-block {
+            padding: 12px 10px 10px;
+            border-radius: 16px;
+            font-size: 13px;
+          }
+
+          .dates-section-search-wrap {
+            margin-bottom: 12px;
+          }
+
+          .dates-section-search {
+            min-height: 48px;
+            font-size: 16px;
+            padding: 12px 14px 12px 44px;
+            background-position: 14px center;
+            border-radius: 12px;
+          }
+
+          .dates-section {
+            border-radius: 14px;
+            margin-bottom: 10px;
+          }
+
+          .dates-section summary {
+            padding: 12px 10px 12px 12px;
+            min-height: 48px;
+            font-size: 0.88rem;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.06);
+          }
+
+          .dates-section-title {
+            flex: 1 1 calc(100% - 36px);
+            gap: 8px;
+          }
+
+          .dates-section-icon {
+            width: 26px;
+            height: 26px;
+            font-size: 12px;
+          }
+
+          .dates-section-count {
+            font-size: 11px;
+            padding: 4px 7px;
+            max-width: 100%;
+            word-break: break-word;
+          }
+
+          .dates-chevron {
+            padding: 6px 8px;
+            min-width: 36px;
+            text-align: center;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+          }
+
+          .dates-section-inner {
+            padding: 10px 6px 12px;
+            -webkit-overflow-scrolling: touch;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .org-dates-collapse-trigger__stats {
+            grid-template-columns: 1fr;
+          }
+
+          .org-dates-stat-pill {
+            min-height: auto;
+            padding: 9px 10px;
+          }
         }
 
         .dates-strip {
@@ -4530,7 +4955,7 @@ export default function OrganizerProfileEditor() {
             data-test-id="organizer-events-list"
             className="org-events-section"
           >
-            <div style={{ position: 'relative', zIndex: 1 }}>
+            <div className="org-events-list-inner">
               <div className="org-events-header">
                 <div className="org-events-header-left">
                   <div className="org-events-header-icon">
@@ -4850,6 +5275,7 @@ export default function OrganizerProfileEditor() {
                       ritmos={ritmoTags}
                       zonas={zonaTags}
                       eventFecha={dateForm.fecha}
+                      hideCostsSection
                       onSaveCosto={() => {
                         showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
                       }}
@@ -5860,7 +6286,7 @@ export default function OrganizerProfileEditor() {
                           </div>
                           {/* Fechas disponibles */}
                           {independentAvailable.length > 0 && (
-                            <details className="dates-section" open>
+                            <details className="dates-section dates-section--available" open>
                               <summary>
                                 <span className="dates-section-title">
                                   <span className="dates-section-icon available">✓</span>
@@ -5871,7 +6297,7 @@ export default function OrganizerProfileEditor() {
                                 </span>
                                 <span className="dates-chevron">▼</span>
                               </summary>
-                              <div style={{ marginTop: 12 }}>
+                              <div className="dates-section-inner">
                                 <EventDatesSheet
                                   rows={independentAvailableFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                                   variant="embedded"
@@ -5897,7 +6323,7 @@ export default function OrganizerProfileEditor() {
                           
                           {/* Fechas pasadas */}
                           {independentPast.length > 0 && (
-                            <details className="dates-section">
+                            <details className="dates-section dates-section--past">
                               <summary>
                                 <span className="dates-section-title">
                                   <span className="dates-section-icon past">⏱</span>
@@ -5908,7 +6334,7 @@ export default function OrganizerProfileEditor() {
                                 </span>
                                 <span className="dates-chevron">▼</span>
                               </summary>
-                              <div style={{ marginTop: 12 }}>
+                              <div className="dates-section-inner">
                                 <EventDatesSheet
                                   rows={independentPastFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
                                   variant="embedded"

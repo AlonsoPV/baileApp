@@ -1371,6 +1371,7 @@ export function EventDateEditScreen() {
           eventFecha={form.fecha}
           ritmos={ritmoTags}
           zonas={zonaTags}
+          hideCostsSection
           onSaveCosto={() => {
             showToast('💰 Costo guardado en el formulario. Recuerda presionar Guardar al final.', 'info');
           }}

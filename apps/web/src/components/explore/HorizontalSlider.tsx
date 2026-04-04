@@ -66,7 +66,13 @@ export default function HorizontalSlider<T>({
     clientWidth: 0,
     maxScrollLeft: 0,
   });
+  const isScrollingRef = useRef(false);
   const [isScrolling, setIsScrolling] = useState(false);
+  const navStateRef = useRef<{ canLeft: boolean; canRight: boolean; activeIndex: number }>({
+    canLeft: false,
+    canRight: false,
+    activeIndex: -1,
+  });
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scrollRafRef = useRef<number | null>(null);
   const navSettleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -82,6 +88,8 @@ export default function HorizontalSlider<T>({
   const isTouchDevice =
     typeof window !== "undefined" &&
     ("ontouchstart" in window || (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0));
+  const isAndroidTouch =
+    typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent || "");
   const isDesktop =
     typeof window !== "undefined" ? window.matchMedia("(min-width: 769px)").matches : false;
   const allowUserScroll = !(disableDesktopScroll && isDesktop);
@@ -150,7 +158,6 @@ export default function HorizontalSlider<T>({
 
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
   const getCarouselItems = useCallback((scroller: HTMLElement) => {
     return Array.from(scroller.querySelectorAll<HTMLElement>("[data-carousel-item]"));
   }, []);
@@ -179,6 +186,17 @@ export default function HorizontalSlider<T>({
     return nearestIndex;
   }, [getCarouselItems, getScrollPaddingLeftPx]);
 
+  const applyActiveItemClass = useCallback((scroller: HTMLElement, activeIndex: number) => {
+    const nodes = getCarouselItems(scroller);
+    for (let i = 0; i < nodes.length; i += 1) {
+      if (i === activeIndex) {
+        nodes[i].classList.add("is-active");
+      } else {
+        nodes[i].classList.remove("is-active");
+      }
+    }
+  }, [getCarouselItems]);
+
   const updateNavState = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -186,17 +204,33 @@ export default function HorizontalSlider<T>({
     // En móviles/tabs, el slider puede medir 0 en primer render.
     // Si hay más de 1 item, mantenemos "Siguiente" habilitado de forma provisional.
     if (el.clientWidth <= 0 || el.scrollWidth <= 0 || itemNodes.length === 0) {
-      setCanLeft(false);
-      setCanRight((items?.length ?? 0) > 1);
+      const provisionalCanRight = (items?.length ?? 0) > 1;
+      if (navStateRef.current.canLeft !== false) {
+        navStateRef.current.canLeft = false;
+        setCanLeft(false);
+      }
+      if (navStateRef.current.canRight !== provisionalCanRight) {
+        navStateRef.current.canRight = provisionalCanRight;
+        setCanRight(provisionalCanRight);
+      }
       return;
     }
     const nearestIndex = getNearestItemIndex(el);
     const nextCanLeft = nearestIndex > 0;
     const nextCanRight = nearestIndex >= 0 && nearestIndex < itemNodes.length - 1;
-    if (nearestIndex >= 0) setActiveIndex(nearestIndex);
-    setCanLeft(nextCanLeft);
-    setCanRight(nextCanRight);
-  }, [getCarouselItems, getNearestItemIndex, items?.length]);
+    if (nearestIndex >= 0 && navStateRef.current.activeIndex !== nearestIndex) {
+      navStateRef.current.activeIndex = nearestIndex;
+      applyActiveItemClass(el, nearestIndex);
+    }
+    if (navStateRef.current.canLeft !== nextCanLeft) {
+      navStateRef.current.canLeft = nextCanLeft;
+      setCanLeft(nextCanLeft);
+    }
+    if (navStateRef.current.canRight !== nextCanRight) {
+      navStateRef.current.canRight = nextCanRight;
+      setCanRight(nextCanRight);
+    }
+  }, [applyActiveItemClass, getCarouselItems, getNearestItemIndex, items?.length]);
 
   const scheduleNavStateUpdate = useCallback(() => {
     if (navSettleTimeoutRef.current) {
@@ -216,12 +250,20 @@ export default function HorizontalSlider<T>({
 
   // Detectar scroll activo + actualizar navegación con rAF (evita jank en móviles).
   const handleScroll = useCallback(() => {
-    setIsScrolling(true);
+    const el = scrollerRef.current;
+    if (!el) return;
+    if (!isScrollingRef.current) {
+      isScrollingRef.current = true;
+      setIsScrolling(true);
+      el.classList.add("scrolling");
+    }
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
     scrollTimeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
       setIsScrolling(false);
+      el.classList.remove("scrolling");
     }, 150);
 
     if (scrollRafRef.current !== null) return;
@@ -256,6 +298,9 @@ export default function HorizontalSlider<T>({
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+      isScrollingRef.current = false;
+      setIsScrolling(false);
+      el.classList.remove("scrolling");
       if (scrollRafRef.current !== null) {
         cancelAnimationFrame(scrollRafRef.current);
       }
@@ -392,10 +437,12 @@ export default function HorizontalSlider<T>({
         el.scrollLeft = clamped;
       }
       if (axisLock === "y") {
-        // Fallback: force vertical page scroll even when inner card libs capture gestures.
+        // Fallback only for Android/WebView: force vertical page scroll
+        // when nested interactive cards block native vertical pan.
+        if (!isAndroidTouch) return;
         const deltaY = t.clientY - lastY;
         lastY = t.clientY;
-        if (Math.abs(deltaY) > 0.5) {
+        if (Math.abs(deltaY) > 0.5 && e.cancelable) {
           e.preventDefault();
           let moved = false;
           let movedHost: string | null = null;
@@ -445,7 +492,8 @@ export default function HorizontalSlider<T>({
           }
           const targetLeft = Math.max(0, nodes[targetIndex].offsetLeft - getScrollPaddingLeftPx(el));
           el.scrollTo({ left: targetLeft, behavior: "smooth" });
-          setActiveIndex(targetIndex);
+          navStateRef.current.activeIndex = targetIndex;
+          applyActiveItemClass(el, targetIndex);
           scheduleNavStateUpdate();
         }
       }
@@ -465,10 +513,12 @@ export default function HorizontalSlider<T>({
       el.removeEventListener("touchcancel", onTouchEnd);
     };
   }, [
+    applyActiveItemClass,
     allowUserScroll,
     getCarouselItems,
     getNearestItemIndex,
     getScrollPaddingLeftPx,
+    isAndroidTouch,
     items?.length,
     scheduleNavStateUpdate,
     preferVerticalScroll,
@@ -562,8 +612,8 @@ export default function HorizontalSlider<T>({
     const item = scroller.querySelector<HTMLElement>("[data-carousel-item]");
     const gapValue = getGapPx(scroller);
     if (item) return item.offsetWidth + gapValue;
-    return Math.round(scroller.clientWidth * 0.9);
-  }, [getGapPx]);
+    return Math.round(scroller.clientWidth * scrollStep);
+  }, [getGapPx, scrollStep]);
 
   const scrollByCard = useCallback((dir: 1 | -1) => {
     const el = scrollerRef.current;
@@ -584,18 +634,18 @@ export default function HorizontalSlider<T>({
   }, [getCarouselItems, getNearestItemIndex, getScrollPaddingLeftPx, getScrollStep, scheduleNavStateUpdate]);
 
   const navButtonBottomStyle: React.CSSProperties = {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     display: "grid",
     placeItems: "center",
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 700,
     cursor: "pointer",
     WebkitTapHighlightColor: "transparent",
     transition: "all 0.2s ease",
-    border: "none",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    boxShadow: "0 8px 22px rgba(0,0,0,0.28)",
   };
   const navButtonBottomActive: React.CSSProperties = {
     background: "linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%)",
@@ -607,6 +657,7 @@ export default function HorizontalSlider<T>({
     color: "rgba(255,255,255,0.35)",
     cursor: "not-allowed",
     boxShadow: "none",
+    borderColor: "rgba(255,255,255,0.08)",
   };
 
   const ArrowLeft = ({ size = 20 }: { size?: number }) => (
@@ -634,21 +685,24 @@ export default function HorizontalSlider<T>({
           top: navPosition === "overlay" ? "50%" : undefined,
           transform: navPosition === "overlay" ? "translateY(-50%)" : undefined,
           right: undefined,
-          width: 42,
-          height: 42,
+          width: 52,
+          height: 52,
           borderRadius: 999,
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "rgba(15,15,18,0.55)",
-          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.24)",
+          background: "linear-gradient(145deg, rgba(18,20,28,0.86), rgba(12,14,20,0.72))",
+          backdropFilter: "blur(12px)",
           display: "grid",
           placeItems: "center",
           cursor: canLeft ? "pointer" : "not-allowed",
           opacity: canLeft ? 1 : 0.35,
           color: "rgba(255,255,255,0.9)",
           WebkitTapHighlightColor: "transparent",
+          boxShadow: canLeft
+            ? "0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset"
+            : "none",
         }}
       >
-        <ArrowLeft />
+        <ArrowLeft size={22} />
       </button>
       <button
         type="button"
@@ -662,21 +716,24 @@ export default function HorizontalSlider<T>({
           left: navPosition === "overlay" ? undefined : undefined,
           top: navPosition === "overlay" ? "50%" : undefined,
           transform: navPosition === "overlay" ? "translateY(-50%)" : undefined,
-          width: 42,
-          height: 42,
+          width: 52,
+          height: 52,
           borderRadius: 999,
-          border: "1px solid rgba(255,255,255,0.18)",
-          background: "rgba(15,15,18,0.55)",
-          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.24)",
+          background: "linear-gradient(145deg, rgba(18,20,28,0.86), rgba(12,14,20,0.72))",
+          backdropFilter: "blur(12px)",
           display: "grid",
           placeItems: "center",
           cursor: canRight ? "pointer" : "not-allowed",
           opacity: canRight ? 1 : 0.35,
           color: "rgba(255,255,255,0.9)",
           WebkitTapHighlightColor: "transparent",
+          boxShadow: canRight
+            ? "0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset"
+            : "none",
         }}
       >
-        <ArrowRight />
+        <ArrowRight size={22} />
       </button>
     </>
   );
@@ -717,7 +774,7 @@ export default function HorizontalSlider<T>({
       {/* Viewport central */}
       <div
         ref={scrollerRef}
-        className={`horizontal-scroll horizontal-carousel horizontal-slider-scroller ${isScrolling ? 'scrolling' : ''}`}
+        className="horizontal-scroll horizontal-carousel horizontal-slider-scroller"
         {...(enableMouseDrag
           ? {
               onPointerDown,
@@ -794,7 +851,7 @@ export default function HorizontalSlider<T>({
           .horizontal-slider-nav-overlay .horizontal-slider-nav-row { pointer-events: auto; }
           .horizontal-slider-nav-overlay button { pointer-events: auto; }
           .horizontal-scroll::-webkit-scrollbar { display: none; }
-          .horizontal-scroll > * { touch-action: auto; overscroll-behavior-y: auto; }
+          .horizontal-scroll > * { touch-action: pan-y; overscroll-behavior-y: auto; }
           @media (max-width: 768px) {
             .horizontal-scroll,
             .horizontal-slider,
@@ -879,6 +936,13 @@ export default function HorizontalSlider<T>({
           .horizontal-slider-nav-row button:not(:disabled):active {
             transform: scale(0.98);
           }
+          .horizontal-slider-nav-overlay button:not(:disabled):hover {
+            transform: translateY(-1px) scale(1.04);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.42), 0 0 0 1px rgba(255,255,255,0.1) inset !important;
+          }
+          .horizontal-slider-nav-overlay button:not(:disabled):active {
+            transform: scale(0.97);
+          }
         `}</style>
         <div
           className={`horizontal-slider-grid ${itemWidth && itemWidth > 0 ? 'horizontal-slider-grid--hero' : ''}`}
@@ -894,7 +958,7 @@ export default function HorizontalSlider<T>({
               ? {}
               : { gridAutoColumns: autoColumns as any }),
             gap,
-            willChange: enableMouseDrag && isScrolling ? "transform" : "auto",
+            willChange: "auto",
             transform: "translateZ(0)",
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
@@ -913,7 +977,7 @@ export default function HorizontalSlider<T>({
             const baseKey = String(stableOccurrence || `${String(rawId)}_${idx}`);
             const itemKey = `${baseKey}_${idx}`;
             return (
-              <div key={itemKey} data-carousel-item className={`horizontal-slider-item${idx === activeIndex ? " is-active" : ""}`} style={{ minWidth: 0 }}>
+              <div key={itemKey} data-carousel-item className="horizontal-slider-item" style={{ minWidth: 0 }}>
                 {renderItem(it, idx)}
               </div>
             );

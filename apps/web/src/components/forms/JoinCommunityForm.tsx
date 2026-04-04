@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface FormData {
   nombre: string;
@@ -29,6 +30,7 @@ const TIPO_PERFIL_OPTIONS = [
 ];
 
 export default function JoinCommunityForm() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -499,7 +501,7 @@ Fecha: ${new Date().toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'lon
         type="button"
       >
         <span>✨</span>
-        <span>Quiero formar parte</span>
+        <span>{t('footer_join_cta')}</span>
       </button>
 
       {typeof document !== 'undefined' && document.body && createPortal(
