@@ -10,6 +10,8 @@ export interface TimelineItem {
   realizadoPor?: string;
   realizado_por?: string;
   nivel?: string;
+  /** Texto libre del cronograma (ScheduleEditor) */
+  descripcion?: string;
 }
 
 export interface TimelineProps {
@@ -41,6 +43,10 @@ export function Timeline({
         if (item.realizadoPor || item.realizado_por)
           parts.push(`${conductedByLabel} ${item.realizadoPor || item.realizado_por}`);
         const subtitle = parts.join(" · ");
+        const descripcion =
+          typeof item.descripcion === "string" && item.descripcion.trim()
+            ? item.descripcion.trim()
+            : "";
 
         return (
           <div key={i} className="eds-timeline__row">
@@ -52,6 +58,9 @@ export function Timeline({
               <div className="eds-timeline__content">
                 {title && <strong className="eds-timeline__title">{title}</strong>}
                 {subtitle && <span className="eds-timeline__subtitle">{subtitle}</span>}
+                {descripcion && (
+                  <p className="eds-timeline__desc">{descripcion}</p>
+                )}
               </div>
               <div className="eds-timeline__time-block">
                 <Clock size={18} strokeWidth={2} />

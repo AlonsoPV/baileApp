@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar, MapPin, Copy, Ticket } from "lucide-react";
+import { Calendar, ChevronDown, MapPin, Copy, Ticket } from "lucide-react";
 import { normalizeEventCosts } from "../../../utils/eventCosts";
 
 type CostItem = {
@@ -58,6 +58,18 @@ export function InfoGrid({
   const legacyItems = Array.isArray(costsItems) ? costsItems : [];
   const phasedCosts = normalizeEventCosts(legacyItems);
 
+  /** Por defecto todos los tableros de costos están colapsados */
+  const [expandedCostIds, setExpandedCostIds] = React.useState<Set<string>>(() => new Set());
+
+  const toggleCostBoard = (id: string) => {
+    setExpandedCostIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const formatPrice = (raw: CostItem["monto"] | CostItem["precio"]) => {
     const isFree =
       raw === 0 ||
@@ -93,8 +105,8 @@ export function InfoGrid({
   };
 
   return (
-    <div className="eds-info-grid">
-      <div className="eds-info-card">
+    <div className="eds-info-grid eds-info-grid--costs-loc-date">
+      <div className="eds-info-card eds-info-card--costs">
         <div className="eds-info-card__row">
           <div className="eds-info-card__icon">
             <Ticket size={20} strokeWidth={2} />
@@ -104,34 +116,54 @@ export function InfoGrid({
         <div className="eds-info-card__value">
           {phasedCosts.length > 0 ? (
             <div style={{ display: "grid", gap: 10 }}>
-              {phasedCosts.map((cost) => (
-                <div key={cost.id} className="eds-cost-board">
-                  <div className="eds-cost-board__head">
-                    <span className="eds-cost-board__name">{cost.name}</span>
-                    {cost.description && <small className="eds-cost-board__desc">{cost.description}</small>}
+              {phasedCosts.map((cost) => {
+                const isOpen = expandedCostIds.has(cost.id);
+                const headId = `eds-cost-head-${cost.id}`;
+                const phasesId = `eds-cost-phases-${cost.id}`;
+                return (
+                  <div
+                    key={cost.id}
+                    className={`eds-cost-board${isOpen ? " eds-cost-board--open" : " eds-cost-board--collapsed"}`}
+                  >
+                    <button
+                      type="button"
+                      className="eds-cost-board__toggle"
+                      id={headId}
+                      aria-expanded={isOpen}
+                      aria-controls={phasesId}
+                      onClick={() => toggleCostBoard(cost.id)}
+                    >
+                      <span className="eds-cost-board__toggle-text">
+                        <span className="eds-cost-board__name">{cost.name}</span>
+                        {cost.description && <small className="eds-cost-board__desc">{cost.description}</small>}
+                      </span>
+                      <ChevronDown className="eds-cost-board__chevron" size={20} strokeWidth={2} aria-hidden />
+                    </button>
+                    {isOpen && (
+                      <div
+                        className="eds-cost-board__phases"
+                        id={phasesId}
+                        role="region"
+                        aria-labelledby={headId}
+                      >
+                        {[...cost.phases]
+                          .sort((a, b) => a.order - b.order)
+                          .map((phase) => (
+                            <div key={phase.id} className="eds-cost-board__phase">
+                              <div className="eds-cost-board__phase-title">
+                                {phase.name}
+                                {phase.type && <span className="eds-cost-board__type">{prettifyType(phase.type)}</span>}
+                                {phase.isFinal && <span className="eds-cost-board__badge">Taquilla</span>}
+                              </div>
+                              <strong className="eds-cost-board__phase-price">{formatPrice(phase.price ?? phase.monto)}</strong>
+                              {phase.description && <small className="eds-cost-board__phase-desc">{phase.description}</small>}
+                            </div>
+                          ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="eds-cost-board__phases">
-                    {[...cost.phases]
-                      .sort((a, b) => a.order - b.order)
-                      .map((phase) => (
-                        <div key={phase.id} className="eds-cost-board__phase">
-                          <div className="eds-cost-board__phase-title">
-                            {phase.name}
-                            {phase.type && <span className="eds-cost-board__type">{prettifyType(phase.type)}</span>}
-                            {phase.isFinal && <span className="eds-cost-board__badge">Taquilla</span>}
-                          </div>
-                          <strong className="eds-cost-board__phase-price">{formatPrice(phase.price ?? phase.monto)}</strong>
-                          {phase.description && <small className="eds-cost-board__phase-desc">{phase.description}</small>}
-                          {(phase.startDate || phase.endDate) && (
-                            <small className="eds-cost-board__phase-dates">
-                              {phase.startDate || "Hoy"}{phase.endDate ? ` - ${phase.endDate}` : ""}
-                            </small>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               <small style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>{costsDisclaimer}</small>
             </div>
           ) : (
@@ -165,52 +197,54 @@ export function InfoGrid({
           )}
         </div>
       </div>
-      <div className="eds-info-card">
-        <div className="eds-info-card__row">
-          <div className="eds-info-card__icon">
-            <MapPin size={20} strokeWidth={2} />
+      <div className="eds-info-grid__loc-date">
+        <div className="eds-info-card eds-info-card--location">
+          <div className="eds-info-card__row">
+            <div className="eds-info-card__icon">
+              <MapPin size={20} strokeWidth={2} />
+            </div>
+            <div className="eds-info-card__label">Ubicación</div>
           </div>
-          <div className="eds-info-card__label">Ubicación</div>
-        </div>
-        <div className="eds-info-card__value">{locationLabel || "—"}</div>
-        <div className="eds-info-card__actions">
-          {mapsUrl && (
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="eds-info-card__link"
-            >
-              Ver mapa ↗
-            </a>
-          )}
-          {fullAddress && onCopyAddress && (
-            <button
-              type="button"
-              className="eds-info-card__copy"
-              onClick={onCopyAddress}
-              aria-label="Copiar dirección"
-            >
-              <Copy size={18} strokeWidth={2} />
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="eds-info-card">
-        <div className="eds-info-card__row">
-          <div className="eds-info-card__icon">
-            <Calendar size={20} strokeWidth={2} />
+          <div className="eds-info-card__value">{locationLabel || "—"}</div>
+          <div className="eds-info-card__actions">
+            {mapsUrl && (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="eds-info-card__link"
+              >
+                Ver mapa ↗
+              </a>
+            )}
+            {fullAddress && onCopyAddress && (
+              <button
+                type="button"
+                className="eds-info-card__copy"
+                onClick={onCopyAddress}
+                aria-label="Copiar dirección"
+              >
+                <Copy size={18} strokeWidth={2} />
+              </button>
+            )}
           </div>
-          <div className="eds-info-card__label">Fecha y horario</div>
         </div>
-        <div className="eds-info-card__value">
-          {dateStr || "—"}
-          {timeRange && (
-            <>
-              <br />
-              {timeRange}
-            </>
-          )}
+        <div className="eds-info-card eds-info-card--datetime">
+          <div className="eds-info-card__row">
+            <div className="eds-info-card__icon">
+              <Calendar size={20} strokeWidth={2} />
+            </div>
+            <div className="eds-info-card__label">Fecha y horario</div>
+          </div>
+          <div className="eds-info-card__value">
+            {dateStr || "—"}
+            {timeRange && (
+              <>
+                <br />
+                {timeRange}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

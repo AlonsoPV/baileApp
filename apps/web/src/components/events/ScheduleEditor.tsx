@@ -30,6 +30,7 @@ type ScheduleItem = {
   fecha?: string; // YYYY-MM-DD
   ubicacion?: string; // texto libre
   nivel?: string;
+  descripcion?: string;
   referenciaCosto?: string; // enlaza con costos.nombre (normalizado)
   realizadoPor?: string; // texto libre: "Se llevará a cabo por"
 };
@@ -192,10 +193,10 @@ const pill = (active: boolean): React.CSSProperties => ({
 });
 
 const SCHEDULE_TYPE_OPTIONS: Array<{ value: ScheduleItem["tipo"]; label: string }> = [
+  { value: "clase", label: "Clase" },
   { value: "inicio", label: "Inicio" },
   { value: "social", label: "Social" },
   { value: "taller", label: "Taller" },
-  { value: "clase", label: "Clase" },
   { value: "otro", label: "Otro" },
 ];
 
@@ -205,6 +206,21 @@ const getTipoLabel = (tipo?: ScheduleItem["tipo"]) => {
   const found = SCHEDULE_TYPE_OPTIONS.find((o) => o.value === tipo);
   if (found) return found.label;
   return tipo ? tipo.charAt(0).toUpperCase() + tipo.slice(1) : "Actividad";
+};
+
+const getTipoIcon = (tipo?: ScheduleItem["tipo"]) => {
+  switch (tipo) {
+    case "clase":
+      return "📚";
+    case "social":
+      return "🎉";
+    case "taller":
+      return "🛠️";
+    case "inicio":
+      return "🚀";
+    default:
+      return "🗂️";
+  }
 };
 
 export default function ScheduleEditorPlus({
@@ -292,7 +308,7 @@ export default function ScheduleEditorPlus({
 
   const [newItem, setNewItem] = useState<ScheduleItem>({
     __ui_id: makeUiId(),
-    tipo: "inicio",
+    tipo: "clase",
     titulo: "",
     ritmoId: selectedRitmoId ?? null,
     zonaId: selectedZonaId ?? null,
@@ -301,6 +317,7 @@ export default function ScheduleEditorPlus({
     fecha: eventFecha || "",
     ubicacion: ubicacion ?? "",
     nivel: "",
+    descripcion: "",
     referenciaCosto: "",
     realizadoPor: "",
   });
@@ -339,7 +356,7 @@ export default function ScheduleEditorPlus({
     // Reset new item (mantener defaults + fecha heredada)
     setNewItem({
       __ui_id: makeUiId(),
-      tipo: "inicio",
+      tipo: "clase",
       titulo: "",
       ritmoId: meta.ritmoId ?? null,
       zonaId: meta.zonaId ?? null,
@@ -348,6 +365,7 @@ export default function ScheduleEditorPlus({
       fecha: eventFecha || "",
       ubicacion: meta.ubicacion ?? "",
       nivel: "",
+      descripcion: "",
       referenciaCosto: "",
       realizadoPor: "",
     });
@@ -500,7 +518,12 @@ export default function ScheduleEditorPlus({
       {/* === Cronograma === */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <label style={{ fontSize: "1.1rem", fontWeight: 600, color: colors.light }}>{labelSchedule}</label>
+          <div>
+            <label style={{ fontSize: "1.1rem", fontWeight: 600, color: colors.light }}>{labelSchedule}</label>
+            <div style={{ fontSize: 12, color: `${colors.light}B3`, marginTop: 3 }}>
+              Configura actividades por horario. El tipo por defecto es <strong>Clase</strong>.
+            </div>
+          </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -509,6 +532,7 @@ export default function ScheduleEditorPlus({
               setNewItem((s) => ({
                 ...s,
                 __ui_id: makeUiId(),
+                tipo: "clase",
                 ritmoId: meta.ritmoId ?? null,
                 zonaId: meta.zonaId ?? null,
                 ubicacion: meta.ubicacion ?? "",
@@ -526,7 +550,7 @@ export default function ScheduleEditorPlus({
               cursor: "pointer",
             }}
           >
-            ➕ Agregar Actividad
+            ➕ Nueva actividad
           </motion.button>
         </div>
 
@@ -565,30 +589,28 @@ export default function ScheduleEditorPlus({
                         </select>
                       </div>
                     </div>
-
                     {isClaseType(item.tipo) && (
-                      <div>
-                        <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nivel (opcional)</div>
-                        <input
-                          type="text"
-                          value={item.nivel || ""}
-                          onChange={(e) => updateItemByUiId(uiId, "nivel", e.target.value)}
-                          placeholder="Ej: Principiante, Intermedio"
-                          style={input}
-                        />
-                      </div>
-                    )}
-
-                    {isClaseType(item.tipo) && (
-                      <div>
-                        <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Se llevará a cabo por:</div>
-                        <input
-                          type="text"
-                          value={item.realizadoPor || ""}
-                          onChange={(e) => updateItemByUiId(uiId, "realizadoPor", e.target.value)}
-                          placeholder="Ej: Profesor, grupo o entidad responsable"
-                          style={input}
-                        />
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div>
+                          <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nivel (opcional)</div>
+                          <input
+                            type="text"
+                            value={item.nivel || ""}
+                            onChange={(e) => updateItemByUiId(uiId, "nivel", e.target.value)}
+                            placeholder="Ej: Principiante, Intermedio"
+                            style={input}
+                          />
+                        </div>
+                        <div>
+                          <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Se llevará a cabo por:</div>
+                          <input
+                            type="text"
+                            value={item.realizadoPor || ""}
+                            onChange={(e) => updateItemByUiId(uiId, "realizadoPor", e.target.value)}
+                            placeholder="Ej: Profesor, grupo o entidad responsable"
+                            style={input}
+                          />
+                        </div>
                       </div>
                     )}
 
@@ -636,6 +658,16 @@ export default function ScheduleEditorPlus({
                       </div>
                     </div>
 
+                    <div>
+                      <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Descripción (opcional)</div>
+                      <textarea
+                        value={item.descripcion || ""}
+                        onChange={(e) => updateItemByUiId(uiId, "descripcion", e.target.value)}
+                        placeholder="Ej: Clase técnica enfocada en musicalidad y combinaciones"
+                        style={{ ...input, minHeight: 82, resize: "vertical" }}
+                      />
+                    </div>
+
                     <div style={{ display: "flex", gap: 8, justifyContent: "flex-start" }}>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -677,7 +709,7 @@ export default function ScheduleEditorPlus({
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
-                        <span style={{ fontSize: "1.2rem" }}>📚</span>
+                        <span style={{ fontSize: "1.2rem" }}>{getTipoIcon(item.tipo)}</span>
                         <span
                           style={{
                             padding: "4px 8px",
@@ -707,7 +739,7 @@ export default function ScheduleEditorPlus({
                       </div>
 
                       <h4 style={{ fontSize: "1rem", fontWeight: 600, color: colors.light, marginBottom: 4 }}>
-                        {item.titulo || (item.ritmoId ? ritmoTagNameById.get(item.ritmoId) : "")}
+                        {item.titulo || (item.ritmoId ? ritmoTagNameById.get(item.ritmoId) : "") || "Actividad sin nombre"}
                       </h4>
 
                       <p style={{ fontSize: "0.9rem", color: colors.light, opacity: 0.8 }}>
@@ -717,6 +749,11 @@ export default function ScheduleEditorPlus({
                       {isClaseType(item.tipo) && item.realizadoPor && (
                         <p style={{ fontSize: "0.85rem", color: colors.light, opacity: 0.8 }}>
                           Se llevará a cabo por: {item.realizadoPor}
+                        </p>
+                      )}
+                      {item.descripcion && (
+                        <p style={{ fontSize: "0.85rem", color: colors.light, opacity: 0.78, marginTop: 4 }}>
+                          📝 {item.descripcion}
                         </p>
                       )}
                     </div>
@@ -765,7 +802,10 @@ export default function ScheduleEditorPlus({
       {/* Form de alta rápida */}
       {isAdding && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...card, border: `1px solid ${colors.blue}33` }}>
-          <h4 style={{ fontSize: "1rem", fontWeight: 600, color: colors.light, marginBottom: 12 }}>➕ Nueva Actividad</h4>
+          <h4 style={{ fontSize: "1rem", fontWeight: 600, color: colors.light, marginBottom: 6 }}>➕ Nueva Actividad</h4>
+          <p style={{ margin: "0 0 12px", fontSize: 12, color: `${colors.light}AA` }}>
+            Recomendado: usa <strong>Clase</strong> cuando la actividad tenga ritmo, nivel o responsable.
+          </p>
           <div style={{ display: "grid", gap: 12 }}>
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(140px, 1fr)", gap: 10, alignItems: "end" }}>
               <div style={{ minWidth: 0 }}>
@@ -800,30 +840,28 @@ export default function ScheduleEditorPlus({
                 </select>
               </div>
             </div>
-
             {isClaseType(newItem.tipo) && (
-              <div>
-                <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nivel (opcional)</div>
-                <input
-                  type="text"
-                  value={newItem.nivel || ""}
-                  onChange={(e) => setNewItem({ ...newItem, nivel: e.target.value })}
-                  placeholder="Ej: Principiante, Intermedio"
-                  style={input}
-                />
-              </div>
-            )}
-
-            {isClaseType(newItem.tipo) && (
-              <div>
-                <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Se llevará a cabo por:</div>
-                <input
-                  type="text"
-                  value={newItem.realizadoPor || ""}
-                  onChange={(e) => setNewItem({ ...newItem, realizadoPor: e.target.value })}
-                  placeholder="Ej: Profesor, grupo o entidad responsable"
-                  style={input}
-                />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Nivel (opcional)</div>
+                  <input
+                    type="text"
+                    value={newItem.nivel || ""}
+                    onChange={(e) => setNewItem({ ...newItem, nivel: e.target.value })}
+                    placeholder="Ej: Principiante, Intermedio"
+                    style={input}
+                  />
+                </div>
+                <div>
+                  <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Se llevará a cabo por:</div>
+                  <input
+                    type="text"
+                    value={newItem.realizadoPor || ""}
+                    onChange={(e) => setNewItem({ ...newItem, realizadoPor: e.target.value })}
+                    placeholder="Ej: Profesor, grupo o entidad responsable"
+                    style={input}
+                  />
+                </div>
               </div>
             )}
 
@@ -869,6 +907,16 @@ export default function ScheduleEditorPlus({
                   style={input}
                 />
               </div>
+            </div>
+
+            <div>
+              <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Descripción (opcional)</div>
+              <textarea
+                value={newItem.descripcion || ""}
+                onChange={(e) => setNewItem({ ...newItem, descripcion: e.target.value })}
+                placeholder="Ej: Clase técnica enfocada en musicalidad y combinaciones"
+                style={{ ...input, minHeight: 82, resize: "vertical" }}
+              />
             </div>
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-start" }}>
