@@ -157,7 +157,9 @@ export function InfoGrid({
                             <div key={phase.id} className="eds-cost-board__phase">
                               <div className="eds-cost-board__phase-title">
                                 {phase.name}
-                                {phase.type && <span className="eds-cost-board__type">{prettifyType(phase.type)}</span>}
+                                {phase.type && !phase.isFinal && (
+                                  <span className="eds-cost-board__type">{prettifyType(phase.type)}</span>
+                                )}
                                 {phase.isFinal && (
                                   <span className="eds-cost-board__badge">{t("cost_type_door", "Box office")}</span>
                                 )}
