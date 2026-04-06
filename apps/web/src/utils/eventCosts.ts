@@ -165,6 +165,38 @@ export function normalizeEventCosts(input: any): EventCost[] {
   return out;
 }
 
+/** True if this phase counts as taquilla / door (not presale/promo). */
+function phaseIsTaquilla(phase: CostPhase, cost: EventCost): boolean {
+  const pt = normalizeTipo(phase.type as string | undefined);
+  if (pt === "preventa" || pt === "promocion") return false;
+  if (pt === "taquilla") return true;
+  const ct = normalizeTipo(cost.type as string | undefined);
+  if (ct === "taquilla") return true;
+  if (phase.isFinal === true) return true;
+  const nm = (phase.name || "").toLowerCase();
+  if (nm.includes("taquilla") || nm.includes("en puerta") || nm.includes("puerta")) return true;
+  return false;
+}
+
+/**
+ * Minimum price among all taquilla/door phases (across cost boards).
+ * Returns null if there is no taquilla phase (caller may fall back to getPrimaryCost).
+ */
+export function getLowestTaquillaMonto(event: any): number | null {
+  const phased = normalizeEventCosts(event);
+  if (!phased.length) return null;
+  const candidates: number[] = [];
+  for (const c of phased) {
+    for (const p of c.phases) {
+      if (!phaseIsTaquilla(p, c)) continue;
+      const price = parsePrice(p.price);
+      if (price !== null && Number.isFinite(price)) candidates.push(price);
+    }
+  }
+  if (!candidates.length) return null;
+  return Math.min(...candidates);
+}
+
 export function getPrimaryCost(event: any): EventCosto | null {
   const phased = normalizeEventCosts(event);
   if (!phased.length) return null;

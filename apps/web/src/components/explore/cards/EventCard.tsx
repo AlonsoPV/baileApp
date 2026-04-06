@@ -6,7 +6,7 @@ import { useFmtDate } from "../../../hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
-import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
+import { getLowestTaquillaMonto, getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
 import { resolveEventDateYmd } from "../../../utils/eventDateDisplay";
 import "./Card.css";
 
@@ -280,6 +280,8 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
   const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
   const costMonto = React.useMemo(() => {
+    const taq = getLowestTaquillaMonto(item);
+    if (taq != null) return taq;
     let m = getMonto(primaryCost);
     if (m == null) {
       const raw = item?.costos?.[0] ?? item?.events_parent?.costos?.[0];

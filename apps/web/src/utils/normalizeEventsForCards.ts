@@ -6,7 +6,7 @@
  * EventCard recibe item con item.__ui ya poblado.
  */
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
-import { getPrimaryCost, hasDiscount, getMonto } from "./eventCosts";
+import { getLowestTaquillaMonto, getPrimaryCost, hasDiscount, getMonto } from "./eventCosts";
 import { resolveEventDateYmd } from "./eventDateDisplay";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "./imageOptimization";
 import { getMediaBySlot, normalizeMediaArray } from "./mediaSlots";
@@ -93,11 +93,14 @@ export function normalizeEventsForCards(
     const lugar = e.lugar || e.evento_lugar;
     const lugarNombre = extractLugarNombre(lugar);
 
-    const primaryCost = getPrimaryCost(e);
-    let costoMonto = getMonto(primaryCost);
+    let costoMonto = getLowestTaquillaMonto(e);
     if (costoMonto == null) {
-      const raw = e?.costos?.[0] ?? e?.events_parent?.costos?.[0];
-      costoMonto = getMonto(raw);
+      const primaryCost = getPrimaryCost(e);
+      costoMonto = getMonto(primaryCost);
+      if (costoMonto == null) {
+        const raw = e?.costos?.[0] ?? e?.events_parent?.costos?.[0];
+        costoMonto = getMonto(raw);
+      }
     }
     if (costoMonto == null) costoMonto = 0;
     const hasDiscountVal = hasDiscount(e);
