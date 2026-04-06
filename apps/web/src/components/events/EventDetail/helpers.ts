@@ -1,9 +1,9 @@
-import { getLocaleFromI18n } from "../../../utils/locale";
+import { getLocaleFromI18n, getLocale } from "../../../utils/locale";
 
 /**
- * Formatea una fecha ISO a "Vie, 27 feb"
+ * Short date for hero / info card (weekday + day + month; locale follows language).
  */
-export function formatHeaderDate(fechaISO: string): string {
+export function formatHeaderDate(fechaISO: string, lang?: string): string {
   if (!fechaISO) return "";
   const safeDate = (() => {
     const plain = String(fechaISO).split("T")[0];
@@ -19,7 +19,7 @@ export function formatHeaderDate(fechaISO: string): string {
     return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
   })();
 
-  const locale = getLocaleFromI18n();
+  const locale = lang ? getLocale(lang) : getLocaleFromI18n();
   return safeDate.toLocaleDateString(locale, {
     weekday: "short",
     day: "numeric",

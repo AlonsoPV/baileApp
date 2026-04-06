@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import LiveLink from "../LiveLink";
 import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
-import { fmtDate } from "@/utils/format";
+import { useFmtDate } from "@/hooks/useFmtDate";
 import { toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import "./EventSocialGridCard.css";
@@ -70,6 +70,7 @@ function formatHHMM(t?: string) {
 
 /** Misma estructura y clases CSS que `EventSocialGridCard` (vista cuadrícula / carrusel Explore). */
 function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardProps) {
+  const fmtDateLocalized = useFmtDate();
   const { t } = useTranslation();
   const { data: allTags } = useTags() as any;
   const href = React.useMemo(() => buildClaseHref(item), [item]);
@@ -143,13 +144,13 @@ function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardPr
     if (item.fecha) {
       try {
         const plain = String(item.fecha).split("T")[0];
-        return fmtDate(plain);
+        return fmtDateLocalized(plain);
       } catch {
         return String(item.fecha);
       }
     }
     return "";
-  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal, t]);
+  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal, t, fmtDateLocalized]);
 
   const timePart = React.useMemo(() => {
     const a = item.inicio ? formatHHMM(item.inicio) : "";

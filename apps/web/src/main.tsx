@@ -37,6 +37,10 @@ if (window.location.pathname.includes('//')) {
 installNativeAuthBridge();
 if (import.meta.env.DEV) startScrollLockWatchdog();
 
+const hostWindow = typeof window !== "undefined" ? (window as any) : undefined;
+const isEmbeddedWebView = !!hostWindow?.ReactNativeWebView;
+const canLoadVercelSignals = !isEmbeddedWebView;
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -44,8 +48,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <ToastProvider>
             <App />
-            <SpeedInsights />
-            <Analytics />
+            {canLoadVercelSignals ? <SpeedInsights /> : null}
+            {canLoadVercelSignals ? <Analytics /> : null}
           </ToastProvider>
         </AuthProvider>
       </BrowserRouter>

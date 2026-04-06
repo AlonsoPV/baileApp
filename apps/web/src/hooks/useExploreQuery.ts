@@ -162,6 +162,7 @@ function baseSelect(type: ExploreType) {
 /** Exportado para runPerfScenarios (dev). NO usar en producción. */
 export async function fetchExplorePage(params: QueryParams, page: number) {
   const fetchStart = performance.now();
+  const isFirstPage = page === 0;
   const { type, q, ritmos, zonas, dateFrom, dateTo } = params;
   const { table, select } = baseSelect(type);
   const search = normalizeSearch(q);
@@ -615,57 +616,60 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       }
     }
 
-    // Pre-paso: descubrir todos los parent_id recurrentes y organizer_id huérfanos (sin parent)
-    // para materializar ocurrencias aunque no salgan en la página actual (así las 184+ se ven al paginar).
-    try {
-      const rangeFrom = dateFrom || todayStr;
-      const rangeTo = dateTo || addDaysYmd(rangeFrom, 30 * 7);
-      let discoverParents: number[] = [];
-      let discoverOrphans: number[] = [];
-      const dateOrFrom = `dia_semana.not.is.null,fecha.gte.${rangeFrom},fecha.is.null`;
-      const dateOrTo = `dia_semana.not.is.null,fecha.lte.${rangeTo},fecha.is.null`;
-      const { data: parentRows } = await supabase
-        .from("events_date")
-        .select("parent_id")
-        .eq("estado_publicacion", "publicado")
-        .not("parent_id", "is", null)
-        .not("dia_semana", "is", null)
-        .or(dateOrFrom)
-        .or(dateOrTo)
-        .limit(500);
-      if (Array.isArray(parentRows)) {
-        discoverParents = [...new Set((parentRows as any[]).map((r: any) => r?.parent_id).filter((n: any) => Number.isFinite(Number(n))).map((n: any) => Number(n)))].slice(0, 200);
-      }
-      const { data: orphanRows } = await supabase
-        .from("events_date")
-        .select("organizer_id")
-        .eq("estado_publicacion", "publicado")
-        .is("parent_id", null)
-        .not("dia_semana", "is", null)
-        .or(dateOrFrom)
-        .or(dateOrTo)
-        .limit(200);
-      if (Array.isArray(orphanRows)) {
-        discoverOrphans = [...new Set((orphanRows as any[]).map((r: any) => r?.organizer_id).filter((n: any) => Number.isFinite(Number(n))).map((n: any) => Number(n)))].slice(0, 50);
-      }
-      const rpcPreStart = performance.now();
-      for (const pid of discoverParents) {
-        try {
-          await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: weeksAhead } as any);
-        } catch (e) {
-          console.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
+    // Evitar sobrecarga al paginar: la materialización de recurrencias se hace solo en la primera página.
+    if (isFirstPage) {
+      // Pre-paso: descubrir todos los parent_id recurrentes y organizer_id huérfanos (sin parent)
+      // para materializar ocurrencias aunque no salgan en la página actual (así las 184+ se ven al paginar).
+      try {
+        const rangeFrom = dateFrom || todayStr;
+        const rangeTo = dateTo || addDaysYmd(rangeFrom, 30 * 7);
+        let discoverParents: number[] = [];
+        let discoverOrphans: number[] = [];
+        const dateOrFrom = `dia_semana.not.is.null,fecha.gte.${rangeFrom},fecha.is.null`;
+        const dateOrTo = `dia_semana.not.is.null,fecha.lte.${rangeTo},fecha.is.null`;
+        const { data: parentRows } = await supabase
+          .from("events_date")
+          .select("parent_id")
+          .eq("estado_publicacion", "publicado")
+          .not("parent_id", "is", null)
+          .not("dia_semana", "is", null)
+          .or(dateOrFrom)
+          .or(dateOrTo)
+          .limit(500);
+        if (Array.isArray(parentRows)) {
+          discoverParents = [...new Set((parentRows as any[]).map((r: any) => r?.parent_id).filter((n: any) => Number.isFinite(Number(n))).map((n: any) => Number(n)))].slice(0, 200);
         }
-      }
-      for (const oid of discoverOrphans) {
-        try {
-          await supabase.rpc("ensure_weekly_occurrences_orphan", { p_organizer_id: oid, p_weeks_ahead: weeksAhead } as any);
-        } catch (e) {
-          console.warn("[useExploreQuery] ensure_weekly_occurrences_orphan failed for organizer", oid, e);
+        const { data: orphanRows } = await supabase
+          .from("events_date")
+          .select("organizer_id")
+          .eq("estado_publicacion", "publicado")
+          .is("parent_id", null)
+          .not("dia_semana", "is", null)
+          .or(dateOrFrom)
+          .or(dateOrTo)
+          .limit(200);
+        if (Array.isArray(orphanRows)) {
+          discoverOrphans = [...new Set((orphanRows as any[]).map((r: any) => r?.organizer_id).filter((n: any) => Number.isFinite(Number(n))).map((n: any) => Number(n)))].slice(0, 50);
         }
+        const rpcPreStart = performance.now();
+        for (const pid of discoverParents) {
+          try {
+            await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: weeksAhead } as any);
+          } catch (e) {
+            console.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
+          }
+        }
+        for (const oid of discoverOrphans) {
+          try {
+            await supabase.rpc("ensure_weekly_occurrences_orphan", { p_organizer_id: oid, p_weeks_ahead: weeksAhead } as any);
+          } catch (e) {
+            console.warn("[useExploreQuery] ensure_weekly_occurrences_orphan failed for organizer", oid, e);
+          }
+        }
+        perfLog({ hook: 'useExploreQuery', step: 'ensure_weekly_occurrences_pre_discover', duration_ms: performance.now() - rpcPreStart, rows: 0, extra: { parents: discoverParents.length, orphans: discoverOrphans.length } });
+      } catch (e) {
+        console.warn("[useExploreQuery] pre-discover recurring/orphan RPC failed (non-fatal)", e);
       }
-      perfLog({ hook: 'useExploreQuery', step: 'ensure_weekly_occurrences_pre_discover', duration_ms: performance.now() - rpcPreStart, rows: 0, extra: { parents: discoverParents.length, orphans: discoverOrphans.length } });
-    } catch (e) {
-      console.warn("[useExploreQuery] pre-discover recurring/orphan RPC failed (non-fatal)", e);
     }
 
     // ✅ Materializar ocurrencias reales para plantillas recurrentes (dia_semana no-null)
@@ -687,7 +691,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       )
     );
     // Materializar ocurrencias huérfanas de la página actual (por si el pre-discover no las incluyó, ej. 12604)
-    if (orphanOrganizerIds.length > 0) {
+    if (isFirstPage && orphanOrganizerIds.length > 0) {
       for (const oid of orphanOrganizerIds) {
         try {
           await supabase.rpc("ensure_weekly_occurrences_orphan", { p_organizer_id: oid, p_weeks_ahead: weeksAhead } as any);
@@ -696,7 +700,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
         }
       }
     }
-    if (recurringParentIds.length > 0) {
+    if (isFirstPage && recurringParentIds.length > 0) {
       const rpcStart = performance.now();
       for (const pid of recurringParentIds) {
         try {
@@ -770,7 +774,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
     }
 
     // Re-fetch ocurrencias huérfanas (parent_id null, organizer_id + dia_semana) y fusionar en la página actual
-    if (orphanOrganizerIds.length > 0) {
+    if (isFirstPage && orphanOrganizerIds.length > 0) {
       try {
         const rangeFrom = dateFrom || todayStr;
         const rangeTo = dateTo || addDaysYmd(rangeFrom, 30 * 7);
@@ -1050,8 +1054,10 @@ export function useExploreQuery(params: QueryParams & { enabled?: boolean }) {
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextPage,
     enabled, // Solo ejecutar la query si enabled es true
-    staleTime: 1000 * 120, // 2 min — home/explore no necesita refetch tan seguido; reduce carga en Android
+    staleTime: 1000 * 60 * 5, // 5 min — reduce refetches al alternar filtros/secciones
+    gcTime: 1000 * 60 * 10,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }

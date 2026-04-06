@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
-import { fmtDate } from "@/utils/format";
+import { useFmtDate } from "@/hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
@@ -59,6 +59,7 @@ function resolveFlyerUrlRaw(item: any): string | undefined {
 
 /** Vista cartelera: flyer protagonista + overlay (misma data que EventSocialGridCard). */
 function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardProps) {
+  const fmtDateLocalized = useFmtDate();
   const ui = item?.__ui;
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
@@ -105,7 +106,7 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
     return m ?? 0;
   }, [item, primaryCost]);
 
-  const dateLine = ui ? (ui.fechaYmd ? fmtDate(ui.fechaYmd) : "") : fechaFallback ? fmtDate(fechaFallback) : "";
+  const dateLine = ui ? (ui.fechaYmd ? fmtDateLocalized(ui.fechaYmd) : "") : fechaFallback ? fmtDateLocalized(fechaFallback) : "";
   const timePart = horaInicio ? formatHHMM(horaInicio) : "";
   const lugarLine = ui ? ui.lugarNombre || "" : lugarSoloNombre || "";
   const costMonto = ui ? ui.costoMonto ?? 0 : costMontoFallback;

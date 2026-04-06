@@ -28,6 +28,7 @@ import {
 import { formatHeaderDate, formatHeaderTimeRange } from "@/components/events/EventDetail/helpers";
 import { resolveEventDateYmd } from "@/utils/eventDateDisplay";
 import SeoHead from "@/components/SeoHead";
+import { useTranslation } from "react-i18next";
 
 const PROFILE_ENTITY_TYPES: ShareEntityType[] = [
   "academia",
@@ -91,6 +92,7 @@ export default function OpenEntityScreen({ entityType }: Props) {
 }
 
 function OpenEventoContent({ dateId, dateIdParam }: { dateId: number; dateIdParam: string }) {
+  const { i18n } = useTranslation();
   const { data: date, isLoading, isError } = useEventDate(dateId);
   const parentId = date?.parent_id ?? undefined;
   const { data: parent } = useEventParent(parentId);
@@ -107,7 +109,7 @@ function OpenEventoContent({ dateId, dateIdParam }: { dateId: number; dateIdPara
 
   const displayYmd = resolveEventDateYmd(date);
   const title = (date as any).nombre || (parent as any)?.nombre || "Evento de baile";
-  const dateStr = formatHeaderDate(displayYmd || "");
+  const dateStr = formatHeaderDate(displayYmd || "", i18n.language);
   const timeStr = formatHeaderTimeRange(
     (date as any).hora_inicio,
     (date as any).hora_fin

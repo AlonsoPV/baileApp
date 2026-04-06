@@ -5,7 +5,7 @@ import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
-import { fmtDate } from "@/utils/format";
+import { useFmtDate } from "@/hooks/useFmtDate";
 import { toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
@@ -94,6 +94,7 @@ function resolveDancerImage(item: any): string | undefined {
 }
 
 function ExploreEntityCarteleraCard({ variant, item, priority = false }: ExploreEntityCarteleraCardProps) {
+  const fmtDateLocalized = useFmtDate();
   const { t } = useTranslation();
   const { data: allTags } = useTags() as any;
 
@@ -203,13 +204,13 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
     if (item.fecha) {
       try {
         const plain = String(item.fecha).split("T")[0];
-        return fmtDate(plain);
+        return fmtDateLocalized(plain);
       } catch {
         return String(item.fecha);
       }
     }
     return "";
-  }, [variant, item.fecha, item.diasSemana, item.diaSemana, isSemanal, t]);
+  }, [variant, item.fecha, item.diasSemana, item.diaSemana, isSemanal, t, fmtDateLocalized]);
 
   const timePart =
     variant === "clase" && (item.inicio || item.fin)

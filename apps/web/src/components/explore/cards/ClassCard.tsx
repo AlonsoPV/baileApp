@@ -5,7 +5,7 @@ import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
 import { toDirectPublicStorageUrl, logCardImage } from '../../../utils/imageOptimization';
 import { withStableCacheBust } from '../../../utils/cacheBuster';
-import { getLocaleFromI18n } from '../../../utils/locale';
+import { getLocale } from '../../../utils/locale';
 import { useTranslation } from 'react-i18next';
 import "./Card.css";
 
@@ -36,7 +36,7 @@ interface Props {
 }
 
 export default function ClassCard({ item, fillHeight = false, priority = false }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isAndroid = React.useMemo(
     () => typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent),
     []
@@ -154,7 +154,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
 
   // Formatear fecha para meta
   const formattedDate = React.useMemo(() => {
-    const locale = getLocaleFromI18n();
+    const locale = getLocale(i18n.language || "es");
     if (isSemanal) {
       if (typeof item.diaSemana === 'number') {
         const dayNames = [
@@ -232,7 +232,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
       }
     }
     return '';
-  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal, t]);
+  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal, t, i18n.language]);
 
   return (
     <>

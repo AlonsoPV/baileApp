@@ -165,8 +165,7 @@ const config: ExpoConfig = {
   newArchEnabled: false, // ⚠️ Deshabilitado temporalmente debido a crash en TurboModules (iOS 18.1)
 
   splash: {
-    image: "./assets/adaptive-icon.png",
-    resizeMode: "contain",
+    // Sin imagen para evitar mostrar logo legado en la cortina de carga nativa.
     backgroundColor: "#000000",
   },
 

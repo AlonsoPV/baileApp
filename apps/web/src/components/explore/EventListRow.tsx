@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
-import { fmtDate } from "@/utils/format";
+import { useFmtDate } from "@/hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
@@ -51,6 +51,7 @@ const toNumericId = (v: any): number | null => {
 };
 
 function EventListRowDumb({ item, priority = false }: EventListRowProps) {
+  const fmtDateLocalized = useFmtDate();
   const ui = item?.__ui!;
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
@@ -129,8 +130,8 @@ function EventListRowDumb({ item, priority = false }: EventListRowProps) {
           )}
           <div className="event-list-row__meta">
             {ui.fechaYmd && (
-              <span title={fmtDate(ui.fechaYmd)}>
-                📅 {fmtDate(ui.fechaYmd)}
+              <span title={fmtDateLocalized(ui.fechaYmd)}>
+                📅 {fmtDateLocalized(ui.fechaYmd)}
               </span>
             )}
             {horaInicio && (
@@ -180,6 +181,7 @@ function EventListRowDumb({ item, priority = false }: EventListRowProps) {
 }
 
 function EventListRowWithTags({ item, priority = false, allTags: allTagsProp }: EventListRowProps) {
+  const fmtDateLocalized = useFmtDate();
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
   const { data: allTagsFromHook } = useTags() as any;
@@ -301,7 +303,7 @@ function EventListRowWithTags({ item, priority = false, allTags: allTagsProp }: 
             </div>
           )}
           <div className="event-list-row__meta">
-            {fecha && <span title={fmtDate(fecha)}>📅 {fmtDate(fecha)}</span>}
+            {fecha && <span title={fmtDateLocalized(fecha)}>📅 {fmtDateLocalized(fecha)}</span>}
             {horaInicio && <span title={`Hora ${formatHHMM(horaInicio)}`}>🕗 {formatHHMM(horaInicio)}</span>}
             <span
               className="event-list-row__tag--cost"

@@ -1,7 +1,6 @@
 import React from "react";
 import {
   View,
-  Image,
   ActivityIndicator,
   StyleSheet,
   Platform,
@@ -25,15 +24,17 @@ import { markPerformance } from "../lib/performance";
 import { PerformanceLogger } from "../utils/perf";
 import { assertGoogleAuthConfig } from "../auth/assertGoogleAuthConfig";
 import { logHost, shouldAuthDebug } from "../utils/authDebug";
+import {
+  createInitialConnectivitySnapshot,
+  runLightweightHealthcheck,
+  startNetworkDiagnostics,
+  type ConnectivitySnapshot,
+} from "../lib/networkDiagnostics";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
 // Puedes ajustar esto a staging si  lo necesitas.
 // Siempre HTTPS; no cargar http:// en el WebView (evita cleartext/SSL en Android).
 const WEB_APP_URL = "https://dondebailar.com.mx";
-
-// Icono de la app (mismo que en la web) para la pantalla de carga.
-const APP_ICON_URL =
-  "https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/icon.png";
 
 const NAVBAR_TEAL = "#297F96";
 
@@ -41,6 +42,12 @@ const NAVBAR_TEAL = "#297F96";
 const LOAD_TIMEOUT_MS = 20_000;
 
 type WebViewErrorDetail = {
+  source?:
+    | "onError"
+    | "onHttpError"
+    | "onRenderProcessGone"
+    | "onContentProcessDidTerminate"
+    | "load_timeout";
   code?: number;
   description?: string;
   url?: string;
@@ -49,6 +56,25 @@ type WebViewErrorDetail = {
   canGoForward?: boolean;
   isSsl?: boolean;
   userMessage: string;
+};
+
+type ErrorUiCategory = "network" | "backend" | "ssl" | "renderer" | "timeout" | "unknown";
+
+type ErrorUiModel = {
+  title: string;
+  message: string;
+  category: ErrorUiCategory;
+};
+
+type LoadPathKind = "explore" | "detail";
+
+type PendingPathLoad = {
+  kind: LoadPathKind;
+  startLabel: string;
+  endLabel: string;
+  metricName: string;
+  startedAtMs: number;
+  url: string;
 };
 
 function logWebViewError(
@@ -100,6 +126,119 @@ function classifyWebViewError(
   };
 }
 
+function isLikelyTransientError(
+  errorDetail: WebViewErrorDetail | null,
+  snapshot: ConnectivitySnapshot
+): boolean {
+  if (!errorDetail) return false;
+  if (snapshot.isConnected === false || snapshot.isInternetReachable === false) return false;
+  if (errorDetail.isSsl) return false;
+
+  if (errorDetail.source === "onRenderProcessGone" || errorDetail.source === "onContentProcessDidTerminate") {
+    return true;
+  }
+  if (errorDetail.source === "load_timeout") return true;
+  if (typeof errorDetail.statusCode === "number") {
+    return errorDetail.statusCode >= 500;
+  }
+
+  const desc = String(errorDetail.description ?? "").toLowerCase();
+  return (
+    /timeout|timed out|err_timed_out|net::err_timed_out/.test(desc) ||
+    /connection|network|failed to connect|err_connection|err_name_not_resolved|dns/.test(desc)
+  );
+}
+
+function buildErrorUiModel(
+  errorDetail: WebViewErrorDetail | null,
+  snapshot: ConnectivitySnapshot
+): ErrorUiModel {
+  if (snapshot.isConnected === false || snapshot.isInternetReachable === false) {
+    return {
+      category: "network",
+      title: "Sin conexión a internet",
+      message: "Tu dispositivo parece estar sin internet. Verifica tu red y vuelve a intentar.",
+    };
+  }
+
+  if (errorDetail?.isSsl) {
+    return {
+      category: "ssl",
+      title: "Problema de seguridad (SSL)",
+      message:
+        "No se pudo validar una conexión segura. Intenta de nuevo y, si persiste, actualiza Android System WebView/Chrome.",
+    };
+  }
+
+  if (errorDetail?.source === "onRenderProcessGone" || errorDetail?.source === "onContentProcessDidTerminate") {
+    return {
+      category: "renderer",
+      title: "El contenido se cerró inesperadamente",
+      message: "WebView se reinició. Puedes reintentar la carga o abrir la página en tu navegador.",
+    };
+  }
+
+  if (errorDetail?.source === "load_timeout") {
+    return {
+      category: "timeout",
+      title: "La carga tardó demasiado",
+      message: "La página tardó más de lo esperado en responder. Reintenta la carga.",
+    };
+  }
+
+  if (typeof errorDetail?.statusCode === "number") {
+    if (errorDetail.statusCode >= 500) {
+      return {
+        category: "backend",
+        title: "Servidor temporalmente no disponible",
+        message: `El servidor respondió con error (${errorDetail.statusCode}). Intenta de nuevo en unos momentos.`,
+      };
+    }
+    if (errorDetail.statusCode >= 400) {
+      return {
+        category: "backend",
+        title: "No se pudo abrir esta página",
+        message: `El servidor devolvió ${errorDetail.statusCode}. Reintenta o abre en navegador para descartar un bloqueo local.`,
+      };
+    }
+  }
+
+  return {
+    category: "unknown",
+    title: "No se pudo cargar la página",
+    message:
+      errorDetail?.userMessage ??
+      "Puede ser un problema de red, DNS o WebView. Intenta de nuevo o abre en navegador.",
+  };
+}
+
+function detectLoadPathKind(url: string): LoadPathKind | null {
+  const rawUrl = String(url || "").trim();
+  if (!rawUrl) return null;
+
+  let normalized = rawUrl.toLowerCase();
+  try {
+    const parsed = new URL(rawUrl);
+    normalized = `${parsed.pathname}${parsed.search}${parsed.hash}`.toLowerCase();
+  } catch {
+    // Keep raw lowercased URL when parsing fails.
+  }
+
+  const isExplore =
+    /\/explore(?:[/?#]|$)/.test(normalized) ||
+    /[?&#]tab=explore(?:[&#]|$)/.test(normalized) ||
+    /\/social(?:[/?#]|$)/.test(normalized);
+  if (isExplore) return "explore";
+
+  const isDetail =
+    /\/social\/fecha\/[^/?#]+/.test(normalized) ||
+    /\/clase\/[^/?#]+\/[^/?#]+/.test(normalized) ||
+    /\/(academia|maestro|organizer|u|marca)\/[^/?#]+/.test(normalized);
+  if (isDetail) return "detail";
+
+  return null;
+}
+
 export default function WebAppScreen() {
   const [loading, setLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
@@ -117,6 +256,79 @@ export default function WebAppScreen() {
   const progressMarksRef = React.useRef<{ p25?: boolean; p50?: boolean; p75?: boolean; p100?: boolean }>({});
   const [debugOpen, setDebugOpen] = React.useState(false);
   const [canGoBackInWebView, setCanGoBackInWebView] = React.useState(false);
+  const networkSnapshotRef = React.useRef<ConnectivitySnapshot>(
+    createInitialConnectivitySnapshot("netinfo_not_initialized")
+  );
+  const healthcheckRunningRef = React.useRef(false);
+  const healthcheckLastRunAtRef = React.useRef(0);
+  const autoRetryAttemptedRef = React.useRef(false);
+  const autoRetryLastAtRef = React.useRef(0);
+  const autoRetryTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [autoRetryState, setAutoRetryState] = React.useState<"idle" | "scheduled" | "running" | "done">("idle");
+  const pathLoadSeqRef = React.useRef<{ explore: number; detail: number }>({ explore: 0, detail: 0 });
+  const pendingPathLoadRef = React.useRef<PendingPathLoad | null>(null);
+
+  const getNetworkSnapshot = React.useCallback((): ConnectivitySnapshot => {
+    return { ...networkSnapshotRef.current };
+  }, []);
+
+  const logDiagnosticEvent = React.useCallback(
+    (event: string, payload: Record<string, unknown> = {}) => {
+      if (Platform.OS !== "android" || typeof console?.log !== "function") return;
+      const structured = {
+        source: "webview",
+        event,
+        timestamp: new Date().toISOString(),
+        platform: Platform.OS,
+        network: getNetworkSnapshot(),
+        ...payload,
+      };
+      console.log("[WEBVIEW_DIAG]", JSON.stringify(structured));
+    },
+    [getNetworkSnapshot]
+  );
+
+  const triggerLightHealthcheck = React.useCallback(
+    async (reason: string, context: Record<string, unknown> = {}) => {
+      if (Platform.OS !== "android") return;
+      if (healthcheckRunningRef.current) {
+        logDiagnosticEvent("healthcheck_skipped_running", { reason, ...context });
+        return;
+      }
+      const now = Date.now();
+      if (now - healthcheckLastRunAtRef.current < 5_000) {
+        logDiagnosticEvent("healthcheck_skipped_cooldown", { reason, ...context });
+        return;
+      }
+
+      healthcheckRunningRef.current = true;
+      healthcheckLastRunAtRef.current = now;
+      try {
+        const cfg = getRuntimeConfig();
+        const result = await runLightweightHealthcheck({
+          webUrl: WEB_APP_URL,
+          supabaseUrl: cfg.supabase.url,
+          supabaseAnonKey: cfg.supabase.anonKey,
+          timeoutMs: 3_500,
+          reason,
+        });
+        logDiagnosticEvent("healthcheck_result", {
+          reason,
+          ...context,
+          healthcheck: result,
+        });
+      } catch (error) {
+        logDiagnosticEvent("healthcheck_failed", {
+          reason,
+          ...context,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        healthcheckRunningRef.current = false;
+      }
+    },
+    [logDiagnosticEvent]
+  );
 
   const clearLoadWatchdog = React.useCallback(() => {
     if (loadWatchdogRef.current) {
@@ -124,6 +336,20 @@ export default function WebAppScreen() {
       loadWatchdogRef.current = null;
     }
   }, []);
+
+  const clearAutoRetryTimer = React.useCallback(() => {
+    if (autoRetryTimeoutRef.current) {
+      clearTimeout(autoRetryTimeoutRef.current);
+      autoRetryTimeoutRef.current = null;
+    }
+  }, []);
+
+  const resetAutoRetryGuard = React.useCallback(() => {
+    autoRetryAttemptedRef.current = false;
+    autoRetryLastAtRef.current = 0;
+    setAutoRetryState("idle");
+    clearAutoRetryTimer();
+  }, [clearAutoRetryTimer]);
 
   const armLoadWatchdog = React.useCallback(() => {
     clearLoadWatchdog();
@@ -133,15 +359,22 @@ export default function WebAppScreen() {
         timeoutMs: LOAD_TIMEOUT_MS,
         message: "onLoadEnd/READY did not fire within timeout",
       });
+      logDiagnosticEvent("load_timeout", {
+        timeoutMs: LOAD_TIMEOUT_MS,
+      });
       setLastWebViewError({
+        source: "load_timeout",
         userMessage: "La conexión tardó demasiado.",
         description: `Timeout ${LOAD_TIMEOUT_MS / 1000}s`,
       });
       setLoading(false);
       setHasError(true);
+      void triggerLightHealthcheck("load_timeout", {
+        timeoutMs: LOAD_TIMEOUT_MS,
+      });
       loadWatchdogRef.current = null;
     }, LOAD_TIMEOUT_MS);
-  }, [clearLoadWatchdog]);
+  }, [clearLoadWatchdog, logDiagnosticEvent, triggerLightHealthcheck]);
 
   const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
     try {
@@ -264,8 +497,9 @@ export default function WebAppScreen() {
   React.useEffect(() => {
     return () => {
       clearLoadWatchdog();
+      clearAutoRetryTimer();
     };
-  }, [clearLoadWatchdog]);
+  }, [clearAutoRetryTimer, clearLoadWatchdog]);
 
   React.useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -283,6 +517,29 @@ export default function WebAppScreen() {
       subscription.remove();
     };
   }, [canGoBackInWebView]);
+
+  React.useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    const session = startNetworkDiagnostics({
+      onSnapshot: (snapshot) => {
+        networkSnapshotRef.current = snapshot;
+      },
+      onEvent: (event) => {
+        if (event.event === "state_change" || event.event === "fetch_failed" || event.event === "module_missing") {
+          logDiagnosticEvent(`network_${event.event}`, {
+            networkEvent: event,
+          });
+        }
+      },
+    });
+
+    networkSnapshotRef.current = session.getSnapshot();
+
+    return () => {
+      session.stop();
+    };
+  }, [logDiagnosticEvent]);
 
   React.useEffect(() => {
     // Handle cold start URL
@@ -411,12 +668,14 @@ export default function WebAppScreen() {
           }
           markPerformance("webview_ready");
           PerformanceLogger.mark("web_ready");
+          PerformanceLogger.measure("app_start_to_web_ready", "app_start", "web_ready");
           if (typeof __DEV__ !== "undefined" && __DEV__) {
             try {
               PerformanceLogger.flush();
             } catch {}
           }
           clearLoadWatchdog();
+          resetAutoRetryGuard();
           setLoading(false);
         }
         return;
@@ -659,19 +918,102 @@ export default function WebAppScreen() {
         });
       }
     },
-    [getGoogleIosClientId, getGoogleWebClientId, injectWebAuthError, injectWebSetSession, injectWebCalendarResult, nativeAuthInProgress]
+    [
+      clearLoadWatchdog,
+      getGoogleIosClientId,
+      getGoogleWebClientId,
+      injectWebAuthError,
+      injectWebSetSession,
+      injectWebCalendarResult,
+      nativeAuthInProgress,
+      resetAutoRetryGuard,
+    ]
+  );
+
+  const retryLoad = React.useCallback(
+    (mode: "manual" | "auto_once") => {
+      setHasError(false);
+      setLastWebViewError(null);
+      setLoading(true);
+      void triggerLightHealthcheck(mode === "manual" ? "manual_retry" : "auto_retry_once", {
+        retryMode: mode,
+      });
+      if (webViewImportError || !webViewModule) {
+        loadWebViewModule();
+        return;
+      }
+      webviewRef.current?.reload?.();
+    },
+    [loadWebViewModule, triggerLightHealthcheck, webViewImportError, webViewModule]
   );
 
   const handleReload = React.useCallback(() => {
+    clearAutoRetryTimer();
+    setAutoRetryState("done");
     setHasError(false);
     setLastWebViewError(null);
     setLoading(true);
+    void triggerLightHealthcheck("manual_retry", {
+      lastKnownError: lastWebViewError?.description ?? lastWebViewError?.userMessage ?? null,
+    });
     if (webViewImportError || !webViewModule) {
       loadWebViewModule();
       return;
     }
     webviewRef.current?.reload?.();
-  }, [webViewImportError, webViewModule]);
+  }, [clearAutoRetryTimer, lastWebViewError, loadWebViewModule, triggerLightHealthcheck, webViewImportError, webViewModule]);
+
+  React.useEffect(() => {
+    if (!hasError || !lastWebViewError) return;
+    if (autoRetryAttemptedRef.current) return;
+
+    const currentSnapshot = getNetworkSnapshot();
+    if (!isLikelyTransientError(lastWebViewError, currentSnapshot)) return;
+    const now = Date.now();
+    if (now - autoRetryLastAtRef.current < 3_000) return;
+
+    autoRetryAttemptedRef.current = true;
+    autoRetryLastAtRef.current = now;
+    setAutoRetryState("scheduled");
+    logDiagnosticEvent("auto_retry_scheduled", {
+      reason: lastWebViewError.source ?? "unknown",
+      retryAttempt: 1,
+      network: currentSnapshot,
+    });
+    clearAutoRetryTimer();
+    autoRetryTimeoutRef.current = setTimeout(() => {
+      setAutoRetryState("running");
+      logDiagnosticEvent("auto_retry_start", {
+        reason: lastWebViewError.source ?? "unknown",
+        retryAttempt: 1,
+      });
+      retryLoad("auto_once");
+      setAutoRetryState("done");
+      autoRetryTimeoutRef.current = null;
+    }, 1200);
+
+    return () => {
+      clearAutoRetryTimer();
+    };
+  }, [clearAutoRetryTimer, getNetworkSnapshot, hasError, lastWebViewError, logDiagnosticEvent, retryLoad]);
+
+  const errorUi = React.useMemo(() => {
+    return buildErrorUiModel(lastWebViewError, getNetworkSnapshot());
+  }, [getNetworkSnapshot, lastWebViewError, hasError, autoRetryState]);
+
+  const connectivityHint = React.useMemo(() => {
+    const snapshot = getNetworkSnapshot();
+    if (snapshot.isInternetReachable === false || snapshot.isConnected === false) {
+      return "Conectividad: sin internet";
+    }
+    if (snapshot.isInternetReachable === true) {
+      return `Conectividad: online (${snapshot.type || "unknown"})`;
+    }
+    if (snapshot.available) {
+      return `Conectividad: verificando (${snapshot.type || "unknown"})`;
+    }
+    return "Conectividad: no disponible";
+  }, [getNetworkSnapshot, hasError, autoRetryState]);
 
   const openInBrowser = React.useCallback(() => {
     Linking.openURL(WEB_APP_URL).catch((err) => {
@@ -778,7 +1120,7 @@ export default function WebAppScreen() {
               ? `DondeBailarApp/${Constants.expoConfig?.version ?? "1.0"} Android WebView`
               : undefined
           }
-          onLoadStart={() => {
+          onLoadStart={(e: any) => {
             setHasError(false);
             setLastWebViewError(null);
             setLoading(true);
@@ -789,6 +1131,36 @@ export default function WebAppScreen() {
             progressMarksRef.current = {};
             markPerformance("webview_load_start");
             PerformanceLogger.mark("webview_load_start");
+            const currentUrl = String(e?.nativeEvent?.url ?? WEB_APP_URL);
+            const pathKind = detectLoadPathKind(currentUrl);
+            if (pathKind) {
+              pathLoadSeqRef.current[pathKind] += 1;
+              const seq = pathLoadSeqRef.current[pathKind];
+              const startLabel = `${pathKind}_load_start_${seq}`;
+              const endLabel = `${pathKind}_load_end_${seq}`;
+              const metricName = `${pathKind}_load_duration_${seq}`;
+              pendingPathLoadRef.current = {
+                kind: pathKind,
+                startLabel,
+                endLabel,
+                metricName,
+                startedAtMs: Date.now(),
+                url: currentUrl,
+              };
+              markPerformance(startLabel);
+              PerformanceLogger.mark(startLabel);
+              logDiagnosticEvent("load_path_start", {
+                kind: pathKind,
+                seq,
+                url: currentUrl,
+              });
+            } else {
+              pendingPathLoadRef.current = null;
+            }
+            logDiagnosticEvent("onLoadStart", {
+              url: currentUrl,
+              navigationType: e?.nativeEvent?.navigationType ?? "unknown",
+            });
           }}
           onLoadProgress={(e: { nativeEvent: { progress: number } }) => {
             const progress = Math.max(0, Math.min(1, e.nativeEvent.progress || 0));
@@ -812,18 +1184,57 @@ export default function WebAppScreen() {
               PerformanceLogger.mark("webview_progress_100");
             }
           }}
-          onLoadEnd={() => {
+          onLoadEnd={(e: any) => {
             clearLoadWatchdog();
+            resetAutoRetryGuard();
             const elapsed = Date.now() - loadStartTimeRef.current;
             if (typeof console?.log === "function") {
               console.log(`[PERF] webview_load_end: ${elapsed.toFixed(2)}ms`);
             }
             markPerformance("webview_load_end");
             PerformanceLogger.mark("webview_load_end");
+            const pendingPathLoad = pendingPathLoadRef.current;
+            const currentUrl = String(e?.nativeEvent?.url ?? "");
+            if (pendingPathLoad) {
+              const endedAtMs = Date.now();
+              const durationMs = endedAtMs - pendingPathLoad.startedAtMs;
+              markPerformance(pendingPathLoad.endLabel);
+              PerformanceLogger.mark(pendingPathLoad.endLabel);
+              PerformanceLogger.measure(
+                pendingPathLoad.metricName,
+                pendingPathLoad.startLabel,
+                pendingPathLoad.endLabel
+              );
+              if (typeof console?.log === "function") {
+                console.log(
+                  `[PERF] ${pendingPathLoad.kind}_load_duration: ${durationMs.toFixed(2)}ms`
+                );
+              }
+              logDiagnosticEvent("load_path_end", {
+                kind: pendingPathLoad.kind,
+                metricName: pendingPathLoad.metricName,
+                durationMs,
+                startUrl: pendingPathLoad.url,
+                endUrl: currentUrl,
+              });
+              pendingPathLoadRef.current = null;
+            }
             setLoading(false);
+            logDiagnosticEvent("onLoadEnd", {
+              elapsedMs: elapsed,
+              url: currentUrl,
+              title: e?.nativeEvent?.title ?? "",
+            });
           }}
           onNavigationStateChange={(state: any) => {
             setCanGoBackInWebView(Boolean(state?.canGoBack));
+            logDiagnosticEvent("onNavigationStateChange", {
+              url: state?.url ?? "",
+              title: state?.title ?? "",
+              loading: Boolean(state?.loading),
+              canGoBack: Boolean(state?.canGoBack),
+              canGoForward: Boolean(state?.canGoForward),
+            });
           }}
           onError={(e: any) => {
             const ev = e?.nativeEvent ?? {};
@@ -839,8 +1250,16 @@ export default function WebAppScreen() {
               canGoBack,
               canGoForward,
             });
+            logDiagnosticEvent("onError", {
+              code,
+              description,
+              url,
+              canGoBack,
+              canGoForward,
+            });
             const { userMessage, isSsl } = classifyWebViewError(code, description, undefined);
             setLastWebViewError({
+              source: "onError",
               code,
               description,
               url,
@@ -852,6 +1271,11 @@ export default function WebAppScreen() {
             clearLoadWatchdog();
             setLoading(false);
             setHasError(true);
+            void triggerLightHealthcheck("webview_onError", {
+              code,
+              description,
+              url,
+            });
           }}
           onHttpError={(e: any) => {
             const ev = e?.nativeEvent ?? {};
@@ -863,9 +1287,15 @@ export default function WebAppScreen() {
               description,
               url,
             });
+            logDiagnosticEvent("onHttpError", {
+              statusCode,
+              description,
+              url,
+            });
             const { userMessage, isSsl } = classifyWebViewError(undefined, description, statusCode);
             setLastWebViewError((prev) => ({
               ...prev,
+              source: prev?.source ?? "onHttpError",
               statusCode,
               description: prev?.description ?? description,
               url: prev?.url ?? url,
@@ -876,6 +1306,11 @@ export default function WebAppScreen() {
               clearLoadWatchdog();
               setLoading(false);
               setHasError(true);
+              void triggerLightHealthcheck("webview_onHttpError", {
+                statusCode,
+                description,
+                url,
+              });
             }
           }}
           onRenderProcessGone={
@@ -886,13 +1321,21 @@ export default function WebAppScreen() {
                     didCrash: ev.didCrash,
                     rendererPriorityAtExit: ev.rendererPriorityAtExit,
                   });
+                  logDiagnosticEvent("onRenderProcessGone", {
+                    didCrash: Boolean(ev.didCrash),
+                    rendererPriorityAtExit: ev.rendererPriorityAtExit ?? "unknown",
+                  });
                   setLastWebViewError({
+                    source: "onRenderProcessGone",
                     userMessage:
                       "El contenido se cerró inesperadamente. Revisa tu conexión y reintenta.",
                   });
                   clearLoadWatchdog();
                   setLoading(false);
                   setHasError(true);
+                  void triggerLightHealthcheck("webview_render_process_gone", {
+                    didCrash: Boolean(ev.didCrash),
+                  });
                 }
               : undefined
           }
@@ -900,13 +1343,16 @@ export default function WebAppScreen() {
             Platform.OS === "ios"
               ? () => {
                   logWebViewError("onContentProcessDidTerminate", {});
+                  logDiagnosticEvent("onContentProcessDidTerminate");
                   setLastWebViewError({
+                    source: "onContentProcessDidTerminate",
                     userMessage:
                       "El contenido se cerró inesperadamente. Revisa tu conexión y reintenta.",
                   });
                   clearLoadWatchdog();
                   setLoading(false);
                   setHasError(true);
+                  void triggerLightHealthcheck("webview_content_process_terminated");
                 }
               : undefined
           }
@@ -1090,7 +1536,6 @@ export default function WebAppScreen() {
         />
         ) : (
           <View style={styles.loaderOverlay}>
-            <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />
             <ActivityIndicator size="large" color="#ffffff" />
           </View>
         )}
@@ -1136,7 +1581,6 @@ export default function WebAppScreen() {
 
         {nativeAuthInProgress && (
           <View style={styles.loaderOverlay}>
-            <Image source={{ uri: APP_ICON_URL }} style={styles.loaderIcon} resizeMode="contain" />
             <ActivityIndicator size="large" color="#ffffff" />
             <Text style={{ color: "#fff", marginTop: 12, fontWeight: "600" }}>
               Conectando…
@@ -1156,11 +1600,14 @@ export default function WebAppScreen() {
 
         {hasError && (
           <View style={styles.errorOverlay}>
-            <Text style={styles.errorTitle}>No se pudo cargar la página</Text>
-            <Text style={styles.errorText}>
-              {lastWebViewError?.userMessage ??
-                "Puede ser un problema de red, DNS o SSL. Intenta de nuevo o revisa tu conexión."}
-            </Text>
+            <Text style={styles.errorTitle}>{errorUi.title}</Text>
+            <Text style={styles.errorText}>{errorUi.message}</Text>
+            <Text style={styles.errorMetaText}>{connectivityHint}</Text>
+            {autoRetryState === "scheduled" || autoRetryState === "running" ? (
+              <Text style={styles.errorMetaText}>Reintento automático en curso (1 de 1).</Text>
+            ) : autoRetryAttemptedRef.current ? (
+              <Text style={styles.errorMetaText}>Ya se realizó un reintento automático.</Text>
+            ) : null}
             {__DEV__ && lastWebViewError && (
               <View style={styles.errorCodeBox}>
                 <Text style={styles.errorCodeLabel}>[DEV] Código / descripción:</Text>
@@ -1218,12 +1665,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: NAVBAR_TEAL,
   },
-  loaderIcon: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
-    borderRadius: 18,
-  },
   errorOverlay: {
     position: "absolute",
     top: 0,
@@ -1258,6 +1699,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     marginBottom: 16,
+  },
+  errorMetaText: {
+    color: "#9ca3af",
+    fontSize: 12,
+    textAlign: "center",
+    marginBottom: 8,
   },
   button: {
     backgroundColor: "#f093fb",

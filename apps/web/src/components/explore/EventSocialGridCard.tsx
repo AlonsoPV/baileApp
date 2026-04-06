@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
-import { fmtDate } from "@/utils/format";
+import { useFmtDate } from "@/hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
@@ -38,6 +38,7 @@ function formatHHMM(t?: string) {
 
 /** Card compacta para grilla Explore: flyer, nombre, fecha/hora, lugar, precio. Requiere item.__ui (Explore normalizado). */
 function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCardProps) {
+  const fmtDateLocalized = useFmtDate();
   const ui = item?.__ui!;
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
@@ -64,7 +65,7 @@ function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCard
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
   logCardImage("evento", eventId, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
 
-  const dateLine = ui.fechaYmd ? fmtDate(ui.fechaYmd) : "";
+  const dateLine = ui.fechaYmd ? fmtDateLocalized(ui.fechaYmd) : "";
   const timePart = horaInicio ? formatHHMM(horaInicio) : "";
 
   return (
@@ -128,6 +129,7 @@ function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCard
 
 /** Fallback sin __ui (raro en Explore): mismos campos con cálculo local. */
 function EventSocialGridCardFallback({ item, priority = false }: EventSocialGridCardProps) {
+  const fmtDateLocalized = useFmtDate();
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
 
@@ -194,7 +196,7 @@ function EventSocialGridCardFallback({ item, priority = false }: EventSocialGrid
     return m ?? 0;
   }, [item, primaryCost]);
 
-  const dateLine = fecha ? fmtDate(fecha) : "";
+  const dateLine = fecha ? fmtDateLocalized(fecha) : "";
   const timePart = horaInicio ? formatHHMM(horaInicio) : "";
 
   return (

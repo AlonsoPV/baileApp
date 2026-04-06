@@ -22,7 +22,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
   isOpen,
   onClose,
   menuItems,
-  userName = "Usuario",
+  userName = "User",
   userEmail,
   userAvatar,
   displayName,
@@ -209,7 +209,7 @@ export const OffCanvasMenu: React.FC<OffCanvasMenuProps> = ({
                   fontStyle: "italic",
                   marginLeft: "0.5rem"
                 }}>
-                  Próximamente
+                  Coming soon
                 </span>
               )}
             </button>

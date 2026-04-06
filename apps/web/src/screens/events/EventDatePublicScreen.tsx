@@ -24,7 +24,7 @@ import {
 } from "../../components/events/EventDetail";
 import "../../components/events/EventDetail/eventDetailScreen.css";
 import { useToast } from "../../components/Toast";
-// import RequireLogin from "@/components/auth/RequireLogin"; // TEMP: desactivado para permitir acciones sin login
+// import RequireLogin from "@/components/auth/RequireLogin"; // TEMP: disabled to allow actions without login
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { withStableCacheBust } from "../../utils/cacheBuster";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
@@ -33,7 +33,7 @@ import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { buildShareUrl } from "@/utils/shareUrls";
 import { EventDateSkeleton } from "../../components/skeletons/EventDateSkeleton";
 import { QueryErrorBoundaryWithReset } from "../../components/errors/QueryErrorBoundary";
-import { getLocaleFromI18n } from "../../utils/locale";
+import { getLocale } from "../../utils/locale";
 import { routes } from "../../routes/registry";
 import { resolveEventDateYmd } from "../../utils/eventDateDisplay";
 import { supabase } from "../../lib/supabase";
@@ -50,7 +50,7 @@ const colors = {
   light: '#F5F5F5',
 };
 
-/** Texto “Acerca del evento”: prioridad fecha → biografía del parent → descripción (evita omitir biografia del parent). */
+/** “About the event” text: date bio → parent bio → description (avoids dropping parent bio). */
 function resolveEventAboutText(date: any, parent: any): string {
   const nested = date?.events_parent;
   const candidates = [
@@ -70,40 +70,36 @@ function resolveEventAboutText(date: any, parent: any): string {
 
 function buildWhatsAppUrl(phone?: string | null, message?: string | null, eventName?: string | null) {
   if (!phone) return undefined;
-  const cleanedPhone = phone.replace(/[^\d]/g, ''); // usar solo dígitos en el número
+  const cleanedPhone = phone.replace(/[^\d]/g, ''); // digits only
   if (!cleanedPhone) return undefined;
 
   const text = typeof message === 'string' ? message : '';
   const trimmed = text.trim();
 
-  // Construir el mensaje base
+  // Build the base message
   let baseMessage = '';
   if (trimmed) {
-    // Si hay mensaje personalizado, usarlo directamente (asumiendo que ya tiene el formato correcto)
+    // Custom message: use as-is (assumes correct format)
     baseMessage = trimmed;
   } else if (eventName && eventName.trim()) {
-    // Sin mensaje personalizado, crear uno con el nombre del evento
-    baseMessage = `me interesa el evento: ${eventName.trim()}`;
+    baseMessage = `I'm interested in the event: ${eventName.trim()}`;
   } else {
-    // Sin mensaje ni nombre, mensaje genérico
-    baseMessage = 'me interesa este evento';
+    baseMessage = "I'm interested in this event";
   }
 
-  // Verificar si el mensaje ya incluye el prefijo para evitar duplicación
-  const hasPrefix = baseMessage.toLowerCase().includes('hola vengo de donde bailar mx');
-  
-  // Prepend "Hola vengo de Donde Bailar MX, " al mensaje si no lo tiene
-  const fullMessage = hasPrefix 
-    ? baseMessage 
-    : `Hola vengo de Donde Bailar MX, ${baseMessage}`;
+  const hasPrefix =
+    baseMessage.toLowerCase().includes("hi, i'm from donde bailar mx") ||
+    baseMessage.toLowerCase().includes('hola vengo de donde bailar mx');
+
+  const fullMessage = hasPrefix ? baseMessage : `Hi, I'm from Donde Bailar MX, ${baseMessage}`;
 
   const encoded = encodeURIComponent(fullMessage);
   return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
 }
 
 /**
- * Componente principal con Suspense
- * Maneja la validación del dateId y envuelve el contenido con Suspense
+ * Root component with Suspense.
+ * Validates dateId and wraps content in Suspense.
  */
 export default function EventDatePublicScreen() {
   const { t } = useTranslation();
@@ -111,7 +107,7 @@ export default function EventDatePublicScreen() {
   const dateIdParam = params.dateId ?? params.id;
   const dateIdNum = dateIdParam ? parseInt(dateIdParam) : undefined;
 
-  // Validar que tenemos un dateId válido antes de usar Suspense
+  // Require a valid dateId before using Suspense
   if (!dateIdNum || isNaN(dateIdNum)) {
     return (
       <div style={{
@@ -144,25 +140,24 @@ export default function EventDatePublicScreen() {
 }
 
 /**
- * Componente de contenido que usa Suspense
- * Este componente asume que los datos están disponibles (Suspense maneja el loading)
- * Con Suspense, no necesitamos early returns de loading - el hook siempre retorna datos
+ * Content component using Suspense.
+ * Assumes data is available (Suspense handles loading).
  */
 function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam: string | undefined }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showToast } = useToast();
   const { isEventFavorite, toggleEventFavorite, togglingEvent } = useUserFavorites();
   const guestFavorites = useGuestFavorites();
   
-  // Con Suspense, date siempre existe cuando se renderiza
+  // With Suspense, date always exists when this renders
   const date = useEventDateSuspense(dateId);
   const displayYmd = React.useMemo(() => resolveEventDateYmd(date), [date]);
 
-  // ✅ Si abrimos una "plantilla" recurrente (dia_semana sin fecha), materializar ocurrencias y redirigir
-  // a la primera ocurrencia real futura para navegar por un events_date.id real.
+  // ✅ Recurring template (dia_semana, no fecha): materialize occurrences and redirect
+  // to the next real future occurrence so we navigate with a real events_date.id.
   React.useEffect(() => {
     const hasDiaSemana = typeof (date as any)?.dia_semana === "number";
     const hasFecha = !!(date as any)?.fecha || !!(date as any)?.fecha_inicio;
@@ -204,7 +199,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     };
   }, [date?.parent_id, (date as any)?.organizer_id, (date as any)?.dia_semana, (date as any)?.fecha, (date as any)?.fecha_inicio, dateId, navigate]);
   
-  // Estas queries pueden ser opcionales (no usan Suspense)
+  // Optional queries (not using Suspense)
   const { data: parent } = useEventParent(date?.parent_id ?? undefined);
   const { data: myOrganizer } = useMyOrganizer();
   const { data: ritmos } = useTags('ritmo');
@@ -213,11 +208,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const dateMedia = React.useMemo(() => normalizeMediaArray((date as any)?.media), [(date as any)?.media]);
   const parentMedia = React.useMemo(() => normalizeMediaArray((parent as any)?.media), [(parent as any)?.media]);
 
-  // Verificar si el usuario es propietario
   const isOwner = React.useMemo(() => {
     if (!user || !myOrganizer || !parent) return false;
 
-    // Comparar user_id del organizador con user_id del parent
+    // Organizer user_id vs parent user_id
     const organizerUserId = (myOrganizer as any).user_id;
     const parentUserId = (parent as any)?.user_id;
 
@@ -229,13 +223,13 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     if (!fullAddress) return;
     try {
       await navigator.clipboard.writeText(fullAddress);
-      showToast(t('link_copied', 'Link copiado'), 'success');
+      showToast(t('link_copied', 'Link copied'), 'success');
     } catch {
-      showToast(t('copy_failed', 'No se pudo copiar'), 'error');
+      showToast(t('copy_failed', 'Could not copy'), 'error');
     }
   }, [fullAddress, showToast, t]);
 
-  // RSVP: disponible con o sin login. Sin login se guarda en localStorage.
+  // RSVP: works with or without login; guests use localStorage.
   const GUEST_RSVP_KEY = (id: number) => `rsvp_guest_${id}`;
   const readGuestRsvp = React.useCallback((id: number): RSVPStatus | null => {
     try {
@@ -283,19 +277,19 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       try {
         const next = guestFavorites.toggleEventFavorite(dateId);
         showToast(
-          next ? t("added_to_favorites", "Agregado a favoritos") : t("removed_from_favorites", "Eliminado de favoritos"),
+          next ? t("added_to_favorites", "Added to favorites") : t("removed_from_favorites", "Removed from favorites"),
           "success"
         );
       } catch {
-        showToast(t("action_failed", "No se pudo completar la acción"), "error");
+        showToast(t("action_failed", "Could not complete the action"), "error");
       }
       return;
     }
     try {
       const next = await toggleEventFavorite(dateId);
-      showToast(next ? t("added_to_favorites", "Agregado a favoritos") : t("removed_from_favorites", "Eliminado de favoritos"), "success");
+      showToast(next ? t("added_to_favorites", "Added to favorites") : t("removed_from_favorites", "Removed from favorites"), "success");
     } catch {
-      showToast(t("action_failed", "No se pudo completar la acción"), "error");
+      showToast(t("action_failed", "Could not complete the action"), "error");
     }
   }, [user, guestFavorites, toggleEventFavorite, dateId, showToast, t]);
 
@@ -311,11 +305,11 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         }
         setGuestRsvpStatus(s);
         if (s === null) {
-          showToast(t("rsvp_guest_cleared", "Preferencia actualizada"), "success");
+          showToast(t("rsvp_guest_cleared", "Preference updated"), "success");
         } else if (s === "interesado") {
-          showToast(t("rsvp_guest_interested", "Te interesa este evento"), "success");
+          showToast(t("rsvp_guest_interested", "You're interested in this event"), "success");
         } else if (s === "going") {
-          showToast(t("rsvp_guest_going", "¡Nos vemos en el evento!"), "success");
+          showToast(t("rsvp_guest_going", "See you at the event!"), "success");
         }
         return;
       }
@@ -329,26 +323,17 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         .catch(() => {
           if (reqId === requestIdRef.current) {
             setOptimisticStatus(previous ?? undefined);
-            showToast(t('rsvp_error_toast', 'No se pudo registrar, intenta de nuevo'), 'error');
+            showToast(t('rsvp_error_toast', 'Could not save. Please try again.'), 'error');
           }
         });
     },
     [dateId, canMutateRsvpBackend, effectiveStatus, isUpdating, setStatus, showToast, t]
   );
 
-  // Calcular contador de interesados de forma robusta
-  // La función RPC get_event_rsvp_stats retorna { interesado: number, total: number }
-  // Este contador se actualiza automáticamente cuando el usuario cambia su RSVP
-  // gracias a la invalidación de queries en useEventRSVP
-  // COMENTADO: Contador deshabilitado temporalmente
+  // Interested count (RPC get_event_rsvp_stats: { interesado, total }) — disabled for now
   // const interestedCount = React.useMemo(() => {
-  //   // Si stats aún no está cargado, retornar 0 (se actualizará cuando cargue)
   //   if (!stats) return 0;
-  //   
-  //   // stats es de tipo RSVPStats: { interesado: number, total: number }
   //   const count = stats.interesado;
-  //   
-  //   // Validar que sea un número válido y no negativo
   //   if (typeof count !== 'number' || isNaN(count) || count < 0) {
   //     console.warn('[EventDatePublicScreen] Invalid interestedCount from stats:', stats);
   //     return 0;
@@ -356,7 +341,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   //    
   //   return count;
   // }, [stats]);
-  // Calcular start/end para calendario (fecha específica o dia_semana recurrente)
+  // Calendar start/end (specific date or recurring dia_semana)
   const { calendarStart, calendarEnd } = React.useMemo(() => {
     try {
       const horaInicio = (date.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
@@ -365,7 +350,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       let start: Date;
       let end: Date;
   
-      // ✅ 1) Si hay fecha concreta (o display calculado legacy), usarla SIEMPRE
+      // ✅ 1) Concrete date (or legacy display YMD): always use it
       if (displayYmd) {
         const parsedStart = new Date(`${displayYmd}T${horaInicio}:00`);
         const parsedEnd = new Date(`${displayYmd}T${horaFin}:00`);
@@ -391,7 +376,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
 
 
-  const dateName = date.nombre || parent?.nombre || 'Fecha de baile';
+  const dateName = date.nombre || parent?.nombre || 'Dance event';
   const aboutText = React.useMemo(() => resolveEventAboutText(date, parent), [date, parent]);
   const calendarButton = (
     <AddToCalendarWithStats
@@ -436,11 +421,11 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   );
 
   const getRitmoName = (id: number) => {
-    return ritmos?.find(r => r.id === id)?.nombre || `Ritmo ${id}`;
+    return ritmos?.find(r => r.id === id)?.nombre || `Rhythm ${id}`;
   };
 
   const getZonaName = (id: number) => {
-    return zonas?.find(z => z.id === id)?.nombre || `Zona ${id}`;
+    return zonas?.find(z => z.id === id)?.nombre || `Zone ${id}`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -453,15 +438,14 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         Number.isFinite(month) &&
         Number.isFinite(day)
       ) {
-        // Colocar el día a mediodía en UTC para evitar desfases al formatear en CDMX
+        // Noon UTC to avoid day-shift when formatting for CDMX
         return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
       }
       const parsed = new Date(dateStr);
       return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
     })();
 
-    // ✅ Usar locale según el idioma actual
-    const locale = getLocaleFromI18n();
+    const locale = getLocale(i18n.language || "es");
     return safeDate.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
@@ -485,12 +469,12 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   }
 
   const formattedDate = formatDate(displayYmd || '');
-  const locationName = date.lugar || date.ciudad || (parent as any)?.ciudad || getZonaName((date.zonas || [])[0]) || 'México';
+  const locationName = date.lugar || date.ciudad || (parent as any)?.ciudad || getZonaName((date.zonas || [])[0]) || 'Mexico';
   const hasLocation = !!(date.lugar || date.direccion || date.ciudad);
   const ritmosList = Array.isArray((date as any).ritmos)
     ? (date as any).ritmos.map((id: number) => getRitmoName(id)).slice(0, 3).join(', ')
     : '';
-  const seoDescription = `${dateName} el ${formattedDate}${locationName ? ` en ${locationName}` : ''}${ritmosList ? ` · Ritmos: ${ritmosList}` : ''}.`;
+  const seoDescription = `${dateName} on ${formattedDate}${locationName ? ` in ${locationName}` : ''}${ritmosList ? ` · Styles: ${ritmosList}` : ''}.`;
 
   const seoImageRaw =
     baseFlyerUrl ||
@@ -521,14 +505,14 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     }
     try {
       await navigator.clipboard.writeText(shareUrl);
-      showToast(t('link_copied', 'Link copiado'), 'success');
+      showToast(t('link_copied', 'Link copied'), 'success');
     } catch {
-      showToast(t('copy_failed', 'No se pudo copiar'), 'error');
+      showToast(t('copy_failed', 'Could not copy'), 'error');
     }
   }, [shareUrl, dateName, t, showToast]);
 
-  const dateStr = formatHeaderDate(displayYmd || '');
-  /** Rango visible en hero + eds-info-card: inicio y fin; si no hay hora_fin en BD, el fin coincide con Add to calendar (+2h si aplica). */
+  const dateStr = formatHeaderDate(displayYmd || "", i18n.language);
+  /** Time range for hero + info card; if no hora_fin in DB, end matches Add to calendar (+2h when applicable). */
   const timeRange = React.useMemo(() => {
     const hi = date.hora_inicio;
     const hf = date.hora_fin;
@@ -540,7 +524,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     }
     const startFmt = formatHeaderTime(hi);
     if (!startFmt) return "";
-    const locale = getLocaleFromI18n();
+    const locale = getLocale(i18n.language || "es");
     const endFmt = calendarEnd.toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
@@ -548,21 +532,21 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       timeZone: "America/Mexico_City",
     });
     return `${startFmt} - ${endFmt}`;
-  }, [date.hora_inicio, date.hora_fin, calendarEnd]);
+  }, [date.hora_inicio, date.hora_fin, calendarEnd, i18n.language]);
   const venueName = date.lugar || '';
   const costsSummary = React.useMemo(() => {
     const normalized = normalizeEventCosts((date as any)?.costos || []);
     const values = normalized.flatMap((c) => c.phases.map((p) => p.price)).filter((v) => Number.isFinite(v));
-    if (!values.length) return "Por confirmar";
+    if (!values.length) return "To be confirmed";
     const minValue = Math.min(...values.map((v) => Number(v)));
-    if (minValue <= 0) return "Gratis";
+    if (minValue <= 0) return "Free";
 
-    return new Intl.NumberFormat("es-MX", {
+    return new Intl.NumberFormat(getLocale(i18n.language || "es"), {
       style: "currency",
       currency: "MXN",
       maximumFractionDigits: 0,
     }).format(minValue);
-  }, [date]);
+  }, [date, i18n.language]);
   const mapsUrl = (date.lugar || date.direccion || date.ciudad)
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
         `${date.lugar ?? ''} ${date.direccion ?? ''} ${date.ciudad ?? ''}`.trim()
@@ -591,8 +575,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           formattedDate,
           locationName,
           ritmosList,
-          'evento de baile',
-          'Dónde Bailar',
+          'dance event',
+          'Donde Bailar',
         ].filter(Boolean) as string[]}
       />
       <div id="event-detail-page" className="event-detail-screen">
@@ -625,10 +609,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
               to="/auth/login"
               state={{ from: `${location.pathname}${location.search || ""}` }}
             >
-              {t("login", "Iniciar sesión")}
+              {t("login", "Log in")}
             </Link>
             <span className="eds-guest-sync-hint__rest">
-              {t("guest_sync_continue", "para sincronizar favoritos y RSVPs en tu cuenta.")}
+              {t("guest_sync_continue", "to sync favorites and RSVPs with your account.")}
             </span>
           </div>
         )}
@@ -637,8 +621,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
             <InfoGrid
               costsSummary={costsSummary}
               costsItems={Array.isArray(date.costos) ? (date.costos as any[]) : []}
-              costsDisclaimer={t('price_disclaimer', 'Precios sujetos a cambios')}
-              freeLabel={t('free', 'Gratis')}
+              costsDisclaimer={t('price_disclaimer', 'Prices subject to change')}
+              freeLabel={t('free', 'Free')}
               dateStr={dateStr}
               timeRange={timeRange}
               venueName={venueName}
@@ -653,13 +637,13 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
             return (
               <section id="event-section-about" className="eds-section eds-section--about">
                 <div className="eds-section-header">
-                  <h2 className="eds-section-title">{t('about_event', 'Acerca del evento')}</h2>
+                  <h2 className="eds-section-title">{t('about_event', 'About the event')}</h2>
                   <div className="eds-section-underline" aria-hidden />
                 </div>
                 <ExpandableText
                   text={aboutText}
-                  expandLabel={t('see_more', 'Ver más')}
-                  collapseLabel={t('see_less', 'Ver menos')}
+                  expandLabel={t('see_more', 'See more')}
+                  collapseLabel={t('see_less', 'See less')}
                 />
               </section>
             );
@@ -667,7 +651,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
             <section id="event-section-schedule" className="eds-section eds-section--schedule">
               <div className="eds-section-header">
-                <h2 className="eds-section-title">{t('schedule', 'Cronograma')}</h2>
+                <h2 className="eds-section-title">{t('schedule', 'Schedule')}</h2>
                 <div className="eds-section-underline" aria-hidden />
               </div>
               <Timeline items={date.cronograma} byLabel={t('by')} conductedByLabel={t('conducted_by')} levelLabel={t('level')} />
@@ -680,7 +664,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                 address={[date.direccion, date.ciudad].filter(Boolean).join(', ')}
                 references={date.referencias ?? undefined}
                 mapsUrl={mapsUrl}
-                mapsLabel={t('view_on_maps', 'Abrir en Google Maps')}
+                mapsLabel={t('view_on_maps', 'Open in Google Maps')}
                 copyLabel={t('copy_address')}
                 copiedLabel={t('copied')}
               />
@@ -689,7 +673,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           {date.requisitos && (
             <section id="event-section-requirements" className="eds-section eds-section--requirements">
               <div className="eds-section-header">
-                <h2 className="eds-section-title">{t('requirements', 'Requisitos')}</h2>
+                <h2 className="eds-section-title">{t('requirements', 'Requirements')}</h2>
                 <div className="eds-section-underline" aria-hidden />
               </div>
               <div className="eds-expandable">
@@ -700,12 +684,12 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           {date.telefono_contacto && (
             <section id="event-section-contact" className="eds-section eds-section--contact">
               <div className="eds-section-header">
-                <h2 className="eds-section-title">{t('contact', 'Contacto')}</h2>
+                <h2 className="eds-section-title">{t('contact', 'Contact')}</h2>
                 <div className="eds-section-underline" aria-hidden />
               </div>
               <ContactSection
                 whatsappUrl={buildWhatsAppUrl((date as any).telefono_contacto, (date as any).mensaje_contacto, dateName) || '#'}
-                whatsappLabel={t('consult_whatsapp', 'Contactar por WhatsApp')}
+                whatsappLabel={t('consult_whatsapp', 'Contact via WhatsApp')}
                 organizerName={parent?.nombre}
               />
             </section>
@@ -713,7 +697,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           {hasMedia && (
             <section id="event-section-gallery" className="eds-section eds-section--gallery">
               <div className="eds-section-header">
-                <h2 className="eds-section-title">{t('photo_gallery', 'Galería')}</h2>
+                <h2 className="eds-section-title">{t('photo_gallery', 'Gallery')}</h2>
                 <div className="eds-section-underline" aria-hidden />
               </div>
               <MediaGallery photos={carouselPhotos} videos={videos} toDirectUrl={toDirectPublicStorageUrl} />

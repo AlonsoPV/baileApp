@@ -2660,7 +2660,7 @@ export default function ExploreHomeScreen() {
   const { preferences, applyDefaultFilters, loading: prefsLoading } = useUserFilterPreferences();
   const { showToast } = useToast();
 
-  const qDebounced = useDebouncedValue(filters.q || '', 300);
+  const qDebounced = useDebouncedValue(filters.q || '', 450);
   const qDeferred = React.useDeferredValue(qDebounced);
 
   const hasConfiguredFavorites = React.useMemo(
@@ -3757,23 +3757,20 @@ export default function ExploreHomeScreen() {
     return flattenQueryData(usuariosQuery.data);
   }, [usuariosQuery.data, shouldLoadUsuarios]);
 
-  // Si hay filtro de zonas activo, cargar todas las páginas del contexto visible
-  // para que también aparezcan resultados no visibles en la primera página.
+  // Si hay filtro de zonas activo, calentar SOLO la siguiente página del contexto visible.
+  // Evita ráfagas de requests al aplicar filtros en Android/WebView.
   const hasZoneFilter = (filters.zonas?.length || 0) > 0;
   const zoneAutoLoadBusyRef = React.useRef<Record<string, boolean>>({});
-  const runAutoLoadAllPages = React.useCallback(async (key: string, queryLike: any) => {
+  const runZoneWarmupPage = React.useCallback(async (key: string, queryLike: any) => {
     if (!queryLike) return;
     if (zoneAutoLoadBusyRef.current[key]) return;
     if (!queryLike.hasNextPage || queryLike.isFetchingNextPage || queryLike.isLoading) return;
     zoneAutoLoadBusyRef.current[key] = true;
     try {
-      let r: { hasNextPage?: boolean } | undefined = await queryLike.fetchNextPage();
-      while (r?.hasNextPage) {
-        r = await queryLike.fetchNextPage();
-      }
+      await queryLike.fetchNextPage();
     } catch (err) {
       if (import.meta.env?.DEV) {
-        console.warn(`[ExploreHomeScreen] Auto load failed for ${key}:`, err);
+        console.warn(`[ExploreHomeScreen] Zone warmup failed for ${key}:`, err);
       }
     } finally {
       zoneAutoLoadBusyRef.current[key] = false;
@@ -3783,44 +3780,44 @@ export default function ExploreHomeScreen() {
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'fechas') return;
-    void runAutoLoadAllPages('fechas', fechasQuery);
-  }, [hasZoneFilter, selectedType, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.isLoading, fechasQuery.fetchNextPage, runAutoLoadAllPages]);
+    void runZoneWarmupPage('fechas', fechasQuery);
+  }, [hasZoneFilter, selectedType, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.isLoading, fechasQuery.fetchNextPage, runZoneWarmupPage]);
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'academias') return;
-    void runAutoLoadAllPages('academias', academiasQuery);
-  }, [hasZoneFilter, selectedType, academiasQuery.hasNextPage, academiasQuery.isFetchingNextPage, academiasQuery.isLoading, academiasQuery.fetchNextPage, runAutoLoadAllPages]);
+    void runZoneWarmupPage('academias', academiasQuery);
+  }, [hasZoneFilter, selectedType, academiasQuery.hasNextPage, academiasQuery.isFetchingNextPage, academiasQuery.isLoading, academiasQuery.fetchNextPage, runZoneWarmupPage]);
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'maestros') return;
-    void runAutoLoadAllPages('maestros', maestrosQuery);
-  }, [hasZoneFilter, selectedType, maestrosQuery.hasNextPage, maestrosQuery.isFetchingNextPage, maestrosQuery.isLoading, maestrosQuery.fetchNextPage, runAutoLoadAllPages]);
+    void runZoneWarmupPage('maestros', maestrosQuery);
+  }, [hasZoneFilter, selectedType, maestrosQuery.hasNextPage, maestrosQuery.isFetchingNextPage, maestrosQuery.isLoading, maestrosQuery.fetchNextPage, runZoneWarmupPage]);
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'organizadores') return;
-    void runAutoLoadAllPages('organizadores', organizadoresQuery);
-  }, [hasZoneFilter, selectedType, organizadoresQuery.hasNextPage, organizadoresQuery.isFetchingNextPage, organizadoresQuery.isLoading, organizadoresQuery.fetchNextPage, runAutoLoadAllPages]);
+    void runZoneWarmupPage('organizadores', organizadoresQuery);
+  }, [hasZoneFilter, selectedType, organizadoresQuery.hasNextPage, organizadoresQuery.isFetchingNextPage, organizadoresQuery.isLoading, organizadoresQuery.fetchNextPage, runZoneWarmupPage]);
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'marcas') return;
-    void runAutoLoadAllPages('marcas', marcasQuery);
-  }, [hasZoneFilter, selectedType, marcasQuery.hasNextPage, marcasQuery.isFetchingNextPage, marcasQuery.isLoading, marcasQuery.fetchNextPage, runAutoLoadAllPages]);
+    void runZoneWarmupPage('marcas', marcasQuery);
+  }, [hasZoneFilter, selectedType, marcasQuery.hasNextPage, marcasQuery.isFetchingNextPage, marcasQuery.isLoading, marcasQuery.fetchNextPage, runZoneWarmupPage]);
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'usuarios') return;
-    void runAutoLoadAllPages('usuarios', usuariosQuery);
-  }, [hasZoneFilter, selectedType, usuariosQuery.hasNextPage, usuariosQuery.isFetchingNextPage, usuariosQuery.isLoading, usuariosQuery.fetchNextPage, runAutoLoadAllPages]);
+    void runZoneWarmupPage('usuarios', usuariosQuery);
+  }, [hasZoneFilter, selectedType, usuariosQuery.hasNextPage, usuariosQuery.isFetchingNextPage, usuariosQuery.isLoading, usuariosQuery.fetchNextPage, runZoneWarmupPage]);
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'clases') return;
-    void runAutoLoadAllPages('clases_academias', academiasQuery);
-    void runAutoLoadAllPages('clases_maestros', maestrosQuery);
+    void runZoneWarmupPage('clases_academias', academiasQuery);
+    void runZoneWarmupPage('clases_maestros', maestrosQuery);
   }, [
     hasZoneFilter,
     selectedType,
@@ -3832,11 +3829,13 @@ export default function ExploreHomeScreen() {
     maestrosQuery.isFetchingNextPage,
     maestrosQuery.isLoading,
     maestrosQuery.fetchNextPage,
-    runAutoLoadAllPages,
+    runZoneWarmupPage,
   ]);
 
-  // Cargar automáticamente todas las páginas de usuarios para mostrar todos sin límite
+  // Usuarios: warmup de una sola página extra por combinación de filtros.
+  // Evita descargas completas en background.
   const usuariosAutoLoadRef = React.useRef(false);
+  const usuariosWarmupDoneKeyRef = React.useRef<string | null>(null);
   React.useEffect(() => {
     // Importante: no autoload cuando "showAll" está activo (pantalla inicial),
     // porque dispara muchas requests y puede inflar first_screen_mount.
@@ -3844,12 +3843,19 @@ export default function ExploreHomeScreen() {
       usuariosAutoLoadRef.current = false;
       return;
     }
-    
-    // Si hay más páginas y no se está cargando, cargar la siguiente página automáticamente
+    const usersWarmupKey = [
+      String(qDeferred || '').trim().toLowerCase(),
+      Array.isArray(filters.ritmos) ? [...filters.ritmos].sort((a, b) => a - b).join(',') : '',
+      Array.isArray(filters.zonas) ? [...filters.zonas].sort((a, b) => a - b).join(',') : '',
+    ].join('|');
+    if (usuariosWarmupDoneKeyRef.current === usersWarmupKey) return;
+
+    // Si hay más páginas y no se está cargando, precargar solo la siguiente página.
     if (usuariosQuery.hasNextPage && !usuariosQuery.isFetchingNextPage && !usuariosQuery.isLoading && !usuariosAutoLoadRef.current) {
       usuariosAutoLoadRef.current = true;
       usuariosQuery.fetchNextPage()
         .then(() => {
+          usuariosWarmupDoneKeyRef.current = usersWarmupKey;
           usuariosAutoLoadRef.current = false;
         })
         .catch((err) => {
@@ -3859,9 +3865,21 @@ export default function ExploreHomeScreen() {
           }
         });
     } else if (!usuariosQuery.hasNextPage) {
+      usuariosWarmupDoneKeyRef.current = usersWarmupKey;
       usuariosAutoLoadRef.current = false;
     }
-  }, [shouldLoadUsuarios, usuariosQuery.hasNextPage, usuariosQuery.isFetchingNextPage, usuariosQuery.isLoading, usuariosQuery.data, usuariosQuery.fetchNextPage]);
+  }, [
+    shouldLoadUsuarios,
+    selectedType,
+    qDeferred,
+    filters.ritmos,
+    filters.zonas,
+    usuariosQuery.hasNextPage,
+    usuariosQuery.isFetchingNextPage,
+    usuariosQuery.isLoading,
+    usuariosQuery.data,
+    usuariosQuery.fetchNextPage,
+  ]);
 
   // [PERF] data_fetch_end cuando llega la primera data (fechas es la sección principal)
   const perfDataFetchEndDone = React.useRef(false);

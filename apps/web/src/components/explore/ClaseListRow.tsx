@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import LiveLink from "../LiveLink";
 import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
-import { fmtDate } from "@/utils/format";
+import { useFmtDate } from "@/hooks/useFmtDate";
 import { toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import "@/components/explore/EventListRow.css";
@@ -40,6 +40,7 @@ function buildClaseHref(item: any): string {
 }
 
 function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
+  const fmtDateLocalized = useFmtDate();
   const { t } = useTranslation();
   const { data: allTags } = useTags() as any;
   const href = React.useMemo(() => buildClaseHref(item), [item]);
@@ -124,13 +125,13 @@ function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
     if (item.fecha) {
       try {
         const plain = String(item.fecha).split("T")[0];
-        return fmtDate(plain);
+        return fmtDateLocalized(plain);
       } catch {
         return String(item.fecha);
       }
     }
     return "";
-  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal, t]);
+  }, [item.fecha, item.diasSemana, item.diaSemana, isSemanal, t, fmtDateLocalized]);
 
   const ritmoNames = React.useMemo(() => {
     try {

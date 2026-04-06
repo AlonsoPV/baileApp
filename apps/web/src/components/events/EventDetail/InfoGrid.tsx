@@ -1,6 +1,8 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Calendar, ChevronDown, MapPin, Copy, Ticket } from "lucide-react";
 import { normalizeEventCosts } from "../../../utils/eventCosts";
+import { getLocaleFromI18n } from "../../../utils/locale";
 
 type CostItem = {
   id?: string;
@@ -51,14 +53,16 @@ export function InfoGrid({
   onCopyAddress,
   costsSummary,
   costsItems,
-  costsDisclaimer = "Precios sujetos a cambios",
-  freeLabel = "Gratis",
+  costsDisclaimer,
+  freeLabel,
 }: InfoGridProps) {
+  const { t } = useTranslation();
+  const disclaimerText = costsDisclaimer ?? t("price_disclaimer", "Prices subject to change");
+  const freeText = freeLabel ?? t("free", "Free");
   const locationLabel = [venueName, city].filter(Boolean).join(", ") || venueName || city;
   const legacyItems = Array.isArray(costsItems) ? costsItems : [];
   const phasedCosts = normalizeEventCosts(legacyItems);
 
-  /** Por defecto todos los tableros de costos están colapsados */
   const [expandedCostIds, setExpandedCostIds] = React.useState<Set<string>>(() => new Set());
 
   const toggleCostBoard = (id: string) => {
@@ -75,8 +79,9 @@ export function InfoGrid({
       raw === 0 ||
       raw === null ||
       raw === undefined ||
-      (typeof raw === "string" && (raw === "" || raw.toLowerCase() === "gratis"));
-    if (isFree) return freeLabel;
+      (typeof raw === "string" &&
+        (raw === "" || raw.toLowerCase() === "gratis" || raw.toLowerCase() === "free"));
+    if (isFree) return freeText;
 
     const num =
       typeof raw === "number"
@@ -85,8 +90,8 @@ export function InfoGrid({
           ? parseFloat(raw.replace(/[^\d.]/g, ""))
           : NaN;
 
-    if (!Number.isFinite(num)) return String(raw ?? freeLabel);
-    return new Intl.NumberFormat("es-MX", {
+    if (!Number.isFinite(num)) return String(raw ?? freeText);
+    return new Intl.NumberFormat(getLocaleFromI18n(), {
       style: "currency",
       currency: "MXN",
       maximumFractionDigits: 0,
@@ -94,13 +99,13 @@ export function InfoGrid({
   };
 
   const prettifyType = (tipo?: string) => {
-    const t = (tipo || "").trim().toLowerCase();
-    if (!t) return "";
-    if (t === "preventa") return "Preventa";
-    if (t === "taquilla") return "Taquilla";
-    if (t === "promocion") return "Promoción";
-    if (t === "gratis") return "Gratis";
-    if (t === "otro") return "Otro";
+    const key = (tipo || "").trim().toLowerCase();
+    if (!key) return "";
+    if (key === "preventa") return t("cost_type_presale", "Presale");
+    if (key === "taquilla") return t("cost_type_door", "Box office");
+    if (key === "promocion") return t("cost_type_promotion", "Promotion");
+    if (key === "gratis") return freeText;
+    if (key === "otro") return t("cost_type_other", "Other");
     return tipo || "";
   };
 
@@ -111,7 +116,7 @@ export function InfoGrid({
           <div className="eds-info-card__icon">
             <Ticket size={20} strokeWidth={2} />
           </div>
-          <div className="eds-info-card__label">Costos</div>
+          <div className="eds-info-card__label">{t("costs", "Costs")}</div>
         </div>
         <div className="eds-info-card__value">
           {phasedCosts.length > 0 ? (
@@ -153,7 +158,9 @@ export function InfoGrid({
                               <div className="eds-cost-board__phase-title">
                                 {phase.name}
                                 {phase.type && <span className="eds-cost-board__type">{prettifyType(phase.type)}</span>}
-                                {phase.isFinal && <span className="eds-cost-board__badge">Taquilla</span>}
+                                {phase.isFinal && (
+                                  <span className="eds-cost-board__badge">{t("cost_type_door", "Box office")}</span>
+                                )}
                               </div>
                               <strong className="eds-cost-board__phase-price">{formatPrice(phase.price ?? phase.monto)}</strong>
                               {phase.description && <small className="eds-cost-board__phase-desc">{phase.description}</small>}
@@ -164,7 +171,7 @@ export function InfoGrid({
                   </div>
                 );
               })}
-              <small style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>{costsDisclaimer}</small>
+              <small style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>{disclaimerText}</small>
             </div>
           ) : (
             legacyItems.length > 0 ? (
@@ -174,7 +181,7 @@ export function InfoGrid({
                     item.nombre ||
                     (item.tipo
                       ? String(item.tipo).charAt(0).toUpperCase() + String(item.tipo).slice(1).toLowerCase()
-                      : "Entrada");
+                      : t("event_detail_ticket_label", "Ticket"));
                   const price = formatPrice(item.monto ?? item.precio);
                   const subtitle = item.descripcion ?? item.regla;
                   return (
@@ -189,10 +196,10 @@ export function InfoGrid({
                     </div>
                   );
                 })}
-                <small style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>{costsDisclaimer}</small>
+                <small style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>{disclaimerText}</small>
               </div>
             ) : (
-              costsSummary || "Por confirmar"
+              costsSummary || t("event_detail_pending_price", "To be confirmed")
             )
           )}
         </div>
@@ -203,7 +210,7 @@ export function InfoGrid({
             <div className="eds-info-card__icon">
               <MapPin size={20} strokeWidth={2} />
             </div>
-            <div className="eds-info-card__label">Ubicación</div>
+            <div className="eds-info-card__label">{t("location", "Location")}</div>
           </div>
           <div className="eds-info-card__value">{locationLabel || "—"}</div>
           <div className="eds-info-card__actions">
@@ -214,7 +221,7 @@ export function InfoGrid({
                 rel="noopener noreferrer"
                 className="eds-info-card__link"
               >
-                Ver mapa ↗
+                {t("event_detail_view_map", "View map ↗")}
               </a>
             )}
             {fullAddress && onCopyAddress && (
@@ -222,7 +229,7 @@ export function InfoGrid({
                 type="button"
                 className="eds-info-card__copy"
                 onClick={onCopyAddress}
-                aria-label="Copiar dirección"
+                aria-label={t("event_detail_copy_address_aria", "Copy address")}
               >
                 <Copy size={18} strokeWidth={2} />
               </button>
@@ -234,7 +241,7 @@ export function InfoGrid({
             <div className="eds-info-card__icon">
               <Calendar size={20} strokeWidth={2} />
             </div>
-            <div className="eds-info-card__label">Fecha y horario</div>
+            <div className="eds-info-card__label">{t("event_detail_date_time", "Date & time")}</div>
           </div>
           <div className="eds-info-card__value">
             {dateStr || "—"}

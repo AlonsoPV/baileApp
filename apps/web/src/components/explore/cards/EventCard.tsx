@@ -2,7 +2,7 @@ import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
-import { fmtDate } from "../../../utils/format";
+import { useFmtDate } from "../../../hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
 import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
@@ -64,6 +64,7 @@ function useEventCardMotion() {
 
 /** Card "tonta": usa solo item.__ui precomputado. Cero hooks de datos, cero queries. */
 function EventCardDumb({ item, priority = false }: EventCardProps) {
+  const fmtDateLocalized = useFmtDate();
   const ui = item?.__ui!;
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
@@ -151,7 +152,7 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
           <div className="meta">
             {ui.fechaYmd && (
               <div className="meta-row--date">
-                <div className="tag">📅 {fmtDate(ui.fechaYmd)}</div>
+                <div className="tag">📅 {fmtDateLocalized(ui.fechaYmd)}</div>
               </div>
             )}
             <div className="meta-row--time-zone">
@@ -209,6 +210,7 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
 
 /** Card con fallback: usa useTags cuando item.__ui no existe (pantallas fuera de Explore). */
 function EventCardWithTags({ item, priority = false }: EventCardProps) {
+  const fmtDateLocalized = useFmtDate();
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
   const motionPrefs = useEventCardMotion();
@@ -343,7 +345,7 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
           <div className="meta">
             {fecha && (
               <div className="meta-row--date">
-                <div className="tag">📅 {fmtDate(fecha)}</div>
+                <div className="tag">📅 {fmtDateLocalized(fecha)}</div>
               </div>
             )}
             <div className="meta-row--time-zone">

@@ -102,12 +102,12 @@ export default function AppShell() {
   const menuItems = [
     // { id: 'challenges', label: 'Retos', icon: '🏆', onClick: () => navigate('/challenges') },
     // { id: 'trending', label: 'Trending', icon: '📈', onClick: () => navigate('/trending') },
-    { id: 'roles-info', label: '¿Quieres saber más sobre nuestros roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
-    { id: 'validation-info', label: '¿Qué significa los perfiles con ✅?', icon: '✅', onClick: () => navigate('/validation/info') },
-    { id: 'support', label: 'Soporte', icon: '🛟', onClick: () => navigate('/soporte') },
-    { id: 'legal', label: 'Aviso de Privacidad', icon: '🔒', onClick: () => navigate('/aviso-de-privacidad') },
+    { id: 'roles-info', label: 'Want to know more about our roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
+    { id: 'validation-info', label: 'What do profiles with ✅ mean?', icon: '✅', onClick: () => navigate('/validation/info') },
+    { id: 'support', label: 'Support', icon: '🛟', onClick: () => navigate('/soporte') },
+    { id: 'legal', label: 'Privacy notice', icon: '🔒', onClick: () => navigate('/aviso-de-privacidad') },
     isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
-    { id: 'logout', label: 'Cerrar sesión', icon: '🚪', onClick: handleLogout },
+    { id: 'logout', label: 'Log out', icon: '🚪', onClick: handleLogout },
   ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
 
   return (
@@ -441,7 +441,7 @@ export default function AppShell() {
             isOpen={true}
             onClose={() => setMenuOpen(false)}
             menuItems={menuItems}
-            userName={user.email?.split('@')[0] || 'Usuario'}
+            userName={user.email?.split('@')[0] || 'User'}
             userEmail={user.email || ''}
             userAvatar={avatarUrl}
             displayName={profile?.display_name || undefined}
