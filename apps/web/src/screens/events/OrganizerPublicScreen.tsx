@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useQuery } from '@tanstack/react-query';
 import { useTags } from "../../hooks/useTags";
 import { supabase } from '@/lib/supabase';
@@ -18,16 +19,23 @@ import RequireLogin from "@/components/auth/RequireLogin";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useEventParentsByOrganizer, useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { fmtDate, fmtTime } from "../../utils/format";
+import { getLocale } from "../../utils/locale";
+import { getEventDatePriceChipLabel } from "../../utils/eventCosts";
+import { extractLugarNombre, resolveFlyerUrlForEventDate } from "../../utils/normalizeEventsForCards";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { BioSection } from "../../components/profile/BioSection";
+import OrganizerPublicGallery from "../../components/profile/gallery/OrganizerPublicGallery";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { buildShareUrl } from "@/utils/shareUrls";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
+import { formatEventTimeHHMM, localDateTimeFromYmdAndHhMm, normalizeEventDateYmd } from "../../utils/eventDateDisplay";
 import CompetitionGroupCard from "../../components/explore/cards/CompetitionGroupCard";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
+import OrganizerPublicFaqSection from "../../components/organizer/OrganizerPublicFaqSection";
+import { parseOrganizerFaqFromDb } from "../../utils/organizerFaq";
 
 const isUUID = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 
@@ -97,6 +105,7 @@ export function OrganizerPublicScreen() {
   const { id, organizerId } = useParams<{ id?: string; organizerId?: string }>();
   const routeId = id || organizerId || '';
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
   const { ritmos: allRitmos = [], zonas: allZonas = [] } = useTags();
   const [copied, setCopied] = React.useState(false);
 
@@ -206,6 +215,11 @@ export function OrganizerPublicScreen() {
       .filter(Boolean);
   }, [media, isValidMediaUrl, resolveMediaUrl]);
 
+  const organizerFaqItems = React.useMemo(
+    () => parseOrganizerFaqFromDb((org as any)?.faq),
+    [org]
+  );
+
   // Debug DEV: validar fuente de datos / slots
   React.useEffect(() => {
     if (!import.meta.env.DEV || !org) return;
@@ -248,9 +262,10 @@ export function OrganizerPublicScreen() {
     }
   })();
 
-  // Construir items de Fechas para slider
-  const inviteItems = (() => {
+  // Construir items de Fechas para slider (misma lógica de precio/fecha/flyer que cards Explore)
+  const inviteItems = React.useMemo(() => {
     const items: any[] = [];
+    const localeTag = getLocale(i18n.language || "es");
     
     // Obtener fecha y hora actual en CDMX
     const getTodayCDMX = () => {
@@ -286,14 +301,11 @@ export function OrganizerPublicScreen() {
     const todayCDMX = getTodayCDMX();
     const nowCDMX = getNowCDMX();
 
-    // Filtrar solo fechas futuras (incluyendo hoy si la hora no ha pasado)
-    const parseLocalYmd = (value: string) => {
-      const plain = String(value).split('T')[0];
-      const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
-      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
-        const fallback = new Date(value);
-        return Number.isNaN(fallback.getTime()) ? null : fallback;
-      }
+    const parseLocalYmd = (value: unknown) => {
+      const ymd = normalizeEventDateYmd(value);
+      if (!ymd) return null;
+      const [y, m, d] = ymd.split("-").map((n) => parseInt(n, 10));
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
       return new Date(y, m - 1, d);
     };
 
@@ -363,23 +375,22 @@ export function OrganizerPublicScreen() {
           return true;
         }
         
-        // Si no tiene dia_semana, filtrar por fecha específica
-        const fechaStr = String(d.fecha).split('T')[0];
+        const fechaStr = normalizeEventDateYmd(d.fecha);
+        if (!fechaStr) return false;
         const dateObj = parseLocalYmd(d.fecha);
         if (!dateObj) return false;
-        
-        // Si la fecha es hoy, verificar la hora
+
         if (fechaStr === todayCDMX) {
           const horaStr = d.hora_inicio as string | null | undefined;
-          if (!horaStr) return true; // Si no hay hora, mostrar todo el día
-          
-          const [yy, mm, dd] = fechaStr.split('-').map((p: string) => parseInt(p, 10));
+          if (!horaStr) return true;
+
+          const [yy, mm, dd] = fechaStr.split("-").map((p: string) => parseInt(p, 10));
           if (!Number.isFinite(yy) || !Number.isFinite(mm) || !Number.isFinite(dd)) return true;
-          
-          const [hhRaw, minRaw] = String(horaStr).split(':');
-          const hh = parseInt(hhRaw ?? '0', 10);
-          const min = parseInt(minRaw ?? '0', 10);
-          
+
+          const [hhRaw, minRaw] = String(horaStr).split(":");
+          const hh = parseInt(hhRaw ?? "0", 10);
+          const min = parseInt(minRaw ?? "0", 10);
+
           const eventDateTime = new Date(Date.UTC(yy, mm - 1, dd, hh, min, 0));
           return eventDateTime.getTime() >= nowCDMX.getTime();
         }
@@ -404,36 +415,27 @@ export function OrganizerPublicScreen() {
     });
 
     futureDates.forEach((date) => {
-      const nombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
-      const horaFormateada = date.hora_inicio && date.hora_fin ? `${date.hora_inicio} - ${date.hora_fin}` : (date.hora_inicio || '');
-      
-      // Usar la fecha calculada (ya expandida si es recurrente)
-      const fechaParaMostrar = date.fecha;
-      
+      const fechaYmd = normalizeEventDateYmd(date.fecha) ?? "";
+      const nombre =
+        (date as any).nombre || (fechaYmd ? `Fecha ${fmtDate(fechaYmd, localeTag)}` : "Fecha");
+      const hi = formatEventTimeHHMM(date.hora_inicio as string | undefined);
+      const hf = formatEventTimeHHMM(date.hora_fin as string | undefined);
+      const horaFormateada = hi && hf ? `${hi} - ${hf}` : hi || "";
+      const flyerUrl = resolveFlyerUrlForEventDate(date);
+      const priceLabel = getEventDatePriceChipLabel(date, localeTag);
+      const placeShort = extractLugarNombre((date.lugar || date.ciudad || "") as string) || (date.ciudad || date.lugar || "");
+
       items.push({
         id: date._original_id || date.id,
         nombre,
-        date: fmtDate(fechaParaMostrar),
+        date: fechaYmd ? fmtDate(fechaYmd, localeTag) : "",
         time: horaFormateada,
-        place: date.lugar || date.ciudad || '',
+        place: placeShort,
         href: `/social/fecha/${date._original_id || date.id}`,
-        cover: (() => {
-          const raw = Array.isArray(date.media) && date.media.length > 0 ? (date.media[0] as any)?.url || date.media[0] : undefined;
-          return raw ? (toDirectPublicStorageUrl(raw) || raw) : undefined;
-        })(),
-        flyer: (() => {
-          const raw = (date as any).flyer_url || (Array.isArray(date.media) && date.media.length > 0 ? (date.media[0] as any)?.url || date.media[0] : undefined);
-          return raw ? (toDirectPublicStorageUrl(raw) || raw) : undefined;
-        })(),
-        price: (() => {
-          const costos = (date as any)?.costos;
-          if (Array.isArray(costos) && costos.length) {
-            const nums = costos.map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
-            if (nums.length) { const min = Math.min(...(nums as number[])); return min >= 0 ? `$${min.toLocaleString()}` : undefined; }
-          }
-          return undefined;
-        })(),
-        fecha: fechaParaMostrar,
+        cover: flyerUrl,
+        flyer: flyerUrl,
+        price: priceLabel,
+        fecha: fechaYmd || date.fecha,
         hora_inicio: date.hora_inicio,
         hora_fin: date.hora_fin,
         lugar: date.lugar || date.ciudad || date.direccion,
@@ -442,7 +444,7 @@ export function OrganizerPublicScreen() {
       });
     });
     return items;
-  })();
+  }, [eventDates, i18n.language]);
 
   // Slider de flyer vertical (mismo diseño)
   const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
@@ -451,38 +453,50 @@ export function OrganizerPublicScreen() {
     const ev = items[idx % items.length];
     const calendarStart = (() => {
       try {
-        // Si tiene dia_semana, calcular la próxima fecha basada en el día de la semana
-        if (ev.dia_semana !== null && ev.dia_semana !== undefined && typeof ev.dia_semana === 'number') {
-          const horaInicio = (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
+        if (ev.dia_semana !== null && ev.dia_semana !== undefined && typeof ev.dia_semana === "number") {
+          const horaInicio = (ev.hora_inicio || "20:00").split(":").slice(0, 2).join(":");
           return calculateNextDateWithTime(ev.dia_semana, horaInicio);
         }
-        // Si no tiene dia_semana, usar la fecha específica
-        if (!ev.fecha) return new Date();
-        const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
-        const hora = (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-        const parsed = new Date(`${fechaStr}T${hora}:00`);
-        return isNaN(parsed.getTime()) ? new Date() : parsed;
-      } catch { return new Date(); }
+        const ymd = normalizeEventDateYmd(ev.fecha);
+        if (!ymd) return new Date();
+        const parsed = localDateTimeFromYmdAndHhMm(ymd, formatEventTimeHHMM(ev.hora_inicio as string | undefined) || "20:00");
+        return parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date();
+      } catch {
+        return new Date();
+      }
     })();
     const calendarEnd = (() => {
       try {
-        // Si tiene dia_semana, calcular la próxima fecha basada en el día de la semana
-        if (ev.dia_semana !== null && ev.dia_semana !== undefined && typeof ev.dia_semana === 'number') {
-          const horaFin = (ev.hora_fin || ev.hora_inicio || '23:00').split(':').slice(0, 2).join(':');
-          const startDate = calculateNextDateWithTime(ev.dia_semana, (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':'));
-          const [hora, minutos] = horaFin.split(':').map(Number);
+        if (ev.dia_semana !== null && ev.dia_semana !== undefined && typeof ev.dia_semana === "number") {
+          const horaFin = (ev.hora_fin || ev.hora_inicio || "23:00").split(":").slice(0, 2).join(":");
+          const startDate = calculateNextDateWithTime(ev.dia_semana, (ev.hora_inicio || "20:00").split(":").slice(0, 2).join(":"));
+          const [hora, minutos] = horaFin.split(":").map(Number);
           const endDate = new Date(startDate);
           endDate.setHours(hora || 23, minutos || 0, 0, 0);
           return endDate;
         }
-        // Si no tiene dia_semana, usar la fecha específica
-        if (!ev.fecha) { const d = new Date(calendarStart); d.setHours(d.getHours() + 2); return d; }
-        const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
-        const hora = (ev.hora_fin || ev.hora_inicio || '23:59').split(':').slice(0, 2).join(':');
-        const parsed = new Date(`${fechaStr}T${hora}:00`);
-        if (isNaN(parsed.getTime())) { const d = new Date(calendarStart); d.setHours(d.getHours() + 2); return d; }
+        const ymd = normalizeEventDateYmd(ev.fecha);
+        if (!ymd) {
+          const d = new Date(calendarStart);
+          d.setHours(d.getHours() + 2);
+          return d;
+        }
+        const endHhmm =
+          formatEventTimeHHMM(ev.hora_fin as string | undefined) ||
+          formatEventTimeHHMM(ev.hora_inicio as string | undefined) ||
+          "23:59";
+        const parsed = localDateTimeFromYmdAndHhMm(ymd, endHhmm);
+        if (!parsed || Number.isNaN(parsed.getTime())) {
+          const d = new Date(calendarStart);
+          d.setHours(d.getHours() + 2);
+          return d;
+        }
         return parsed;
-      } catch { const d = new Date(calendarStart); d.setHours(d.getHours() + 2); return d; }
+      } catch {
+        const d = new Date(calendarStart);
+        d.setHours(d.getHours() + 2);
+        return d;
+      }
     })();
     return (
       <div style={{ display: 'grid', placeItems: 'center', gap: spacing[3] }}>
@@ -1195,6 +1209,10 @@ export function OrganizerPublicScreen() {
             />
           </motion.div>
 
+          {organizerFaqItems.some((x) => x.q.trim() && x.a.trim()) && (
+            <OrganizerPublicFaqSection items={organizerFaqItems} />
+          )}
+
         {/* Ubicaciones de los Sociales (agregadas) */}
         {aggregatedLocations.length > 0 && (
           <motion.section
@@ -1444,45 +1462,9 @@ export function OrganizerPublicScreen() {
           )}
           */}
 
-          {/* Galería de Fotos Mejorada */}
-         {/*  {carouselPhotos.length > 0 && (
-            <motion.section
-              id="organizer-profile-photo-gallery"
-              data-baile-id="organizer-profile-photo-gallery"
-              data-test-id="organizer-profile-photo-gallery"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="gallery-section glass-card-container"
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1.5rem'
-              }}>
-                <h3 className="section-title">
-                  📷 Galería de Fotos
-                </h3>
-                <div style={{
-                  padding: '0.5rem 1rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '20px',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: colors.light
-                }}>
-                  {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
-                </div>
-              </div>
-
-              <CarouselComponent photos={carouselPhotos} />
-            </motion.section>
-          )}
- */}
-          {/* FAQ */}
+          {/* FAQ (arriba de la galería) */}
           {((org as any)?.respuestas?.musica_tocaran || (org as any)?.respuestas?.hay_estacionamiento) && (
-            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
+            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card" style={{ marginBottom: spacing[8], padding: spacing[8], borderRadius: borderRadius['2xl'] }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
                 <div style={{ width: 60, height: 60, borderRadius: '50%', background: colors.gradients.secondary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: typography.fontSize['2xl'], boxShadow: `0 8px 24px ${colors.secondary[500]}40` }}>❓</div>
                 <div>
@@ -1496,6 +1478,11 @@ export function OrganizerPublicScreen() {
               </div>
             </motion.section>
           )}
+          {carouselPhotos.length > 0 ? (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+              <OrganizerPublicGallery photos={carouselPhotos} title="Galería de fotos" />
+            </motion.div>
+          ) : null}
         </div>
       </div>
     </>

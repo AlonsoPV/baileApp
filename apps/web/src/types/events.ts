@@ -1,3 +1,5 @@
+import type { OrganizerFaqItem } from "./organizerFaq";
+
 export type Aprobacion = 'borrador'|'en_revision'|'aprobado'|'rechazado';
 
 export type EventCostoTipo = 'taquilla' | 'preventa' | 'promocion' | 'gratis' | 'otro';
@@ -49,6 +51,8 @@ export type Organizer = {
   estilos?: number[]; // IDs numéricos de tags (legacy)
   zonas?: number[];
   ubicaciones?: any[]; // Ubicaciones del organizador
+  /** Preguntas frecuentes del perfil (JSON en BD). */
+  faq?: OrganizerFaqItem[] | null;
   stripe_account_id?: string | null;
   stripe_onboarding_status?: string | null;
   stripe_charges_enabled?: boolean | null;

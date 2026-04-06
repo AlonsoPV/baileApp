@@ -99,6 +99,7 @@ export function useUpsertMyOrganizer() {
           respuestas: nextRespuestas,
           redes_sociales: nextRedes,
           cuenta_bancaria: nextCuentaBancaria,
+          faq: nextFaq,
           ...candidate
         } = next as any; // media va por otro hook, campos no existentes se filtran
         
@@ -145,7 +146,7 @@ export function useUpsertMyOrganizer() {
           changed: JSON.stringify((prev as any).ritmos_seleccionados) !== JSON.stringify((next as any).ritmos_seleccionados)
         });
         const patch = buildSafePatch(prev, candidate, { 
-          allowEmptyArrays: ["ritmos", "zonas", "estilos", "ritmos_seleccionados"] as any 
+          allowEmptyArrays: ["ritmos", "zonas", "estilos", "ritmos_seleccionados", "faq"] as any 
         });
 
         // Cuenta bancaria (JSONB): debe comportarse como "replace" (no merge),
@@ -156,6 +157,15 @@ export function useUpsertMyOrganizer() {
           if (!deepEqual(prevBank, cleanedBank)) {
             (patch as any).cuenta_bancaria = cleanedBank;
             console.log("✅ [useOrganizer] Agregando 'cuenta_bancaria' al patch:", cleanedBank);
+          }
+        }
+
+        // FAQ (JSONB array): reemplazo completo
+        if (nextFaq !== undefined) {
+          const prevFaq = Array.isArray((prev as any).faq) ? (prev as any).faq : [];
+          if (!deepEqual(prevFaq, nextFaq)) {
+            (patch as any).faq = nextFaq;
+            console.log("✅ [useOrganizer] Agregando 'faq' al patch");
           }
         }
         
@@ -241,6 +251,9 @@ export function useUpsertMyOrganizer() {
             }
             if (Object.prototype.hasOwnProperty.call(patch, 'respuestas')) {
               (needsDirect as any).respuestas = (patch as any).respuestas;
+            }
+            if (Object.prototype.hasOwnProperty.call(patch, 'faq')) {
+              (needsDirect as any).faq = (patch as any).faq;
             }
             if (Object.keys(needsDirect).length > 0) {
               console.log("🔧 [useOrganizer] Aplicando refuerzo para campos:", Object.keys(needsDirect));

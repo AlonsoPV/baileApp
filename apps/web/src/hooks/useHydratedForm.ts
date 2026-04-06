@@ -37,6 +37,7 @@ function sanitizeNotNullArrays<T extends Record<string, any>>(obj: T): T {
   if (out.ritmos_seleccionados === null) out.ritmos_seleccionados = [];
   if (out.ritmos === null) out.ritmos = [];
   if (out.zonas === null) out.zonas = [];
+  if (out.faq === null || out.faq === undefined) out.faq = [];
   return out as T;
 }
 

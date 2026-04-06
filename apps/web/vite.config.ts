@@ -69,6 +69,10 @@ export default defineConfig({
       "state/userIsolation.test.ts",
       // RSVP expiration logic
       "utils/eventDateExpiration.test.ts",
+      // Organizer FAQ: markdown sanitization, save flow, public section
+      "utils/organizerFaqRichText.test.ts",
+      "utils/organizerFaqSaveFlow.test.ts",
+      "components/organizer/OrganizerPublicFaqSection.test.tsx",
     ],
     environment: "jsdom",
     globals: true,

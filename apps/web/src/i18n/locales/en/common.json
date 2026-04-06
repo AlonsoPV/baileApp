@@ -1006,6 +1006,67 @@
   "configure_base_date_tooltip": "Configure the base date to enable quick actions",
   "sending": "⏳ Sending...",
   "submit_for_review": "📤 Submit for Review",
-  "profile_created_default_social_failed": "⚠️ Profile created, but could not create default social"
+  "profile_created_default_social_failed": "⚠️ Profile created, but could not create default social",
+  "organizer_faq": {
+    "title": "Frequently asked questions",
+    "public_subtitle": "Useful info before you attend",
+    "intro": "Add answers about pricing, schedules, location, levels, or payment. Changes are saved when you tap Save in the top bar.",
+    "add_question": "+ Add question",
+    "add_menu_title": "Start with…",
+    "add_blank": "Blank question",
+    "question": "Question",
+    "answer": "Answer",
+    "question_placeholder": "e.g. Is there parking?",
+    "answer_placeholder": "Clear text. Use bullet lists; links: [label](https://…)",
+    "answer_hint_markdown": "Light Markdown: lists (- or 1.) and links [label](url).",
+    "preview": "Preview",
+    "move_up": "Move up",
+    "move_down": "Move down",
+    "delete": "Delete",
+    "deleted_toast": "Question removed.",
+    "empty_title": "No FAQs yet",
+    "empty_hint": "Help attendees with pricing, schedules, or location. Tap Add question to get started.",
+    "counter": "{{current}}/{{total}}",
+    "untitled": "Question {{n}}",
+    "drag_handle_label": "Drag to reorder",
+    "validation_toast": "In FAQ, fill both question and answer on each row, or remove the incomplete row.",
+    "templates": {
+      "costs": {
+        "label": "Pricing & tickets",
+        "question": "How much is admission?",
+        "answer": "- Door: $[AMOUNT]\n- Presale: [DETAIL]\n\nMore info: [your site](https://example.com)"
+      },
+      "schedule": {
+        "label": "Schedule",
+        "question": "What time does it start and end?",
+        "answer": "Doors: [TIME]\nSocial starts: [TIME]\nApprox. end: [TIME]\n\nNote: times may change; [updates on socials](https://example.com)"
+      },
+      "location": {
+        "label": "Location & access",
+        "question": "Where is it and how do I get there?",
+        "answer": "Address: [ADDRESS]\n\n- Parking: [YES/NO + detail]\n- Landmarks: [MEETING POINT]\n\nMap: [maps link](https://maps.google.com)"
+      },
+      "levels": {
+        "label": "Level & music",
+        "question": "What dance level is it? What music will play?",
+        "answer": "Level: [BEGINNER / MIXED / ADVANCED]\n\nStyles / rhythms: [LIST]\n\nDJ rotation: [YES / NO]"
+      },
+      "payment": {
+        "label": "Payment methods",
+        "question": "Which payment methods do you accept?",
+        "answer": "- Cash\n- Bank transfer: [DETAILS]\n- Card: [YES/NO]\n\nImportant: [REFUND / CHANGE POLICY]"
+      },
+      "atmosphere": {
+        "label": "Vibe & dress code",
+        "question": "What is the vibe? Is there a dress code?",
+        "answer": "Vibe: [SHORT DESCRIPTION]\n\nDress code: [FORMAL / CASUAL / THEME]\n\nPartner rotation policy: [DETAIL]"
+      },
+      "requirements": {
+        "label": "Requirements & age",
+        "question": "Is there a minimum age or entry requirements?",
+        "answer": "Age: [E.G. 18+]\n\nID required: [YES/NO]\n\nOther rules: [SHORT LIST]"
+      }
+    }
+  }
 }
 

@@ -37,7 +37,8 @@ function formatHHMM(t?: string): string {
   return String(t);
 }
 
-function extractLugarNombre(lugar?: string | null): string {
+/** Same trimming as event cards for venue line. */
+export function extractLugarNombre(lugar?: string | null): string {
   if (!lugar || typeof lugar !== "string") return "";
   const s = String(lugar).trim();
   const separadores = [" · ", " ·", "· ", ",", " – ", " - "];
@@ -47,7 +48,8 @@ function extractLugarNombre(lugar?: string | null): string {
   return s;
 }
 
-function resolveFlyerUrl(item: any): string | undefined {
+/** Flyer image URL: flyer_url → p1 → avatar → portada → first media (aligned with Explore cards). */
+export function resolveFlyerUrlForEventDate(item: any): string | undefined {
   const toUrl = (u: string | null | undefined) =>
     u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined;
   if (item.flyer_url) return toUrl(item.flyer_url);
@@ -124,7 +126,7 @@ export function normalizeEventsForCards(
       }
     }
 
-    const flyerUrl = resolveFlyerUrl(e);
+    const flyerUrl = resolveFlyerUrlForEventDate(e);
     const sortKey = `${fechaYmd ?? ""}|${horaHm}|${e.id ?? ""}`;
 
     return {

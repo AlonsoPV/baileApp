@@ -144,6 +144,7 @@ function formatHoraRange(horaInicio?: string | null, horaFin?: string | null) {
 }
 
 function toWeekdayNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n)) return null;
   if (n < 0 || n > 6) return null;

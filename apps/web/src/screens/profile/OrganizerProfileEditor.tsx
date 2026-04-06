@@ -7,8 +7,6 @@ import { useParentsByOrganizer, useDeleteParent, useDatesByParent, useDeleteDate
 import { useEventDatesByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useCreateEventDate } from "../../hooks/useEventDate";
-import { MediaUploader } from "../../components/MediaUploader";
-import { MediaGrid } from "../../components/MediaGrid";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import { useToast } from "../../components/Toast";
 import ProfileToolbar from "../../components/profile/ProfileToolbar";
@@ -16,12 +14,10 @@ import { Chip } from "../../components/profile/Chip";
 import { useTags } from "../../hooks/useTags";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
 import ImageWithFallback from "../../components/ImageWithFallback";
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import { supabase } from "../../lib/supabase";
-import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
-import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
+import OrganizerGalleryEditor from "../../components/profile/gallery/OrganizerGalleryEditor";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useDrafts } from "../../state/drafts";
 import { useRoleChange } from "../../hooks/useRoleChange";
@@ -48,6 +44,12 @@ import { FaInstagram, FaFacebookF, FaWhatsapp, FaGlobe, FaTelegram } from 'react
 import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
 import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
 import { useQueryClient } from "@tanstack/react-query";
+import OrganizerFaqEditor from "../../components/organizer/OrganizerFaqEditor";
+import {
+  findInvalidOrganizerFaq,
+  parseOrganizerFaqFromDb,
+  sanitizeOrganizerFaqForSave,
+} from "../../utils/organizerFaq";
 import EventDatesSheet from "../../components/events/EventDatesSheet";
 import EventDateFullDrawer from "../../components/events/EventDateFullDrawer";
 import PendingFlyersPanel from "../../components/events/PendingFlyersPanel";
@@ -611,7 +613,7 @@ export default function OrganizerProfileEditor() {
   const deleteDate = useDeleteDate();
   const createParent = useCreateParent();
   const updateDate = useUpdateDate();
-  const { media, add, remove } = useOrganizerMedia();
+  const { media, add, remove, replaceMedia } = useOrganizerMedia();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<"perfil" | "metricas">("perfil");
   const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
@@ -715,6 +717,8 @@ export default function OrganizerProfileEditor() {
   const [drawerDateId, setDrawerDateId] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [independentDatesSearch, setIndependentDatesSearch] = useState('');
+  /** Búsqueda en fechas con parent_id que no está en los sociales de esta cuenta (p. ej. tras reasignar organizer_id en BD). */
+  const [mislinkedDatesSearch, setMislinkedDatesSearch] = useState('');
 
   const bulkOrganizerId = (org as any)?.id ? Number((org as any).id) : undefined;
   const patchBulkCache = useCallback((ids: number[], patch: Record<string, any>) => {
@@ -1094,7 +1098,8 @@ export default function OrganizerProfileEditor() {
         musica_tocaran: "",
         hay_estacionamiento: ""
       },
-      cuenta_bancaria: {} as BankAccountData
+      cuenta_bancaria: {} as BankAccountData,
+      faq: [] as import("../../types/organizerFaq").OrganizerFaqItem[],
     },
     preferDraft: true
   });
@@ -1136,11 +1141,19 @@ export default function OrganizerProfileEditor() {
       // Validar zonas contra el catálogo
       const validatedZonas = validateZonasAgainstCatalog(form.zonas || [], allTags);
 
+      const faqParsed = parseOrganizerFaqFromDb((form as any).faq);
+      if (findInvalidOrganizerFaq(faqParsed)) {
+        showToast(t("organizer_faq.validation_toast"), "error");
+        return;
+      }
+      const faqToSave = sanitizeOrganizerFaqForSave(faqParsed);
+
       const savedProfile = await upsert.mutateAsync({ 
         ...(form as any), 
         ritmos_seleccionados: outSelected,
         zonas: validatedZonas,
-        cuenta_bancaria: (form as any).cuenta_bancaria || {}
+        cuenta_bancaria: (form as any).cuenta_bancaria || {},
+        faq: faqToSave,
       } as any);
 
       // Refetch explícito para actualizar el estado inmediatamente
@@ -4922,11 +4935,7 @@ export default function OrganizerProfileEditor() {
                   </div>
                 </div>
               </div>
-            </>
-          )}
 
-          {activeTab === "perfil" && (
-            <>
           {/* Pagos / Stripe Payouts */}
           {approvedRoles?.approved?.includes('organizador') && user?.id && org && (
             <div className="org-editor-card" style={{ marginBottom: '3rem' }}>
@@ -6114,6 +6123,20 @@ export default function OrganizerProfileEditor() {
               {(() => {
                 // Filtrar fechas independientes (sin parent_id)
                 const independentDates = ((bulkDates as any) || []).filter((d: any) => !d.parent_id);
+
+                const parentIdsInProfile = new Set(
+                  (parents || [])
+                    .map((p: any) => Number(p?.id))
+                    .filter((n: number) => Number.isFinite(n))
+                );
+                // organizer_id ya es el de esta cuenta, pero el social (events_parent) sigue asociado a otra cuenta → no aparece en `parents`
+                const mislinkedDates = ((bulkDates as any) || []).filter((d: any) => {
+                  const pid = d?.parent_id;
+                  if (pid == null || pid === "") return false;
+                  const n = Number(pid);
+                  if (!Number.isFinite(n)) return false;
+                  return !parentIdsInProfile.has(n);
+                });
                 
                 // Clasificar fechas independientes en disponibles y pasadas
                 // NOTA: No usar useMemo aquí porque estamos dentro de una IIFE (viola reglas de hooks)
@@ -6223,6 +6246,50 @@ export default function OrganizerProfileEditor() {
                 };
                 const independentAvailableFiltered = independentAvailable.filter((d: any) => matchIndependentSearch(d, independentDatesSearch));
                 const independentPastFiltered = independentPast.filter((d: any) => matchIndependentSearch(d, independentDatesSearch));
+
+                const mislinkedAvailable = mislinkedDates.filter((d: any) => {
+                  try {
+                    const displayYmd = getDisplayFechaYmd(d);
+                    if (!displayYmd) return false;
+                    const dateObj = parseLocalYmd(displayYmd);
+                    if (!dateObj) return false;
+                    dateObj.setHours(0, 0, 0, 0);
+                    return dateObj >= today;
+                  } catch {
+                    return false;
+                  }
+                });
+                const mislinkedPast = mislinkedDates
+                  .filter((d: any) => {
+                    try {
+                      if (d.dia_semana !== null && d.dia_semana !== undefined && typeof d.dia_semana === "number") {
+                        return false;
+                      }
+                      const displayYmd = getDisplayFechaYmd(d);
+                      if (!displayYmd) return false;
+                      const dateObj = parseLocalYmd(displayYmd);
+                      if (!dateObj) return false;
+                      dateObj.setHours(0, 0, 0, 0);
+                      return dateObj < today;
+                    } catch {
+                      return false;
+                    }
+                  })
+                  .sort((a: any, b: any) => {
+                    const da = parseLocalYmd(a.fecha);
+                    const db = parseLocalYmd(b.fecha);
+                    if (!da || !db) return 0;
+                    return db.getTime() - da.getTime();
+                  });
+
+                const matchMislinkedSearch = (d: any, q: string) => {
+                  if (!q || !q.trim()) return true;
+                  const term = q.trim().toLowerCase();
+                  const pid = d?.parent_id != null ? String(d.parent_id) : "";
+                  return matchIndependentSearch(d, q) || pid.includes(term);
+                };
+                const mislinkedAvailableFiltered = mislinkedAvailable.filter((d: any) => matchMislinkedSearch(d, mislinkedDatesSearch));
+                const mislinkedPastFiltered = mislinkedPast.filter((d: any) => matchMislinkedSearch(d, mislinkedDatesSearch));
                 
                 return (
                   <>
@@ -6259,6 +6326,113 @@ export default function OrganizerProfileEditor() {
                         ))}
                       </motion.div>
                     ) : null}
+
+                    {/* Fechas con parent_id que no corresponde a un social de esta cuenta (p. ej. organizer_id movido en BD) */}
+                    {mislinkedDates.length > 0 && (
+                      <div
+                        className="dates-block"
+                        style={{ marginTop: parents && parents.length > 0 ? "2rem" : 0 }}
+                        data-test-id="organizer-mislinked-dates"
+                      >
+                        <div className="dates-section-search-wrap">
+                          <input
+                            id="org-dates-filter-mislinked"
+                            type="text"
+                            role="searchbox"
+                            inputMode="search"
+                            enterKeyHint="search"
+                            className="dates-section-search"
+                            placeholder="Buscar por nombre, fecha, parent_id…"
+                            value={mislinkedDatesSearch}
+                            onChange={(e) => setMislinkedDatesSearch(e.target.value)}
+                            aria-label="Buscar fechas con social ajeno"
+                            name="org-dates-filter-mislinked"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            data-lpignore="true"
+                          />
+                        </div>
+                        {mislinkedAvailable.length > 0 && (
+                          <details className="dates-section dates-section--available" open>
+                            <summary>
+                              <span className="dates-section-title">
+                                <span className="dates-section-icon available">✓</span>
+                                Próximas (social no listado)
+                                <span className="dates-section-count">
+                                  ({mislinkedAvailableFiltered.length}
+                                  {mislinkedDatesSearch.trim() ? ` de ${mislinkedAvailable.length}` : ""})
+                                </span>
+                              </span>
+                              <span className="dates-chevron">▼</span>
+                            </summary>
+                            <div className="dates-section-inner">
+                              <EventDatesSheet
+                                rows={mislinkedAvailableFiltered.map((d: any) => ({
+                                  ...d,
+                                  fecha: getDisplayFechaYmd(d) || d.fecha,
+                                }))}
+                                variant="embedded"
+                                showHeader={false}
+                                onOpenRow={(id) => {
+                                  setDrawerDateId(Number(id));
+                                  setDrawerOpen(true);
+                                }}
+                                onStartFrecuentes={(fromDateId) => {
+                                  const params = new URLSearchParams(location.search);
+                                  params.set("mode", "frecuentes");
+                                  params.set("fromDateId", String(fromDateId));
+                                  navigate({ pathname: location.pathname, search: params.toString() });
+                                }}
+                                onViewRow={(id) => navigate(`/social/fecha/${id}`)}
+                                onDeleteRow={(row) => handleDeleteDate(row as any)}
+                                onDeleteRows={deleteDatesBulk as any}
+                                deletingRowId={deletingDateId as any}
+                              />
+                            </div>
+                          </details>
+                        )}
+                        {mislinkedPast.length > 0 && (
+                          <details className="dates-section dates-section--past" style={{ marginTop: "0.75rem" }}>
+                            <summary>
+                              <span className="dates-section-title">
+                                <span className="dates-section-icon past">⏱</span>
+                                Pasadas (social no listado)
+                                <span className="dates-section-count">
+                                  ({mislinkedPastFiltered.length}
+                                  {mislinkedDatesSearch.trim() ? ` de ${mislinkedPast.length}` : ""})
+                                </span>
+                              </span>
+                              <span className="dates-chevron">▼</span>
+                            </summary>
+                            <div className="dates-section-inner">
+                              <EventDatesSheet
+                                rows={mislinkedPastFiltered.map((d: any) => ({
+                                  ...d,
+                                  fecha: getDisplayFechaYmd(d) || d.fecha,
+                                }))}
+                                variant="embedded"
+                                showHeader={false}
+                                onOpenRow={(id) => {
+                                  setDrawerDateId(Number(id));
+                                  setDrawerOpen(true);
+                                }}
+                                onStartFrecuentes={(fromDateId) => {
+                                  const params = new URLSearchParams(location.search);
+                                  params.set("mode", "frecuentes");
+                                  params.set("fromDateId", String(fromDateId));
+                                  navigate({ pathname: location.pathname, search: params.toString() });
+                                }}
+                                onViewRow={(id) => navigate(`/social/fecha/${id}`)}
+                                onDeleteRow={(row) => handleDeleteDate(row as any)}
+                                onDeleteRows={deleteDatesBulk as any}
+                                deletingRowId={deletingDateId as any}
+                              />
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                    )}
                     
                     {/* Fechas independientes (sin parent_id) */}
                     {independentDates.length > 0 && (
@@ -6361,7 +6535,7 @@ export default function OrganizerProfileEditor() {
                       </div>
                     )}
                     
-                    {!parents?.length && independentDates.length === 0 && (
+                    {!parents?.length && independentDates.length === 0 && mislinkedDates.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -6433,51 +6607,56 @@ export default function OrganizerProfileEditor() {
             />
           </div>
 
-          {/* Sección de Fotos - Dos Columnas */}
-          <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem', alignItems: 'stretch' }}>
-            {/* Columna 1: Avatar / Foto Principal */}
-            <PhotoManagementSection
-              media={media}
-              uploading={uploading}
-              removing={removing}
-              uploadFile={uploadFile}
-              removeFile={removeFile}
-              title="📷 Gestión de Fotos"
-              description="👤 Avatar / Foto Principal (p1)"
-              slots={['p1']}
-              isMainPhoto={true}
-              imageVersion={(org as any)?.updated_at}
+          <OrganizerGalleryEditor
+            media={media as any[]}
+            onUploadPhoto={(file, slot) => uploadFile(file, slot, "photo")}
+            onRemovePhoto={removeFile}
+            onReplaceMedia={async (nextMedia) => {
+              await replaceMedia.mutateAsync(nextMedia);
+              showToast("Orden de galería actualizado", "success");
+            }}
+            busySlots={new Set([
+              ...Object.entries(uploading)
+                .filter(([, busy]) => Boolean(busy))
+                .map(([slot]) => slot),
+              ...Object.entries(removing)
+                .filter(([, busy]) => Boolean(busy))
+                .map(([slot]) => slot),
+            ])}
+          />
+
+          {/* FAQ del organizador (perfil público) — debajo de galería de fotos */}
+          <div
+            id="organizer-faq-editor"
+            data-test-id="organizer-faq-editor"
+            className="org-editor-card"
+            style={{
+              marginBottom: "3rem",
+              marginTop: "3rem",
+              position: "relative",
+              overflow: "hidden",
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "linear-gradient(135deg, rgba(19,21,27,0.92), rgba(16,18,24,0.92))",
+              padding: "1.35rem",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 4,
+                background: "linear-gradient(90deg, #00BCD4, #1E88E5, #7C4DFF)",
+              }}
             />
-
-            {/* Columna 2: Fotos Destacadas */}
-          {/*   <PhotoManagementSection
-              media={media}
-              uploading={uploading}
-              removing={removing}
-              uploadFile={uploadFile}
-              removeFile={removeFile}
-              title="📷 Fotos Destacadas (p2 - p3)"
-              description="Estas fotos se usan en las secciones destacadas de tu perfil"
-              slots={['p2', 'p3']}
-              isMainPhoto={false}
-              verticalLayout={true}
-              imageVersion={(org as any)?.updated_at}
-            /> */}
+            <OrganizerFaqEditor
+              value={parseOrganizerFaqFromDb((form as any).faq)}
+              onChange={(next) => setField("faq" as any, next as any)}
+              disabled={upsert.isPending}
+            />
           </div>
-
-          {/* Sección de Fotos Adicionales */}
-      {/*     <PhotoManagementSection
-            media={media}
-            uploading={uploading}
-            removing={removing}
-            uploadFile={uploadFile}
-            removeFile={removeFile}
-            title="📷 Fotos Adicionales (p4-p10)"
-            description="Estas fotos aparecerán en la galería de tu perfil"
-            slots={['p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10']}
-            isMainPhoto={false}
-            imageVersion={(org as any)?.updated_at}
-          /> */}
 
           {/* Sección de Videos comentada
           <VideoManagementSection

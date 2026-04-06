@@ -1008,6 +1008,67 @@
   "configure_base_date_tooltip": "Configura la fecha base para habilitar acciones rápidas",
   "sending": "⏳ Enviando...",
   "submit_for_review": "📤 Enviar para Revisión",
-  "profile_created_default_social_failed": "⚠️ Perfil creado, pero no se pudo crear el social por defecto"
+  "profile_created_default_social_failed": "⚠️ Perfil creado, pero no se pudo crear el social por defecto",
+  "organizer_faq": {
+    "title": "Preguntas frecuentes",
+    "public_subtitle": "Información útil antes de asistir",
+    "intro": "Añade dudas sobre costos, horarios, ubicación, niveles o formas de pago. Los cambios se guardan al pulsar Guardar en la barra superior.",
+    "add_question": "+ Agregar pregunta",
+    "add_menu_title": "Empezar con…",
+    "add_blank": "Pregunta en blanco",
+    "question": "Pregunta",
+    "answer": "Respuesta",
+    "question_placeholder": "Ej. ¿Hay estacionamiento?",
+    "answer_placeholder": "Texto claro. Listas con guiones; enlaces: [texto](https://…)",
+    "answer_hint_markdown": "Markdown ligero: listas (- o 1.) y enlaces [etiqueta](url).",
+    "preview": "Vista previa",
+    "move_up": "Subir",
+    "move_down": "Bajar",
+    "delete": "Eliminar",
+    "deleted_toast": "Pregunta eliminada.",
+    "empty_title": "Aún no hay preguntas frecuentes",
+    "empty_hint": "Ayuda a tus asistentes con respuestas sobre precios, horarios o ubicación. Pulsa Agregar pregunta para empezar.",
+    "counter": "{{current}}/{{total}}",
+    "untitled": "Pregunta {{n}}",
+    "drag_handle_label": "Arrastrar para reordenar",
+    "validation_toast": "En el FAQ, completa pregunta y respuesta en cada fila o elimina la fila vacía.",
+    "templates": {
+      "costs": {
+        "label": "Costos y boletos",
+        "question": "¿Cuánto cuesta la entrada?",
+        "answer": "- Taquilla: $[IMPORTE]\n- Preventa: [DETALLE]\n\nMás info: [tu sitio o link](https://ejemplo.com)"
+      },
+      "schedule": {
+        "label": "Horarios",
+        "question": "¿A qué hora empieza y termina?",
+        "answer": "Puertas: [HORA]\nInicio social: [HORA]\nCierre aproximado: [HORA]\n\nNota: los horarios pueden cambiar; [aviso en redes](https://ejemplo.com)"
+      },
+      "location": {
+        "label": "Ubicación y acceso",
+        "question": "¿Dónde es y cómo llego?",
+        "answer": "Dirección: [DIRECCIÓN]\n\n- Estacionamiento: [SÍ/NO + detalle]\n- Referencias: [PUNTO DE ENCUENTRO]\n\nMapa: [enlace a maps](https://maps.google.com)"
+      },
+      "levels": {
+        "label": "Nivel y música",
+        "question": "¿Qué nivel de baile hay? ¿Qué música tocarán?",
+        "answer": "Nivel: [PRINCIPIANTE / MIXTO / AVANZADO]\n\nEstilos / ritmos: [LISTA]\n\nRotación de DJs: [SÍ / NO]"
+      },
+      "payment": {
+        "label": "Formas de pago",
+        "question": "¿Qué métodos de pago aceptan?",
+        "answer": "- Efectivo\n- Transferencia: [DATOS]\n- Tarjeta: [SÍ/NO]\n\nImportante: [POLÍTICA DE REEMBOLSOS O CAMBIOS]"
+      },
+      "atmosphere": {
+        "label": "Ambiente y dress code",
+        "question": "¿Cómo es el ambiente? ¿Hay código de vestimenta?",
+        "answer": "Ambiente: [DESCRIPCIÓN BREVE]\n\nDress code: [FORMAL / CASUAL / TEMA]\n\nPolítica de parejas / rotación: [DETALLE]"
+      },
+      "requirements": {
+        "label": "Requisitos y edad",
+        "question": "¿Hay edad mínima o requisitos para entrar?",
+        "answer": "Edad: [EJ. 18+]\n\nIdentificación: [SÍ/NO]\n\nOtras normas: [LISTA CORTA]"
+      }
+    }
+  }
 }
 

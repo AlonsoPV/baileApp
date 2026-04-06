@@ -100,12 +100,17 @@ export function normalizeRitmosToSlugs(
   const slugs: string[] = [];
   const validCatalogSlugs = getValidCatalogSlugSet();
 
-  // 1) Prioridad máxima: ritmos_seleccionados (ya son slugs)
+  // 1) Prioridad máxima: ritmos_seleccionados (ya son slugs del catálogo)
+  // Si el array existe pero ningún valor es válido (datos viejos, typos, IDs en vez de slugs),
+  // NO devolver [] aquí: seguir con ritmos numéricos / tags para que los chips sí se vean.
   if (Array.isArray(profile?.ritmos_seleccionados) && profile.ritmos_seleccionados.length > 0) {
-    return profile.ritmos_seleccionados
-      .filter((s: any) => typeof s === 'string')
+    const fromSeleccionados = profile.ritmos_seleccionados
+      .filter((s: any) => typeof s === 'string' && String(s).trim().length > 0)
       .map((s: string) => normalizeCatalogSlug(s))
       .filter((s: string) => validCatalogSlugs.has(s));
+    if (fromSeleccionados.length > 0) {
+      return [...new Set(fromSeleccionados)];
+    }
   }
 
   const tagList: Array<{ id: number; nombre: string; tipo?: string; slug?: string }> = Array.isArray(allTags)

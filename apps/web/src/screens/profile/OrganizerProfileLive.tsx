@@ -7,21 +7,28 @@ import { useEventParentsByOrganizer, useEventDatesByOrganizer } from "../../hook
 import { useOrganizerMedia } from "../../hooks/useOrganizerMedia";
 import { useTags } from "../../hooks/useTags";
 import { fmtDate } from "../../utils/format";
+import { getLocale } from "../../utils/locale";
+import { getEventDatePriceChipLabel } from "../../utils/eventCosts";
+import { extractLugarNombre, resolveFlyerUrlForEventDate } from "../../utils/normalizeEventsForCards";
 import RitmosChips from "../../components/RitmosChips";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
+import { formatEventTimeHHMM, localDateTimeFromYmdAndHhMm, normalizeEventDateYmd } from "../../utils/eventDateDisplay";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
 import InvitedMastersSection from "../../components/profile/InvitedMastersSection";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import RequireLogin from "@/components/auth/RequireLogin";
 import { BioSection } from "../../components/profile/BioSection";
+import OrganizerPublicFaqSection from "../../components/organizer/OrganizerPublicFaqSection";
+import { parseOrganizerFaqFromDb } from "../../utils/organizerFaq";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
+import OrganizerPublicGallery from "../../components/profile/gallery/OrganizerPublicGallery";
 import { buildShareUrl } from "@/utils/shareUrls";
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
@@ -1093,7 +1100,7 @@ const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
 CarouselComponent.displayName = 'CarouselComponent';
 
 export function OrganizerProfileLive() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: org, isLoading, error, isError } = useMyOrganizer();
   const { data: parents } = useEventParentsByOrganizer((org as any)?.id);
@@ -1110,7 +1117,8 @@ export function OrganizerProfileLive() {
   }, [isLoading, org, isError, navigate]);
 
   const toWeekdayNumber = useCallback((value: unknown): number | null => {
-    const n = typeof value === 'number' ? value : Number(value);
+    if (value === null || value === undefined || value === "") return null;
+    const n = typeof value === "number" ? value : Number(value);
     if (!Number.isFinite(n) || n < 0 || n > 6) return null;
     return n;
   }, []);
@@ -1185,9 +1193,15 @@ export function OrganizerProfileLive() {
     }
   }, [parents]);
 
+  const organizerFaqItems = useMemo(
+    () => parseOrganizerFaqFromDb((org as any)?.faq),
+    [org]
+  );
+
   // Preparar items de "Fechas" (maneja también eventos recurrentes semanales)
   const inviteItems = useMemo(() => {
     const items: any[] = [];
+    const localeTag = getLocale(i18n.language || "es");
 
     const getTodayCDMX = () => {
       const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -1222,13 +1236,11 @@ export function OrganizerProfileLive() {
     const todayCDMX = getTodayCDMX();
     const nowCDMX = getNowCDMX();
 
-    const parseLocalYmd = (value: string) => {
-      const plain = String(value).split('T')[0];
-      const [y, m, d] = plain.split('-').map((n) => parseInt(n, 10));
-      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
-        const fallback = new Date(value);
-        return Number.isNaN(fallback.getTime()) ? null : fallback;
-      }
+    const parseLocalYmd = (value: unknown) => {
+      const ymd = normalizeEventDateYmd(value);
+      if (!ymd) return null;
+      const [y, m, d] = ymd.split("-").map((n) => parseInt(n, 10));
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
       return new Date(y, m - 1, d);
     };
 
@@ -1274,7 +1286,8 @@ export function OrganizerProfileLive() {
           return true;
         }
 
-        const fechaStr = String(d.fecha).split('T')[0];
+        const fechaStr = normalizeEventDateYmd(d.fecha);
+        if (!fechaStr) return false;
         const dateObj = parseLocalYmd(d.fecha);
         if (!dateObj) return false;
 
@@ -1312,44 +1325,27 @@ export function OrganizerProfileLive() {
     });
 
     futureDates.forEach((date) => {
-      const fechaNombre = (date as any).nombre || `Fecha ${fmtDate(date.fecha)}`;
-
-      const horaFormateada = date.hora_inicio && date.hora_fin
-        ? `${date.hora_inicio} - ${date.hora_fin}`
-        : date.hora_inicio || '';
+      const fechaYmd = normalizeEventDateYmd((date as any).fecha) ?? "";
+      const fechaNombre =
+        (date as any).nombre || (fechaYmd ? `Fecha ${fmtDate(fechaYmd, localeTag)}` : "Fecha");
+      const hi = formatEventTimeHHMM(date.hora_inicio as string | undefined);
+      const hf = formatEventTimeHHMM(date.hora_fin as string | undefined);
+      const horaFormateada = hi && hf ? `${hi} - ${hf}` : hi || "";
+      const flyerUrl = resolveFlyerUrlForEventDate(date);
+      const priceLabel = getEventDatePriceChipLabel(date, localeTag);
+      const placeShort = extractLugarNombre((date.lugar || date.ciudad || "") as string) || (date.ciudad || date.lugar || "");
 
       items.push({
         id: date._original_id || date.id,
         nombre: fechaNombre,
-        date: fmtDate(date.fecha),
+        date: fechaYmd ? fmtDate(fechaYmd, localeTag) : "",
         time: horaFormateada,
-        place: date.lugar || date.ciudad || '',
+        place: placeShort,
         href: `/social/fecha/${date._original_id || date.id}`,
-        cover: (() => {
-          const raw = Array.isArray(date.media) && date.media.length > 0
-            ? (date.media[0] as any)?.url || date.media[0]
-            : undefined;
-          return raw ? (toDirectPublicStorageUrl(raw) || raw) : undefined;
-        })(),
-        flyer: (() => {
-          const raw = (date as any).flyer_url
-            || (Array.isArray(date.media) && date.media.length > 0
-              ? (date.media[0] as any)?.url || date.media[0]
-              : undefined);
-          return raw ? (toDirectPublicStorageUrl(raw) || raw) : undefined;
-        })(),
-        price: (() => {
-          const costos = (date as any)?.costos;
-          if (Array.isArray(costos) && costos.length) {
-            const nums = costos.map((c: any) => (typeof c?.precio === 'number' ? c.precio : null)).filter((n: any) => n !== null);
-            if (nums.length) {
-              const min = Math.min(...(nums as number[]));
-              return min >= 0 ? `$${min.toLocaleString()}` : undefined;
-            }
-          }
-          return undefined;
-        })(),
-        fecha: date.fecha,
+        cover: flyerUrl,
+        flyer: flyerUrl,
+        price: priceLabel,
+        fecha: fechaYmd || date.fecha,
         hora_inicio: date.hora_inicio,
         hora_fin: date.hora_fin,
         lugar: date.lugar || date.ciudad || date.direccion,
@@ -1359,7 +1355,7 @@ export function OrganizerProfileLive() {
     });
 
     return items;
-  }, [eventDates, toWeekdayNumber]);
+  }, [eventDates, toWeekdayNumber, i18n.language]);
 
   const DateFlyerSlider: React.FC<{ items: any[]; onOpen: (href: string) => void }> = ({ items, onOpen }) => {
     const [idx, setIdx] = React.useState(0);
@@ -1368,37 +1364,49 @@ export function OrganizerProfileLive() {
     
     const calendarStart = (() => {
       try {
-        if (!ev.fecha) return new Date();
-        const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
-        const hora = (ev.hora_inicio || '20:00').split(':').slice(0, 2).join(':');
-        const fechaCompleta = `${fechaStr}T${hora}:00`;
-        const parsed = new Date(fechaCompleta);
-        return isNaN(parsed.getTime()) ? new Date() : parsed;
+        if (ev.dia_semana !== null && ev.dia_semana !== undefined && typeof ev.dia_semana === "number") {
+          const horaInicio = (ev.hora_inicio || "20:00").split(":").slice(0, 2).join(":");
+          return calculateNextDateWithTime(ev.dia_semana, horaInicio);
+        }
+        const ymd = normalizeEventDateYmd(ev.fecha);
+        if (!ymd) return new Date();
+        const parsed = localDateTimeFromYmdAndHhMm(ymd, formatEventTimeHHMM(ev.hora_inicio as string | undefined) || "20:00");
+        return parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date();
       } catch (err) {
-        console.error('[DateFlyerSlider] Error parsing start date:', err);
+        console.error("[DateFlyerSlider] Error parsing start date:", err);
         return new Date();
       }
     })();
 
     const calendarEnd = (() => {
       try {
-        if (!ev.fecha) {
+        if (ev.dia_semana !== null && ev.dia_semana !== undefined && typeof ev.dia_semana === "number") {
+          const horaFin = (ev.hora_fin || ev.hora_inicio || "23:00").split(":").slice(0, 2).join(":");
+          const startDate = calculateNextDateWithTime(ev.dia_semana, (ev.hora_inicio || "20:00").split(":").slice(0, 2).join(":"));
+          const [hora, minutos] = horaFin.split(":").map(Number);
+          const endDate = new Date(startDate);
+          endDate.setHours(hora || 23, minutos || 0, 0, 0);
+          return endDate;
+        }
+        const ymd = normalizeEventDateYmd(ev.fecha);
+        if (!ymd) {
           const defaultEnd = new Date(calendarStart);
           defaultEnd.setHours(defaultEnd.getHours() + 2);
           return defaultEnd;
         }
-        const fechaStr = ev.fecha.includes('T') ? ev.fecha.split('T')[0] : ev.fecha;
-        const hora = (ev.hora_fin || ev.hora_inicio || '23:59').split(':').slice(0, 2).join(':');
-        const fechaCompleta = `${fechaStr}T${hora}:00`;
-        const parsed = new Date(fechaCompleta);
-        if (isNaN(parsed.getTime())) {
+        const endHhmm =
+          formatEventTimeHHMM(ev.hora_fin as string | undefined) ||
+          formatEventTimeHHMM(ev.hora_inicio as string | undefined) ||
+          "23:59";
+        const parsed = localDateTimeFromYmdAndHhMm(ymd, endHhmm);
+        if (!parsed || Number.isNaN(parsed.getTime())) {
           const defaultEnd = new Date(calendarStart);
           defaultEnd.setHours(defaultEnd.getHours() + 2);
           return defaultEnd;
         }
         return parsed;
       } catch (err) {
-        console.error('[DateFlyerSlider] Error parsing end date:', err);
+        console.error("[DateFlyerSlider] Error parsing end date:", err);
         const defaultEnd = new Date(calendarStart);
         defaultEnd.setHours(defaultEnd.getHours() + 2);
         return defaultEnd;
@@ -1926,6 +1934,10 @@ export function OrganizerProfileLive() {
             />
           </motion.div>
 
+          {organizerFaqItems.some((x) => x.q.trim() && x.a.trim()) && (
+            <OrganizerPublicFaqSection items={organizerFaqItems} />
+          )}
+
           {aggregatedLocations.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
@@ -2137,46 +2149,11 @@ export function OrganizerProfileLive() {
           )}
           */}
 
-          {/* {carouselPhotos.length > 0 && (
-            <motion.section
-              id="organizer-profile-photo-gallery"
-              data-baile-id="organizer-profile-photo-gallery"
-              data-test-id="organizer-profile-photo-gallery"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="gallery-section glass-card-container"
-            >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1.5rem'
-              }}>
-                <h3 className="section-title">
-                  {t('photo_gallery')}
-                </h3>
-                <div style={{
-                  padding: '0.5rem 1rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '20px',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: colors.light
-                }}>
-                  {t('photo_count', { count: carouselPhotos.length })}
-                </div>
-              </div>
-
-              <CarouselComponent photos={carouselPhotos} />
-            </motion.section>
-          )} */}
-
           {((org as any)?.respuestas?.musica_tocaran || (org as any)?.respuestas?.hay_estacionamiento) && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
+              transition={{ delay: 0.5 }}
               className="glass-card"
               style={{
                 marginBottom: spacing[8],
@@ -2233,6 +2210,12 @@ export function OrganizerProfileLive() {
               </div>
             </motion.section>
           )}
+
+          {carouselPhotos.length > 0 ? (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+              <OrganizerPublicGallery photos={carouselPhotos} title={t("photo_gallery")} />
+            </motion.div>
+          ) : null}
         </div>
       </div>
     </>

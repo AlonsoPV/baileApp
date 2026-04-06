@@ -235,3 +235,23 @@ export function getMonto(c: EventCosto | null): number | null {
 export function formatCostoMonto(monto: number): string {
   return `$${monto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`;
 }
+
+/**
+ * Price line for event chips / sliders: lowest taquilla, same logic as Explore cards (`normalizeEventsForCards`).
+ * Returns "Gratis" when amount is 0; undefined when no price data.
+ */
+export function getEventDatePriceChipLabel(event: any, localeTag = "es-MX"): string | undefined {
+  let n = getLowestTaquillaMonto(event);
+  if (n == null) n = getMonto(getPrimaryCost(event));
+  if (n == null) {
+    const raw = event?.costos?.[0] ?? event?.events_parent?.costos?.[0];
+    n = getMonto(raw);
+  }
+  if (n == null || Number.isNaN(n)) return undefined;
+  if (n <= 0) return "Gratis";
+  return new Intl.NumberFormat(localeTag, {
+    style: "currency",
+    currency: "MXN",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
