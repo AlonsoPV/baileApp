@@ -12,6 +12,7 @@ import ImageWithFallback from "../../components/ImageWithFallback";
 import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import { useEventRSVP } from "../../hooks/useRSVP";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
+import { normalizeEventCosts } from "../../utils/normalizeEventCosts";
 
 export function DateLiveScreen() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,7 @@ export function DateLiveScreen() {
   const { data: social } = useEventParent(date?.parent_id);
   const { data: allTags } = useTags();
   const { userStatus, stats, toggleInterested, isUpdating } = useEventRSVP(dateId);
+  const normalizedCosts = React.useMemo(() => normalizeEventCosts((date as any)?.costos || []), [date]);
   
   // Verificar si el usuario puede editar esta fecha
   const canEdit = social?.organizer_id && user?.id && 
@@ -734,7 +736,7 @@ export function DateLiveScreen() {
           )}
 
           {/* Costos */}
-          {date.costos && Array.isArray(date.costos) && date.costos.length > 0 && (
+          {normalizedCosts.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -758,7 +760,7 @@ export function DateLiveScreen() {
                 💰 Costos
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[4] }}>
-                {date.costos.map((costo: any, index: number) => (
+                {normalizedCosts.map((costo: any, index: number) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
@@ -777,26 +779,30 @@ export function DateLiveScreen() {
                       marginBottom: spacing[2],
                       color: colors.gray[50]
                     }}>
-                      {costo.titulo}
+                      {costo.name}
                     </h4>
-                    <p style={{
-                      fontSize: typography.fontSize.xl,
-                      fontWeight: typography.fontWeight.bold,
-                      color: colors.gray[50],
-                      margin: 0
-                    }}>
-                      ${costo.precio}
-                    </p>
-                    {costo.descripcion && (
+                    {costo.description && (
                       <p style={{
                         fontSize: typography.fontSize.sm,
                         color: colors.gray[200],
                         margin: 0,
                         marginTop: spacing[2]
                       }}>
-                        {costo.descripcion}
+                        {costo.description}
                       </p>
                     )}
+                    <div style={{ display: 'grid', gap: spacing[2], marginTop: spacing[2] }}>
+                      {costo.phases.map((phase: any) => (
+                        <div key={phase.id} style={{ display: 'flex', justifyContent: 'space-between', gap: spacing[2] }}>
+                          <span style={{ fontSize: typography.fontSize.sm, color: colors.gray[100] }}>{phase.name}</span>
+                          <strong style={{ fontSize: typography.fontSize.base, color: colors.gray[50] }}>
+                            {phase.price <= 0
+                              ? "Gratis"
+                              : new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(phase.price)}
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
                   </motion.div>
                 ))}
               </div>

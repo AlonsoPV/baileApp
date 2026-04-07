@@ -1,5 +1,6 @@
 import React from 'react';
 import { colors as themeColors } from '../../theme/colors';
+import { normalizeEventCosts } from '../../utils/normalizeEventCosts';
 
 type CronoItem = { titulo?: string; inicio?: string; fin?: string; nivel?: string; tipo?: string };
 type CostoItem = { nombre?: string; regla?: string; tipo?: string; precio?: number | null };
@@ -18,6 +19,7 @@ type Props = {
 
 export default function EventInfoGrid({ date }: Props) {
   const colors = themeColors;
+  const normalizedCosts = React.useMemo(() => normalizeEventCosts(date.costos || []), [date.costos]);
 
   return (
     <div className="two-col-grid">
@@ -161,7 +163,7 @@ export default function EventInfoGrid({ date }: Props) {
         </div>
       )}
 
-      {date.costos && date.costos.length > 0 && (
+      {normalizedCosts.length > 0 && (
         <div
           style={{
             background: `${colors.dark}66`,
@@ -184,7 +186,7 @@ export default function EventInfoGrid({ date }: Props) {
             💰 Costos y Promociones
           </h2>
           <div style={{ display: 'grid', gap: '16px' }}>
-            {date.costos.map((costo, index) => (
+            {normalizedCosts.map((costo, index) => (
               <div
                 key={index}
                 style={{
@@ -199,19 +201,21 @@ export default function EventInfoGrid({ date }: Props) {
               >
                 <div>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: colors.light, marginBottom: '4px' }}>
-                    {costo.nombre}
+                    {costo.name}
                   </h3>
-                  {costo.regla && (
-                    <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.8, margin: 0 }}>{costo.regla}</p>
+                  {costo.description && (
+                    <p style={{ fontSize: '0.9rem', color: colors.light, opacity: 0.8, margin: 0 }}>{costo.description}</p>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '1.5rem' }}>
-                    {costo.tipo === 'preventa' ? '🎫' : costo.tipo === 'taquilla' ? '💰' : '🎁'}
-                  </span>
-                  <span style={{ fontSize: '1.3rem', fontWeight: '700', color: colors.light }}>
-                    {costo.precio !== undefined && costo.precio !== null ? `$${costo.precio.toLocaleString()}` : 'Gratis'}
-                  </span>
+                <div style={{ display: 'grid', gap: '8px', minWidth: 180 }}>
+                  {costo.phases.map((phase) => (
+                    <div key={phase.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                      <span style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.9 }}>{phase.name}</span>
+                      <span style={{ fontSize: '0.95rem', fontWeight: '700', color: colors.light }}>
+                        {phase.price <= 0 ? 'Gratis' : `$${phase.price.toLocaleString()}`}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

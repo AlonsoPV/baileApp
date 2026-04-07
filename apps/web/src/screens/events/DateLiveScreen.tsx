@@ -13,6 +13,7 @@ import RSVPButtons from "../../components/rsvp/RSVPButtons";
 import { useToast } from "../../components/Toast";
 import { useEventRSVP } from "../../hooks/useRSVP";
 import { buildShareUrl } from "../../utils/shareUrls";
+import { normalizeEventCosts } from "../../utils/normalizeEventCosts";
 
 const colors = {
   coral: '#FF3D57',
@@ -36,6 +37,7 @@ export function DateLiveScreen() {
   const { data: allTags } = useTags();
   const { userStatus, stats, toggleInterested, isUpdating } = useEventRSVP(dateId);
   const { showToast } = useToast();
+  const normalizedCosts = React.useMemo(() => normalizeEventCosts((date as any)?.costos || []), [date]);
   
   // Verificar si el usuario puede editar esta fecha (organizer desde parent o desde fecha sin parent)
   const organizerId = social?.organizer_id ?? (date as any)?.organizer_id;
@@ -864,7 +866,7 @@ export function DateLiveScreen() {
         )}
 
         {/* Costos */}
-        {date.costos && Array.isArray(date.costos) && date.costos.length > 0 && (
+        {normalizedCosts.length > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -881,7 +883,7 @@ export function DateLiveScreen() {
               💰 Costos
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {date.costos.map((costo: any, index: number) => (
+              {normalizedCosts.map((costo: any, index: number) => (
                 <div key={index} style={{
                   padding: '1rem',
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -894,17 +896,39 @@ export function DateLiveScreen() {
                     marginBottom: '0.5rem',
                     color: colors.light,
                   }}>
-                    {costo.tipo && `${costo.tipo} - `}${costo.precio}
+                    {costo.name}
                   </h4>
-                  {costo.descripcion && (
+                  {costo.description && (
                     <p style={{
                       fontSize: '0.9rem',
                       opacity: 0.8,
                       lineHeight: 1.4,
+                      marginBottom: '0.5rem',
                     }}>
-                      {costo.descripcion}
+                      {costo.description}
                     </p>
                   )}
+                  <div style={{ display: 'grid', gap: '0.4rem' }}>
+                    {costo.phases.map((phase: any) => (
+                      <div
+                        key={phase.id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem',
+                          fontSize: '0.9rem',
+                          opacity: 0.95,
+                        }}
+                      >
+                        <span>{phase.name}</span>
+                        <strong>
+                          {phase.price <= 0
+                            ? 'Gratis'
+                            : new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(phase.price)}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

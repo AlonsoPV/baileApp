@@ -39,7 +39,7 @@ import { resolveEventDateYmd } from "../../utils/eventDateDisplay";
 import { supabase } from "../../lib/supabase";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useGuestFavorites } from "@/hooks/useGuestFavorites";
-import { normalizeEventCosts } from "../../utils/eventCosts";
+import { normalizeEventCosts } from "../../utils/normalizeEventCosts";
 
 const colors = {
   coral: '#FF3D57',

@@ -404,6 +404,21 @@ export default function FilterBar({
            filters.dateTo;
   }, [filters, showTypeFilter]);
 
+  /** Solo tipo distinto de "todos" en fechas: no mostrar número en "Limpiar (n)" — el tipo ya está visible. */
+  const onlyTypeFilterActive = React.useMemo(() => {
+    const hasNonDefaultDate =
+      Boolean(filters.dateFrom || filters.dateTo) ||
+      (Boolean(filters.datePreset) && filters.datePreset !== 'todos');
+    return (
+      showTypeFilter &&
+      filters.type !== 'all' &&
+      !filters.q &&
+      filters.ritmos.length === 0 &&
+      filters.zonas.length === 0 &&
+      !hasNonDefaultDate
+    );
+  }, [showTypeFilter, filters]);
+
   return (
     <div className={`sticky top-16 z-40 ${className}`}>
         <style>{`
@@ -731,7 +746,9 @@ export default function FilterBar({
                 icon="👥"
                 isOpen={openDropdown === 'tipos'}
                 onClick={() => toggleDropdown('tipos')}
-                activeCount={filters.type !== 'all' ? 1 : 0}
+                activeCount={
+                  onlyTypeFilterActive ? 0 : filters.type !== 'all' ? 1 : 0
+                }
                 ariaControlsId="dropdown-tipos"
               />
             )}
@@ -803,7 +820,10 @@ export default function FilterBar({
                 }}
               >
                 <span>🗑️</span>
-                <span>{t('clear')} ({activeFilterCount})</span>
+                <span>
+                  {t('clear')}
+                  {!onlyTypeFilterActive && ` (${activeFilterCount})`}
+                </span>
               </motion.button>
             )}
 

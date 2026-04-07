@@ -2356,6 +2356,7 @@ function FiltersLayout({
   onClickOverlay,
   onClearFilters,
   activeFiltersCount = 0,
+  activeFiltersIndicatorCount,
 }: {
   isMobile: boolean;
   onClose: () => void;
@@ -2366,7 +2367,10 @@ function FiltersLayout({
   onClickOverlay?: (e: React.MouseEvent) => void;
   onClearFilters?: () => void;
   activeFiltersCount?: number;
+  /** Si se omite, coincide con activeFiltersCount (retrocompatibilidad). */
+  activeFiltersIndicatorCount?: number;
 }) {
+  const indicatorCount = activeFiltersIndicatorCount ?? activeFiltersCount;
   if (!isMobile) return <>{children}</>;
   const topOffset = 'max(env(safe-area-inset-top), 16px)';
   return (
@@ -2426,7 +2430,9 @@ function FiltersLayout({
               }}
             >
               <span aria-hidden style={{ opacity: activeFiltersCount > 0 ? 1 : 0.5 }}>↩</span>
-              <span style={{ minWidth: 16, height: 16, padding: '0 4px', fontSize: 11, fontWeight: 700, background: activeFiltersCount > 0 ? 'rgba(255,106,26,0.9)' : 'rgba(255,255,255,0.3)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{activeFiltersCount}</span>
+              {indicatorCount > 0 && (
+                <span style={{ minWidth: 16, height: 16, padding: '0 4px', fontSize: 11, fontWeight: 700, background: 'rgba(255,106,26,0.9)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{indicatorCount}</span>
+              )}
             </button>
           )}
           <button
@@ -2993,6 +2999,28 @@ export default function ExploreHomeScreen() {
     if (filters.dateFrom || filters.dateTo) count += 1;
     return count;
   }, [filters.type, filters.q, stableRitmos.length, stableZonas.length, filters.dateFrom, filters.dateTo]);
+
+  /** Badge / contador: no mostrar si solo aplica el filtro de tipo (el tipo ya se ve en la UI). */
+  const activeFiltersIndicatorCount = React.useMemo(() => {
+    const hasNonDefaultDate =
+      Boolean(filters.dateFrom || filters.dateTo) ||
+      (Boolean(filters.datePreset) && filters.datePreset !== 'todos');
+    const otherThanType =
+      (filters.q ? 1 : 0) +
+      stableRitmos.length +
+      stableZonas.length +
+      (hasNonDefaultDate ? 1 : 0);
+    if (otherThanType === 0) return 0;
+    return activeFiltersCount;
+  }, [
+    activeFiltersCount,
+    filters.q,
+    stableRitmos.length,
+    stableZonas.length,
+    filters.dateFrom,
+    filters.dateTo,
+    filters.datePreset,
+  ]);
 
   // Memoizar handlePreNavigate para evitar re-renders de cards
   const handlePreNavigate = React.useCallback(() => {
@@ -4623,9 +4651,9 @@ export default function ExploreHomeScreen() {
         <circle cx="11" cy="11" r="7" />
         <path d="M20 20L16.65 16.65" strokeLinecap="round" />
       </svg>
-      {activeFiltersCount > 0 && (
+      {activeFiltersIndicatorCount > 0 && (
         <span className="filters-hero-trigger__badge">
-          {activeFiltersCount > 99 ? '99+' : activeFiltersCount}
+          {activeFiltersIndicatorCount > 99 ? '99+' : activeFiltersIndicatorCount}
         </span>
       )}
     </button>
@@ -4671,6 +4699,7 @@ export default function ExploreHomeScreen() {
                   setSearchOpen(false);
                 }}
                 activeFiltersCount={activeFiltersCount}
+                activeFiltersIndicatorCount={activeFiltersIndicatorCount}
               >
             {usingFavoriteFilters && user && (
               <motion.div

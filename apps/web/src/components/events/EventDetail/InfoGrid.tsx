@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Calendar, ChevronDown, MapPin, Copy, Ticket } from "lucide-react";
-import { normalizeEventCosts } from "../../../utils/eventCosts";
+import { normalizeCostType, normalizeEventCosts } from "../../../utils/normalizeEventCosts";
 import { getLocaleFromI18n } from "../../../utils/locale";
 
 type CostItem = {
@@ -158,7 +158,16 @@ export function InfoGrid({
                               <div className="eds-cost-board__phase-title">
                                 {phase.name}
                                 {phase.type && !phase.isFinal && (
-                                  <span className="eds-cost-board__type">{prettifyType(phase.type)}</span>
+                                  <span
+                                    className={
+                                      "eds-cost-board__type" +
+                                      (normalizeCostType(String(phase.type)) === "taquilla"
+                                        ? " eds-cost-board__type--dorada"
+                                        : "")
+                                    }
+                                  >
+                                    {prettifyType(phase.type)}
+                                  </span>
                                 )}
                                 {phase.isFinal && (
                                   <span className="eds-cost-board__badge">{t("cost_type_door", "Box office")}</span>
