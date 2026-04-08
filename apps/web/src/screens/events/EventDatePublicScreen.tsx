@@ -50,7 +50,7 @@ const colors = {
   light: '#F5F5F5',
 };
 
-/** “About the event” text: date bio → parent bio → description (avoids dropping parent bio). */
+/** “About the event” for calendar / extras: date bio → parent bio → description (avoids dropping parent bio). */
 function resolveEventAboutText(date: any, parent: any): string {
   const nested = date?.events_parent;
   const candidates = [
@@ -66,6 +66,13 @@ function resolveEventAboutText(date: any, parent: any): string {
     if (s.length > 0) return s;
   }
   return "";
+}
+
+/** Copy for `#event-section-about`: only this date’s biografía (no herencia del padre). */
+function getEventDateAboutSectionBody(date: any): string {
+  const raw = date?.biografia;
+  if (typeof raw !== "string") return "";
+  return raw.trim();
 }
 
 function buildWhatsAppUrl(phone?: string | null, message?: string | null, eventName?: string | null) {
@@ -378,6 +385,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
   const dateName = date.nombre || parent?.nombre || 'Dance event';
   const aboutText = React.useMemo(() => resolveEventAboutText(date, parent), [date, parent]);
+  const aboutSectionBody = React.useMemo(() => getEventDateAboutSectionBody(date), [date]);
   const calendarButton = (
     <AddToCalendarWithStats
       eventId={dateId}
@@ -632,22 +640,19 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
               onCopyAddress={fullAddress ? handleCopyAddress : undefined}
             />
           </section>
-          {(() => {
-            if (!aboutText) return null;
-            return (
+          {aboutSectionBody ? (
               <section id="event-section-about" className="eds-section eds-section--about">
                 <div className="eds-section-header">
                   <h2 className="eds-section-title">{t('about_event', 'About the event')}</h2>
                   <div className="eds-section-underline" aria-hidden />
                 </div>
                 <ExpandableText
-                  text={aboutText}
+                  text={aboutSectionBody}
                   expandLabel={t('see_more', 'See more')}
                   collapseLabel={t('see_less', 'See less')}
                 />
               </section>
-            );
-          })()}
+          ) : null}
           {Array.isArray(date.cronograma) && date.cronograma.length > 0 && (
             <section id="event-section-schedule" className="eds-section eds-section--schedule">
               <div className="eds-section-header">

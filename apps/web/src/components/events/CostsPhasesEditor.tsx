@@ -45,7 +45,6 @@ function emptyCost(): EventCost {
     id: makeId("cost"),
     name: "",
     type: "taquilla",
-    description: "",
     currency: "MXN",
     phases: [],
   };
@@ -157,11 +156,12 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
 
   const commitCosts = (nextCosts: EventCost[]) => {
     const withSync = nextCosts.map((cost) => {
-      const phases = normalizePhases(cost.phases || [], cost.type);
+      const phases = normalizePhases(cost.phases || [], "taquilla");
       const amountFromPhases = phases[0]?.price ?? 0;
       return {
         ...cost,
-        amount: cost.type === "gratis" ? 0 : amountFromPhases,
+        description: undefined,
+        amount: amountFromPhases,
         phases,
       };
     });
@@ -240,8 +240,7 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
     if (!cost) return;
     const nonFinalCount = cost.phases.filter((p) => !p.isFinal).length;
     const ph = emptyPhase(nonFinalCount + 1);
-    ph.type = cost.type === "gratis" ? "gratis" : "preventa";
-    if (cost.type === "gratis") ph.price = 0;
+    ph.type = "preventa";
     updateCost(costId, { phases: [...cost.phases, ph] });
     setOpenCostId(costId);
     setOpenPhaseByCost((prev) => ({ ...prev, [costId]: ph.id }));
@@ -256,7 +255,7 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
       if (next.type === "taquilla") next.isFinal = true;
       if (next.type && next.type !== "taquilla" && patch.type) next.isFinal = false;
       if (next.isFinal) next.type = "taquilla";
-      if (cost.type === "gratis") next.price = 0;
+      if (next.type === "gratis") next.price = 0;
       return next;
     });
     updateCost(costId, {
@@ -292,17 +291,17 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
               cursor: "pointer",
             }}
           >
-            + Tipo de costo
+            + Agregar costo
           </button>
         </div>
         <p style={{ margin: 0, color: "rgba(255,255,255,0.72)", fontSize: 13 }}>
-          Configura primero el tipo de costo y luego agrega sus fases (preventa, taquilla, etc.).
+          Define el nombre del costo y sus fases de precio (preventa, taquilla, etc.).
         </p>
       </div>
 
       {costs.length === 0 && (
         <div style={{ ...inputStyle, borderStyle: "dashed", textAlign: "center", opacity: 0.8 }}>
-          Agrega un tipo de costo (ej. Pulsera dorada) y después sus fases (preventa/taquilla).
+          Agrega un costo (ej. Pulsera dorada) y sus fases (preventa/taquilla).
         </div>
       )}
 
@@ -361,7 +360,6 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
                   </span>
                 )}
               </div>
-              {cost.description && <small style={{ color: "rgba(255,255,255,0.7)" }}>{cost.description}</small>}
             </div>
 
             {isOpen && (
@@ -377,37 +375,6 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
                       placeholder="Ej. Pulsera dorada"
                       onChange={(e) => updateCost(cost.id, { name: e.target.value })}
                       style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={sectionLabel}>Tipo</label>
-                    <select
-                      value={(cost.type as string) || "taquilla"}
-                      onChange={(e) => {
-                        const nextType = e.target.value as EventCostoTipo;
-                        const nextPhases =
-                          nextType === "gratis"
-                            ? cost.phases.map((p) => ({ ...p, type: "gratis", price: 0 }))
-                            : cost.phases.map((p) => ({ ...p, type: p.type === "gratis" ? "preventa" : p.type || "preventa" }));
-                        updateCost(cost.id, { type: nextType, phases: nextPhases });
-                      }}
-                      style={inputStyle}
-                    >
-                      {TYPE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={sectionLabel}>Descripción (opcional)</label>
-                    <textarea
-                      value={cost.description || ""}
-                      placeholder="Descripción breve del tipo de costo"
-                      onChange={(e) => updateCost(cost.id, { description: e.target.value })}
-                      rows={2}
-                      style={{ ...inputStyle, resize: "vertical", minHeight: 62 }}
                     />
                   </div>
                 </div>
@@ -535,17 +502,17 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
                                     type="number"
                                     min="0"
                                     step="1"
-                                    value={cost.type === "gratis" ? 0 : phase.price}
+                                    value={phase.type === "gratis" ? 0 : phase.price}
                                     onChange={(e) => updatePhase(cost.id, phase.id, { price: Math.max(0, Number(e.target.value) || 0) })}
                                     placeholder="Precio"
-                                    style={{ ...inputStyle, opacity: cost.type === "gratis" ? 0.6 : 1 }}
-                                    disabled={cost.type === "gratis"}
+                                    style={{ ...inputStyle, opacity: phase.type === "gratis" ? 0.6 : 1 }}
+                                    disabled={phase.type === "gratis"}
                                   />
                                 </div>
                                 <div>
                                   <label style={sectionLabel}>Tipo fase</label>
                                   <select
-                                    value={(phase.type as string) || (cost.type as string) || "preventa"}
+                                    value={(phase.type as string) || "preventa"}
                                     onChange={(e) => {
                                       const nextType = e.target.value as EventCostoTipo;
                                       updatePhase(cost.id, phase.id, {
@@ -659,7 +626,7 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
                       marginRight: 8,
                     }}
                   >
-                    Duplicar tipo
+                    Duplicar
                   </button>
                   <button
                     type="button"
@@ -674,7 +641,7 @@ export default function CostsPhasesEditor({ value, onChange }: Props) {
                       cursor: "pointer",
                     }}
                   >
-                    Eliminar tipo
+                    Eliminar
                   </button>
                 </div>
               </div>

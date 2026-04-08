@@ -61,9 +61,29 @@ export function InfoGrid({
   const freeText = freeLabel ?? t("free", "Free");
   const locationLabel = [venueName, city].filter(Boolean).join(", ") || venueName || city;
   const legacyItems = Array.isArray(costsItems) ? costsItems : [];
-  const phasedCosts = normalizeEventCosts(legacyItems);
+  const phasedCosts = React.useMemo(() => normalizeEventCosts(legacyItems), [legacyItems]);
 
-  const [expandedCostIds, setExpandedCostIds] = React.useState<Set<string>>(() => new Set());
+  const phasedCostIdsKey = React.useMemo(
+    () => phasedCosts.map((c) => String(c.id)).sort().join("|"),
+    [phasedCosts],
+  );
+
+  const [expandedCostIds, setExpandedCostIds] = React.useState<Set<string>>(() => {
+    const pc = normalizeEventCosts(Array.isArray(costsItems) ? costsItems : []);
+    return pc.length === 1 ? new Set([pc[0].id]) : new Set();
+  });
+
+  const skipExpandEffectOnce = React.useRef(true);
+  React.useEffect(() => {
+    if (skipExpandEffectOnce.current) {
+      skipExpandEffectOnce.current = false;
+      return;
+    }
+    const parts = phasedCostIdsKey.split("|").filter(Boolean);
+    if (parts.length === 1) {
+      setExpandedCostIds(new Set([parts[0]!]));
+    }
+  }, [phasedCostIdsKey]);
 
   const toggleCostBoard = (id: string) => {
     setExpandedCostIds((prev) => {

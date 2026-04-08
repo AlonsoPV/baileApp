@@ -1,8 +1,6 @@
 // ScheduleEditorPlus.tsx
 import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import RitmosChips from "../RitmosChips";
-import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import CostsPhasesEditor from "./CostsPhasesEditor";
 
 const colors = {
@@ -245,20 +243,7 @@ export default function ScheduleEditorPlus({
   // ------------------------
   // Perf: maps (O(1) lookup)
   // ------------------------
-  const catalogIdToLabel = useMemo(() => {
-    const m = new Map<string, string>();
-    RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => m.set(i.id, i.label)));
-    return m;
-  }, []);
-
-  const labelToCatalogId = useMemo(() => {
-    const m = new Map<string, string>();
-    RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => m.set(i.label, i.id)));
-    return m;
-  }, []);
-
   const ritmoTagNameById = useMemo(() => new Map(ritmos.map((r) => [r.id, r.nombre])), [ritmos]);
-  const ritmoTagIdByName = useMemo(() => new Map(ritmos.map((r) => [r.nombre, r.id])), [ritmos]);
 
   // ------------------------
   // Ensure stable UI ids
@@ -310,7 +295,7 @@ export default function ScheduleEditorPlus({
     __ui_id: makeUiId(),
     tipo: "clase",
     titulo: "",
-    ritmoId: selectedRitmoId ?? null,
+    ritmoId: null,
     zonaId: selectedZonaId ?? null,
     inicio: "",
     fin: "",
@@ -332,11 +317,10 @@ export default function ScheduleEditorPlus({
   // Schedule actions
   // ------------------------
   const addItem = () => {
-    const hasTitulo = (newItem.titulo && newItem.titulo.trim()) || newItem.ritmoId;
-    if (!hasTitulo || !newItem.inicio) return;
+    const tituloTrim = newItem.titulo?.trim() ?? "";
+    if (!tituloTrim || !newItem.inicio) return;
 
-    const titleFromRitmo = newItem.ritmoId ? (ritmoTagNameById.get(newItem.ritmoId) || "") : "";
-    const finalTitulo = (newItem.titulo && newItem.titulo.trim()) || titleFromRitmo;
+    const finalTitulo = tituloTrim;
 
     const next = [
       ...schedule,
@@ -358,7 +342,7 @@ export default function ScheduleEditorPlus({
       __ui_id: makeUiId(),
       tipo: "clase",
       titulo: "",
-      ritmoId: meta.ritmoId ?? null,
+      ritmoId: null,
       zonaId: meta.zonaId ?? null,
       inicio: "",
       fin: "",
@@ -533,7 +517,7 @@ export default function ScheduleEditorPlus({
                 ...s,
                 __ui_id: makeUiId(),
                 tipo: "clase",
-                ritmoId: meta.ritmoId ?? null,
+                ritmoId: null,
                 zonaId: meta.zonaId ?? null,
                 ubicacion: meta.ubicacion ?? "",
                 fecha: eventFecha || s.fecha || "",
@@ -611,27 +595,6 @@ export default function ScheduleEditorPlus({
                             style={input}
                           />
                         </div>
-                      </div>
-                    )}
-
-                    {isClaseType(item.tipo) && (
-                      <div>
-                        <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
-                        <RitmosChips
-                          selected={(() => {
-                            if (!item.ritmoId) return [];
-                            const tagName = ritmoTagNameById.get(item.ritmoId);
-                            if (!tagName) return [];
-                            const catalogId = labelToCatalogId.get(tagName);
-                            return catalogId ? [catalogId] : [];
-                          })()}
-                          onChange={(ids) => {
-                            const first = ids[0];
-                            const label = first ? catalogIdToLabel.get(first) : undefined;
-                            const tagId = label ? ritmoTagIdByName.get(label) ?? null : null;
-                            updateItemByUiId(uiId, "ritmoId", tagId);
-                          }}
-                        />
                       </div>
                     )}
 
@@ -804,7 +767,7 @@ export default function ScheduleEditorPlus({
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ ...card, border: `1px solid ${colors.blue}33` }}>
           <h4 style={{ fontSize: "1rem", fontWeight: 600, color: colors.light, marginBottom: 6 }}>➕ Nueva Actividad</h4>
           <p style={{ margin: "0 0 12px", fontSize: 12, color: `${colors.light}AA` }}>
-            Recomendado: usa <strong>Clase</strong> cuando la actividad tenga ritmo, nivel o responsable.
+            Recomendado: usa <strong>Clase</strong> cuando la actividad tenga nivel o responsable.
           </p>
           <div style={{ display: "grid", gap: 12 }}>
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(140px, 1fr)", gap: 10, alignItems: "end" }}>
@@ -865,27 +828,6 @@ export default function ScheduleEditorPlus({
               </div>
             )}
 
-            {isClaseType(newItem.tipo) && (
-              <div>
-                <div style={{ marginBottom: 6, fontSize: 12, color: colors.light, opacity: 0.85 }}>Ritmo</div>
-                <RitmosChips
-                  selected={(() => {
-                    if (!newItem.ritmoId) return [];
-                    const tagName = ritmoTagNameById.get(newItem.ritmoId);
-                    if (!tagName) return [];
-                    const catalogId = labelToCatalogId.get(tagName);
-                    return catalogId ? [catalogId] : [];
-                  })()}
-                  onChange={(ids) => {
-                    const first = ids[0];
-                    const label = first ? catalogIdToLabel.get(first) : undefined;
-                    const tagId = label ? ritmoTagIdByName.get(label) ?? null : null;
-                    setNewItem((s) => ({ ...s, ritmoId: tagId }));
-                  }}
-                />
-              </div>
-            )}
-
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div>
                 <div style={{ marginBottom: 4, fontSize: "0.9rem", color: colors.light }}>Inicio</div>
@@ -924,16 +866,16 @@ export default function ScheduleEditorPlus({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={addItem}
-                disabled={!((newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio)}
+                disabled={!(newItem.titulo?.trim() && newItem.inicio)}
                 style={{
                   padding: "10px 20px",
                   borderRadius: 8,
                   border: "none",
-                  background: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` : `${colors.light}33`,
+                  background: newItem.titulo?.trim() && newItem.inicio ? `linear-gradient(135deg, ${colors.blue}, ${colors.coral})` : `${colors.light}33`,
                   color: colors.light,
                   fontSize: "0.9rem",
                   fontWeight: 600,
-                  cursor: (newItem.titulo?.trim() || newItem.ritmoId) && newItem.inicio ? "pointer" : "not-allowed",
+                  cursor: newItem.titulo?.trim() && newItem.inicio ? "pointer" : "not-allowed",
                 }}
               >
                 ✅ Agregar Actividad
