@@ -16,11 +16,11 @@ import { startScrollLockWatchdog } from "./utils/scrollLockWatchdog";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
-// Medición de carga (prefijo [PERF] para Android logcat)
+// Medición de carga (hitos en memoria + postMessage WebView; sin logs en consola)
 try { performance?.mark?.("web_boot_start"); } catch {}
 mark("app_start");
 
-// PERF Collector (dev-only): intercepta [PERF] logs, window.perfReport(), window.perfExport()
+// Dev: collector histórico (perfReport / perfExport); ya no depende de logs [PERF] en consola
 if (import.meta.env?.DEV) {
   import("./dev/perfCollector");
   import("./dev/runPerfScenarios").then((m) => m.installPerfScenarioRunners());

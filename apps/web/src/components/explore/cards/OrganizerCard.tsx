@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
-import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
@@ -39,7 +39,6 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
   const placeholderReason = !bannerUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
-  logCardImage('organizador', item.id, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
 
   return (
     <>
@@ -75,12 +74,8 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
                 alt={`Imagen de ${item?.nombre_publico || 'Organizador'}`}
                 loading="lazy"
                 decoding="async"
-                onLoad={() => { logCardImage('organizador', item.id, imageUrlFinal, true, 'load'); setImageError(false); }}
-                onError={(e) => {
-                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
-                  console.warn('[CardImageError] type=organizador id=', item.id, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
-                  setImageError(true);
-                }}
+                onLoad={() => setImageError(false)}
+                onError={() => setImageError(true)}
               />
             )}
 

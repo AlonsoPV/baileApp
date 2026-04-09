@@ -31,7 +31,6 @@ import HorizontalCarousel from "../../components/explore/HorizontalCarousel";
 import ClassExploreGridCard from "@/components/explore/ClassExploreGridCard";
 import ProfileExploreGridCard from "@/components/explore/ProfileExploreGridCard";
 import BrandCard from "../../components/explore/cards/BrandCard";
-import SocialCard from "../../components/explore/cards/SocialCard";
 import { LoadMoreCard } from "@/components/explore/cards/LoadMoreCard";
 import { urls } from "../../lib/urls";
 import { colors, typography, spacing, borderRadius, transitions } from "../../theme/colors";
@@ -39,8 +38,6 @@ import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTags } from "@/hooks/useTags";
 import SeoHead from "@/components/SeoHead";
-import { EventsSection } from "../../components/sections/EventsSection";
-import { ClassesSection } from "../../components/sections/ClassesSection";
 import { AcademiesSection } from "../../components/sections/AcademiesSection";
 import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
 import { useToast } from "../../components/Toast";
@@ -408,17 +405,6 @@ const CTACard = React.memo(({
     window.location.href = 'https://dondebailar.com.mx/app/roles/info';
   }, []);
 
-  const icon =
-    sectionType === 'clases'
-      ? '🎓'
-      : sectionType === 'academias'
-        ? '🏫'
-        : sectionType === 'maestros'
-          ? '👨‍🏫'
-          : sectionType === 'organizadores'
-            ? '📅'
-            : '🏷️';
-
   return (
     <button
       type="button"
@@ -426,9 +412,6 @@ const CTACard = React.memo(({
       onClick={handleClick}
       aria-label={`${text} — ${t('join')}`}
     >
-      <span className="explore-cta-inline__icon" aria-hidden>
-        {icon}
-      </span>
       <span className="explore-cta-inline__text">{text}</span>
       <span className="explore-cta-inline__chev" aria-hidden>
         →
@@ -448,29 +431,24 @@ const STYLES = `
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     padding: 12px 14px;
     border-radius: 14px;
-    border: 1px solid var(--ex-border-strong);
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: var(--ex-shadow);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
     color: #f4f4f5;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 600;
     text-align: left;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
     -webkit-tap-highlight-color: transparent;
   }
   .explore-cta-inline:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.14);
-  }
-  .explore-cta-inline__icon {
-    font-size: 1.25rem;
-    line-height: 1;
-    flex-shrink: 0;
+    transform: scale(1.01);
   }
   .explore-cta-inline__text {
     flex: 1;
@@ -2430,15 +2408,6 @@ export default function ExploreHomeScreen() {
   const selectedType = (!filters.type || filters.type === 'all' ? 'fechas' : filters.type) as ExploreType;
   const showAll = false;
 
-  // DEV-only instrumentation helper (safe in prod)
-  // Note: Vite does not define __DEV__ by default; we emulate it here.
-  const __DEV__ = import.meta.env.DEV;
-  const __DEV_LOG = React.useCallback((...args: any[]) => {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log("[ExploreHome]", ...args);
-    }
-  }, [__DEV__]);
   const ritmosPillRef = React.useRef<HTMLButtonElement | null>(null);
   const zonasPillRef = React.useRef<HTMLButtonElement | null>(null);
   const fechasPillRef = React.useRef<HTMLButtonElement | null>(null);
@@ -2967,17 +2936,6 @@ export default function ExploreHomeScreen() {
     }
   }, [fechasError]);
 
-  React.useEffect(() => {
-    if (!import.meta.env?.DEV) return;
-    if (selectedType !== "fechas") return;
-    console.log("[DATE FILTER STATE]", {
-      selectedDateFilter: filters.datePreset ?? null,
-      dateFrom: filters.dateFrom ?? null,
-      dateTo: filters.dateTo ?? null,
-      query: qDeferred || "",
-    });
-  }, [selectedType, filters.datePreset, filters.dateFrom, filters.dateTo, qDeferred]);
-
   const filteredFechas = React.useMemo(() => {
     const isValidDiaSemana = (value: any): value is number =>
       Number.isInteger(value) && value >= 0 && value <= 6;
@@ -3044,61 +3002,6 @@ export default function ExploreHomeScreen() {
       }
       return Array.from(map.values());
     })();
-
-    if (import.meta.env?.DEV) {
-      const selectedDateFilter = filters.datePreset ?? null;
-      const isSiguientesPreset = selectedDateFilter === "siguientes";
-      const hasTodayFilter = !!filters.dateFrom && !!filters.dateTo && filters.dateFrom === filters.dateTo && !!todayOnly;
-      const tomorrowOnly = todayOnly
-        ? new Date(todayOnly.getFullYear(), todayOnly.getMonth(), todayOnly.getDate() + 1)
-        : null;
-      const todayEvents = hasTodayFilter
-        ? deduped.filter((event: any) => {
-            const d = normalizeDateOnly(getEffectiveEventDate(event));
-            return !!d && !!todayOnly && d.getTime() === todayOnly.getTime();
-          })
-        : [];
-      const upcomingEvents = tomorrowOnly
-        ? deduped.filter((event: any) => {
-            const d = normalizeDateOnly(getEffectiveEventDate(event));
-            return !!d && d.getTime() >= tomorrowOnly.getTime();
-          })
-        : [];
-      console.log("[ExploreFechas] hoy normalizado:", todayOnly);
-      console.log("[ExploreFechas] manana normalizado:", tomorrowOnly);
-      console.log("[ExploreFechas] eventos originales:", allFechas.length);
-      console.log("[ExploreFechas] eventos generados:", upcoming.length);
-      console.log("[ExploreFechas] eventos deduplicados:", deduped.length);
-      console.log("[ExploreFechas] eventos HOY:", todayEvents);
-      console.log("[ExploreFechas] eventos FUTUROS:", upcomingEvents);
-      console.log("[DATE FILTER APPLIED]", {
-        selectedDateFilter,
-        totalEventsBeforeFilter: allFechas.length,
-        totalEventsAfterFilter: deduped.length,
-      });
-
-      if (isSiguientesPreset) {
-        console.log("[RAW EVENTS]", allFechas.length, allFechas.slice(0, 10));
-        console.log("[GENERATED EVENTS]", upcoming.length, upcoming.slice(0, 10));
-        console.log("[FILTER PREVIOUS COUNT]", allFechas.length);
-        console.log("[FUTURE FILTER RESULT]", deduped.length, deduped.slice(0, 20));
-        deduped.slice(0, 60).forEach((event: any) => {
-          const effective = getEffectiveEventDate(event);
-          const normalized = normalizeDateOnly(effective);
-          console.log("[EVENT DATE CHECK]", {
-            id: event?.id,
-            parent_id: event?.parent_id,
-            nombre: event?.nombre,
-            instance_date: event?.instance_date,
-            fecha: event?.fecha,
-            fecha_inicio: event?.fecha_inicio,
-            effectiveDate: effective,
-            normalized,
-            hora_inicio: event?.hora_inicio,
-          });
-        });
-      }
-    }
 
     // Orden robusto en UI: primero por fecha, luego por hora, luego por id.
     // Esto evita mezclas cuando los datos vienen de múltiples fuentes/páginas.
@@ -3182,15 +3085,6 @@ export default function ExploreHomeScreen() {
     loadMoreBusyRef.current = true;
     const nextCount = visibleCount + NEXT_LIMIT;
     try {
-      if (import.meta.env?.DEV) {
-        console.log("[LOAD_MORE] click", {
-          visibleCount,
-          normalizedCount: normalizedFechas.length,
-          nextCount,
-          hasNextPage: !!fechasQuery.hasNextPage,
-          isFetchingNextPage: !!fechasQuery.isFetchingNextPage,
-        });
-      }
       if (normalizedFechas.length >= nextCount) {
         setVisibleCount(nextCount);
         return;
@@ -3199,8 +3093,8 @@ export default function ExploreHomeScreen() {
         await fechasQuery.fetchNextPage();
       }
       setVisibleCount(nextCount);
-    } catch (error) {
-      console.warn("[LOAD_MORE] fetchNextPage failed", error);
+    } catch {
+      /* fetch failure: UI keeps current page; avoid console noise in lists */
     } finally {
       loadMoreBusyRef.current = false;
     }
@@ -3253,17 +3147,7 @@ export default function ExploreHomeScreen() {
         );
       }
 
-      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-        __DEV_LOG("renderItem", {
-          type: "fechas_grid",
-          idx,
-          id: fechaEvento?.id,
-          original: (fechaEvento as any)?._original_id,
-          rec: (fechaEvento as any)?._recurrence_index,
-        });
-      }
-
-      const card = (
+      return (
         <div
           onClickCapture={handlePreNavigate}
           style={{
@@ -3279,19 +3163,8 @@ export default function ExploreHomeScreen() {
           <EventSocialGridCard item={fechaEvento} priority={idx < 3} />
         </div>
       );
-
-      if (__DEV__) {
-        try {
-          return card;
-        } catch (e) {
-          __DEV_LOG("renderItem_error", { type: "fechas_grid", idx, id: fechaEvento?.id, error: (e as any)?.message || e });
-          return null;
-        }
-      }
-
-      return card;
     },
-    [__DEV__, __DEV_LOG, handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
+    [handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
   );
 
   const renderClaseCarouselItem = React.useCallback(
@@ -3440,32 +3313,6 @@ export default function ExploreHomeScreen() {
           </div>
         );
       }
-      if (__DEV__ && (idx === 0 || idx % 20 === 0)) {
-        __DEV_LOG("renderItem", { type: "marcas", idx, id: item?.id, nombre: item?.nombre_publico || item?.nombre });
-      }
-      if (__DEV__) {
-        try {
-          return (
-            <div
-              key={item.id ?? idx}
-              onClickCapture={handlePreNavigate}
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 16,
-                padding: 0,
-                overflow: "hidden",
-                boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
-              }}
-            >
-              <BrandCard item={item} />
-            </div>
-          );
-        } catch (e) {
-          __DEV_LOG("renderItem_error", { type: "marcas", idx, id: item?.id, error: (e as any)?.message || e });
-          return null;
-        }
-      }
       return (
         <div
           key={item.id ?? idx}
@@ -3483,7 +3330,7 @@ export default function ExploreHomeScreen() {
         </div>
       );
     },
-    [__DEV__, __DEV_LOG, handlePreNavigate, t]
+    [handlePreNavigate, t]
   );
 
   const renderFechaListItem = React.useCallback(
@@ -3646,10 +3493,8 @@ export default function ExploreHomeScreen() {
     zoneAutoLoadBusyRef.current[key] = true;
     try {
       await queryLike.fetchNextPage();
-    } catch (err) {
-      if (import.meta.env?.DEV) {
-        console.warn(`[ExploreHomeScreen] Zone warmup failed for ${key}:`, err);
-      }
+    } catch {
+      /* optional prefetch; ignore */
     } finally {
       zoneAutoLoadBusyRef.current[key] = false;
     }
@@ -3736,11 +3581,8 @@ export default function ExploreHomeScreen() {
           usuariosWarmupDoneKeyRef.current = usersWarmupKey;
           usuariosAutoLoadRef.current = false;
         })
-        .catch((err) => {
+        .catch(() => {
           usuariosAutoLoadRef.current = false;
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('[ExploreHomeScreen] Error cargando más usuarios:', err);
-          }
         });
     } else if (!usuariosQuery.hasNextPage) {
       usuariosWarmupDoneKeyRef.current = usersWarmupKey;
@@ -4331,158 +4173,6 @@ export default function ExploreHomeScreen() {
     },
     [set],
   );
-
-  // -----------------------------
-  // DEV instrumentation (runtime diagnosis)
-  // -----------------------------
-  const devSummary = React.useMemo(() => {
-    return {
-      userId: user?.id ?? null,
-      selectedType,
-      showAll,
-      filters: {
-        type: filters.type,
-        q: (filters.q || "").slice(0, 40),
-        ritmosCount: (filters.ritmos || []).length,
-        zonasCount: (filters.zonas || []).length,
-        datePreset: filters.datePreset ?? null,
-        dateFrom: filters.dateFrom ?? null,
-        dateTo: filters.dateTo ?? null,
-      },
-      enabled: {
-        fechas: shouldLoadFechas,
-        clases: (showAll || selectedType === 'clases'),
-        academias: shouldLoadAcademias,
-        maestros: shouldLoadMaestros,
-        organizadores: shouldLoadOrganizadores,
-        marcas: shouldLoadMarcas,
-        usuarios: shouldLoadUsuarios,
-      },
-      query: {
-        fechas: { isLoading: fechasQuery.isLoading, isError: (fechasQuery as any).isError, pages: fechasQuery.data?.pages?.length ?? 0 },
-        academias: { isLoading: academiasQuery.isLoading, isError: (academiasQuery as any).isError, pages: academiasQuery.data?.pages?.length ?? 0 },
-        maestros: { isLoading: maestrosQuery.isLoading, isError: (maestrosQuery as any).isError, pages: maestrosQuery.data?.pages?.length ?? 0 },
-        organizadores: { isLoading: organizadoresQuery.isLoading, isError: (organizadoresQuery as any).isError, pages: organizadoresQuery.data?.pages?.length ?? 0 },
-        marcas: { isLoading: marcasQuery.isLoading, isError: (marcasQuery as any).isError, pages: marcasQuery.data?.pages?.length ?? 0 },
-        usuarios: { isLoading: usuariosQuery.isLoading, isError: (usuariosQuery as any).isError, pages: usuariosQuery.data?.pages?.length ?? 0 },
-      },
-      counts: {
-        fechasRaw: fechasData.length,
-        fechasFiltered: filteredFechas.length,
-        academias: academiasData.length,
-        maestros: maestrosData.length,
-        organizadores: organizadoresData.length,
-        marcas: marcasData.length,
-        usuariosRaw: usuariosData.length,
-        usuariosValid: validUsuarios.length,
-        clases: classesList.length,
-      },
-      gates: {
-        anyLoading,
-        noResultsAllTypes,
-      },
-    };
-  }, [
-    user?.id,
-    selectedType,
-    showAll,
-    filters.type,
-    filters.q,
-    filters.ritmos,
-    filters.zonas,
-    filters.datePreset,
-    filters.dateFrom,
-    filters.dateTo,
-    shouldLoadFechas,
-    shouldLoadAcademias,
-    shouldLoadMaestros,
-    shouldLoadOrganizadores,
-    shouldLoadMarcas,
-    shouldLoadUsuarios,
-    fechasQuery.isLoading,
-    (fechasQuery as any).isError,
-    fechasQuery.data,
-    academiasQuery.isLoading,
-    (academiasQuery as any).isError,
-    academiasQuery.data,
-    maestrosQuery.isLoading,
-    (maestrosQuery as any).isError,
-    maestrosQuery.data,
-    organizadoresQuery.isLoading,
-    (organizadoresQuery as any).isError,
-    organizadoresQuery.data,
-    marcasQuery.isLoading,
-    (marcasQuery as any).isError,
-    marcasQuery.data,
-    usuariosQuery.isLoading,
-    (usuariosQuery as any).isError,
-    usuariosQuery.data,
-    fechasData.length,
-    filteredFechas.length,
-    academiasData.length,
-    maestrosData.length,
-    organizadoresData.length,
-    marcasData.length,
-    usuariosData.length,
-    validUsuarios.length,
-    classesList.length,
-    anyLoading,
-    noResultsAllTypes,
-  ]);
-
-  const devPrevRef = React.useRef<string>("");
-  React.useEffect(() => {
-    if (!__DEV__) return;
-    const key = JSON.stringify(devSummary);
-    if (devPrevRef.current === key) return;
-    devPrevRef.current = key;
-    __DEV_LOG("state", devSummary);
-  }, [__DEV__, __DEV_LOG, devSummary]);
-
-  // Log which conditional branch each section takes (DEV only).
-  const devBranches = React.useMemo(() => {
-    return {
-      fechas: fechasLoading ? "loading" : fechasError ? "error" : filteredFechas.length > 0 ? "render" : "empty",
-      clases:
-        (academiasLoading || maestrosLoading) ? "loading"
-        : (academiasError || maestrosError) ? "error"
-        : classesList.length > 0 ? "render"
-        : "empty",
-      academias: academiasLoading ? "loading" : academiasData.length > 0 ? "render" : "empty",
-      maestros: maestrosLoading ? "loading" : maestrosError ? "error" : maestrosData.length > 0 ? "render" : "empty",
-      usuarios: usuariosLoading ? "loading" : validUsuarios.length > 0 ? "render" : "empty",
-      organizadores: organizadoresLoading ? "loading" : organizadoresError ? "error" : organizadoresData.length > 0 ? "render" : "empty",
-      marcas: marcasLoading ? "loading" : marcasData.length > 0 ? "render" : "empty",
-    } as const;
-  }, [
-    fechasLoading,
-    fechasError,
-    filteredFechas.length,
-    academiasLoading,
-    maestrosLoading,
-    academiasError,
-    maestrosError,
-    classesList.length,
-    academiasData.length,
-    maestrosError,
-    maestrosData.length,
-    usuariosLoading,
-    validUsuarios.length,
-    organizadoresLoading,
-    organizadoresError,
-    organizadoresData.length,
-    marcasLoading,
-    marcasData.length,
-  ]);
-
-  const devPrevBranchesRef = React.useRef<string>("");
-  React.useEffect(() => {
-    if (!__DEV__) return;
-    const key = JSON.stringify(devBranches);
-    if (devPrevBranchesRef.current === key) return;
-    devPrevBranchesRef.current = key;
-    __DEV_LOG("branches", devBranches);
-  }, [__DEV__, __DEV_LOG, devBranches]);
 
   const filtersHeaderAction = (
     <button

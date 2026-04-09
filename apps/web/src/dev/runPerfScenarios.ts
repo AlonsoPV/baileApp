@@ -54,7 +54,7 @@ export function installPerfScenarioRunners() {
   if (typeof window === "undefined") return;
 
   window.runPerfScenarioSearch = async () => {
-    console.log("[PERF] runPerfScenarioSearch: 5 ejecuciones con q=bachata");
+    console.log("[runPerfScenarios] runPerfScenarioSearch: 5 ejecuciones con q=bachata");
     const params = baseParams("search");
     for (let i = 0; i < 5; i++) {
       if (i > 0 && i % 2 === 1) {
@@ -63,14 +63,14 @@ export function installPerfScenarioRunners() {
       await fetchExplorePage(params, 0);
       if (i < 4) await new Promise((r) => setTimeout(r, DELAY_MS));
     }
-    console.log("[PERF] runPerfScenarioSearch done. Llamar window.perfExport()");
+    console.log("[runPerfScenarios] runPerfScenarioSearch done. Llamar window.perfExport()");
     if (typeof (window as any).perfExport === "function") {
       (window as any).perfExport();
     }
   };
 
   window.runPerfScenarioRecurring = async () => {
-    console.log("[PERF] runPerfScenarioRecurring: 5 ejecuciones (date range amplio)");
+    console.log("[runPerfScenarios] runPerfScenarioRecurring: 5 ejecuciones (date range amplio)");
     const params = baseParams("recurring");
     params.dateTo = addDaysYmd(getTodayCDMX(), 30);
     for (let i = 0; i < 5; i++) {
@@ -80,11 +80,11 @@ export function installPerfScenarioRunners() {
       await fetchExplorePage(params, 0);
       if (i < 4) await new Promise((r) => setTimeout(r, DELAY_MS));
     }
-    console.log("[PERF] runPerfScenarioRecurring done. Llamar window.perfExport()");
+    console.log("[runPerfScenarios] runPerfScenarioRecurring done. Llamar window.perfExport()");
     if (typeof (window as any).perfExport === "function") {
       (window as any).perfExport();
     }
   };
 
-  console.log("[PERF] Runners instalados: runPerfScenarioSearch(), runPerfScenarioRecurring()");
+  console.log("[runPerfScenarios] Runners instalados: runPerfScenarioSearch(), runPerfScenarioRecurring()");
 }

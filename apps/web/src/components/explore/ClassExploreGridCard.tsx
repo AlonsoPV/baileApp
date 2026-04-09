@@ -5,7 +5,7 @@ import LiveLink from "../LiveLink";
 import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useFmtDate } from "@/hooks/useFmtDate";
-import { toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
+import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import "./EventSocialGridCard.css";
 
@@ -187,9 +187,8 @@ function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardPr
     return [] as string[];
   }, [item, allTags]);
 
-  const accentLine = ritmoNames[0] || item.ownerName || t("explore_cartelera_class_badge", "Clase");
-
-  logCardImage("clase", item.ownerId ?? title, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
+  const badgeLine = ritmoNames[0] || t("explore_cartelera_class_badge", "Clase");
+  const secondaryLine = lugarNombre || "";
 
   return (
     <LiveLink to={href} asCard={false}>
@@ -198,7 +197,7 @@ function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardPr
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.99 }}
       >
         <div className="event-social-grid-card__media">
           {showPlaceholder ? (
@@ -228,13 +227,13 @@ function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardPr
             {dateLine && timePart && <span className="event-social-grid-card__dot">·</span>}
             {timePart && <span>{timePart}</span>}
           </div>
-          {lugarNombre ? (
-            <div className="event-social-grid-card__line event-social-grid-card__line--place" title={lugarNombre}>
-              📍 {lugarNombre}
+          {secondaryLine ? (
+            <div className="event-social-grid-card__line event-social-grid-card__line--place" title={secondaryLine}>
+              {secondaryLine}
             </div>
           ) : null}
-          <div className="event-social-grid-card__price" aria-label={accentLine}>
-            <span>{accentLine.length > 28 ? `${accentLine.slice(0, 28)}…` : accentLine}</span>
+          <div className="event-social-grid-card__badge" aria-label={badgeLine}>
+            <span>{badgeLine.length > 28 ? `${badgeLine.slice(0, 28)}…` : badgeLine}</span>
           </div>
         </div>
       </motion.article>

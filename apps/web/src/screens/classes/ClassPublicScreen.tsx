@@ -998,6 +998,7 @@ export default function ClassPublicScreen() {
                 }
               })()}
               showAsIcon={false}
+              calendarGlyph="lucide-calendar-days"
             />
           </motion.div>
         )}

@@ -4,7 +4,7 @@ import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
-import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 import { resolveSupabaseStoragePublicUrl } from "../../../utils/supabaseStoragePublicUrl";
@@ -76,7 +76,6 @@ export default function DancerCard({ item, to }: Props) {
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
   const placeholderReason = !coverUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
-  logCardImage('dancer', item.id, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
 
   const name = item.display_name || (item as any).nombre || "Dancer";
   const bio = item.bio || "";
@@ -150,12 +149,8 @@ export default function DancerCard({ item, to }: Props) {
                 alt={`Imagen de ${name}`}
                 loading="lazy"
                 decoding="async"
-                onLoad={() => { logCardImage('dancer', item.id, imageUrlFinal, true, 'load'); setImageError(false); }}
-                onError={(e) => {
-                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
-                  console.warn('[CardImageError] type=dancer id=', item.id, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
-                  setImageError(true);
-                }}
+                onLoad={() => setImageError(false)}
+                onError={() => setImageError(true)}
               />
             )}
 

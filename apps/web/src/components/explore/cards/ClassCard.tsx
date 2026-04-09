@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
-import { toDirectPublicStorageUrl, logCardImage } from '../../../utils/imageOptimization';
+import { toDirectPublicStorageUrl } from '../../../utils/imageOptimization';
 import { withStableCacheBust } from '../../../utils/cacheBuster';
 import { getLocale } from '../../../utils/locale';
 import { useTranslation } from 'react-i18next';
@@ -37,10 +37,6 @@ interface Props {
 
 export default function ClassCard({ item, fillHeight = false, priority = false }: Props) {
   const { t, i18n } = useTranslation();
-  const isAndroid = React.useMemo(
-    () => typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent),
-    []
-  );
   const isSemanal = Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
   // Construir la ruta correcta: /clase/:type/:id
   // Si hay ownerType y ownerId, usar la ruta con parámetros
@@ -102,7 +98,6 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
   const placeholderReason = !bg ? 'URL vacía' : imageError ? 'Image load failed' : '';
-  logCardImage('clase', item.ownerId ?? item.titulo, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
 
   // Extraer solo el nombre del lugar (similar a EventCard que usa `lugar`)
   // Si ubicacion contiene información adicional (dirección, ciudad, etc.), extraer solo el nombre
@@ -236,24 +231,16 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
 
   return (
     <>
-      <style>{``}</style>
       <LiveLink to={href} asCard={false}>
         <motion.article
           className="class-card class-card-mobile"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.01, transition: { duration: 0.18 } }}
+          whileTap={{ scale: 0.99 }}
           style={fillHeight ? ({ height: '100%', alignSelf: 'stretch' } as React.CSSProperties) : undefined}
         >
           <div className="class-card-media">
-            {!isAndroid && imageUrlFinal && !imageError && (
-              <div
-                className="class-card-media__bg"
-                style={{ backgroundImage: `url(${imageUrlFinal})` }}
-                aria-hidden
-              />
-            )}
             <div className="class-card-media__frame">
               {showPlaceholder ? (
                 <div className="class-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
@@ -268,12 +255,8 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
                   loading={priority ? "eager" : "lazy"}
                   fetchPriority={priority ? "high" : "auto"}
                   decoding="async"
-                  onLoad={() => { logCardImage('clase', item.ownerId ?? item.titulo, imageUrlFinal, true, 'load'); setImageError(false); }}
-                  onError={(e) => {
-                    const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
-                    console.warn('[CardImageError] type=clase id=', item.ownerId ?? item.titulo, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
-                    setImageError(true);
-                  }}
+                  onLoad={() => setImageError(false)}
+                  onError={() => setImageError(true)}
                 />
               ) : null}
             </div>
@@ -291,26 +274,26 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
             <h3 className="class-card-title">{item.titulo || (item as any).nombre || 'Clase'}</h3>
 
             {item.ownerName && (
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000' }}>
-                por <strong style={{ color: '#fff', fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 2px #000' }}>{item.ownerName}</strong>
+              <div className="event-card__owner">
+                por <strong>{item.ownerName}</strong>
               </div>
             )}
 
             <div className="class-card-meta">
               {formattedDate && (
                 <div className="class-card-meta-row--date">
-                  <div className="tag">🗓️ {formattedDate}</div>
+                  <div className="tag">{formattedDate}</div>
                 </div>
               )}
               <div className="class-card-meta-row--time-zone">
                 {(item.inicio || item.fin) && (
-                  <div className="tag">🕗 {item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}</div>
+                  <div className="tag">{item.inicio || '—'}{item.fin ? ` - ${item.fin}` : ''}</div>
                 )}
                 {lugarNombre && (
-                  <div className="tag tag--location">📍 {lugarNombre}</div>
+                  <div className="tag tag--location">{lugarNombre}</div>
                 )}
                 {ritmoNames.length > 0 && (
-                  <div className="tag">🎵 {ritmoNames.slice(0, 2).join(', ')}</div>
+                  <div className="tag">{ritmoNames.slice(0, 2).join(', ')}</div>
                 )}
               </div>
             </div>

@@ -5,7 +5,8 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { SELECT_EVENTS_CARD } from "@/lib/eventSelects";
 import { calculateNextDateWithTime, firstOccurrenceInRange } from "../utils/calculateRecurringDates";
 import { perfLog } from "../utils/perfLog";
-import { getEffectiveEventDate, getEffectiveEventDateYmd, normalizeDateOnly } from "@/utils/effectiveEventDate";
+import { logger } from "@/utils/logger";
+import { getEffectiveEventDate, getEffectiveEventDateYmd } from "@/utils/effectiveEventDate";
 
 const PAGE_LIMIT = 12;
 
@@ -203,7 +204,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
             }
           }
         } catch (e) {
-          console.warn('[useExploreQuery] Catalog mapping failed, continuing with numeric only', e);
+          logger.warn("[useExploreQuery] Catalog mapping failed, continuing with numeric only", e);
         }
       })()
     );
@@ -220,13 +221,10 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
             .or([`nombre.ilike.${search.pattern}`].join(","))
             .limit(250);
           const epEnd = performance.now();
-          if (import.meta.env?.DEV) {
-            console.log("[PERF_SQL] search_events_parent:", { pattern: search.pattern });
-          }
           perfLog({ hook: 'useExploreQuery', step: 'search_events_parent', duration_ms: epEnd - epStart, rows: parentRows?.length ?? 0, data: parentRows });
           searchParentRows.push(...(parentRows || []));
         } catch (e) {
-          console.warn("[useExploreQuery] events_parent text search failed (non-fatal):", e);
+          logger.warn("[useExploreQuery] events_parent text search failed (non-fatal):", e);
         }
       })()
     );
@@ -240,13 +238,10 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
             .or([`nombre_publico.ilike.${search.pattern}`].join(","))
             .limit(250);
           const orgEnd = performance.now();
-          if (import.meta.env?.DEV) {
-            console.log("[PERF_SQL] search_v_organizers_public:", { pattern: search.pattern });
-          }
           perfLog({ hook: 'useExploreQuery', step: 'search_v_organizers_public', duration_ms: orgEnd - orgStart, rows: orgRows?.length ?? 0, data: orgRows });
           searchOrgRows.push(...(orgRows || []));
         } catch (e) {
-          console.warn("[useExploreQuery] organizer search failed (non-fatal):", e);
+          logger.warn("[useExploreQuery] organizer search failed (non-fatal):", e);
         }
       })()
     );
@@ -316,7 +311,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           .map((r: any) => Number(r?.id))
           .filter((n) => Number.isFinite(n));
       } catch (e) {
-        console.warn("[useExploreQuery] parent zones prefetch failed (non-fatal)", e);
+        logger.warn("[useExploreQuery] parent zones prefetch failed (non-fatal)", e);
       }
       const zoneCsv = (zonas as number[]).join(",");
       const zoneParts = [
@@ -431,25 +426,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
   // Paginación (range)
   const from = page * (params.pageSize || PAGE_LIMIT);
   const to   = from + (params.pageSize || PAGE_LIMIT) - 1;
-  
-  if (import.meta.env?.DEV && type === "fechas") {
-    const todayCDMX = getTodayCDMX();
-    console.log("[PERF_SQL] main_events_query params:", {
-      table: "events_date",
-      select: "id,parent_id,nombre,fecha,dia_semana,...+events_parent(...)",
-      filters: {
-        estado_publicacion: "publicado",
-        dateOr: `dia_semana.not.is.null OR fecha.gte.${dateFrom || todayCDMX}`,
-        dateOr2: dateTo ? `dia_semana.not.is.null OR fecha.lte.${dateTo}` : null,
-        ritmos: ritmos?.length ? `overlaps(estilos,${JSON.stringify(ritmos)})` : null,
-        zonas: zonas?.length ? `in(zona,${JSON.stringify(zonas)})` : null,
-        search: search ? `or(nombre.ilike,lugar.ilike,ciudad.ilike,direccion.ilike).${search.pattern}` : null,
-      },
-      order: "fecha asc",
-      range: [from, to],
-    });
-  }
-  
+
   const mainStart = performance.now();
   const { data, error, count } = await query.range(from, to);
   const mainEnd = performance.now();
@@ -458,23 +435,17 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
   if (error) {
     if (isAuthLockAbortError(error)) {
       // Evita romper explore por aborts transitorios durante contención de lock auth.
-      console.warn('[useExploreQuery] Abort transitorio de lock auth; devolviendo página vacía para recuperación.');
+      logger.warn("[useExploreQuery] Abort transitorio de lock auth; devolviendo página vacía para recuperación.");
       return { data: [], nextPage: undefined, count: 0 };
     }
-    console.error('[useExploreQuery] Error:', error);
+    logger.error("[useExploreQuery] Error:", error);
     throw error;
   }
 
   // Supabase typed client may infer `GenericStringError[]` for complex selects.
   // We normalize to `any[]` because downstream code operates dynamically by `type`.
   let finalData: any[] = (data as any[]) || [];
-  const rawDataSnapshot: any[] = [...finalData];
   let searchOrganizerIdSet: Set<number> | null = null;
-  const debugIsFutureRange = type === "fechas" && !!dateFrom && !dateTo;
-
-  if (import.meta.env?.DEV && type === "fechas") {
-    console.log("[RAW EVENTS]", rawDataSnapshot.length, rawDataSnapshot.slice(0, 10));
-  }
 
   // Usar resultados de búsqueda paralela (search_events_parent + search_v_organizers ya ejecutados)
   if (type === 'fechas' && search) {
@@ -497,9 +468,6 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           .in("organizer_id", organizerIds as any)
           .limit(500);
         const pboEnd = performance.now();
-        if (import.meta.env?.DEV) {
-          console.log("[PERF_SQL] search_events_parent_by_org:", { organizer_ids: organizerIds });
-        }
         perfLog({ hook: 'useExploreQuery', step: 'search_events_parent_by_org', duration_ms: pboEnd - pboStart, rows: parentByOrg?.length ?? 0, data: parentByOrg });
         for (const r of (parentByOrg || []) as any[]) {
           if (typeof r?.id === "number" && Number.isFinite(r.id)) matchedParentIds.add(r.id);
@@ -570,12 +538,9 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
         finalData = [...finalData, ...newMatches];
       }
 
-      if (import.meta.env?.DEV) {
-        console.log("[GENERATED EVENTS]", finalData.length, finalData.slice(0, 10));
-      }
       }
     } catch (error) {
-      console.warn("[useExploreQuery] Extra search queries failed (non-fatal):", error);
+      logger.warn("[useExploreQuery] Extra search queries failed (non-fatal):", error);
       // Continuar con los resultados de la query principal
     }
   }
@@ -656,19 +621,19 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           try {
             await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: weeksAhead } as any);
           } catch (e) {
-            console.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
+            logger.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
           }
         }
         for (const oid of discoverOrphans) {
           try {
             await supabase.rpc("ensure_weekly_occurrences_orphan", { p_organizer_id: oid, p_weeks_ahead: weeksAhead } as any);
           } catch (e) {
-            console.warn("[useExploreQuery] ensure_weekly_occurrences_orphan failed for organizer", oid, e);
+            logger.warn("[useExploreQuery] ensure_weekly_occurrences_orphan failed for organizer", oid, e);
           }
         }
         perfLog({ hook: 'useExploreQuery', step: 'ensure_weekly_occurrences_pre_discover', duration_ms: performance.now() - rpcPreStart, rows: 0, extra: { parents: discoverParents.length, orphans: discoverOrphans.length } });
       } catch (e) {
-        console.warn("[useExploreQuery] pre-discover recurring/orphan RPC failed (non-fatal)", e);
+        logger.warn("[useExploreQuery] pre-discover recurring/orphan RPC failed (non-fatal)", e);
       }
     }
 
@@ -696,7 +661,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
         try {
           await supabase.rpc("ensure_weekly_occurrences_orphan", { p_organizer_id: oid, p_weeks_ahead: weeksAhead } as any);
         } catch (e) {
-          console.warn("[useExploreQuery] ensure_weekly_occurrences_orphan (page) failed for organizer", oid, e);
+          logger.warn("[useExploreQuery] ensure_weekly_occurrences_orphan (page) failed for organizer", oid, e);
         }
       }
     }
@@ -706,7 +671,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
         try {
           await supabase.rpc("ensure_weekly_occurrences", { p_parent_id: pid, p_weeks_ahead: weeksAhead } as any);
         } catch (e) {
-          console.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
+          logger.warn("[useExploreQuery] ensure_weekly_occurrences failed for parent", pid, e);
         }
       }
       const rpcEnd = performance.now();
@@ -765,11 +730,8 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           finalData = Array.from(byId.values());
         }
 
-        if (import.meta.env?.DEV) {
-          console.log("[GENERATED EVENTS]", finalData.length, finalData.slice(0, 10));
-        }
       } catch (e) {
-        console.warn("[useExploreQuery] re-fetch occurrences failed", e);
+        logger.warn("[useExploreQuery] re-fetch occurrences failed", e);
       }
     }
 
@@ -815,7 +777,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
           perfLog({ hook: 'useExploreQuery', step: 'refetch_orphan_occurrences', duration_ms: 0, rows: orphanRows.length });
         }
       } catch (e) {
-        console.warn("[useExploreQuery] re-fetch orphan occurrences failed", e);
+        logger.warn("[useExploreQuery] re-fetch orphan occurrences failed", e);
       }
     }
 
@@ -853,7 +815,6 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       return !(fechaDate < todayDate);
     };
 
-    const beforeFutureFilterCount = finalData.length;
     finalData.forEach((row: any) => {
       const hasDiaSemana = isValidDiaSemana(row?.dia_semana);
       const parentId = typeof row?.parent_id === "number" ? row.parent_id : null;
@@ -892,7 +853,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
             usesLegacyNextOccurrence = true;
           }
         } catch (e) {
-          console.error('Error calculando next occurrence para evento recurrente legacy:', e);
+          logger.warn("Error calculando next occurrence para evento recurrente legacy:", e);
           ymd = '';
         }
       }
@@ -932,7 +893,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
             ymd = `${year}-${month}-${day}`;
             usesLegacyNextOccurrence = true;
           } catch (e) {
-            console.error('Error recalculando next occurrence para evento recurrente con fecha legacy:', e);
+            logger.warn("Error recalculando next occurrence para evento recurrente con fecha legacy:", e);
           }
         }
       }
@@ -947,11 +908,6 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       nextData.push(out);
     });
 
-    if (import.meta.env?.DEV) {
-      console.log("[FILTER PREVIOUS COUNT]", beforeFutureFilterCount);
-      console.log("[FUTURE FILTER RESULT]", nextData.length, nextData.slice(0, 20));
-    }
-
     const dedupedByOccurrence = (() => {
       const map = new Map<string, any>();
       for (const row of nextData) {
@@ -960,26 +916,6 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       }
       return Array.from(map.values());
     })();
-
-    if (import.meta.env?.DEV) {
-      console.log("[DEDUPE RESULT]", dedupedByOccurrence.length, dedupedByOccurrence.slice(0, 20));
-      if (debugIsFutureRange) {
-        dedupedByOccurrence.slice(0, 80).forEach((event: any) => {
-          const effectiveDate = getEffectiveEventDate(event);
-          console.log("[EVENT DATE CHECK]", {
-            id: event?.id,
-            parent_id: event?.parent_id,
-            nombre: event?.nombre,
-            instance_date: event?.instance_date,
-            fecha: event?.fecha,
-            fecha_inicio: event?.fecha_inicio,
-            effectiveDate,
-            normalized: normalizeDateOnly(effectiveDate),
-            hora_inicio: event?.hora_inicio,
-          });
-        });
-      }
-    }
 
     finalData = dedupedByOccurrence;
     
@@ -1023,10 +959,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
   
   const fetchEnd = performance.now();
   perfLog({ hook: 'useExploreQuery', step: 'fetchPage_total', duration_ms: fetchEnd - fetchStart, rows: finalData.length, data: finalData, extra: { count: count ?? 0, type } });
-  if (import.meta.env?.DEV && type === "fechas") {
-    console.log("[RENDER FINAL]", finalData.length, finalData.slice(0, 20));
-  }
-  
+
   return { 
     data: finalData, 
     nextPage: (to + 1 < (count || 0)) ? page + 1 : undefined, 

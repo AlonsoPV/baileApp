@@ -3,6 +3,8 @@
  * Convierte URLs de storage a URLs optimizadas con redimensionamiento y compresión
  */
 
+import { logger } from "./logger";
+
 const SUPABASE_PUBLIC_PATH = "/storage/v1/object/public/";
 const SUPABASE_RENDER_PATH = "/storage/v1/render/image/public/";
 
@@ -59,7 +61,7 @@ function getSupabaseUrl(): string {
       }
     }
   } catch (error) {
-    console.warn('[getSupabaseUrl] Error obteniendo URL de Supabase:', error);
+    logger.warn('[getSupabaseUrl] Error obteniendo URL de Supabase:', error);
   }
   return "";
 }
@@ -139,7 +141,7 @@ export function optimizeSupabaseImageUrl(
     return `${renderUrl}?${params.toString()}`;
   } catch (error) {
     // Si hay algún error al procesar la URL, retornar la original
-    console.warn('[optimizeSupabaseImageUrl] Error procesando URL:', urlString, error);
+    logger.warn('[optimizeSupabaseImageUrl] Error procesando URL:', urlString, error);
     return urlString;
   }
 }
@@ -156,7 +158,7 @@ export function ensureAbsoluteImageUrl(url?: string | null): string | null {
   if (/^https:\/\//i.test(urlString)) return urlString;
   if (/^http:\/\//i.test(urlString)) {
     if (typeof window !== "undefined" && window.location?.protocol === "https:") {
-      console.warn("[ensureAbsoluteImageUrl] HTTP bloqueado en página HTTPS:", urlString.slice(0, 80));
+      logger.warn("[ensureAbsoluteImageUrl] HTTP bloqueado en página HTTPS:", urlString.slice(0, 80));
       return null;
     }
     return urlString;
@@ -169,7 +171,7 @@ export function ensureAbsoluteImageUrl(url?: string | null): string | null {
   }
   const base = getSupabaseUrl();
   if (!base) {
-    console.warn("[ensureAbsoluteImageUrl] URL relativa sin base:", urlString.slice(0, 60));
+    logger.warn("[ensureAbsoluteImageUrl] URL relativa sin base:", urlString.slice(0, 60));
     return null;
   }
   // Si viene como "avatars/..." (path sin bucket), asumir bucket "media" por defecto.
@@ -179,25 +181,6 @@ export function ensureAbsoluteImageUrl(url?: string | null): string | null {
   const storageKey = isKnownBucketPrefix ? urlString : `media/${urlString}`;
   const full = `${base.replace(/\/$/, "")}${SUPABASE_PUBLIC_PATH}${storageKey}`;
   return full;
-}
-
-/**
- * Log de diagnóstico para imágenes de cards (solo en dev).
- * Usar desde cada card: logCardImage('evento', id, imageUrl, !!imageUrl, reason).
- */
-export function logCardImage(
-  type: string,
-  id: string | number | undefined,
-  imageUrl: string | undefined | null,
-  valid: boolean,
-  reason?: string
-): void {
-  if (import.meta.env.DEV && typeof console !== "undefined" && console.log) {
-    const uri = imageUrl ? String(imageUrl).slice(0, 80) : "";
-    console.log(
-      `[ExploreCard] type=${type} id=${id ?? "?"} imageUrl=${uri} valid=${valid}${reason ? ` reason=${reason}` : ""}`
-    );
-  }
 }
 
 /**

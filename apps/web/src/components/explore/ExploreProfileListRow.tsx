@@ -4,8 +4,9 @@ import { ChevronRight } from "lucide-react";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
+import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
-import { toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
+import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import "@/components/explore/EventListRow.css";
 
@@ -128,27 +129,44 @@ function ExploreProfileListRow({ variant, item, priority = false }: ExploreProfi
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
 
-  const logKind =
-    variant === "academy" ? "academia" : variant === "teacher" ? "maestro" : variant === "dancer" ? "usuario" : "organizador";
-  logCardImage(logKind, item.id ?? item.user_id, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
-
   const zonaNombres: string[] = (item.zonas || [])
     .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === "zona")?.nombre)
     .filter(Boolean);
+  const ritmoNombres = React.useMemo(() => {
+    try {
+      const labelByCatalogId = new Map<string, string>();
+      RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
+      const catalogIds = (item.ritmosSeleccionados || item.ritmos_seleccionados || []) as string[];
+      if (Array.isArray(catalogIds) && catalogIds.length > 0) {
+        return catalogIds.map((id) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
+      }
+      const nums = (item.ritmos || []) as number[];
+      if (Array.isArray(allTags) && nums.length > 0) {
+        return nums
+          .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === "ritmo"))
+          .filter(Boolean)
+          .map((tag: any) => tag.nombre as string);
+      }
+    } catch {
+      /* ignore */
+    }
+    return [] as string[];
+  }, [allTags, item]);
 
   const bioSnippet = (item.bio || "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 120);
+    .slice(0, 72);
+  const primaryLine = zonaNombres[0] || ritmoNombres[0] || bioSnippet || "";
 
   return (
     <LiveLink to={href} asCard={false}>
       <motion.article
         className="event-list-row"
-        initial={{ opacity: 0, y: 6 }}
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.16 }}
-        whileTap={{ scale: 0.985 }}
+        whileTap={{ scale: 0.99 }}
       >
         <div className="event-list-row__thumb" aria-hidden={showPlaceholder}>
           {showPlaceholder ? (
@@ -173,15 +191,10 @@ function ExploreProfileListRow({ variant, item, priority = false }: ExploreProfi
         </div>
         <div className="event-list-row__main">
           <h3 className="event-list-row__title">{title}</h3>
-          {bioSnippet ? (
-            <div className="event-list-row__setlist" title={item.bio}>
-              {bioSnippet}
-              {(item.bio || "").length > 120 ? "…" : ""}
-            </div>
-          ) : null}
-          {zonaNombres.length > 0 ? (
-            <div className="event-list-row__meta">
-              <span title={zonaNombres.join(", ")}>📍 {zonaNombres.slice(0, 3).join(", ")}</span>
+          {primaryLine ? (
+            <div className="event-list-row__secondary" title={primaryLine}>
+              {primaryLine}
+              {primaryLine === bioSnippet && (item.bio || "").length > 72 ? "…" : ""}
             </div>
           ) : null}
         </div>

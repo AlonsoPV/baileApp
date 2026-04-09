@@ -5,7 +5,7 @@ import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
-import { toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
+import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import "./EventSocialGridCard.css";
@@ -154,22 +154,22 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
     .filter(Boolean);
 
   const ritmos = ritmoLabels(item, allTags);
-  const ritmoMeta = ritmos.slice(0, 2).join(" · ");
-  const zonaMeta = zonaNombres.slice(0, 2).join(" · ");
-  const metaMain = ritmoMeta || zonaMeta;
+  const primaryZone = zonaNombres[0] || "";
+  const primaryRhythm = ritmos[0] || "";
 
   const bioRaw = String(item.bio || "")
     .replace(/\s+/g, " ")
     .trim();
-  const bioLong = bioRaw.length > 72;
   const bioSnippet = bioRaw.slice(0, 72);
-
-  let placeRow: { text: string; withPin: boolean } | null = null;
-  if (ritmoMeta && zonaNombres[0]) placeRow = { text: zonaNombres[0], withPin: true };
-  else if (!ritmoMeta && zonaMeta) {
-    if (bioSnippet) placeRow = { text: `${bioSnippet}${bioLong ? "…" : ""}`, withPin: false };
-  } else if (zonaNombres[0]) placeRow = { text: zonaNombres[0], withPin: true };
-  else if (bioSnippet) placeRow = { text: `${bioSnippet}${bioLong ? "…" : ""}`, withPin: false };
+  const primaryLine = primaryZone || primaryRhythm || (bioSnippet ? `${bioSnippet}${bioRaw.length > 72 ? "…" : ""}` : "");
+  const secondaryLine =
+    primaryZone && primaryRhythm
+      ? primaryRhythm
+      : primaryZone || primaryRhythm
+        ? bioSnippet
+          ? `${bioSnippet}${bioRaw.length > 72 ? "…" : ""}`
+          : ""
+        : "";
 
   const accentLine =
     variant === "academy"
@@ -180,10 +180,6 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
           ? t("explore_grid_badge_dancer")
           : t("explore_grid_badge_organizer");
 
-  const logKind =
-    variant === "academy" ? "academia" : variant === "teacher" ? "maestro" : variant === "dancer" ? "usuario" : "organizador";
-  logCardImage(logKind, item.id ?? item.user_id ?? title, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
-
   return (
     <LiveLink to={href} asCard={false}>
       <motion.article
@@ -191,7 +187,7 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.99 }}
       >
         <div className="event-social-grid-card__media">
           {showPlaceholder ? (
@@ -216,20 +212,20 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
         </div>
         <div className="event-social-grid-card__body">
           <h3 className="event-social-grid-card__title">{title}</h3>
-          {metaMain ? (
+          {primaryLine ? (
             <div className="event-social-grid-card__line event-social-grid-card__line--meta">
-              <span>{metaMain}</span>
+              <span>{primaryLine}</span>
             </div>
           ) : null}
-          {placeRow ? (
+          {secondaryLine ? (
             <div
               className="event-social-grid-card__line event-social-grid-card__line--place"
-              title={placeRow.withPin ? placeRow.text : item.bio}
+              title={secondaryLine}
             >
-              {placeRow.withPin ? `📍 ${placeRow.text}` : placeRow.text}
+              {secondaryLine}
             </div>
           ) : null}
-          <div className="event-social-grid-card__price" aria-label={accentLine}>
+          <div className="event-social-grid-card__badge" aria-label={accentLine}>
             <span>{accentLine.length > 28 ? `${accentLine.slice(0, 28)}…` : accentLine}</span>
           </div>
         </div>

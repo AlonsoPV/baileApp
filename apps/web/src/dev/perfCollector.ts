@@ -1,5 +1,5 @@
 // apps/web/src/dev/perfCollector.ts
-/* Dev-only performance collector for [PERF] logs */
+/* Dev-only: monkey-patch console.log para acumular muestras legacy (prefijo "[PERF]" + objeto) */
 
 type PerfSample = {
   hook: string;
@@ -118,12 +118,12 @@ function safeNum(n: unknown): number {
     const json = JSON.stringify(samples, null, 2);
     try {
       await navigator.clipboard.writeText(json);
-      console.log("[PERF] Export copied to clipboard. samples=", samples.length);
+      console.log("[perfCollector] Export copied to clipboard. samples=", samples.length);
     } catch {
-      console.log("[PERF] Clipboard blocked. Copy from console output below:");
+      console.log("[perfCollector] Clipboard blocked. Copy from console output below:");
       console.log(json);
     }
   };
 
-  console.log("[PERF] perfCollector installed");
+  console.log("[perfCollector] installed (perfReport / perfExport en window)");
 })();

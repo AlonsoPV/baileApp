@@ -27,7 +27,7 @@ export function startScrollLockWatchdog() {
       if (hiddenSince === null) hiddenSince = now;
       const elapsed = now - hiddenSince;
       if (elapsed >= WARN_AFTER_MS) {
-        console.warn("[PERF] scroll_lock_watchdog overflow:hidden > 3s", { htmlOv, bodyOv });
+        console.warn("[scrollLockWatchdog] overflow:hidden > 3s", { htmlOv, bodyOv });
       }
     } else {
       hiddenSince = null;

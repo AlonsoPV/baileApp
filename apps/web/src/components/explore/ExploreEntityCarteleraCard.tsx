@@ -6,7 +6,7 @@ import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useFmtDate } from "@/hooks/useFmtDate";
-import { toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
+import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import "./EventCarteleraCard.css";
@@ -246,29 +246,19 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
     return [];
   }, [variant, item, allTags]);
 
-  const subtitleLine =
-    variant === "clase" && item.ownerName ? (
-      <div className="event-cartelera-card__place" style={{ fontSize: "0.625rem", opacity: 0.95 }}>
-        {t("explore_cartelera_by", { name: item.ownerName })}
-      </div>
-    ) : null;
+  const bioSnippet = `${String(item.bio || "").replace(/\s+/g, " ").trim().slice(0, 72)}${String(item.bio || "").trim().length > 72 ? "…" : ""}`;
+  const primaryProfileLine = zonaNombres[0] || ritmoNames[0] || bioSnippet || "";
+  const secondaryProfileLine =
+    zonaNombres[0] && ritmoNames[0]
+      ? ritmoNames[0]
+      : (zonaNombres[0] || ritmoNames[0]) && bioSnippet
+        ? bioSnippet
+        : "";
 
   const badgeText =
     variant === "clase"
       ? ritmoNames[0] || t("explore_cartelera_class_badge")
-      : zonaNombres[0] || t("explore_cartelera_profile_badge");
-
-  const logKind =
-    variant === "clase"
-      ? "clase"
-      : variant === "academy"
-        ? "academia"
-        : variant === "teacher"
-          ? "maestro"
-          : variant === "dancer"
-            ? "usuario"
-            : "organizador";
-  logCardImage(logKind, item.id ?? item.user_id ?? title, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
+      : t("explore_cartelera_profile_badge");
 
   const [imageError, setImageError] = React.useState(false);
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
@@ -281,7 +271,7 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.16 }}
-        whileTap={{ scale: 0.985 }}
+        whileTap={{ scale: 0.99 }}
       >
         <div className="event-cartelera-card__frame">
           {showPlaceholder ? (
@@ -307,7 +297,6 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
             <h3 className="event-cartelera-card__title">{title}</h3>
             {variant === "clase" ? (
               <>
-                {subtitleLine}
                 <div className="event-cartelera-card__meta">
                   {formattedDate && <span>{formattedDate}</span>}
                   {formattedDate && timePart && <span className="event-cartelera-card__dot">·</span>}
@@ -315,31 +304,28 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
                 </div>
                 {lugarLine ? (
                   <div className="event-cartelera-card__place" title={lugarLine}>
-                    📍 {lugarLine}
+                    {lugarLine}
                   </div>
                 ) : null}
               </>
             ) : (
               <>
-                {zonaNombres.length > 0 ? (
+                {primaryProfileLine ? (
                   <div className="event-cartelera-card__meta">
-                    <span title={zonaNombres.join(", ")}>📍 {zonaNombres.slice(0, 2).join(", ")}</span>
+                    <span title={primaryProfileLine}>{primaryProfileLine}</span>
                   </div>
                 ) : null}
-                {item.bio ? (
-                  <div className="event-cartelera-card__place" title={item.bio}>
-                    {String(item.bio).replace(/\s+/g, " ").trim().slice(0, 72)}
-                    {String(item.bio).length > 72 ? "…" : ""}
+                {secondaryProfileLine ? (
+                  <div className="event-cartelera-card__place" title={secondaryProfileLine}>
+                    {secondaryProfileLine}
                   </div>
                 ) : null}
               </>
             )}
             <div className="event-cartelera-card__footer">
               <span style={{ flex: 1 }} />
-              <div className="event-cartelera-card__price" aria-hidden>
-                <span style={{ fontSize: "0.7rem", fontWeight: 700 }}>
-                  {badgeText.length > 22 ? `${badgeText.slice(0, 22)}…` : badgeText}
-                </span>
+              <div className="event-cartelera-card__badge" aria-hidden>
+                <span>{badgeText.length > 22 ? `${badgeText.slice(0, 22)}…` : badgeText}</span>
               </div>
             </div>
           </div>

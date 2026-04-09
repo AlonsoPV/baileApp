@@ -2,11 +2,10 @@
  * PerformanceLogger — instrumentación de tiempos de carga para web (y WebView en Android).
  *
  * - Usa performance.now() si existe, si no Date.now()
- * - Logs con prefijo [PERF] para poder filtrar en Android (adb logcat | grep PERF)
- * - Marca hitos: app_start, first_screen_mount, data_fetch_start/end, list_render_end, etc.
+ * - Los hitos se guardan en memoria para `notifyReady` / postMessage al host nativo.
+ * - Sin logs en consola (evita ruido); usar DevTools Performance / mensajes nativos si hace falta.
  */
 
-const PERF_PREFIX = "[PERF]";
 const hasPerfNow = typeof performance !== "undefined" && typeof performance.now === "function";
 
 function now(): number {
@@ -16,18 +15,12 @@ function now(): number {
 const startTime = now();
 const marks: { name: string; time: number; relativeMs: number }[] = [];
 
-function logWithPrefix(label: string, value?: string | number): void {
-  const msg = value !== undefined ? `${PERF_PREFIX} ${label} ${value}` : `${PERF_PREFIX} ${label}`;
-  if (typeof console !== "undefined") {
-    console.log(msg);
-  }
-  if (typeof console.time === "function" && typeof console.timeEnd === "function") {
-    // time/timeEnd are optional; we use our own marks for report
-  }
+function logWithPrefix(_label: string, _value?: string | number): void {
+  /* intentionally silent */
 }
 
 /**
- * Registra un hito y opcionalmente imprime el tiempo relativo al arranque.
+ * Registra un hito (tiempo relativo al arranque). `logToConsole` se ignora; sin salida a consola.
  */
 export function mark(name: string, logToConsole = true): number {
   const t = now();
@@ -43,19 +36,13 @@ export function mark(name: string, logToConsole = true): number {
  * Inicia un timer con nombre (para timeEnd).
  */
 export function time(label: string): void {
-  if (typeof console.time === "function") {
-    console.time(`${PERF_PREFIX} ${label}`);
-  }
   mark(`${label}_start`, false);
 }
 
 /**
- * Finaliza un timer y muestra la duración.
+ * Finaliza un timer (registra hito `_end`; sin consola).
  */
 export function timeEnd(label: string): void {
-  if (typeof console.timeEnd === "function") {
-    console.timeEnd(`${PERF_PREFIX} ${label}`);
-  }
   const start = marks.find((m) => m.name === `${label}_start`);
   const rel = start ? now() - start.time : 0;
   mark(`${label}_end`, false);
@@ -118,7 +105,7 @@ export function notifyReady(): void {
   } catch {
     // ignore
   }
-  mark("web_ready", true);
+  mark("web_ready", false);
 }
 
 export function notifyError(payload: Record<string, unknown>): void {

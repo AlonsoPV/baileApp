@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useFmtDate } from "@/hooks/useFmtDate";
-import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
+import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "@/utils/eventCosts";
@@ -112,8 +112,6 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
   const costMonto = ui ? ui.costoMonto ?? 0 : costMontoFallback;
   const hasDisc = ui ? !!ui.hasDiscount : showDiscount;
 
-  logCardImage("evento", eventId, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
-
   const [imageError, setImageError] = React.useState(false);
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
@@ -125,7 +123,7 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.16 }}
-        whileTap={{ scale: 0.985 }}
+        whileTap={{ scale: 0.99 }}
       >
         <div className="event-cartelera-card__frame">
           {showPlaceholder ? (
@@ -156,7 +154,7 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
             </div>
             {lugarLine ? (
               <div className="event-cartelera-card__place" title={lugarLine}>
-                📍 {lugarLine}
+                {lugarLine}
               </div>
             ) : null}
             <div className="event-cartelera-card__footer">

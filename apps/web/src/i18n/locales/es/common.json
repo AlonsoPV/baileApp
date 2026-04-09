@@ -194,6 +194,7 @@
   "adding_to_calendar": "Cargando...",
   "google_calendar": "Google Calendar",
   "apple_calendar": "Apple Calendar (.ics)",
+  "iphone_calendar": "Calendario de iPhone",
   "login_to_add_calendar": "Inicia sesión para añadir al calendario",
   "error_adding_calendar": "Error al añadir al calendario. Intenta nuevamente.",
   "calendar_permission_required": "Permiso requerido",

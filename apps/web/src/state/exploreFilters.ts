@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { userLocalStorage } from "@/storage/userScopedStorage";
+import { logger } from "@/utils/logger";
 
 export type ExploreType = "all" | "fechas" | "sociales" | "clases" | "organizadores" | "maestros" | "academias" | "marcas" | "usuarios";
 
@@ -44,7 +45,7 @@ export const useExploreFilters = create<Store>((set, get) => ({
     try {
       userLocalStorage.setItem([...STORAGE_PARTS], JSON.stringify(next));
     } catch (e) {
-      console.warn('[ExploreFilters] Failed to save to localStorage:', e);
+      logger.warn("[ExploreFilters] Failed to save to localStorage:", e);
     }
     set({ filters: next });
   },
@@ -52,7 +53,7 @@ export const useExploreFilters = create<Store>((set, get) => ({
     try {
       userLocalStorage.setItem([...STORAGE_PARTS], JSON.stringify(defaultFilters));
     } catch (e) {
-      console.warn('[ExploreFilters] Failed to reset localStorage:', e);
+      logger.warn("[ExploreFilters] Failed to reset localStorage:", e);
     }
     set({ filters: defaultFilters });
   },
@@ -62,7 +63,7 @@ export const useExploreFilters = create<Store>((set, get) => ({
       const parsed = raw ? JSON.parse(raw) : null;
       set({ filters: parsed ? { ...defaultFilters, ...parsed } : defaultFilters });
     } catch (e) {
-      console.warn("[ExploreFilters] Failed to rehydrate user filters:", e);
+      logger.warn("[ExploreFilters] Failed to rehydrate user filters:", e);
       set({ filters: defaultFilters });
     }
   },

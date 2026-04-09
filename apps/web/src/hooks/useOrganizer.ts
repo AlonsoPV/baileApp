@@ -38,9 +38,6 @@ export function useMyOrganizer() {
         }
         throw error;
       }
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[useMyOrganizer] Estado de aprobación obtenido:', data?.estado_aprobacion, 'Full data:', data);
-      }
       return data || null;
     },
     staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch

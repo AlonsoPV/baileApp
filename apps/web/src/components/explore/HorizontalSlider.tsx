@@ -657,7 +657,7 @@ export default function HorizontalSlider<T>({
     color: "rgba(255,255,255,0.35)",
     cursor: "not-allowed",
     boxShadow: "none",
-    borderColor: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.08)",
   };
 
   const ArrowLeft = ({ size = 20 }: { size?: number }) => (

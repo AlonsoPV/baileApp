@@ -4,6 +4,7 @@ import LiveLink from '../../LiveLink';
 import { supabase } from '../../../lib/supabase';
 import type { CompetitionGroup } from '../../../types/competitionGroup';
 import { normalizeAndOptimizeUrl } from '../../../utils/imageOptimization';
+import { logger } from '../../../utils/logger';
 
 interface Props {
   group: CompetitionGroup & {
@@ -127,7 +128,7 @@ export default function CompetitionGroupCard({ group }: Props) {
           });
         }
       } catch (error) {
-        console.error('Error loading owner data:', error);
+        logger.error('Error loading owner data:', error);
       }
     };
 

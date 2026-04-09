@@ -4,7 +4,7 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
-import { toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
@@ -55,7 +55,6 @@ export default function TeacherCard({ item }: { item: any }) {
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
   const placeholderReason = !bannerUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
-  logCardImage('maestro', item.id, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? 'URL vacía' : undefined);
 
   const zonaNombres: string[] = (item.zonas || [])
     .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
@@ -90,12 +89,8 @@ export default function TeacherCard({ item }: { item: any }) {
                 alt={`Imagen de ${displayName}`}
                 loading="lazy"
                 decoding="async"
-                onLoad={() => { logCardImage('maestro', item.id, imageUrlFinal, true, 'load'); setImageError(false); }}
-                onError={(e) => {
-                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? 'Image load failed';
-                  console.warn('[CardImageError] type=maestro id=', item.id, 'uri=', imageUrlFinal?.slice(0, 80), 'error=', msg);
-                  setImageError(true);
-                }}
+                onLoad={() => setImageError(false)}
+                onError={() => setImageError(true)}
               />
             )}
 

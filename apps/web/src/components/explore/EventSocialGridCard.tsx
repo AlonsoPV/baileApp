@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useFmtDate } from "@/hooks/useFmtDate";
-import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
+import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "@/utils/eventCosts";
@@ -63,7 +63,6 @@ function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCard
 
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
-  logCardImage("evento", eventId, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
 
   const dateLine = ui.fechaYmd ? fmtDateLocalized(ui.fechaYmd) : "";
   const timePart = horaInicio ? formatHHMM(horaInicio) : "";
@@ -75,7 +74,7 @@ function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCard
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.99 }}
       >
         <div className="event-social-grid-card__media">
           {showPlaceholder ? (
@@ -107,7 +106,7 @@ function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCard
           </div>
           {ui.lugarNombre ? (
             <div className="event-social-grid-card__line event-social-grid-card__line--place" title={ui.lugarNombre}>
-              📍 {ui.lugarNombre}
+              {ui.lugarNombre}
             </div>
           ) : null}
           <div className="event-social-grid-card__price" aria-label={ui.costoMonto === 0 ? "Entrada gratis" : `Costo ${formatCostoMonto(ui.costoMonto)}`}>
@@ -206,7 +205,7 @@ function EventSocialGridCardFallback({ item, priority = false }: EventSocialGrid
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.15 }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.99 }}
       >
         <div className="event-social-grid-card__media">
           {showPlaceholder ? (
@@ -238,7 +237,7 @@ function EventSocialGridCardFallback({ item, priority = false }: EventSocialGrid
           </div>
           {lugarSoloNombre ? (
             <div className="event-social-grid-card__line event-social-grid-card__line--place" title={lugarSoloNombre}>
-              📍 {lugarSoloNombre}
+              {lugarSoloNombre}
             </div>
           ) : null}
           <div className="event-social-grid-card__price" aria-label={costMonto === 0 ? "Entrada gratis" : `Costo ${formatCostoMonto(costMonto)}`}>

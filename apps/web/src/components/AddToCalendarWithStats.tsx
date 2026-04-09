@@ -9,6 +9,9 @@ import { buildICS, buildGoogleUrl, formatDateToLocalISO } from "../utils/calenda
 import { calculateRecurringDates, calculateMultipleRecurringDates } from "../utils/calculateRecurringDates";
 import { useAuth } from "@/contexts/AuthProvider";
 import { isNativeApp } from "@/utils/isNativeApp";
+import { getCalendarAddMenuVisibility } from "@/utils/calendarAddOptions";
+import { logger } from "@/utils/logger";
+import { CalendarDays } from "lucide-react";
 
 type AddToCalendarProps = {
   eventId: string | number;
@@ -32,6 +35,8 @@ type AddToCalendarProps = {
   fecha?: string | null; // Fecha específica (YYYY-MM-DD) - si existe, no es recurrente
   diaSemana?: number | null; // Día de la semana (0-6) para clases recurrentes
   diasSemana?: number[] | null; // Array de días de la semana para clases con múltiples días
+  /** Icono del botón ancho (no aplica a showAsIcon). */
+  calendarGlyph?: "emoji" | "lucide-calendar-days";
 };
 
 export default function AddToCalendarWithStats({
@@ -52,6 +57,7 @@ export default function AddToCalendarWithStats({
   fecha,
   diaSemana,
   diasSemana,
+  calendarGlyph = "emoji",
 }: AddToCalendarProps) {
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
@@ -113,7 +119,7 @@ export default function AddToCalendarWithStats({
             setCount(0);
           }
         } catch (err) {
-          console.error('[AddToCalendarWithStats] Error obteniendo stats:', err);
+          logger.error("[AddToCalendarWithStats] Error obteniendo stats:", err);
           setCount(0);
         }
       }
@@ -137,6 +143,7 @@ export default function AddToCalendarWithStats({
   }, [user, eventIdStr]);
 
   const inNative = isNativeApp(routerLocation.search);
+  const calAddOpts = useMemo(() => getCalendarAddMenuVisibility(), []);
 
   const invalidateRelatedMetrics = React.useCallback(() => {
     if (academyId) {
@@ -291,17 +298,6 @@ export default function AddToCalendarWithStats({
   };
 
   const handleAdd = async (href: string) => {
-    console.log("[AddToCalendarWithStats] 🎯 handleAdd llamado con:", {
-      href,
-      userId: user?.id,
-      alreadyAdded,
-      classId,
-      academyId,
-      eventId,
-      roleBaile,
-      zonaTagId,
-    });
-
     if (!user?.id) {
       // TEMP: sin login permitir abrir enlace (Google Calendar / ICS) sin registrar en backend
       setOpen(false);
@@ -310,7 +306,6 @@ export default function AddToCalendarWithStats({
     }
 
     if (alreadyAdded) {
-      console.log("[AddToCalendarWithStats] ⚠️ Ya agregado, solo abriendo calendario");
       setAdded(true);
       setTimeout(() => setAdded(false), 2000);
       setOpen(false);
@@ -320,7 +315,6 @@ export default function AddToCalendarWithStats({
 
     setLoading(true);
     try {
-      console.log("[AddToCalendarWithStats] 📝 Iniciando proceso de agregar a calendario...");
       // Registrar en eventos_interesados (lógica existente)
       const { error: errorInteresados } = await supabase.from("eventos_interesados").insert({
         event_id: eventIdStr,
@@ -406,19 +400,17 @@ export default function AddToCalendarWithStats({
 
               const successful = results.filter(r => r.status === 'fulfilled').length;
             } else {
-              console.error("[AddToCalendarWithStats] ❌ Error insertando asistencias:", insertError);
+              logger.error("[AddToCalendarWithStats] Error insertando asistencias:", insertError);
             }
-          } else {
-            console.log("[AddToCalendarWithStats] ✅", insertData?.length || 0, "asistencias registradas exitosamente");
           }
 
           // Invalidar y refetch queries de métricas si hay academyId o teacherId
           invalidateRelatedMetrics();
         } catch (err) {
-          console.error("[AddToCalendarWithStats] ❌ Error inesperado:", err);
+          logger.error("[AddToCalendarWithStats] Error inesperado:", err);
         }
       } else {
-        console.warn("[AddToCalendarWithStats] ⚠️ No se puede insertar: classId inválido o NaN", {
+        logger.warn("[AddToCalendarWithStats] No se puede insertar: classId inválido o NaN", {
           finalClassId,
           classId,
           eventId,
@@ -618,7 +610,9 @@ export default function AddToCalendarWithStats({
     if (open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const menuWidth = 200;
-      const menuHeight = 120; // Estimado
+      const icsVisible = !!(icsBlobUrl && calAddOpts.showIcsOption);
+      const rowCount = inNative ? (icsVisible ? 3 : 2) : icsVisible ? 2 : 1;
+      const menuHeight = rowCount * 49;
 
       // Calcular posición, asegurándose de que esté dentro del viewport
       let left = rect.right - menuWidth;
@@ -646,7 +640,7 @@ export default function AddToCalendarWithStats({
     } else {
       setMenuPosition(null);
     }
-  }, [open]);
+  }, [open, inNative, icsBlobUrl, calAddOpts.showIcsOption]);
 
   // TEMP: candado desactivado — siempre mostrar botón de calendario (ICS/Google sin login)
   // Antes: isClass && !user?.id mostraba botón "Inicia sesión para añadir al calendario"
@@ -793,7 +787,7 @@ export default function AddToCalendarWithStats({
                       >
                         {t("google_calendar")}
                       </button>
-                      {icsBlobUrl && (
+                      {icsBlobUrl && calAddOpts.showIcsOption && (
                         <button
                           onClick={handleFallbackICS}
                           style={{
@@ -806,7 +800,7 @@ export default function AddToCalendarWithStats({
                             cursor: "pointer",
                           }}
                         >
-                          {t("calendar_download_ics")}
+                          {t(calAddOpts.icsLabelKey)}
                         </button>
                       )}
                       <button
@@ -877,9 +871,9 @@ export default function AddToCalendarWithStats({
                         onClick={() => handleAdd(googleUrl)}
                         icon="📅"
                       />
-                      {icsBlobUrl && (
+                      {icsBlobUrl && calAddOpts.showIcsOption && (
                         <MenuItem
-                          label={t('apple_calendar')}
+                          label={t(calAddOpts.icsLabelKey)}
                           onClick={() => handleAdd(icsBlobUrl)}
                           icon="📱"
                         />
@@ -892,9 +886,9 @@ export default function AddToCalendarWithStats({
                         onClick={() => handleAdd(googleUrl)}
                         icon="📅"
                       />
-                      {icsBlobUrl && (
+                      {icsBlobUrl && calAddOpts.showIcsOption && (
                         <MenuItem
-                          label={t('apple_calendar')}
+                          label={t(calAddOpts.icsLabelKey)}
                           onClick={() => handleAdd(icsBlobUrl)}
                           icon="📱"
                         />
@@ -937,24 +931,40 @@ export default function AddToCalendarWithStats({
         aria-label={added ? t('event_added_calendar') : t('add_event_calendar')}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <span
-            aria-hidden
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: '50%',
-              display: 'grid',
-              placeItems: 'center',
-              background: added
-                ? 'linear-gradient(135deg, #4CAF50, #81C784)'
-                : 'linear-gradient(135deg, #7F7CFF, #21D4FD)',
-              boxShadow: added
-                ? '0 4px 10px rgba(129,199,132,0.35)'
-                : '0 4px 10px rgba(33,212,253,0.35)'
-            }}
-          >
-            📅
-          </span>
+          {calendarGlyph === "lucide-calendar-days" ? (
+            loading ? (
+              <span aria-hidden style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 1 }}>
+                ⏳
+              </span>
+            ) : (
+              <CalendarDays
+                className="lucide lucide-calendar-days"
+                size={20}
+                strokeWidth={2.25}
+                color="rgba(255,255,255,0.95)"
+                aria-hidden
+              />
+            )
+          ) : (
+            <span
+              aria-hidden
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                background: added
+                  ? 'linear-gradient(135deg, #4CAF50, #81C784)'
+                  : 'linear-gradient(135deg, #7F7CFF, #21D4FD)',
+                boxShadow: added
+                  ? '0 4px 10px rgba(129,199,132,0.35)'
+                  : '0 4px 10px rgba(33,212,253,0.35)'
+              }}
+            >
+              {loading ? "⏳" : "📅"}
+            </span>
+          )}
           <span>{added ? t('added_to_calendar') : loading ? t('adding_to_calendar') : t('add_to_calendar_button')}</span>
         </span>
       </motion.button>
@@ -1077,7 +1087,7 @@ export default function AddToCalendarWithStats({
                     >
                       {t("google_calendar")}
                     </button>
-                    {icsBlobUrl && (
+                    {icsBlobUrl && calAddOpts.showIcsOption && (
                       <button
                         onClick={handleFallbackICS}
                         style={{
@@ -1090,7 +1100,7 @@ export default function AddToCalendarWithStats({
                           cursor: "pointer",
                         }}
                       >
-                        {t("calendar_download_ics")}
+                        {t(calAddOpts.icsLabelKey)}
                       </button>
                     )}
                     <button
@@ -1154,15 +1164,15 @@ export default function AddToCalendarWithStats({
                   <>
                     <MenuItem label={t('add_to_calendar_button')} onClick={() => handleAddNative()} icon="📅" />
                     <MenuItem label={t('google_calendar')} onClick={() => handleAdd(googleUrl)} icon="📅" />
-                    {icsBlobUrl && (
-                      <MenuItem label={t('apple_calendar')} onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
+                    {icsBlobUrl && calAddOpts.showIcsOption && (
+                      <MenuItem label={t(calAddOpts.icsLabelKey)} onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
                     )}
                   </>
                 ) : (
                   <>
                     <MenuItem label={t('google_calendar')} onClick={() => handleAdd(googleUrl)} icon="📅" />
-                    {icsBlobUrl && (
-                      <MenuItem label={t('apple_calendar')} onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
+                    {icsBlobUrl && calAddOpts.showIcsOption && (
+                      <MenuItem label={t(calAddOpts.icsLabelKey)} onClick={() => handleAdd(icsBlobUrl)} icon="📱" />
                     )}
                   </>
                 )}

@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useFmtDate } from "../../../hooks/useFmtDate";
-import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl, logCardImage } from "../../../utils/imageOptimization";
+import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import { withStableCacheBust } from "../../../utils/cacheBuster";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { getLowestTaquillaMonto, getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
@@ -17,16 +17,6 @@ interface EventCardProps {
   /** Tags pre-fetched por el padre. Solo se usa cuando item.__ui NO existe (fallback). */
   allTags?: any[] | null;
 }
-
-const resolveEventSetlist = (item: any): string => {
-  const candidates = [item?.djs, item?.evento_djs, item?.events_date?.djs, item?.__ui?.djs];
-  for (const value of candidates) {
-    if (typeof value !== "string") continue;
-    const normalized = value.replace(/\s+/g, " ").trim();
-    if (normalized) return normalized;
-  }
-  return "";
-};
 
 function formatHHMM(t?: string) {
   if (!t) return "";
@@ -69,11 +59,6 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
   const motionPrefs = useEventCardMotion();
-  const isAndroid = React.useMemo(
-    () => typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent),
-    []
-  );
-
   const flyerCacheKey =
     ((item as any)?.updated_at as string | undefined) ||
     ((item as any)?.created_at as string | undefined) ||
@@ -92,12 +77,10 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
   const placeholderReason = !ui.flyerUrl ? "URL vacía" : imageError ? "Image load failed" : "";
-  logCardImage("evento", eventId, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
 
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
-  const organizador = item.organizador_nombre || item.organizer_name;
-  const setlist = React.useMemo(() => resolveEventSetlist(item), [item]);
+  const ownerLabel = item.ownerName || item.organizador_nombre || item.organizer_name || "";
 
   return (
     <LiveLink to={linkTo} asCard={false}>
@@ -108,15 +91,7 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
         whileHover={motionPrefs.hover}
         whileTap={motionPrefs.tap}
       >
-        {setlist && (
-          <div className="event-setlist-top" title={setlist}>
-            {setlist}
-          </div>
-        )}
         <div className="media">
-          {!isAndroid && imageUrlFinal && !imageError && (
-            <div className="media__bg" style={{ backgroundImage: `url(${imageUrlFinal})` }} aria-hidden />
-          )}
           <div className="media__frame">
             {showPlaceholder ? (
               <div className="media-placeholder" data-reason={placeholderReason} aria-hidden style={{ width: "100%", height: "100%", minHeight: 100 }}>
@@ -133,10 +108,7 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
                 loading={priority ? "eager" : "lazy"}
                 fetchPriority={priority ? "high" : "auto"}
                 decoding="async"
-                onLoad={() => {
-                  logCardImage("evento", eventId, imageUrlFinal, true, "load");
-                  setImageError(false);
-                }}
+                onLoad={() => setImageError(false)}
                 onError={() => setImageError(true)}
               />
             ) : null}
@@ -144,9 +116,9 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
         </div>
         <div className="content">
           <h3 className="event-title">{nombre}</h3>
-          {item.ownerName && (
+          {ownerLabel && (
             <p className="event-card__owner">
-              por <strong>{item.ownerName}</strong>
+              por <strong>{ownerLabel}</strong>
             </p>
           )}
           <div className="meta">
@@ -156,7 +128,7 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
               </div>
             )}
             <div className="meta-row--time-zone">
-              {horaInicio && <div className="tag">🕗 {formatHHMM(horaInicio)}</div>}
+              {horaInicio && <div className="tag">{formatHHMM(horaInicio)}</div>}
               <div className="tag tag--cost" aria-label={ui.costoMonto === 0 ? "Entrada gratis" : `Costo taquilla ${formatCostoMonto(ui.costoMonto)}`}>
                 {ui.costoMonto === 0 ? (
                   <span>Gratis</span>
@@ -174,22 +146,9 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
                   </span>
                 )}
               </div>
-              {ui.lugarNombre && <div className="tag tag--location">📍 {ui.lugarNombre}</div>}
+              {ui.lugarNombre && <div className="tag tag--location">{ui.lugarNombre}</div>}
             </div>
           </div>
-          {organizador && (
-            <div className="event-card__organizer">
-              <div className="event-card__organizer-avatar" aria-hidden>
-                👤
-              </div>
-              <div className="event-card__organizer-text">
-                <div className="event-card__organizer-name" title={organizador}>
-                  {organizador}
-                </div>
-                <div className="event-card__organizer-label">Organizador</div>
-              </div>
-            </div>
-          )}
         </div>
         <div
           aria-hidden
@@ -214,10 +173,6 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
   const motionPrefs = useEventCardMotion();
-  const isAndroid = React.useMemo(
-    () => typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent),
-    []
-  );
 
   const toUrl = (u: string | null | undefined) =>
     u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined;
@@ -260,7 +215,6 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
   React.useEffect(() => setImageError(false), [imageUrlFinal]);
   const showPlaceholder = !imageUrlFinal || imageError;
   const placeholderReason = !flyer ? "URL vacía" : imageError ? "Image load failed" : "";
-  logCardImage("evento", eventId, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
 
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
@@ -274,8 +228,7 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
     }
     return s;
   }, [lugar]);
-  const organizador = item.organizador_nombre || item.organizer_name;
-  const setlist = React.useMemo(() => resolveEventSetlist(item), [item]);
+  const ownerLabel = item.ownerName || item.organizador_nombre || item.organizer_name || "";
   const fecha = React.useMemo(() => resolveEventDateYmd(item), [item]);
   const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
@@ -299,15 +252,7 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
         whileHover={motionPrefs.hover}
         whileTap={motionPrefs.tap}
       >
-        {setlist && (
-          <div className="event-setlist-top" title={setlist}>
-            {setlist}
-          </div>
-        )}
         <div className="media">
-          {!isAndroid && imageUrlFinal && !imageError && (
-            <div className="media__bg" style={{ backgroundImage: `url(${imageUrlFinal})` }} aria-hidden />
-          )}
           <div className="media__frame">
             {showPlaceholder ? (
               <div className="media-placeholder" data-reason={placeholderReason} aria-hidden style={{ width: "100%", height: "100%", minHeight: 100 }}>
@@ -324,24 +269,17 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
                 loading={priority ? "eager" : "lazy"}
                 fetchPriority={priority ? "high" : "auto"}
                 decoding="async"
-                onLoad={() => {
-                  logCardImage("evento", eventId, imageUrlFinal, true, "load");
-                  setImageError(false);
-                }}
-                onError={(e) => {
-                  const msg = (e.nativeEvent as unknown as { message?: string })?.message ?? "Image load failed";
-                  console.warn("[CardImageError] type=evento id=", eventId, "uri=", imageUrlFinal?.slice(0, 80), "error=", msg);
-                  setImageError(true);
-                }}
+                onLoad={() => setImageError(false)}
+                onError={() => setImageError(true)}
               />
             ) : null}
           </div>
         </div>
         <div className="content">
           <h3 className="event-title">{nombre}</h3>
-          {item.ownerName && (
+          {ownerLabel && (
             <p className="event-card__owner">
-              por <strong>{item.ownerName}</strong>
+              por <strong>{ownerLabel}</strong>
             </p>
           )}
           <div className="meta">
@@ -351,7 +289,7 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
               </div>
             )}
             <div className="meta-row--time-zone">
-              {horaInicio && <div className="tag">🕗 {formatHHMM(horaInicio)}</div>}
+              {horaInicio && <div className="tag">{formatHHMM(horaInicio)}</div>}
               <div className="tag tag--cost" aria-label={costMonto === 0 ? "Entrada gratis" : `Costo taquilla ${formatCostoMonto(costMonto)}`}>
                 {costMonto === 0 ? (
                   <span>Gratis</span>
@@ -369,22 +307,9 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
                   </span>
                 )}
               </div>
-              {lugarSoloNombre && <div className="tag tag--location">📍 {lugarSoloNombre}</div>}
+              {lugarSoloNombre && <div className="tag tag--location">{lugarSoloNombre}</div>}
             </div>
           </div>
-          {organizador && (
-            <div className="event-card__organizer">
-              <div className="event-card__organizer-avatar" aria-hidden>
-                👤
-              </div>
-              <div className="event-card__organizer-text">
-                <div className="event-card__organizer-name" title={organizador}>
-                  {organizador}
-                </div>
-                <div className="event-card__organizer-label">Organizador</div>
-              </div>
-            </div>
-          )}
         </div>
         <div
           aria-hidden

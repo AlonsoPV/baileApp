@@ -6,7 +6,7 @@ import LiveLink from "../LiveLink";
 import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useFmtDate } from "@/hooks/useFmtDate";
-import { toDirectPublicStorageUrl, logCardImage } from "@/utils/imageOptimization";
+import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import { withStableCacheBust } from "@/utils/cacheBuster";
 import "@/components/explore/EventListRow.css";
 
@@ -62,7 +62,6 @@ function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
   const showPlaceholder = !imageUrlFinal || imageError;
 
   const titulo = item.titulo || item.nombre || "Clase";
-  logCardImage("clase", item.ownerId ?? titulo, imageUrlFinal, !!imageUrlFinal, !imageUrlFinal ? "URL vacía" : undefined);
 
   const lugarNombre = React.useMemo(() => {
     if (!item.ubicacion) return "";
@@ -158,15 +157,16 @@ function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
     item.inicio || item.fin
       ? `${item.inicio || "—"}${item.fin ? ` – ${item.fin}` : ""}`
       : "";
+  const secondaryLine = lugarNombre || ritmoNames[0] || "";
 
   return (
     <LiveLink to={href} asCard={false}>
       <motion.article
         className="event-list-row"
-        initial={{ opacity: 0, y: 6 }}
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.16 }}
-        whileTap={{ scale: 0.985 }}
+        whileTap={{ scale: 0.99 }}
       >
         <div className="event-list-row__thumb" aria-hidden={showPlaceholder}>
           {showPlaceholder ? (
@@ -196,12 +196,11 @@ function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
               por <strong>{item.ownerName}</strong>
             </div>
           ) : null}
+          {secondaryLine ? <div className="event-list-row__secondary" title={secondaryLine}>{secondaryLine}</div> : null}
           <div className="event-list-row__meta">
-            {formattedDate ? <span>📅 {formattedDate}</span> : null}
+            {formattedDate ? <span>{formattedDate}</span> : null}
             {formattedDate && timeLine ? <span className="event-list-row__dot">·</span> : null}
-            {timeLine ? <span>🕗 {timeLine}</span> : null}
-            {lugarNombre ? <span title={lugarNombre}>📍 {lugarNombre}</span> : null}
-            {ritmoNames.length > 0 ? <span>🎵 {ritmoNames.slice(0, 2).join(", ")}</span> : null}
+            {timeLine ? <span>{timeLine}</span> : null}
           </div>
         </div>
         <div className="event-list-row__chevron" aria-hidden>
