@@ -34,6 +34,7 @@ import { useAllowedRitmosTeacher } from "../../hooks/useAllowedRitmosTeacher";
 
 // Lazy load heavy components
 const TeacherMetricsPanel = React.lazy(() => import("../../components/profile/TeacherMetricsPanel").then(m => ({ default: m.TeacherMetricsPanel })));
+const TeacherStudentsPanelLazy = React.lazy(() => import("../../components/profile/TeacherStudentsPanel").then(m => ({ default: m.TeacherStudentsPanel })));
 const UbicacionesEditor = React.lazy(() => import("../../components/locations/UbicacionesEditor"));
 const CrearClase = React.lazy(() => import("../../components/events/CrearClase"));
 const CostsPromotionsEditor = React.lazy(() => import("../../components/events/CostsPromotionsEditor"));
@@ -1177,7 +1178,7 @@ export default function TeacherProfileEditor() {
   const [editingIndex, setEditingIndex] = React.useState<number|null>(null);
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok'|'err'; text: string }|null>(null);
-  const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
+  const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas" | "alumnos">("perfil");
   const [wasNewProfile, setWasNewProfile] = React.useState(false);
   const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
   const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
@@ -1892,7 +1893,7 @@ export default function TeacherProfileEditor() {
   );
 
   // Callbacks for handlers
-  const handleTabChange = React.useCallback((tab: "perfil" | "metricas") => {
+  const handleTabChange = React.useCallback((tab: "perfil" | "metricas" | "alumnos") => {
     setActiveTab(tab);
   }, []);
 
@@ -2034,12 +2035,30 @@ export default function TeacherProfileEditor() {
           >
             📊 Métricas clases
           </button>
+          <button
+            className="teacher-tab-button"
+            role="tab"
+            aria-selected={activeTab === "alumnos"}
+            aria-controls="tabpanel-alumnos"
+            id="tab-alumnos"
+            onClick={() => handleTabChange("alumnos")}
+          >
+            👥 Alumnos
+          </button>
         </div>
 
         {activeTab === "metricas" && teacherId && (
           <div role="tabpanel" id="tabpanel-metricas" aria-labelledby="tab-metricas">
             <React.Suspense fallback={<div role="status" aria-live="polite">Cargando métricas...</div>}>
           <TeacherMetricsPanel teacherId={teacherId} />
+            </React.Suspense>
+          </div>
+        )}
+
+        {activeTab === "alumnos" && teacherId && (
+          <div role="tabpanel" id="tabpanel-alumnos" aria-labelledby="tab-alumnos">
+            <React.Suspense fallback={<div role="status" aria-live="polite">Cargando alumnos...</div>}>
+              <TeacherStudentsPanelLazy teacherId={teacherId} />
             </React.Suspense>
           </div>
         )}

@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
 import { supabase } from '../../../lib/supabase';
 import type { CompetitionGroup } from '../../../types/competitionGroup';
-import { normalizeAndOptimizeUrl } from '../../../utils/imageOptimization';
 import { logger } from '../../../utils/logger';
+import ExploreResponsiveImage from '../../explore/ExploreResponsiveImage';
 
 interface Props {
   group: CompetitionGroup & {
@@ -135,8 +135,15 @@ export default function CompetitionGroupCard({ group }: Props) {
     loadOwnerData();
   }, [group.owner_id, group.academy_id, group.owner_name, group.owner_type]);
 
-  // Priorizar cover_image_url del grupo, luego cover_url del dueño
-  const bg = normalizeAndOptimizeUrl(group.cover_image_url || ownerData?.cover_url);
+  const rawCover = group.cover_image_url || ownerData?.cover_url;
+  const coverCacheKey =
+    (group as any)?.updated_at ??
+    (group as any)?.created_at ??
+    group.id ??
+    "";
+  const [coverError, setCoverError] = React.useState(false);
+  React.useEffect(() => setCoverError(false), [rawCover, coverCacheKey]);
+  const showCover = !!rawCover && !coverError;
 
   const href = `/competition-groups/${group.id}`;
   const ownerLabel = ownerData?.type === 'academy' ? 'Academia' : 'Maestro';
@@ -240,21 +247,29 @@ export default function CompetitionGroupCard({ group }: Props) {
           whileTap={{ scale: 0.98 }}
           transition={{ duration: 0.15 }}
           className="competition-group-card competition-group-card-mobile"
-          style={{
-            backgroundImage: bg ? `url(${bg})` : undefined,
-            backgroundSize: bg ? 'cover' : undefined,
-            backgroundPosition: bg ? 'center' : undefined,
-            backgroundRepeat: bg ? 'no-repeat' : undefined
-          }}
+          style={{ position: "relative" }}
         >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9 }} />
-        
-        {/* Overlay como en ClassCard: solo si no hay background */}
-        {!bg && (
+        {showCover ? (
+          <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+            <ExploreResponsiveImage
+              rawUrl={rawCover}
+              cacheVersion={coverCacheKey}
+              preset="carouselCard"
+              alt={group.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              onError={() => setCoverError(true)}
+            />
+          </div>
+        ) : null}
+        {!showCover ? (
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%)', zIndex: 0, pointerEvents: 'none' }} />
+        ) : (
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.82) 100%)", zIndex: 1, pointerEvents: "none" }} />
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem', position: 'relative', zIndex: 1 }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f093fb, #f5576c, #FFD166)', opacity: 0.9, zIndex: 2 }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem', position: 'relative', zIndex: 2 }}>
           <h3 className="competition-group-card-title">
             <span>
               {group.name}
@@ -263,7 +278,7 @@ export default function CompetitionGroupCard({ group }: Props) {
         </div>
 
         {/* Badge de estado */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>
           <span style={{
             padding: '4px 10px',
             borderRadius: '999px',
@@ -283,7 +298,7 @@ export default function CompetitionGroupCard({ group }: Props) {
         </div>
 
         {ownerData?.name && (
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', position: 'relative', zIndex: 1, marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', position: 'relative', zIndex: 2, marginBottom: 4 }}>
             Por: <strong style={{ color: '#fff' }}>{ownerData.name}</strong>
             {ownerData.type && (
               <span style={{ 
@@ -303,7 +318,7 @@ export default function CompetitionGroupCard({ group }: Props) {
 
         {/* Solo ubicación */}
         {group.training_location && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6, position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6, position: 'relative', zIndex: 2 }}>
             <span style={{ 
               border: '1px solid rgb(255 255 255 / 48%)', 
               background: 'rgb(25 25 25 / 89%)', 

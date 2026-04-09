@@ -8,6 +8,8 @@ import { BioSection } from "./BioSection";
 import { colors } from "../../theme/colors";
 import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
+import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
+import { EXPLORE_SIZES_PROFILE_AVATAR_HERO } from "@/utils/supabaseResponsiveImage";
 
 type TagLike = { id: number; nombre?: string; slug?: string; tipo?: string };
 
@@ -41,6 +43,8 @@ export interface UserProfileHeroProps {
   onAvatarError?: () => void;
   /** URL exacta que usa el nav (profile.avatar_url) para usar la misma en el hero y que la imagen cargue */
   avatarUrlSameAsNav?: string | null;
+  /** Cache-bust / transforms (?v=) — p. ej. profile.updated_at */
+  avatarCacheKey?: string | number | null;
 }
 
 const BIO_TRUNCATE_LENGTH = 120;
@@ -61,6 +65,7 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
   avatarError = false,
   onAvatarError,
   avatarUrlSameAsNav,
+  avatarCacheKey,
 }) => {
   const { t } = useTranslation();
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -175,6 +180,7 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
             0 0 0 1px rgba(255, 255, 255, 0.06) inset;
           background: colors.gradients.primary;
         }
+        .user-profile-hero-avatar picture,
         .user-profile-hero-avatar img,
         .user-profile-hero-avatar > div {
           position: absolute;
@@ -182,6 +188,13 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
           display: block;
           width: 100%;
           height: 100%;
+          object-fit: cover;
+          object-position: center top;
+        }
+        .user-profile-hero-avatar picture {
+          object-fit: unset;
+        }
+        .user-profile-hero-avatar picture img {
           object-fit: cover;
           object-position: center top;
         }
@@ -499,12 +512,13 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
               className="user-profile-hero-avatar"
             >
               {resolvedAvatarUrl ? (
-                <img
-                  src={resolvedAvatarUrl}
+                <ExploreResponsiveImage
+                  rawUrl={resolvedAvatarUrl}
+                  cacheVersion={avatarCacheKey ?? null}
+                  preset="carouselCard"
+                  sizes={EXPLORE_SIZES_PROFILE_AVATAR_HERO}
                   alt={t("avatar")}
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="async"
+                  priority
                   onError={onAvatarError}
                   style={{
                     width: "100%",

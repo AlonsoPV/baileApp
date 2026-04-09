@@ -6,7 +6,7 @@ import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useFmtDate } from "@/hooks/useFmtDate";
 import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
-import { withStableCacheBust } from "@/utils/cacheBuster";
+import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import "./EventSocialGridCard.css";
 
 export type ClassExploreGridItem = {
@@ -82,14 +82,9 @@ function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardPr
     item.ownerId ||
     item.titulo ||
     "";
-  const imageUrlFinal = React.useMemo(
-    () => withStableCacheBust(bg, bgCacheKey || null) || bg,
-    [bg, bgCacheKey]
-  );
-
   const [imageError, setImageError] = React.useState(false);
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [bg, bgCacheKey]);
+  const showPlaceholder = !bg || imageError;
 
   const title = item.titulo || (item as any).nombre || t("explore_cartelera_class_badge");
 
@@ -209,12 +204,12 @@ function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardPr
               </svg>
             </div>
           ) : (
-            <img
-              src={imageUrlFinal}
+            <ExploreResponsiveImage
+              rawUrl={bg}
+              cacheVersion={bgCacheKey || null}
+              preset="carouselCard"
               alt={title}
-              loading={priority ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
-              decoding="async"
+              priority={priority}
               onLoad={() => setImageError(false)}
               onError={() => setImageError(true)}
             />

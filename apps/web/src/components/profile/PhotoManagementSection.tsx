@@ -1,6 +1,7 @@
 import React from 'react';
 import { getMediaBySlot, normalizeMediaArray } from '../../utils/mediaSlots';
 import ImageWithFallback from '../ImageWithFallback';
+import ExploreResponsiveImage from '@/components/explore/ExploreResponsiveImage';
 import { getDisplayImageUrl } from '../../utils/storageUrl';
 import { resolveSupabaseStoragePublicUrl } from '../../utils/supabaseStoragePublicUrl';
 import { toDirectPublicStorageUrl } from '../../utils/imageOptimization';
@@ -172,6 +173,16 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
           border-radius: 50%;
           margin: 0 auto;
         }
+        .photo-container picture,
+        .photo-container img {
+          width: 100%;
+          height: 100%;
+          display: block;
+        }
+        .photo-container picture img {
+          width: 100%;
+          height: 100%;
+        }
         
         /* Desktop optimizations */
         @media (min-width: 1024px) {
@@ -325,12 +336,12 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
             const mediaItem = isMainPhoto 
               ? getMediaBySlot(normalizedMedia, 'p1') // Solo buscar p1, sin fallback
               : getMediaBySlot(normalizedMedia, slot);
-            const slotImageUrl = mediaItem
-              ? getDisplayImageUrl(
-                  normalizeSlotUrl((mediaItem as any).url || (mediaItem as any).path),
-                  imageVersion
-                )
-              : '';
+            const rawBase = mediaItem
+              ? normalizeSlotUrl((mediaItem as any).url || (mediaItem as any).path)
+              : undefined;
+            const slotImageUrl =
+              rawBase && typeof rawBase === "string" ? getDisplayImageUrl(rawBase, imageVersion) : "";
+            const isDataUrl = !!rawBase?.startsWith("data:");
             
             // Debug: verificar que estamos usando el slot correcto
             if (isMainPhoto && process.env.NODE_ENV === 'development') {
@@ -365,29 +376,66 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
               >
               {mediaItem ? (
                 isMainPhoto ? (
+                  isDataUrl ? (
+                    <ImageWithFallback
+                      src={slotImageUrl}
+                      alt="Avatar / Foto principal"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: "center top",
+                      }}
+                    />
+                  ) : (
+                    <ExploreResponsiveImage
+                      rawUrl={rawBase}
+                      cacheVersion={imageVersion ?? null}
+                      preset="carouselCard"
+                      sizes="(max-width: 480px) 240px, 350px"
+                      alt="Avatar / Foto principal"
+                      priority
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: "center top",
+                      }}
+                    />
+                  )
+                ) : isDataUrl ? (
                   <ImageWithFallback
                     src={slotImageUrl}
-                    alt="Avatar / Foto principal"
+                    alt={`Foto ${slot}`}
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center top'
+                      width: "100%",
+                      height: "100%",
+                      objectFit: verticalLayout ? "contain" : "cover",
+                      objectPosition: "center",
+                      maxWidth: verticalLayout ? "100%" : "none",
+                      maxHeight: verticalLayout ? "100%" : "none",
                     }}
                   />
                 ) : (
-                <ImageWithFallback
-                    src={slotImageUrl}
+                  <ExploreResponsiveImage
+                    rawUrl={rawBase}
+                    cacheVersion={imageVersion ?? null}
+                    preset={verticalLayout ? "flyerContain" : "carouselCard"}
+                    sizes={
+                      verticalLayout
+                        ? "(max-width: 900px) 100vw, 480px"
+                        : "(max-width: 900px) min(90vw, 400px), 400px"
+                    }
                     alt={`Foto ${slot}`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                      objectFit: verticalLayout ? 'contain' : 'cover',
-                      objectPosition: 'center',
-                    maxWidth: verticalLayout ? '100%' : 'none',
-                    maxHeight: verticalLayout ? '100%' : 'none'
-                  }}
-                />
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: verticalLayout ? "contain" : "cover",
+                      objectPosition: "center",
+                      maxWidth: verticalLayout ? "100%" : "none",
+                      maxHeight: verticalLayout ? "100%" : "none",
+                    }}
+                  />
                 )
               ) : (
                 <div style={{

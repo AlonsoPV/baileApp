@@ -43,6 +43,12 @@
   background: rgba(0, 0, 0, 0.35);
 }
 
+.event-cartelera-card__frame picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .event-cartelera-card__frame img {
   width: 100%;
   height: 100%;

@@ -43,7 +43,7 @@
 @media (min-width: 600px) {
   .eds-hero { max-width: 520px; }
 }
-/* Flyer como fondo: el .eds-hero__img (ImageWithFallback o placeholder) cubre todo el hero */
+/* Flyer: ExploreResponsiveImage dentro de .eds-hero__img cubre el hero */
 .eds-hero__bg {
   position: absolute;
   inset: 0;
@@ -56,7 +56,17 @@
   z-index: 1;
   width: 100%;
   height: 100%;
+}
+.eds-hero__img picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.eds-hero__img img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  display: block;
 }
 .eds-hero__overlay {
   position: absolute;
@@ -876,8 +886,21 @@
   border-color: rgba(235, 55, 127, 0.3);
   box-shadow: 0 4px 16px rgba(41, 127, 150, 0.1);
 }
+.eds-gallery__item picture,
 .eds-gallery__item img,
 .eds-gallery__item video {
+  width: 100%;
+  height: 100%;
+}
+.eds-gallery__item picture {
+  display: block;
+}
+.eds-gallery__item img,
+.eds-gallery__item video {
+  object-fit: cover;
+}
+.eds-gallery__item picture img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;

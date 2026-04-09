@@ -5,7 +5,7 @@ import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
-import { withStableCacheBust } from "../../../utils/cacheBuster";
+import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
 import "./ExploreCardsShared.css";
 
 interface AcademyCardProps {
@@ -46,15 +46,9 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
     (item.nombre_publico as string | undefined) ||
     '';
 
-  const primaryAvatarWithCacheBust = React.useMemo(
-    () => withStableCacheBust(primaryAvatar, avatarCacheKey || null) ?? null,
-    [primaryAvatar, avatarCacheKey]
-  );
-
   const [imageError, setImageError] = React.useState(false);
-  const imageUrlFinal = primaryAvatarWithCacheBust || primaryAvatar;
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [primaryAvatar, avatarCacheKey]);
+  const showPlaceholder = !primaryAvatar || imageError;
   const placeholderReason = !primaryAvatar ? 'URL vacía' : imageError ? 'Image load failed' : '';
 
   const zonaNombres: string[] = (item.zonas || [])
@@ -70,12 +64,7 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
         whileHover={{ scale: 1.01, transition: { duration: 0.18 } }}
         whileTap={{ scale: 0.99 }}
       >
-        <div
-          className="explore-card-media"
-          style={{
-            '--img': !priority && imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
-          } as React.CSSProperties}
-        >
+        <div className="explore-card-media">
           {showPlaceholder && (
             <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
@@ -83,13 +72,13 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
               </svg>
             </div>
           )}
-          {imageUrlFinal && !imageError && (
-            <img
-              src={imageUrlFinal}
+          {primaryAvatar && !imageError && (
+            <ExploreResponsiveImage
+              rawUrl={primaryAvatar}
+              cacheVersion={avatarCacheKey || null}
+              preset="carouselCard"
               alt={`Imagen de ${nombre}`}
-              loading={priority ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
-              decoding="async"
+              priority={priority}
               onLoad={() => setImageError(false)}
               onError={() => setImageError(true)}
             />

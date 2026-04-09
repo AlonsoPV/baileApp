@@ -1178,6 +1178,33 @@ export function Profile() {
                 <div style={{ fontSize: '1.5rem' }}>→</div>
               </button>
 
+              <button
+                onClick={() => navigate('/me/clases')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: spacing(3),
+                  background: colors.glass.strong,
+                  border: `1px solid ${theme.bg.card}`,
+                  borderRadius: borderRadius.md,
+                  cursor: 'pointer',
+                  color: colors.light,
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+                    📚 Mis clases
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: colors.gray[400] }}>
+                    Ver a cuales asistire y cuales ya fueron confirmadas
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.5rem' }}>→</div>
+              </button>
+
               {/* Organizer Section */}
               {!isLoadingOrganizer && (
                 <>

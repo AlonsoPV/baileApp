@@ -1,9 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useAcademyStudentDetail,
   useAcademyStudentsGlobalMetrics,
   useAcademyStudentsList,
+  type StudentHistoryItem,
   type DateFilter,
   type StudentRoleFilter,
   type StudentSegment,
@@ -11,6 +13,7 @@ import {
 } from "@/hooks/useAcademyStudents";
 import { StudentMetricCard } from "@/components/profile/academy-metrics/StudentMetricCard";
 import { StudentDetailPanel } from "@/components/profile/academy-metrics/StudentDetailPanel";
+import { useMarkClassAttendanceAttended } from "@/hooks/useClassAttendanceActions";
 
 type PanelProps = { academyId: number };
 
@@ -36,6 +39,7 @@ function toPct(value: number, total: number): string {
 }
 
 export function AcademyStudentsPanel({ academyId }: PanelProps) {
+  const queryClient = useQueryClient();
   const [dateFilter, setDateFilter] = React.useState<DateFilter>("all");
   const [customFrom, setCustomFrom] = React.useState("");
   const [customTo, setCustomTo] = React.useState("");
@@ -68,6 +72,21 @@ export function AcademyStudentsPanel({ academyId }: PanelProps) {
     academyId,
     selectedUserId,
     filters,
+  );
+  const markAttended = useMarkClassAttendanceAttended();
+
+  const handleMarkAttended = React.useCallback(
+    async (item: StudentHistoryItem) => {
+      await markAttended.mutateAsync(item.id);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["academy-students-global", academyId] }),
+        queryClient.invalidateQueries({ queryKey: ["academy-students-list", academyId] }),
+        queryClient.invalidateQueries({ queryKey: ["academy-student-detail", academyId, selectedUserId] }),
+        queryClient.invalidateQueries({ queryKey: ["academy-metrics", academyId] }),
+        queryClient.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] }),
+      ]);
+    },
+    [academyId, markAttended, queryClient, selectedUserId],
   );
 
   React.useEffect(() => {
@@ -488,6 +507,21 @@ export function AcademyStudentsPanel({ academyId }: PanelProps) {
           color: rgba(255,255,255,.38);
           font-size: 0.66rem;
         }
+        .students-history-action {
+          justify-self: flex-start;
+          border: 1px solid rgba(76,175,80,.35);
+          border-radius: 999px;
+          background: rgba(76,175,80,.16);
+          color: #d8ffd8;
+          font-size: 0.68rem;
+          font-weight: 700;
+          padding: 0.32rem 0.6rem;
+          cursor: pointer;
+        }
+        .students-history-action:disabled {
+          opacity: 0.65;
+          cursor: wait;
+        }
         @media (min-width: 960px) {
           .students-layout {
             grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
@@ -672,6 +706,8 @@ export function AcademyStudentsPanel({ academyId }: PanelProps) {
               loading={loadingDetail}
               errorMessage={detailError ? (detailError as Error).message : undefined}
               onClose={() => setSelectedUserId(null)}
+              onMarkAttended={handleMarkAttended}
+              markingId={markAttended.isPending ? Number(markAttended.variables ?? 0) : null}
             />
           </div>
         </motion.section>

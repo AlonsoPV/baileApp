@@ -70,15 +70,23 @@ export const EXPLORE_CARD_STYLES = `
     inset: 0;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.82) 100%);
   }
-  .explore-card-media img {
+  .explore-card-media picture {
     position: absolute;
     inset: 10px 12px;
     width: calc(100% - 24px);
     height: calc(100% - 20px);
+    z-index: 1;
+    display: block;
+  }
+  .explore-card-media picture img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
     object-position: center center;
     border-radius: 8px;
-    z-index: 1;
+    display: block;
   }
 
   /* Placeholder cuando no hay imagen o falla la carga (evita card vacía) */

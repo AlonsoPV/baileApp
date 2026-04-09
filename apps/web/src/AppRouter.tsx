@@ -108,6 +108,7 @@ const CompetitionGroupList = React.lazy(() => import('./components/competitionGr
 const CompetitionGroupDetail = React.lazy(() => import('./components/competitionGroups/CompetitionGroupDetail'));
 const CompetitionGroupForm = React.lazy(() => import('./components/competitionGroups/CompetitionGroupForm'));
 const MyPurchasesScreen = React.lazy(() => import('./screens/payments/MyPurchasesScreen'));
+const MyClassAttendanceScreen = React.lazy(() => import('./screens/profile/MyClassAttendanceScreen'));
 
 function RouteSuspense({
   children,
@@ -260,6 +261,7 @@ export default function AppRouter() {
             <Route path="/social/fecha/:dateId/edit" element={<OrganizerEventDateEditScreen />} />
             <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
             <Route path="/me/compras" element={<MyPurchasesScreen />} />
+            <Route path="/me/clases" element={<MyClassAttendanceScreen />} />
             <Route path={routes.academy.edit} element={<AcademyProfileEditor />} />
             <Route path="/profile/academy/edit" element={<AcademyProfileEditor />} />
             <Route path={routes.brand.edit} element={<BrandEditorScreen />} />

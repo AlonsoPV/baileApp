@@ -339,7 +339,6 @@ const ALL_EXPLORE_SECTIONS: ExploreSectionId[] = [
 ];
 
 /** Imágenes eager: primera sección usa 2; el resto 1 para priorizar percepción sin saturar red/CPU. */
-const EAGER_MAIN = 2;
 const EAGER_OTHERS = 1;
 const INITIAL_LIMIT = 10;
 const NEXT_LIMIT = 20;
@@ -3160,7 +3159,7 @@ export default function ExploreHomeScreen() {
             height: "100%",
           }}
         >
-          <EventSocialGridCard item={fechaEvento} priority={idx < 3} />
+          <EventSocialGridCard item={fechaEvento} priority={idx === 0} />
         </div>
       );
     },
@@ -3198,7 +3197,7 @@ export default function ExploreHomeScreen() {
             height: "100%",
           }}
         >
-          <ClassExploreGridCard item={item} priority={idx < 3} />
+          <ClassExploreGridCard item={item} priority={idx === 0} />
         </div>
       );
     },
@@ -3235,7 +3234,7 @@ export default function ExploreHomeScreen() {
             height: "100%",
           }}
         >
-          <ProfileExploreGridCard variant="teacher" item={item} priority={idx < 3} />
+          <ProfileExploreGridCard variant="teacher" item={item} priority={idx === 0} />
         </div>
       );
     },
@@ -3260,7 +3259,7 @@ export default function ExploreHomeScreen() {
         <ProfileExploreGridCard
           variant="dancer"
           item={item}
-          priority={idx < 3}
+          priority={idx === 0}
         />
       </div>
     ),
@@ -3297,7 +3296,7 @@ export default function ExploreHomeScreen() {
             height: "100%",
           }}
         >
-          <ProfileExploreGridCard variant="organizer" item={item} priority={idx < 3} />
+          <ProfileExploreGridCard variant="organizer" item={item} priority={idx === 0} />
         </div>
       );
     },
@@ -3326,7 +3325,7 @@ export default function ExploreHomeScreen() {
             boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
           }}
         >
-          <BrandCard item={item} />
+          <BrandCard item={item} priority={idx === 0} />
         </div>
       );
     },
@@ -3360,7 +3359,7 @@ export default function ExploreHomeScreen() {
           onClickCapture={handlePreNavigate}
           style={{ width: "100%" }}
         >
-          <EventListRow item={fechaEvento} priority={idx < EAGER_MAIN} allTags={allTags as any[]} />
+          <EventListRow item={fechaEvento} priority={idx === 0} allTags={allTags as any[]} />
         </div>
       );
     },
@@ -3389,7 +3388,7 @@ export default function ExploreHomeScreen() {
 
       return (
         <div key={key} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
-          <EventCarteleraCard item={fechaEvento} priority={idx < 4} />
+          <EventCarteleraCard item={fechaEvento} priority={idx === 0} />
         </div>
       );
     },
@@ -4722,7 +4721,7 @@ export default function ExploreHomeScreen() {
                           const rowKey = `${item.ownerType || "owner"}-${item.ownerId ?? "unknown"}-${item.titulo ?? "class"}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join("-") : "semana")}-${idx}`;
                           return (
                             <div key={rowKey} role="listitem" onClickCapture={handlePreNavigate} style={{ width: "100%" }}>
-                              <ClaseListRow item={item} priority={idx < EAGER_OTHERS} />
+                              <ClaseListRow item={item} priority={idx === 0} />
                             </div>
                           );
                         })}
@@ -4740,7 +4739,7 @@ export default function ExploreHomeScreen() {
                           const rowKey = `${item.ownerType || "owner"}-${item.ownerId ?? "unknown"}-${item.titulo ?? "class"}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join("-") : "semana")}-${idx}`;
                           return (
                             <div key={rowKey} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
-                              <ExploreEntityCarteleraCard variant="clase" item={item} priority={idx < EAGER_OTHERS} />
+                              <ExploreEntityCarteleraCard variant="clase" item={item} priority={idx === 0} />
                             </div>
                           );
                         })}
@@ -4848,7 +4847,7 @@ export default function ExploreHomeScreen() {
                               onClickCapture={handlePreNavigate}
                               style={{ width: "100%" }}
                             >
-                              <ExploreProfileListRow variant="teacher" item={item} priority={idx < EAGER_OTHERS} />
+                              <ExploreProfileListRow variant="teacher" item={item} priority={idx === 0} />
                             </div>
                           );
                         })}
@@ -4865,7 +4864,7 @@ export default function ExploreHomeScreen() {
                           }
                           return (
                             <div key={item.id ?? idx} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
-                              <ExploreEntityCarteleraCard variant="teacher" item={item} priority={idx < EAGER_OTHERS} />
+                              <ExploreEntityCarteleraCard variant="teacher" item={item} priority={idx === 0} />
                             </div>
                           );
                         })}
@@ -4919,7 +4918,7 @@ export default function ExploreHomeScreen() {
                               <ExploreProfileListRow
                                 variant="dancer"
                                 item={item}
-                                priority={idx < EAGER_OTHERS}
+                                priority={idx === 0}
                               />
                             </div>
                           ))}
@@ -4936,7 +4935,7 @@ export default function ExploreHomeScreen() {
                               <ExploreEntityCarteleraCard
                                 variant="dancer"
                                 item={item}
-                                priority={idx < EAGER_OTHERS}
+                                priority={idx === 0}
                               />
                             </div>
                           ))}
@@ -5018,7 +5017,7 @@ export default function ExploreHomeScreen() {
                             onClickCapture={handlePreNavigate}
                             style={{ width: "100%" }}
                           >
-                            <ExploreProfileListRow variant="organizer" item={item} priority={idx < EAGER_OTHERS} />
+                            <ExploreProfileListRow variant="organizer" item={item} priority={idx === 0} />
                           </div>
                         );
                       })}
@@ -5035,7 +5034,7 @@ export default function ExploreHomeScreen() {
                         }
                         return (
                           <div key={item.id ?? idx} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
-                            <ExploreEntityCarteleraCard variant="organizer" item={item} priority={idx < EAGER_OTHERS} />
+                            <ExploreEntityCarteleraCard variant="organizer" item={item} priority={idx === 0} />
                           </div>
                         );
                       })}

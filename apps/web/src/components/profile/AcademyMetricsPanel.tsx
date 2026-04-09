@@ -49,17 +49,19 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
     );
   }, [byClass, searchQuery]);
   
-  const attendanceTotal = global?.totalAttendanceRecords ?? global?.totalTentative ?? 0;
+  const attendanceTotal = global?.totalTentative ?? 0;
+
+  const roleBase = global?.totalAttendanceRecords ?? 0;
 
   const rolePercentages = React.useMemo(() => {
-    if (!global || attendanceTotal === 0) return null;
+    if (!global || roleBase === 0) return null;
     return {
-      leader: ((global.byRole.leader || 0) / attendanceTotal) * 100,
-      follower: ((global.byRole.follower || 0) / attendanceTotal) * 100,
-      ambos: ((global.byRole.ambos || 0) / attendanceTotal) * 100,
-      otro: ((global.byRole.otro || 0) / attendanceTotal) * 100,
+      leader: ((global.byRole.leader || 0) / roleBase) * 100,
+      follower: ((global.byRole.follower || 0) / roleBase) * 100,
+      ambos: ((global.byRole.ambos || 0) / roleBase) * 100,
+      otro: ((global.byRole.otro || 0) / roleBase) * 100,
     };
-  }, [global, attendanceTotal]);
+  }, [global, roleBase]);
   
   if (loading) {
     return (
@@ -797,7 +799,7 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
             <div className="metrics-section__head">
               <h3 className="metrics-section__title">📊 Panel de gestión</h3>
               <p className="metrics-section__lead">
-                Números según el filtro de fechas. Las reservas usan intención de asistencia (estado tentativo). Las clases en cronograma son el inventario de tu academia.
+                Números según el filtro de fechas. Separamos intención de asistencia y asistencia confirmada para evitar métricas ambiguas.
               </p>
             </div>
 
@@ -813,9 +815,14 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
                 <p className="metrics-kpi-hint">Personas distintas con al menos una reserva en el periodo.</p>
               </div>
               <div className="metrics-kpi-card">
-                <div className="metrics-kpi-label">Registros de asistencia</div>
+                <div className="metrics-kpi-label">Tentativos</div>
                 <div className="metrics-kpi-value">{attendanceTotal}</div>
-                <p className="metrics-kpi-hint">Total de reservas; el mismo alumno puede sumar varias veces.</p>
+                <p className="metrics-kpi-hint">Intenciones de asistencia en el periodo.</p>
+              </div>
+              <div className="metrics-kpi-card">
+                <div className="metrics-kpi-label">Asistieron</div>
+                <div className="metrics-kpi-value">{global.totalAttended ?? 0}</div>
+                <p className="metrics-kpi-hint">Asistencias confirmadas por academy o teacher.</p>
               </div>
               <div className="metrics-kpi-card">
                 <div className="metrics-kpi-label">Sesiones con reserva</div>
@@ -838,7 +845,7 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
               <div style={{ fontSize: "0.875rem", marginBottom: "0.65rem", color: "#fff", fontWeight: 700 }}>
                 Distribución por rol (sobre registros del periodo)
               </div>
-              {attendanceTotal === 0 ? (
+              {roleBase === 0 ? (
                 <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)", margin: 0 }}>
                   Sin datos en este periodo. Ajusta el filtro o espera a que los alumnos marquen asistencia.
                 </p>

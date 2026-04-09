@@ -1,4 +1,6 @@
-const BASE_URL = import.meta.env.VITE_SITE_URL ?? 'https://baile-app-1lfl.vercel.app';
+import { SITE_URL } from "./siteUrl";
+
+const BASE_URL = SITE_URL;
 
 // Usar el logo de la app (desde Supabase Storage)
 const ICON_URL = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/DB_LOGO150.webp';

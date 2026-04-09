@@ -1,6 +1,13 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/open/evento/([^/]+)", "destination": "/api/open?entityType=evento&id=$1" },
+    { "source": "/open/clase/([^/]+)/([^/]+)", "destination": "/api/open?entityType=clase&type=$1&id=$2" },
+    { "source": "/open/academia/([^/]+)", "destination": "/api/open?entityType=academia&id=$1" },
+    { "source": "/open/maestro/([^/]+)", "destination": "/api/open?entityType=maestro&id=$1" },
+    { "source": "/open/organizer/([^/]+)", "destination": "/api/open?entityType=organizer&id=$1" },
+    { "source": "/open/u/([^/]+)", "destination": "/api/open?entityType=user&id=$1" },
+    { "source": "/open/marca/([^/]+)", "destination": "/api/open?entityType=marca&id=$1" },
     {
       "source": "/((?!assets|.*\\.[a-z0-9]+$).*)",
       "destination": "/index.html"

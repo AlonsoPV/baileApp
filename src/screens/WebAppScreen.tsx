@@ -498,8 +498,11 @@ export default function WebAppScreen() {
           const parts = path.split("/").filter(Boolean);
           if (parts.length >= 2) {
             const [type, id] = parts;
-            return `${WEB_APP_URL}/clase/${type}/${id}${qs}${hash}`;
+            if ((type === "teacher" || type === "academy") && id) {
+              return `${WEB_APP_URL}/clase/${type}/${id}${qs}${hash}`;
+            }
           }
+          return null;
         }
         // Perfiles -> canonical web paths
         if (host === "academia" && path) {
@@ -524,9 +527,12 @@ export default function WebAppScreen() {
         }
 
         // Auth callback (e.g. dondebailarmx://auth/callback?code=...)
-        const hostSlash = u.host ? `/${u.host}` : "";
-        const mappedPath = `${hostSlash}${u.pathname || ""}` || "/auth/callback";
-        return `${WEB_APP_URL}${mappedPath}${qs}${hash}`;
+        if (host === "auth") {
+          const hostSlash = u.host ? `/${u.host}` : "";
+          const mappedPath = `${hostSlash}${u.pathname || ""}` || "/auth/callback";
+          return `${WEB_APP_URL}${mappedPath}${qs}${hash}`;
+        }
+        return null;
       }
 
       // Universal/App link to our domain should stay in WebView
@@ -569,7 +575,7 @@ export default function WebAppScreen() {
     (incomingUrl: string) => {
       const webUrl = mapIncomingUrlToWebUrl(incomingUrl);
       if (!webUrl) return;
-      console.log("[WebAppScreen] Handling auth deep link -> WebView:", webUrl);
+      console.log("[WebAppScreen] Handling deep link -> WebView:", webUrl);
       navigateWebView(webUrl);
     },
     [mapIncomingUrlToWebUrl, navigateWebView]

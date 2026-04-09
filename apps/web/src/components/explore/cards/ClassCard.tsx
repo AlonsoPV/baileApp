@@ -4,7 +4,7 @@ import LiveLink from '../../LiveLink';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
 import { toDirectPublicStorageUrl } from '../../../utils/imageOptimization';
-import { withStableCacheBust } from '../../../utils/cacheBuster';
+import ExploreResponsiveImage from '../../explore/ExploreResponsiveImage';
 import { getLocale } from '../../../utils/locale';
 import { useTranslation } from 'react-i18next';
 import "./Card.css";
@@ -88,15 +88,9 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
     (item.titulo as string | undefined) ||
     '';
 
-  const bgWithCacheBust = React.useMemo(
-    () => withStableCacheBust(bg, bgCacheKey || null),
-    [bg, bgCacheKey]
-  );
-
   const [imageError, setImageError] = React.useState(false);
-  const imageUrlFinal = bgWithCacheBust || bg;
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [bg, bgCacheKey]);
+  const showPlaceholder = !bg || imageError;
   const placeholderReason = !bg ? 'URL vacía' : imageError ? 'Image load failed' : '';
 
   // Extraer solo el nombre del lugar (similar a EventCard que usa `lugar`)
@@ -248,13 +242,13 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
                     <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
                   </svg>
                 </div>
-              ) : imageUrlFinal && !imageError ? (
-                <img
-                  src={imageUrlFinal}
+              ) : bg && !imageError ? (
+                <ExploreResponsiveImage
+                  rawUrl={bg}
+                  cacheVersion={bgCacheKey || null}
+                  preset="flyerContain"
                   alt={item.titulo || 'Clase'}
-                  loading={priority ? "eager" : "lazy"}
-                  fetchPriority={priority ? "high" : "auto"}
-                  decoding="async"
+                  priority={priority}
                   onLoad={() => setImageError(false)}
                   onError={() => setImageError(true)}
                 />

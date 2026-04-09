@@ -1,5 +1,5 @@
 import React from "react";
-import type { StudentDetail } from "@/hooks/useAcademyStudents";
+import type { StudentDetail, StudentHistoryItem } from "@/hooks/useAcademyStudents";
 import { StudentClassHistoryList } from "@/components/profile/academy-metrics/StudentClassHistoryList";
 
 type Props = {
@@ -7,6 +7,8 @@ type Props = {
   loading: boolean;
   errorMessage?: string;
   onClose: () => void;
+  onMarkAttended?: (item: StudentHistoryItem) => void;
+  markingId?: number | null;
 };
 
 function formatDateTime(value: string | null): string {
@@ -30,7 +32,14 @@ function toPairs(data: Record<string, number>) {
   return Object.entries(data).sort(([, a], [, b]) => b - a);
 }
 
-export function StudentDetailPanel({ detail, loading, errorMessage, onClose }: Props) {
+export function StudentDetailPanel({
+  detail,
+  loading,
+  errorMessage,
+  onClose,
+  onMarkAttended,
+  markingId = null,
+}: Props) {
   return (
     <div className="students-detail-panel">
       <div className="students-detail-head">
@@ -68,6 +77,10 @@ export function StudentDetailPanel({ detail, loading, errorMessage, onClose }: P
             <div className="students-detail-kpi">
               <span>Compras</span>
               <strong>{detail.metrics.totalPaid}</strong>
+            </div>
+            <div className="students-detail-kpi">
+              <span>Asistio</span>
+              <strong>{detail.metrics.totalAttended}</strong>
             </div>
             <div className="students-detail-kpi">
               <span>Clases distintas</span>
@@ -132,7 +145,7 @@ export function StudentDetailPanel({ detail, loading, errorMessage, onClose }: P
 
           <div className="students-detail-section">
             <h5>Historial de clases</h5>
-            <StudentClassHistoryList history={detail.history} />
+            <StudentClassHistoryList history={detail.history} onMarkAttended={onMarkAttended} markingId={markingId} />
           </div>
         </>
       ) : null}

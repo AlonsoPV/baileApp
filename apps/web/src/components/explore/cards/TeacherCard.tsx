@@ -5,10 +5,10 @@ import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot } from "../../../utils/mediaSlots";
 import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
-import { withStableCacheBust } from "../../../utils/cacheBuster";
+import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
-export default function TeacherCard({ item }: { item: any }) {
+export default function TeacherCard({ item, priority = false }: { item: any; priority?: boolean }) {
   const { data: allTags } = useTags() as any;
 
   // Nombre robusto: aceptar múltiples campos antes de caer en el fallback
@@ -45,15 +45,9 @@ export default function TeacherCard({ item }: { item: any }) {
     (item.nombre_publico as string | undefined) ||
     '';
 
-  const bannerUrlWithCacheBust = React.useMemo(
-    () => withStableCacheBust(bannerUrl, bannerCacheKey || null),
-    [bannerUrl, bannerCacheKey]
-  );
-
   const [imageError, setImageError] = React.useState(false);
-  const imageUrlFinal = bannerUrlWithCacheBust || bannerUrl;
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [bannerUrl, bannerCacheKey]);
+  const showPlaceholder = !bannerUrl || imageError;
   const placeholderReason = !bannerUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
 
   const zonaNombres: string[] = (item.zonas || [])
@@ -70,12 +64,7 @@ export default function TeacherCard({ item }: { item: any }) {
           whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
         >
-          <div
-            className="explore-card-media"
-            style={{
-              '--img': imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
-            } as React.CSSProperties}
-          >
+          <div className="explore-card-media">
             {showPlaceholder && (
               <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
@@ -83,12 +72,13 @@ export default function TeacherCard({ item }: { item: any }) {
                 </svg>
               </div>
             )}
-            {imageUrlFinal && !imageError && (
-              <img
-                src={imageUrlFinal}
+            {bannerUrl && !imageError && (
+              <ExploreResponsiveImage
+                rawUrl={bannerUrl}
+                cacheVersion={bannerCacheKey || null}
+                preset="flyerContain"
                 alt={`Imagen de ${displayName}`}
-                loading="lazy"
-                decoding="async"
+                priority={priority}
                 onLoad={() => setImageError(false)}
                 onError={() => setImageError(true)}
               />

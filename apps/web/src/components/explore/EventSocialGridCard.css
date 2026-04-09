@@ -28,6 +28,12 @@
   overflow: hidden;
 }
 
+.event-social-grid-card__media picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .event-social-grid-card__media img {
   width: 100%;
   height: 100%;

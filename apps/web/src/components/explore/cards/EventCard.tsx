@@ -4,7 +4,7 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useFmtDate } from "../../../hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
-import { withStableCacheBust } from "../../../utils/cacheBuster";
+import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { getLowestTaquillaMonto, getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
 import { resolveEventDateYmd } from "../../../utils/eventDateDisplay";
@@ -67,15 +67,9 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
     (item._original_id as string | number | undefined) ||
     (item.id as string | number | undefined) ||
     "";
-  const flyerWithCacheBust = React.useMemo(
-    () => withStableCacheBust(ui.flyerUrl, flyerCacheKey || null),
-    [ui.flyerUrl, flyerCacheKey]
-  );
-  const imageUrlFinal = flyerWithCacheBust || ui.flyerUrl;
-
   const [imageError, setImageError] = React.useState(false);
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [ui.flyerUrl, flyerCacheKey]);
+  const showPlaceholder = !ui.flyerUrl || imageError;
   const placeholderReason = !ui.flyerUrl ? "URL vacía" : imageError ? "Image load failed" : "";
 
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
@@ -101,13 +95,13 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
                   <path d="M21 15l-5-5L5 21" />
                 </svg>
               </div>
-            ) : imageUrlFinal && !imageError ? (
-              <img
-                src={imageUrlFinal}
+            ) : ui.flyerUrl && !imageError ? (
+              <ExploreResponsiveImage
+                rawUrl={ui.flyerUrl}
+                cacheVersion={flyerCacheKey || null}
+                preset="flyerContain"
                 alt={`Poster del evento ${nombre}`}
-                loading={priority ? "eager" : "lazy"}
-                fetchPriority={priority ? "high" : "auto"}
-                decoding="async"
+                priority={priority}
                 onLoad={() => setImageError(false)}
                 onError={() => setImageError(true)}
               />
@@ -205,15 +199,9 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
     (item._original_id as string | number | undefined) ||
     (item.id as string | number | undefined) ||
     "";
-  const flyerWithCacheBust = React.useMemo(
-    () => withStableCacheBust(flyer, flyerCacheKey || null),
-    [flyer, flyerCacheKey]
-  );
-  const imageUrlFinal = flyerWithCacheBust || flyer;
-
   const [imageError, setImageError] = React.useState(false);
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [flyer, flyerCacheKey]);
+  const showPlaceholder = !flyer || imageError;
   const placeholderReason = !flyer ? "URL vacía" : imageError ? "Image load failed" : "";
 
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
@@ -262,13 +250,13 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
                   <path d="M21 15l-5-5L5 21" />
                 </svg>
               </div>
-            ) : imageUrlFinal && !imageError ? (
-              <img
-                src={imageUrlFinal}
+            ) : flyer && !imageError ? (
+              <ExploreResponsiveImage
+                rawUrl={flyer}
+                cacheVersion={flyerCacheKey || null}
+                preset="flyerContain"
                 alt={`Poster del evento ${nombre}`}
-                loading={priority ? "eager" : "lazy"}
-                fetchPriority={priority ? "high" : "auto"}
-                decoding="async"
+                priority={priority}
                 onLoad={() => setImageError(false)}
                 onError={() => setImageError(true)}
               />

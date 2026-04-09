@@ -5,7 +5,7 @@
 
 import { getMediaBySlot, normalizeMediaArray } from "./mediaSlots";
 import { toDirectPublicStorageUrl } from "./imageOptimization";
-import { SEO_LOGO_URL } from "@/lib/seoConfig";
+import { SEO_LOGO_URL } from "../lib/seoConfig";
 
 const IMAGE_URL_FIELDS = ["url", "src", "image_url", "flyer_url", "cover_url", "avatar_url", "path"];
 
@@ -113,6 +113,26 @@ export function resolveOpenEntityImageEvento(data: {
   const parentFirst = getMediaBySlot(parentMedia, "cover")?.url || getMediaBySlot(parentMedia, "p1")?.url;
   if (parentFirst) {
     const url = resolveUrl(parentFirst);
+    if (url) return { imageUrl: url, imageSourceType: "media" };
+  }
+
+  const avatarRaw =
+    (date as any)?.avatar_url ??
+    (parent as any)?.avatar_url ??
+    (date as any)?.portada_url ??
+    (parent as any)?.portada_url;
+  if (isNonEmptyImageUrl(avatarRaw)) {
+    const url = resolveUrl(avatarRaw);
+    if (url) return { imageUrl: url, imageSourceType: "avatar" };
+  }
+
+  const firstAny =
+    extractFirstValidImageUrl(date?.media) ||
+    extractFirstValidImageUrl(parent?.media) ||
+    extractFirstValidImageUrl(date) ||
+    extractFirstValidImageUrl(parent);
+  if (firstAny) {
+    const url = resolveUrl(firstAny);
     if (url) return { imageUrl: url, imageSourceType: "media" };
   }
 

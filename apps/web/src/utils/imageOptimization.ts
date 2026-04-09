@@ -74,13 +74,21 @@ function getSupabaseUrl(): string {
  * @param width - Ancho deseado (default: 600)
  * @param height - Alto deseado (default: 400)
  * @param quality - Calidad de compresión (default: 80)
+ * @param extra - format webp/avif y resize (cover para cards tipo object-fit:cover)
  * @returns URL optimizada o la URL original si no es de Supabase Storage
  */
+export type SupabaseImageTransformExtras = {
+  format?: "webp" | "avif";
+  /** default: contain (compat); cover alinea con object-fit: cover en cards */
+  resize?: "cover" | "contain";
+};
+
 export function optimizeSupabaseImageUrl(
   url?: string | null,
   width: number = 600,
   height: number = 400,
-  quality: number = 80
+  quality: number = 80,
+  extra?: SupabaseImageTransformExtras
 ): string | undefined {
   if (!url) return undefined;
   
@@ -135,8 +143,9 @@ export function optimizeSupabaseImageUrl(
     const params = new URLSearchParams();
     params.set("width", String(width));
     params.set("height", String(height));
-    params.set("resize", "contain");
+    params.set("resize", extra?.resize ?? "contain");
     params.set("quality", String(quality));
+    if (extra?.format) params.set("format", extra.format);
     
     return `${renderUrl}?${params.toString()}`;
   } catch (error) {

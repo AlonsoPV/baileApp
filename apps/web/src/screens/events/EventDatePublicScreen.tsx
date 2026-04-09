@@ -26,7 +26,6 @@ import "../../components/events/EventDetail/eventDetailScreen.css";
 import { useToast } from "../../components/Toast";
 // import RequireLogin from "@/components/auth/RequireLogin"; // TEMP: disabled to allow actions without login
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../utils/imageOptimization";
-import { withStableCacheBust } from "../../utils/cacheBuster";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
@@ -423,10 +422,6 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     ((date as any)?.updated_at as string | undefined) ||
     (date.created_at as string | undefined) ||
     '';
-  const flyerUrlCacheBusted = React.useMemo(
-    () => withStableCacheBust(baseFlyerUrl, flyerCacheKey || null) ?? null,
-    [baseFlyerUrl, flyerCacheKey]
-  );
 
   const getRitmoName = (id: number) => {
     return ritmos?.find(r => r.id === id)?.nombre || `Rhythm ${id}`;
@@ -590,8 +585,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       <div id="event-detail-page" className="event-detail-screen">
         <EventHero
           title={dateName}
-          flyerUrl={flyerUrlCacheBusted || date.flyer_url}
-          flyerCacheKey=""
+          flyerUrl={baseFlyerUrl ?? date.flyer_url ?? null}
+          flyerCacheKey={flyerCacheKey || null}
           dateStr={dateStr}
           timeRange={timeRange}
           venueName={venueName}
@@ -600,7 +595,6 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           onToggleFavorite={onToggleFavorite}
           favoriteActive={favoriteActive}
           togglingEvent={user ? togglingEvent : false}
-          toDirectUrl={toDirectPublicStorageUrl}
         />
         <StickyCtaBar
           userStatus={effectiveStatus}
@@ -705,7 +699,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
                 <h2 className="eds-section-title">{t('photo_gallery', 'Gallery')}</h2>
                 <div className="eds-section-underline" aria-hidden />
               </div>
-              <MediaGallery photos={carouselPhotos} videos={videos} toDirectUrl={toDirectPublicStorageUrl} />
+              <MediaGallery photos={carouselPhotos} videos={videos} photoCacheKey={flyerCacheKey || null} />
             </section>
           )}
         </div>

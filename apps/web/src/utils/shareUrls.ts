@@ -4,7 +4,7 @@
  * open/evento/:id = siempre events_date.id.
  */
 
-import { SEO_BASE_URL } from "@/lib/seoConfig";
+import { SEO_BASE_URL } from "../lib/seoConfig";
 
 const DEEP_LINK_SCHEME = "dondebailarmx";
 

@@ -2,15 +2,16 @@ import React from "react";
 import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
-import { withStableCacheBust } from "../../../utils/cacheBuster";
+import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 
 interface OrganizerCardProps {
   item: any;
+  priority?: boolean;
 }
 
-export default function OrganizerCard({ item }: OrganizerCardProps) {
+export default function OrganizerCard({ item, priority = false }: OrganizerCardProps) {
   const toUrl = (u: string | undefined) => u ? toDirectPublicStorageUrl(u) : undefined;
   const mediaList = normalizeMediaArray(item?.media);
   const bannerUrl: string | undefined =
@@ -29,15 +30,9 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
     (item.nombre_publico as string | undefined) ||
     '';
 
-  const bannerUrlWithCacheBust = React.useMemo(
-    () => withStableCacheBust(bannerUrl, bannerCacheKey || null),
-    [bannerUrl, bannerCacheKey]
-  );
-
   const [imageError, setImageError] = React.useState(false);
-  const imageUrlFinal = bannerUrlWithCacheBust || bannerUrl;
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [bannerUrl, bannerCacheKey]);
+  const showPlaceholder = !bannerUrl || imageError;
   const placeholderReason = !bannerUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
 
   return (
@@ -55,12 +50,7 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
           }}
           whileTap={{ scale: 0.98 }}
         >
-          <div
-            className="explore-card-media"
-            style={{
-              '--img': imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
-            } as React.CSSProperties}
-          >
+          <div className="explore-card-media">
             {showPlaceholder && (
               <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
@@ -68,12 +58,13 @@ export default function OrganizerCard({ item }: OrganizerCardProps) {
                 </svg>
               </div>
             )}
-            {imageUrlFinal && !imageError && (
-              <img
-                src={imageUrlFinal}
+            {bannerUrl && !imageError && (
+              <ExploreResponsiveImage
+                rawUrl={bannerUrl}
+                cacheVersion={bannerCacheKey || null}
+                preset="flyerContain"
                 alt={`Imagen de ${item?.nombre_publico || 'Organizador'}`}
-                loading="lazy"
-                decoding="async"
+                priority={priority}
                 onLoad={() => setImageError(false)}
                 onError={() => setImageError(true)}
               />

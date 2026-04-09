@@ -3,8 +3,10 @@ import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
-import ImageWithFallback from "../../components/ImageWithFallback";
+import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
+import { EXPLORE_SIZES_LIST_THUMB } from "@/utils/supabaseResponsiveImage";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
+import { UserProfilePhotoCarousel } from "../../components/profile/UserProfilePhotoCarousel";
 import { PHOTO_SLOTS, getMediaBySlot, normalizeMediaArray, type MediaItem } from "../../utils/mediaSlots";
 import EventCard from "../../components/explore/cards/EventCard";
 import { supabase } from "../../lib/supabase";
@@ -22,212 +24,6 @@ import { Modal } from "../../components/ui/Modal";
 import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 import { buildShareUrl } from "@/utils/shareUrls";
 import "./UserProfile.css";
-
-const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
-  const { t } = useTranslation();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const nextPhoto = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % photos.length);
-  }, [photos.length]);
-
-  const prevPhoto = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  }, [photos.length]);
-
-  const goToPhoto = useCallback((index: number) => {
-    setCurrentIndex(index);
-  }, []);
-
-  const handleFullscreenOpen = useCallback(() => {
-    setIsFullscreen(true);
-  }, []);
-
-  const handleFullscreenClose = useCallback(() => {
-    setIsFullscreen(false);
-  }, []);
-
-  if (photos.length === 0) return null;
-
-  const hasMultiplePhotos = photos.length > 1;
-
-  return (
-    <div
-      id="user-profile-carousel"
-      data-baile-id="user-profile-carousel"
-      data-test-id="user-profile-carousel"
-      className="carousel-container"
-    >
-      <div
-        id="user-profile-carousel-main"
-        data-baile-id="user-profile-carousel-main"
-        data-test-id="user-profile-carousel-main"
-        className="carousel-main"
-      >
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -100 }}
-          transition={{ duration: 0.3 }}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%'
-          }}
-        >
-          <img
-            src={photos[currentIndex]}
-            alt={`${t('photo')} ${currentIndex + 1}`}
-            loading="eager"
-            decoding="async"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              objectPosition: 'center',
-              cursor: 'pointer',
-              display: 'block'
-            }}
-            onClick={handleFullscreenOpen}
-          />
-        </motion.div>
-
-        <div className="carousel-counter">
-          {currentIndex + 1} / {photos.length}
-        </div>
-
-        {hasMultiplePhotos && (
-          <>
-            <button
-              id="user-profile-carousel-prev"
-              data-baile-id="user-profile-carousel-prev"
-              data-test-id="user-profile-carousel-prev"
-              onClick={prevPhoto}
-              className="carousel-nav-btn carousel-nav-prev"
-              disabled={!hasMultiplePhotos}
-            >
-              ‹
-            </button>
-            <button
-              id="user-profile-carousel-next"
-              data-baile-id="user-profile-carousel-next"
-              data-test-id="user-profile-carousel-next"
-              onClick={nextPhoto}
-              className="carousel-nav-btn carousel-nav-next"
-              disabled={!hasMultiplePhotos}
-            >
-              ›
-            </button>
-          </>
-        )}
-      </div>
-
-      {hasMultiplePhotos && (
-        <div
-          id="user-profile-carousel-thumbnails"
-          data-baile-id="user-profile-carousel-thumbnails"
-          data-test-id="user-profile-carousel-thumbnails"
-          className="carousel-thumbnails"
-        >
-          {photos.map((photo, index) => (
-            <motion.button
-              key={index}
-              id={`user-profile-carousel-thumbnail-${index}`}
-              data-baile-id={`user-profile-carousel-thumbnail-${index}`}
-              data-test-id={`user-profile-carousel-thumbnail-${index}`}
-              onClick={() => goToPhoto(index)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`carousel-thumbnail ${currentIndex === index ? 'active' : ''}`}
-            >
-              <img
-                src={photo}
-                alt={`${t('photo_thumbnail')} ${index + 1}`}
-                loading={index < 4 ? 'eager' : 'lazy'}
-                decoding="async"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: 'block'
-                }}
-              />
-            </motion.button>
-          ))}
-        </div>
-      )}
-
-      {isFullscreen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.95)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem'
-          }}
-          onClick={handleFullscreenClose}
-        >
-          <div style={{
-            position: 'relative',
-            maxWidth: '90vw',
-            maxHeight: '90vh',
-            borderRadius: '12px',
-            overflow: 'hidden'
-          }}>
-            <img
-              src={photos[currentIndex]}
-              alt={`${t('photo')} ${currentIndex + 1} - ${t('close_fullscreen')}`}
-              loading="eager"
-              decoding="async"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                display: 'block'
-              }}
-            />
-
-            <button
-              onClick={handleFullscreenClose}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'rgba(0, 0, 0, 0.7)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '50%',
-                width: '48px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: '1.5rem',
-                fontWeight: 'bold'
-              }}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-});
-
-CarouselComponent.displayName = 'CarouselComponent';
 
 export const UserProfileLive: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -678,6 +474,7 @@ export const UserProfileLive: React.FC = () => {
             user={profile}
             avatarUrl={avatarUrl}
             avatarUrlSameAsNav={profile?.avatar_url}
+            avatarCacheKey={(profile as { updated_at?: string })?.updated_at ?? null}
             allTags={allTags}
             ritmosSlugs={normalizeRitmosToSlugs(profile, allTags)}
             isOwnProfile={isOwnProfile}
@@ -874,13 +671,14 @@ export const UserProfileLive: React.FC = () => {
                 >
                   <div className="avatar-wrap">
                     {showImg ? (
-                      <img
-                        src={avatarUrl!}
+                      <ExploreResponsiveImage
+                        rawUrl={avatarUrl!}
+                        cacheVersion={null}
+                        preset="listThumb"
+                        sizes={EXPLORE_SIZES_LIST_THUMB}
                         alt={person.display_name || t('profile')}
-                        loading="eager"
-                        decoding="async"
                         onError={() => handleCommunityAvatarError(person.id)}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       />
                     ) : (
                       <span className="community-avatar-initial" aria-hidden>
@@ -1283,7 +1081,10 @@ export const UserProfileLive: React.FC = () => {
                 </div>
               </div>
 
-              <CarouselComponent photos={carouselPhotos} />
+              <UserProfilePhotoCarousel
+                photos={carouselPhotos}
+                cacheVersion={(profile as { updated_at?: string })?.updated_at ?? null}
+              />
             </motion.section>
           )} */}
         </div>

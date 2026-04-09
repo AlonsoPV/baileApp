@@ -19,6 +19,7 @@ import { EventDateEditScreen } from './screens/events/EventDateEditScreen';
 import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
 import { MyRSVPsScreen } from './screens/events/MyRSVPsScreen';
 import MyPurchasesScreen from './screens/payments/MyPurchasesScreen';
+import MyClassAttendanceScreen from './screens/profile/MyClassAttendanceScreen';
 import { EventCreateWizard } from './screens/events/EventCreateWizard';
 
 // New unified event screens
@@ -156,6 +157,7 @@ export function AppRouter() {
         {/* My RSVPs Route */}
         <Route path="/me/rsvps" element={<MyRSVPsScreen />} />
         <Route path="/me/compras" element={<MyPurchasesScreen />} />
+        <Route path="/me/clases" element={<MyClassAttendanceScreen />} />
 
         {/* New Social/Event Flow Routes */}
         {/* Social (Parent) Routes */}

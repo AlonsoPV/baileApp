@@ -1,5 +1,5 @@
 import React from "react";
-import ImageWithFallback from "../../ImageWithFallback";
+import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { VideoPlayerWithPiP } from "../../video/VideoPlayerWithPiP";
 
 export interface MediaItem {
@@ -13,13 +13,14 @@ export interface MediaItem {
 export interface MediaGalleryProps {
   photos: string[];
   videos: string[];
-  toDirectUrl?: (url: string) => string;
+  /** updated_at / created_at para ?v= en transforms */
+  photoCacheKey?: string | number | null;
 }
 
 export function MediaGallery({
   photos,
   videos,
-  toDirectUrl = (u) => u,
+  photoCacheKey,
 }: MediaGalleryProps) {
   const items = [
     ...photos.map((url) => ({ type: "photo" as const, url })),
@@ -28,19 +29,28 @@ export function MediaGallery({
 
   if (items.length === 0) return null;
 
+  let photoIndex = 0;
+
   return (
     <section className="eds-gallery" aria-label="Galería">
       <div className="eds-gallery__grid">
-        {items.map((item, i) =>
-          item.type === "photo" ? (
-            <div key={i} className="eds-gallery__item">
-              <ImageWithFallback
-                src={toDirectUrl(item.url) || item.url}
-                alt={`Foto ${i + 1}`}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </div>
-          ) : (
+        {items.map((item, i) => {
+          if (item.type === "photo") {
+            const pi = photoIndex;
+            photoIndex += 1;
+            return (
+              <div key={i} className="eds-gallery__item">
+                <ExploreResponsiveImage
+                  rawUrl={item.url}
+                  cacheVersion={photoCacheKey ?? null}
+                  preset="carteleraGrid"
+                  alt={`Foto ${pi + 1}`}
+                  priority={pi === 0}
+                />
+              </div>
+            );
+          }
+          return (
             <div key={i} className="eds-gallery__item">
               <VideoPlayerWithPiP
                 src={item.url}
@@ -51,8 +61,8 @@ export function MediaGallery({
                 aria-label={`Video ${i + 1}`}
               />
             </div>
-          )
-        )}
+          );
+        })}
       </div>
     </section>
   );

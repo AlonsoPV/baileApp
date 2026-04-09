@@ -171,6 +171,22 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
               }}
             >
               <div style={{ fontSize: "0.875rem", opacity: 0.9, marginBottom: "0.5rem", color: "#fff" }}>
+                Asistieron
+              </div>
+              <div style={{ fontSize: "2rem", fontWeight: 900, color: "#81C784" }}>
+                {global.totalAttended ?? 0}
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: "1rem",
+                background: "rgba(76,175,80,0.12)",
+                borderRadius: 12,
+                border: "1px solid rgba(76,175,80,0.25)",
+              }}
+            >
+              <div style={{ fontSize: "0.875rem", opacity: 0.9, marginBottom: "0.5rem", color: "#fff" }}>
                 Compras (pagado)
               </div>
               <div style={{ fontSize: "2rem", fontWeight: 900, color: "#4CAF50" }}>
@@ -263,7 +279,7 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
         </h3>
         {porClase.length === 0 ? (
           <p style={{ color: "rgba(255,255,255,0.7)" }}>
-            No hay clases con registros tentativos todavía.
+            No hay clases con registros todavía.
           </p>
         ) : (
           <div style={{ display: "grid", gap: "1rem" }}>
@@ -285,8 +301,8 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
                         year: "numeric",
                       });
                     }
-                  } catch (e) {
-                    console.error("[TeacherMetricsPanel] Error formateando fecha:", e);
+                  } catch {
+                    fechaFormateada = String(cl.fecha);
                   }
                 } else {
                   // Si no es una fecha, asumir que es un día de la semana y mostrarlo directamente
@@ -336,8 +352,11 @@ export function TeacherMetricsPanel({ teacherId }: PanelProps) {
                     <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#f093fb" }}>
                       {cl.totalTentativos}
                     </div>
-                    <div style={{ fontSize: "0.75rem", opacity: 0.9, marginTop: "0.25rem", color: "#A5D6A7" }}>
-                      💳 Compras: {cl.totalPagados ?? 0}
+                    <div style={{ fontSize: "0.75rem", opacity: 0.9, marginTop: "0.25rem", color: "#B9F6CA" }}>
+                      Asistieron: {cl.totalAttended ?? 0}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", opacity: 0.9, marginTop: "0.2rem", color: "#A5D6A7" }}>
+                      Compras: {cl.totalPagados ?? 0}
                     </div>
                   </div>
                 </div>

@@ -22,6 +22,7 @@ export interface AcademyZoneMetricRow {
 export interface GlobalMetrics {
   /** Registros tentative en el período (volumen; el mismo usuario puede repetirse). */
   totalTentative: number;
+  totalAttended: number;
   /** Alias explícito para dashboard; coincide con totalTentative cuando viene de RPC. */
   totalAttendanceRecords: number;
   /** Usuarios distintos con al menos una reserva tentative en el período. */
@@ -43,6 +44,7 @@ export interface ClassReservationMetric {
   classId: number;
   className: string;
   classDate: string | null;
+  status: string;
   userId: string;
   userName: string;
   roleType: RoleType;
@@ -59,6 +61,8 @@ export interface ClassSummary {
   diaSemana: number | null; // 0=Domingo, 1=Lunes, ..., 6=Sábado
   diaSemanaNombre: string | null; // 'lunes', 'martes', etc.
   totalAsistentes: number;
+  totalTentative: number;
+  totalAttended: number;
   byRole: Record<string, number>; // 'leader', 'follower', 'ambos', 'otro'
   reservations: ClassReservationMetric[]; // Lista de usuarios
   reservationsByDate: Map<string, ClassReservationMetric[]>; // Agrupado por fecha específica
@@ -113,15 +117,17 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
     queryKey: ["academy-metrics", academyIdNum, filters],
     enabled: !!academyIdNum,
     queryFn: async (): Promise<AcademyMetricsResult> => {
-      console.log("[useAcademyMetrics] 🔍 Consultando métricas para academyId:", academyIdNum, "filtros:", filters);
-      
       const dateRange = getDateRange(filters.dateFilter, filters.from, filters.to);
 
       type RpcGlobalRow = {
         total_classes_registered?: number;
         unique_students?: number;
         total_attendance_records?: number;
+        total_tentative?: number;
+        total_attended?: number;
+        total_paid?: number;
         sessions_with_reservations?: number;
+        status_breakdown?: Record<string, number>;
         role_breakdown?: { lead?: number; follow?: number; ambos?: number; other?: number };
         zone_breakdown?: Array<{
           zone_id?: number;
@@ -145,27 +151,13 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           ? (rpcGlobalRaw as RpcGlobalRow)
           : null;
 
-      // Usar función RPC para bypassar RLS y obtener todas las reservas de la academia
-      // Esta función verifica que el usuario sea dueño de la academia
-      console.log("[useAcademyMetrics] 🔧 Llamando a función RPC get_academy_class_reservations con academyId:", academyIdNum);
       const { data: rpcData, error: rpcError } = await supabase
         .rpc("get_academy_class_reservations", { p_academy_id: academyIdNum! });
-      
-      console.log("[useAcademyMetrics] 📥 Respuesta RPC:", { 
-        hasData: !!rpcData, 
-        dataLength: rpcData?.length || 0, 
-        hasError: !!rpcError,
-        error: rpcError 
-      });
-      
+
       let data: any[] = [];
       
       if (rpcError) {
-        console.error("[useAcademyMetrics] ❌ Error en RPC get_academy_class_reservations:", rpcError);
-        console.log("[useAcademyMetrics] 💡 La función RPC puede no existir aún. Ejecuta: supabase/07_get_academy_class_reservations.sql");
-        console.log("[useAcademyMetrics] 💡 Detalles del error:", JSON.stringify(rpcError, null, 2));
         // Fallback: intentar consulta directa (puede fallar por RLS)
-        console.log("[useAcademyMetrics] 🔄 Intentando consulta directa como fallback...");
         let query = supabase
           .from("clase_asistencias")
           .select(`
@@ -174,11 +166,11 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             class_id,
             role_baile,
             zona_tag_id,
+            status,
             fecha_especifica,
             created_at
           `)
-          .eq("academy_id", academyIdNum!)
-          .eq("status", "tentative");
+          .eq("academy_id", academyIdNum!);
         
         // Aplicar filtros de fecha si existen
         if (dateRange.from) {
@@ -190,10 +182,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         
         const { data: directData, error: directError } = await query;
         
-        if (directError) {
-          console.error("[useAcademyMetrics] ❌ Error en consulta directa:", directError);
-          throw directError;
-        }
+        if (directError) throw directError;
         
         // Filtrar por fecha si es necesario
         data = directData || [];
@@ -211,8 +200,6 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             return true;
           });
         }
-        
-        console.log("[useAcademyMetrics] 📊 Registros encontrados (fallback):", data?.length || 0);
       } else {
         // Filtrar por fecha si es necesario (ya que RPC no tiene filtros)
         data = rpcData || [];
@@ -230,11 +217,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             return true;
           });
         }
-        
-        console.log("[useAcademyMetrics] 📊 Registros encontrados (RPC):", data?.length || 0);
       }
-      
-      console.log("[useAcademyMetrics] 📊 Total registros procesados:", data?.length || 0);
       
       // Obtener información de clases, zonas y usuarios
       const classIds = [...new Set((data || []).map((r: any) => r.class_id))];
@@ -417,10 +400,8 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           .in("user_id", userIds);
         
         if (userError) {
-          console.error("[useAcademyMetrics] Error obteniendo perfiles de usuario:", userError);
+          throw userError;
         }
-        
-        console.log("[useAcademyMetrics] Perfiles encontrados:", userProfiles?.length || 0, "de", userIds.length);
         
         (userProfiles || []).forEach((profile: any) => {
           // Priorizar display_name, luego email, luego ID truncado
@@ -428,13 +409,11 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             || profile.email?.split('@')[0]?.trim()
             || `Usuario ${profile.user_id.substring(0, 8)}`;
           userInfoMap.set(profile.user_id, nombre);
-          console.log("[useAcademyMetrics] Usuario mapeado:", profile.user_id, "->", nombre);
         });
         
         // Para usuarios que no se encontraron en profiles_user
         const missingUserIds = userIds.filter(id => !userInfoMap.has(id));
         if (missingUserIds.length > 0) {
-          console.log("[useAcademyMetrics] Usuarios no encontrados:", missingUserIds.length);
           missingUserIds.forEach((id) => {
             userInfoMap.set(id, `Usuario ${id.substring(0, 8)}`);
           });
@@ -444,6 +423,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       // Procesar datos — KPIs globales preferentemente desde rpc_get_academy_global_metrics
       const global: GlobalMetrics = {
         totalTentative: 0,
+        totalAttended: 0,
         totalAttendanceRecords: 0,
         uniqueStudents: 0,
         totalClassesRegistered: 0,
@@ -460,8 +440,10 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         global.totalClassesRegistered = Number(rpcGlobal.total_classes_registered) || 0;
         global.uniqueStudents = Number(rpcGlobal.unique_students) || 0;
         global.totalAttendanceRecords = Number(rpcGlobal.total_attendance_records) || 0;
-        global.totalTentative = global.totalAttendanceRecords;
+        global.totalTentative = Number(rpcGlobal.total_tentative) || 0;
+        global.totalAttended = Number(rpcGlobal.total_attended) || 0;
         global.sessionsWithReservations = Number(rpcGlobal.sessions_with_reservations) || 0;
+        global.totalPurchases = Number(rpcGlobal.total_paid) || 0;
         const rb = rpcGlobal.role_breakdown || {};
         global.byRole.leader = Number(rb.lead) || 0;
         global.byRole.follower = Number(rb.follow) || 0;
@@ -493,8 +475,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         
         // Actualizar métricas globales (solo si no vinieron de rpc_get_academy_global_metrics)
         if (!global.globalRpcLoaded) {
-          global.totalTentative += 1;
-          global.totalAttendanceRecords = global.totalTentative;
+          if (row.status === "tentative") global.totalTentative += 1;
+          if (row.status === "attended") global.totalAttended += 1;
+          global.totalAttendanceRecords += 1;
           global.byRole[normalizedRole] = (global.byRole[normalizedRole] || 0) + 1;
           if (row.zona_tag_id && zonaInfoMap.has(row.zona_tag_id)) {
             const zonaNombre = zonaInfoMap.get(row.zona_tag_id)!;
@@ -549,6 +532,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           classId: row.class_id,
           className: finalClassInfo.nombre, // Siempre usar nombre, nunca ID
           classDate: classDate,
+          status: String(row.status ?? "tentative"),
           userId: row.user_id,
           userName: userName, // Siempre usar nombre, nunca ID
           roleType: normalizedRole as RoleType,
@@ -569,7 +553,8 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         });
         global.uniqueStudents = userSet.size;
         global.totalAttendanceRecords = rows.length;
-        global.totalTentative = rows.length;
+        global.totalTentative = rows.filter((row: any) => row.status === "tentative").length;
+        global.totalAttended = rows.filter((row: any) => row.status === "attended").length;
         global.sessionsWithReservations = sessionSet.size;
         const { data: paCron } = await supabase
           .from("profiles_academy")
@@ -617,6 +602,8 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         
         if (existing) {
           existing.totalAsistentes += 1;
+          if (reservation.status === "tentative") existing.totalTentative += 1;
+          if (reservation.status === "attended") existing.totalAttended += 1;
           existing.byRole[reservation.roleType || 'otro'] = (existing.byRole[reservation.roleType || 'otro'] || 0) + 1;
           existing.reservations.push(reservation);
           
@@ -662,6 +649,8 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             diaSemana,
             diaSemanaNombre,
             totalAsistentes: 1,
+            totalTentative: reservation.status === "tentative" ? 1 : 0,
+            totalAttended: reservation.status === "attended" ? 1 : 0,
             byRole: {
               leader: reservation.roleType === 'leader' ? 1 : 0,
               follower: reservation.roleType === 'follower' ? 1 : 0,
@@ -683,14 +672,14 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           .eq("academy_id", academyIdNum!)
           .eq("status", "pagado");
 
-        if (purchaseError) {
-          console.error("[useAcademyMetrics] ❌ Error obteniendo compras (clase_asistencias):", purchaseError);
-        } else {
+        if (!purchaseError) {
           const purchasesBySessionKey = new Map<string, number>();
           (purchaseRows || []).forEach((row: any) => {
             const classId = row.class_id as number;
             if (!classId) return;
-            global.totalPurchases += 1;
+            if (!global.globalRpcLoaded) {
+              global.totalPurchases += 1;
+            }
             const fechaKey = row.fecha_especifica ? String(row.fecha_especifica) : 'sin-fecha';
             const sessionPrefix = `${classId}|${fechaKey}|`;
             // Sumamos por prefix para cubrir claves legacy con día/hora en memoria.
@@ -711,8 +700,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             summary.totalPurchases = count;
           });
         }
-      } catch (purchaseErr) {
-        console.error("[useAcademyMetrics] ❌ Excepción obteniendo compras:", purchaseErr);
+      } catch {
       }
       
       // Post-procesamiento: asegurar que todas las clases tengan classDate si alguna reserva tiene fecha
@@ -786,6 +774,8 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
               : String(rpcRow.class_name || summary.className);
             summary.timeLabel = timePart || summary.timeLabel || null;
             summary.totalAsistentes = Number(rpcRow.total_alumnos) || summary.totalAsistentes;
+            summary.totalTentative = Number(rpcRow.tentative_count) || summary.totalTentative;
+            summary.totalAttended = Number(rpcRow.attended_count) || summary.totalAttended;
             summary.byRole = {
               leader: Number(rpcRow.leader_count) || 0,
               follower: Number(rpcRow.follower_count) || 0,
@@ -794,8 +784,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             };
           });
         }
-      } catch (rpcSessionError) {
-        console.warn("[useAcademyMetrics] rpc_get_academy_class_metrics unavailable:", rpcSessionError);
+      } catch {
       }
 
       // Convertir a array y ordenar por total de asistentes (mayor primero)

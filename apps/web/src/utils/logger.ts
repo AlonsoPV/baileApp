@@ -1,4 +1,10 @@
-const isDev = import.meta.env.DEV;
+const isDev = (() => {
+  try {
+    return (import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV === true;
+  } catch {
+    return false;
+  }
+})();
 
 /**
  * Logging helpers: log/info/debug/warn only run in development (Vite `import.meta.env.DEV`).

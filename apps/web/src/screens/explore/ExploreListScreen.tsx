@@ -216,7 +216,7 @@ export default function ExploreListScreen() {
         key = item.id ?? i;
     }
 
-    return <CardComponent key={key} item={item} />;
+    return <CardComponent key={key} item={item} priority={i === 0} />;
   };
 
   return (

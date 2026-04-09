@@ -56,6 +56,12 @@ function roleLabel(role: string | null | undefined): string {
   return "Otro";
 }
 
+function statusLabel(status: string | null | undefined): string {
+  if (status === "attended") return "Asistio";
+  if (status === "pagado") return "Pagado";
+  return "Tentativo";
+}
+
 function uniqueUserCount(reservations: ClassReservationMetric[]): number {
   return new Set(reservations.map((r) => r.userId)).size;
 }
@@ -189,6 +195,14 @@ export function ClassMetricCard({ classSummary, isExpanded, onToggle }: ClassMet
             <div className="acm-kpi-value">{unique}</div>
             <div className="acm-kpi-label">Alumnos</div>
           </div>
+          <div className="acm-kpi">
+            <div className="acm-kpi-value">{classSummary.totalTentative}</div>
+            <div className="acm-kpi-label">Tentativos</div>
+          </div>
+          <div className="acm-kpi">
+            <div className="acm-kpi-value">{classSummary.totalAttended}</div>
+            <div className="acm-kpi-label">Asistieron</div>
+          </div>
           <div className="acm-kpi acm-kpi--purchases">
             <div className="acm-kpi-value">{purchases}</div>
             <div className="acm-kpi-label">Compras</div>
@@ -296,6 +310,7 @@ function AttendeeRow({ reservation }: { reservation: ClassReservationMetric }) {
   });
 
   const parts: string[] = [roleLabel(reservation.roleType)];
+  parts.push(statusLabel(reservation.status));
   if (reservation.zone) parts.push(reservation.zone);
   if (attendDate) parts.push(`Clase ${attendDate}`);
   parts.push(`Registro ${registered}`);

@@ -7,7 +7,7 @@ import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
-import { withStableCacheBust } from "@/utils/cacheBuster";
+import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import "@/components/explore/EventListRow.css";
 
 export type ExploreProfileListVariant = "academy" | "teacher" | "dancer" | "organizer";
@@ -120,14 +120,9 @@ function ExploreProfileListRow({ variant, item, priority = false }: ExploreProfi
     (item.user_id as string | undefined) ||
     "";
 
-  const imageUrlFinal = React.useMemo(
-    () => withStableCacheBust(rawImg, cacheKey || null) || rawImg,
-    [rawImg, cacheKey]
-  );
-
   const [imageError, setImageError] = React.useState(false);
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [rawImg, cacheKey]);
+  const showPlaceholder = !rawImg || imageError;
 
   const zonaNombres: string[] = (item.zonas || [])
     .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === "zona")?.nombre)
@@ -178,12 +173,12 @@ function ExploreProfileListRow({ variant, item, priority = false }: ExploreProfi
               </svg>
             </div>
           ) : (
-            <img
-              src={imageUrlFinal}
+            <ExploreResponsiveImage
+              rawUrl={rawImg}
+              cacheVersion={cacheKey || null}
+              preset="listThumb"
               alt={title}
-              loading={priority ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
-              decoding="async"
+              priority={priority}
               onLoad={() => setImageError(false)}
               onError={() => setImageError(true)}
             />

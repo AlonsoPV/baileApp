@@ -4,7 +4,7 @@ import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useFmtDate } from "@/hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "@/utils/imageOptimization";
-import { withStableCacheBust } from "@/utils/cacheBuster";
+import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "@/utils/eventCosts";
 import { resolveEventDateYmd } from "@/utils/eventDateDisplay";
@@ -74,11 +74,6 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
     "";
 
   const rawFlyerForMemo = ui ? ui.flyerUrl : resolveFlyerUrlRaw(item);
-  const flyerWithCacheBust = React.useMemo(
-    () => withStableCacheBust(rawFlyerForMemo, flyerCacheKey || null),
-    [rawFlyerForMemo, flyerCacheKey]
-  );
-  const imageUrlFinal = flyerWithCacheBust || rawFlyerForMemo;
 
   const nombre = item.nombre || item.evento_nombre || item.lugar || item.ciudad || "Evento";
   const horaInicio = item.hora_inicio || item.evento_hora_inicio;
@@ -113,8 +108,8 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
   const hasDisc = ui ? !!ui.hasDiscount : showDiscount;
 
   const [imageError, setImageError] = React.useState(false);
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [rawFlyerForMemo, flyerCacheKey]);
+  const showPlaceholder = !rawFlyerForMemo || imageError;
 
   return (
     <LiveLink to={linkTo} asCard={false}>
@@ -135,12 +130,12 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
               </svg>
             </div>
           ) : (
-            <img
-              src={imageUrlFinal}
+            <ExploreResponsiveImage
+              rawUrl={rawFlyerForMemo}
+              cacheVersion={flyerCacheKey || null}
+              preset="carteleraGrid"
               alt={nombre}
-              loading={priority ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
-              decoding="async"
+              priority={priority}
               onLoad={() => setImageError(false)}
               onError={() => setImageError(true)}
             />

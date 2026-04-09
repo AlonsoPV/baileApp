@@ -5,7 +5,7 @@ import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
-import { withStableCacheBust } from "../../../utils/cacheBuster";
+import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
 import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 import { resolveSupabaseStoragePublicUrl } from "../../../utils/supabaseStoragePublicUrl";
 // no se usa urls.userLive, pedimos navegar a /app/profile con query
@@ -26,9 +26,10 @@ type DancerItem = {
 interface Props {
   item: DancerItem;
   to?: string; // ruta opcional; si no existe ruta pública, usa '#'
+  priority?: boolean;
 }
 
-export default function DancerCard({ item, to }: Props) {
+export default function DancerCard({ item, to, priority = false }: Props) {
   const { data: allTags } = useTags() as any;
 
   // URL pública directa (sin render/Image Transformation para evitar fallos en cards)
@@ -66,16 +67,11 @@ export default function DancerCard({ item, to }: Props) {
     '';
 
   const coverUrlDirect = toDirectPublicStorageUrl(coverUrl) ?? coverUrl;
-  const coverUrlWithCacheBust = React.useMemo(
-    () => withStableCacheBust(coverUrlDirect, coverCacheKey || null),
-    [coverUrlDirect, coverCacheKey]
-  );
 
   const [imageError, setImageError] = React.useState(false);
-  const imageUrlFinal = coverUrlWithCacheBust || coverUrlDirect;
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
-  const placeholderReason = !coverUrl ? 'URL vacía' : imageError ? 'Image load failed' : '';
+  React.useEffect(() => setImageError(false), [coverUrlDirect, coverCacheKey]);
+  const showPlaceholder = !coverUrlDirect || imageError;
+  const placeholderReason = !coverUrlDirect ? 'URL vacía' : imageError ? 'Image load failed' : '';
 
   const name = item.display_name || (item as any).nombre || "Dancer";
   const bio = item.bio || "";
@@ -130,12 +126,7 @@ export default function DancerCard({ item, to }: Props) {
           whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
         >
-          <div
-            className="explore-card-media"
-            style={{
-              '--img': imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
-            } as React.CSSProperties}
-          >
+          <div className="explore-card-media">
             {showPlaceholder && (
               <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
@@ -143,12 +134,13 @@ export default function DancerCard({ item, to }: Props) {
                 </svg>
               </div>
             )}
-            {imageUrlFinal && !imageError && (
-              <img
-                src={imageUrlFinal}
+            {coverUrlDirect && !imageError && (
+              <ExploreResponsiveImage
+                rawUrl={coverUrlDirect}
+                cacheVersion={coverCacheKey || null}
+                preset="flyerContain"
                 alt={`Imagen de ${name}`}
-                loading="lazy"
-                decoding="async"
+                priority={priority}
                 onLoad={() => setImageError(false)}
                 onError={() => setImageError(true)}
               />

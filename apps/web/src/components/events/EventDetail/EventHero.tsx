@@ -1,10 +1,12 @@
 import React from "react";
 import { ArrowLeft, Heart, Share2 } from "lucide-react";
-import { withStableCacheBust } from "@/utils/cacheBuster";
+import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
+import { EXPLORE_SIZES_EVENT_HERO } from "@/utils/supabaseResponsiveImage";
+
 export interface EventHeroProps {
   title: string;
   flyerUrl?: string | null;
-  flyerCacheKey?: string;
+  flyerCacheKey?: string | number | null;
   dateStr: string;
   timeRange: string;
   venueName: string;
@@ -12,13 +14,9 @@ export interface EventHeroProps {
   onToggleFavorite?: () => void;
   favoriteActive?: boolean;
   togglingEvent?: boolean;
-  toDirectUrl?: (url: string) => string;
   /** Volver atrás (historial o pantalla anterior) */
   onBack?: () => void;
 }
-
-const PLACEHOLDER_GRADIENT =
-  "linear-gradient(135deg, #1a1a24 0%, #2d1f3d 50%, #1a1a24 100%)";
 
 export function EventHero({
   title,
@@ -31,36 +29,26 @@ export function EventHero({
   onToggleFavorite,
   favoriteActive = false,
   togglingEvent = false,
-  toDirectUrl = (u) => u,
   onBack,
 }: EventHeroProps) {
-  const displayUrl = flyerUrl
-    ? (withStableCacheBust(flyerUrl, flyerCacheKey || null) ?? flyerUrl)
-    : null;
-  const src = displayUrl ? toDirectUrl(displayUrl) || displayUrl : null;
-
-  const heroStyle: React.CSSProperties = src
-    ? {
-        backgroundImage: `url(${src})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }
-    : { background: PLACEHOLDER_GRADIENT };
+  const hasFlyer = !!(flyerUrl && String(flyerUrl).trim());
 
   return (
-    <section
-      className="eds-hero"
-      aria-label="Hero del evento"
-      style={heroStyle}
-    >
-      {!src && (
-        <div
-          className="eds-hero__img"
-          style={{ background: PLACEHOLDER_GRADIENT, position: "absolute", inset: 0 }}
-          aria-hidden
-        />
-      )}
+    <section className="eds-hero" aria-label="Hero del evento">
+      <div className="eds-hero__bg" aria-hidden>
+        {hasFlyer ? (
+          <div className="eds-hero__img">
+            <ExploreResponsiveImage
+              rawUrl={flyerUrl}
+              cacheVersion={flyerCacheKey ?? null}
+              preset="carouselCard"
+              sizes={EXPLORE_SIZES_EVENT_HERO}
+              alt=""
+              priority
+            />
+          </div>
+        ) : null}
+      </div>
       <div className="eds-hero__overlay" aria-hidden />
       <div className="eds-hero__actions">
         <div className="eds-hero__actions-start">

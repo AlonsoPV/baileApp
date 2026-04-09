@@ -151,11 +151,16 @@ export default function AddToCalendarWithStats({
       qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
       qc.invalidateQueries({ queryKey: ["academy-metrics"] });
       qc.refetchQueries({ queryKey: ["academy-metrics"] });
+      qc.invalidateQueries({ queryKey: ["academy-students-global", academyId] });
+      qc.invalidateQueries({ queryKey: ["academy-students-list", academyId] });
     }
     if (teacherId) {
       qc.invalidateQueries({ queryKey: ["teacher-class-metrics", teacherId] });
       qc.refetchQueries({ queryKey: ["teacher-class-metrics", teacherId] });
+      qc.invalidateQueries({ queryKey: ["teacher-students-global", teacherId] });
+      qc.invalidateQueries({ queryKey: ["teacher-students-list", teacherId] });
     }
+    qc.invalidateQueries({ queryKey: ["my-class-attendance"] });
   }, [academyId, teacherId, qc]);
 
   useEffect(() => {

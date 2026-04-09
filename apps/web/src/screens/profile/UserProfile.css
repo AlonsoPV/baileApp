@@ -79,6 +79,7 @@
     align-items: center;
     justify-content: center;
   }
+  .carousel-main picture,
   .carousel-main img {
     display: block;
     width: 100%;
@@ -86,10 +87,21 @@
     object-fit: contain;
     object-position: center;
   }
+  .carousel-main picture {
+    object-fit: unset;
+  }
+  .carousel-main picture img {
+    object-fit: contain;
+    object-position: center;
+  }
+  .carousel-thumbnail picture,
   .carousel-thumbnail img {
     display: block;
     width: 100%;
     height: 100%;
+    object-fit: cover;
+  }
+  .carousel-thumbnail picture img {
     object-fit: cover;
   }
   .carousel-thumbnails {

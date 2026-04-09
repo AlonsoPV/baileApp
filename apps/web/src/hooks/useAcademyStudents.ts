@@ -77,6 +77,7 @@ export interface StudentClassBreakdownItem {
   className: string;
   records: number;
   tentative: number;
+  attended: number;
   paid: number;
   lastActivityAt: string | null;
 }
@@ -348,6 +349,7 @@ export function useAcademyStudentDetail(
           className: String(c.class_name ?? "Clase"),
           records: toNum(c.records),
           tentative: toNum(c.tentative),
+          attended: toNum(c.attended),
           paid: toNum(c.paid),
           lastActivityAt: c.last_activity_at ? String(c.last_activity_at) : null,
         })),

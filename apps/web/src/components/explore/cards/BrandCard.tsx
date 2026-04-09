@@ -4,13 +4,13 @@ import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
 import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
-import { withStableCacheBust } from "../../../utils/cacheBuster";
+import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import "./ExploreCardsShared.css";
 
-type Props = { item: any };
+type Props = { item: any; priority?: boolean };
 
-export default function BrandCard({ item }: Props) {
+export default function BrandCard({ item, priority = false }: Props) {
   const { data: allTags } = useTags() as any;
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Marca";
@@ -49,15 +49,9 @@ export default function BrandCard({ item }: Props) {
     (item.nombre_publico as string | undefined) ||
     '';
 
-  const coverWithCacheBust = React.useMemo(
-    () => withStableCacheBust(cover, coverCacheKey || null),
-    [cover, coverCacheKey]
-  );
-
   const [imageError, setImageError] = React.useState(false);
-  const imageUrlFinal = coverWithCacheBust || cover;
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [cover, coverCacheKey]);
+  const showPlaceholder = !cover || imageError;
   const placeholderReason = !cover ? 'URL vacía' : imageError ? 'Image load failed' : '';
 
   return (
@@ -69,12 +63,7 @@ export default function BrandCard({ item }: Props) {
         whileHover={{ scale: 1.01, transition: { duration: 0.18 } }}
         whileTap={{ scale: 0.99 }}
       >
-        <div
-          className="explore-card-media"
-          style={{
-            '--img': imageUrlFinal && !imageError ? `url(${imageUrlFinal})` : undefined,
-          } as React.CSSProperties}
-        >
+        <div className="explore-card-media">
           {showPlaceholder && (
             <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
@@ -82,12 +71,13 @@ export default function BrandCard({ item }: Props) {
               </svg>
             </div>
           )}
-          {imageUrlFinal && !imageError && (
-            <img
-              src={imageUrlFinal}
+          {cover && !imageError && (
+            <ExploreResponsiveImage
+              rawUrl={cover}
+              cacheVersion={coverCacheKey || null}
+              preset="flyerContain"
               alt={`Imagen de ${nombre}`}
-              loading="lazy"
-              decoding="async"
+              priority={priority}
               onLoad={() => setImageError(false)}
               onError={() => setImageError(true)}
             />

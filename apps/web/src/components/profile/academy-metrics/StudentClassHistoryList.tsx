@@ -3,6 +3,8 @@ import type { StudentHistoryItem } from "@/hooks/useAcademyStudents";
 
 type Props = {
   history: StudentHistoryItem[];
+  onMarkAttended?: (item: StudentHistoryItem) => void;
+  markingId?: number | null;
 };
 
 function formatDate(value: string | null): string {
@@ -31,7 +33,7 @@ function statusLabel(status: string): string {
   return status;
 }
 
-export function StudentClassHistoryList({ history }: Props) {
+export function StudentClassHistoryList({ history, onMarkAttended, markingId = null }: Props) {
   const grouped = React.useMemo(() => {
     const map = new Map<string, StudentHistoryItem[]>();
     history.forEach((row) => {
@@ -93,6 +95,16 @@ export function StudentClassHistoryList({ history }: Props) {
                     minute: "2-digit",
                   })}
                 </div>
+                {onMarkAttended && item.status.toLowerCase() === "tentative" ? (
+                  <button
+                    type="button"
+                    className="students-history-action"
+                    onClick={() => onMarkAttended(item)}
+                    disabled={markingId === item.id}
+                  >
+                    {markingId === item.id ? "Guardando..." : "Marcar como asistio"}
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>

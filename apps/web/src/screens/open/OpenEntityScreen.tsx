@@ -8,7 +8,7 @@ import { useAcademyPublic } from "@/hooks/useAcademy";
 import { useOrganizerPublic } from "@/hooks/useOrganizer";
 import { useBrandPublic } from "@/hooks/useBrand";
 import { supabase } from "@/lib/supabase";
-import { buildCanonicalUrl, buildDeepLink, type ShareEntityType } from "@/utils/shareUrls";
+import { buildCanonicalUrl, buildDeepLink, buildShareUrl, type ShareEntityType } from "@/utils/shareUrls";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
 import { SEO_LOGO_URL } from "@/lib/seoConfig";
 
@@ -25,8 +25,11 @@ import {
   resolveOpenEntityImageProfile,
   getOpenEntityImageForMeta,
 } from "@/utils/resolveOpenEntityImage";
-import { formatHeaderDate, formatHeaderTimeRange } from "@/components/events/EventDetail/helpers";
-import { resolveEventDateYmd } from "@/utils/eventDateDisplay";
+import {
+  buildOpenClasePresentation,
+  buildOpenEventoPresentation,
+  buildOpenProfilePresentation,
+} from "@/utils/openEntityMeta";
 import SeoHead from "@/components/SeoHead";
 import { useTranslation } from "react-i18next";
 
@@ -48,7 +51,9 @@ export default function OpenEntityScreen({ entityType }: Props) {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const idParam = params.id ?? "";
-  const typeParam = (params.type as "teacher" | "academy") ?? "academy";
+  const rawTypeParam = params.type;
+  const typeParam =
+    rawTypeParam === "teacher" || rawTypeParam === "academy" ? rawTypeParam : null;
   const indexParam = searchParams.get("i");
   const index = indexParam !== null && indexParam !== "" ? parseInt(indexParam, 10) : undefined;
   const idNum = parseInt(idParam, 10);
@@ -66,7 +71,7 @@ export default function OpenEntityScreen({ entityType }: Props) {
   }
 
   if (entityType === "clase") {
-    if (!isValidNumId) return <OpenNotFound entityType={entityType} />;
+    if (!isValidNumId || !typeParam) return <OpenNotFound entityType={entityType} />;
     return (
       <OpenClaseContent
         sourceType={typeParam}
@@ -106,35 +111,30 @@ function OpenEventoContent({ dateId, dateIdParam }: { dateId: number; dateIdPara
     date: date as Record<string, unknown>,
     parent: parent as Record<string, unknown> | undefined,
   });
-
-  const displayYmd = resolveEventDateYmd(date);
-  const title = (date as any).nombre || (parent as any)?.nombre || "Evento de baile";
-  const dateStr = formatHeaderDate(displayYmd || "", i18n.language);
-  const timeStr = formatHeaderTimeRange(
-    (date as any).hora_inicio,
-    (date as any).hora_fin
+  const presentation = buildOpenEventoPresentation(
+    date as Record<string, unknown>,
+    parent as Record<string, unknown> | undefined,
+    i18n.language,
   );
-  const lugar = (date as any).lugar;
-  const ciudad = (date as any).ciudad;
-  const parentSede = (parent as any)?.sede_general;
-  const place = [lugar, ciudad].filter(Boolean).join(", ") || parentSede || "";
 
   const canonicalUrl = buildCanonicalUrl("evento", String(dateId));
   const deepLink = buildDeepLink("evento", String(dateId));
+  const shareUrl = buildShareUrl("evento", String(dateIdParam || dateId));
 
   return (
     <OpenLayout
       entityType="evento"
-      title={title}
-      subtitle={[dateStr, timeStr].filter(Boolean).join(" · ")}
-      place={place}
+      title={presentation.title}
+      subtitle={presentation.subtitle}
+      place={presentation.place}
       imageUrl={imageResult.imageUrl}
       canonicalUrl={canonicalUrl}
       deepLink={deepLink}
-      seoTitle={title}
-      seoDescription={[dateStr, timeStr, place].filter(Boolean).join(" · ")}
+      shareUrl={shareUrl}
+      seoTitle={presentation.seoTitle}
+      seoDescription={presentation.seoDescription}
       seoImage={getOpenEntityImageForMeta(imageResult)}
-      seoUrl={canonicalUrl}
+      seoUrl={shareUrl}
     />
   );
 }
@@ -159,41 +159,11 @@ function OpenClaseContent({
     return <OpenLoading />;
   }
 
-  const cronograma = (profile as any)?.cronograma || (profile as any)?.horarios || [];
-  const entry = Array.isArray(cronograma) && classIndex != null && cronograma[classIndex]
-    ? cronograma[classIndex]
-    : cronograma[0];
-  const classTitle =
-    (entry as any)?.nombre ||
-    (entry as any)?.nombre_clase ||
-    (profile as any)?.nombre_publico ||
-    "Clase de baile";
-  const ubicaciones = (profile as any)?.ubicaciones || [];
-  const firstUbicacion = Array.isArray(ubicaciones) ? ubicaciones[0] : null;
-  const place =
-    (firstUbicacion as any)?.nombre ||
-    (firstUbicacion as any)?.ciudad ||
-    (profile as any)?.ciudad ||
-    "";
-
   const imageResult = resolveOpenEntityImageClase({
     profile: profile as Record<string, unknown>,
     sourceType,
   });
-
-  const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-  const diaNum = (entry as any)?.diaSemana ?? (entry as any)?.dia_semana;
-  const dayLabel =
-    typeof diaNum === "number" && diaNum >= 0 && diaNum <= 6
-      ? dayNames[diaNum]
-      : null;
-  const subtitle = dayLabel
-    ? dayLabel + ((entry as any)?.hora ? ` · ${String((entry as any).hora)}` : "")
-    : (entry as any)?.hora
-      ? String((entry as any).hora)
-      : (profile as any)?.nombre_publico
-        ? ""
-        : "Clase";
+  const presentation = buildOpenClasePresentation(profile as Record<string, unknown>, classIndex);
 
   const canonicalUrl = buildCanonicalUrl("clase", String(profileId), {
     type: sourceType,
@@ -203,20 +173,25 @@ function OpenClaseContent({
     type: sourceType,
     index: classIndex,
   });
+  const shareUrl = buildShareUrl("clase", String(profileId), {
+    type: sourceType,
+    index: classIndex,
+  });
 
   return (
     <OpenLayout
       entityType="clase"
-      title={classTitle}
-      subtitle={subtitle || (profile as any)?.nombre_publico}
-      place={place}
+      title={presentation.title}
+      subtitle={presentation.subtitle}
+      place={presentation.place}
       imageUrl={imageResult.imageUrl}
       canonicalUrl={canonicalUrl}
       deepLink={deepLink}
-      seoTitle={classTitle}
-      seoDescription={[subtitle, place].filter(Boolean).join(" · ") || "Clase de baile"}
+      shareUrl={shareUrl}
+      seoTitle={presentation.seoTitle}
+      seoDescription={presentation.seoDescription}
       seoImage={getOpenEntityImageForMeta(imageResult)}
-      seoUrl={canonicalUrl}
+      seoUrl={shareUrl}
     />
   );
 }
@@ -271,31 +246,26 @@ function OpenProfileContent({
     profile: profile as Record<string, unknown>,
   });
 
-  const title =
-    (profile as any)?.display_name ||
-    (profile as any)?.nombre_publico ||
-    (profile as any)?.nombre ||
-    (profile as any)?.nombre_organizador ||
-    (profile as any)?.full_name ||
-    (profile as any)?.nombre_marca ||
-    "Perfil";
+  const presentation = buildOpenProfilePresentation(profileType, profile as Record<string, unknown>);
 
   const canonicalUrl = buildCanonicalUrl(profileType, id);
   const deepLink = buildDeepLink(profileType, id);
+  const shareUrl = buildShareUrl(profileType, id);
 
   return (
     <OpenLayout
       entityType={profileType}
-      title={title}
+      title={presentation.title}
       subtitle={undefined}
       place={undefined}
       imageUrl={imageResult.imageUrl}
       canonicalUrl={canonicalUrl}
       deepLink={deepLink}
-      seoTitle={title}
-      seoDescription={`Perfil de ${title} en Dónde Bailar`}
+      shareUrl={shareUrl}
+      seoTitle={presentation.seoTitle}
+      seoDescription={presentation.seoDescription}
       seoImage={getOpenEntityImageForMeta(imageResult)}
-      seoUrl={canonicalUrl}
+      seoUrl={shareUrl}
     />
   );
 }
@@ -335,6 +305,7 @@ function OpenLayout({
   imageUrl,
   canonicalUrl,
   deepLink,
+  shareUrl,
   seoTitle,
   seoDescription,
   seoImage,
@@ -347,6 +318,7 @@ function OpenLayout({
   imageUrl: string;
   canonicalUrl: string;
   deepLink: string;
+  shareUrl: string;
   seoTitle?: string;
   seoDescription?: string;
   seoImage?: string;
@@ -357,13 +329,14 @@ function OpenLayout({
   const didBackgroundRef = React.useRef(false);
 
   const handleOpenInApp = React.useCallback(() => {
+    if (typeof window === "undefined") return;
     if (openTimeoutRef.current) {
       clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = null;
     }
     didBackgroundRef.current = false;
     setShowFallback(false);
-    window.location.href = deepLink;
+    window.location.assign(deepLink);
     openTimeoutRef.current = setTimeout(() => {
       openTimeoutRef.current = null;
       if (didBackgroundRef.current) return;
@@ -538,30 +511,54 @@ function OpenLayout({
             Abrir en la app
           </button>
           {showFallback && (
-            <a
-              href={getStoreUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
+            <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                flexDirection: "column",
                 gap: "0.5rem",
                 width: "100%",
-                padding: "0.85rem 1.25rem",
+                padding: "0.9rem 1rem",
                 borderRadius: 14,
-                border: "none",
-                background: "rgba(255,255,255,0.12)",
-                color: "#fff",
-                fontWeight: 600,
-                fontSize: "0.95rem",
-                textAlign: "center",
-                textDecoration: "none",
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.12)",
                 boxSizing: "border-box",
               }}
             >
-              No tienes la app · Descargar aquí
-            </a>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "0.9rem",
+                  color: "rgba(255,255,255,0.78)",
+                  textAlign: "center",
+                }}
+              >
+                Si la app no se abrio automaticamente, usa Ver en navegador o descarga la app.
+              </p>
+              <a
+                href={getStoreUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  width: "100%",
+                  padding: "0.85rem 1.25rem",
+                  borderRadius: 12,
+                  border: "none",
+                  background: "rgba(255,255,255,0.12)",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  textAlign: "center",
+                  textDecoration: "none",
+                  boxSizing: "border-box",
+                }}
+              >
+                Descargar en tu tienda
+              </a>
+            </div>
           )}
           <a
             href={canonicalUrl}
@@ -594,7 +591,7 @@ function OpenLayout({
               textAlign: "center",
             }}
           >
-            ¿No tienes la app?
+            Comparte este enlace o abre el contenido en tu app, en web o desde la tienda correcta.
           </p>
           <div
             style={{
@@ -629,6 +626,30 @@ function OpenLayout({
               <AppleLogoIconSmall />
               <span>App Store</span>
             </a>
+            <a
+              href={PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Descargar en Google Play"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: 40,
+                padding: "0 14px",
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.18)",
+                color: "#fff",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                textDecoration: "none",
+                letterSpacing: "0.01em",
+                boxSizing: "border-box",
+              }}
+            >
+              <span>Google Play</span>
+            </a>
           </div>
         </div>
       </div>
@@ -639,7 +660,8 @@ function OpenLayout({
           color: "rgba(255,255,255,0.5)",
         }}
       >
-        Dónde Bailar · Clases y eventos de baile
+        Donde Bailar · Clases y eventos de baile
+        <span style={{ display: "block", marginTop: 4, opacity: 0.8 }}>{shareUrl}</span>
       </p>
     </div>
     </>

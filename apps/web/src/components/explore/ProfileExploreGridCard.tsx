@@ -6,7 +6,7 @@ import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
-import { withStableCacheBust } from "@/utils/cacheBuster";
+import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import "./EventSocialGridCard.css";
 
@@ -139,14 +139,9 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
     item.user_id ||
     "";
 
-  const imageUrlFinal = React.useMemo(
-    () => withStableCacheBust(rawImg, cacheKey || null) || rawImg,
-    [rawImg, cacheKey]
-  );
-
   const [imageError, setImageError] = React.useState(false);
-  React.useEffect(() => setImageError(false), [imageUrlFinal]);
-  const showPlaceholder = !imageUrlFinal || imageError;
+  React.useEffect(() => setImageError(false), [rawImg, cacheKey]);
+  const showPlaceholder = !rawImg || imageError;
 
   const title = profileTitle(variant, item);
   const zonaNombres: string[] = (item.zonas || [])
@@ -199,12 +194,12 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
               </svg>
             </div>
           ) : (
-            <img
-              src={imageUrlFinal}
+            <ExploreResponsiveImage
+              rawUrl={rawImg}
+              cacheVersion={cacheKey || null}
+              preset="carouselCard"
               alt={title}
-              loading={priority ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
-              decoding="async"
+              priority={priority}
               onLoad={() => setImageError(false)}
               onError={() => setImageError(true)}
             />

@@ -667,6 +667,42 @@ const handleSave = async () => {
                 </div>
                 <div style={{ fontSize: "1.4rem" }}>→</div>
               </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/me/clases")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "0.85rem 1.25rem",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  color: colors.light,
+                  textAlign: "left",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(76,175,80,0.8)";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(76,175,80,0.35)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.15rem" }}>📚 Mis clases</div>
+                  <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)" }}>
+                    Ver las clases tentativas y las asistencias confirmadas
+                  </div>
+                </div>
+                <div style={{ fontSize: "1.4rem" }}>→</div>
+              </button>
             </div>
           </div>
 
