@@ -129,18 +129,6 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
     return [] as string[];
   }, [item, allTags]);
 
-  // Determinar si es hoy
-  const isToday = React.useMemo(() => {
-    if (!item.fecha) return false;
-    try {
-      const today = new Date();
-      const eventDate = new Date(item.fecha);
-      return today.toDateString() === eventDate.toDateString();
-    } catch {
-      return false;
-    }
-  }, [item.fecha]);
-
   // Formatear fecha para meta
   const formattedDate = React.useMemo(() => {
     const locale = getLocale(i18n.language || "es");
@@ -255,12 +243,6 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
               ) : null}
             </div>
             <div className="class-card-media__overlay" aria-hidden />
-
-            {isToday && (
-              <div className="class-card-badges">
-                <div className="class-card-badge hot">HOY</div>
-              </div>
-            )}
 
           </div>
 

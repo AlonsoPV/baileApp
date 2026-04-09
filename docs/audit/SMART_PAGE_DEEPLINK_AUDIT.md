@@ -138,6 +138,41 @@
 - Antes la cadena usada en smart page no siempre era consistente con la del detalle publico de evento.
 - Se centralizo ademas la presentacion de titulos/subtitulos con `apps/web/src/utils/openEntityMeta.ts`.
 
+## Addendum iOS
+
+### Diagnostico exacto
+- El scheme `dondebailarmx://` si esta registrado en iOS:
+  - `app.config.ts` define `scheme: "dondebailarmx"`.
+  - `ios/DondeBailarMX/Info.plist` incluye `CFBundleURLSchemes` con `dondebailarmx`.
+- El mapping interno de contenido tambien existe:
+  - `dondebailarmx://evento/:id` -> `https://dondebailar.com.mx/social/fecha/:id`
+  - `dondebailarmx://clase/:type/:id` -> `https://dondebailar.com.mx/clase/:type/:id`
+  - perfiles y `auth/callback` siguen cubiertos en `src/screens/WebAppScreen.tsx`.
+- El riesgo especifico de iOS no estaba en el scheme ni en auth, sino en el handoff desde la smart page:
+  - Safari embebido y algunos navegadores in-app pueden bloquear o ignorar silenciosamente custom schemes.
+  - La version SPA dependia de `window.location.assign(...)` desde un `button`, que ofrece menos resiliencia que un `href` directo bajo gesto del usuario.
+
+### Correccion aplicada para iOS
+- `apps/web/api/open.ts`
+  - mantiene `href="dondebailarmx://..."` como mecanismo primario;
+  - agrega logs `[SMART_PAGE]` y `[DEEPLINK_IOS]`;
+  - detecta iOS / navegador embebido para mostrar fallback e instruccion mas precisos.
+- `apps/web/src/screens/open/OpenEntityScreen.tsx`
+  - deja de usar un `button` puro para abrir la app;
+  - ahora usa un `a href={deepLink}` con el mismo gesto del usuario y la misma telemetria que el HTML server-side;
+  - muestra ayuda explicita cuando el usuario viene desde un navegador embebido en iPhone.
+- `src/screens/WebAppScreen.tsx`
+  - agrega logs `[WEBAPP_LINKING]` en `getInitialURL`, eventos `Linking`, mapping y navegacion al WebView para distinguir si iOS recibio o no el enlace.
+
+### Checklist manual de validacion
+1. En iPhone real, abrir manualmente `dondebailarmx://evento/:id` desde Safari.
+2. Confirmar que la app abre y carga `social/fecha/:id`.
+3. Abrir `https://dondebailar.com.mx/open/evento/:id`.
+4. Tocar `Abrir en la app` y revisar logs `[SMART_PAGE]`, `[DEEPLINK_IOS]` y `[WEBAPP_LINKING]`.
+5. Repetir el flujo con `https://dondebailar.com.mx/open/clase/:type/:id`.
+6. Hacer smoke test equivalente en Android para verificar que no se rompio el handoff existente.
+7. Verificar que auth callback siga usando `dondebailarmx://auth/callback` sin cambios.
+
 ## Conclusiones
 - El scheme y las rutas nativas ya existian; el bug no era “falta de deep link”.
 - El mayor problema funcional era la combinacion de:

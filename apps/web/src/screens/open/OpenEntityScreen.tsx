@@ -12,6 +12,61 @@ import { buildCanonicalUrl, buildDeepLink, buildShareUrl, type ShareEntityType }
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
 import { SEO_LOGO_URL } from "@/lib/seoConfig";
 
+type SmartPageClientEnv = {
+  userAgent: string;
+  isIos: boolean;
+  isAndroid: boolean;
+  isSafari: boolean;
+  isEmbeddedBrowser: boolean;
+};
+
+function detectSmartPageClientEnv(): SmartPageClientEnv {
+  if (typeof navigator === "undefined") {
+    return {
+      userAgent: "",
+      isIos: false,
+      isAndroid: false,
+      isSafari: false,
+      isEmbeddedBrowser: false,
+    };
+  }
+
+  const userAgent = String(navigator.userAgent || "");
+  const isIos = /iPhone|iPad|iPod/i.test(userAgent);
+  const isAndroid = /Android/i.test(userAgent);
+  const isSafari = isIos && /Safari/i.test(userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(userAgent);
+  const isEmbeddedBrowser =
+    /(FBAN|FBAV|Instagram|Line|MicroMessenger|TikTok|Snapchat|Pinterest|LinkedInApp|Twitter|X\/)/i.test(userAgent) ||
+    (isIos && !isSafari && /AppleWebKit/i.test(userAgent));
+
+  return {
+    userAgent,
+    isIos,
+    isAndroid,
+    isSafari,
+    isEmbeddedBrowser,
+  };
+}
+
+function getSmartPageFallbackMessage(env: SmartPageClientEnv): string {
+  if (env.isIos && env.isEmbeddedBrowser) {
+    return "Si estas en un navegador embebido de iPhone, abre esta pagina en Safari y vuelve a tocar Abrir en la app.";
+  }
+  if (env.isIos) {
+    return "Si la app no se abrio automaticamente, confirma que este instalada y vuelve a intentar desde Safari.";
+  }
+  return "Si la app no se abrio automaticamente, usa Ver en navegador o descarga la app.";
+}
+
+function logSmartPage(tag: "[SMART_PAGE]" | "[DEEPLINK_IOS]", payload: Record<string, unknown>): void {
+  if (typeof console?.log !== "function") return;
+  try {
+    console.log(tag, JSON.stringify(payload));
+  } catch {
+    console.log(tag, payload);
+  }
+}
+
 function getStoreUrl(): string {
   if (typeof navigator === "undefined") return APP_STORE_URL;
   const ua = navigator.userAgent.toLowerCase();
@@ -327,28 +382,78 @@ function OpenLayout({
   const [showFallback, setShowFallback] = React.useState(false);
   const openTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const didBackgroundRef = React.useRef(false);
+  const env = React.useMemo(() => detectSmartPageClientEnv(), []);
+  const fallbackMessage = React.useMemo(() => getSmartPageFallbackMessage(env), [env]);
+  const showIosEmbeddedHint = env.isIos && env.isEmbeddedBrowser;
 
   const handleOpenInApp = React.useCallback(() => {
-    if (typeof window === "undefined") return;
     if (openTimeoutRef.current) {
       clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = null;
     }
     didBackgroundRef.current = false;
     setShowFallback(false);
-    window.location.assign(deepLink);
+
+    logSmartPage("[SMART_PAGE]", {
+      event: "open_in_app_click",
+      entityType,
+      deepLink,
+      canonicalUrl,
+      shareUrl,
+      env,
+    });
+    if (env.isIos) {
+      logSmartPage("[DEEPLINK_IOS]", {
+        event: "open_attempt",
+        deepLink,
+        canonicalUrl,
+        shareUrl,
+        isSafari: env.isSafari,
+        isEmbeddedBrowser: env.isEmbeddedBrowser,
+      });
+    }
+
     openTimeoutRef.current = setTimeout(() => {
       openTimeoutRef.current = null;
       if (didBackgroundRef.current) return;
+      logSmartPage(env.isIos ? "[DEEPLINK_IOS]" : "[SMART_PAGE]", {
+        event: "open_timeout_fallback",
+        deepLink,
+        canonicalUrl,
+        shareUrl,
+        isSafari: env.isSafari,
+        isEmbeddedBrowser: env.isEmbeddedBrowser,
+      });
       setShowFallback(true);
-    }, 2000);
-  }, [deepLink]);
+    }, env.isIos ? 2200 : 2000);
+  }, [canonicalUrl, deepLink, entityType, env, shareUrl]);
 
   React.useEffect(() => {
     return () => {
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
     };
   }, []);
+
+  React.useEffect(() => {
+    logSmartPage("[SMART_PAGE]", {
+      event: "render",
+      entityType,
+      deepLink,
+      canonicalUrl,
+      shareUrl,
+      env,
+    });
+    if (env.isIos) {
+      logSmartPage("[DEEPLINK_IOS]", {
+        event: "render",
+        deepLink,
+        canonicalUrl,
+        shareUrl,
+        isSafari: env.isSafari,
+        isEmbeddedBrowser: env.isEmbeddedBrowser,
+      });
+    }
+  }, [canonicalUrl, deepLink, entityType, env, shareUrl]);
 
   React.useEffect(() => {
     if (!showFallback) return;
@@ -360,6 +465,11 @@ function OpenLayout({
     const onVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         didBackgroundRef.current = true;
+        logSmartPage(env.isIos ? "[DEEPLINK_IOS]" : "[SMART_PAGE]", {
+          event: "document_hidden",
+          deepLink,
+          shareUrl,
+        });
         if (openTimeoutRef.current) {
           clearTimeout(openTimeoutRef.current);
           openTimeoutRef.current = null;
@@ -368,6 +478,11 @@ function OpenLayout({
     };
     const onPageHide = () => {
       didBackgroundRef.current = true;
+      logSmartPage(env.isIos ? "[DEEPLINK_IOS]" : "[SMART_PAGE]", {
+        event: "pagehide",
+        deepLink,
+        shareUrl,
+      });
       if (openTimeoutRef.current) {
         clearTimeout(openTimeoutRef.current);
         openTimeoutRef.current = null;
@@ -379,7 +494,7 @@ function OpenLayout({
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pagehide", onPageHide);
     };
-  }, []);
+  }, [deepLink, env, shareUrl]);
 
   return (
     <>
@@ -479,8 +594,8 @@ function OpenLayout({
             gap: "0.875rem",
           }}
         >
-          <button
-            type="button"
+          <a
+            href={deepLink}
             onClick={handleOpenInApp}
             style={{
               display: "flex",
@@ -499,6 +614,7 @@ function OpenLayout({
               textAlign: "center",
               boxSizing: "border-box",
               boxShadow: "0 4px 16px rgba(45,156,219,0.35), 0 1px 3px rgba(0,0,0,0.2)",
+              textDecoration: "none",
             }}
           >
             <img
@@ -509,7 +625,19 @@ function OpenLayout({
             />
             <OpenInAppIcon />
             Abrir en la app
-          </button>
+          </a>
+          {showIosEmbeddedHint && (
+            <p
+              style={{
+                margin: "-0.25rem 0 0",
+                fontSize: "0.82rem",
+                color: "rgba(255,255,255,0.62)",
+                textAlign: "center",
+              }}
+            >
+              Si estas en Instagram, Facebook u otro navegador embebido de iPhone, puede que necesites abrir esta pagina en Safari.
+            </p>
+          )}
           {showFallback && (
             <div
               style={{
@@ -532,7 +660,7 @@ function OpenLayout({
                   textAlign: "center",
                 }}
               >
-                Si la app no se abrio automaticamente, usa Ver en navegador o descarga la app.
+                {fallbackMessage}
               </p>
               <a
                 href={getStoreUrl()}

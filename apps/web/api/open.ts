@@ -703,6 +703,14 @@ function renderHtml(payload: OpenPayload): string {
         text-align: center;
       }
       .notice.is-visible { display: block; }
+      .hint {
+        display: none;
+        margin: -4px 0 0;
+        color: rgba(255,255,255,0.62);
+        font-size: 0.82rem;
+        text-align: center;
+      }
+      .hint.is-visible { display: block; }
       .stores {
         display: flex;
         flex-wrap: wrap;
@@ -752,6 +760,7 @@ function renderHtml(payload: OpenPayload): string {
       </section>
       <section class="actions">
         <a id="open-in-app" class="button button-primary" href="${deepLink}">Abrir en la app</a>
+        <p id="ios-browser-hint" class="hint"></p>
         <div id="fallback-notice" class="notice">
           Si la app no se abrio automaticamente, usa Ver en navegador o descarga la app.
         </div>
@@ -768,9 +777,70 @@ function renderHtml(payload: OpenPayload): string {
     </main>
     <script>
       (function () {
+        var deepLink = ${JSON.stringify(payload.deepLink)};
+        var canonicalUrl = ${JSON.stringify(payload.canonicalUrl)};
+        var shareUrl = ${JSON.stringify(payload.shareUrl)};
+        var entityLabel = ${JSON.stringify(payload.entityLabel)};
         var fallback = document.getElementById("fallback-notice");
+        var iosHint = document.getElementById("ios-browser-hint");
         var openBtn = document.getElementById("open-in-app");
         var timer = null;
+        function log(tag, payload) {
+          try {
+            console.log(tag, JSON.stringify(payload));
+          } catch (error) {
+            console.log(tag, payload, error);
+          }
+        }
+        function detectEnv() {
+          var ua = String((window.navigator && window.navigator.userAgent) || "");
+          var isIos = /iPhone|iPad|iPod/i.test(ua);
+          var isAndroid = /Android/i.test(ua);
+          var isSafari = isIos && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+          var isEmbeddedBrowser =
+            /(FBAN|FBAV|Instagram|Line|MicroMessenger|TikTok|Snapchat|Pinterest|LinkedInApp|Twitter|X\/)/i.test(ua) ||
+            (isIos && !isSafari && /AppleWebKit/i.test(ua));
+          return {
+            userAgent: ua,
+            isIos: isIos,
+            isAndroid: isAndroid,
+            isSafari: isSafari,
+            isEmbeddedBrowser: isEmbeddedBrowser
+          };
+        }
+        function getFallbackMessage(env) {
+          if (env.isIos && env.isEmbeddedBrowser) {
+            return "Si estas en un navegador embebido de iPhone, abre esta pagina en Safari y vuelve a tocar Abrir en la app.";
+          }
+          if (env.isIos) {
+            return "Si la app no se abrio automaticamente, confirma que este instalada y vuelve a intentar desde Safari.";
+          }
+          return "Si la app no se abrio automaticamente, usa Ver en navegador o descarga la app.";
+        }
+        var env = detectEnv();
+        log("[SMART_PAGE]", {
+          event: "render",
+          deepLink: deepLink,
+          canonicalUrl: canonicalUrl,
+          shareUrl: shareUrl,
+          entityLabel: entityLabel,
+          env: env
+        });
+        if (env.isIos) {
+          log("[DEEPLINK_IOS]", {
+            event: "render",
+            deepLink: deepLink,
+            canonicalUrl: canonicalUrl,
+            shareUrl: shareUrl,
+            isSafari: env.isSafari,
+            isEmbeddedBrowser: env.isEmbeddedBrowser
+          });
+        }
+        if (fallback) fallback.textContent = getFallbackMessage(env);
+        if (iosHint && env.isIos && env.isEmbeddedBrowser) {
+          iosHint.textContent = "Si estas en Instagram, Facebook u otro navegador embebido de iPhone, puede que necesites abrir esta pagina en Safari.";
+          iosHint.classList.add("is-visible");
+        }
         function clearTimer() {
           if (timer) {
             clearTimeout(timer);
@@ -781,14 +851,55 @@ function renderHtml(payload: OpenPayload): string {
           if (fallback) fallback.classList.add("is-visible");
         }
         document.addEventListener("visibilitychange", function () {
-          if (document.visibilityState === "hidden") clearTimer();
+          if (document.visibilityState === "hidden") {
+            log(env.isIos ? "[DEEPLINK_IOS]" : "[SMART_PAGE]", {
+              event: "document_hidden",
+              deepLink: deepLink,
+              shareUrl: shareUrl
+            });
+            clearTimer();
+          }
         });
-        window.addEventListener("pagehide", clearTimer);
+        window.addEventListener("pagehide", function () {
+          log(env.isIos ? "[DEEPLINK_IOS]" : "[SMART_PAGE]", {
+            event: "pagehide",
+            deepLink: deepLink,
+            shareUrl: shareUrl
+          });
+          clearTimer();
+        });
         if (openBtn) {
           openBtn.addEventListener("click", function () {
             if (fallback) fallback.classList.remove("is-visible");
             clearTimer();
-            timer = setTimeout(showFallback, 1800);
+            log("[SMART_PAGE]", {
+              event: "open_in_app_click",
+              deepLink: deepLink,
+              canonicalUrl: canonicalUrl,
+              shareUrl: shareUrl,
+              env: env
+            });
+            if (env.isIos) {
+              log("[DEEPLINK_IOS]", {
+                event: "open_attempt",
+                deepLink: deepLink,
+                canonicalUrl: canonicalUrl,
+                shareUrl: shareUrl,
+                isSafari: env.isSafari,
+                isEmbeddedBrowser: env.isEmbeddedBrowser
+              });
+            }
+            timer = setTimeout(function () {
+              log(env.isIos ? "[DEEPLINK_IOS]" : "[SMART_PAGE]", {
+                event: "open_timeout_fallback",
+                deepLink: deepLink,
+                canonicalUrl: canonicalUrl,
+                shareUrl: shareUrl,
+                isSafari: env.isSafari,
+                isEmbeddedBrowser: env.isEmbeddedBrowser
+              });
+              showFallback();
+            }, env.isIos ? 2200 : 1800);
           });
         }
       })();

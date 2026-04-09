@@ -119,6 +119,15 @@ function logWebViewError(
   console.log(`[WEBVIEW_ERR] ${source}`, JSON.stringify(payload, null, 2));
 }
 
+function logWebAppLinking(event: string, payload: Record<string, unknown>): void {
+  if (typeof console?.log !== "function") return;
+  try {
+    console.log(`[WEBAPP_LINKING] ${event}`, JSON.stringify(payload));
+  } catch {
+    console.log(`[WEBAPP_LINKING] ${event}`, payload);
+  }
+}
+
 function classifyWebViewError(
   code?: number,
   description?: string,
@@ -491,7 +500,11 @@ export default function WebAppScreen() {
         // dondebailarmx://evento/:id -> canonical web /social/fecha/:id
         if (host === "evento" && path) {
           const id = path.split("/")[0];
-          if (id) return `${WEB_APP_URL}/social/fecha/${id}${qs}${hash}`;
+          if (id) {
+            const mappedUrl = `${WEB_APP_URL}/social/fecha/${id}${qs}${hash}`;
+            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
+            return mappedUrl;
+          }
         }
         // dondebailarmx://clase/:type/:id -> canonical web /clase/:type/:id
         if (host === "clase" && path) {
@@ -499,39 +512,75 @@ export default function WebAppScreen() {
           if (parts.length >= 2) {
             const [type, id] = parts;
             if ((type === "teacher" || type === "academy") && id) {
-              return `${WEB_APP_URL}/clase/${type}/${id}${qs}${hash}`;
+              const mappedUrl = `${WEB_APP_URL}/clase/${type}/${id}${qs}${hash}`;
+              logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
+              return mappedUrl;
             }
           }
+          logWebAppLinking("map_rejected", {
+            incomingUrl,
+            host,
+            path,
+            reason: "invalid_clase_path",
+          });
           return null;
         }
         // Perfiles -> canonical web paths
         if (host === "academia" && path) {
           const id = path.split("/")[0];
-          if (id) return `${WEB_APP_URL}/academia/${id}${qs}${hash}`;
+          if (id) {
+            const mappedUrl = `${WEB_APP_URL}/academia/${id}${qs}${hash}`;
+            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
+            return mappedUrl;
+          }
         }
         if (host === "maestro" && path) {
           const id = path.split("/")[0];
-          if (id) return `${WEB_APP_URL}/maestro/${id}${qs}${hash}`;
+          if (id) {
+            const mappedUrl = `${WEB_APP_URL}/maestro/${id}${qs}${hash}`;
+            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
+            return mappedUrl;
+          }
         }
         if (host === "organizer" && path) {
           const id = path.split("/")[0];
-          if (id) return `${WEB_APP_URL}/organizer/${id}${qs}${hash}`;
+          if (id) {
+            const mappedUrl = `${WEB_APP_URL}/organizer/${id}${qs}${hash}`;
+            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
+            return mappedUrl;
+          }
         }
         if (host === "u" && path) {
           const id = path.split("/")[0];
-          if (id) return `${WEB_APP_URL}/u/${id}${qs}${hash}`;
+          if (id) {
+            const mappedUrl = `${WEB_APP_URL}/u/${id}${qs}${hash}`;
+            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
+            return mappedUrl;
+          }
         }
         if (host === "marca" && path) {
           const id = path.split("/")[0];
-          if (id) return `${WEB_APP_URL}/marca/${id}${qs}${hash}`;
+          if (id) {
+            const mappedUrl = `${WEB_APP_URL}/marca/${id}${qs}${hash}`;
+            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
+            return mappedUrl;
+          }
         }
 
         // Auth callback (e.g. dondebailarmx://auth/callback?code=...)
         if (host === "auth") {
           const hostSlash = u.host ? `/${u.host}` : "";
           const mappedPath = `${hostSlash}${u.pathname || ""}` || "/auth/callback";
-          return `${WEB_APP_URL}${mappedPath}${qs}${hash}`;
+          const mappedUrl = `${WEB_APP_URL}${mappedPath}${qs}${hash}`;
+          logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
+          return mappedUrl;
         }
+        logWebAppLinking("map_rejected", {
+          incomingUrl,
+          host,
+          path,
+          reason: "unsupported_custom_scheme_host",
+        });
         return null;
       }
 
@@ -540,18 +589,33 @@ export default function WebAppScreen() {
         incomingUrl.startsWith("https://dondebailar.com.mx") ||
         incomingUrl.startsWith("https://www.dondebailar.com.mx")
       ) {
+        logWebAppLinking("map_success", {
+          incomingUrl,
+          host: "https",
+          path: incomingUrl,
+          mappedUrl: incomingUrl,
+        });
         return incomingUrl;
       }
 
+      logWebAppLinking("map_rejected", {
+        incomingUrl,
+        reason: "unsupported_url",
+      });
       return null;
     } catch (e) {
       console.warn("[WebAppScreen] Failed to map incoming URL:", incomingUrl, e);
+      logWebAppLinking("map_error", {
+        incomingUrl,
+        error: e instanceof Error ? e.message : String(e),
+      });
       return null;
     }
   }, []);
 
   const navigateWebView = React.useCallback(
     (targetUrl: string) => {
+      logWebAppLinking("navigate_webview", { targetUrl });
       // Prefer request URL change through WebView ref when possible.
       // Fallback is to inject JS, which works even when ref APIs differ by platform.
       try {
@@ -573,8 +637,15 @@ export default function WebAppScreen() {
 
   const handleIncomingUrl = React.useCallback(
     (incomingUrl: string) => {
+      logWebAppLinking("incoming_url", { incomingUrl });
       const webUrl = mapIncomingUrlToWebUrl(incomingUrl);
-      if (!webUrl) return;
+      if (!webUrl) {
+        logWebAppLinking("incoming_url_ignored", {
+          incomingUrl,
+          reason: "map_returned_null",
+        });
+        return;
+      }
       console.log("[WebAppScreen] Handling deep link -> WebView:", webUrl);
       navigateWebView(webUrl);
     },
@@ -685,11 +756,17 @@ export default function WebAppScreen() {
     // Handle cold start URL
     Linking.getInitialURL()
       .then((url) => {
+        logWebAppLinking("initial_url", { url: url ?? null });
         if (url) handleIncomingUrl(url);
       })
-      .catch(() => {});
+      .catch((error) => {
+        logWebAppLinking("initial_url_error", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
 
     const sub = Linking.addEventListener("url", (event) => {
+      logWebAppLinking("url_event", { url: event?.url ?? null });
       if (event?.url) handleIncomingUrl(event.url);
     });
 
@@ -1642,6 +1719,7 @@ export default function WebAppScreen() {
 
             // Intercept auth deep links so they don't kick user to browser
             if (url.startsWith("dondebailarmx://")) {
+              logWebAppLinking("webview_custom_scheme_intercept", { url });
               handleIncomingUrl(url);
               // Navigation cancelled: make sure we don't leave native loader stuck.
               clearLoadWatchdog();

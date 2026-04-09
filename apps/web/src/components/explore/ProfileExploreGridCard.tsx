@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
@@ -121,7 +120,6 @@ function ritmoLabels(item: any, allTags: any[] | undefined): string[] {
  * Misma estructura y clases CSS que `ClassExploreGridCard` / `EventSocialGridCard` (carrusel Explore).
  */
 function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExploreGridCardProps) {
-  const { t } = useTranslation();
   const { data: allTags } = useTags() as any;
   const href = React.useMemo(() => profileHref(variant, item), [variant, item]);
 
@@ -165,15 +163,6 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
           ? `${bioSnippet}${bioRaw.length > 72 ? "…" : ""}`
           : ""
         : "";
-
-  const accentLine =
-    variant === "academy"
-      ? t("explore_grid_badge_academy")
-      : variant === "teacher"
-        ? t("explore_grid_badge_teacher")
-        : variant === "dancer"
-          ? t("explore_grid_badge_dancer")
-          : t("explore_grid_badge_organizer");
 
   return (
     <LiveLink to={href} asCard={false}>
@@ -220,9 +209,6 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
               {secondaryLine}
             </div>
           ) : null}
-          <div className="event-social-grid-card__badge" aria-label={accentLine}>
-            <span>{accentLine.length > 28 ? `${accentLine.slice(0, 28)}…` : accentLine}</span>
-          </div>
         </div>
       </motion.article>
     </LiveLink>

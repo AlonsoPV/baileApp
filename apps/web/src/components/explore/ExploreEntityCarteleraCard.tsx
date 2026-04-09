@@ -251,11 +251,6 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
         ? bioSnippet
         : "";
 
-  const badgeText =
-    variant === "clase"
-      ? ritmoNames[0] || t("explore_cartelera_class_badge")
-      : t("explore_cartelera_profile_badge");
-
   const [imageError, setImageError] = React.useState(false);
   React.useEffect(() => setImageError(false), [rawImg, cacheKey]);
   const showPlaceholder = !rawImg || imageError;
@@ -318,12 +313,6 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
                 ) : null}
               </>
             )}
-            <div className="event-cartelera-card__footer">
-              <span style={{ flex: 1 }} />
-              <div className="event-cartelera-card__badge" aria-hidden>
-                <span>{badgeText.length > 22 ? `${badgeText.slice(0, 22)}…` : badgeText}</span>
-              </div>
-            </div>
           </div>
         </div>
       </motion.article>

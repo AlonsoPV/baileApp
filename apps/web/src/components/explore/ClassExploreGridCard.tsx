@@ -2,8 +2,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import LiveLink from "../LiveLink";
-import { useTags } from "@/hooks/useTags";
-import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useFmtDate } from "@/hooks/useFmtDate";
 import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
@@ -72,7 +70,6 @@ function formatHHMM(t?: string) {
 function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardProps) {
   const fmtDateLocalized = useFmtDate();
   const { t } = useTranslation();
-  const { data: allTags } = useTags() as any;
   const href = React.useMemo(() => buildClaseHref(item), [item]);
 
   const bg = toDirectPublicStorageUrl(item.ownerCoverUrl as any) ?? undefined;
@@ -163,26 +160,6 @@ function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardPr
     return ubicacion;
   }, [item.ubicacion]);
 
-  const ritmoNames = React.useMemo(() => {
-    try {
-      const labelByCatalogId = new Map<string, string>();
-      RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
-      const catalogIds = (item.ritmosSeleccionados || []) as string[];
-      if (catalogIds.length > 0) return catalogIds.map((id) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
-      const nums = (item.ritmos || []) as number[];
-      if (Array.isArray(allTags) && nums.length > 0) {
-        return nums
-          .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === "ritmo"))
-          .filter(Boolean)
-          .map((tag: any) => tag.nombre as string);
-      }
-    } catch {
-      /* ignore */
-    }
-    return [] as string[];
-  }, [item, allTags]);
-
-  const badgeLine = ritmoNames[0] || t("explore_cartelera_class_badge", "Clase");
   const secondaryLine = lugarNombre || "";
 
   return (
@@ -227,9 +204,6 @@ function ClassExploreGridCard({ item, priority = false }: ClassExploreGridCardPr
               {secondaryLine}
             </div>
           ) : null}
-          <div className="event-social-grid-card__badge" aria-label={badgeLine}>
-            <span>{badgeLine.length > 28 ? `${badgeLine.slice(0, 28)}…` : badgeLine}</span>
-          </div>
         </div>
       </motion.article>
     </LiveLink>
