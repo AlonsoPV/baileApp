@@ -2,6 +2,7 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthProvider";
+import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 
 type EntityType = "event" | "class";
 type ClassSourceType = "teacher" | "academy";
@@ -44,6 +45,21 @@ type VisibleFavoriteRow = {
   detail_route: string;
   created_at: string;
 };
+
+/** Misma prioridad que AcademyCard: p1/cover en media → avatar → portada → primera imagen. */
+function pickAcademyListImage(row: {
+  avatar_url?: string | null;
+  portada_url?: string | null;
+  media?: unknown;
+}): string | undefined {
+  const mediaList = normalizeMediaArray(row?.media);
+  const fromSlot =
+    getMediaBySlot(mediaList, "p1")?.url || getMediaBySlot(mediaList, "cover")?.url || undefined;
+  const first = mediaList[0]?.url;
+  const a = typeof row.avatar_url === "string" ? row.avatar_url.trim() : "";
+  const p = typeof row.portada_url === "string" ? row.portada_url.trim() : "";
+  return fromSlot || a || p || first || undefined;
+}
 
 function getTodayCDMX(): string {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -127,6 +143,32 @@ export function useUserFavorites() {
           coverUrl: row.image_url || undefined,
         };
       });
+
+      const academyIds = Array.from(
+        new Set(
+          classesResolved
+            .filter((c) => c.sourceType === "academy" && Number.isFinite(c.sourceId) && c.sourceId > 0)
+            .map((c) => c.sourceId),
+        ),
+      );
+      if (academyIds.length > 0) {
+        const { data: academyRows, error: academyErr } = await supabase
+          .from("profiles_academy")
+          .select("id, avatar_url, portada_url, media")
+          .in("id", academyIds as any);
+        if (!academyErr && Array.isArray(academyRows)) {
+          const byId = new Map<number, (typeof academyRows)[0]>(
+            academyRows.map((r: any) => [Number(r.id), r]),
+          );
+          classesResolved = classesResolved.map((c) => {
+            if (c.sourceType !== "academy") return c;
+            const profile = byId.get(c.sourceId);
+            if (!profile) return c;
+            const best = pickAcademyListImage(profile);
+            return best ? { ...c, coverUrl: best } : c;
+          });
+        }
+      }
 
       return {
         rows: favRows,

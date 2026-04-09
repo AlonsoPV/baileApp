@@ -257,6 +257,18 @@ export default function ClassPublicScreen() {
     return s;
   }, [selectedClass]);
 
+  const handleBack = React.useCallback(() => {
+    if (fromParam === '/me/compras' || fromParam === '/me/rsvps') {
+      navigate(fromParam);
+      return;
+    }
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(routes.app.explore);
+    }
+  }, [navigate, fromParam]);
+
   if (!rawId || Number.isNaN(idNum)) {
     return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#fff' }}>{t('missing_id')}</div>;
   }
@@ -315,11 +327,65 @@ export default function ClassPublicScreen() {
     stripeAccountId: profile?.stripe_account_id,
   });
   
-  // Generar un ID único para la clase basado en el índice (similar a useLiveClasses)
-  // Si la clase tiene diasSemana, usar el primer día; si tiene fecha, usar 0
-  const classUniqueId = selectedClass 
-    ? (selectedClassIndex * 1000 + (selectedClass.diasSemana && Array.isArray(selectedClass.diasSemana) ? 0 : 0))
-    : undefined;
+  // ID estable de clase para asistencia/métricas:
+  // 1) usar id real del item de cronograma cuando exista;
+  // 2) fallback determinístico por parent+índice (evita desalineación entre flujos).
+  const classStableId = (() => {
+    const rawClassId = Number((selectedClass as any)?.id);
+    if (Number.isFinite(rawClassId) && rawClassId > 0) return rawClassId;
+    if (Number.isFinite(idNum) && idNum > 0) return idNum * 1000 + selectedClassIndex + 1;
+    return null;
+  })();
+
+  // Fecha exacta de sesión (YYYY-MM-DD) para registrar asistencia por sesión concreta.
+  const classSessionDateYmd = (() => {
+    const explicit = (selectedClass as any)?.fecha;
+    if (typeof explicit === 'string' && explicit.trim()) {
+      return explicit.includes('T') ? explicit.split('T')[0] : explicit;
+    }
+    const resolveDay = () => {
+      if (diaParam !== null) {
+        const d = Number(diaParam);
+        if (!Number.isNaN(d) && d >= 0 && d <= 6) return d;
+      }
+      if ((selectedClass as any)?.diaSemana != null && Number.isFinite(Number((selectedClass as any).diaSemana))) {
+        return Number((selectedClass as any).diaSemana);
+      }
+      if ((selectedClass as any)?.dia_semana != null && Number.isFinite(Number((selectedClass as any).dia_semana))) {
+        return Number((selectedClass as any).dia_semana);
+      }
+      if (Array.isArray((selectedClass as any)?.diasSemana) && (selectedClass as any).diasSemana.length > 0) {
+        const first = (selectedClass as any).diasSemana[0];
+        const dayMap: Record<string, number> = {
+          domingo: 0, dom: 0,
+          lunes: 1, lun: 1,
+          martes: 2, mar: 2,
+          miércoles: 3, miercoles: 3, mié: 3, mie: 3,
+          jueves: 4, jue: 4,
+          viernes: 5, vie: 5,
+          sábado: 6, sabado: 6, sáb: 6, sab: 6,
+        };
+        if (typeof first === 'number' && first >= 0 && first <= 6) return first;
+        if (typeof first === 'string') {
+          const mapped = dayMap[first.toLowerCase().trim()];
+          if (mapped !== undefined) return mapped;
+        }
+      }
+      return null;
+    };
+    const sessionDay = resolveDay();
+    if (sessionDay === null) return null;
+    const rawTime = String((selectedClass as any)?.inicio || (selectedClass as any)?.hora_inicio || '20:00');
+    const timeMatch = rawTime.match(/^(\d{1,2}):(\d{2})/);
+    const normalizedTime = timeMatch
+      ? `${String(Math.min(23, Math.max(0, Number(timeMatch[1])))).padStart(2, '0')}:${String(Math.min(59, Math.max(0, Number(timeMatch[2])))).padStart(2, '0')}`
+      : '20:00';
+    const nextDate = calculateNextDateWithTime(sessionDay, normalizedTime);
+    const y = nextDate.getFullYear();
+    const m = String(nextDate.getMonth() + 1).padStart(2, '0');
+    const d = String(nextDate.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  })();
   
   const cronogramaSelected = selectedClass ? [selectedClass] : [];
 
@@ -374,27 +440,37 @@ export default function ClassPublicScreen() {
     }
 
     try {
+      if (!classStableId) {
+        showToast(t('no_valid_class_reference', 'No se pudo identificar la sesión de clase'), 'error');
+        return;
+      }
+
+      const bookingPayload = {
+        user_id: user.id,
+        class_id: classStableId,
+        academy_id: !isTeacher ? profile?.id : null,
+        teacher_id: isTeacher ? profile?.id : null,
+        role_baile: (userProfile as any)?.rol_baile || null,
+        status: 'tentative',
+        fecha_especifica: classSessionDateYmd || null,
+      };
+
       const { data: booking, error: bookingError } = await supabase
         .from('clase_asistencias')
-        .insert({
-          user_id: user.id,
-          class_id: selectedClass?.id,
-          academy_id: !isTeacher ? profile?.id : null,
-          teacher_id: isTeacher ? profile?.id : null,
-          role_baile: (userProfile as any)?.rol_baile || null,
-          status: 'tentative',
-        })
+        .upsert(bookingPayload, { onConflict: 'user_id,class_id,fecha_especifica' })
         .select('id')
         .single();
 
       let bookingId: string | number;
       if (bookingError) {
-        const { data: existing } = await supabase
+        let existingQuery = supabase
           .from('clase_asistencias')
           .select('id')
           .eq('user_id', user.id)
-          .eq('class_id', selectedClass?.id)
-          .maybeSingle();
+          .eq('class_id', classStableId);
+        if (classSessionDateYmd) existingQuery = existingQuery.eq('fecha_especifica', classSessionDateYmd);
+        else existingQuery = existingQuery.is('fecha_especifica', null);
+        const { data: existing } = await existingQuery.maybeSingle();
 
         if (!existing) {
           throw bookingError;
@@ -721,17 +797,13 @@ export default function ClassPublicScreen() {
   const mapsQuery = encodeURIComponent(`${(ubicacion as any)?.nombre ?? ''} ${(ubicacion as any)?.direccion ?? ''} ${(ubicacion as any)?.ciudad ?? ''}`.trim());
   const mapsHref = mapsQuery ? `https://www.google.com/maps/search/?api=1&query=${mapsQuery}` : undefined;
 
-  const handleBack = React.useCallback(() => {
-    if (fromParam === '/me/compras' || fromParam === '/me/rsvps') {
-      navigate(fromParam);
-      return;
-    }
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate(routes.app.explore);
-    }
-  }, [navigate, fromParam]);
+  const dayNotSpecifiedText = t('day_not_specified');
+  const showClassInfoDateTime =
+    Boolean(String(timeLabel).trim()) ||
+    (Boolean(String(dayLabelLong).trim()) && dayLabelLong !== dayNotSpecifiedText);
+  const showClassInfoLocation = Boolean(String(locationDisplay).trim()) || Boolean(mapsHref);
+  const showClassInfoCost = costLabel != null && String(costLabel).trim() !== '';
+  const showClassInfoLevel = Boolean(nivelLabel && String(nivelLabel).trim());
 
   const handleShare = async () => {
     const title = `${classTitle} | ${creatorName}`;
@@ -1565,23 +1637,36 @@ export default function ClassPublicScreen() {
           </div>
         )}
 
-        {/* Grid de 4 cards (info) */}
+        {/* Grid de cards (info): solo las que tienen dato */}
+        {(showClassInfoDateTime ||
+          showClassInfoLocation ||
+          showClassInfoCost ||
+          showClassInfoLevel) && (
         <section className="class-info-grid" aria-label={t('info', 'Información')}>
+          {showClassInfoDateTime && (
           <div className="class-info-card">
             <div className="class-info-icon" aria-hidden><CalendarDays size={20} /></div>
             <div className="class-info-meta">
               <p className="class-info-label">{t('date_and_time', 'Fecha y hora')}</p>
               <p className="class-info-value">{dayLabelLong}</p>
-              {timeLabel && <p className="class-info-sub">{timeLabel}</p>}
+              {timeLabel ? <p className="class-info-sub">{timeLabel}</p> : null}
             </div>
             <span />
           </div>
+          )}
 
+          {showClassInfoLocation && (
           <div className="class-info-card">
             <div className="class-info-icon" aria-hidden><MapPin size={20} /></div>
             <div className="class-info-meta">
               <p className="class-info-label">{t('location', 'Ubicación')}</p>
-              <p className="class-info-value">{locationDisplay || t('place', 'Lugar')}</p>
+              <p className="class-info-value">
+                {locationDisplay.trim()
+                  ? locationDisplay
+                  : mapsHref
+                    ? t('view_on_maps', 'Abrir en mapa')
+                    : ''}
+              </p>
             </div>
             {mapsHref ? (
               <a
@@ -1598,27 +1683,31 @@ export default function ClassPublicScreen() {
               <span />
             )}
           </div>
+          )}
 
+          {showClassInfoCost && (
           <div className="class-info-card">
             <div className="class-info-icon" aria-hidden><DollarSign size={20} /></div>
             <div className="class-info-meta">
               <p className="class-info-label">{t('costs', 'Costo')}</p>
-              <p className="class-info-value">{costLabel || t('cost_not_specified', 'Costo no especificado')}</p>
+              <p className="class-info-value">{costLabel}</p>
             </div>
             <span />
           </div>
+          )}
 
+          {showClassInfoLevel && (
           <div className="class-info-card">
             <div className="class-info-icon" aria-hidden><Activity size={20} /></div>
             <div className="class-info-meta">
               <p className="class-info-label">{t('level', 'Nivel')}</p>
-              <p className="class-info-value">
-                {(nivelLabel ? nivelLabel : t('level', 'Nivel'))}
-              </p>
+              <p className="class-info-value">{nivelLabel}</p>
             </div>
             <span />
           </div>
+          )}
         </section>
+        )}
 
         {/* Descripción (si existe) */}
         {selectedClass?.descripcion && (
@@ -1746,8 +1835,8 @@ export default function ClassPublicScreen() {
             {selectedClass && (
               <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
                 <AddToCalendarWithStats
-                  eventId={classUniqueId || idNum}
-                  classId={classUniqueId || undefined}
+                  eventId={classStableId || idNum}
+                  classId={classStableId || undefined}
                   academyId={!isTeacher ? profile?.id : undefined}
                   teacherId={isTeacher ? profile?.id : undefined}
                   roleBaile={userProfile?.rol_baile || null}
@@ -1755,7 +1844,7 @@ export default function ClassPublicScreen() {
                   title={classTitle}
                   description={`Clase de ${classTitle} con ${creatorName}`}
                   location={locationLabel}
-                  fecha={selectedClass?.fecha || null}
+                  fecha={classSessionDateYmd}
                   diaSemana={(() => {
                     if (diaParam !== null) {
                       const diaNum = Number(diaParam);
@@ -1763,28 +1852,7 @@ export default function ClassPublicScreen() {
                     }
                     return selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null;
                   })()}
-                  diasSemana={(() => {
-                    if (diaParam !== null) {
-                      const diaNum = Number(diaParam);
-                      if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return null;
-                    }
-                    if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana)) {
-                      const dayMap: Record<string, number> = {
-                        domingo: 0, dom: 0,
-                        lunes: 1, lun: 1,
-                        martes: 2, mar: 2,
-                        miércoles: 3, miercoles: 3, mié: 3, mie: 3,
-                        jueves: 4, jue: 4,
-                        viernes: 5, vie: 5,
-                        sábado: 6, sabado: 6, sáb: 6, sab: 6,
-                      };
-                      const dias = selectedClass.diasSemana
-                        .map((d: string) => dayMap[String(d).toLowerCase().trim()])
-                        .filter((d: number | undefined) => d !== undefined) as number[];
-                      return dias.length > 0 ? dias : null;
-                    }
-                    return null;
-                  })()}
+                  diasSemana={null}
                   start={(() => {
                     try {
                       const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {

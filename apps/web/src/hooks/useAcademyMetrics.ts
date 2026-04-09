@@ -11,11 +11,31 @@ export interface MetricsFilters {
   dateFilter: DateFilter;
 }
 
+/** Fila de zona desde rpc_get_academy_global_metrics */
+export interface AcademyZoneMetricRow {
+  zoneId: number;
+  zoneName: string;
+  attendanceCount: number;
+  uniqueStudents: number;
+}
+
 export interface GlobalMetrics {
+  /** Registros tentative en el período (volumen; el mismo usuario puede repetirse). */
   totalTentative: number;
+  /** Alias explícito para dashboard; coincide con totalTentative cuando viene de RPC. */
+  totalAttendanceRecords: number;
+  /** Usuarios distintos con al menos una reserva tentative en el período. */
+  uniqueStudents: number;
+  /** Ítems en profiles_academy.cronograma (inventario; no depende del filtro de fechas). */
+  totalClassesRegistered: number;
+  /** Sesiones distintas (class_id + fecha_especifica) con ≥1 reserva en el período. */
+  sessionsWithReservations: number;
   byRole: Record<string, number>; // 'leader', 'follower', 'ambos', 'otro'
-  byZone: Record<string, number>; // key = zone chip/nombre
-  totalPurchases: number; // número de compras (status = 'pagado')
+  byZone: Record<string, number>; // key = zone name → attendance count (período)
+  zoneRows: AcademyZoneMetricRow[];
+  totalPurchases: number; // compras (status = 'pagado'), hoy sin filtro de período en el hook
+  /** true si rpc_get_academy_global_metrics respondió OK */
+  globalRpcLoaded: boolean;
 }
 
 export interface ClassReservationMetric {
@@ -31,9 +51,11 @@ export interface ClassReservationMetric {
 }
 
 export interface ClassSummary {
+  sessionKey: string;
   classId: number;
   className: string;
   classDate: string | null;
+  timeLabel: string | null;
   diaSemana: number | null; // 0=Domingo, 1=Lunes, ..., 6=Sábado
   diaSemanaNombre: string | null; // 'lunes', 'martes', etc.
   totalAsistentes: number;
@@ -94,7 +116,35 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       console.log("[useAcademyMetrics] 🔍 Consultando métricas para academyId:", academyIdNum, "filtros:", filters);
       
       const dateRange = getDateRange(filters.dateFilter, filters.from, filters.to);
-      
+
+      type RpcGlobalRow = {
+        total_classes_registered?: number;
+        unique_students?: number;
+        total_attendance_records?: number;
+        sessions_with_reservations?: number;
+        role_breakdown?: { lead?: number; follow?: number; ambos?: number; other?: number };
+        zone_breakdown?: Array<{
+          zone_id?: number;
+          zone_name?: string;
+          attendance_count?: number;
+          unique_students?: number;
+        }>;
+      };
+
+      const { data: rpcGlobalRaw, error: rpcGlobalErr } = await supabase.rpc(
+        "rpc_get_academy_global_metrics",
+        {
+          p_academy_id: academyIdNum!,
+          p_from: dateRange.from ?? null,
+          p_to: dateRange.to ?? null,
+        },
+      );
+
+      const rpcGlobal =
+        !rpcGlobalErr && rpcGlobalRaw && typeof rpcGlobalRaw === "object"
+          ? (rpcGlobalRaw as RpcGlobalRow)
+          : null;
+
       // Usar función RPC para bypassar RLS y obtener todas las reservas de la academia
       // Esta función verifica que el usuario sea dueño de la academia
       console.log("[useAcademyMetrics] 🔧 Llamando a función RPC get_academy_class_reservations con academyId:", academyIdNum);
@@ -195,6 +245,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       const classInfoMap = new Map<number, { 
         nombre: string; 
         fecha: string | null;
+        horaInicio: string | null;
         diaSemana: number | null;
         diaSemanaNombre: string | null;
       }>();
@@ -214,6 +265,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           academyData.cronograma.forEach((clase: any, index: number) => {
             const claseId = clase.id ? Number(clase.id) : null;
             const nombreClase = clase.titulo || clase.nombre || null;
+            const horaInicio = typeof (clase?.inicio || clase?.hora_inicio) === 'string'
+              ? String(clase.inicio || clase.hora_inicio)
+              : null;
             
             // Obtener día de la semana
             let diaSemana: number | null = null;
@@ -243,6 +297,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
               classInfoMap.set(claseId, {
                 nombre: nombreClase || `Clase #${claseId}`,
                 fecha: clase.fecha || null,
+                horaInicio,
                 diaSemana,
                 diaSemanaNombre
               });
@@ -255,6 +310,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
                   classInfoMap.set(id, {
                     nombre: nombreClase || `Clase #${id}`,
                     fecha: clase.fecha || null,
+                    horaInicio,
                     diaSemana,
                     diaSemanaNombre
                   });
@@ -269,6 +325,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
                   classInfoMap.set(id, {
                     nombre: nombreClase || `Clase #${id}`,
                     fecha: clase.fecha || null,
+                    horaInicio,
                     diaSemana,
                     diaSemanaNombre
                   });
@@ -290,6 +347,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
               classInfoMap.set(id, {
                 nombre: primeraClase.titulo || primeraClase.nombre || `Clase #${id}`,
                 fecha: primeraClase.fecha || null,
+                horaInicio: typeof (primeraClase?.inicio || primeraClase?.hora_inicio) === 'string'
+                  ? String(primeraClase.inicio || primeraClase.hora_inicio)
+                  : null,
                 diaSemana,
                 diaSemanaNombre
               });
@@ -310,6 +370,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
               classInfoMap.set(event.id, {
                 nombre: event.titulo || event.nombre || `Clase #${event.id}`,
                 fecha: null,
+                horaInicio: null,
                 diaSemana: null,
                 diaSemanaNombre: null
               });
@@ -323,6 +384,7 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             classInfoMap.set(id, {
               nombre: `Clase #${id}`,
               fecha: null,
+              horaInicio: null,
               diaSemana: null,
               diaSemanaNombre: null
             });
@@ -379,13 +441,44 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         }
       }
       
-      // Procesar datos
+      // Procesar datos — KPIs globales preferentemente desde rpc_get_academy_global_metrics
       const global: GlobalMetrics = {
         totalTentative: 0,
+        totalAttendanceRecords: 0,
+        uniqueStudents: 0,
+        totalClassesRegistered: 0,
+        sessionsWithReservations: 0,
         byRole: { leader: 0, follower: 0, ambos: 0, otro: 0 },
         byZone: {},
+        zoneRows: [],
         totalPurchases: 0,
+        globalRpcLoaded: false,
       };
+
+      if (rpcGlobal) {
+        global.globalRpcLoaded = true;
+        global.totalClassesRegistered = Number(rpcGlobal.total_classes_registered) || 0;
+        global.uniqueStudents = Number(rpcGlobal.unique_students) || 0;
+        global.totalAttendanceRecords = Number(rpcGlobal.total_attendance_records) || 0;
+        global.totalTentative = global.totalAttendanceRecords;
+        global.sessionsWithReservations = Number(rpcGlobal.sessions_with_reservations) || 0;
+        const rb = rpcGlobal.role_breakdown || {};
+        global.byRole.leader = Number(rb.lead) || 0;
+        global.byRole.follower = Number(rb.follow) || 0;
+        global.byRole.ambos = Number(rb.ambos) || 0;
+        global.byRole.otro = Number(rb.other) || 0;
+        const zlist = Array.isArray(rpcGlobal.zone_breakdown) ? rpcGlobal.zone_breakdown : [];
+        global.zoneRows = zlist.map((z) => ({
+          zoneId: Number(z.zone_id),
+          zoneName: String(z.zone_name ?? ""),
+          attendanceCount: Number(z.attendance_count) || 0,
+          uniqueStudents: Number(z.unique_students) || 0,
+        }));
+        zlist.forEach((z) => {
+          const name = String(z.zone_name ?? "").trim();
+          if (name) global.byZone[name] = Number(z.attendance_count) || 0;
+        });
+      }
       
       const perClass: ClassReservationMetric[] = [];
       
@@ -398,14 +491,15 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         else if (role === 'ambos') normalizedRole = 'ambos';
         else normalizedRole = 'otro';
         
-        // Actualizar métricas globales
-        global.totalTentative += 1;
-        global.byRole[normalizedRole] = (global.byRole[normalizedRole] || 0) + 1;
-        
-        // Por zona
-        if (row.zona_tag_id && zonaInfoMap.has(row.zona_tag_id)) {
-          const zonaNombre = zonaInfoMap.get(row.zona_tag_id)!;
-          global.byZone[zonaNombre] = (global.byZone[zonaNombre] || 0) + 1;
+        // Actualizar métricas globales (solo si no vinieron de rpc_get_academy_global_metrics)
+        if (!global.globalRpcLoaded) {
+          global.totalTentative += 1;
+          global.totalAttendanceRecords = global.totalTentative;
+          global.byRole[normalizedRole] = (global.byRole[normalizedRole] || 0) + 1;
+          if (row.zona_tag_id && zonaInfoMap.has(row.zona_tag_id)) {
+            const zonaNombre = zonaInfoMap.get(row.zona_tag_id)!;
+            global.byZone[zonaNombre] = (global.byZone[zonaNombre] || 0) + 1;
+          }
         }
         
         // Información de la clase - asegurar que siempre tenga un nombre
@@ -415,12 +509,16 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           classInfoMap.set(row.class_id, {
             nombre: `Clase #${row.class_id}`,
             fecha: null,
+            horaInicio: null,
             diaSemana: null,
             diaSemanaNombre: null
           });
         }
         const finalClassInfo = classInfoMap.get(row.class_id)!;
-        const classDate = row.fecha_especifica || finalClassInfo.fecha || null;
+        const classDateRaw = row.fecha_especifica || finalClassInfo.fecha || null;
+        const classDate = typeof classDateRaw === 'string' && classDateRaw.includes('T')
+          ? classDateRaw.split('T')[0]
+          : classDateRaw;
         
         // Si hay fecha_especifica, determinar el día de la semana
         let diaSemana: number | null = finalClassInfo.diaSemana;
@@ -460,12 +558,32 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           createdAt: row.created_at
         });
       });
+
+      if (!global.globalRpcLoaded) {
+        const rows = data || [];
+        const userSet = new Set<string>();
+        const sessionSet = new Set<string>();
+        rows.forEach((row: any) => {
+          if (row.user_id) userSet.add(String(row.user_id));
+          sessionSet.add(`${row.class_id}|${row.fecha_especifica ?? "null"}`);
+        });
+        global.uniqueStudents = userSet.size;
+        global.totalAttendanceRecords = rows.length;
+        global.totalTentative = rows.length;
+        global.sessionsWithReservations = sessionSet.size;
+        const { data: paCron } = await supabase
+          .from("profiles_academy")
+          .select("cronograma")
+          .eq("id", academyIdNum!)
+          .maybeSingle();
+        const cr = paCron?.cronograma;
+        global.totalClassesRegistered = Array.isArray(cr) ? cr.length : 0;
+      }
       
       // Ordenar perClass por fecha de creación (más recientes primero)
       perClass.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-      // Agrupar por clase + día de la semana
-      // Usar una clave compuesta: classId-diaSemana para separar clases del mismo nombre en diferentes días
+      // Agrupar por sesión exacta: class_id + fecha_especifica (+ fallback por día/hora)
       const byClassMap = new Map<string, ClassSummary>();
       
       perClass.forEach((reservation) => {
@@ -488,8 +606,12 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           }
         }
         
-        // Crear clave única: classId-diaSemana (o solo classId si no hay día)
-        const key = diaSemana !== null ? `${reservation.classId}-${diaSemana}` : String(reservation.classId);
+        const timeLabel = classInfo.horaInicio ? String(classInfo.horaInicio) : null;
+        const sessionDateKey = reservation.classDate && String(reservation.classDate).trim()
+          ? String(reservation.classDate).trim()
+          : 'sin-fecha';
+        // Fallback legacy para filas antiguas sin fecha específica: separar por día/hora.
+        const key = `${reservation.classId}|${sessionDateKey}|${diaSemana ?? 'na'}|${timeLabel ?? 'na'}`;
         
         const existing = byClassMap.get(key);
         
@@ -517,10 +639,14 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           }
           existing.reservationsByDate.get(fechaKey)!.push(reservation);
         } else {
-          // Crear nombre de clase con día de la semana
+          // Crear nombre de sesión con día/hora para que la UI refleje sesión exacta.
           let classNameWithDay = reservation.className;
-          if (diaSemanaNombre) {
-            classNameWithDay = `${reservation.className} - ${diaSemanaNombre.charAt(0).toUpperCase() + diaSemanaNombre.slice(1)}`;
+          if (diaSemanaNombre || timeLabel) {
+            const dayPart = diaSemanaNombre
+              ? diaSemanaNombre.charAt(0).toUpperCase() + diaSemanaNombre.slice(1)
+              : '';
+            const parts = [dayPart, timeLabel].filter(Boolean);
+            if (parts.length) classNameWithDay = `${reservation.className} - ${parts.join(' ')}`;
           }
           
           const reservationsByDate = new Map<string, ClassReservationMetric[]>();
@@ -528,9 +654,11 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           reservationsByDate.set(fechaKey, [reservation]);
           
           byClassMap.set(key, {
+            sessionKey: key,
             classId: reservation.classId,
             className: classNameWithDay,
             classDate: reservation.classDate,
+            timeLabel,
             diaSemana,
             diaSemanaNombre,
             totalAsistentes: 1,
@@ -551,24 +679,35 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       try {
         const { data: purchaseRows, error: purchaseError } = await supabase
           .from("clase_asistencias")
-          .select("class_id, created_at")
+          .select("class_id, fecha_especifica, created_at")
           .eq("academy_id", academyIdNum!)
           .eq("status", "pagado");
 
         if (purchaseError) {
           console.error("[useAcademyMetrics] ❌ Error obteniendo compras (clase_asistencias):", purchaseError);
         } else {
-          const purchasesByClassId = new Map<number, number>();
+          const purchasesBySessionKey = new Map<string, number>();
           (purchaseRows || []).forEach((row: any) => {
             const classId = row.class_id as number;
             if (!classId) return;
             global.totalPurchases += 1;
-            purchasesByClassId.set(classId, (purchasesByClassId.get(classId) || 0) + 1);
+            const fechaKey = row.fecha_especifica ? String(row.fecha_especifica) : 'sin-fecha';
+            const sessionPrefix = `${classId}|${fechaKey}|`;
+            // Sumamos por prefix para cubrir claves legacy con día/hora en memoria.
+            purchasesBySessionKey.set(sessionPrefix, (purchasesBySessionKey.get(sessionPrefix) || 0) + 1);
           });
 
           // Asignar compras a cada resumen de clase
           byClassMap.forEach((summary) => {
-            const count = purchasesByClassId.get(summary.classId) || 0;
+            const fechaKey = summary.classDate ? String(summary.classDate) : 'sin-fecha';
+            const prefix = `${summary.classId}|${fechaKey}|`;
+            let count = purchasesBySessionKey.get(prefix) || 0;
+            if (!count && fechaKey === 'sin-fecha') {
+              // Fallback para datos viejos sin fecha_especifica.
+              count = Array.from(purchasesBySessionKey.entries())
+                .filter(([k]) => k.startsWith(`${summary.classId}|`))
+                .reduce((acc, [, n]) => acc + n, 0);
+            }
             summary.totalPurchases = count;
           });
         }
@@ -620,6 +759,45 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         }
       });
       
+      // Optimización Stage 1: enriquecer/normalizar desde RPC por sesión exacta.
+      try {
+        const { data: sessionRows, error: sessionErr } = await supabase.rpc("rpc_get_academy_class_metrics", {
+          p_academy_id: academyIdNum!,
+          p_from: dateRange.from ?? null,
+          p_to: dateRange.to ?? null,
+        });
+        if (!sessionErr && Array.isArray(sessionRows)) {
+          const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+          const sessionMap = new Map<string, any>();
+          sessionRows.forEach((row: any) => {
+            const dateKey = row.class_session_date ? String(row.class_session_date) : 'sin-fecha';
+            sessionMap.set(`${row.class_id}|${dateKey}`, row);
+          });
+
+          byClassMap.forEach((summary) => {
+            const dateKey = summary.classDate ? String(summary.classDate) : 'sin-fecha';
+            const rpcRow = sessionMap.get(`${summary.classId}|${dateKey}`);
+            if (!rpcRow) return;
+            const dayPart = rpcRow.dia_label ? capitalize(String(rpcRow.dia_label)) : null;
+            const timePart = rpcRow.hora_inicio ? String(rpcRow.hora_inicio) : null;
+            const nameParts = [dayPart, timePart].filter(Boolean);
+            summary.className = nameParts.length
+              ? `${String(rpcRow.class_name || summary.className)} - ${nameParts.join(' ')}`
+              : String(rpcRow.class_name || summary.className);
+            summary.timeLabel = timePart || summary.timeLabel || null;
+            summary.totalAsistentes = Number(rpcRow.total_alumnos) || summary.totalAsistentes;
+            summary.byRole = {
+              leader: Number(rpcRow.leader_count) || 0,
+              follower: Number(rpcRow.follower_count) || 0,
+              ambos: Number(rpcRow.ambos_count) || 0,
+              otro: Number(rpcRow.otros_count) || 0,
+            };
+          });
+        }
+      } catch (rpcSessionError) {
+        console.warn("[useAcademyMetrics] rpc_get_academy_class_metrics unavailable:", rpcSessionError);
+      }
+
       // Convertir a array y ordenar por total de asistentes (mayor primero)
       const byClass = Array.from(byClassMap.values()).sort((a, b) => b.totalAsistentes - a.totalAsistentes);
       

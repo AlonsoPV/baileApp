@@ -58,6 +58,9 @@ export type CrearClaseValue = {
   tipo?: 'clases sueltas' | 'paquetes' | 'coreografia' | 'entrenamiento' | 'otro' | 'personalizado';
   precio?: number | null;
   regla?: string;
+  /** Niveles elegidos en el formulario (solo etiquetas del catálogo). */
+  niveles?: string[];
+  /** Valor persistido / legado: uno o varios niveles unidos con " · ". */
   nivel?: string | null;
   descripcion?: string;
   fechaModo?: 'especifica' | 'semanal' | 'por_agendar';
@@ -227,6 +230,47 @@ const niveles = [
   'Avanzado'
 ] as const;
 
+type NivelChip = (typeof niveles)[number];
+
+const NIVEL_CODES: Record<string, NivelChip> = {
+  '0': 'Todos los niveles',
+  '1': 'Principiante',
+  '2': 'Intermedio',
+  '3': 'Avanzado',
+};
+
+const nivelesSet = new Set<string>(niveles);
+
+function nivelesToNivelString(arr: string[] | undefined | null): string | null {
+  if (!arr || arr.length === 0) return null;
+  return arr.join(' · ');
+}
+
+/** Interpreta nivel guardado o array explícito hacia chips seleccionables. */
+function parseNivelesFromStored(
+  nivel: string | number | null | undefined,
+  nivelesArr: string[] | undefined | null
+): string[] {
+  if (nivelesArr && nivelesArr.length) {
+    return nivelesArr.filter((x) => nivelesSet.has(x));
+  }
+  if (nivel === null || nivel === undefined) return [];
+  const raw = String(nivel).trim();
+  if (!raw) return [];
+  if (NIVEL_CODES[raw]) return [NIVEL_CODES[raw]];
+  const parts = raw.split(/\s*·\s*|\s*,\s*|\s*\/\s*/).map((p) => p.trim()).filter(Boolean);
+  const out: string[] = [];
+  for (const part of parts) {
+    if (nivelesSet.has(part)) {
+      out.push(part);
+      continue;
+    }
+    const byLower = niveles.find((n) => n.toLowerCase() === part.toLowerCase());
+    if (byLower) out.push(byLower);
+  }
+  return [...new Set(out)];
+}
+
 export default function CrearClase({
   value,
   editIndex,
@@ -258,7 +302,7 @@ export default function CrearClase({
     tipo: value?.tipo || 'clases sueltas',
     precio: value?.precio ?? null,
     regla: value?.regla || '',
-    nivel: value?.nivel ?? null,
+    niveles: parseNivelesFromStored(value?.nivel, value?.niveles),
     descripcion: value?.descripcion || '',
     fechaModo: enableDate ? (value?.fechaModo || 'especifica') : undefined,
     fecha: enableDate ? (value?.fecha || '') : undefined,
@@ -296,7 +340,8 @@ export default function CrearClase({
       prevEffective.tipo !== effective?.tipo ||
       prevEffective.precio !== effective?.precio ||
       prevEffective.regla !== effective?.regla ||
-      prevEffective.nivel !== effective?.nivel ||
+      JSON.stringify(parseNivelesFromStored(prevEffective?.nivel, prevEffective?.niveles)) !==
+        JSON.stringify(parseNivelesFromStored(effective?.nivel, effective?.niveles)) ||
       prevEffective.descripcion !== effective?.descripcion ||
       prevEffective.fechaModo !== effective?.fechaModo ||
       prevEffective.fecha !== effective?.fecha ||
@@ -321,7 +366,7 @@ export default function CrearClase({
         tipo: effective?.tipo || 'clases sueltas',
         precio: effective?.precio ?? null,
         regla: effective?.regla || '',
-        nivel: effective?.nivel ?? null,
+        niveles: parseNivelesFromStored(effective?.nivel, effective?.niveles),
         descripcion: effective?.descripcion || '',
         fechaModo: enableDate ? (effective?.fechaModo || 'especifica') : undefined,
         fecha: enableDate ? (effective?.fecha || '') : undefined,
@@ -403,7 +448,7 @@ export default function CrearClase({
   const updateForm = useCallback((updater: (prev: CrearClaseValue) => CrearClaseValue) => {
     setForm(prev => {
       const next = updater(prev);
-      onChange?.(next);
+      onChange?.({ ...next, nivel: nivelesToNivelString(next.niveles) });
       return next;
     });
   }, [onChange]);
@@ -420,7 +465,7 @@ export default function CrearClase({
           fin: undefined
         };
         // Usar ref para onChange para mantener array de dependencias estable
-        onChangeRef.current?.(updated);
+        onChangeRef.current?.({ ...updated, nivel: nivelesToNivelString(updated.niveles) });
         return updated;
       });
     }
@@ -428,6 +473,21 @@ export default function CrearClase({
 
   const setField = useCallback((k: keyof CrearClaseValue, v: any) => {
     updateForm(prev => ({ ...prev, [k]: v }));
+  }, [updateForm]);
+
+  const toggleNivelChip = useCallback((n: NivelChip) => {
+    updateForm(prev => {
+      const cur = prev.niveles ?? [];
+      const TODOS: NivelChip = 'Todos los niveles';
+      if (n === TODOS) {
+        const next = cur.includes(TODOS) ? [] : [TODOS];
+        return { ...prev, niveles: next };
+      }
+      let next = cur.filter((x) => x !== TODOS);
+      if (next.includes(n)) next = next.filter((x) => x !== n);
+      else next = [...next, n];
+      return { ...prev, niveles: next };
+    });
   }, [updateForm]);
 
   const toggleRitmoChip = useCallback((ritmoId: number) => {
@@ -702,7 +762,7 @@ export default function CrearClase({
       tipo: 'clases sueltas',
       precio: null,
       regla: '',
-      nivel: null,
+      niveles: [],
       descripcion: '',
       fechaModo: enableDate ? 'especifica' : undefined,
       fecha: enableDate ? '' : undefined,
@@ -722,7 +782,7 @@ export default function CrearClase({
       ubicacionId: null,
     };
     setForm(base);
-    onChange?.(base);
+    onChange?.({ ...base, nivel: null });
     setSelectedLocationId('');
   };
 
@@ -867,15 +927,16 @@ export default function CrearClase({
               </div>
             </div>
 
-            {/* NIVEL */}
+            {/* NIVELES (multi) */}
             <div style={sectionHeader}><span>🏷️</span><b>Nivel</b></div>
+            <div style={{ fontSize: 12, color: colors.mut, marginBottom: 8 }}>Puedes elegir más de uno</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {niveles.map(n => (
                 <button
                   type="button"
                   key={n}
-                  onClick={() => setField('nivel', n)}
-                  style={chip(form.nivel === n)}
+                  onClick={() => toggleNivelChip(n)}
+                  style={chip((form.niveles ?? []).includes(n))}
                 >
                   {n}
                 </button>
@@ -1316,10 +1377,14 @@ export default function CrearClase({
               if (submitState === 'saving') return;
               try {
                 setSubmitState('saving');
-                const submission = enableDate ? form : (() => {
+                const submissionBase = enableDate ? form : (() => {
                   const { fecha, fechaModo, diaSemana, ...rest } = form;
                   return rest as CrearClaseValue;
                 })();
+                const submission = {
+                  ...submissionBase,
+                  nivel: nivelesToNivelString(submissionBase.niveles),
+                };
                 await Promise.resolve(onSubmit?.(submission));
                 setSubmitState('success');
                 // Reiniciar siempre después de éxito (tanto crear como editar)

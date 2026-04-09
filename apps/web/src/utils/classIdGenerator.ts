@@ -1,4 +1,13 @@
 /**
+ * Clave estable para listas React del cronograma.
+ * Los IDs guardados como número en JSON pueden superar Number.MAX_SAFE_INTEGER;
+ * al parsear en JS se redondean y colisionan — no usar solo `id` como key.
+ */
+export function stableCronogramaListKey(index: number): string {
+  return `crono-${index}`;
+}
+
+/**
  * Genera un ID único para una clase en el cronograma.
  * Usa timestamp + número aleatorio para evitar colisiones.
  * 

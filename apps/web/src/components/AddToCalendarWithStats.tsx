@@ -77,14 +77,19 @@ export default function AddToCalendarWithStats({
         // Para clases: contar solo fechas futuras o NULL
         const nowCDMX = new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" });
         const todayCDMX = new Date(nowCDMX).toISOString().split('T')[0]; // YYYY-MM-DD
-        
-      const { count, error } = await supabase
+
+        let classCountQuery = supabase
           .from("clase_asistencias")
-        .select("*", { count: "exact", head: true })
+          .select("*", { count: "exact", head: true })
           .eq("class_id", classId)
-          .eq("status", "tentative")
-          .or(`fecha_especifica.is.null,fecha_especifica.gte.${todayCDMX}`);
-        
+          .eq("status", "tentative");
+        if (fecha) {
+          classCountQuery = classCountQuery.eq("fecha_especifica", fecha);
+        } else {
+          classCountQuery = classCountQuery.or(`fecha_especifica.is.null,fecha_especifica.gte.${todayCDMX}`);
+        }
+        const { count, error } = await classCountQuery;
+
       if (!error && typeof count === "number") {
         setCount(count);
         }
@@ -114,7 +119,7 @@ export default function AddToCalendarWithStats({
       }
     };
     loadCount();
-  }, [eventIdStr, isClass, classId]);
+  }, [eventIdStr, isClass, classId, fecha]);
 
   // Verificar si el usuario ya dio clic
   useEffect(() => {
@@ -132,6 +137,19 @@ export default function AddToCalendarWithStats({
   }, [user, eventIdStr]);
 
   const inNative = isNativeApp(routerLocation.search);
+
+  const invalidateRelatedMetrics = React.useCallback(() => {
+    if (academyId) {
+      qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
+      qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
+      qc.invalidateQueries({ queryKey: ["academy-metrics"] });
+      qc.refetchQueries({ queryKey: ["academy-metrics"] });
+    }
+    if (teacherId) {
+      qc.invalidateQueries({ queryKey: ["teacher-class-metrics", teacherId] });
+      qc.refetchQueries({ queryKey: ["teacher-class-metrics", teacherId] });
+    }
+  }, [academyId, teacherId, qc]);
 
   useEffect(() => {
     if (!inNative) return;
@@ -208,14 +226,7 @@ export default function AddToCalendarWithStats({
         await supabase.from("clase_asistencias").upsert(insertPayloads, {
           onConflict: "user_id,class_id,fecha_especifica",
         });
-        if (academyId) {
-          qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
-          qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
-        }
-        if (teacherId) {
-          qc.invalidateQueries({ queryKey: ["teacher-class-metrics", teacherId] });
-          qc.refetchQueries({ queryKey: ["teacher-class-metrics", teacherId] });
-        }
+        invalidateRelatedMetrics();
       }
       setAdded(true);
       setAlreadyAdded(true);
@@ -402,16 +413,7 @@ export default function AddToCalendarWithStats({
           }
 
           // Invalidar y refetch queries de métricas si hay academyId o teacherId
-          if (academyId) {
-            console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para academyId:", academyId);
-            qc.invalidateQueries({ queryKey: ["academy-class-metrics", academyId] });
-            qc.refetchQueries({ queryKey: ["academy-class-metrics", academyId] });
-          }
-          if (teacherId) {
-            console.log("[AddToCalendarWithStats] 🔄 Invalidando y refrescando queries para teacherId:", teacherId);
-            qc.invalidateQueries({ queryKey: ["teacher-class-metrics", teacherId] });
-            qc.refetchQueries({ queryKey: ["teacher-class-metrics", teacherId] });
-          }
+          invalidateRelatedMetrics();
         } catch (err) {
           console.error("[AddToCalendarWithStats] ❌ Error inesperado:", err);
         }

@@ -56,21 +56,22 @@ export default function ClassDatesSection({
     const past: ClassItem[] = [];
     const toAgendar: ClassItem[] = [];
 
-    classes.forEach((cls) => {
+    classes.forEach((cls, idx) => {
+      const tagged = { ...cls, _originalIndex: idx };
       if (cls.fechaModo === 'por_agendar') {
-        toAgendar.push(cls);
+        toAgendar.push(tagged);
       } else if (cls.fecha) {
         const classDate = new Date(cls.fecha);
         if (classDate >= now) {
-          available.push(cls);
+          available.push(tagged);
         } else {
-          past.push(cls);
+          past.push(tagged);
         }
       } else if (cls.diaSemana !== null && cls.diaSemana !== undefined) {
         // Clases semanales siempre disponibles
-        available.push(cls);
+        available.push(tagged);
       } else {
-        available.push(cls);
+        available.push(tagged);
       }
     });
 
@@ -411,14 +412,14 @@ export default function ClassDatesSection({
               </summary>
               <div className="dates-strip">
                 {groupedClasses.available.map((cls, idx) => {
-                  const originalIndex = classes.findIndex(c => c.id === cls.id);
+                  const originalIndex = (cls as any)._originalIndex ?? classes.findIndex(c => c.id === cls.id);
                   const fechaLabel = formatDateOrDay(cls.fecha, cls.diaSemana, cls.diasSemana);
                   const costoLabel = formatCurrency(cls.costo?.precio);
                   const isDeleting = deletingIndex === originalIndex;
                   
                   return (
                     <motion.div
-                      key={cls.id}
+                      key={`crono-row-${originalIndex}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="date-card"
@@ -483,13 +484,13 @@ export default function ClassDatesSection({
               </summary>
               <div className="dates-strip">
                 {groupedClasses.toAgendar.map((cls, idx) => {
-                  const originalIndex = classes.findIndex(c => c.id === cls.id);
+                  const originalIndex = (cls as any)._originalIndex ?? classes.findIndex(c => c.id === cls.id);
                   const costoLabel = formatCurrency(cls.costo?.precio);
                   const isDeleting = deletingIndex === originalIndex;
                   
                   return (
                     <motion.div
-                      key={cls.id}
+                      key={`crono-row-${originalIndex}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="date-card"
@@ -549,14 +550,14 @@ export default function ClassDatesSection({
               </summary>
               <div className="dates-strip">
                 {groupedClasses.past.map((cls, idx) => {
-                  const originalIndex = classes.findIndex(c => c.id === cls.id);
+                  const originalIndex = (cls as any)._originalIndex ?? classes.findIndex(c => c.id === cls.id);
                   const fechaLabel = formatDateOrDay(cls.fecha, cls.diaSemana, cls.diasSemana);
                   const costoLabel = formatCurrency(cls.costo?.precio);
                   const isDeleting = deletingIndex === originalIndex;
                   
                   return (
                     <motion.div
-                      key={cls.id}
+                      key={`crono-row-${originalIndex}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="date-card past"

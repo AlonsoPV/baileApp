@@ -24,7 +24,7 @@ import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
 import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies, useRemoveInvitation } from "../../hooks/useAcademyTeacherInvitations";
 import { useLiveClasses } from "@/hooks/useLiveClasses";
-import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
+import { generateClassId, ensureClassId, stableCronogramaListKey } from "../../utils/classIdGenerator";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/useCompetitionGroups";
 import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
@@ -1639,23 +1639,26 @@ export default function TeacherProfileEditor() {
     setStatusMsg(null);
   }, [setEditingIndex, setEditInitial, setStatusMsg]);
 
-  const handleClassDelete = React.useCallback((classId: number, refKey: string, cronograma: any[], costos: any[]) => {
+  const handleClassDelete = React.useCallback((index: number, cronograma: any[], costos: any[]) => {
     const ok = window.confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.');
     if (!ok) return;
 
     const currentCrono = ([...cronograma] as any[]);
     const currentCostos = ([...costos] as any[]);
+    const removed = currentCrono[index];
+    const classId = removed ? ensureClassId(removed) : null;
+    const refKey = ((removed?.referenciaCosto || removed?.titulo || '') as string).trim().toLowerCase();
 
-    const nextCrono = currentCrono.filter((it: any) => {
-      const itId = ensureClassId(it);
-      return itId !== classId;
+    const nextCrono = currentCrono.filter((_: any, i: number) => i !== index);
+    const nextCostos = currentCostos.filter((c: any) => {
+      if (typeof c?.cronogramaIndex === 'number') {
+        return c.cronogramaIndex !== index;
+      }
+      if (classId != null && c?.classId === classId) return false;
+      if (classId != null && c?.referenciaCosto != null && String(c.referenciaCosto) === String(classId)) return false;
+      if (refKey && (c?.referenciaCosto || c?.nombre || '').trim().toLowerCase() === refKey) return false;
+      return true;
     });
-    const nextCostos = refKey
-      ? currentCostos.filter((c: any) => {
-          const cRef = (c?.referenciaCosto || c?.nombre || '').trim().toLowerCase();
-          return cRef !== refKey;
-        })
-      : currentCostos;
 
     setField('cronograma' as any, nextCrono as any);
     setField('costos' as any, nextCostos as any);
@@ -1663,10 +1666,11 @@ export default function TeacherProfileEditor() {
     autoSaveClasses(nextCrono, nextCostos, '✅ Clase eliminada')
       .then(() => {
         if (editingIndex !== null) {
-          const editingClassId = ensureClassId(cronograma[editingIndex]);
-          if (editingClassId === classId) {
+          if (editingIndex === index) {
             setEditingIndex(null);
             setEditInitial(undefined);
+          } else if (editingIndex > index) {
+            setEditingIndex(editingIndex - 1);
           }
         }
       });
@@ -2459,27 +2463,27 @@ export default function TeacherProfileEditor() {
 
                 return (
                   <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
-                    {cronograma.map((it: any) => {
+                    {cronograma.map((it: any, idx: number) => {
                       const classId = ensureClassId(it);
                       const refKey = ((it?.referenciaCosto || it?.titulo || '') as string).trim().toLowerCase();
                       const costo = costos.find((c: any) => {
+                        if (typeof c?.cronogramaIndex === 'number' && c.cronogramaIndex === idx) return true;
                         if (c?.classId && c.classId === classId) return true;
                         if (c?.referenciaCosto && Number(c.referenciaCosto) === classId) return true;
                         return (c?.nombre || '').trim().toLowerCase() === refKey;
                       });
                       const costoLabel = costo ? formatCurrency(costo.precio) : null;
                       const fechaLabel = formatDateOrDay(it.fecha, (it as any)?.diaSemana ?? null, (it as any)?.diasSemana ?? null);
-                      const idx = cronograma.findIndex((item: any) => ensureClassId(item) === classId);
                       
                       return (
                         <ClassListItem
-                          key={classId}
+                          key={stableCronogramaListKey(idx)}
                           item={it}
                           costo={costo}
                           fechaLabel={fechaLabel}
                           costoLabel={costoLabel}
                           onEdit={() => handleClassEdit(idx, it, costo)}
-                          onDelete={() => handleClassDelete(classId, refKey, cronograma, costos)}
+                          onDelete={() => handleClassDelete(idx, cronograma, costos)}
                         />
                       );
                     })}

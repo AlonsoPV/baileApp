@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { Suspense, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAcademyMy, useUpsertAcademy } from "../../hooks/useAcademy";
@@ -41,6 +41,10 @@ import ClassDatesSheet from "../../components/classes/ClassDatesSheet";
 import { type ClassItem } from "../../components/classes/ClassDatesSection";
 import { useToast } from "../../components/Toast";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
+
+const AcademyStudentsPanelLazy = React.lazy(() =>
+  import("../../components/profile/AcademyStudentsPanel").then((m) => ({ default: m.AcademyStudentsPanel })),
+);
 
 const colors = {
   primary: '#E53935',
@@ -877,7 +881,7 @@ export default function AcademyProfileEditor() {
   const [statusMsg, setStatusMsg] = React.useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [deletingIndex, setDeletingIndex] = React.useState<number | null>(null);
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas">("perfil");
+  const [activeTab, setActiveTab] = React.useState<"perfil" | "metricas" | "alumnos">("perfil");
   const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
   const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
   
@@ -1632,10 +1636,29 @@ export default function AcademyProfileEditor() {
             >
               📊 Métricas clases
             </button>
+            <button
+              className="academy-tab-button"
+              onClick={() => setActiveTab("alumnos")}
+              style={{
+                background: activeTab === "alumnos"
+                  ? 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(245,87,108,0.2))'
+                  : 'transparent',
+                fontWeight: activeTab === "alumnos" ? 800 : 600,
+                borderBottom: activeTab === "alumnos" ? '2px solid rgba(240,147,251,0.5)' : '2px solid transparent',
+              }}
+            >
+              👥 Alumnos
+            </button>
           </div>
 
           {activeTab === "metricas" && academyId && (
             <AcademyMetricsPanel academyId={academyId} />
+          )}
+
+          {activeTab === "alumnos" && academyId && (
+            <Suspense fallback={<div style={{ padding: "2rem", color: "#fff" }}>Cargando gestión de alumnos...</div>}>
+              <AcademyStudentsPanelLazy academyId={academyId} />
+            </Suspense>
           )}
 
           {activeTab === "perfil" && (

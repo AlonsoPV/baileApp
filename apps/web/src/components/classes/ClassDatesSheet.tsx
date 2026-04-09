@@ -577,7 +577,7 @@ export default function ClassDatesSheet({
               const originalIndex = (cls as any)._originalIndex ?? classes.findIndex(c => c.id === cls.id);
               return (
                 <ClassRow
-                  key={cls.id}
+                  key={`crono-row-${originalIndex}`}
                   classItem={cls}
                   index={originalIndex}
                   onEdit={onEdit}

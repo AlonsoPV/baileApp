@@ -41,6 +41,40 @@ const NAVBAR_TEAL = "#297F96";
 /** Timeout de carga (ms): si no llega onLoadEnd/READY, mostrar error. */
 const LOAD_TIMEOUT_MS = 20_000;
 
+/** Tras este tiempo desde onLoadStart (solo Android), banner suave “sigue cargando”. iOS: desactivado. */
+const ANDROID_LOAD_SLOW_HINT_MS = 3_000;
+const IOS_LOAD_SLOW_HINT_MS = 9_000_000;
+
+/** Android: tiempo mínimo con NetInfo “offline” antes del copy fuerte “Sin conexión”. */
+const ANDROID_OFFLINE_CONFIRM_MS = 1_500;
+
+/** Android: espera antes de confirmar onError (no aplica a SSL ni crash de proceso). */
+const ANDROID_ON_ERROR_DEBOUNCE_MS = 600;
+
+/** Android: healthcheck ligero (solo diagnóstico). */
+const ANDROID_HEALTHCHECK_TIMEOUT_MS = 5_750;
+
+function isLikelyDocumentNavigationHttpUrl(url: string): boolean {
+  const u = String(url || "").trim();
+  if (!u) return true;
+  try {
+    const parsed = new URL(u);
+    const base = new URL(WEB_APP_URL);
+    if (parsed.host !== base.host) return false;
+    const path = parsed.pathname;
+    if (
+      /\.(js|mjs|cjs|css|map|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|json|wasm|mp4|webm|mp3)(\?|$)/i.test(
+        path
+      )
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 type WebViewErrorDetail = {
   source?:
     | "onError"
@@ -151,9 +185,14 @@ function isLikelyTransientError(
 
 function buildErrorUiModel(
   errorDetail: WebViewErrorDetail | null,
-  snapshot: ConnectivitySnapshot
+  snapshot: ConnectivitySnapshot,
+  opts?: { androidOfflineNetCopyOk?: boolean }
 ): ErrorUiModel {
-  if (snapshot.isConnected === false || snapshot.isInternetReachable === false) {
+  const appearsOffline = snapshot.isConnected === false || snapshot.isInternetReachable === false;
+  const android = Platform.OS === "android";
+  const offlineCopyOk = !appearsOffline || !android || opts?.androidOfflineNetCopyOk;
+
+  if (appearsOffline && offlineCopyOk) {
     return {
       category: "network",
       title: "Sin conexión a internet",
@@ -267,6 +306,11 @@ export default function WebAppScreen() {
   const [autoRetryState, setAutoRetryState] = React.useState<"idle" | "scheduled" | "running" | "done">("idle");
   const pathLoadSeqRef = React.useRef<{ explore: number; detail: number }>({ explore: 0, detail: 0 });
   const pendingPathLoadRef = React.useRef<PendingPathLoad | null>(null);
+  const [offlineSinceAt, setOfflineSinceAt] = React.useState<number | null>(null);
+  const [slowLoadHint, setSlowLoadHint] = React.useState(false);
+  const [androidOfflineNetCopyOk, setAndroidOfflineNetCopyOk] = React.useState(() => Platform.OS !== "android");
+  const onErrorDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slowLoadHintTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const getNetworkSnapshot = React.useCallback((): ConnectivitySnapshot => {
     return { ...networkSnapshotRef.current };
@@ -275,6 +319,17 @@ export default function WebAppScreen() {
   const logDiagnosticEvent = React.useCallback(
     (event: string, payload: Record<string, unknown> = {}) => {
       if (Platform.OS !== "android" || typeof console?.log !== "function") return;
+      if (event === "load_phase" || event === "error_deferred") {
+        let allowVerbose = typeof __DEV__ !== "undefined" && __DEV__;
+        if (!allowVerbose) {
+          try {
+            allowVerbose = getRuntimeConfig().debug.showConfigDebug;
+          } catch {
+            allowVerbose = false;
+          }
+        }
+        if (!allowVerbose) return;
+      }
       const structured = {
         source: "webview",
         event,
@@ -309,7 +364,7 @@ export default function WebAppScreen() {
           webUrl: WEB_APP_URL,
           supabaseUrl: cfg.supabase.url,
           supabaseAnonKey: cfg.supabase.anonKey,
-          timeoutMs: 3_500,
+          timeoutMs: ANDROID_HEALTHCHECK_TIMEOUT_MS,
           reason,
         });
         logDiagnosticEvent("healthcheck_result", {
@@ -351,6 +406,55 @@ export default function WebAppScreen() {
     clearAutoRetryTimer();
   }, [clearAutoRetryTimer]);
 
+  const clearOnErrorDebounce = React.useCallback(() => {
+    if (onErrorDebounceRef.current) {
+      clearTimeout(onErrorDebounceRef.current);
+      onErrorDebounceRef.current = null;
+    }
+  }, []);
+
+  const clearSlowLoadHintTimer = React.useCallback(() => {
+    if (slowLoadHintTimerRef.current) {
+      clearTimeout(slowLoadHintTimerRef.current);
+      slowLoadHintTimerRef.current = null;
+    }
+  }, []);
+
+  const applyWebViewError = React.useCallback(
+    (detail: WebViewErrorDetail, confirmReason: "immediate" | "debounced" | "timeout") => {
+      logDiagnosticEvent("error_confirmed", {
+        confirmReason,
+        source: detail.source,
+        code: detail.code,
+        statusCode: detail.statusCode,
+      });
+      setLastWebViewError(detail);
+      clearLoadWatchdog();
+      clearOnErrorDebounce();
+      clearSlowLoadHintTimer();
+      setSlowLoadHint(false);
+      setLoading(false);
+      setHasError(true);
+      const hcReason =
+        detail.source === "load_timeout"
+          ? "load_timeout"
+          : detail.source === "onHttpError"
+            ? "webview_onHttpError"
+            : detail.source === "onRenderProcessGone"
+              ? "webview_render_process_gone"
+              : detail.source === "onContentProcessDidTerminate"
+                ? "webview_content_process_terminated"
+                : confirmReason === "debounced"
+                  ? "webview_onError_debounced"
+                  : "webview_onError";
+      void triggerLightHealthcheck(hcReason, {
+        confirmReason,
+        source: detail.source,
+      });
+    },
+    [clearLoadWatchdog, clearOnErrorDebounce, clearSlowLoadHintTimer, logDiagnosticEvent, triggerLightHealthcheck]
+  );
+
   const armLoadWatchdog = React.useCallback(() => {
     clearLoadWatchdog();
     loadWatchdogRef.current = setTimeout(() => {
@@ -362,19 +466,17 @@ export default function WebAppScreen() {
       logDiagnosticEvent("load_timeout", {
         timeoutMs: LOAD_TIMEOUT_MS,
       });
-      setLastWebViewError({
-        source: "load_timeout",
-        userMessage: "La conexión tardó demasiado.",
-        description: `Timeout ${LOAD_TIMEOUT_MS / 1000}s`,
-      });
-      setLoading(false);
-      setHasError(true);
-      void triggerLightHealthcheck("load_timeout", {
-        timeoutMs: LOAD_TIMEOUT_MS,
-      });
+      applyWebViewError(
+        {
+          source: "load_timeout",
+          userMessage: "La conexión tardó demasiado.",
+          description: `Timeout ${LOAD_TIMEOUT_MS / 1000}s`,
+        },
+        "timeout"
+      );
       loadWatchdogRef.current = null;
     }, LOAD_TIMEOUT_MS);
-  }, [clearLoadWatchdog, logDiagnosticEvent, triggerLightHealthcheck]);
+  }, [applyWebViewError, clearLoadWatchdog, logDiagnosticEvent]);
 
   const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
     try {
@@ -498,8 +600,35 @@ export default function WebAppScreen() {
     return () => {
       clearLoadWatchdog();
       clearAutoRetryTimer();
+      clearOnErrorDebounce();
+      clearSlowLoadHintTimer();
     };
-  }, [clearAutoRetryTimer, clearLoadWatchdog]);
+  }, [clearAutoRetryTimer, clearLoadWatchdog, clearOnErrorDebounce, clearSlowLoadHintTimer]);
+
+  React.useEffect(() => {
+    if (Platform.OS !== "android") {
+      setAndroidOfflineNetCopyOk(true);
+      return;
+    }
+    const snap = networkSnapshotRef.current;
+    const disc = snap.isConnected === false || snap.isInternetReachable === false;
+    if (!disc || !offlineSinceAt) {
+      setAndroidOfflineNetCopyOk(false);
+      return;
+    }
+    const elapsed = Date.now() - offlineSinceAt;
+    if (elapsed >= ANDROID_OFFLINE_CONFIRM_MS) {
+      setAndroidOfflineNetCopyOk(true);
+      return;
+    }
+    setAndroidOfflineNetCopyOk(false);
+    const t = setTimeout(() => {
+      const s2 = networkSnapshotRef.current;
+      const still = s2.isConnected === false || s2.isInternetReachable === false;
+      if (still) setAndroidOfflineNetCopyOk(true);
+    }, ANDROID_OFFLINE_CONFIRM_MS - elapsed);
+    return () => clearTimeout(t);
+  }, [offlineSinceAt]);
 
   React.useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -524,6 +653,11 @@ export default function WebAppScreen() {
     const session = startNetworkDiagnostics({
       onSnapshot: (snapshot) => {
         networkSnapshotRef.current = snapshot;
+        const disc = snapshot.isConnected === false || snapshot.isInternetReachable === false;
+        setOfflineSinceAt((prev) => {
+          if (!disc) return null;
+          return prev ?? Date.now();
+        });
       },
       onEvent: (event) => {
         if (event.event === "state_change" || event.event === "fetch_failed" || event.event === "module_missing") {
@@ -676,6 +810,9 @@ export default function WebAppScreen() {
           }
           clearLoadWatchdog();
           resetAutoRetryGuard();
+          clearSlowLoadHintTimer();
+          setSlowLoadHint(false);
+          clearOnErrorDebounce();
           setLoading(false);
         }
         return;
@@ -920,6 +1057,8 @@ export default function WebAppScreen() {
     },
     [
       clearLoadWatchdog,
+      clearOnErrorDebounce,
+      clearSlowLoadHintTimer,
       getGoogleIosClientId,
       getGoogleWebClientId,
       injectWebAuthError,
@@ -932,6 +1071,9 @@ export default function WebAppScreen() {
 
   const retryLoad = React.useCallback(
     (mode: "manual" | "auto_once") => {
+      clearOnErrorDebounce();
+      clearSlowLoadHintTimer();
+      setSlowLoadHint(false);
       setHasError(false);
       setLastWebViewError(null);
       setLoading(true);
@@ -944,10 +1086,13 @@ export default function WebAppScreen() {
       }
       webviewRef.current?.reload?.();
     },
-    [loadWebViewModule, triggerLightHealthcheck, webViewImportError, webViewModule]
+    [clearOnErrorDebounce, clearSlowLoadHintTimer, loadWebViewModule, triggerLightHealthcheck, webViewImportError, webViewModule]
   );
 
   const handleReload = React.useCallback(() => {
+    clearOnErrorDebounce();
+    clearSlowLoadHintTimer();
+    setSlowLoadHint(false);
     clearAutoRetryTimer();
     setAutoRetryState("done");
     setHasError(false);
@@ -961,7 +1106,16 @@ export default function WebAppScreen() {
       return;
     }
     webviewRef.current?.reload?.();
-  }, [clearAutoRetryTimer, lastWebViewError, loadWebViewModule, triggerLightHealthcheck, webViewImportError, webViewModule]);
+  }, [
+    clearAutoRetryTimer,
+    clearOnErrorDebounce,
+    clearSlowLoadHintTimer,
+    lastWebViewError,
+    loadWebViewModule,
+    triggerLightHealthcheck,
+    webViewImportError,
+    webViewModule,
+  ]);
 
   React.useEffect(() => {
     if (!hasError || !lastWebViewError) return;
@@ -998,11 +1152,17 @@ export default function WebAppScreen() {
   }, [clearAutoRetryTimer, getNetworkSnapshot, hasError, lastWebViewError, logDiagnosticEvent, retryLoad]);
 
   const errorUi = React.useMemo(() => {
-    return buildErrorUiModel(lastWebViewError, getNetworkSnapshot());
-  }, [getNetworkSnapshot, lastWebViewError, hasError, autoRetryState]);
+    return buildErrorUiModel(lastWebViewError, getNetworkSnapshot(), {
+      androidOfflineNetCopyOk,
+    });
+  }, [androidOfflineNetCopyOk, getNetworkSnapshot, lastWebViewError]);
 
   const connectivityHint = React.useMemo(() => {
     const snapshot = getNetworkSnapshot();
+    const disc = snapshot.isInternetReachable === false || snapshot.isConnected === false;
+    if (disc && Platform.OS === "android" && !androidOfflineNetCopyOk) {
+      return "Conectividad: comprobando…";
+    }
     if (snapshot.isInternetReachable === false || snapshot.isConnected === false) {
       return "Conectividad: sin internet";
     }
@@ -1013,7 +1173,7 @@ export default function WebAppScreen() {
       return `Conectividad: verificando (${snapshot.type || "unknown"})`;
     }
     return "Conectividad: no disponible";
-  }, [getNetworkSnapshot, hasError, autoRetryState]);
+  }, [androidOfflineNetCopyOk, getNetworkSnapshot]);
 
   const openInBrowser = React.useCallback(() => {
     Linking.openURL(WEB_APP_URL).catch((err) => {
@@ -1123,9 +1283,28 @@ export default function WebAppScreen() {
           onLoadStart={(e: any) => {
             setHasError(false);
             setLastWebViewError(null);
+            clearOnErrorDebounce();
+            clearSlowLoadHintTimer();
+            setSlowLoadHint(false);
             setLoading(true);
-            armLoadWatchdog();
             loadStartTimeRef.current = Date.now();
+            const slowAfterMs = Platform.select({
+              android: ANDROID_LOAD_SLOW_HINT_MS,
+              ios: IOS_LOAD_SLOW_HINT_MS,
+              default: IOS_LOAD_SLOW_HINT_MS,
+            });
+            if (slowAfterMs < 600_000) {
+              slowLoadHintTimerRef.current = setTimeout(() => {
+                slowLoadHintTimerRef.current = null;
+                setSlowLoadHint(true);
+                logDiagnosticEvent("load_phase", {
+                  phase: "slow",
+                  elapsedMs: Date.now() - loadStartTimeRef.current,
+                  reason: "elapsed_after_onLoadStart",
+                });
+              }, slowAfterMs);
+            }
+            armLoadWatchdog();
             readyReceivedRef.current = false;
             setWebViewProgress(0);
             progressMarksRef.current = {};
@@ -1161,6 +1340,11 @@ export default function WebAppScreen() {
               url: currentUrl,
               navigationType: e?.nativeEvent?.navigationType ?? "unknown",
             });
+            logDiagnosticEvent("load_phase", {
+              phase: "loading",
+              elapsedMs: 0,
+              reason: "onLoadStart",
+            });
           }}
           onLoadProgress={(e: { nativeEvent: { progress: number } }) => {
             const progress = Math.max(0, Math.min(1, e.nativeEvent.progress || 0));
@@ -1185,6 +1369,9 @@ export default function WebAppScreen() {
             }
           }}
           onLoadEnd={(e: any) => {
+            clearOnErrorDebounce();
+            clearSlowLoadHintTimer();
+            setSlowLoadHint(false);
             clearLoadWatchdog();
             resetAutoRetryGuard();
             const elapsed = Date.now() - loadStartTimeRef.current;
@@ -1258,7 +1445,7 @@ export default function WebAppScreen() {
               canGoForward,
             });
             const { userMessage, isSsl } = classifyWebViewError(code, description, undefined);
-            setLastWebViewError({
+            const detail: WebViewErrorDetail = {
               source: "onError",
               code,
               description,
@@ -1267,15 +1454,24 @@ export default function WebAppScreen() {
               canGoForward,
               isSsl,
               userMessage,
-            });
-            clearLoadWatchdog();
-            setLoading(false);
-            setHasError(true);
-            void triggerLightHealthcheck("webview_onError", {
+            };
+
+            if (Platform.OS !== "android" || isSsl) {
+              applyWebViewError(detail, "immediate");
+              return;
+            }
+
+            clearOnErrorDebounce();
+            logDiagnosticEvent("error_deferred", {
               code,
               description,
               url,
+              debounceMs: ANDROID_ON_ERROR_DEBOUNCE_MS,
             });
+            onErrorDebounceRef.current = setTimeout(() => {
+              onErrorDebounceRef.current = null;
+              applyWebViewError(detail, "debounced");
+            }, ANDROID_ON_ERROR_DEBOUNCE_MS);
           }}
           onHttpError={(e: any) => {
             const ev = e?.nativeEvent ?? {};
@@ -1292,26 +1488,31 @@ export default function WebAppScreen() {
               description,
               url,
             });
-            const { userMessage, isSsl } = classifyWebViewError(undefined, description, statusCode);
-            setLastWebViewError((prev) => ({
-              ...prev,
-              source: prev?.source ?? "onHttpError",
-              statusCode,
-              description: prev?.description ?? description,
-              url: prev?.url ?? url,
-              isSsl: prev?.isSsl ?? isSsl,
-              userMessage: prev?.userMessage ?? userMessage,
-            }));
-            if (statusCode >= 400) {
-              clearLoadWatchdog();
-              setLoading(false);
-              setHasError(true);
-              void triggerLightHealthcheck("webview_onHttpError", {
+            if (typeof statusCode !== "number" || statusCode < 400) return;
+
+            if (
+              Platform.OS === "android" &&
+              statusCode >= 400 &&
+              statusCode < 500 &&
+              !isLikelyDocumentNavigationHttpUrl(String(url))
+            ) {
+              logDiagnosticEvent("onHttpError_ignored_subresource", {
                 statusCode,
-                description,
                 url,
               });
+              return;
             }
+
+            const { userMessage, isSsl } = classifyWebViewError(undefined, description, statusCode);
+            const detail: WebViewErrorDetail = {
+              source: "onHttpError",
+              statusCode,
+              description: String(description),
+              url: String(url),
+              isSsl,
+              userMessage,
+            };
+            applyWebViewError(detail, "immediate");
           }}
           onRenderProcessGone={
             Platform.OS === "android"
@@ -1325,17 +1526,14 @@ export default function WebAppScreen() {
                     didCrash: Boolean(ev.didCrash),
                     rendererPriorityAtExit: ev.rendererPriorityAtExit ?? "unknown",
                   });
-                  setLastWebViewError({
-                    source: "onRenderProcessGone",
-                    userMessage:
-                      "El contenido se cerró inesperadamente. Revisa tu conexión y reintenta.",
-                  });
-                  clearLoadWatchdog();
-                  setLoading(false);
-                  setHasError(true);
-                  void triggerLightHealthcheck("webview_render_process_gone", {
-                    didCrash: Boolean(ev.didCrash),
-                  });
+                  applyWebViewError(
+                    {
+                      source: "onRenderProcessGone",
+                      userMessage:
+                        "El contenido se cerró inesperadamente. Revisa tu conexión y reintenta.",
+                    },
+                    "immediate"
+                  );
                 }
               : undefined
           }
@@ -1344,15 +1542,14 @@ export default function WebAppScreen() {
               ? () => {
                   logWebViewError("onContentProcessDidTerminate", {});
                   logDiagnosticEvent("onContentProcessDidTerminate");
-                  setLastWebViewError({
-                    source: "onContentProcessDidTerminate",
-                    userMessage:
-                      "El contenido se cerró inesperadamente. Revisa tu conexión y reintenta.",
-                  });
-                  clearLoadWatchdog();
-                  setLoading(false);
-                  setHasError(true);
-                  void triggerLightHealthcheck("webview_content_process_terminated");
+                  applyWebViewError(
+                    {
+                      source: "onContentProcessDidTerminate",
+                      userMessage:
+                        "El contenido se cerró inesperadamente. Revisa tu conexión y reintenta.",
+                    },
+                    "immediate"
+                  );
                 }
               : undefined
           }
@@ -1540,6 +1737,12 @@ export default function WebAppScreen() {
           </View>
         )}
 
+        {slowLoadHint && loading && !hasError && Platform.OS === "android" && (
+          <View style={styles.slowHintBanner} pointerEvents="none" accessibilityLiveRegion="polite">
+            <Text style={styles.slowHintText}>Cargando… esto puede tardar un poco</Text>
+          </View>
+        )}
+
         {__DEV__ && (
           <View pointerEvents="box-none" style={styles.perfOverlayWrap}>
             <TouchableOpacity
@@ -1664,6 +1867,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: NAVBAR_TEAL,
+  },
+  slowHintBanner: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+  },
+  slowHintText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
   },
   errorOverlay: {
     position: "absolute",
