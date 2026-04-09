@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "http";
-import { supabaseAdmin } from "./_supabaseAdmin";
+import { createClient } from "@supabase/supabase-js";
 type ShareEntityType =
   | "evento"
   | "clase"
@@ -25,6 +25,13 @@ const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.tuorg.dondebailarmx.app";
 const SEO_LOGO_URL =
   "https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/DB_LOGO150.webp";
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVER_KEY =
+  process.env.SUPABASE_SERVICE_ROLE ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY;
 
 type ClassType = "teacher" | "academy";
 type OpenPayload = {
@@ -45,6 +52,16 @@ type ResolveOpenEntityImageResult = {
   imageUrl: string;
   imageSourceType: "flyer_url" | "media" | "cover" | "avatar" | "fallback_entity";
 };
+
+if (!SUPABASE_URL || !SUPABASE_SERVER_KEY) {
+  throw new Error(
+    "[open] Missing Supabase env. Expected SUPABASE_URL plus SUPABASE_SERVICE_ROLE or SUPABASE_ANON_KEY (VITE_* also supported).",
+  );
+}
+
+const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVER_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
