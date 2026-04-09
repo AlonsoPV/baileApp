@@ -117,7 +117,7 @@ export default function AppShell() {
         .app-shell-root {
           min-height: 100vh;
           height: 100dvh;
-          background: #0b0d10;
+          background: #0f1218;
           color: #e5e7eb;
           display: flex;
           flex-direction: column;

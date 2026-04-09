@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { Calendar, Clock, Eye, MapPin, Share2, Tag } from "lucide-react";
 import type { Clase } from "@/types/classes";
 import { groupClassesByWeekday } from "@/utils/classesByWeekday";
 import ImageWithFallback from "@/components/ImageWithFallback";
@@ -12,6 +13,8 @@ import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useTags } from "@/hooks/useTags";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { FaWhatsapp } from 'react-icons/fa';
+import { ClasesLiveDayHeader } from "@/components/classes/ClasesLiveDayHeader";
+import "./ClasesLiveTabs.css";
 
 // Helper para construir URL de WhatsApp con mensaje personalizado para clases
 function buildClassWhatsAppUrl(
@@ -56,18 +59,6 @@ type Props = {
   stripeAccountId?: string | null;
   stripeChargesEnabled?: boolean | null;
   creatorName?: string | null;
-};
-
-const chipStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: ".4rem",
-  padding: ".35rem .7rem",
-  borderRadius: 999,
-  border: "1px solid rgba(255,255,255,0.18)",
-  background: "rgba(255,255,255,0.08)",
-  fontWeight: 700,
-  fontSize: ".85rem",
 };
 
 export default function ClasesLiveTabs({ 
@@ -166,6 +157,14 @@ export default function ClasesLiveTabs({
     if (activeIdx >= days.length) setActiveIdx(0);
   }, [days.length, activeIdx]);
 
+  React.useEffect(() => {
+    if (days.length === 0) return;
+    setExpandedDays((prev) => {
+      if (prev.size > 0) return prev;
+      return new Set([days[0].key]);
+    });
+  }, [days.length, days[0]?.key]);
+
   const handleTabClick = (index: number) => {
     if (isMobile) {
       // En móvil: si ya está activa, colapsar; si no, expandir
@@ -248,6 +247,18 @@ export default function ClasesLiveTabs({
       });
     }
     return null;
+  };
+
+  /** Subtítulo opcional bajo el nombre del día (ej. «13 abr» o próxima ocurrencia semanal). */
+  const getDayDateSubline = (d: { key: number; items: Clase[] }): string | null => {
+    const sortedFechas = d.items
+      .map((c) => c.fecha)
+      .filter(Boolean)
+      .sort() as string[];
+    if (sortedFechas.length > 0) {
+      return formatDateShort(sortedFechas[0], null);
+    }
+    return formatDateShort(undefined, d.key);
   };
 
   // Calcular fecha completa para el calendario (necesita fecha completa, no solo día)
@@ -396,88 +407,41 @@ export default function ClasesLiveTabs({
   // En móvil: mostrar lista vertical de días con sus clases
   if (isMobile) {
     return (
-      <div
-        style={{
-          padding: "1rem",
-          borderRadius: 24,
-          border: "1px solid rgba(255,255,255,0.12)",
-          background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-          color: "#fff",
-        }}
-      >
+      <div className="clt-root clt-mobile-shell">
         <style>{clasesLiveCardStyles}</style>
-        <div style={{ marginBottom: "1.5rem" }}>
-          <div style={{ fontWeight: 900, fontSize: "1.25rem", marginBottom: ".5rem" }}>{title}</div>
-          {subtitle && <div style={{ opacity: 0.8, fontSize: ".95rem" }}>{subtitle}</div>}
+        <div style={{ marginBottom: "1.25rem" }}>
+          <div style={{ fontWeight: 800, fontSize: "1.2rem", marginBottom: "6px", letterSpacing: "-0.02em" }}>{title}</div>
+          {subtitle && <div style={{ opacity: 0.78, fontSize: ".9rem", lineHeight: 1.4 }}>{subtitle}</div>}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           {days.map((d) => {
             const isExpanded = expandedDays.has(d.key);
+            const countLabel = `${d.items.length} ${d.items.length === 1 ? "clase" : "clases"}`;
             return (
-              <div key={d.key} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {/* Encabezado del día - clickeable para colapsar/expandir */}
-                <button
-                  onClick={() => toggleDay(d.key)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: ".8rem 1rem",
-                    borderRadius: 14,
-                    border: `1px solid ${isExpanded ? "rgba(30,136,229,.5)" : "rgba(30,136,229,.3)"}`,
-                    background: isExpanded
-                      ? "linear-gradient(135deg, rgba(30,136,229,.25), rgba(0,188,212,.15))"
-                      : "linear-gradient(135deg, rgba(30,136,229,.15), rgba(0,188,212,.1))",
-                    fontWeight: 800,
-                    fontSize: "1.1rem",
-                    cursor: "pointer",
-                    color: "#fff",
-                    transition: "all 0.2s ease",
-                    width: "100%",
-                    textAlign: "left",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.3), rgba(0,188,212,.2))";
-                  }}
-                  onMouseLeave={(e) => {
-                    const target = e.currentTarget as HTMLButtonElement;
-                    target.style.background = isExpanded
-                      ? "linear-gradient(135deg, rgba(30,136,229,.25), rgba(0,188,212,.15))"
-                      : "linear-gradient(135deg, rgba(30,136,229,.15), rgba(0,188,212,.1))";
-                  }}
-                >
-                  <span>🗓️ {d.label}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem" }}>
-                    <span style={{ ...chipStyle, fontSize: ".75rem" }}>{d.items.length} {d.items.length === 1 ? 'clase' : 'clases'}</span>
-                    <span
-                      style={{
-                        fontSize: "1.2rem",
-                        transition: "transform 0.3s ease",
-                        transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
-                        display: "inline-block",
-                      }}
-                    >
-                      ▼
-                    </span>
-                  </div>
-                </button>
+              <div key={d.key} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <ClasesLiveDayHeader
+                  dayLabel={d.label}
+                  dateSubline={getDayDateSubline(d)}
+                  countLabel={countLabel}
+                  expanded={isExpanded}
+                  onToggle={() => toggleDay(d.key)}
+                />
 
-                {/* Clases del día - colapsable */}
                 <motion.div
+                  className="clt-day-collapsible"
                   initial={false}
                   animate={{
                     height: isExpanded ? "auto" : 0,
                     opacity: isExpanded ? 1 : 0,
                     marginBottom: isExpanded ? "0" : 0,
                   }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
                   style={{
                     overflow: "hidden",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "1rem",
-                    paddingLeft: ".5rem",
+                    gap: "12px",
                   }}
                 >
                   {isExpanded && d.items.map((c, idx) => {
@@ -491,6 +455,15 @@ export default function ClasesLiveTabs({
                   const nivel = c.nivel;
                   const ritmo = c.ritmo;
                   const fecha = c.fecha;
+                  const ritmoNombre = getRitmoName(ritmo, c.ritmos_seleccionados ?? null);
+                  const placeShort = (() => {
+                    if (!ubicacion) return "";
+                    const u = String(ubicacion).trim();
+                    for (const sep of [",", "·", "-", "|"]) {
+                      if (u.includes(sep)) return u.split(sep)[0]!.trim();
+                    }
+                    return u;
+                  })();
 
                   // Crear clave única combinando día, índice y ID de clase
                   const uniqueKey = `day-${d.key}-class-${c.id || `idx-${idx}`}-${idx}`;
@@ -498,115 +471,90 @@ export default function ClasesLiveTabs({
                   return (
                     <motion.article
                       key={uniqueKey}
-                      className="clases-live-card"
-                      initial={{ opacity: 0, y: 12 }}
+                      className={`clases-live-card clt-card${isClickable ? " clt-card--clickable" : ""}`}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: .25 }}
+                      transition={{ duration: 0.22 }}
                       onClick={() => handleClassClick(c)}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: ".75rem",
-                        padding: "1rem",
-                        borderRadius: 16,
-                        border: "1px solid rgba(255,255,255,0.15)",
-                        background: "rgba(255,255,255,0.06)",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-                        cursor: isClickable ? "pointer" : "default",
-                        transition: "all 0.2s ease",
-                      }}
+                      whileHover={isClickable ? { y: -2 } : {}}
                     >
-                      {/* Cover - solo si existe */}
                       {coverUrl && (
-                        <div
-                          style={{
-                            width: "100%",
-                            aspectRatio: "16/9",
-                            borderRadius: 12,
-                            overflow: "hidden",
-                            border: "1px solid rgba(255,255,255,0.12)",
-                            background: "rgba(0,0,0,.2)",
-                          }}
-                        >
+                        <div className="clt-card__media">
                           <ImageWithFallback
                             src={coverUrl}
-                            alt={titulo}
+                            alt=""
                             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                           />
                         </div>
                       )}
 
-                      {/* Info */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: ".5rem" }}>
-                        <div className="clases-live-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem", flexWrap: "wrap" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1, flexWrap: "wrap" }}>
-                            <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 900 }}>{titulo}</h4>
-                            {c.fechaModo === 'por_agendar' ? (
-                              <span style={{ 
-                                fontSize: "1rem", 
-                                opacity: 1, 
-                                fontWeight: 800,
-                                color: "#fff",
-                                padding: ".3rem .6rem",
-                                borderRadius: 8,
-                                background: "rgba(251, 191, 36, 0.2)",
-                                border: "1px solid rgba(251, 191, 36, 0.4)"
-                              }}>
-                                📅 Por agendar con academia
-                              </span>
-                            ) : formatDateShort(fecha, c.dia_semana || c.diaSemana) ? (
-                              <span style={{ 
-                                fontSize: "1rem", 
-                                opacity: 1, 
-                                fontWeight: 800,
-                                color: "#fff",
-                                padding: ".3rem .6rem",
-                                borderRadius: 8,
-                                background: "rgba(30,136,229,0.2)",
-                                border: "1px solid rgba(30,136,229,0.4)"
-                              }}>
-                                📅 {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
-                              </span>
-                            ) : null}
-                          </div>
-                          <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                            {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
-                          </div>
-                        </div>
+                      <div className="clt-card__body">
+                        <h4 className="clt-card__title">{titulo}</h4>
 
-                        <div className="clases-live-card-meta" style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", opacity: .95, fontSize: ".9rem" }}>
-                          {c.fechaModo === 'por_agendar' ? (
-                            // Si es por agendar, mostrar duración si está disponible
-                            c.duracionHoras ? (
-                              <span>⏱️ {c.duracionHoras} {c.duracionHoras === 1 ? 'hora' : 'horas'}</span>
-                            ) : null
-                          ) : (
-                            // Si no es por agendar, mostrar hora según el modo de horario
-                            <>
-                              {c.horarioModo === 'duracion' && c.duracionHoras ? (
-                                <span>⏱️ {c.duracionHoras} {c.duracionHoras === 1 ? 'hora' : 'horas'}</span>
-                              ) : (horaInicio || horaFin) ? (
-                                <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
-                              ) : null}
-                            </>
-                          )}
-                          {ubicacion && <span>📍 {ubicacion}</span>}
+                        <div className="clt-chips">
+                          {c.fechaModo === "por_agendar" ? (
+                            <span className="clt-chip clt-chip--warn">
+                              <Calendar size={12} strokeWidth={2.25} aria-hidden />
+                              Por agendar
+                            </span>
+                          ) : formatDateShort(fecha, c.dia_semana || c.diaSemana) ? (
+                            <span className="clt-chip clt-chip--accent">
+                              <Calendar size={12} strokeWidth={2.25} aria-hidden />
+                              {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
+                            </span>
+                          ) : null}
+                          {nivel ? (
+                            <span className="clt-chip clt-chip--muted">
+                              <Tag size={12} strokeWidth={2.25} aria-hidden />
+                              {nivel}
+                            </span>
+                          ) : null}
+                          {ritmoNombre ? (
+                            <span className="clt-chip clt-chip--muted">{ritmoNombre}</span>
+                          ) : null}
                           {typeof costo === "number" && costo === 0 && (
-                            <span>💰 Gratis</span>
+                            <span className="clt-chip">Gratis</span>
                           )}
                           {typeof costo === "number" && costo > 0 && (
-                            <span>💰 {new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(costo)}</span>
+                            <span className="clt-chip">
+                              {new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(costo)}
+                            </span>
                           )}
                         </div>
 
-                        {c.descripcion && (
-                          <p style={{ margin: 0, opacity: .9, lineHeight: 1.5, fontSize: ".9rem" }}>
-                            {c.descripcion}
-                          </p>
-                        )}
+                        <div className="clt-info">
+                          {c.fechaModo === "por_agendar" ? (
+                            c.duracionHoras ? (
+                              <span className="clt-info__item">
+                                <Clock size={14} strokeWidth={2} aria-hidden />
+                                {c.duracionHoras} {c.duracionHoras === 1 ? "hora" : "horas"}
+                              </span>
+                            ) : null
+                          ) : c.horarioModo === "duracion" && c.duracionHoras ? (
+                            <span className="clt-info__item">
+                              <Clock size={14} strokeWidth={2} aria-hidden />
+                              {c.duracionHoras} {c.duracionHoras === 1 ? "hora" : "horas"}
+                            </span>
+                          ) : horaInicio || horaFin ? (
+                            <span className="clt-info__item">
+                              <Clock size={14} strokeWidth={2} aria-hidden />
+                              {horaInicio && horaFin ? `${horaInicio}–${horaFin}` : horaInicio || horaFin}
+                            </span>
+                          ) : null}
+                          {placeShort ? (
+                            <>
+                              <span className="clt-info__sep" aria-hidden />
+                              <span className="clt-info__item clt-info__place" title={ubicacion}>
+                                <MapPin size={14} strokeWidth={2} aria-hidden />
+                                {placeShort}
+                              </span>
+                            </>
+                          ) : null}
+                        </div>
 
-                        {/* Botones de compartir, calendario y ver detalle */}
-                        <div style={{ display: "flex", gap: ".75rem", marginTop: ".5rem", flexWrap: "wrap", alignItems: "center" }}>
+                        {c.descripcion && <p className="clt-card__desc">{c.descripcion}</p>}
+
+                        <div className="clt-actions">
                           {(() => {
                             // Si la clase es "por agendar", no mostrar botón de calendario
                             if (c.fechaModo === 'por_agendar') {
@@ -621,56 +569,52 @@ export default function ClasesLiveTabs({
                               
                               return (
                                 <>
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <ShareButton
-                                      url={shareUrl}
-                                      title={titulo}
-                                      text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ''}`}
-                                      style={{ 
-                                        padding: ".5rem .8rem",
-                                        borderRadius: 999,
-                                        border: "1px solid rgba(255,255,255,.2)",
-                                        background: "rgba(255,255,255,0.08)",
-                                        color: "#fff",
-                                        fontWeight: 700,
-                                        fontSize: ".85rem",
-                                      }}
-                                    >
-                                      📤 Compartir
-                                    </ShareButton>
-                                  </div>
                                   {isClickable && sourceType && sourceId && (
                                     <button
+                                      type="button"
+                                      className="clt-btn-detail"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleClassClick(c);
                                       }}
-                                      style={{
-                                        padding: ".6rem 1rem",
-                                        borderRadius: 999,
-                                        border: "1px solid rgba(30,136,229,.5)",
-                                        background: "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))",
-                                        color: "#fff",
-                                        fontWeight: 800,
-                                        fontSize: ".9rem",
-                                        cursor: "pointer",
-                                        transition: "all 0.2s ease",
-                                        boxShadow: "0 2px 8px rgba(30,136,229,0.3)",
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.5), rgba(0,188,212,.4))";
-                                        (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(30,136,229,0.4)";
-                                        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))";
-                                        (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(30,136,229,0.3)";
-                                        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                                      }}
                                     >
-                                      👁️ Ver detalle
+                                      <Eye size={18} strokeWidth={2.25} aria-hidden />
+                                      Ver detalle
                                     </button>
                                   )}
+                                  <div className="clt-actions__toolbar">
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                      <ShareButton
+                                        url={shareUrl}
+                                        title={titulo}
+                                        text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ""}`}
+                                        className="clt-share-btn"
+                                        style={{
+                                          padding: 0,
+                                          minWidth: 44,
+                                          minHeight: 44,
+                                          width: 44,
+                                          height: 44,
+                                          borderRadius: 12,
+                                        }}
+                                      >
+                                        <Share2 size={18} strokeWidth={2.25} aria-hidden />
+                                      </ShareButton>
+                                    </div>
+                                    {whatsappNumber && titulo && (
+                                      <a
+                                        className="clt-wa-icon"
+                                        href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || "#"}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        aria-label="WhatsApp"
+                                        title="WhatsApp"
+                                      >
+                                        <FaWhatsapp size={20} />
+                                      </a>
+                                    )}
+                                  </div>
                                 </>
                               );
                             }
@@ -797,155 +741,109 @@ export default function ClasesLiveTabs({
 
                             return (
                               <>
-                                {calendarStart && calendarEnd && (
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    {(() => {
-                                      // Generar classId único basado en el índice (similar a useLiveClasses)
-                                      // Si la clase tiene id, usarlo; si no, generar uno basado en el índice
-                                      // Usar ?? en lugar de || para permitir classId = 0
-                                      const classIdForMetrics = (c.id !== null && c.id !== undefined) ? c.id : (idx * 1000);
-                                      console.log("[ClasesLiveTabs] 🔍 DEBUG - Agregando a calendario:", {
-                                        idx,
-                                        classId: c.id,
-                                        classIdForMetrics,
-                                        titulo,
-                                        sourceType,
-                                        sourceId,
-                                        academyId: sourceType === 'academy' && sourceId ? Number(sourceId) : undefined,
-                                        teacherId: sourceType === 'teacher' && sourceId ? Number(sourceId) : undefined,
-                                        roleBaile: userProfile?.rol_baile || null,
-                                      });
-                                      return (
-                                        <AddToCalendarWithStats
-                                          eventId={c.id || idx}
-                                          classId={classIdForMetrics}
-                                          academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
-                                    teacherId={sourceType === 'teacher' && sourceId ? Number(sourceId) : undefined}
-                                          roleBaile={userProfile?.rol_baile || null}
-                                          zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
-                                          title={titulo}
-                                          description={c.descripcion || undefined}
-                                          location={ubicacion || undefined}
-                                          start={calendarStart}
-                                          end={calendarEnd}
-                                          showAsIcon={true}
-                                          fecha={c.fecha || null}
-                                          diaSemana={c.diaSemana ?? c.dia_semana ?? null}
-                                          diasSemana={(() => {
-                                            // Si tiene diasSemana como array de strings, convertir a números
-                                            if (c.diasSemana && Array.isArray(c.diasSemana)) {
-                                              const dayMap: Record<string, number> = {
-                                                'domingo': 0, 'dom': 0,
-                                                'lunes': 1, 'lun': 1,
-                                                'martes': 2, 'mar': 2,
-                                                'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
-                                                'jueves': 4, 'jue': 4,
-                                                'viernes': 5, 'vie': 5,
-                                                'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
-                                              };
-                                              const dias = c.diasSemana
-                                                .map((d: string) => dayMap[String(d).toLowerCase().trim()])
-                                                .filter((d: number | undefined) => d !== undefined) as number[];
-                                              return dias.length > 0 ? dias : null;
-                                            }
-                                            return null;
-                                          })()}
-                                        />
-                                      );
-                                    })()}
-                                  </div>
-                                )}
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <ShareButton
-                                    url={shareUrl}
-                                    title={titulo}
-                                    text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ''}`}
-                                    style={{ 
-                                      padding: ".5rem .8rem",
-                                      borderRadius: 999,
-                                      border: "1px solid rgba(255,255,255,.2)",
-                                      background: "rgba(255,255,255,0.08)",
-                                      color: "#fff",
-                                      fontWeight: 700,
-                                      fontSize: ".85rem",
-                                    }}
-                                  >
-                                    📤 Compartir
-                                  </ShareButton>
-                                </div>
                                 {isClickable && sourceType && sourceId && (
                                   <button
+                                    type="button"
+                                    className="clt-btn-detail"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleClassClick(c);
                                     }}
-                                    style={{
-                                      padding: ".6rem 1rem",
-                                      borderRadius: 999,
-                                      border: "1px solid rgba(30,136,229,.5)",
-                                      background: "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))",
-                                      color: "#fff",
-                                      fontWeight: 800,
-                                      fontSize: ".9rem",
-                                      cursor: "pointer",
-                                      transition: "all 0.2s ease",
-                                      boxShadow: "0 2px 8px rgba(30,136,229,0.3)",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.5), rgba(0,188,212,.4))";
-                                      (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(30,136,229,0.4)";
-                                      (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))";
-                                      (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(30,136,229,0.3)";
-                                      (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                                    }}
                                   >
-                                    👁️ Ver detalle
+                                    <Eye size={18} strokeWidth={2.25} aria-hidden />
+                                    Ver detalle
                                   </button>
                                 )}
+                                <div className="clt-actions__toolbar">
+                                  {calendarStart && calendarEnd && (
+                                    <div className="clt-actions__cal-wrap" onClick={(e) => e.stopPropagation()}>
+                                      {(() => {
+                                        const classIdForMetrics = (c.id !== null && c.id !== undefined) ? c.id : (idx * 1000);
+                                        return (
+                                          <AddToCalendarWithStats
+                                            eventId={c.id || idx}
+                                            classId={classIdForMetrics}
+                                            academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
+                                            teacherId={sourceType === 'teacher' && sourceId ? Number(sourceId) : undefined}
+                                            roleBaile={userProfile?.rol_baile || null}
+                                            zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
+                                            title={titulo}
+                                            description={c.descripcion || undefined}
+                                            location={ubicacion || undefined}
+                                            start={calendarStart}
+                                            end={calendarEnd}
+                                            showAsIcon={true}
+                                            fecha={c.fecha || null}
+                                            diaSemana={c.diaSemana ?? c.dia_semana ?? null}
+                                            diasSemana={(() => {
+                                              if (c.diasSemana && Array.isArray(c.diasSemana)) {
+                                                const dayMap: Record<string, number> = {
+                                                  domingo: 0,
+                                                  dom: 0,
+                                                  lunes: 1,
+                                                  lun: 1,
+                                                  martes: 2,
+                                                  mar: 2,
+                                                  miércoles: 3,
+                                                  miercoles: 3,
+                                                  mié: 3,
+                                                  mie: 3,
+                                                  jueves: 4,
+                                                  jue: 4,
+                                                  viernes: 5,
+                                                  vie: 5,
+                                                  sábado: 6,
+                                                  sabado: 6,
+                                                  sáb: 6,
+                                                  sab: 6,
+                                                };
+                                                const dias = c.diasSemana
+                                                  .map((dd: string) => dayMap[String(dd).toLowerCase().trim()])
+                                                  .filter((dd: number | undefined) => dd !== undefined) as number[];
+                                                return dias.length > 0 ? dias : null;
+                                              }
+                                              return null;
+                                            })()}
+                                          />
+                                        );
+                                      })()}
+                                    </div>
+                                  )}
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <ShareButton
+                                      url={shareUrl}
+                                      title={titulo}
+                                      text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ""}`}
+                                      className="clt-share-btn"
+                                      style={{
+                                        padding: 0,
+                                        minWidth: 44,
+                                        minHeight: 44,
+                                        width: 44,
+                                        height: 44,
+                                        borderRadius: 12,
+                                      }}
+                                    >
+                                      <Share2 size={18} strokeWidth={2.25} aria-hidden />
+                                    </ShareButton>
+                                  </div>
+                                  {whatsappNumber && titulo && (
+                                    <a
+                                      className="clt-wa-icon"
+                                      href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || "#"}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      aria-label="WhatsApp"
+                                      title="WhatsApp"
+                                    >
+                                      <FaWhatsapp size={20} />
+                                    </a>
+                                  )}
+                                </div>
                               </>
                             );
                           })()}
-
-                          {/* Botón WhatsApp */}
-                          {whatsappNumber && titulo && (
-                            <a
-                              href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || '#'}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '0.5rem',
-                                padding: '0.6rem 1rem',
-                                background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                                color: '#fff',
-                                borderRadius: '999px',
-                                textDecoration: 'none',
-                                fontWeight: 700,
-                                fontSize: '0.9rem',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
-                                border: 'none',
-                                cursor: 'pointer',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = '';
-                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
-                              }}
-                            >
-                              <FaWhatsapp size={18} />
-                              <span>WhatsApp</span>
-                            </a>
-                          )}
                         </div>
                       </div>
                     </motion.article>
@@ -962,74 +860,29 @@ export default function ClasesLiveTabs({
 
   // Desktop: diseño con tabs verticales
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "240px 1fr",
-        gap: "1.25rem",
-        alignItems: "start",
-        padding: "1.25rem",
-        minWidth: 0,
-        borderRadius: 24,
-        border: "1px solid rgba(255,255,255,0.12)",
-        background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-        color: "#fff",
-      }}
-    >
+    <div className="clt-root clt-desktop">
       <style>{clasesLiveCardStyles}</style>
       <div style={{ display: "contents" }}>
         {/* Sidebar / Tabs verticales */}
-        <nav
-          aria-label="Días de la semana con clases"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: ".5rem",
-            padding: ".25rem",
-          }}
-        >
-          <div style={{ marginBottom: ".5rem" }}>
-            <div style={{ fontWeight: 900, fontSize: "1.25rem" }}>{title}</div>
-            {subtitle && <div style={{ opacity: 0.8, fontSize: ".95rem" }}>{subtitle}</div>}
+        <nav className="clt-nav" aria-label="Días de la semana con clases">
+          <div>
+            <div className="clt-nav-title">{title}</div>
+            {subtitle && <div className="clt-nav-sub">{subtitle}</div>}
           </div>
 
           {days.map((d, i) => {
             const isActive = i === activeIdx;
+            const countLabel = `${d.items.length}`;
             return (
               <button
                 key={d.key}
+                type="button"
                 onClick={() => setActiveIdx(i)}
                 aria-pressed={isActive}
-                style={{
-                  textAlign: "left",
-                  width: "100%",
-                  padding: ".8rem 1rem",
-                  borderRadius: 14,
-                  border: `1px solid ${isActive ? "rgba(30,136,229,.5)" : "rgba(255,255,255,.12)"}`,
-                  background: isActive
-                    ? "linear-gradient(135deg, rgba(30,136,229,.22), rgba(0,188,212,.16))"
-                    : "rgba(255,255,255,0.04)",
-                  cursor: "pointer",
-                  color: "#fff",
-                  fontWeight: 800,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
-                  }
-                }}
+                className={`clt-nav-btn${isActive ? " clt-nav-btn--active" : ""}`}
               >
-                <span>🗓️ {d.label}</span>
-                <span style={{ ...chipStyle, fontSize: ".75rem" }}>{d.items.length}</span>
+                <span>{d.label}</span>
+                <span className="clt-nav-btn__badge">{countLabel}</span>
               </button>
             );
           })}
@@ -1037,6 +890,7 @@ export default function ClasesLiveTabs({
 
         {/* Panel de contenido */}
         <section
+          className="clt-tabpanel"
           role="tabpanel"
           aria-label={`Clases del día ${days[activeIdx]?.label}`}
           style={{ display: "grid", gap: "1rem", minWidth: 0 }}
@@ -1052,6 +906,15 @@ export default function ClasesLiveTabs({
             const nivel = c.nivel;
             const ritmo = c.ritmo;
             const fecha = c.fecha;
+            const ritmoNombre = getRitmoName(ritmo, c.ritmos_seleccionados ?? null);
+            const placeShort = (() => {
+              if (!ubicacion) return "";
+              const u = String(ubicacion).trim();
+              for (const sep of [",", "·", "-", "|"]) {
+                if (u.includes(sep)) return u.split(sep)[0]!.trim();
+              }
+              return u;
+            })();
 
             // Crear clave única combinando día activo, índice y ID de clase
             const uniqueKey = `desktop-day-${activeIdx}-class-${c.id || `idx-${idx}`}-${idx}`;
@@ -1059,115 +922,86 @@ export default function ClasesLiveTabs({
             return (
               <motion.article
                 key={uniqueKey}
-                className="clases-live-card"
-                initial={{ opacity: 0, y: 12 }}
+                className={`clases-live-card clt-card${isClickable ? " clt-card--clickable" : ""}`}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: .25 }}
+                transition={{ duration: 0.22 }}
                 onClick={() => handleClassClick(c)}
-                style={{
-                  display: "grid",
-                  gap: "1rem",
-                  padding: "1rem",
-                  borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  background: "rgba(255,255,255,0.06)",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
-                  cursor: isClickable ? "pointer" : "default",
-                  transition: "all 0.2s ease",
-                }}
-                whileHover={isClickable ? { scale: 1.02, boxShadow: "0 12px 32px rgba(0,0,0,0.35)" } : {}}
+                whileHover={isClickable ? { y: -2 } : {}}
               >
-                {/* Cover */}
-               {/*  <div
-                  style={{
-                    width: "100%",
-                    aspectRatio: "4/3",
-                    borderRadius: 14,
-                    overflow: "hidden",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    background: "rgba(0,0,0,.2)",
-                  }}
-                >
-                  {coverUrl && (
+                {coverUrl && (
+                  <div className="clt-card__media">
                     <ImageWithFallback
                       src={coverUrl}
-                      alt={titulo}
+                      alt=""
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     />
-                  )}
-                </div> */}
-
-                {/* Info */}
-                <div style={{ display: "grid", gap: ".5rem" }}>
-                  <div className="clases-live-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: ".75rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flex: 1, flexWrap: "wrap" }}>
-                      <h4 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900 }}>{titulo}</h4>
-                      {c.fechaModo === 'por_agendar' ? (
-                        <span style={{ 
-                          fontSize: "1.05rem", 
-                          opacity: 1, 
-                          fontWeight: 800,
-                          color: "#fff",
-                          padding: ".35rem .7rem",
-                          borderRadius: 8,
-                          background: "rgba(251, 191, 36, 0.2)",
-                          border: "1px solid rgba(251, 191, 36, 0.4)"
-                        }}>
-                          📅 Por agendar con academia
-                        </span>
-                      ) : formatDateShort(fecha, c.dia_semana || c.diaSemana) ? (
-                        <span style={{ 
-                          fontSize: "1.05rem", 
-                          opacity: 1, 
-                          fontWeight: 800,
-                          color: "#fff",
-                          padding: ".35rem .7rem",
-                          borderRadius: 8,
-                          background: "rgba(30,136,229,0.2)",
-                          border: "1px solid rgba(30,136,229,0.4)"
-                        }}>
-                          📅 {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                      {nivel && <span style={chipStyle}>🏷️ {nivel}</span>}
-                    </div>
                   </div>
+                )}
 
-                  <div className="clases-live-card-meta" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", opacity: .95 }}>
-                    {c.fechaModo === 'por_agendar' ? (
-                      // Si es por agendar, mostrar duración si está disponible
-                      c.duracionHoras ? (
-                        <span>⏱️ {c.duracionHoras} {c.duracionHoras === 1 ? 'hora' : 'horas'}</span>
-                      ) : null
-                    ) : (
-                      // Si no es por agendar, mostrar hora según el modo de horario
-                      <>
-                        {c.horarioModo === 'duracion' && c.duracionHoras ? (
-                          <span>⏱️ {c.duracionHoras} {c.duracionHoras === 1 ? 'hora' : 'horas'}</span>
-                        ) : (horaInicio || horaFin) ? (
-                          <span>🕒 {horaInicio || ""}{horaFin ? ` - ${horaFin}` : ""}</span>
-                        ) : null}
-                      </>
-                    )}
-                    {ubicacion && <span>📍 {ubicacion}</span>}
-                    {typeof costo === "number" && costo === 0 && (
-                      <span>💰 Gratis</span>
-                    )}
+                <div className="clt-card__body">
+                  <h4 className="clt-card__title">{titulo}</h4>
+
+                  <div className="clt-chips">
+                    {c.fechaModo === "por_agendar" ? (
+                      <span className="clt-chip clt-chip--warn">
+                        <Calendar size={12} strokeWidth={2.25} aria-hidden />
+                        Por agendar
+                      </span>
+                    ) : formatDateShort(fecha, c.dia_semana || c.diaSemana) ? (
+                      <span className="clt-chip clt-chip--accent">
+                        <Calendar size={12} strokeWidth={2.25} aria-hidden />
+                        {formatDateShort(fecha, c.dia_semana || c.diaSemana)}
+                      </span>
+                    ) : null}
+                    {nivel ? (
+                      <span className="clt-chip clt-chip--muted">
+                        <Tag size={12} strokeWidth={2.25} aria-hidden />
+                        {nivel}
+                      </span>
+                    ) : null}
+                    {ritmoNombre ? <span className="clt-chip clt-chip--muted">{ritmoNombre}</span> : null}
+                    {typeof costo === "number" && costo === 0 && <span className="clt-chip">Gratis</span>}
                     {typeof costo === "number" && costo > 0 && (
-                      <span>💰 {new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(costo)}</span>
+                      <span className="clt-chip">
+                        {new Intl.NumberFormat("es-MX", { style: "currency", currency: moneda }).format(costo)}
+                      </span>
                     )}
                   </div>
 
-                  {c.descripcion && (
-                    <p style={{ margin: 0, opacity: .9, lineHeight: 1.6 }}>
-                      {c.descripcion}
-                    </p>
-                  )}
+                  <div className="clt-info">
+                    {c.fechaModo === "por_agendar" ? (
+                      c.duracionHoras ? (
+                        <span className="clt-info__item">
+                          <Clock size={14} strokeWidth={2} aria-hidden />
+                          {c.duracionHoras} {c.duracionHoras === 1 ? "hora" : "horas"}
+                        </span>
+                      ) : null
+                    ) : c.horarioModo === "duracion" && c.duracionHoras ? (
+                      <span className="clt-info__item">
+                        <Clock size={14} strokeWidth={2} aria-hidden />
+                        {c.duracionHoras} {c.duracionHoras === 1 ? "hora" : "horas"}
+                      </span>
+                    ) : horaInicio || horaFin ? (
+                      <span className="clt-info__item">
+                        <Clock size={14} strokeWidth={2} aria-hidden />
+                        {horaInicio && horaFin ? `${horaInicio}–${horaFin}` : horaInicio || horaFin}
+                      </span>
+                    ) : null}
+                    {placeShort ? (
+                      <>
+                        <span className="clt-info__sep" aria-hidden />
+                        <span className="clt-info__item clt-info__place" title={ubicacion}>
+                          <MapPin size={14} strokeWidth={2} aria-hidden />
+                          {placeShort}
+                        </span>
+                      </>
+                    ) : null}
+                  </div>
 
-                  {/* Botones de compartir, calendario y ver detalle */}
-                  <div style={{ display: "flex", gap: ".75rem", marginTop: ".5rem", flexWrap: "wrap", alignItems: "center" }}>
+                  {c.descripcion && <p className="clt-card__desc">{c.descripcion}</p>}
+
+                  <div className="clt-actions">
                     {(() => {
                       // Si la clase es "por agendar", no mostrar botón de calendario
                       if (c.fechaModo === 'por_agendar') {
@@ -1182,96 +1016,54 @@ export default function ClasesLiveTabs({
                         
                         return (
                           <>
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <ShareButton
-                                url={shareUrl}
-                                title={titulo}
-                                text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ''}`}
-                                style={{ 
-                                  padding: ".6rem .9rem",
-                                  borderRadius: 999,
-                                  border: "1px solid rgba(255,255,255,.2)",
-                                  background: "rgba(255,255,255,0.08)",
-                                  color: "#fff",
-                                  fontWeight: 700,
-                                  fontSize: ".9rem",
-                                }}
-                              >
-                                📤 Compartir
-                              </ShareButton>
-                            </div>
                             {isClickable && sourceType && sourceId && (
                               <button
+                                type="button"
+                                className="clt-btn-detail"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleClassClick(c);
                                 }}
-                                style={{
-                                  padding: ".7rem 1.1rem",
-                                  borderRadius: 999,
-                                  border: "1px solid rgba(30,136,229,.5)",
-                                  background: "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))",
-                                  color: "#fff",
-                                  fontWeight: 800,
-                                  fontSize: ".95rem",
-                                  cursor: "pointer",
-                                  transition: "all 0.2s ease",
-                                  boxShadow: "0 2px 8px rgba(30,136,229,0.3)",
-                                }}
-                                onMouseEnter={(e) => {
-                                  (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.5), rgba(0,188,212,.4))";
-                                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(30,136,229,0.4)";
-                                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))";
-                                  (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(30,136,229,0.3)";
-                                  (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                                }}
                               >
-                                👁️ Ver detalle
+                                <Eye size={18} strokeWidth={2.25} aria-hidden />
+                                Ver detalle
                               </button>
                             )}
-
-                            {/* Botón WhatsApp (desktop - solo logueados) */}
-                            {whatsappNumber && titulo && (
-                              <RequireLogin fallback={null}>
-                                <a
-                                  href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || '#'}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
+                            <div className="clt-actions__toolbar">
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <ShareButton
+                                  url={shareUrl}
+                                  title={titulo}
+                                  text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ""}`}
+                                  className="clt-share-btn"
                                   style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '0.5rem',
-                                    padding: '0.7rem 1.1rem',
-                                    background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                                    color: '#fff',
-                                    borderRadius: '999px',
-                                    textDecoration: 'none',
-                                    fontWeight: 700,
-                                    fontSize: '0.95rem',
-                                    transition: 'all 0.3s ease',
-                                    boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(-2px)';
-                                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = '';
-                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
+                                    padding: 0,
+                                    minWidth: 44,
+                                    minHeight: 44,
+                                    width: 44,
+                                    height: 44,
+                                    borderRadius: 12,
                                   }}
                                 >
-                                  <FaWhatsapp size={18} />
-                                  <span>WhatsApp</span>
-                                </a>
-                              </RequireLogin>
-                            )}
+                                  <Share2 size={18} strokeWidth={2.25} aria-hidden />
+                                </ShareButton>
+                              </div>
+                              {whatsappNumber && titulo && (
+                                <RequireLogin fallback={null}>
+                                  <a
+                                    className="clt-wa-icon"
+                                    href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || "#"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    aria-label="WhatsApp"
+                                    title="WhatsApp"
+                                  >
+                                    <FaWhatsapp size={20} />
+                                  </a>
+                                </RequireLogin>
+                              )}
+                            </div>
                           </>
                         );
                       }
@@ -1398,130 +1190,108 @@ export default function ClasesLiveTabs({
 
                       return (
                         <>
-                          {calendarStart && calendarEnd && (
-                            <div onClick={(e) => e.stopPropagation()}>
-                              {(() => {
-                                // Generar classId único basado en el índice (similar a useLiveClasses)
-                                // Si la clase tiene id, usarlo; si no, generar uno basado en el índice
-                                // Usar ?? en lugar de || para permitir classId = 0
-                                const classIdForMetrics = (c.id !== null && c.id !== undefined) ? c.id : (idx * 1000);
-                                console.log("[ClasesLiveTabs] 🔍 DEBUG - Agregando a calendario (desktop):", {
-                                  idx,
-                                  classId: c.id,
-                                  classIdForMetrics,
-                                  titulo,
-                                  sourceType,
-                                  sourceId,
-                                  academyId: sourceType === 'academy' && sourceId ? Number(sourceId) : undefined,
-                                  roleBaile: userProfile?.rol_baile || null,
-                                });
-                                return (
-                                  <AddToCalendarWithStats
-                                    eventId={c.id || idx}
-                                    classId={classIdForMetrics}
-                                    academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
-                                    teacherId={sourceType === 'teacher' && sourceId ? Number(sourceId) : undefined}
-                                    roleBaile={userProfile?.rol_baile || null}
-                                    zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
-                                    title={titulo}
-                                    description={c.descripcion || undefined}
-                                    location={ubicacion || undefined}
-                                    start={calendarStart}
-                                    end={calendarEnd}
-                                    showAsIcon={true}
-                                  />
-                                );
-                              })()}
-                            </div>
-                          )}
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <ShareButton
-                              url={shareUrl}
-                              title={titulo}
-                              text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ''}`}
-                              style={{ 
-                                padding: ".6rem .9rem",
-                                borderRadius: 999,
-                                border: "1px solid rgba(255,255,255,.2)",
-                                background: "rgba(255,255,255,0.08)",
-                                color: "#fff",
-                                fontWeight: 700,
-                                fontSize: ".9rem",
-                              }}
-                            >
-                              📤 Compartir
-                            </ShareButton>
-                          </div>
                           {isClickable && sourceType && sourceId && (
                             <button
+                              type="button"
+                              className="clt-btn-detail"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleClassClick(c);
                               }}
-                              style={{
-                                padding: ".7rem 1.1rem",
-                                borderRadius: 999,
-                                border: "1px solid rgba(30,136,229,.5)",
-                                background: "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))",
-                                color: "#fff",
-                                fontWeight: 800,
-                                fontSize: ".95rem",
-                                cursor: "pointer",
-                                transition: "all 0.2s ease",
-                                boxShadow: "0 2px 8px rgba(30,136,229,0.3)",
-                              }}
-                              onMouseEnter={(e) => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.5), rgba(0,188,212,.4))";
-                                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 12px rgba(30,136,229,0.4)";
-                                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
-                              }}
-                              onMouseLeave={(e) => {
-                                (e.currentTarget as HTMLButtonElement).style.background = "linear-gradient(135deg, rgba(30,136,229,.35), rgba(0,188,212,.25))";
-                                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 8px rgba(30,136,229,0.3)";
-                                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                              }}
                             >
-                              👁️ Ver detalle
+                              <Eye size={18} strokeWidth={2.25} aria-hidden />
+                              Ver detalle
                             </button>
                           )}
-
-                          {/* Botón WhatsApp (desktop - segunda ubicación) */}
-                          {whatsappNumber && titulo && (
-                            <a
-                              href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || '#'}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '0.5rem',
-                                padding: '0.7rem 1.1rem',
-                                background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                                color: '#fff',
-                                borderRadius: '999px',
-                                textDecoration: 'none',
-                                fontWeight: 700,
-                                fontSize: '0.95rem',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
-                                border: 'none',
-                                cursor: 'pointer',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 211, 102, 0.4)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = '';
-                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)';
-                              }}
-                            >
-                              <FaWhatsapp size={18} />
-                              <span>WhatsApp</span>
-                            </a>
-                          )}
+                          <div className="clt-actions__toolbar">
+                            {calendarStart && calendarEnd && (
+                              <div className="clt-actions__cal-wrap" onClick={(e) => e.stopPropagation()}>
+                                {(() => {
+                                  const classIdForMetrics = (c.id !== null && c.id !== undefined) ? c.id : (idx * 1000);
+                                  return (
+                                    <AddToCalendarWithStats
+                                      eventId={c.id || idx}
+                                      classId={classIdForMetrics}
+                                      academyId={sourceType === 'academy' && sourceId ? Number(sourceId) : undefined}
+                                      teacherId={sourceType === 'teacher' && sourceId ? Number(sourceId) : undefined}
+                                      roleBaile={userProfile?.rol_baile || null}
+                                      zonaTagId={c.ubicacionJson?.zona_tag_id || (userProfile?.zonas?.[0] || null)}
+                                      title={titulo}
+                                      description={c.descripcion || undefined}
+                                      location={ubicacion || undefined}
+                                      start={calendarStart}
+                                      end={calendarEnd}
+                                      showAsIcon={true}
+                                      fecha={c.fecha || null}
+                                      diaSemana={c.diaSemana ?? c.dia_semana ?? null}
+                                      diasSemana={(() => {
+                                        if (c.diasSemana && Array.isArray(c.diasSemana)) {
+                                          const dayMap: Record<string, number> = {
+                                            domingo: 0,
+                                            dom: 0,
+                                            lunes: 1,
+                                            lun: 1,
+                                            martes: 2,
+                                            mar: 2,
+                                            miércoles: 3,
+                                            miercoles: 3,
+                                            mié: 3,
+                                            mie: 3,
+                                            jueves: 4,
+                                            jue: 4,
+                                            viernes: 5,
+                                            vie: 5,
+                                            sábado: 6,
+                                            sabado: 6,
+                                            sáb: 6,
+                                            sab: 6,
+                                          };
+                                          const dias = c.diasSemana
+                                            .map((dd: string) => dayMap[String(dd).toLowerCase().trim()])
+                                            .filter((dd: number | undefined) => dd !== undefined) as number[];
+                                          return dias.length > 0 ? dias : null;
+                                        }
+                                        return null;
+                                      })()}
+                                    />
+                                  );
+                                })()}
+                              </div>
+                            )}
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <ShareButton
+                                url={shareUrl}
+                                title={titulo}
+                                text={`${titulo}${ubicacion ? ` - ${ubicacion}` : ""}`}
+                                className="clt-share-btn"
+                                style={{
+                                  padding: 0,
+                                  minWidth: 44,
+                                  minHeight: 44,
+                                  width: 44,
+                                  height: 44,
+                                  borderRadius: 12,
+                                }}
+                              >
+                                <Share2 size={18} strokeWidth={2.25} aria-hidden />
+                              </ShareButton>
+                            </div>
+                            {whatsappNumber && titulo && (
+                              <RequireLogin fallback={null}>
+                                <a
+                                  className="clt-wa-icon"
+                                  href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, titulo) || "#"}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  aria-label="WhatsApp"
+                                  title="WhatsApp"
+                                >
+                                  <FaWhatsapp size={20} />
+                                </a>
+                              </RequireLogin>
+                            )}
+                          </div>
                         </>
                       );
                     })()}

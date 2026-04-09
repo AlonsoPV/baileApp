@@ -32,9 +32,9 @@ export const EXPLORE_CARD_STYLES = `
   .explore-card {
     border-radius: 22px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.03);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
     position: relative;
     cursor: pointer;
     /* Default aspect ratio (desktop/tablet). Mobile overrides via --card-ar. +15px altura aprox. */

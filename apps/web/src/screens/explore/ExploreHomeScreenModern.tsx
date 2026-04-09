@@ -27,7 +27,6 @@ import { ExploreSectionViewToggle } from "@/components/explore/ExploreSectionVie
 import ClaseListRow from "@/components/explore/ClaseListRow";
 import ExploreProfileListRow from "@/components/explore/ExploreProfileListRow";
 import ExploreEntityCarteleraCard from "@/components/explore/ExploreEntityCarteleraCard";
-import { LayoutGrid, List, Images } from "lucide-react";
 import HorizontalCarousel from "../../components/explore/HorizontalCarousel";
 import ClassExploreGridCard from "@/components/explore/ClassExploreGridCard";
 import ProfileExploreGridCard from "@/components/explore/ProfileExploreGridCard";
@@ -223,7 +222,7 @@ function SectionHeader({
 }) {
   return (
     <div
-      className="section-header section-header--hero"
+      className="section-header section-header--hero explore-section-header"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -234,8 +233,6 @@ function SectionHeader({
         paddingBottom: 12,
         paddingRight: actionSlot ? 56 : 0,
         marginBottom: 8,
-        borderBottom: '3px solid transparent',
-        borderImage: 'linear-gradient(90deg, rgba(255,157,28,0.6), rgba(168,85,247,0.4), transparent) 1',
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
@@ -245,8 +242,8 @@ function SectionHeader({
             style={{
               margin: 0,
               fontSize: 'clamp(1.25rem, 5vw, 1.5rem)',
-              fontWeight: 900,
-              color: '#fff',
+              fontWeight: 800,
+              color: '#f4f4f5',
               letterSpacing: '-0.02em',
               lineHeight: 1.25,
             }}
@@ -396,11 +393,11 @@ function createArrayWithCTA<T>(
   return result as any;
 }
 
-// Componente CTA Card
+/** CTA compacta: misma acción (roles/info), menos peso visual que la card hero anterior. */
 const CTACard = React.memo(({
   text,
   sectionType,
-  idx
+  idx: _idx
 }: {
   text: string;
   sectionType: 'clases' | 'academias' | 'maestros' | 'organizadores' | 'marcas';
@@ -411,133 +408,80 @@ const CTACard = React.memo(({
     window.location.href = 'https://dondebailar.com.mx/app/roles/info';
   }, []);
 
-  const logoUrl = 'https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/LogoDondeBMx.webp';
+  const icon =
+    sectionType === 'clases'
+      ? '🎓'
+      : sectionType === 'academias'
+        ? '🏫'
+        : sectionType === 'maestros'
+          ? '👨‍🏫'
+          : sectionType === 'organizadores'
+            ? '📅'
+            : '🏷️';
 
   return (
-    <>
-      <style>{`
-        /* En escritorio, igualar altura con las tarjetas de carrusel/cartelera.
-           En mobile mantenemos la proporción 4/5 para que se vea consistente. */
-        .cta-card-mobile {
-          width: 100%;
-          height: 100%;
-          align-self: stretch;
-        }
-        @media (max-width: 768px) {
-          .cta-card-mobile {
-            /* Mantener proporción en mobile */
-            aspect-ratio: 4 / 5 !important;
-            max-width: 100%;
-            margin: 0;
-          }
-        }
-      `}</style>
-      <div
-        className="cta-card-mobile"
-        onClick={handleClick}
-        style={{
-          backgroundImage: `url(${logoUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          border: '2px solid rgba(240, 147, 251, 0.4)',
-          borderRadius: 16,
-          padding: 0,
-          overflow: 'hidden',
-          boxShadow: 'none',
-          cursor: 'pointer',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          gap: '1rem',
-          width: '100%'
-        }}
-      >
-      {/* Overlay oscuro para mejor contraste */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'linear-gradient(135deg, rgba(40, 30, 45, 0.75), rgba(30, 20, 40, 0.75))',
-        zIndex: 1
-      }} />
-
-      {/* Contenido */}
-      <div style={{
-        position: 'relative',
-        zIndex: 2,
-        padding: '1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        gap: '1rem',
-        height: '100%',
-        width: '100%'
-      }}>
-        {/* Badge "Únete" */}
-        <div style={{
-          position: 'absolute',
-          top: '1rem',
-          right: '1rem',
-          background: 'linear-gradient(135deg, #f093fb, #f5576c)',
-          color: 'white',
-          padding: '0.4rem 0.8rem',
-          borderRadius: '999px',
-          fontSize: '0.75rem',
-          fontWeight: 700,
-          boxShadow: '0 4px 12px rgba(240, 147, 251, 0.5)',
-          border: '2px solid rgba(255, 255, 255, 0.3)',
-          fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-        }}>
-          {t('join')}
-        </div>
-
-        {/* Icono */}
-        <div style={{
-          fontSize: '3rem',
-          marginBottom: '0.5rem'
-        }}>
-          {sectionType === 'clases' ? '🎓' :
-            sectionType === 'academias' ? '🏫' :
-              sectionType === 'maestros' ? '👨‍🏫' :
-                sectionType === 'organizadores' ? '📅' :
-                  '🏷️'}
-        </div>
-
-        {/* Texto */}
-        <p style={{
-          color: '#fff',
-          fontSize: '1.1rem',
-          fontWeight: 600,
-          margin: 0,
-          lineHeight: 1.4,
-          maxWidth: '90%',
-          fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-        }}>
-          {text}
-        </p>
-
-        {/* Flecha indicativa */}
-        <div style={{
-          marginTop: '0.5rem',
-          fontSize: '1.5rem',
-          opacity: 0.8
-        }}>
-          →
-        </div>
-      </div>
-    </div>
-    </>
+    <button
+      type="button"
+      className="explore-cta-inline"
+      onClick={handleClick}
+      aria-label={`${text} — ${t('join')}`}
+    >
+      <span className="explore-cta-inline__icon" aria-hidden>
+        {icon}
+      </span>
+      <span className="explore-cta-inline__text">{text}</span>
+      <span className="explore-cta-inline__chev" aria-hidden>
+        →
+      </span>
+    </button>
   );
 });
 
 CTACard.displayName = 'CTACard';
 
 const STYLES = `
+  .explore-section-header {
+    border-bottom: 2px solid var(--ex-accent);
+    padding-bottom: 12px;
+  }
+  .explore-cta-inline {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--ex-border-strong);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: var(--ex-shadow);
+    color: #f4f4f5;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .explore-cta-inline:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+  .explore-cta-inline__icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .explore-cta-inline__text {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.35;
+  }
+  .explore-cta-inline__chev {
+    flex-shrink: 0;
+    opacity: 0.65;
+    font-size: 1rem;
+  }
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -549,11 +493,17 @@ const STYLES = `
     }
   }
   .explore-container { 
+    --ex-surface: #0f1218;
+    --ex-elevated: #161a22;
+    --ex-border: rgba(255, 255, 255, 0.08);
+    --ex-border-strong: rgba(255, 255, 255, 0.1);
+    --ex-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+    --ex-accent: rgba(41, 127, 150, 0.5);
     --explore-bottom-space: max(104px, calc(env(safe-area-inset-bottom, 0px) + 88px));
     min-height: 100vh; 
     min-height: 100dvh;
     /* IMPORTANT: This screen is styled for a dark UI (cards/text assume dark background). */
-    background: #0b0d10; 
+    background: var(--ex-surface); 
     color: ${colors.gray[50]}; 
     width: 100%;
     max-width: 100vw;
@@ -608,11 +558,11 @@ const STYLES = `
     will-change: auto;
   }
   .panel { 
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--ex-border-strong, rgba(255, 255, 255, 0.1));
     border-radius: 20px;
     padding: ${spacing[5]};
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--ex-shadow, 0 4px 20px rgba(0, 0, 0, 0.22));
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
@@ -622,16 +572,6 @@ const STYLES = `
     will-change: auto;
     backfaceVisibility: hidden;
     -webkit-backfaceVisibility: hidden;
-  }
-  .panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #f093fb, #f5576c, #FFD166);
-    opacity: 0.9;
   }
   .section-container {
     margin-bottom: 0;
@@ -666,25 +606,26 @@ const STYLES = `
     width: 46px;
     height: 46px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.34);
-    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.22), rgba(255,255,255,0.06) 35%), linear-gradient(135deg, rgba(41,127,150,0.38) 0%, rgba(235,55,127,0.26) 100%);
+    border: 1px solid var(--ex-border-strong, rgba(255,255,255,0.1));
+    background: rgba(255, 255, 255, 0.06);
     color: #fff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease;
-    box-shadow: 0 10px 24px rgba(0,0,0,.34), 0 0 0 1px rgba(255,255,255,.08) inset, 0 0 18px rgba(125, 96, 255, .22);
+    transition: transform .16s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+    box-shadow: var(--ex-shadow, 0 4px 20px rgba(0, 0, 0, 0.22));
     z-index: 15;
     -webkit-appearance: none;
     appearance: none;
     -webkit-tap-highlight-color: transparent;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
   }
   .filters-hero-trigger:hover {
     transform: translateY(-1px);
-    border-color: rgba(255,255,255,0.48);
-    box-shadow: 0 14px 28px rgba(0,0,0,.38), 0 0 0 1px rgba(255,255,255,.1) inset, 0 0 24px rgba(125, 96, 255, .28);
+    border-color: rgba(255,255,255,0.16);
+    background: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 6px 22px rgba(0,0,0,.28);
   }
   .filters-hero-trigger:active {
     transform: translateY(0);
@@ -810,20 +751,7 @@ const STYLES = `
   .filters-panel.is-collapsed {
     display: none;
   }
-  .filters-panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    max-width: 280px;
-    height: 3px;
-    border-radius: 0 0 999px 999px;
-    background: linear-gradient(90deg, transparent, rgba(41, 127, 150, .6), transparent);
-    opacity: .9;
-  }
-  /* Filters card (barra principal) — diseño contenedor oscuro con borde claro */
+  /* Filters card (barra principal) — superficie elevada unificada */
   .filters-card {
     width: 100%;
     max-width: 680px;
@@ -831,9 +759,9 @@ const STYLES = `
     margin-right: auto;
     padding: 16px 14px 14px;
     border-radius: 20px;
-    background: linear-gradient(180deg, #1c1f28 0%, #14171e 100%);
-    border: 1px solid rgba(255,255,255,.12);
-    box-shadow: 0 0 0 1px rgba(0,0,0,.2) inset, 0 4px 16px rgba(0,0,0,.3);
+    background: var(--ex-elevated, #161a22);
+    border: 1px solid var(--ex-border, rgba(255,255,255,0.08));
+    box-shadow: var(--ex-shadow, 0 4px 20px rgba(0, 0, 0, 0.22));
     color: #fff;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
     min-width: 0;
@@ -924,17 +852,6 @@ const STYLES = `
       padding: 10px 12px !important;
       font-size: 13px !important;
     }
-  }
-  .filters-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
-    opacity: .9;
-    border-radius: 20px 20px 0 0;
   }
   .filters-header {
     display: flex;
@@ -2399,10 +2316,10 @@ function FiltersLayout({
           maxHeight: `calc(100vh - ${topOffset} - 24px)`,
           display: 'flex',
           flexDirection: 'column',
-          background: 'linear-gradient(180deg, #1c1f28 0%, #14171e 100%)',
+          background: '#161a22',
           borderRadius: 18,
-          border: '1px solid rgba(255,255,255,.12)',
-          boxShadow: '0 16px 48px rgba(0,0,0,.5)',
+          border: '1px solid rgba(255,255,255,.08)',
+          boxShadow: '0 8px 28px rgba(0,0,0,.32)',
           overflow: 'hidden',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -2616,36 +2533,6 @@ export default function ExploreHomeScreen() {
     };
   }, [openFilterDropdown]);
 
-  // Navegación entre secciones (solo móvil)
-  const scrollToSection = React.useCallback((direction: 'up' | 'down') => {
-    const sections = Array.from(document.querySelectorAll<HTMLElement>('.section-container'));
-    if (sections.length === 0) return;
-
-    // Determinar sección "actual" usando el scroll real (no el centro),
-    // para que "up" no caiga en la misma sección.
-    const headerOffset = 110; // un poco más que el header fijo
-    const y = window.scrollY + headerOffset + 1;
-
-    const tops = sections.map((el) => el.getBoundingClientRect().top + window.scrollY);
-    let currentIndex = 0;
-    for (let i = 0; i < tops.length; i++) {
-      if (tops[i] <= y) currentIndex = i;
-      else break;
-    }
-
-    const nextIndex =
-      direction === 'down'
-        ? Math.min(sections.length - 1, currentIndex + 1)
-        : Math.max(0, currentIndex - 1);
-
-    const target = sections[nextIndex];
-    if (!target) return;
-
-    const targetTop = target.getBoundingClientRect().top + window.scrollY;
-    const offsetPosition = targetTop - headerOffset;
-    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-  }, []);
-
   const { data: allTags } = useTags();
   const rhythmContext = React.useMemo(() => mapExploreTypeToContext(filters.type), [filters.type]);
   const zoneContext = React.useMemo(() => mapExploreTypeToZoneContext(filters.type), [filters.type]);
@@ -2750,9 +2637,6 @@ export default function ExploreHomeScreen() {
     mark("first_screen_mount");
     mark("data_fetch_start", false);
   }, []);
-
-  const shouldShowSectionNav =
-    typeof window !== 'undefined' ? window.innerWidth < 769 : isMobile;
 
   const computePresetRange = React.useCallback((preset: DatePreset) => {
     const todayCDMX = getTodayCDMX();
@@ -3388,7 +3272,7 @@ export default function ExploreHomeScreen() {
             borderRadius: 16,
             padding: 0,
             overflow: "hidden",
-            boxShadow: "none",
+            boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
             height: "100%",
           }}
         >
@@ -3419,16 +3303,8 @@ export default function ExploreHomeScreen() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05, duration: 0.3 }}
-            whileHover={{ y: -4, scale: 1.02 }}
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 16,
-              padding: 0,
-              overflow: "hidden",
-              boxShadow: "none",
-              height: "100%",
-            }}
+            whileHover={{ y: -2 }}
+            style={{ height: "100%", display: "flex", alignItems: "stretch" }}
           >
             <CTACard text={t("cta_classes")} sectionType="clases" idx={idx} />
           </motion.div>
@@ -3445,7 +3321,7 @@ export default function ExploreHomeScreen() {
             borderRadius: 16,
             padding: 0,
             overflow: "hidden",
-            boxShadow: "none",
+            boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
             height: "100%",
           }}
         >
@@ -3465,16 +3341,8 @@ export default function ExploreHomeScreen() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05, duration: 0.3 }}
-            whileHover={{ y: -4, scale: 1.02 }}
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 16,
-              padding: 0,
-              overflow: "hidden",
-              boxShadow: "none",
-              height: "100%",
-            }}
+            whileHover={{ y: -2 }}
+            style={{ height: "100%", display: "flex", alignItems: "stretch" }}
           >
             <CTACard text={t("cta_teachers")} sectionType="maestros" idx={idx} />
           </motion.div>
@@ -3490,7 +3358,7 @@ export default function ExploreHomeScreen() {
             borderRadius: 16,
             padding: 0,
             overflow: "hidden",
-            boxShadow: "none",
+            boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
             height: "100%",
           }}
         >
@@ -3512,7 +3380,7 @@ export default function ExploreHomeScreen() {
           borderRadius: 16,
           padding: 0,
           overflow: "hidden",
-          boxShadow: "none",
+          boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
           height: "100%",
         }}
       >
@@ -3535,16 +3403,8 @@ export default function ExploreHomeScreen() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05, duration: 0.3 }}
-            whileHover={{ y: -4, scale: 1.02 }}
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 16,
-              padding: 0,
-              overflow: "hidden",
-              boxShadow: "none",
-              height: "100%",
-            }}
+            whileHover={{ y: -2 }}
+            style={{ height: "100%", display: "flex", alignItems: "stretch" }}
           >
             <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
           </motion.div>
@@ -3560,7 +3420,7 @@ export default function ExploreHomeScreen() {
             borderRadius: 16,
             padding: 0,
             overflow: "hidden",
-            boxShadow: "none",
+            boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
             height: "100%",
           }}
         >
@@ -3575,17 +3435,7 @@ export default function ExploreHomeScreen() {
     (item: any, idx: number) => {
       if (item?.__isCTA) {
         return (
-          <div
-            key="cta-marcas"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 16,
-              padding: 0,
-              overflow: "hidden",
-              boxShadow: "none",
-            }}
-          >
+          <div key="cta-marcas" style={{ display: "flex", alignItems: "stretch" }}>
             <CTACard text={t("cta_brands")} sectionType="marcas" idx={idx} />
           </div>
         );
@@ -3605,7 +3455,7 @@ export default function ExploreHomeScreen() {
                 borderRadius: 16,
                 padding: 0,
                 overflow: "hidden",
-                boxShadow: "none",
+                boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
               }}
             >
               <BrandCard item={item} />
@@ -3626,7 +3476,7 @@ export default function ExploreHomeScreen() {
             borderRadius: 16,
             padding: 0,
             overflow: "hidden",
-            boxShadow: "none",
+            boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
           }}
         >
           <BrandCard item={item} />
@@ -4808,11 +4658,11 @@ export default function ExploreHomeScreen() {
                     width: panelWidth,
                     maxWidth: 'calc(100vw - 24px)',
                     boxSizing: 'border-box',
-                    background: 'linear-gradient(180deg, #161b24 0%, #0f1218 100%)',
-                    border: '1px solid rgba(41, 127, 150, 0.3)',
+                    background: '#161a22',
+                    border: '1px solid rgba(255,255,255,0.1)',
                     borderRadius: 16,
                     padding: '12px 10px',
-                    boxShadow: '0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.05) inset',
+                    boxShadow: '0 8px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05) inset',
                     top: rect.bottom + 8,
                     left,
                   }}
@@ -5060,96 +4910,12 @@ export default function ExploreHomeScreen() {
               }
             >
               <>
-              <div
-                className="explore-fechas-view-toggle-row"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  width: '100%',
-                  marginTop: -4,
-                  marginBottom: 14,
-                  paddingLeft: 2,
-                  paddingRight: 2,
-                }}
-              >
-                <div
-                  role="group"
-                  aria-label={t('explore_fechas_view_group') || 'Vista de sociales'}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 0,
-                    borderRadius: 999,
-                    border: '1px solid rgba(255,255,255,0.22)',
-                    background: 'rgba(0,0,0,0.2)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <button
-                    type="button"
-                    aria-pressed={fechasViewMode === 'carousel'}
-                    onClick={() => setFechasViewMode('carousel')}
-                    title={t('explore_fechas_view_cards') || 'Tarjetas'}
-                    aria-label={t('explore_fechas_view_cards') || 'Vista en tarjetas'}
-                    style={{
-                      border: 'none',
-                      background: fechasViewMode === 'carousel' ? 'rgba(255,255,255,0.18)' : 'transparent',
-                      color: '#fff',
-                      padding: '8px 14px',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      lineHeight: 0,
-                    }}
-                  >
-                    <LayoutGrid size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={fechasViewMode === 'cartelera'}
-                    onClick={() => setFechasViewMode('cartelera')}
-                    title={t('explore_fechas_view_cartelera') || 'Cartelera'}
-                    aria-label={t('explore_fechas_view_cartelera') || 'Vista cartelera'}
-                    style={{
-                      border: 'none',
-                      borderLeft: '1px solid rgba(255,255,255,0.12)',
-                      background: fechasViewMode === 'cartelera' ? 'rgba(255,255,255,0.18)' : 'transparent',
-                      color: '#fff',
-                      padding: '8px 14px',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      lineHeight: 0,
-                    }}
-                  >
-                    <Images size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={fechasViewMode === 'list'}
-                    onClick={() => setFechasViewMode('list')}
-                    title={t('explore_fechas_view_list') || 'Lista'}
-                    aria-label={t('explore_fechas_view_list') || 'Vista en lista'}
-                    style={{
-                      border: 'none',
-                      borderLeft: '1px solid rgba(255,255,255,0.12)',
-                      background: fechasViewMode === 'list' ? 'rgba(255,255,255,0.18)' : 'transparent',
-                      color: '#fff',
-                      padding: '8px 14px',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      lineHeight: 0,
-                    }}
-                  >
-                    <List size={18} />
-                  </button>
-                </div>
-              </div>
+              <ExploreSectionViewToggle
+                value={fechasViewMode}
+                onChange={setFechasViewMode}
+                likeFechas
+                groupLabel={t('explore_fechas_view_group') || 'Vista de sociales'}
+              />
               {fechasTimedOut ? (
                 <InlineQueryError
                   title="La carga está tardando demasiado"
@@ -5259,16 +5025,7 @@ export default function ExploreHomeScreen() {
                           if (item?.__isCTA) {
                             return (
                               <div key="cta-clases" role="listitem" style={{ width: "100%" }}>
-                                <div
-                                  style={{
-                                    background: "rgba(255,255,255,0.04)",
-                                    border: "1px solid rgba(255,255,255,0.08)",
-                                    borderRadius: 14,
-                                    overflow: "hidden",
-                                  }}
-                                >
                                   <CTACard text={t("cta_classes")} sectionType="clases" idx={idx} />
-                                </div>
                               </div>
                             );
                           }
@@ -5286,16 +5043,7 @@ export default function ExploreHomeScreen() {
                           if (item?.__isCTA) {
                             return (
                               <div key="cta-clases" className="explore-fechas-cartelera__load-more" role="listitem">
-                                <div
-                                  style={{
-                                    background: "rgba(255,255,255,0.04)",
-                                    border: "1px solid rgba(255,255,255,0.08)",
-                                    borderRadius: 14,
-                                    overflow: "hidden",
-                                  }}
-                                >
                                   <CTACard text={t("cta_classes")} sectionType="clases" idx={idx} />
-                                </div>
                               </div>
                             );
                           }
@@ -5399,16 +5147,7 @@ export default function ExploreHomeScreen() {
                           if (item?.__isCTA) {
                             return (
                               <div key="cta-maestros" role="listitem" style={{ width: "100%" }}>
-                                <div
-                                  style={{
-                                    background: "rgba(255,255,255,0.04)",
-                                    border: "1px solid rgba(255,255,255,0.08)",
-                                    borderRadius: 14,
-                                    overflow: "hidden",
-                                  }}
-                                >
                                   <CTACard text={t("cta_teachers")} sectionType="maestros" idx={idx} />
-                                </div>
                               </div>
                             );
                           }
@@ -5430,16 +5169,7 @@ export default function ExploreHomeScreen() {
                           if (item?.__isCTA) {
                             return (
                               <div key="cta-maestros" className="explore-fechas-cartelera__load-more" role="listitem">
-                                <div
-                                  style={{
-                                    background: "rgba(255,255,255,0.04)",
-                                    border: "1px solid rgba(255,255,255,0.08)",
-                                    borderRadius: 14,
-                                    overflow: "hidden",
-                                  }}
-                                >
                                   <CTACard text={t("cta_teachers")} sectionType="maestros" idx={idx} />
-                                </div>
                               </div>
                             );
                           }
@@ -5587,16 +5317,7 @@ export default function ExploreHomeScreen() {
                         if (item?.__isCTA) {
                           return (
                             <div key="cta-organizadores" role="listitem" style={{ width: "100%" }}>
-                              <div
-                                style={{
-                                  background: "rgba(255,255,255,0.04)",
-                                  border: "1px solid rgba(255,255,255,0.08)",
-                                  borderRadius: 14,
-                                  overflow: "hidden",
-                                }}
-                              >
-                                <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
-                              </div>
+                                  <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
                             </div>
                           );
                         }
@@ -5618,16 +5339,7 @@ export default function ExploreHomeScreen() {
                         if (item?.__isCTA) {
                           return (
                             <div key="cta-organizadores" className="explore-fechas-cartelera__load-more" role="listitem">
-                              <div
-                                style={{
-                                  background: "rgba(255,255,255,0.04)",
-                                  border: "1px solid rgba(255,255,255,0.08)",
-                                  borderRadius: 14,
-                                  overflow: "hidden",
-                                }}
-                              >
-                                <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
-                              </div>
+                                  <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
                             </div>
                           );
                         }

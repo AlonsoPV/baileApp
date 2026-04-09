@@ -825,6 +825,186 @@ export default function ClassPublicScreen() {
     }
   };
 
+  function renderHeroMapsCalendar() {
+    if (!mapsHref && !selectedClass) return null;
+    return (
+      <div className="class-actions-row">
+        {/* Abrir Maps */}
+        {mapsHref && (
+          <motion.a
+            href={mapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.97 }}
+            className="class-hero__cta class-hero__cta--maps"
+            aria-label={t('view_on_maps', 'Abrir en Google Maps')}
+            title={t('view_on_maps', 'Abrir en Google Maps')}
+          >
+            <MapPin size={18} strokeWidth={2.25} aria-hidden />
+            <span>Maps</span>
+          </motion.a>
+        )}
+
+        {/* Add to calendar (existente) */}
+        {selectedClass && (
+          <motion.div
+            className="class-hero__action-slot class-hero__action-slot--calendar class-hero__cta class-hero__cta--calendar"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <AddToCalendarWithStats
+              eventId={classStableId || idNum}
+              classId={classStableId || undefined}
+              academyId={!isTeacher ? profile?.id : undefined}
+              teacherId={isTeacher ? profile?.id : undefined}
+              roleBaile={userProfile?.rol_baile || null}
+              zonaTagId={selectedClass?.ubicacionJson?.zona_tag_id || profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
+              title={classTitle}
+              description={`Clase de ${classTitle} con ${creatorName}`}
+              location={locationLabel}
+              fecha={classSessionDateYmd}
+              diaSemana={(() => {
+                if (diaParam !== null) {
+                  const diaNum = Number(diaParam);
+                  if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
+                }
+                return selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null;
+              })()}
+              diasSemana={null}
+              start={(() => {
+                try {
+                  const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
+                    if (!timeStr || typeof timeStr !== 'string') return defaultTime;
+                    const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
+                    if (timeMatch) {
+                      const hours = parseInt(timeMatch[1], 10);
+                      const minutes = parseInt(timeMatch[2], 10);
+                      if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                      }
+                    }
+                    return defaultTime;
+                  };
+                  if (selectedClass.fecha) {
+                    const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                    const hora = normalizeTime(selectedClass.inicio, '20:00');
+                    const [year, month, day] = fechaStr.split('-').map(Number);
+                    const [hour, minute] = hora.split(':').map(Number);
+                    if (!isNaN(year) && !isNaN(month) && !isNaN(day) && !isNaN(hour) && !isNaN(minute)) {
+                      return new Date(year, month - 1, day, hour, minute, 0, 0);
+                    }
+                    return new Date(`${fechaStr}T${hora}:00`);
+                  }
+                  const diaParaCalcular = (() => {
+                    if (diaParam !== null) {
+                      const diaNum = Number(diaParam);
+                      if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
+                    }
+                    if (selectedClass?.diaSemana !== null && selectedClass?.diaSemana !== undefined && typeof selectedClass.diaSemana === 'number') return selectedClass.diaSemana;
+                    if (selectedClass?.dia_semana !== null && selectedClass?.dia_semana !== undefined && typeof selectedClass.dia_semana === 'number') return selectedClass.dia_semana;
+                    if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) && selectedClass.diasSemana.length > 0) {
+                      const dayMap: Record<string, number> = {
+                        domingo: 0, dom: 0,
+                        lunes: 1, lun: 1,
+                        martes: 2, mar: 2,
+                        miércoles: 3, miercoles: 3, mié: 3, mie: 3,
+                        jueves: 4, jue: 4,
+                        viernes: 5, vie: 5,
+                        sábado: 6, sabado: 6, sáb: 6, sab: 6,
+                      };
+                      const firstDay = selectedClass.diasSemana[0];
+                      if (typeof firstDay === 'number') return firstDay;
+                      if (typeof firstDay === 'string') return dayMap[firstDay.toLowerCase().trim()] ?? null;
+                    }
+                    return null;
+                  })();
+                  if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
+                    const hora = normalizeTime(selectedClass.inicio, '20:00');
+                    return calculateNextDateWithTime(diaParaCalcular, hora);
+                  }
+                  const now = new Date();
+                  const hora = normalizeTime(selectedClass.inicio, '20:00');
+                  const [hour, minute] = hora.split(':').map(Number);
+                  now.setHours(hour, minute, 0, 0);
+                  return now;
+                } catch {
+                  return new Date();
+                }
+              })()}
+              end={(() => {
+                try {
+                  const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
+                    if (!timeStr || typeof timeStr !== 'string') return defaultTime;
+                    const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
+                    if (timeMatch) {
+                      const hours = parseInt(timeMatch[1], 10);
+                      const minutes = parseInt(timeMatch[2], 10);
+                      if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                      }
+                    }
+                    return defaultTime;
+                  };
+                  if (selectedClass.fecha) {
+                    const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
+                    const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
+                    const [year, month, day] = fechaStr.split('-').map(Number);
+                    const [hour, minute] = hora.split(':').map(Number);
+                    if (!isNaN(year) && !isNaN(month) && !isNaN(day) && !isNaN(hour) && !isNaN(minute)) {
+                      return new Date(year, month - 1, day, hour, minute, 0, 0);
+                    }
+                    return new Date(`${fechaStr}T${hora}:00`);
+                  }
+                  const diaParaCalcular = (() => {
+                    if (diaParam !== null) {
+                      const diaNum = Number(diaParam);
+                      if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
+                    }
+                    if (selectedClass?.diaSemana !== null && selectedClass?.diaSemana !== undefined && typeof selectedClass.diaSemana === 'number') return selectedClass.diaSemana;
+                    if (selectedClass?.dia_semana !== null && selectedClass?.dia_semana !== undefined && typeof selectedClass.dia_semana === 'number') return selectedClass.dia_semana;
+                    if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) && selectedClass.diasSemana.length > 0) {
+                      const dayMap: Record<string, number> = {
+                        domingo: 0, dom: 0,
+                        lunes: 1, lun: 1,
+                        martes: 2, mar: 2,
+                        miércoles: 3, miercoles: 3, mié: 3, mie: 3,
+                        jueves: 4, jue: 4,
+                        viernes: 5, vie: 5,
+                        sábado: 6, sabado: 6, sáb: 6, sab: 6,
+                      };
+                      const firstDay = selectedClass.diasSemana[0];
+                      if (typeof firstDay === 'number') return firstDay;
+                      if (typeof firstDay === 'string') return dayMap[firstDay.toLowerCase().trim()] ?? null;
+                    }
+                    return null;
+                  })();
+                  if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
+                    const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
+                    const startDate = calculateNextDateWithTime(diaParaCalcular, normalizeTime(selectedClass.inicio, '20:00'));
+                    const endDate = new Date(startDate);
+                    const [h, m] = hora.split(':').map(Number);
+                    endDate.setHours(h || startDate.getHours() + 2, m || 0, 0, 0);
+                    if (endDate.getTime() <= startDate.getTime()) endDate.setHours(startDate.getHours() + 2);
+                    return endDate;
+                  }
+                  const end = new Date();
+                  end.setHours(end.getHours() + 2);
+                  return end;
+                } catch {
+                  const end = new Date();
+                  end.setHours(end.getHours() + 2);
+                  return end;
+                }
+              })()}
+              showAsIcon={false}
+            />
+          </motion.div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       <SeoHead
@@ -1283,102 +1463,253 @@ export default function ClassPublicScreen() {
         .class-hero {
           position: relative;
           overflow: hidden;
-          border-radius: 28px;
-          border: 1px solid rgba(255,255,255,0.08);
-          background: linear-gradient(180deg, #1C2B3D 0%, #18273A 100%);
-          box-shadow: 0 22px 60px rgba(0,0,0,0.55);
-          min-height: clamp(280px, 38vw, 360px);
-          margin-bottom: 16px;
-          --class-hero-avatar-size: clamp(100px, 18vw, 168px);
+          border-radius: 24px;
+          border: 1px solid rgba(255,255,255,0.07);
+          background:
+            radial-gradient(120% 80% at 50% -20%, rgba(122,108,255,0.14), transparent 52%),
+            linear-gradient(165deg, #151c28 0%, #10151f 48%, #0c1018 100%);
+          box-shadow:
+            0 1px 0 rgba(255,255,255,0.06) inset,
+            0 24px 48px rgba(0,0,0,0.45),
+            0 0 0 1px rgba(0,0,0,0.35);
+          min-height: clamp(260px, 42vw, 340px);
+          margin-bottom: 20px;
+          --hero-avatar: clamp(96px, 26vw, 132px);
           display: flex;
           justify-content: center;
-          align-items: center;
+          align-items: stretch;
         }
         .class-hero__bg {
           position: absolute;
           inset: 0;
           background-size: cover;
           background-position: center;
-          filter: saturate(0.92) contrast(1.05);
-          opacity: 0.18;
-          transform: scale(1.02);
+          filter: saturate(0.88) contrast(1.04);
+          opacity: 0.12;
+          transform: scale(1.03);
         }
         .class-hero__overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(180deg, rgba(24,39,58,0.18) 0%, rgba(24,39,58,0.46) 55%, rgba(10,10,15,0.72) 100%);
-          backdrop-filter: blur(10px);
+          background: linear-gradient(180deg, rgba(12,16,24,0.35) 0%, rgba(10,12,18,0.82) 100%);
+          backdrop-filter: blur(14px);
         }
         .class-hero__accent {
           position: absolute;
           left: 0;
           right: 0;
           bottom: 0;
-          height: 4px;
-          background: linear-gradient(90deg, #5B6CFF 0%, #7A6CFF 45%, #B15CFF 100%);
-          opacity: 0.95;
+          height: 3px;
+          background: linear-gradient(90deg, rgba(91,108,255,0.9) 0%, rgba(177,92,255,0.85) 100%);
+          opacity: 0.85;
+        }
+        .class-hero__ambient {
+          pointer-events: none;
+          position: absolute;
+          z-index: 0;
+          inset: -40% -20% auto -20%;
+          height: 70%;
+          background: radial-gradient(ellipse at 50% 0%, rgba(122,108,255,0.16), transparent 62%);
+          opacity: 0.9;
         }
         .class-hero__inner {
           position: relative;
           z-index: 1;
           width: 100%;
           min-height: 100%;
-          padding: 18px;
+          padding: 20px 20px 22px;
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          gap: 10px;
+          gap: 20px;
           box-sizing: border-box;
-          flex-shrink: 0;
         }
-        .class-hero__top {
-          display: flex;
-          justify-content: flex-end;
-          align-items: center;
-          gap: 12px;
-          flex-shrink: 0;
-          margin-top: 12px;
-        }
-        .class-hero__top .class-info-action {
-          min-width: 44px;
-          min-height: 44px;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.85);
-          background: rgba(122,108,255,0.10);
-          color: rgba(255,255,255,0.98);
-        }
-        .class-hero__top .class-info-action:hover {
-          border-color: rgba(255,255,255,1);
-          background: rgba(122,108,255,0.18);
-        }
-        .class-hero__main {
+        .class-hero__topbar {
+          position: relative;
+          z-index: 1;
           display: flex;
           flex-direction: row;
-          justify-content: space-between;
-          gap: 20px;
           align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          min-height: 40px;
+        }
+        .class-hero__eyebrow {
+          font-size: 0.7rem;
+          font-weight: 800;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.38);
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .class-hero__quick-actions {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .class-hero__icon-btn {
+          width: 44px;
+          height: 44px;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.04);
+          color: rgba(255,255,255,0.88);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition:
+            background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+            border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+            color 0.2s ease,
+            box-shadow 0.2s ease,
+            transform 0.15s ease;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.22);
+        }
+        .class-hero__icon-btn:hover {
+          background: rgba(255,255,255,0.08);
+          border-color: rgba(255,255,255,0.16);
+          box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+        }
+        .class-hero__icon-btn:active {
+          transform: scale(0.96);
+        }
+        .class-hero__icon-btn:focus-visible {
+          outline: 2px solid rgba(122,108,255,0.65);
+          outline-offset: 2px;
+        }
+        .class-hero__icon-btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+        .class-hero__icon-btn--active {
+          color: #ff4d8d;
+          border-color: rgba(255,77,141,0.35);
+          background: rgba(255,77,141,0.08);
+        }
+        .class-hero__layout {
+          position: relative;
+          z-index: 1;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 16px 20px;
+          align-items: start;
+        }
+        .class-hero__copy {
           min-width: 0;
-          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
         .class-hero__title {
           margin: 0;
-          color: #fff;
-          font-weight: 900;
-          letter-spacing: -0.03em;
-          line-height: 1.06;
+          color: rgba(255,255,255,0.98);
+          font-weight: 800;
+          letter-spacing: -0.035em;
+          line-height: 1.12;
           font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          font-size: clamp(3rem, 4.2vw, 2.6rem);
-          min-width: 0;
+          font-size: clamp(1.35rem, 4.5vw, 1.85rem);
+          max-width: 22ch;
+          text-wrap: balance;
+        }
+        .class-hero__badges {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+        }
+        .class-hero__badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 11px;
+          border-radius: 999px;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.03em;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.05);
+          color: rgba(255,255,255,0.88);
+        }
+        .class-hero__badge--ritmo {
+          border-color: rgba(177,92,255,0.28);
+          background: linear-gradient(135deg, rgba(177,92,255,0.12), rgba(0,0,0,0.08));
+          color: rgba(245,240,255,0.95);
+        }
+        .class-hero__badge--nivel {
+          border-color: rgba(41,127,150,0.35);
+          background: linear-gradient(135deg, rgba(41,127,150,0.14), rgba(0,0,0,0.06));
+          color: rgba(220,245,250,0.95);
+        }
+        .class-hero__organizer {
+          margin: 0;
+          font-size: 0.9rem;
+          line-height: 1.45;
+          font-weight: 500;
+          color: rgba(255,255,255,0.45);
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .class-hero__organizer-prefix {
+          margin-right: 6px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+        }
+        .class-hero__organizer-name {
+          color: rgba(255,255,255,0.92);
+          font-weight: 700;
+          text-decoration: none;
+          border-bottom: 1px solid rgba(255,255,255,0.14);
+          transition: color 0.2s ease, border-color 0.2s ease;
+        }
+        .class-hero__organizer-name:hover {
+          color: #fff;
+          border-bottom-color: rgba(122,108,255,0.55);
+        }
+        .class-hero__visual {
+          flex-shrink: 0;
+        }
+        .class-hero__avatar-frame {
+          position: relative;
+          width: var(--hero-avatar);
+          height: var(--hero-avatar);
+        }
+        .class-hero__avatar-glow {
+          position: absolute;
+          inset: -8px;
+          border-radius: 28px;
+          background: radial-gradient(circle at 30% 25%, rgba(122,108,255,0.35), transparent 58%);
+          opacity: 0.55;
+          filter: blur(8px);
         }
         .class-hero__avatar {
-          width: var(--class-hero-avatar-size);
-          height: var(--class-hero-avatar-size);
-          border-radius: 999px;
-          border: 3px solid rgba(255,255,255,0.18);
-          background: rgba(255,255,255,0.07);
-          box-shadow: 0 18px 46px rgba(0,0,0,0.55);
+          position: relative;
+          display: block;
+          width: 100%;
+          height: 100%;
+          border-radius: 22px;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.05);
+          box-shadow:
+            0 12px 32px rgba(0,0,0,0.4),
+            0 0 0 1px rgba(0,0,0,0.35) inset;
           overflow: hidden;
-          justify-self: end;
+          text-decoration: none;
+          color: inherit;
+          cursor: pointer;
+          transition: border-color 0.2s ease, box-shadow 0.22s ease, transform 0.18s ease;
+        }
+        .class-hero__avatar:hover {
+          border-color: rgba(255,255,255,0.2);
+          box-shadow:
+            0 14px 36px rgba(0,0,0,0.45),
+            0 0 0 1px rgba(0,0,0,0.35) inset;
+        }
+        .class-hero__avatar:focus-visible {
+          outline: 2px solid rgba(122,108,255,0.55);
+          outline-offset: 2px;
+        }
+        .class-hero__avatar:active {
+          transform: scale(0.985);
         }
         .class-hero__avatar img {
           width: 100%;
@@ -1386,26 +1717,131 @@ export default function ClassPublicScreen() {
           object-fit: cover;
           display: block;
         }
-        .class-hero__creator {
-          margin: 0;
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: rgba(255,255,255,0.68);
-          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          flex-shrink: 0;
+        .class-hero__primary-actions {
+          position: relative;
+          z-index: 1;
+          margin-top: 2px;
         }
-        .class-hero__creator a {
-          color: rgba(255,255,255,0.86);
-          text-decoration: none;
+        .class-hero .class-actions-row {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          align-items: stretch;
+          gap: 10px;
+          width: 100%;
+        }
+        .class-hero .class-actions-row > a.class-hero__cta--maps {
+          flex: 1 1 0;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .class-hero .class-actions-row > .class-hero__action-slot {
+          flex: 1 1 0;
+          min-width: 0;
+          display: flex;
+          align-items: stretch;
+          justify-content: center;
+        }
+        .class-hero__cta {
+          border-radius: 16px;
+          font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           font-weight: 700;
-          border-bottom: 2px solid rgba(255,255,255,0.18);
+          font-size: 0.8125rem;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          transition:
+            background 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+            border-color 0.22s ease,
+            box-shadow 0.22s ease,
+            color 0.2s ease,
+            transform 0.18s ease;
         }
-        @media (max-width: 520px) {
-          .class-hero__main {
-            grid-template-columns: 1fr;
+        a.class-hero__cta--maps {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          min-height: 50px;
+          padding: 0 14px;
+          box-sizing: border-box;
+          text-decoration: none;
+          cursor: pointer;
+          color: rgba(255,255,255,0.88);
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.05);
+          box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+        }
+        a.class-hero__cta--maps:hover {
+          background: rgba(255,255,255,0.09);
+          border-color: rgba(255,255,255,0.18);
+          box-shadow: 0 14px 34px rgba(0,0,0,0.32);
+        }
+        a.class-hero__cta--maps:active {
+          transform: scale(0.98);
+        }
+        a.class-hero__cta--maps:focus-visible {
+          outline: 2px solid rgba(122,108,255,0.55);
+          outline-offset: 2px;
+        }
+        .class-hero .class-actions-row > .class-hero__action-slot--calendar > div {
+          width: 100% !important;
+          display: flex !important;
+          justify-content: stretch !important;
+          align-items: stretch !important;
+          min-height: 50px;
+        }
+        .class-hero .class-actions-row > .class-hero__action-slot--calendar button {
+          width: 100%;
+          min-height: 50px !important;
+          box-sizing: border-box;
+          border-radius: 16px !important;
+          font-weight: 800 !important;
+          letter-spacing: 0.03em !important;
+          text-transform: uppercase !important;
+          font-size: 0.75rem !important;
+          border: 1px solid rgba(122,108,255,0.45) !important;
+          background: linear-gradient(145deg, rgba(122,108,255,0.22), rgba(33,212,253,0.08)) !important;
+          box-shadow: 0 12px 32px rgba(122,108,255,0.18) !important;
+          transition: transform 0.18s ease, box-shadow 0.22s ease !important;
+        }
+        .class-hero .class-actions-row > .class-hero__action-slot--calendar button:hover {
+          box-shadow: 0 16px 36px rgba(122,108,255,0.28) !important;
+        }
+        @media (max-width: 560px) {
+          .class-hero__inner {
+            padding: 18px 16px 20px;
+            gap: 18px;
           }
-          .class-hero__avatar {
-            justify-self: start;
+          .class-hero__layout {
+            grid-template-columns: 1fr;
+            gap: 14px;
+          }
+          .class-hero__visual {
+            justify-self: center;
+            order: -1;
+          }
+          .class-hero__title {
+            max-width: none;
+            text-align: center;
+          }
+          .class-hero__badges {
+            justify-content: center;
+          }
+          .class-hero__organizer {
+            text-align: center;
+          }
+          .class-hero__topbar {
+            flex-wrap: wrap;
+          }
+          .class-hero__eyebrow {
+            width: 100%;
+            text-align: center;
+          }
+          .class-hero__quick-actions {
+            width: 100%;
+            justify-content: center;
           }
         }
         .class-chips-row {
@@ -1552,56 +1988,95 @@ export default function ClassPublicScreen() {
           <div className="class-hero__accent" aria-hidden />
 
           <div className="class-hero__inner">
-            {/* Fila 1: Nombre clase (col 1) | Imagen (col 2) */}
-            <div className="class-hero__main">
-              <h1 className="class-hero__title">{classTitle}</h1>
-              <div className="class-hero__avatar">
-                <img
-                  src={heroAvatarError ? SEO_LOGO_URL : avatarUri}
-                  alt={creatorName ? `${creatorName} avatar` : 'Avatar'}
-                  onError={() => setHeroAvatarError((prev) => (prev ? prev : true))}
-                />
+            <div className="class-hero__ambient" aria-hidden />
+            <header className="class-hero__topbar">
+              <span className="class-hero__eyebrow">{creatorTypeLabel}</span>
+              <div className="class-hero__quick-actions">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                  onClick={handleShare}
+                  className="class-hero__icon-btn"
+                  aria-label={t('share', 'Compartir')}
+                  title={t('share', 'Compartir')}
+                >
+                  <Share2 size={18} strokeWidth={2.25} aria-hidden />
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 20 }}
+                  onClick={onToggleFavorite}
+                  disabled={user ? togglingClass : false}
+                  className={`class-hero__icon-btn${classFavoriteActive ? ' class-hero__icon-btn--active' : ''}`}
+                  aria-label={classFavoriteActive ? t('remove_favorite', 'Quitar favorito') : t('add_favorite', 'Agregar favorito')}
+                  title={classFavoriteActive ? t('remove_favorite', 'Quitar favorito') : t('add_favorite', 'Agregar favorito')}
+                  style={{
+                    opacity: user && togglingClass ? 0.6 : 1,
+                    cursor: user && togglingClass ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {classFavoriteActive ? <Heart size={18} fill="currentColor" strokeWidth={2.25} aria-hidden /> : <Heart size={18} strokeWidth={2.25} aria-hidden />}
+                </motion.button>
+              </div>
+            </header>
+
+            <div className="class-hero__layout">
+              <div className="class-hero__copy">
+                <h1 className="class-hero__title">{classTitle}</h1>
+                {(ritmoPrincipalLabel || nivelLabel) && (
+                  <div className="class-hero__badges" role="list" aria-label={t('class_details', 'Detalle de la clase')}>
+                    {ritmoPrincipalLabel ? (
+                      <span className="class-hero__badge class-hero__badge--ritmo" role="listitem">
+                        <Music2 size={13} strokeWidth={2.5} aria-hidden />
+                        {ritmoPrincipalLabel}
+                      </span>
+                    ) : null}
+                    {nivelLabel ? (
+                      <span className="class-hero__badge class-hero__badge--nivel" role="listitem">
+                        {nivelLabel}
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+                <p className="class-hero__organizer">
+                  <span className="class-hero__organizer-prefix">{t('by', 'por')}</span>
+                  <Link className="class-hero__organizer-name" to={creatorLink}>
+                    {creatorName}
+                  </Link>
+                </p>
+              </div>
+              <div className="class-hero__visual">
+                <div className="class-hero__avatar-frame">
+                  <div className="class-hero__avatar-glow" aria-hidden />
+                  <Link
+                    to={creatorLink}
+                    className="class-hero__avatar"
+                    aria-label={
+                      creatorName
+                        ? `${t('view_profile', 'Ver perfil')}: ${creatorName}`
+                        : t('view_profile', 'Ver perfil')
+                    }
+                  >
+                    <img
+                      src={heroAvatarError ? SEO_LOGO_URL : avatarUri}
+                      alt=""
+                      onError={() => setHeroAvatarError((prev) => (prev ? prev : true))}
+                    />
+                  </Link>
+                </div>
               </div>
             </div>
 
-            {/* Fila 2: Academia o maestro */}
-            <p className="class-hero__creator">
-              {t('by', 'por')}{' '}
-              <Link to={creatorLink}>
-                {creatorName}
-              </Link>
-            </p>
-
-            {/* Botones centrados: Compartir | Favorito (corazón) */}
-            <div className="class-hero__top">
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleShare}
-                className="class-info-action"
-                aria-label={t('share', 'Compartir')}
-                title={t('share', 'Compartir')}
-              >
-                <Share2 size={20} aria-hidden />
-              </motion.button>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onToggleFavorite}
-                disabled={user ? togglingClass : false}
-                className="class-info-action"
-                aria-label={classFavoriteActive ? t('remove_favorite', 'Quitar favorito') : t('add_favorite', 'Agregar favorito')}
-                title={classFavoriteActive ? t('remove_favorite', 'Quitar favorito') : t('add_favorite', 'Agregar favorito')}
-                style={{
-                  opacity: user && togglingClass ? 0.75 : 1,
-                  cursor: user && togglingClass ? 'not-allowed' : 'pointer',
-                  color: classFavoriteActive ? '#F42F7E' : undefined,
-                }}
-              >
-                {classFavoriteActive ? <Heart size={20} fill="currentColor" aria-hidden /> : <Heart size={20} aria-hidden />}
-              </motion.button>
+            <div
+              className="class-hero__primary-actions"
+              role="group"
+              aria-label={t('class_actions', 'Acciones de la clase')}
+            >
+              {renderHeroMapsCalendar()}
             </div>
           </div>
         </motion.section>
@@ -1730,39 +2205,6 @@ export default function ClassPublicScreen() {
         {/* Acciones existentes (reubicadas, misma lógica) */}
         <section className="class-section" aria-label={t('actions', 'Acciones')}>
           <div className="class-actions-row">
-            {/* Abrir Maps */}
-            {mapsHref && (
-              <motion.a
-                href={mapsHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.03, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className="btn-maps-inline"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '.55rem',
-                  padding: '.6rem 1.1rem',
-                  borderRadius: 999,
-                  border: '1px solid rgba(240,147,251,.4)',
-                  color: '#f7d9ff',
-                  background: 'radial-gradient(120% 120% at 0% 0%, rgba(240,147,251,.18), rgba(240,147,251,.08))',
-                  boxShadow: '0 6px 18px rgba(240,147,251,.20)',
-                  fontWeight: 800,
-                  fontSize: '.9rem',
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                }}
-              >
-                <span>📍</span>
-                <span>{t('view_on_maps')}</span>
-                <span aria-hidden style={{ fontSize: '.85rem' }}>↗</span>
-              </motion.a>
-            )}
-
             {/* WhatsApp (existente) */}
             {user && whatsappNumber && (
               <motion.a
@@ -1829,158 +2271,6 @@ export default function ClassPublicScreen() {
                       )}`}
                 </span>
               </motion.button>
-            )}
-
-            {/* Add to calendar (existente) */}
-            {selectedClass && (
-              <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
-                <AddToCalendarWithStats
-                  eventId={classStableId || idNum}
-                  classId={classStableId || undefined}
-                  academyId={!isTeacher ? profile?.id : undefined}
-                  teacherId={isTeacher ? profile?.id : undefined}
-                  roleBaile={userProfile?.rol_baile || null}
-                  zonaTagId={selectedClass?.ubicacionJson?.zona_tag_id || profile?.zonas?.[0] || (userProfile?.zonas?.[0] || null)}
-                  title={classTitle}
-                  description={`Clase de ${classTitle} con ${creatorName}`}
-                  location={locationLabel}
-                  fecha={classSessionDateYmd}
-                  diaSemana={(() => {
-                    if (diaParam !== null) {
-                      const diaNum = Number(diaParam);
-                      if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
-                    }
-                    return selectedClass?.diaSemana ?? selectedClass?.dia_semana ?? null;
-                  })()}
-                  diasSemana={null}
-                  start={(() => {
-                    try {
-                      const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
-                        if (!timeStr || typeof timeStr !== 'string') return defaultTime;
-                        const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
-                        if (timeMatch) {
-                          const hours = parseInt(timeMatch[1], 10);
-                          const minutes = parseInt(timeMatch[2], 10);
-                          if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-                            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                          }
-                        }
-                        return defaultTime;
-                      };
-                      if (selectedClass.fecha) {
-                        const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
-                        const hora = normalizeTime(selectedClass.inicio, '20:00');
-                        const [year, month, day] = fechaStr.split('-').map(Number);
-                        const [hour, minute] = hora.split(':').map(Number);
-                        if (!isNaN(year) && !isNaN(month) && !isNaN(day) && !isNaN(hour) && !isNaN(minute)) {
-                          return new Date(year, month - 1, day, hour, minute, 0, 0);
-                        }
-                        return new Date(`${fechaStr}T${hora}:00`);
-                      }
-                      const diaParaCalcular = (() => {
-                        if (diaParam !== null) {
-                          const diaNum = Number(diaParam);
-                          if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
-                        }
-                        if (selectedClass?.diaSemana !== null && selectedClass?.diaSemana !== undefined && typeof selectedClass.diaSemana === 'number') return selectedClass.diaSemana;
-                        if (selectedClass?.dia_semana !== null && selectedClass?.dia_semana !== undefined && typeof selectedClass.dia_semana === 'number') return selectedClass.dia_semana;
-                        if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) && selectedClass.diasSemana.length > 0) {
-                          const dayMap: Record<string, number> = {
-                            domingo: 0, dom: 0,
-                            lunes: 1, lun: 1,
-                            martes: 2, mar: 2,
-                            miércoles: 3, miercoles: 3, mié: 3, mie: 3,
-                            jueves: 4, jue: 4,
-                            viernes: 5, vie: 5,
-                            sábado: 6, sabado: 6, sáb: 6, sab: 6,
-                          };
-                          const firstDay = selectedClass.diasSemana[0];
-                          if (typeof firstDay === 'number') return firstDay;
-                          if (typeof firstDay === 'string') return dayMap[firstDay.toLowerCase().trim()] ?? null;
-                        }
-                        return null;
-                      })();
-                      if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
-                        const hora = normalizeTime(selectedClass.inicio, '20:00');
-                        return calculateNextDateWithTime(diaParaCalcular, hora);
-                      }
-                      const now = new Date();
-                      const hora = normalizeTime(selectedClass.inicio, '20:00');
-                      const [hour, minute] = hora.split(':').map(Number);
-                      now.setHours(hour, minute, 0, 0);
-                      return now;
-                    } catch {
-                      return new Date();
-                    }
-                  })()}
-                  end={(() => {
-                    try {
-                      const normalizeTime = (timeStr: string | null | undefined, defaultTime: string): string => {
-                        if (!timeStr || typeof timeStr !== 'string') return defaultTime;
-                        const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})/);
-                        if (timeMatch) {
-                          const hours = parseInt(timeMatch[1], 10);
-                          const minutes = parseInt(timeMatch[2], 10);
-                          if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-                            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                          }
-                        }
-                        return defaultTime;
-                      };
-                      if (selectedClass.fecha) {
-                        const fechaStr = selectedClass.fecha.includes('T') ? selectedClass.fecha.split('T')[0] : selectedClass.fecha;
-                        const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
-                        const [year, month, day] = fechaStr.split('-').map(Number);
-                        const [hour, minute] = hora.split(':').map(Number);
-                        if (!isNaN(year) && !isNaN(month) && !isNaN(day) && !isNaN(hour) && !isNaN(minute)) {
-                          return new Date(year, month - 1, day, hour, minute, 0, 0);
-                        }
-                        return new Date(`${fechaStr}T${hora}:00`);
-                      }
-                      const diaParaCalcular = (() => {
-                        if (diaParam !== null) {
-                          const diaNum = Number(diaParam);
-                          if (!Number.isNaN(diaNum) && diaNum >= 0 && diaNum <= 6) return diaNum;
-                        }
-                        if (selectedClass?.diaSemana !== null && selectedClass?.diaSemana !== undefined && typeof selectedClass.diaSemana === 'number') return selectedClass.diaSemana;
-                        if (selectedClass?.dia_semana !== null && selectedClass?.dia_semana !== undefined && typeof selectedClass.dia_semana === 'number') return selectedClass.dia_semana;
-                        if (selectedClass?.diasSemana && Array.isArray(selectedClass.diasSemana) && selectedClass.diasSemana.length > 0) {
-                          const dayMap: Record<string, number> = {
-                            domingo: 0, dom: 0,
-                            lunes: 1, lun: 1,
-                            martes: 2, mar: 2,
-                            miércoles: 3, miercoles: 3, mié: 3, mie: 3,
-                            jueves: 4, jue: 4,
-                            viernes: 5, vie: 5,
-                            sábado: 6, sabado: 6, sáb: 6, sab: 6,
-                          };
-                          const firstDay = selectedClass.diasSemana[0];
-                          if (typeof firstDay === 'number') return firstDay;
-                          if (typeof firstDay === 'string') return dayMap[firstDay.toLowerCase().trim()] ?? null;
-                        }
-                        return null;
-                      })();
-                      if (diaParaCalcular !== null && typeof diaParaCalcular === 'number') {
-                        const hora = normalizeTime(selectedClass.fin || selectedClass.inicio, '22:00');
-                        const startDate = calculateNextDateWithTime(diaParaCalcular, normalizeTime(selectedClass.inicio, '20:00'));
-                        const endDate = new Date(startDate);
-                        const [h, m] = hora.split(':').map(Number);
-                        endDate.setHours(h || startDate.getHours() + 2, m || 0, 0, 0);
-                        if (endDate.getTime() <= startDate.getTime()) endDate.setHours(startDate.getHours() + 2);
-                        return endDate;
-                      }
-                      const end = new Date();
-                      end.setHours(end.getHours() + 2);
-                      return end;
-                    } catch {
-                      const end = new Date();
-                      end.setHours(end.getHours() + 2);
-                      return end;
-                    }
-                  })()}
-                  showAsIcon={false}
-                />
-              </motion.div>
             )}
           </div>
         </section>

@@ -264,8 +264,9 @@ export const landingContent = {
     helpCenter: "Centro de ayuda",
     legalTitle: "Legal",
     supportTitle: "Soporte",
-    tagline: "La plataforma donde la comunidad del baile se encuentra. Descubre eventos, clases y perfiles en un solo lugar.",
-    ctaPro: "Publica clases y eventos, recibe leads y crece tu comunidad desde un solo lugar.",
+    tagline:
+      "La comunidad del baile en un solo lugar: eventos, clases y perfiles. Descubre y conecta sin ruido.",
+    ctaPro: "Para academias y organizadores: publica, recibe leads y crece desde la app.",
   },
 } as const;
 

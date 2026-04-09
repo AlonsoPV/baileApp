@@ -8,11 +8,12 @@ import "@/components/explore/EventListRow.css";
 type Props = {
   value: ExploreSectionViewMode;
   onChange: (mode: ExploreSectionViewMode) => void;
-  /** aria-label del grupo (solo modo 2 botones; en `likeFechas` se usa `explore_fechas_view_group` si no se pasa). */
+  /** aria-label del grupo (en `likeFechas` se usa `explore_fechas_view_group` si no se pasa). */
   groupLabel?: string;
   /**
-   * Mismo orden, iconos y textos que Sociales en Explore:
+   * Mismo orden que Sociales en Explore:
    * LayoutGrid → carousel, Images → cartelera, List → lista.
+   * Si es false: solo cartelera + lista.
    */
   likeFechas?: boolean;
 };
@@ -21,7 +22,7 @@ const segment = (pressed: boolean, withLeftBorder: boolean) =>
   ({
     border: "none",
     borderLeft: withLeftBorder ? "1px solid rgba(255,255,255,0.12)" : undefined,
-    background: pressed ? "rgba(255,255,255,0.18)" : "transparent",
+    background: pressed ? "rgba(255,255,255,0.14)" : "transparent",
     color: "#fff",
     padding: "8px 14px",
     cursor: "pointer",
@@ -31,41 +32,41 @@ const segment = (pressed: boolean, withLeftBorder: boolean) =>
     lineHeight: 0,
   }) as React.CSSProperties;
 
-/** Dos botones (cartelera + lista) o tres como Sociales (`likeFechas`). */
-export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFechas }: Props) {
-  const { t } = useTranslation();
-
-  const wrap = (children: React.ReactNode, label: string) => (
+const wrap = (children: React.ReactNode, label: string) => (
+  <div
+    className="explore-fechas-view-toggle-row"
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "flex-start",
+      width: "100%",
+      marginTop: -4,
+      marginBottom: 14,
+      paddingLeft: 2,
+      paddingRight: 2,
+    }}
+  >
     <div
-      className="explore-fechas-view-toggle-row"
+      role="group"
+      aria-label={label}
       style={{
-        display: "flex",
+        display: "inline-flex",
         alignItems: "center",
-        justifyContent: "flex-start",
-        width: "100%",
-        marginTop: -4,
-        marginBottom: 14,
-        paddingLeft: 2,
-        paddingRight: 2,
+        gap: 0,
+        borderRadius: 999,
+        border: "1px solid rgba(255,255,255,0.12)",
+        background: "rgba(0,0,0,0.18)",
+        overflow: "hidden",
       }}
     >
-      <div
-        role="group"
-        aria-label={label}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 0,
-          borderRadius: 999,
-          border: "1px solid rgba(255,255,255,0.22)",
-          background: "rgba(0,0,0,0.2)",
-          overflow: "hidden",
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </div>
-  );
+  </div>
+);
+
+/** Tres iconos (sociales) o dos (cartelera / lista): solo iconos, visibles a la vez. */
+export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFechas }: Props) {
+  const { t } = useTranslation();
 
   if (likeFechas) {
     const label = groupLabel || t("explore_fechas_view_group") || "Vista de sociales";
@@ -79,7 +80,7 @@ export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFech
           aria-label={t("explore_fechas_view_cards") || "Vista en tarjetas"}
           style={segment(value === "carousel", false)}
         >
-          <LayoutGrid size={18} />
+          <LayoutGrid size={18} aria-hidden />
         </button>
         <button
           type="button"
@@ -89,7 +90,7 @@ export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFech
           aria-label={t("explore_fechas_view_cartelera") || "Vista cartelera"}
           style={segment(value === "cartelera", true)}
         >
-          <Images size={18} />
+          <Images size={18} aria-hidden />
         </button>
         <button
           type="button"
@@ -99,7 +100,7 @@ export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFech
           aria-label={t("explore_fechas_view_list") || "Vista en lista"}
           style={segment(value === "list", true)}
         >
-          <List size={18} />
+          <List size={18} aria-hidden />
         </button>
       </>,
       label
@@ -117,7 +118,7 @@ export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFech
         aria-label={t("explore_fechas_view_cartelera") || "Vista cartelera"}
         style={segment(value === "cartelera", false)}
       >
-        <Images size={18} />
+        <Images size={18} aria-hidden />
       </button>
       <button
         type="button"
@@ -127,7 +128,7 @@ export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFech
         aria-label={t("explore_fechas_view_list") || "Vista en lista"}
         style={segment(value === "list", true)}
       >
-        <List size={18} />
+        <List size={18} aria-hidden />
       </button>
     </>,
     label

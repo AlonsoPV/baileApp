@@ -1,0 +1,516 @@
+/* Premium day list + class cards — mobile-first, dark UI */
+.clt-mobile-shell {
+  padding: 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  color: #fff;
+  overflow: visible;
+}
+
+.clt-root {
+  --clt-radius: 16px;
+  --clt-radius-sm: 12px;
+  --clt-space-1: 8px;
+  --clt-space-2: 12px;
+  --clt-space-3: 16px;
+  --clt-border: rgba(255, 255, 255, 0.1);
+  --clt-surface: rgba(255, 255, 255, 0.04);
+  --clt-surface-2: rgba(255, 255, 255, 0.06);
+  --clt-text: rgba(255, 255, 255, 0.92);
+  --clt-muted: rgba(255, 255, 255, 0.55);
+  --clt-accent: rgba(122, 108, 255, 0.95);
+  --clt-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  --clt-shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.42);
+  color: var(--clt-text);
+  /* No crear un contenedor de scroll propio: el scroll vertical es el de la ventana */
+  overflow: visible;
+  min-width: 0;
+}
+
+/* —— Day section header (mobile collapsible) —— */
+.clt-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--clt-space-2);
+  width: 100%;
+  padding: 10px 14px;
+  margin: 0;
+  border: 1px solid var(--clt-border);
+  border-radius: var(--clt-radius-sm);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clt-day-header:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+}
+
+.clt-day-header:active {
+  transform: scale(0.992);
+}
+
+.clt-day-header:focus-visible {
+  outline: 2px solid rgba(122, 108, 255, 0.55);
+  outline-offset: 2px;
+}
+
+.clt-day-header--open {
+  border-color: rgba(122, 108, 255, 0.28);
+  background: linear-gradient(180deg, rgba(122, 108, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+.clt-day-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.clt-day-header__name {
+  font-family: 'Barlow', 'Montserrat', system-ui, sans-serif;
+  font-weight: 750;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.clt-day-header__date {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clt-muted);
+  letter-spacing: 0.01em;
+}
+
+.clt-day-header__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.clt-day-header__badge {
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.clt-day-header__chev {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.45);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clt-day-header--open .clt-day-header__chev {
+  transform: rotate(180deg);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/*
+ * Colapsable por día (móvil): mantiene overflow:hidden en el nodo (animación de altura).
+ * touch-action evita que el gesto vertical quede “atrapado” en WebKit al hacer scroll de página.
+ */
+.clt-day-collapsible {
+  touch-action: pan-y;
+  overscroll-behavior-y: auto;
+}
+
+/* —— Class card —— */
+.clt-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--clt-space-2);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--clt-space-3);
+  border-radius: var(--clt-radius);
+  border: 1px solid var(--clt-border);
+  background: var(--clt-surface-2);
+  box-shadow: var(--clt-shadow);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.22s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.clt-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: var(--clt-shadow-hover);
+}
+
+.clt-card--clickable {
+  cursor: pointer;
+}
+
+.clt-card--clickable:active {
+  transform: scale(0.992);
+}
+
+.clt-card__media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--clt-radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.clt-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.clt-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.clt-card__title {
+  margin: 0;
+  font-family: 'Barlow', 'Montserrat', system-ui, sans-serif;
+  font-weight: 650;
+  font-size: clamp(0.98rem, 2.4vw, 1.08rem);
+  line-height: 1.28;
+  letter-spacing: -0.015em;
+  color: rgba(255, 255, 255, 0.96);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Chips row */
+.clt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.clt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 100%;
+}
+
+.clt-chip svg {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.clt-chip--muted {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.clt-chip--accent {
+  border-color: rgba(122, 108, 255, 0.28);
+  background: rgba(122, 108, 255, 0.1);
+  color: rgba(230, 228, 255, 0.95);
+}
+
+.clt-chip--warn {
+  border-color: rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
+  color: rgba(255, 224, 160, 0.95);
+}
+
+/* Info line: time + place */
+.clt-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.62);
+  font-weight: 500;
+}
+
+.clt-info__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.clt-info__item svg {
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+.clt-info__sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+
+.clt-info__place {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(100%, 220px);
+}
+
+@media (max-width: 400px) {
+  .clt-info {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .clt-info__sep {
+    display: none;
+  }
+  .clt-info__place {
+    white-space: normal;
+    max-width: 100%;
+  }
+}
+
+.clt-card__desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.62);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Actions */
+.clt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.clt-actions__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.clt-actions__toolbar > * {
+  flex-shrink: 0;
+}
+
+.clt-btn-detail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Barlow', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(145deg, rgba(122, 108, 255, 0.42), rgba(33, 212, 253, 0.12));
+  border: 1px solid rgba(122, 108, 255, 0.38);
+  box-shadow: 0 10px 28px rgba(122, 108, 255, 0.18);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.22s ease,
+    filter 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clt-btn-detail:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 14px 36px rgba(122, 108, 255, 0.26);
+}
+
+.clt-btn-detail:active {
+  transform: scale(0.985);
+}
+
+.clt-btn-detail:focus-visible {
+  outline: 2px solid rgba(122, 108, 255, 0.55);
+  outline-offset: 2px;
+}
+
+.clt-share-btn {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.clt-share-btn:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+.clt-actions__cal-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.clt-wa-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(37, 211, 102, 0.38);
+  background: linear-gradient(145deg, rgba(37, 211, 102, 0.22), rgba(18, 140, 126, 0.12));
+  color: #fff;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: transform 0.18s ease, filter 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.15);
+}
+
+.clt-wa-icon:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 10px 26px rgba(37, 211, 102, 0.22);
+}
+
+.clt-wa-icon:active {
+  transform: scale(0.96);
+}
+
+/* Desktop shell */
+.clt-desktop {
+  display: grid;
+  grid-template-columns: minmax(200px, 240px) 1fr;
+  gap: 1.25rem;
+  align-items: start;
+  align-content: start;
+  padding: 1.25rem;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  overflow: visible;
+}
+
+/* Panel derecho: lista larga sigue el scroll del documento (no scroll interno forzado) */
+.clt-tabpanel {
+  overflow: visible;
+  min-width: 0;
+  min-height: 0;
+}
+
+.clt-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px;
+}
+
+.clt-nav-btn {
+  text-align: left;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.clt-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.clt-nav-btn--active {
+  border-color: rgba(122, 108, 255, 0.35);
+  background: linear-gradient(180deg, rgba(122, 108, 255, 0.16), rgba(255, 255, 255, 0.03));
+}
+
+.clt-nav-btn__badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.clt-nav-title {
+  font-weight: 800;
+  font-size: 1.15rem;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.clt-nav-sub {
+  font-size: 0.9rem;
+  opacity: 0.78;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .clt-desktop {
+    grid-template-columns: 1fr;
+  }
+}
