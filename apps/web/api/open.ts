@@ -1,19 +1,30 @@
 import type { IncomingMessage, ServerResponse } from "http";
 import { supabaseAdmin } from "./_supabaseAdmin";
-import type { ShareEntityType } from "../src/utils/shareUrls";
-import { buildCanonicalUrl, buildDeepLink, buildShareUrl } from "../src/utils/shareUrls";
-import {
-  getOpenEntityImageForMeta,
-  resolveOpenEntityImageClase,
-  resolveOpenEntityImageEvento,
-  resolveOpenEntityImageProfile,
-} from "../src/utils/resolveOpenEntityImage";
-import {
-  buildOpenClasePresentation,
-  buildOpenEventoPresentation,
-  buildOpenProfilePresentation,
-} from "../src/utils/openEntityMeta";
-import { APP_STORE_URL, PLAY_STORE_URL } from "../src/config/links";
+type ShareEntityType =
+  | "evento"
+  | "clase"
+  | "academia"
+  | "maestro"
+  | "organizer"
+  | "user"
+  | "marca";
+
+const SITE_URL =
+  process.env.SITE_URL ||
+  process.env.VITE_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://dondebailar.com.mx");
+const APP_STORE_URL =
+  process.env.VITE_APP_STORE_URL ||
+  "https://apps.apple.com/mx/app/donde-bailar-mx/id6756324774";
+const PLAY_STORE_URL =
+  process.env.VITE_PLAY_STORE_URL ||
+  "https://play.google.com/store/apps/details?id=com.tuorg.dondebailarmx.app";
+const SEO_LOGO_URL =
+  "https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/DB_LOGO150.webp";
 
 type ClassType = "teacher" | "academy";
 type OpenPayload = {
@@ -28,6 +39,11 @@ type OpenPayload = {
   seoDescription: string;
   seoImage: string;
   entityLabel: string;
+};
+
+type ResolveOpenEntityImageResult = {
+  imageUrl: string;
+  imageSourceType: "flyer_url" | "media" | "cover" | "avatar" | "fallback_entity";
 };
 
 function escapeHtml(value: unknown): string {
@@ -47,6 +63,371 @@ function parsePositiveInt(value: string | null): number | null {
   if (!value) return null;
   const num = Number.parseInt(value, 10);
   return Number.isFinite(num) && num > 0 ? num : null;
+}
+
+function buildShareUrl(entityType: ShareEntityType, id: string, opts?: { type?: string; index?: number }): string {
+  const base = `${SITE_URL.replace(/\/+$/, "")}/open`;
+  if (entityType === "evento") return `${base}/evento/${id}`;
+  if (entityType === "clase") {
+    const type = opts?.type ?? "academy";
+    const path = `${base}/clase/${type}/${id}`;
+    return Number.isFinite(opts?.index) ? `${path}?i=${opts?.index}` : path;
+  }
+  if (entityType === "academia") return `${base}/academia/${id}`;
+  if (entityType === "maestro") return `${base}/maestro/${id}`;
+  if (entityType === "organizer") return `${base}/organizer/${id}`;
+  if (entityType === "user") return `${base}/u/${encodeURIComponent(id)}`;
+  if (entityType === "marca") return `${base}/marca/${id}`;
+  return `${base}/evento/${id}`;
+}
+
+function buildCanonicalUrl(entityType: ShareEntityType, id: string, opts?: { type?: string; index?: number }): string {
+  const base = SITE_URL.replace(/\/+$/, "");
+  if (entityType === "evento") return `${base}/social/fecha/${id}`;
+  if (entityType === "clase") {
+    const type = opts?.type ?? "academy";
+    const path = `${base}/clase/${type}/${id}`;
+    return Number.isFinite(opts?.index) ? `${path}?i=${opts?.index}` : path;
+  }
+  if (entityType === "academia") return `${base}/academia/${id}`;
+  if (entityType === "maestro") return `${base}/maestro/${id}`;
+  if (entityType === "organizer") return `${base}/organizer/${id}`;
+  if (entityType === "user") return `${base}/u/${encodeURIComponent(id)}`;
+  if (entityType === "marca") return `${base}/marca/${id}`;
+  return `${base}/social/fecha/${id}`;
+}
+
+function buildDeepLink(entityType: ShareEntityType, id: string, opts?: { type?: string; index?: number }): string {
+  const scheme = "dondebailarmx";
+  if (entityType === "evento") return `${scheme}://evento/${id}`;
+  if (entityType === "clase") {
+    const type = opts?.type ?? "academy";
+    const path = `${scheme}://clase/${type}/${id}`;
+    return Number.isFinite(opts?.index) ? `${path}?i=${opts?.index}` : path;
+  }
+  if (entityType === "academia") return `${scheme}://academia/${id}`;
+  if (entityType === "maestro") return `${scheme}://maestro/${id}`;
+  if (entityType === "organizer") return `${scheme}://organizer/${id}`;
+  if (entityType === "user") return `${scheme}://u/${encodeURIComponent(id)}`;
+  if (entityType === "marca") return `${scheme}://marca/${id}`;
+  return `${scheme}://evento/${id}`;
+}
+
+function isNonEmptyImageUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const s = value.trim();
+  if (!s) return false;
+  if (s === "undefined" || s.includes("undefined")) return false;
+  return s.startsWith("http") || s.startsWith("/") || s.startsWith("data:");
+}
+
+function getSupabaseBaseUrl(): string {
+  return (
+    process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    ""
+  ).replace(/\/+$/, "");
+}
+
+function ensureAbsoluteImageUrl(url?: string | null): string | null {
+  if (!url) return null;
+  const input = String(url).trim();
+  if (!input) return null;
+  if (/^https?:\/\//i.test(input)) return input;
+  if (input.startsWith("/")) {
+    const base = getSupabaseBaseUrl();
+    return base ? `${base}${input}` : null;
+  }
+  const base = getSupabaseBaseUrl();
+  if (!base) return null;
+  const storageKey = input.startsWith("media/") || input.startsWith("public/") ? input : `media/${input}`;
+  return `${base}/storage/v1/object/public/${storageKey}`;
+}
+
+function toDirectPublicStorageUrl(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  const normalized = String(url).trim().replace(
+    "/storage/v1/object/public/AVATARS/",
+    "/storage/v1/object/public/media/avatars/",
+  );
+  if (normalized.includes("/storage/v1/render/image/public/")) {
+    const pathPart = normalized.split("/storage/v1/render/image/public/")[1]?.split("?")[0];
+    if (pathPart) {
+      const origin = normalized.startsWith("http") ? new URL(normalized).origin : getSupabaseBaseUrl();
+      return `${origin}/storage/v1/object/public/${pathPart}`;
+    }
+  }
+  return ensureAbsoluteImageUrl(normalized) ?? normalized;
+}
+
+function resolveUrl(raw: string | null): string | null {
+  if (!raw) return null;
+  const direct = toDirectPublicStorageUrl(raw) ?? raw;
+  return direct && isNonEmptyImageUrl(direct) ? direct : null;
+}
+
+function normalizeMediaArray(raw: unknown): Array<{ slot: string; url: string }> {
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item: any) => ({
+        slot: typeof item?.slot === "string" ? item.slot : "",
+        url: typeof item?.url === "string" ? item.url : typeof item?.path === "string" ? item.path : "",
+      }))
+      .filter((item) => item.slot && item.url);
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      return normalizeMediaArray(JSON.parse(raw));
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function getMediaBySlot(list: Array<{ slot: string; url: string }>, slot: string): { slot: string; url: string } | undefined {
+  return list.find((item) => item.slot === slot);
+}
+
+function extractFirstValidImageUrl(input: unknown): string | null {
+  if (input == null) return null;
+  const keys = ["url", "src", "image_url", "flyer_url", "cover_url", "avatar_url", "path"];
+  if (typeof input === "string") return isNonEmptyImageUrl(input) ? input.trim() : null;
+  if (Array.isArray(input)) {
+    for (const item of input) {
+      const found = extractFirstValidImageUrl(item);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof input === "object") {
+    for (const key of keys) {
+      const value = (input as Record<string, unknown>)[key];
+      if (isNonEmptyImageUrl(value)) return value.trim();
+    }
+  }
+  return null;
+}
+
+function getFallbackEntityDataUrl(entityType: string): string {
+  const label = entityType === "evento" ? "Evento" : entityType === "clase" ? "Clase" : "Perfil";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250"><rect fill="#1a1a24" width="400" height="250"/><text x="200" y="125" fill="rgba(255,255,255,0.4)" font-family="system-ui,sans-serif" font-size="24" font-weight="600" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function resolveOpenEntityImageEvento(data: {
+  date: Record<string, unknown>;
+  parent?: Record<string, unknown> | null;
+}): ResolveOpenEntityImageResult {
+  const { date, parent } = data;
+  if (isNonEmptyImageUrl(date?.flyer_url)) {
+    const url = resolveUrl(date.flyer_url as string);
+    if (url) return { imageUrl: url, imageSourceType: "flyer_url" };
+  }
+  const dateMedia = normalizeMediaArray(date?.media);
+  const dateFirst = getMediaBySlot(dateMedia, "cover")?.url || getMediaBySlot(dateMedia, "p1")?.url;
+  if (dateFirst) {
+    const url = resolveUrl(dateFirst);
+    if (url) return { imageUrl: url, imageSourceType: "media" };
+  }
+  const parentMedia = normalizeMediaArray(parent?.media);
+  const parentFirst = getMediaBySlot(parentMedia, "cover")?.url || getMediaBySlot(parentMedia, "p1")?.url;
+  if (parentFirst) {
+    const url = resolveUrl(parentFirst);
+    if (url) return { imageUrl: url, imageSourceType: "media" };
+  }
+  const avatarRaw =
+    (date as any)?.avatar_url ??
+    (parent as any)?.avatar_url ??
+    (date as any)?.portada_url ??
+    (parent as any)?.portada_url;
+  if (isNonEmptyImageUrl(avatarRaw)) {
+    const url = resolveUrl(avatarRaw);
+    if (url) return { imageUrl: url, imageSourceType: "avatar" };
+  }
+  const firstAny =
+    extractFirstValidImageUrl(date?.media) ||
+    extractFirstValidImageUrl(parent?.media) ||
+    extractFirstValidImageUrl(date) ||
+    extractFirstValidImageUrl(parent);
+  if (firstAny) {
+    const url = resolveUrl(firstAny);
+    if (url) return { imageUrl: url, imageSourceType: "media" };
+  }
+  return { imageUrl: getFallbackEntityDataUrl("evento"), imageSourceType: "fallback_entity" };
+}
+
+function resolveOpenEntityImageClase(data: {
+  profile: Record<string, unknown>;
+}): ResolveOpenEntityImageResult {
+  const profile = data.profile;
+  const mediaArr = Array.isArray(profile?.media) ? profile.media : [];
+  const normalized = normalizeMediaArray(mediaArr);
+  const cover = getMediaBySlot(normalized, "cover")?.url;
+  if (cover) {
+    const url = resolveUrl(cover);
+    if (url) return { imageUrl: url, imageSourceType: "cover" };
+  }
+  const p1 = getMediaBySlot(normalized, "p1")?.url;
+  if (p1) {
+    const url = resolveUrl(p1);
+    if (url) return { imageUrl: url, imageSourceType: "media" };
+  }
+  const avatarRaw =
+    (profile as any)?.avatar_url ?? (profile as any)?.banner_url ?? (profile as any)?.logo_url ?? (profile as any)?.portada_url;
+  if (isNonEmptyImageUrl(avatarRaw)) {
+    const url = resolveUrl(avatarRaw);
+    if (url) return { imageUrl: url, imageSourceType: "avatar" };
+  }
+  const firstAny = extractFirstValidImageUrl(mediaArr);
+  if (firstAny) {
+    const url = resolveUrl(firstAny);
+    if (url) return { imageUrl: url, imageSourceType: "media" };
+  }
+  return { imageUrl: getFallbackEntityDataUrl("clase"), imageSourceType: "fallback_entity" };
+}
+
+function resolveOpenEntityImageProfile(data: {
+  profile: Record<string, unknown>;
+}): ResolveOpenEntityImageResult {
+  const profile = data.profile;
+  const mediaArr = Array.isArray(profile?.media) ? profile.media : [];
+  const normalized = normalizeMediaArray(mediaArr);
+  const cover = getMediaBySlot(normalized, "cover")?.url;
+  if (cover) {
+    const url = resolveUrl(cover);
+    if (url) return { imageUrl: url, imageSourceType: "cover" };
+  }
+  const avatarSlot = getMediaBySlot(normalized, "avatar")?.url;
+  if (avatarSlot) {
+    const url = resolveUrl(avatarSlot);
+    if (url) return { imageUrl: url, imageSourceType: "avatar" };
+  }
+  const firstFromMedia = extractFirstValidImageUrl(mediaArr) || extractFirstValidImageUrl(profile);
+  if (firstFromMedia) {
+    const url = resolveUrl(firstFromMedia);
+    if (url) return { imageUrl: url, imageSourceType: "media" };
+  }
+  const avatarRaw =
+    (profile as any)?.avatar_url ??
+    (profile as any)?.logo_url ??
+    (profile as any)?.banner_url ??
+    (profile as any)?.portada_url;
+  if (isNonEmptyImageUrl(avatarRaw)) {
+    const url = resolveUrl(avatarRaw);
+    if (url) return { imageUrl: url, imageSourceType: "avatar" };
+  }
+  return { imageUrl: getFallbackEntityDataUrl("perfil"), imageSourceType: "fallback_entity" };
+}
+
+function getOpenEntityImageForMeta(result: ResolveOpenEntityImageResult): string {
+  if (result.imageSourceType === "fallback_entity" && result.imageUrl.startsWith("data:")) {
+    return SEO_LOGO_URL;
+  }
+  return result.imageUrl;
+}
+
+function compactParts(parts: Array<unknown>): string {
+  return parts
+    .filter((value) => typeof value === "string" && value.trim())
+    .map((value) => String(value).trim())
+    .join(" · ");
+}
+
+function formatDateLabel(raw: unknown, locale = "es-MX"): string {
+  if (typeof raw !== "string" || !raw.trim()) return "";
+  const plain = raw.split("T")[0];
+  const date = new Date(`${plain}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return plain;
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(date);
+}
+
+function formatTimeRange(start: unknown, end: unknown): string {
+  const startText = typeof start === "string" ? start.trim() : "";
+  const endText = typeof end === "string" ? end.trim() : "";
+  if (!startText) return "";
+  if (!endText || endText === startText) return startText;
+  return `${startText} - ${endText}`;
+}
+
+function buildOpenEventoPresentation(
+  date: Record<string, unknown>,
+  parent?: Record<string, unknown> | null,
+  locale = "es-MX",
+) {
+  const title = String(date?.nombre || parent?.nombre || "Evento de baile");
+  const dateStr = formatDateLabel(String(date?.fecha || date?.fecha_inicio || ""), locale);
+  const timeStr = formatTimeRange(date?.hora_inicio, date?.hora_fin);
+  const place =
+    compactParts([date?.lugar, date?.ciudad]) ||
+    (typeof parent?.sede_general === "string" ? parent.sede_general : "");
+  return {
+    title,
+    subtitle: compactParts([dateStr, timeStr]) || undefined,
+    place: place || undefined,
+    seoTitle: title,
+    seoDescription: compactParts([dateStr, timeStr, place]) || title,
+  };
+}
+
+function buildOpenClasePresentation(profile: Record<string, unknown>, classIndex?: number) {
+  const cronograma = (profile?.cronograma || profile?.horarios || []) as Array<Record<string, unknown>>;
+  const entry =
+    Array.isArray(cronograma) && classIndex != null && cronograma[classIndex]
+      ? cronograma[classIndex]
+      : Array.isArray(cronograma)
+        ? cronograma[0]
+        : undefined;
+  const title = String(entry?.nombre || entry?.nombre_clase || profile?.nombre_publico || "Clase de baile");
+  const ubicaciones = Array.isArray(profile?.ubicaciones) ? (profile.ubicaciones as Array<Record<string, unknown>>) : [];
+  const firstUbicacion = ubicaciones[0];
+  const place =
+    compactParts([firstUbicacion?.nombre, firstUbicacion?.ciudad]) ||
+    (typeof profile?.ciudad === "string" ? profile.ciudad : "");
+  const dayNames = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+  const diaNum = typeof entry?.diaSemana === "number" ? entry.diaSemana : entry?.dia_semana;
+  const dayLabel = typeof diaNum === "number" && diaNum >= 0 && diaNum <= 6 ? dayNames[diaNum] : "";
+  const subtitle =
+    compactParts([dayLabel, entry?.hora]) ||
+    (typeof profile?.nombre_publico === "string" ? "" : "Clase");
+  return {
+    title,
+    subtitle: subtitle || (typeof profile?.nombre_publico === "string" ? String(profile.nombre_publico) : undefined),
+    place: place || undefined,
+    seoTitle: title,
+    seoDescription: compactParts([subtitle, place]) || "Clase de baile",
+  };
+}
+
+function buildOpenProfilePresentation(profileType: ShareEntityType, profile: Record<string, unknown>) {
+  const title = String(
+    profile?.display_name ||
+      profile?.nombre_publico ||
+      profile?.nombre ||
+      profile?.nombre_organizador ||
+      profile?.full_name ||
+      profile?.nombre_marca ||
+      "Perfil",
+  );
+  const profileLabel =
+    profileType === "academia"
+      ? "Academia"
+      : profileType === "maestro"
+        ? "Maestro"
+        : profileType === "organizer"
+          ? "Organizador"
+          : profileType === "marca"
+            ? "Marca"
+            : "Perfil";
+  return {
+    title,
+    seoTitle: title,
+    seoDescription: `${profileLabel} de ${title} en Donde Bailar`,
+  };
 }
 
 function readShareParams(req: IncomingMessage) {
