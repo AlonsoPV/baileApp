@@ -12,6 +12,11 @@ import OnboardingGate from './guards/OnboardingGate';
 // System Screens
 import NotFound from './screens/system/NotFound';
 
+// Deep-link / WebView: these routes must not rely on a separate lazy chunk (second network
+// fetch often fails in RN WebView and RouteLoadErrorBoundary shows "No se pudo cargar la pantalla").
+import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
+import ClassPublicScreen from './screens/classes/ClassPublicScreen';
+
 import StripeOnboardingSuccess from './screens/payments/StripeOnboardingSuccess';
 import StripeOnboardingRefresh from './screens/payments/StripeOnboardingRefresh';
 import PaymentSuccess from './screens/payments/PaymentSuccess';
@@ -62,7 +67,6 @@ const EventDateEditScreen = React.lazy(() =>
 const OrganizerEventDateEditScreen = React.lazy(() => import('./screens/events/OrganizerEventDateEditScreen'));
 const OrganizerEventDateCreateScreen = React.lazy(() => import('./screens/events/OrganizerEventDateCreateScreen'));
 const EventParentPublicScreenModern = React.lazy(() => import('./screens/events/EventParentPublicScreenModern'));
-const EventDatePublicScreen = React.lazy(() => import('./screens/events/EventDatePublicScreen'));
 const MyRSVPsScreen = React.lazy(() =>
   import('./screens/events/MyRSVPsScreen').then((m) => ({ default: m.MyRSVPsScreen })),
 );
@@ -98,7 +102,6 @@ const AcademyProposalScreen = React.lazy(() => import('./screens/static/AcademyP
 const ChallengesList = React.lazy(() => import('./screens/challenges/ChallengesList'));
 const ChallengeNew = React.lazy(() => import('./screens/challenges/ChallengeNew'));
 const ChallengeDetail = React.lazy(() => import('./screens/challenges/ChallengeDetail'));
-const ClassPublicScreen = React.lazy(() => import('./screens/classes/ClassPublicScreen'));
 const OpenEntityScreen = React.lazy(() => import('./screens/open/OpenEntityScreen'));
 const TeacherPublicLive = React.lazy(() => import('./screens/profile/TeacherPublicLive'));
 const TrendingDetail = React.lazy(() => import('./pages/trending/TrendingDetail'));
