@@ -543,7 +543,7 @@ export default function OrganizerEventDateCreateScreen() {
                 </div>
                 <div>
                   <label className="org-editor-field">
-                    Teléfono / WhatsApp para más información
+                    Teléfono o WhatsApp para más información
                   </label>
                   <input
                     type="tel"

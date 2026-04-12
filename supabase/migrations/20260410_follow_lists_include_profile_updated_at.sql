@@ -1,8 +1,3 @@
--- ===========================================
--- 📌 Public RPCs para obtener listas de seguidores y seguidos
---    Evitamos restricciones de RLS sobre la tabla follows.
--- ===========================================
-
 create or replace function public.get_following_profiles(p_user_id uuid)
 returns table (
   user_id uuid,
@@ -49,4 +44,3 @@ $$;
 
 grant execute on function public.get_following_profiles(uuid) to anon, authenticated;
 grant execute on function public.get_follower_profiles(uuid) to anon, authenticated;
-

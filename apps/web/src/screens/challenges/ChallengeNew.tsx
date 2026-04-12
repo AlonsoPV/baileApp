@@ -6,6 +6,7 @@ import { useToast } from '../../components/Toast';
 import RitmosChips from '../../components/RitmosChips';
 import { supabase } from '../../lib/supabase';
 import { resizeImageIfNeeded } from '../../lib/imageResize';
+import { buildSupabaseStoragePublicUrl } from '../../utils/supabaseStoragePublicUrl';
 
 // ⬇️ Estilos compartidos
 import '../../styles/event-public.css';
@@ -93,9 +94,8 @@ export default function ChallengeNew() {
           console.error('❌ Error subiendo portada:', upErr);
           throw upErr;
         }
-        const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
-        updates.cover_image_url = pub.publicUrl;
-        console.log('✅ Portada subida:', pub.publicUrl);
+        updates.cover_image_url = buildSupabaseStoragePublicUrl(path, { bucket: 'media' });
+        console.log('✅ Portada subida:', updates.cover_image_url);
       }
       
       // Paso 3: Subir video base si existe
@@ -112,9 +112,8 @@ export default function ChallengeNew() {
           console.error('❌ Error subiendo video:', upErr);
           throw upErr;
         }
-        const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
-        updates.owner_video_url = pub.publicUrl;
-        console.log('✅ Video subido:', pub.publicUrl);
+        updates.owner_video_url = buildSupabaseStoragePublicUrl(path, { bucket: 'media' });
+        console.log('✅ Video subido:', updates.owner_video_url);
       }
       
       // Paso 4: Actualizar challenge con URLs de archivos

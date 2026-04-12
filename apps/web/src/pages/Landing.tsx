@@ -6,10 +6,6 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { Hero, DownloadModal } from "@/components/landing/Hero";
 import { B2BLeadForm } from "@/components/landing/B2BLeadForm";
 import { PainSolution } from "@/components/landing/PainSolution";
-import { FactorWow } from "@/components/landing/FactorWow";
-import { DecisionNotDiscovery } from "@/components/landing/DecisionNotDiscovery";
-import { Retention } from "@/components/landing/Retention";
-import { BusinessCase } from "@/components/landing/BusinessCase";
 import { BenefitGrid } from "@/components/landing/BenefitGrid";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { MidCTA } from "@/components/landing/MidCTA";
@@ -55,29 +51,21 @@ export default function Landing() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }}
       />
 
-      <LandingNav onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
+      <LandingNav onOpenDownload={openDownload} />
 
       <Hero onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
 
       <PainSolution />
 
-      <FactorWow />
+      <HowItWorks onOpenDownload={openDownload} />
 
-      <DecisionNotDiscovery onOpenDownload={openDownload} />
-
-      <Retention />
-
-      <BusinessCase />
-
-      <BenefitGrid />
-
-      <HowItWorks />
-
-      <B2BLeadForm />
+      <SocialProof />
 
       <MidCTA onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
 
-      <SocialProof />
+      <BenefitGrid />
+
+      <B2BLeadForm />
 
       <FAQ />
 

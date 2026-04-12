@@ -54,15 +54,13 @@ export function B2BLeadForm() {
   return (
     <section className="landing-b2b" id="negocios" aria-labelledby="b2b-heading">
       <div className="landing-container">
-        <p className="landing-b2b__overline">Para academias y maestros</p>
         <div className="landing-b2b__grid">
           <div className="landing-b2b__content">
             <h2 id="b2b-heading" className="landing-b2b__title">
-              Si enseñas u organizas,
-              <span className="accent"> aquí está tu audiencia</span>
+              {b2b.title}
             </h2>
             <p className="landing-b2b__sub">
-              Llega a bailarines que buscan clases y eventos reales. Sin algoritmos, con datos que tú publicas.
+              {b2b.subtitle}
             </p>
 
             <div className="landing-b2b__bullets">

@@ -18,6 +18,7 @@ import { useToast } from '../../components/Toast';
 import { resizeImageIfNeeded } from '../../lib/imageResize';
 import RitmosChips from '../../components/RitmosChips';
 import { useUserMeta } from '../../hooks/useUserMeta';
+import { buildSupabaseStoragePublicUrl } from '../../utils/supabaseStoragePublicUrl';
 
 // ⬇️ Estilos compartidos aplicados
 import '../../styles/event-public.css';
@@ -131,8 +132,7 @@ export default function ChallengeDetail() {
           contentType: pendingEditFile.type || undefined
         });
         if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
-        videoUrl = pub.publicUrl as string;
+        videoUrl = buildSupabaseStoragePublicUrl(path, { bucket: 'media' });
       }
       const { error } = await supabase
         .from('challenge_submissions')
@@ -164,8 +164,7 @@ export default function ChallengeDetail() {
       contentType: processedFile.type || undefined
     });
     if (error) throw error;
-    const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
-    return pub.publicUrl as string;
+    return buildSupabaseStoragePublicUrl(path, { bucket: 'media' });
   };
 
   React.useEffect(() => {

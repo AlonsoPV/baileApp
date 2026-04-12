@@ -11,6 +11,7 @@ import { MediaUploader } from "../../components/MediaUploader";
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";
 import { resizeImageIfNeeded } from "../../lib/imageResize";
+import { buildSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 
 /* Por qué: Tipos fuertes + reducer = menos bugs al mutar estructuras anidadas. */
 type Category = "calzado" | "ropa" | "accesorios";
@@ -433,12 +434,11 @@ export default function BrandProfileEditor() {
         showToast(`❌ Error al subir ${file.name}: ${error.message}`, 'error'); 
         continue; 
       }
-      const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
       uploaded.push({ 
         id: path, 
         titulo: '', 
         descripcion: '',
-        imagen_url: pub.publicUrl, 
+        imagen_url: buildSupabaseStoragePublicUrl(path, { bucket: 'media' }), 
         category: 'ropa',
         gender: 'unisex',
         price: '',
@@ -468,20 +468,20 @@ export default function BrandProfileEditor() {
     const path = `${brandId}/logo-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from('media').upload(path, processedFile, { upsert: true, cacheControl: '31536000', contentType: processedFile.type || undefined });
     if (error) { alert(error.message); return; }
-    const { data: pub } = supabase.storage.from('media').getPublicUrl(path);
-    dispatch({ type:'SET_AVATAR', url: pub.publicUrl });
+    const publicUrl = buildSupabaseStoragePublicUrl(path, { bucket: 'media' });
+    dispatch({ type:'SET_AVATAR', url: publicUrl });
     // Persistir inmediatamente (fallback a user_id si fuera necesario)
     try {
       let { data, error: uerr } = await supabase
         .from('profiles_brand')
-        .update({ avatar_url: pub.publicUrl })
+        .update({ avatar_url: publicUrl })
         .eq('id', (brand as any).id)
         .select('id')
         .maybeSingle();
       if (uerr || !data) {
         const { data: data2, error: uerr2 } = await supabase
           .from('profiles_brand')
-          .update({ avatar_url: pub.publicUrl })
+          .update({ avatar_url: publicUrl })
           .eq('user_id', (user as any)?.id)
           .select('id')
           .maybeSingle();

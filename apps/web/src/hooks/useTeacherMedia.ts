@@ -4,6 +4,7 @@ import { MediaItem } from "../lib/storage";
 import { useTeacherMy } from "./useTeacher";
 import { resizeImageIfNeeded } from "../lib/imageResize";
 import { normalizeMediaArray } from "../utils/mediaSlots";
+import { buildSupabaseStoragePublicUrl } from "../utils/supabaseStoragePublicUrl";
 
 // Bucket para archivos de maestro - usa el bucket 'media' con prefijo 'teacher/'
 const BUCKET = "media";
@@ -24,10 +25,9 @@ async function uploadTeacherFile(teacherId: number, file: File): Promise<MediaIt
   });
   if (error) throw new Error(`Error al subir archivo: ${error.message}`);
 
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return {
     id: path,
-    url: urlData.publicUrl,
+    url: buildSupabaseStoragePublicUrl(path, { bucket: BUCKET }),
     type,
     created_at: new Date().toISOString(),
   };

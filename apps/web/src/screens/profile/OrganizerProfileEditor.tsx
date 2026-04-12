@@ -55,6 +55,8 @@ import EventDateFullDrawer from "../../components/events/EventDateFullDrawer";
 import PendingFlyersPanel from "../../components/events/PendingFlyersPanel";
 import { useEventDatesBulk } from "../../hooks/useEventDatesBulk";
 import { useUploadFlyerQueue } from "../../hooks/useUploadFlyerQueue";
+import { Calendar, Clock, FileText, Globe, Image, MapPin, Music } from "lucide-react";
+import "../../styles/dateCreateForm.css";
 
 const colors = {
   coral: '#FF3D57',
@@ -127,24 +129,11 @@ const BulkRowItem = React.memo(function BulkRowItem({
 }) {
   const rowErr = errors || {};
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 90px)',
-        gap: dense ? 8 : 10,
-        alignItems: 'center',
-        padding: dense ? '8px 8px' : '10px 10px',
-        borderRadius: 12,
-        border: '1px solid rgba(255,255,255,0.10)',
-        background: 'rgba(255,255,255,0.04)',
-      }}
-      className="bulk-row"
-    >
+    <div className={`dcf__bulk-row${dense ? ' dcf__bulk-row--dense' : ''}`}>
       <input
         type="checkbox"
         checked={row.selected}
         onChange={(e) => onChange(row.id, { selected: e.target.checked })}
-        style={{ width: dense ? 16 : 18, height: dense ? 16 : 18 }}
       />
 
       <div>
@@ -152,34 +141,16 @@ const BulkRowItem = React.memo(function BulkRowItem({
           type="date"
           value={row.fecha}
           onChange={(e) => onChange(row.id, { fecha: e.target.value })}
-          style={{
-            width: '100%',
-            padding: dense ? '7px 8px' : '8px 10px',
-            borderRadius: 10,
-            border: rowErr.fecha ? '1px solid rgba(255,61,87,0.9)' : '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(0,0,0,0.25)',
-            color: '#fff',
-            fontSize: dense ? 12 : 13,
-          }}
+          className={`dcf__bulk-row-input${rowErr.fecha ? ' dcf__bulk-row-input--error' : ''}`}
         />
-        {rowErr.fecha && (
-          <div style={{ color: '#ff3d57', fontSize: 11, marginTop: 4 }}>{rowErr.fecha}</div>
-        )}
+        {rowErr.fecha && <div className="dcf__bulk-row-err">{rowErr.fecha}</div>}
       </div>
 
       <input
         type="time"
         value={row.hora_inicio}
         onChange={(e) => onChange(row.id, { hora_inicio: e.target.value })}
-        style={{
-          width: '100%',
-          padding: dense ? '7px 8px' : '8px 10px',
-          borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.18)',
-          background: 'rgba(0,0,0,0.25)',
-          color: '#fff',
-          fontSize: dense ? 12 : 13,
-        }}
+        className="dcf__bulk-row-input"
       />
 
       <div>
@@ -187,33 +158,15 @@ const BulkRowItem = React.memo(function BulkRowItem({
           type="time"
           value={row.hora_fin}
           onChange={(e) => onChange(row.id, { hora_fin: e.target.value })}
-          style={{
-            width: '100%',
-            padding: dense ? '7px 8px' : '8px 10px',
-            borderRadius: 10,
-            border: rowErr.hora_fin ? '1px solid rgba(255,61,87,0.9)' : '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(0,0,0,0.25)',
-            color: '#fff',
-            fontSize: dense ? 12 : 13,
-          }}
+          className={`dcf__bulk-row-input${rowErr.hora_fin ? ' dcf__bulk-row-input--error' : ''}`}
         />
-        {rowErr.hora_fin && (
-          <div style={{ color: '#ff3d57', fontSize: 11, marginTop: 4 }}>{rowErr.hora_fin}</div>
-        )}
+        {rowErr.hora_fin && <div className="dcf__bulk-row-err">{rowErr.hora_fin}</div>}
       </div>
 
       <select
         value={row.estado_publicacion}
         onChange={(e) => onChange(row.id, { estado_publicacion: e.target.value as BulkPubEstado })}
-        style={{
-          width: '100%',
-          padding: dense ? '7px 8px' : '8px 10px',
-          borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.18)',
-          background: '#2b2b2b',
-          color: '#fff',
-          fontSize: dense ? 12 : 13,
-        }}
+        className="dcf__bulk-row-select"
       >
         <option value="borrador">{t('draft')}</option>
         <option value="publicado">{t('published')}</option>
@@ -224,32 +177,15 @@ const BulkRowItem = React.memo(function BulkRowItem({
         value={row.notas}
         onChange={(e) => onChange(row.id, { notas: e.target.value })}
         placeholder={t('optional_notes')}
-        style={{
-          width: '100%',
-          padding: dense ? '7px 8px' : '8px 10px',
-          borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.18)',
-          background: 'rgba(0,0,0,0.25)',
-          color: '#fff',
-          fontSize: dense ? 12 : 13,
-        }}
+        className="dcf__bulk-row-input"
       />
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+      <div className="dcf__bulk-row-actions">
         {typeof createdDateId === 'number' && createdDateId > 0 && (
           <button
             type="button"
+            className="dcf__bulk-icon-btn dcf__bulk-icon-btn--edit"
             onClick={() => onEditCreatedDate?.(createdDateId)}
-            style={{
-              width: dense ? 34 : 36,
-              height: dense ? 34 : 36,
-              borderRadius: 10,
-              border: '1px solid rgba(39,195,255,0.40)',
-              background: 'rgba(39,195,255,0.10)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 900,
-            }}
             title={t('edit_created_date', { id: createdDateId })}
             aria-label={t('edit_created_date', { id: createdDateId })}
           >
@@ -258,16 +194,8 @@ const BulkRowItem = React.memo(function BulkRowItem({
         )}
         <button
           type="button"
+          className="dcf__bulk-icon-btn dcf__bulk-icon-btn--del"
           onClick={() => onRemove(row.id)}
-          style={{
-            width: dense ? 34 : 36,
-            height: dense ? 34 : 36,
-            borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(255,255,255,0.05)',
-            color: '#fff',
-            cursor: 'pointer',
-          }}
           title={t('remove_row')}
           aria-label={t('remove_row')}
         >
@@ -5020,76 +4948,62 @@ export default function OrganizerProfileEditor() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  style={{
-                    marginBottom: '2rem',
-                    padding: '0',
-                    borderRadius: '16px',
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1.5rem'
-                  }}
+                  className="dcf dcf--date-form dcf--dark"
                 >
                   {/* Información Básica */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      {t('basic_information')}
-                    </h3>
-                    <div className="org-editor-grid">
-                      <div>
-                        <label className="org-editor-field">
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--info">
+                        <FileText aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('basic_information')}</h3>
+                    </div>
+                    <div className="dcf__card-body dcf__stack">
+                      <div className="dcf__field">
+                        <label className="dcf__label">
                           {t('event_name')}
+                          <span className="dcf__label-req">*</span>
                         </label>
                         <input
                           type="text"
                           value={dateForm.nombre}
                           onChange={(e) => setDateForm({ ...dateForm, nombre: e.target.value })}
                           placeholder={t('event_name_placeholder')}
-                          className="org-editor-input"
+                          className="dcf__input"
                         />
                       </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label className="org-editor-field">
-                          {t('biography')}
-                        </label>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('biography')}</label>
                         <textarea
                           value={dateForm.biografia || ''}
                           onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
                           placeholder={t('biography_placeholder_event')}
                           rows={2}
-                          className="org-editor-textarea"
+                          className="dcf__textarea"
                         />
                       </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label className="org-editor-field">
-                          {t('djs_present')}
-                        </label>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('djs_present')}</label>
                         <textarea
                           value={dateForm.djs || ''}
                           onChange={(e) => setDateForm({ ...dateForm, djs: e.target.value })}
                           placeholder={t('djs_placeholder')}
                           rows={2}
-                          className="org-editor-textarea"
+                          className="dcf__textarea"
                         />
                       </div>
-                      <div>
-                        <label className="org-editor-field">
-                          {t('phone_whatsapp_info')}
-                        </label>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('phone_whatsapp_info')}</label>
                         <input
                           type="tel"
                           value={dateForm.telefono_contacto}
                           onChange={(e) => setDateForm({ ...dateForm, telefono_contacto: e.target.value })}
                           placeholder={t('phone_placeholder')}
-                          className="org-editor-input"
+                          className="dcf__input"
                         />
                       </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <label className="org-editor-field">
-                          {t('whatsapp_greeting')}
-                        </label>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('whatsapp_greeting')}</label>
                         <textarea
                           value={dateForm.mensaje_contacto}
                           onChange={(e) => setDateForm({ ...dateForm, mensaje_contacto: e.target.value })}
@@ -5102,18 +5016,22 @@ export default function OrganizerProfileEditor() {
                           }}
                           placeholder={t('whatsapp_greeting_placeholder')}
                           rows={2}
-                          className="org-editor-textarea"
+                          className="dcf__textarea"
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Ritmos */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      {t('dance_rhythms')}
-                    </h3>
-                    <div style={{ marginTop: 8 }}>
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--music">
+                        <Music aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('dance_rhythms')}</h3>
+                    </div>
+                    <div className="dcf__card-body">
+                    <div className="dcf__chips-wrap">
                       <RitmosChips
                         selected={dateForm.ritmos_seleccionados || []}
                         allowedIds={((form as any)?.ritmos_seleccionados || []) as string[]}
@@ -5136,21 +5054,24 @@ export default function OrganizerProfileEditor() {
                         }}
                       />
                     </div>
+                    </div>
                   </div>
 
                   {/* Ubicaciones */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      {t('event_location')}
-                    </h3>
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--location">
+                        <MapPin aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('event_location')}</h3>
+                    </div>
+                    <div className="dcf__card-body">
                     {orgLocations.length > 0 && (
-                      <>
-
-                        <div style={{ marginBottom: 16 }}>
-                          <label className="org-editor-field">{t('choose_existing_or_new')}</label>
-                          <div className="org-date-form-select-wrapper" style={{ position: 'relative' }}>
+                      <div className="dcf__field dcf__field--mb-lg">
+                          <label className="dcf__label">{t('choose_existing_or_new')}</label>
+                          <div className="dcf__select-wrap">
                             <select
-                              className="org-date-form-select"
+                              className="dcf__select"
                               value={selectedDateLocationId}
                               onChange={(e) => {
                                 const nextId = e.target.value;
@@ -5163,78 +5084,72 @@ export default function OrganizerProfileEditor() {
                                 applyOrganizerLocationToDateForm(found);
                               }}
                             >
-                              <option value="" style={{ background: '#2b2b2b', color: '#FFFFFF' }}>
+                              <option value="">
                                 {t('enter_manually')}
                               </option>
                               {orgLocations.map((loc) => (
                                 <option
                                   key={loc.id}
                                   value={String(loc.id)}
-                                  style={{ color: '#FFFFFF', background: '#2b2b2b' }}
                                 >
                                   {loc.nombre || loc.direccion || t('location')}
                                 </option>
                               ))}
                             </select>
-                            <span className="org-date-form-select-arrow">
-                              ▼
-                            </span>
+                            <svg className="dcf__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                              <path d="M6 9l6 6 6-6" />
+                            </svg>
                           </div>
                         </div>
-                      </>
                     )}
-                    {/* Formulario de ubicación manual (como en CrearClase) */}
-                    <div className="org-date-form-grid-2">
-                      <div>
-                        <label className="org-editor-field">{t('location_name')}</label>
+                    <div className="dcf__grid-2">
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('location_name')}</label>
                         <input
                           type="text"
                           value={dateForm.lugar || ''}
                           onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
                           placeholder={t('location_name_placeholder')}
-                          className="org-editor-input"
+                          className="dcf__input"
                         />
                       </div>
-                      <div>
-                        <label className="org-editor-field">{t('address')}</label>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('address')}</label>
                         <input
                           type="text"
                           value={dateForm.direccion || ''}
                           onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
                           placeholder={t('address_placeholder')}
-                          className="org-editor-input"
+                          className="dcf__input"
                         />
                       </div>
                     </div>
-                    <div className="org-date-form-grid-2" style={{ marginTop: '16px' }}>
-                      <div>
-                        <label className="org-editor-field">{t('city')}</label>
+                    <div className="dcf__grid-2 dcf__mt-16">
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('city')}</label>
                         <input
                           type="text"
                           value={dateForm.ciudad || ''}
                           onChange={(e) => updateManualDateLocationField('ciudad', e.target.value)}
                           placeholder={t('city_placeholder')}
-                          className="org-editor-input"
+                          className="dcf__input"
                         />
                       </div>
-                      <div>
-                        <label className="org-editor-field">{t('notes_references')}</label>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('notes_references')}</label>
                         <input
                           type="text"
                           value={dateForm.referencias || ''}
                           onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
                           placeholder={t('notes_placeholder')}
-                          className="org-editor-input"
+                          className="dcf__input"
                         />
                       </div>
                     </div>
 
-                    {/* Zonas - visualización cuando hay ubicación seleccionada */}
                     {selectedDateLocationId && (dateForm.zonas || []).length > 0 && (
-                      <div style={{ marginTop: '16px' }}>
-                        <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
-                          {t('zones_selected_location')}
-                        </label>
+                      <div className="dcf__zones-block">
+                        <label className="dcf__label">{t('zones_selected_location')}</label>
                         <ZonaGroupedChips
                           selectedIds={dateForm.zonas || []}
                           allTags={zonaTags}
@@ -5249,12 +5164,9 @@ export default function OrganizerProfileEditor() {
                       </div>
                     )}
 
-                    {/* Zonas - selección cuando se ingresa la ubicación manualmente */}
                     {!selectedDateLocationId && (
-                      <div style={{ marginTop: '16px' }}>
-                        <label className="org-editor-field" style={{ marginBottom: '8px', display: 'block' }}>
-                          {t('zones_city')}
-                        </label>
+                      <div className="dcf__zones-block">
+                        <label className="dcf__label">{t('zones_city')}</label>
                         <ZonaGroupedChips
                           selectedIds={dateForm.zonas || []}
                           allTags={zonaTags}
@@ -5268,14 +5180,18 @@ export default function OrganizerProfileEditor() {
                         />
                       </div>
                     )}
+                    </div>
                   </div>
 
-               
                   {/* Cronograma */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      {t('event_schedule')}
-                    </h3>
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--schedule">
+                        <Clock aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('event_schedule')}</h3>
+                    </div>
+                    <div className="dcf__card-body">
                     <ScheduleEditor
                       schedule={dateForm.cronograma || []}
                       onChangeSchedule={(cronograma) => setDateForm((prev) => ({ ...prev, cronograma }))}
@@ -5289,104 +5205,81 @@ export default function OrganizerProfileEditor() {
                         showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
                       }}
                     />
+                    </div>
                   </div>
 
-                 
-
                   {/* Fecha y Hora (último paso) */}
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      {t('date_and_time')}
-                    </h3>
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--date">
+                        <Calendar aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('date_and_time')}</h3>
+                      {bulkMode && (
+                        <span className="dcf__card-badge">{t('selected', { count: bulkSelectedCount })}</span>
+                      )}
+                    </div>
 
-                    {/* Toggle Simple / Bulk */}
-                    <div className="mode-toggle" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+                    <div className="dcf__mode-bar">
                       <button
                         type="button"
+                        className={`dcf__mode-btn${!bulkMode ? ' dcf__mode-btn--active' : ''}`}
                         onClick={() => {
                           setBulkMode(false);
                           setShowPendingFlyers(false);
                           setDateForm((prev) => ({ ...prev, repetir_semanal: false, dia_semana: null }));
                         }}
-                        style={{
-                          padding: '10px 14px',
-                          borderRadius: 999,
-                          border: !bulkMode ? '2px solid rgba(255,255,255,0.55)' : '1px solid rgba(255,255,255,0.22)',
-                          background: !bulkMode
-                            ? 'linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.10))'
-                            : 'rgba(255,255,255,0.06)',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          fontWeight: 800,
-                          fontSize: 14,
-                          boxShadow: !bulkMode ? '0 10px 26px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.08) inset' : 'none',
-                        }}
                         aria-pressed={!bulkMode}
                       >
-                        {t('unique_mode')}
+                        <span className="dcf__mode-btn-label">{t('unique_mode')}</span>
+                        <span className="dcf__mode-btn-desc">{t('unique_mode_description').replace(/<[^>]+>/g, '').slice(0, 72)}…</span>
                       </button>
                       <button
                         type="button"
+                        className={`dcf__mode-btn${bulkMode ? ' dcf__mode-btn--active' : ''}`}
                         onClick={() => {
                           setBulkMode(true);
                           if (bulkRows.length === 0) addBulkRow();
                         }}
-                        style={{
-                          padding: '10px 14px',
-                          borderRadius: 999,
-                          border: bulkMode ? '2px solid rgba(39,195,255,0.70)' : '1px solid rgba(39,195,255,0.40)',
-                          background: bulkMode
-                            ? 'linear-gradient(135deg, rgba(39,195,255,0.28), rgba(30,136,229,0.22))'
-                            : 'rgba(39,195,255,0.06)',
-                          color: '#fff',
-                          cursor: 'pointer',
-                          fontWeight: 800,
-                          fontSize: 14,
-                          boxShadow: bulkMode ? '0 10px 26px rgba(0,0,0,0.35), 0 0 0 2px rgba(39,195,255,0.12) inset' : 'none',
-                        }}
                         aria-pressed={bulkMode}
                       >
-                        {t('frequent_mode')}
+                        <span className="dcf__mode-btn-label">{t('frequent_mode')}</span>
+                        <span className="dcf__mode-btn-desc">{t('planner_frequent')}</span>
                       </button>
                     </div>
 
-                    <div className="org-date-form-grid">
-                      <div>
-                        <label className="org-editor-field">
+                    <div className="dcf__card-body">
+                    <div className="dcf__grid-3">
+                      <div className="dcf__field">
+                        <label className="dcf__label">
                           {bulkMode ? t('base_date_generate') : t('date')}
+                          {!bulkMode && <span className="dcf__label-req">*</span>}
                         </label>
                         <input
                           type="date"
                           value={dateForm.fecha}
                           onChange={(e) => setDateForm({ ...dateForm, fecha: e.target.value })}
                           required
-                          className="org-editor-input"
-                          style={{ color: '#FFFFFF', opacity: !bulkMode && typeof dateForm.dia_semana === 'number' ? 0.6 : 1 }}
+                          className={`dcf__input${!bulkMode && typeof dateForm.dia_semana === 'number' ? ' dcf__input--muted' : ''}`}
                           disabled={!bulkMode && typeof dateForm.dia_semana === 'number'}
                         />
                       </div>
-                      <div>
-                        <label className="org-editor-field">
-                          {t('start_time')}
-                        </label>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('start_time')}</label>
                         <input
                           type="time"
                           value={dateForm.hora_inicio}
                           onChange={(e) => setDateForm({ ...dateForm, hora_inicio: e.target.value })}
-                          className="org-editor-input"
-                          style={{ color: '#FFFFFF' }}
+                          className="dcf__input"
                         />
                       </div>
-                      <div>
-                        <label className="org-editor-field">
-                          {t('end_time')}
-                        </label>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('end_time')}</label>
                         <input
                           type="time"
                           value={dateForm.hora_fin}
                           onChange={(e) => setDateForm({ ...dateForm, hora_fin: e.target.value })}
-                          className="org-editor-input"
-                          style={{ color: '#FFFFFF' }}
+                          className="dcf__input"
                         />
                       </div>
                     </div>
@@ -5422,9 +5315,9 @@ export default function OrganizerProfileEditor() {
                         }
                       };
                       return (
-                        <div style={{ marginTop: 14, padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'end' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontWeight: 700, color: '#fff' }}>
+                        <div className="dcf__recur-box">
+                          <div className="dcf__recur-grid">
+                            <label className="dcf__toggle">
                               <input
                                 type="checkbox"
                                 checked={isRecurrentWeekly}
@@ -5437,98 +5330,67 @@ export default function OrganizerProfileEditor() {
                                   const fromFecha = makeDiaSemanaFromFecha(dateForm.fecha);
                                   setDateForm((prev) => ({ ...prev, dia_semana: fromFecha ?? 5 }));
                                 }}
-                                style={{ width: 20, height: 20, cursor: 'pointer' }}
                               />
-                              🔁 Recurrente semanal
+                              <span className="dcf__toggle-label">Recurrente semanal</span>
                             </label>
-                            <label style={{ fontSize: 13, fontWeight: 700, color: '#fff', opacity: isRecurrentWeekly ? 1 : 0.7 }}>
-                              Día (recurrente)
-                              <select
-                                disabled={!isRecurrentWeekly}
-                                value={isRecurrentWeekly ? String(dateForm.dia_semana) : ''}
-                                onChange={(e) => setDateForm((prev) => ({ ...prev, dia_semana: parseInt(e.target.value, 10) }))}
-                                style={{
-                                  width: '100%',
-                                  marginTop: 6,
-                                  padding: '10px 12px',
-                                  borderRadius: 12,
-                                  background: '#2b2b2b',
-                                  border: '1px solid rgba(255,255,255,0.18)',
-                                  color: '#fff',
-                                  cursor: isRecurrentWeekly ? 'pointer' : 'not-allowed',
-                                  opacity: isRecurrentWeekly ? 1 : 0.6,
-                                }}
-                              >
-                                <option value="" disabled>Selecciona…</option>
-                                {dayLabels.map((lbl, idx) => (
-                                  <option key={idx} value={String(idx)}>{lbl}</option>
-                                ))}
-                              </select>
-                            </label>
+                            <div className="dcf__field">
+                              <label className="dcf__label">Día de la semana</label>
+                              <div className="dcf__select-wrap">
+                                <select
+                                  className="dcf__select"
+                                  disabled={!isRecurrentWeekly}
+                                  value={isRecurrentWeekly ? String(dateForm.dia_semana) : ''}
+                                  onChange={(e) => setDateForm((prev) => ({ ...prev, dia_semana: parseInt(e.target.value, 10) }))}
+                                >
+                                  <option value="" disabled>
+                                    Selecciona…
+                                  </option>
+                                  {dayLabels.map((lbl, idx) => (
+                                    <option key={idx} value={String(idx)}>
+                                      {lbl}
+                                    </option>
+                                  ))}
+                                </select>
+                                <svg className="dcf__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                                  <path d="M6 9l6 6 6-6" />
+                                </svg>
+                              </div>
+                            </div>
                           </div>
                           {isRecurrentWeekly && (
-                            <div style={{ marginTop: 10, fontSize: 12, opacity: 0.9, color: '#fff' }}>
-                              Próxima ocurrencia aprox.: <b>{nextYmd || '—'}</b> · La fecha queda bloqueada; edita el día.
+                            <div className="dcf__recur-hint">
+                              Próxima ocurrencia aprox.: <strong>{nextYmd || '—'}</strong> · La fecha queda bloqueada; edita el día.
                             </div>
                           )}
                         </div>
                       );
                     })()}
 
-                    {/* Banner Único (después de fecha y hora) */}
                     {!bulkMode && (
-                      <div style={{ marginTop: 14, padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', fontSize: 13, opacity: 0.92 }}
-                      dangerouslySetInnerHTML={{ __html: t('unique_mode_description') }}
+                      <div
+                        className="dcf__hint-banner dcf__mt-16"
+                        dangerouslySetInnerHTML={{ __html: t('unique_mode_description') }}
                       />
                     )}
 
                     {/* Acciones bulk rápidas */}
                     {bulkMode && (
-                      <div style={{ marginTop: 14, padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}>
+                      <div className="dcf__bulk-quick dcf__mt-16">
                         {/*
                           Requerimos fecha base para evitar que el usuario ejecute acciones sin contexto.
                           (En especial "Generar semanal", pero el usuario pidió apagar todos los botones aquí.)
                         */}
                         {(() => {
                           const baseReady = !!dateForm.fecha;
-                          const disabledStyle = {
-                            cursor: 'not-allowed',
-                            opacity: 0.55,
-                          } as const;
-                          const enabledStyle = {
-                            cursor: 'pointer',
-                            opacity: 1,
-                          } as const;
                           const tip = baseReady ? undefined : t('configure_base_date_tooltip');
-
-                          const touchPad = isMobile
-                            ? { minHeight: 44, padding: '12px 12px', fontSize: 13 as const }
-                            : { padding: '8px 12px' };
                           return (
                             <>
-                        <div style={{ fontWeight: 800, marginBottom: 8 }}>{t('quick_actions')}</div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: isMobile ? 'column' : 'row',
-                            flexWrap: isMobile ? 'nowrap' : 'wrap',
-                            gap: isMobile ? 12 : 10,
-                            alignItems: isMobile ? 'stretch' : 'center',
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 8,
-                              width: isMobile ? '100%' : 'auto',
-                              flexShrink: 0,
-                            }}
-                          >
-                            <span style={{ fontSize: 12, opacity: 0.85, flexShrink: 0 }}>{t('weeks')}</span>
+                        <div className="dcf__bulk-quick-title">{t('quick_actions')}</div>
+                        <div className="dcf__bulk-weeks-row">
+                            <label className="dcf__label">{t('weeks')}</label>
                             <input
                               type="number"
-                              min="1"
+                              min={1}
                               max={MAX_RECURRING_WEEKS}
                               value={dateForm.semanas_repetir || 4}
                               onChange={(e) => {
@@ -5538,119 +5400,62 @@ export default function OrganizerProfileEditor() {
                                   : 4;
                                 setDateForm({ ...dateForm, semanas_repetir: next });
                               }}
-                              className="org-editor-input"
+                              className="dcf__input dcf__bulk-weeks-input"
                               inputMode="numeric"
                               aria-label={t('weeks')}
-                              style={{
-                                width: isMobile ? '100%' : 90,
-                                maxWidth: isMobile ? 140 : undefined,
-                                minHeight: isMobile ? 44 : undefined,
-                                color: '#FFFFFF',
-                              }}
                             />
-                          </div>
-                          <div
-                            style={{
-                              display: isMobile ? 'grid' : 'flex',
-                              gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : undefined,
-                              flexWrap: isMobile ? undefined : 'wrap',
-                              gap: 10,
-                              alignItems: isMobile ? 'stretch' : 'center',
-                              flex: isMobile ? undefined : 1,
-                              minWidth: 0,
-                            }}
-                          >
+                        </div>
+                          <div className="dcf__bulk-btn-grid">
                           <button
                             type="button"
+                            className="dcf__bulk-action-btn"
                             onClick={() => baseReady && addBulkRow()}
                             disabled={!baseReady}
                             title={tip}
-                            style={{
-                              ...touchPad,
-                              borderRadius: 10,
-                              border: '1px solid rgba(255,255,255,0.18)',
-                              background: 'rgba(255,255,255,0.06)',
-                              color: '#fff',
-                              fontWeight: 700,
-                              ...(baseReady ? enabledStyle : disabledStyle),
-                            }}
                           >
                             {t('add_row')}
                           </button>
                           <button
                             type="button"
+                            className="dcf__bulk-action-btn dcf__bulk-action-btn--generate"
                             onClick={() => baseReady && generateWeeklyRowsFromTemplate()}
                             disabled={!baseReady}
                             title={tip}
-                            style={{
-                              ...touchPad,
-                              borderRadius: 10,
-                              border: '1px solid rgba(39,195,255,0.40)',
-                              background: 'rgba(39,195,255,0.10)',
-                              color: '#fff',
-                              fontWeight: 700,
-                              ...(baseReady ? enabledStyle : disabledStyle),
-                            }}
                           >
                             {t('generate_weekly', { weeks: Math.max(1, Math.min(MAX_RECURRING_WEEKS, dateForm.semanas_repetir || 1)) })}
                           </button>
                           <button
                             type="button"
+                            className="dcf__bulk-action-btn"
                             onClick={() => baseReady && setAllBulkSelected(true)}
                             disabled={!baseReady}
                             title={tip}
-                            style={{
-                              ...touchPad,
-                              borderRadius: 10,
-                              border: '1px solid rgba(255,255,255,0.18)',
-                              background: 'rgba(255,255,255,0.06)',
-                              color: '#fff',
-                              fontWeight: 700,
-                              ...(baseReady ? enabledStyle : disabledStyle),
-                            }}
                           >
                             {t('select_all')}
                           </button>
                           <button
                             type="button"
+                            className="dcf__bulk-action-btn"
                             onClick={() => baseReady && setAllBulkSelected(false)}
                             disabled={!baseReady}
                             title={tip}
-                            style={{
-                              ...touchPad,
-                              borderRadius: 10,
-                              border: '1px solid rgba(255,255,255,0.18)',
-                              background: 'rgba(255,255,255,0.06)',
-                              color: '#fff',
-                              fontWeight: 700,
-                              ...(baseReady ? enabledStyle : disabledStyle),
-                            }}
                           >
                             {t('deselect')}
                           </button>
                           <button
                             type="button"
+                            className="dcf__bulk-action-btn dcf__bulk-action-btn--clear dcf__bulk-clear-span"
                             onClick={() => baseReady && clearBulk()}
                             disabled={!baseReady}
                             title={tip}
-                            style={{
-                              ...touchPad,
-                              borderRadius: 10,
-                              border: '1px solid rgba(255,61,87,0.35)',
-                              background: 'rgba(255,61,87,0.10)',
-                              color: '#fff',
-                              fontWeight: 700,
-                              gridColumn: isMobile ? '1 / -1' : undefined,
-                              ...(baseReady ? enabledStyle : disabledStyle),
-                            }}
                           >
                             {t('clear_bulk')}
                           </button>
                           </div>
-                        </div>
                         {!baseReady && (
-                          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85 }}
-                          dangerouslySetInnerHTML={{ __html: t('configure_base_date') }}
+                          <div
+                            className="dcf__hint dcf__mt-16"
+                            dangerouslySetInnerHTML={{ __html: t('configure_base_date') }}
                           />
                         )}
                             </>
@@ -5659,44 +5464,29 @@ export default function OrganizerProfileEditor() {
                         
 
                         {/* Planificador bulk (sheet) */}
-                        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
-                          <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: 10, color: '#FFFFFF' }}>
-                            {t('planner_frequent')}
-                          </h3>
-                          <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}
-                          dangerouslySetInnerHTML={{ __html: t('selected', { count: bulkSelectedCount }) + (bulkPreview.count > 0 ? ` · ${t('preview', { first: bulkPreview.first, last: bulkPreview.last })}` : '') }}
+                        <div className="dcf__bulk-planner">
+                          <h3 className="dcf__bulk-planner-title">{t('planner_frequent')}</h3>
+                          <div
+                            className="dcf__bulk-planner-meta"
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                t('selected', { count: bulkSelectedCount }) +
+                                (bulkPreview.count > 0 ? ` · ${t('preview', { first: bulkPreview.first, last: bulkPreview.last })}` : ''),
+                            }}
                           />
 
-                          <div
-                            className="bulk-sheet"
-                            style={{
-                              overflowX: 'auto',
-                              WebkitOverflowScrolling: 'touch' as any,
-                              overscrollBehaviorX: 'contain' as any,
-                            }}
-                          >
-                            <div
-                              className="bulk-sheet-inner"
-                              style={{
-                                minWidth: isMobile ? 760 : 0,
-                                // CSS var para alinear header/filas en responsive
-                                ['--bulk-cols' as any]: isMobile
-                                  ? '38px 140px 110px 110px 130px 220px 84px'
-                                  : '44px 140px 120px 120px 140px 1fr 90px',
-                              }}
-                            >
-                              {/* Header */}
-                              <div className="bulk-header" style={{ display: 'grid', gridTemplateColumns: 'var(--bulk-cols, 44px 140px 120px 120px 140px 1fr 90px)', gap: 10, opacity: 0.85, fontSize: 12, marginBottom: 8 }}>
-                                <div></div>
-                                <div>{t('date_header')}</div>
-                                <div>{t('start_time_header')}</div>
-                                <div>{t('end_time_header')}</div>
-                                <div>{t('status_header')}</div>
-                                <div>{t('notes_header')}</div>
-                                <div></div>
-                              </div>
+                          <div className="dcf__bulk-table-wrap">
+                            <div className="dcf__bulk-table-hd">
+                              <div />
+                              <div>{t('date_header')}</div>
+                              <div>{t('start_time_header')}</div>
+                              <div>{t('end_time_header')}</div>
+                              <div>{t('status_header')}</div>
+                              <div>{t('notes_header')}</div>
+                              <div />
+                            </div>
 
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <div className="dcf__bulk-rows-stack">
                                 {bulkRows.map((r) => (
                                   <BulkRowItem
                                     key={r.id}
@@ -5713,93 +5503,44 @@ export default function OrganizerProfileEditor() {
                                     t={t}
                                   />
                                 ))}
-                              </div>
                             </div>
                           </div>
 
-                          <div
-                            style={{
-                              marginTop: 14,
-                              display: 'flex',
-                              flexDirection: isMobile ? 'column' : 'row',
-                              flexWrap: isMobile ? 'nowrap' : 'wrap',
-                              gap: isMobile ? 12 : 10,
-                              alignItems: isMobile ? 'stretch' : 'center',
-                            }}
-                          >
+                          <div className="dcf__bulk-save-bar">
                             <button
                               type="button"
+                              className="dcf__btn dcf__btn--primary"
                               onClick={handleBulkCreateDates}
                               disabled={createEventDate.isPending || bulkSelectedCount === 0}
-                              style={{
-                                padding: isMobile ? '14px 16px' : '12px 16px',
-                                minHeight: isMobile ? 48 : undefined,
-                                width: isMobile ? '100%' : 'auto',
-                                borderRadius: 14,
-                                border: '1px solid rgba(39,195,255,0.55)',
-                                background: 'linear-gradient(135deg, rgba(39,195,255,0.22), rgba(30,136,229,0.22))',
-                                color: '#fff',
-                                cursor: createEventDate.isPending || bulkSelectedCount === 0 ? 'not-allowed' : 'pointer',
-                                fontWeight: 900,
-                                fontSize: 14,
-                                letterSpacing: 0.2,
-                                opacity: createEventDate.isPending || bulkSelectedCount === 0 ? 0.55 : 1,
-                                boxShadow: '0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset',
-                              }}
                             >
                               {createEventDate.isPending ? t('saving_batch') : t('save_dates')}
                             </button>
 
                             <button
                               type="button"
+                              className="dcf__btn dcf__btn--blue"
                               onClick={() => handleBulkPublish(true)}
                               disabled={Object.keys(createdDateIdByRow).length === 0}
-                              style={{
-                                padding: isMobile ? '14px 16px' : '12px 16px',
-                                minHeight: isMobile ? 48 : undefined,
-                                width: isMobile ? '100%' : 'auto',
-                                borderRadius: 14,
-                                border: '1px solid rgba(255,255,255,0.28)',
-                                background: 'linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))',
-                                color: '#fff',
-                                cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
-                                fontWeight: 900,
-                                fontSize: 14,
-                                opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
-                                boxShadow: '0 10px 22px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.04) inset',
-                              }}
                             >
                               {t('publish_selected')}
                             </button>
 
                             <button
                               type="button"
+                              className="dcf__btn"
                               onClick={() => handleBulkPublish(false)}
                               disabled={Object.keys(createdDateIdByRow).length === 0}
-                              style={{
-                                padding: isMobile ? '14px 16px' : '12px 16px',
-                                minHeight: isMobile ? 48 : undefined,
-                                width: isMobile ? '100%' : 'auto',
-                                borderRadius: 14,
-                                border: '1px solid rgba(255,61,87,0.55)',
-                                background: 'linear-gradient(135deg, rgba(255,61,87,0.22), rgba(255,140,66,0.18))',
-                                color: '#fff',
-                                cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
-                                fontWeight: 900,
-                                fontSize: 14,
-                                opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
-                                boxShadow: '0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05) inset',
-                              }}
                             >
                               {t('publish_all')}
                             </button>
                           </div>
                         </div>
 
-                        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
-                          <div style={{ fontWeight: 800, marginBottom: 8 }}>{t('general_flyer_optional')}</div>
-                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 10 }}
-                          dangerouslySetInnerHTML={{ __html: t('general_flyer_description') }}
+                        <div className="dcf__bulk-flyer-section">
+                          <div className="dcf__bulk-quick-title">{t('general_flyer_optional')}</div>
+                          <div
+                            className="dcf__hint dcf__mt-16"
+                            dangerouslySetInnerHTML={{ __html: t('general_flyer_description') }}
                           />
                           <DateFlyerUploader
                             value={bulkGeneralFlyerUrl || null}
@@ -5813,71 +5554,28 @@ export default function OrganizerProfileEditor() {
                             dateId={null}
                             parentId={selectedParentId || undefined}
                           />
-                          <div
-                            style={{
-                              marginTop: 10,
-                              display: isMobile ? 'grid' : 'flex',
-                              gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : undefined,
-                              flexWrap: isMobile ? undefined : 'wrap',
-                              gap: 10,
-                              alignItems: isMobile ? 'stretch' : 'center',
-                            }}
-                          >
+                          <div className="dcf__bulk-flyer-actions">
                             <button
                               type="button"
+                              className="dcf__btn"
                               onClick={() => applyBulkGeneralFlyerToCreated(true)}
                               disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
-                              style={{
-                                padding: isMobile ? '12px 12px' : '8px 12px',
-                                minHeight: isMobile ? 44 : undefined,
-                                borderRadius: 10,
-                                border: '1px solid rgba(255,255,255,0.18)',
-                                background: 'rgba(255,255,255,0.06)',
-                                color: '#fff',
-                                cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
-                                fontWeight: 700,
-                                fontSize: isMobile ? 13 : undefined,
-                                opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
-                              }}
                             >
                               {t('apply_to_selected_created')}
                             </button>
                             <button
                               type="button"
+                              className="dcf__btn"
                               onClick={() => applyBulkGeneralFlyerToCreated(false)}
                               disabled={!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0}
-                              style={{
-                                padding: isMobile ? '12px 12px' : '8px 12px',
-                                minHeight: isMobile ? 44 : undefined,
-                                borderRadius: 10,
-                                border: '1px solid rgba(255,255,255,0.18)',
-                                background: 'rgba(255,255,255,0.06)',
-                                color: '#fff',
-                                cursor: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 'not-allowed' : 'pointer',
-                                fontWeight: 700,
-                                fontSize: isMobile ? 13 : undefined,
-                                opacity: (!bulkGeneralFlyerUrl || Object.keys(createdDateIdByRow).length === 0) ? 0.55 : 1,
-                              }}
                             >
                               {t('apply_to_all_created')}
                             </button>
                             <button
                               type="button"
+                              className="dcf__btn dcf__btn--blue"
                               onClick={() => setShowPendingFlyers((v) => !v)}
                               disabled={Object.keys(createdDateIdByRow).length === 0}
-                              style={{
-                                padding: isMobile ? '12px 12px' : '8px 12px',
-                                minHeight: isMobile ? 44 : undefined,
-                                borderRadius: 10,
-                                border: '1px solid rgba(39,195,255,0.40)',
-                                background: 'rgba(39,195,255,0.10)',
-                                color: '#fff',
-                                cursor: Object.keys(createdDateIdByRow).length === 0 ? 'not-allowed' : 'pointer',
-                                fontWeight: 700,
-                                fontSize: isMobile ? 13 : undefined,
-                                opacity: Object.keys(createdDateIdByRow).length === 0 ? 0.55 : 1,
-                                gridColumn: isMobile ? '1 / -1' : undefined,
-                              }}
                             >
                               🧾 {showPendingFlyers ? t('hide_individual_flyers') : t('open_individual_flyers')}
                             </button>
@@ -5887,67 +5585,77 @@ export default function OrganizerProfileEditor() {
                         
                       </div>
                     )}
-
+                    </div>
                   </div>
 
                   {/* Flyer (solo único; después de Fecha y Hora) */}
                   {!bulkMode && (
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      {t('event_flyer')}
-                    </h3>
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--flyer">
+                        <Image aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('event_flyer')}</h3>
+                    </div>
+                    <div className="dcf__card-body">
                     <DateFlyerUploader
                       value={dateForm.flyer_url || null}
                       onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
                       dateId={null}
                       parentId={selectedParentId || undefined}
                     />
+                    </div>
                   </div>
                   )}
 
                   {/* Estado de Publicación (solo único; después del flyer) */}
                   {!bulkMode && (
-                  <div className="org-editor-card">
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: '#FFFFFF' }}>
-                      {t('publication_status')}
-                    </h3>
-                    <div className="org-date-form-radio-group">
-                      <label className="org-date-form-checkbox">
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--status">
+                        <Globe aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('publication_status')}</h3>
+                    </div>
+                    <div className="dcf__card-body">
+                    <div className="dcf__radio-group">
+                      <label className="dcf__radio-card">
                         <input
                           type="radio"
                           name="estado_publicacion"
                           value="borrador"
                           checked={dateForm.estado_publicacion === 'borrador'}
                           onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                          style={{ transform: 'scale(1.2)' }}
                         />
-                        <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                          {t('draft_only_you')}
-                        </span>
+                        <div>
+                          <span className="dcf__radio-card-title">{t('draft')}</span>
+                          <span className="dcf__radio-card-desc">{t('draft_only_you')}</span>
+                        </div>
                       </label>
-                      <label className="org-date-form-checkbox">
+                      <label className="dcf__radio-card">
                         <input
                           type="radio"
                           name="estado_publicacion"
                           value="publicado"
                           checked={dateForm.estado_publicacion === 'publicado'}
                           onChange={(e) => setDateForm({ ...dateForm, estado_publicacion: e.target.value as 'borrador' | 'publicado' })}
-                          style={{ transform: 'scale(1.2)' }}
                         />
-                        <span style={{ color: '#FFFFFF', fontSize: '1rem' }}>
-                          {t('public_visible_all')}
-                        </span>
+                        <div>
+                          <span className="dcf__radio-card-title">{t('published')}</span>
+                          <span className="dcf__radio-card-desc">{t('public_visible_all')}</span>
+                        </div>
                       </label>
+                    </div>
                     </div>
                   </div>
                   )}
 
                   {/* Botones (solo único; después de estado) */}
                   {!bulkMode && (
-                  <div className="org-editor-card org-date-form-buttons">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                  <div className="dcf__actions">
+                    <button
+                      type="button"
+                      className="dcf__btn"
                       onClick={() => {
                         setShowDateForm(false);
                         setDateForm({
@@ -5980,52 +5688,37 @@ export default function OrganizerProfileEditor() {
                         setSelectedDateLocationId('');
                         setSelectedParentId(null);
                       }}
-                      style={{
-                        padding: '12px 24px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        background: 'transparent',
-                        color: '#FFFFFF',
-                        fontSize: '0.9rem',
-                        fontWeight: '700',
-                        cursor: 'pointer'
-                      }}
                     >
                       {t('cancel')}
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                    </button>
+                    <div className="dcf__actions-right">
+                    <button
+                      type="button"
+                      className="dcf__btn dcf__btn--primary"
                       onClick={handleCreateDate}
                       disabled={createEventDate.isPending || !dateForm.fecha}
-                      style={{
-                        padding: '12px 24px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        color: '#FFFFFF',
-                        fontSize: '0.9rem',
-                        fontWeight: '700',
-                        cursor: createEventDate.isPending || !dateForm.fecha ? 'not-allowed' : 'pointer',
-                        boxShadow: '0 4px 16px rgba(30, 136, 229, 0.3)',
-                        opacity: createEventDate.isPending || !dateForm.fecha ? 0.6 : 1
-                      }}
                     >
                       {createEventDate.isPending ? t('creating') : t('create')}
-                    </motion.button>
+                    </button>
+                    </div>
                   </div>
                   )}
 
                   {/* Flyers pendientes (bulk) */}
                   {bulkMode && showPendingFlyers && (
-                    <div className="org-editor-card">
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: '#FFFFFF' }}>
-                        {t('pending_flyers')}
-                      </h3>
-                      <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 12 }}>
+                    <div className="dcf__card">
+                      <div className="dcf__card-hd">
+                        <div className="dcf__card-icon dcf__card-icon--flyer">
+                          <Image aria-hidden />
+                        </div>
+                        <h3 className="dcf__card-title">{t('pending_flyers')}</h3>
+                      </div>
+                      <div className="dcf__card-body">
+                      <div className="dcf__hint">
                         {t('pending_flyers_description')}
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <div className="dcf__stack dcf__stack--gap-16 dcf__mt-16">
                         {(() => {
                           const all = bulkRows
                             .map((r) => ({ r, dateId: createdDateIdByRow[r.id] }))
@@ -6038,15 +5731,16 @@ export default function OrganizerProfileEditor() {
                           return (
                             <>
                               {all.length > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <div style={{ fontSize: 12, opacity: 0.85 }}
-                                  dangerouslySetInnerHTML={{ __html: t('showing_count', { showing: showing.length, total: all.length }) + (!bulkShowAllFlyers && all.length !== showing.length ? ` (${t('already_have_flyer')})` : '') }}
+                                <div className="dcf__pending-flyers-toolbar">
+                                  <div
+                                    className="dcf__hint"
+                                    dangerouslySetInnerHTML={{ __html: t('showing_count', { showing: showing.length, total: all.length }) + (!bulkShowAllFlyers && all.length !== showing.length ? ` (${t('already_have_flyer')})` : '') }}
                                   />
                                   {all.length !== showing.length && (
                                     <button
                                       type="button"
+                                      className="dcf__btn"
                                       onClick={() => setBulkShowAllFlyers((v) => !v)}
-                                      style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
                                     >
                                       {bulkShowAllFlyers ? t('hide_with_flyer') : t('show_all_replace')}
                                     </button>
@@ -6055,28 +5749,34 @@ export default function OrganizerProfileEditor() {
                               )}
 
                               {showing.length === 0 && (
-                                <div style={{ fontSize: 13, opacity: 0.9 }}>
+                                <div className="dcf__pending-flyers-empty">
                                   {t('all_dates_have_flyer')}
                                 </div>
                               )}
 
                               {showing.map(({ r, dateId }) => (
-                                <div
-                                  key={r.id}
-                                  style={{
-                                    border: '1px solid rgba(255,255,255,0.10)',
-                                    borderRadius: 14,
-                                    padding: 12,
-                                    background: 'rgba(255,255,255,0.04)',
-                                  }}
-                                >
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 8 }}>
-                                    <div style={{ fontWeight: 800 }}>
+                                <div key={r.id} className="dcf__pending-flyer-row">
+                                  <div className="dcf__pending-flyer-meta">
+                                    <span className="dcf__pending-flyer-date">
                                       {r.fecha} {r.hora_inicio ? `· ${r.hora_inicio}` : ''}
-                                    </div>
-                                    <div style={{ fontSize: 12, opacity: 0.85 }}>
-                                      {r.flyer_status === 'UPLOADING' ? '⏳ UPLOADING' : (r.flyer_url ? '✅ DONE' : (r.flyer_status === 'ERROR' ? '❌ ERROR' : '⏳ PENDING'))}
-                                    </div>
+                                    </span>
+                                    <span
+                                      className={`dcf__pending-flyer-status ${
+                                        r.flyer_url
+                                          ? 'dcf__pending-flyer-status--ok'
+                                          : r.flyer_status === 'ERROR'
+                                          ? 'dcf__pending-flyer-status--error'
+                                          : 'dcf__pending-flyer-status--pending'
+                                      }`}
+                                    >
+                                      {r.flyer_status === 'UPLOADING'
+                                        ? '…'
+                                        : r.flyer_url
+                                        ? 'OK'
+                                        : r.flyer_status === 'ERROR'
+                                        ? 'Error'
+                                        : t('pending')}
+                                    </span>
                                   </div>
 
                                   <DateFlyerUploader
@@ -6107,6 +5807,7 @@ export default function OrganizerProfileEditor() {
                           );
                         })()}
                       </div>
+                    </div>
                     </div>
                   )}
                 </motion.div>

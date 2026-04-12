@@ -12,6 +12,7 @@ import {
   FaGlobe
 } from 'react-icons/fa';
 import { buildShareUrl } from "@/utils/shareUrls";
+import { resolveVersionedSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 import "./BrandProfileLive.css";
 
 // Lazy load components
@@ -151,8 +152,24 @@ export default function BrandProfileLive() {
   }, [brand]);
 
   // Memoizar avatar y portada
-  const avatarUrl = useMemo(() => brand?.avatar_url || media[0] || undefined, [brand, media]);
-  const portadaUrl = useMemo(() => brand?.portada_url as string | undefined, [brand]);
+  const brandImageVersion = useMemo(
+    () => brand?.updated_at || (brand as any)?.created_at || brand?.id || null,
+    [brand]
+  );
+  const avatarUrl = useMemo(
+    () =>
+      resolveVersionedSupabaseStoragePublicUrl(brand?.avatar_url || media[0] || undefined, brandImageVersion, {
+        defaultBucket: "media",
+      }),
+    [brand?.avatar_url, brandImageVersion, media]
+  );
+  const portadaUrl = useMemo(
+    () =>
+      resolveVersionedSupabaseStoragePublicUrl(brand?.portada_url as string | undefined, brandImageVersion, {
+        defaultBucket: "media",
+      }),
+    [brand?.portada_url, brandImageVersion]
+  );
 
   // Memoizar productos normalizados
   const productos = useMemo(() => {

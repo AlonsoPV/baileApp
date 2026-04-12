@@ -10,7 +10,7 @@ import { useMyOrganizer } from '../../hooks/useOrganizer';
 import { TagChip } from '../../components/TagChip';
 import { isValidDisplayName } from '../../utils/validation';
 import { supabase } from '../../lib/supabase';
-import { withStableCacheBust } from '../../utils/cacheBuster';
+import { buildSupabaseStoragePublicUrl, resolveVersionedSupabaseStorageDirectUrl } from '../../utils/supabaseStoragePublicUrl';
 
 const spacing = theme.spacing;
 
@@ -37,9 +37,13 @@ export function Profile() {
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  const avatarVersion = profile?.updated_at ?? profile?.created_at ?? (profile as any)?.user_id ?? null;
   const avatarDisplayUrl = useMemo(
-    () => withStableCacheBust(profile?.avatar_url, profile?.updated_at ?? profile?.created_at ?? (profile as any)?.id) ?? profile?.avatar_url ?? '',
-    [profile?.avatar_url, profile?.updated_at, profile?.created_at, (profile as any)?.id]
+    () =>
+      resolveVersionedSupabaseStorageDirectUrl(profile?.avatar_url, avatarVersion, { defaultBucket: 'media' }) ??
+      profile?.avatar_url ??
+      '',
+    [profile?.avatar_url, avatarVersion]
   );
 
   // Initialize form when toggling edit mode
@@ -111,13 +115,17 @@ export function Profile() {
         const fileName = `avatars/${profile.user_id}.png`;
         const { error: uploadError } = await supabase.storage
           .from('media')
-          .upload(fileName, avatarFile, { upsert: true });
+          .upload(fileName, avatarFile, {
+            upsert: true,
+            cacheControl: '31536000',
+            contentType: avatarFile.type || undefined,
+          });
 
         if (uploadError) {
           throw new Error(`Error uploading avatar: ${uploadError.message}`);
         }
 
-        avatarUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
+        avatarUrl = buildSupabaseStoragePublicUrl(fileName, { bucket: 'media' });
       }
 
       // Preparar patch para guardar (el hook se encarga de merge y normalización)

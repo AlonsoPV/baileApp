@@ -24,6 +24,7 @@ import { resizeImageIfNeeded } from "@/lib/imageResize";
 import "@/styles/event-public.css";
 import { useToast } from "@/components/Toast";
 import RitmosChips from "@/components/RitmosChips";
+import { buildSupabaseStoragePublicUrl } from "@/utils/supabaseStoragePublicUrl";
 
 type Mode = "per_candidate" | "per_ritmo";
 
@@ -106,10 +107,13 @@ export default function TrendingAdmin() {
         const processedCoverFile = await resizeImageIfNeeded(coverFile, 800);
         const ext = processedCoverFile.name.split('.')?.pop();
         const key = `trending-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from('media').upload(key, processedCoverFile, { upsert: true });
+        const { error: upErr } = await supabase.storage.from('media').upload(key, processedCoverFile, {
+          upsert: true,
+          cacheControl: '31536000',
+          contentType: processedCoverFile.type || undefined,
+        });
         if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from('media').getPublicUrl(key);
-        coverUrl = pub.publicUrl;
+        coverUrl = buildSupabaseStoragePublicUrl(key, { bucket: 'media' });
       }
       const id = await adminCreateTrending({
         title: title.trim(),

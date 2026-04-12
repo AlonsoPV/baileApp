@@ -1,7 +1,7 @@
 // path: src/components/events/EventCreateForm.tsx
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { Calendar, Clock, FileText, Globe, Image, MapPin, Music } from "lucide-react";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useTags } from "../../hooks/useTags";
 import { useToast } from "../Toast";
@@ -18,15 +18,7 @@ import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOr
 import type { AcademyLocation } from "../../types/academy";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 import ZonaGroupedChips from "../profile/ZonaGroupedChips";
-
-const colors = {
-  coral: "#FF3D57",
-  orange: "#FF8C42",
-  yellow: "#FFD166",
-  blue: "#1E88E5",
-  dark: "#121212",
-  light: "#F5F5F5",
-};
+import "../../styles/eventCreateForm.css";
 
 type EventCreateFormProps =
   | {
@@ -387,359 +379,289 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     else navigate(-1);
   }, [props, navigate]);
 
+  const rootClass = ["ecf", props.className].filter(Boolean).join(" ");
+
   if (isLoadingInitial) {
     return (
-      <div
-        style={{
-          minHeight: 320,
-          background: `linear-gradient(135deg, ${colors.dark}, #1a1a1a)`,
-          display: "grid",
-          placeItems: "center",
-          color: colors.light,
-        }}
-      >
-        <div>Cargando…</div>
+      <div className={rootClass} style={props.style}>
+        <div className="ecf__loading-screen">Cargando…</div>
       </div>
     );
   }
 
   return (
-    <React.Fragment>
-      <style>{`
-        .event-create-form-container { background: linear-gradient(135deg, ${colors.dark}, #1a1a1a); padding: 24px 0; }
-        .event-create-form-wrapper { max-width: 800px; margin: 0 auto; padding: 0 24px; }
-        .event-create-form-header { margin-bottom: 32px; text-align: center; }
-        .event-create-form-header h1 { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, ${colors.coral}, ${colors.blue}); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
-        .event-create-form-header p { font-size: 1.1rem; color: ${colors.light}; opacity: 0.8; }
-        .event-create-form-section { padding: 24px; background: ${colors.dark}66; border-radius: 16px; border: 1px solid ${colors.light}22; }
-        .event-create-form-section h2 { font-size: 1.5rem; font-weight: 600; color: ${colors.light}; margin-bottom: 20px; }
-        .event-create-form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-        .event-create-form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .event-create-form-actions { display: flex; justify-content: space-between; align-items: center; padding: 24px; background: ${colors.dark}66; border-radius: 16px; border: 1px solid ${colors.light}22; }
-        .event-create-form-actions-buttons { display: flex; align-items: center; gap: 12px; }
-        @media (max-width: 768px) {
-          .event-create-form-container { padding: 16px 0; }
-          .event-create-form-wrapper { padding: 0 16px; }
-          .event-create-form-header { margin-bottom: 24px; }
-          .event-create-form-header h1 { font-size: 2rem; margin-bottom: 6px; }
-          .event-create-form-header p { font-size: 1rem; }
-          .event-create-form-section { padding: 18px; border-radius: 12px; }
-          .event-create-form-section h2 { font-size: 1.3rem; margin-bottom: 16px; }
-          .event-create-form-grid-3 { grid-template-columns: 1fr; gap: 12px; }
-          .event-create-form-grid-2 { grid-template-columns: 1fr; gap: 12px; }
-          .event-create-form-actions { flex-direction: column; gap: 16px; padding: 18px; align-items: stretch; }
-          .event-create-form-actions-buttons { flex-direction: column; width: 100%; gap: 12px; }
-          .event-create-form-actions-buttons button { width: 100%; }
-        }
-        @media (max-width: 480px) {
-          .event-create-form-container { padding: 12px 0; }
-          .event-create-form-wrapper { padding: 0 12px; }
-          .event-create-form-header h1 { font-size: 1.75rem; }
-          .event-create-form-header p { font-size: 0.95rem; }
-          .event-create-form-section { padding: 14px; border-radius: 10px; }
-          .event-create-form-section h2 { font-size: 1.2rem; margin-bottom: 14px; }
-          .event-create-form-actions { padding: 14px; }
-        }
-      `}</style>
+    <div className={rootClass} style={props.style}>
+      <div className="ecf__wrapper">
+        {props.showHeader && (
+          <div className="ecf__header">
+            <div className="ecf__mode-badge">{isParent ? "Social" : "Fecha de evento"}</div>
+            <h1 className="ecf__title">
+              {isParent ? (isEditing ? "Editar social" : "Crear social") : isEditing ? "Editar fecha" : "Nueva fecha"}
+            </h1>
+            <p className="ecf__subtitle">
+              {isParent ? "Información general del evento social" : "Detalles específicos de esta fecha"}
+            </p>
+          </div>
+        )}
 
-      <div className="event-create-form-container" style={props.style}>
-        <div className="event-create-form-wrapper">
-          {props.showHeader && (
-            <div className="event-create-form-header">
-              <h1>{isParent ? (isEditing ? "🎭 Editar Social" : "🎭 Crear Social") : isEditing ? "📅 Editar Fecha" : "📅 Crear Fecha"}</h1>
-              <p>{isParent ? "Información general del evento social" : "Detalles específicos de la fecha del evento"}</p>
-            </div>
-          )}
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Información Básica */}
-            <div className="event-create-form-section">
-              <h2>📝 Información Básica</h2>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                    Nombre del {isParent ? "Social" : "Evento"} *
-                  </label>
-                  <input
-                    type="text"
-                    value={(values as any)?.nombre || ""}
-                    onChange={(e) => setValue("nombre" as any, e.target.value)}
-                    placeholder={`Nombre del ${isParent ? "social" : "evento"}`}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      borderRadius: 12,
-                      background: `${colors.dark}cc`,
-                      border: `2px solid ${colors.light}33`,
-                      color: colors.light,
-                      fontSize: "1rem",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                    Biografía
-                  </label>
-                  <textarea
-                    value={(values as any)?.biografia || ""}
-                    onChange={(e) => setValue("biografia" as any, e.target.value)}
-                    placeholder="Describe el evento, su propósito, qué esperar..."
-                    rows={3}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      borderRadius: 12,
-                      background: `${colors.dark}cc`,
-                      border: `2px solid ${colors.light}33`,
-                      color: colors.light,
-                      fontSize: "1rem",
-                      resize: "vertical",
-                    }}
-                  />
-                </div>
+        <div className="ecf__sections">
+          {/* Información Básica */}
+          <div className="ecf__section">
+            <div className="ecf__section-header">
+              <div className="ecf__section-icon">
+                <FileText size={18} aria-hidden />
+              </div>
+              <div>
+                <h2 className="ecf__section-title">Información básica</h2>
               </div>
             </div>
 
-            {/* Ritmos */}
-            <div className="event-create-form-section">
-              <h2>🎵 Ritmos de Baile</h2>
+            <div className="ecf__stack">
+              <div className="ecf__field">
+                <label className="ecf__label">
+                  Nombre del {isParent ? "social" : "evento"}
+                  <span className="ecf__label-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="ecf__input"
+                  value={(values as any)?.nombre || ""}
+                  onChange={(e) => setValue("nombre" as any, e.target.value)}
+                  placeholder={`Nombre del ${isParent ? "social" : "evento"}`}
+                />
+              </div>
 
-              <div style={{ marginTop: 8 }}>
-                <RitmosChips
-                  selected={(() => {
-                    const selected = (((values as any)?.ritmos_seleccionados || []) as string[]).filter(Boolean);
-                    return allowedCatalogIds.length ? selected.filter((id) => allowedCatalogIds.includes(id)) : selected;
-                  })()}
-                  allowedIds={allowedCatalogIds}
-                  onChange={(ids) => {
-                    const next = allowedCatalogIds.length ? ids.filter((id) => allowedCatalogIds.includes(id)) : ids;
-                    setValue("ritmos_seleccionados" as any, next as any);
-
-                    // Mapear también a estilos (tag IDs) si es posible
-                    try {
-                      const labelByCatalogId = new Map<string, string>();
-                      RITMOS_CATALOG.forEach((g: any) => g.items.forEach((i: any) => labelByCatalogId.set(i.id, i.label)));
-                      const nameToTagId = new Map<string, number>(ritmoTags.map((t: any) => [t.nombre, t.id]));
-                      const mappedTagIds = next
-                        .map((cid) => labelByCatalogId.get(cid))
-                        .filter(Boolean)
-                        .map((label: any) => nameToTagId.get(String(label)))
-                        .filter((n): n is number => typeof n === "number");
-                      setValue("estilos" as any, mappedTagIds as any);
-                    } catch {}
-                  }}
+              <div className="ecf__field">
+                <label className="ecf__label">Biografía</label>
+                <textarea
+                  className="ecf__textarea"
+                  value={(values as any)?.biografia || ""}
+                  onChange={(e) => setValue("biografia" as any, e.target.value)}
+                  placeholder="Describe el evento, su propósito, qué esperar..."
+                  rows={3}
                 />
               </div>
             </div>
+          </div>
 
-            {/* Campos parent */}
-            {isParent && (
-              <>
-                <div className="event-create-form-section">
-                  <h2>🗺️ Ubicaciones del Social</h2>
-                  <p style={{ fontSize: "0.9rem", opacity: 0.75, marginBottom: 16, color: colors.light }}>
-                    Agrega cada sede o punto de encuentro para este social.
-                  </p>
+          {/* Ritmos */}
+          <div className="ecf__section">
+            <div className="ecf__section-header">
+              <div className="ecf__section-icon ecf__section-icon--schedule">
+                <Music size={18} aria-hidden />
+              </div>
+              <div>
+                <h2 className="ecf__section-title">Ritmos de baile</h2>
+              </div>
+            </div>
 
-                  <UbicacionesEditor
-                    value={(((values as any)?.ubicaciones || []) as AcademyLocation[]) ?? []}
-                    onChange={(ubicaciones: AcademyLocation[]) => handleUbicacionesChange(ubicaciones)}
-                    allowedZoneIds={Array.isArray((values as any)?.zonas) ? (((values as any).zonas as number[]).filter((n: any) => typeof n === "number") as any) : undefined}
-                    savedLocations={orgLocations as any}
-                  />
+            <div className="ecf__chips-wrap">
+              <RitmosChips
+                selected={(() => {
+                  const selected = (((values as any)?.ritmos_seleccionados || []) as string[]).filter(Boolean);
+                  return allowedCatalogIds.length ? selected.filter((id) => allowedCatalogIds.includes(id)) : selected;
+                })()}
+                allowedIds={allowedCatalogIds}
+                onChange={(ids) => {
+                  const next = allowedCatalogIds.length ? ids.filter((id) => allowedCatalogIds.includes(id)) : ids;
+                  setValue("ritmos_seleccionados" as any, next as any);
+
+                  // Mapear también a estilos (tag IDs) si es posible
+                  try {
+                    const labelByCatalogId = new Map<string, string>();
+                    RITMOS_CATALOG.forEach((g: any) => g.items.forEach((i: any) => labelByCatalogId.set(i.id, i.label)));
+                    const nameToTagId = new Map<string, number>(ritmoTags.map((t: any) => [t.nombre, t.id]));
+                    const mappedTagIds = next
+                      .map((cid) => labelByCatalogId.get(cid))
+                      .filter(Boolean)
+                      .map((label: any) => nameToTagId.get(String(label)))
+                      .filter((n): n is number => typeof n === "number");
+                    setValue("estilos" as any, mappedTagIds as any);
+                  } catch {}
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Campos parent */}
+          {isParent && (
+            <>
+              <div className="ecf__section">
+                <div className="ecf__section-header">
+                  <div className="ecf__section-icon ecf__section-icon--location">
+                    <MapPin size={18} aria-hidden />
+                  </div>
+                  <div>
+                    <h2 className="ecf__section-title">Ubicaciones del social</h2>
+                    <p className="ecf__section-desc">Agrega cada sede o punto de encuentro para este social.</p>
+                  </div>
                 </div>
 
-                <div className="event-create-form-section">
-                  <h2>📷 Galería de Medios</h2>
-                  <MediaUploader
-                    onPick={(files) => {
-                      // If editing parent, upload to storage/DB
-                      if (isEditing && (parentMedia as any)?.add?.mutate) {
-                        Array.from(files).forEach((file, idx) => {
-                          (parentMedia as any).add.mutate({ file, slot: `p${idx + 1}` });
-                        });
+                <UbicacionesEditor
+                  value={(((values as any)?.ubicaciones || []) as AcademyLocation[]) ?? []}
+                  onChange={(ubicaciones: AcademyLocation[]) => handleUbicacionesChange(ubicaciones)}
+                  allowedZoneIds={Array.isArray((values as any)?.zonas) ? (((values as any).zonas as number[]).filter((n: any) => typeof n === "number") as any) : undefined}
+                  savedLocations={orgLocations as any}
+                />
+              </div>
+
+              <div className="ecf__section">
+                <div className="ecf__section-header">
+                  <div className="ecf__section-icon ecf__section-icon--media">
+                    <Image size={18} aria-hidden />
+                  </div>
+                  <div>
+                    <h2 className="ecf__section-title">Galería de medios</h2>
+                  </div>
+                </div>
+                <MediaUploader
+                  onPick={(files) => {
+                    // If editing parent, upload to storage/DB
+                    if (isEditing && (parentMedia as any)?.add?.mutate) {
+                      Array.from(files).forEach((file, idx) => {
+                        (parentMedia as any).add.mutate({ file, slot: `p${idx + 1}` });
+                      });
+                    } else {
+                      // Create-mode: local preview only
+                      const now = Date.now();
+                      const picked = Array.from(files).map((f, i) => ({
+                        id: `${now}-${i}`,
+                        type: f.type.startsWith("video") ? "video" : "image",
+                        url: URL.createObjectURL(f),
+                      }));
+                      const current = (((values as any)?.media as any[]) || []) as any[];
+                      setValue("media" as any, [...picked, ...current] as any);
+                    }
+                  }}
+                />
+
+                <div className="ecf__media-grid">
+                  <MediaGrid
+                    items={isEditing ? ((parentMedia as any)?.media as any[]) || [] : (((values as any)?.media as any[]) || [])}
+                    onRemove={(id) => {
+                      if (isEditing && (parentMedia as any)?.remove?.mutate) {
+                        (parentMedia as any).remove.mutate(id as string);
                       } else {
-                        // Create-mode: local preview only
-                        const now = Date.now();
-                        const picked = Array.from(files).map((f, i) => ({
-                          id: `${now}-${i}`,
-                          type: f.type.startsWith("video") ? "video" : "image",
-                          url: URL.createObjectURL(f),
-                        }));
-                        const current = (((values as any)?.media as any[]) || []) as any[];
-                        setValue("media" as any, [...picked, ...current] as any);
+                        const next = ((((values as any)?.media as any[]) || []) as any[]).filter((m: any) => m.id !== id);
+                        setValue("media" as any, next as any);
                       }
                     }}
                   />
+                </div>
+              </div>
+            </>
+          )}
 
-                  <div style={{ marginTop: 16 }}>
-                    <MediaGrid
-                      items={isEditing ? ((parentMedia as any)?.media as any[]) || [] : (((values as any)?.media as any[]) || [])}
-                      onRemove={(id) => {
-                        if (isEditing && (parentMedia as any)?.remove?.mutate) {
-                          (parentMedia as any).remove.mutate(id as string);
-                        } else {
-                          const next = ((((values as any)?.media as any[]) || []) as any[]).filter((m: any) => m.id !== id);
-                          setValue("media" as any, next as any);
-                        }
-                      }}
+          {/* Campos date */}
+          {!isParent && (
+            <>
+              <div className="ecf__section">
+                <div className="ecf__section-header">
+                  <div className="ecf__section-icon ecf__section-icon--date">
+                    <Calendar size={18} aria-hidden />
+                  </div>
+                  <div>
+                    <h2 className="ecf__section-title">Fecha y hora</h2>
+                  </div>
+                </div>
+
+                <div className="ecf__grid-3">
+                  <div className="ecf__field">
+                    <label className="ecf__label">
+                      Fecha
+                      <span className="ecf__label-required">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      className="ecf__input"
+                      value={(values as any)?.fecha || ""}
+                      onChange={(e) => setValue("fecha" as any, e.target.value)}
+                      disabled={typeof (values as any)?.dia_semana === "number"}
+                    />
+                  </div>
+
+                  <div className="ecf__field">
+                    <label className="ecf__label">Hora inicio</label>
+                    <input
+                      type="time"
+                      className="ecf__input"
+                      value={(values as any)?.hora_inicio || ""}
+                      onChange={(e) => setValue("hora_inicio" as any, e.target.value)}
+                    />
+                  </div>
+
+                  <div className="ecf__field">
+                    <label className="ecf__label">Hora fin</label>
+                    <input
+                      type="time"
+                      className="ecf__input"
+                      value={(values as any)?.hora_fin || ""}
+                      onChange={(e) => setValue("hora_fin" as any, e.target.value)}
                     />
                   </div>
                 </div>
-              </>
-            )}
 
-            {/* Campos date */}
-            {!isParent && (
-              <>
-                <div className="event-create-form-section">
-                  <h2>📅 Fecha y Hora</h2>
+                {/* Recurrente semanal */}
+                {(() => {
+                  const isRecurrentWeekly = typeof (values as any)?.dia_semana === "number";
+                  const dayLabels = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-                  <div className="event-create-form-grid-3">
-                    <div>
-                      <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                        Fecha *
-                      </label>
-                      <input
-                        type="date"
-                        value={(values as any)?.fecha || ""}
-                        onChange={(e) => setValue("fecha" as any, e.target.value)}
-                        disabled={typeof (values as any)?.dia_semana === "number"}
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          borderRadius: 12,
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: "1rem",
-                          opacity: typeof (values as any)?.dia_semana === "number" ? 0.6 : 1,
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                        Hora Inicio
-                      </label>
-                      <input
-                        type="time"
-                        value={(values as any)?.hora_inicio || ""}
-                        onChange={(e) => setValue("hora_inicio" as any, e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          borderRadius: 12,
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: "1rem",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                        Hora Fin
-                      </label>
-                      <input
-                        type="time"
-                        value={(values as any)?.hora_fin || ""}
-                        onChange={(e) => setValue("hora_fin" as any, e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          borderRadius: 12,
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: "1rem",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Recurrente semanal */}
-                  {(() => {
-                    const isRecurrentWeekly = typeof (values as any)?.dia_semana === "number";
-                    const dayLabels = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-
-                    let nextYmd: string | null = null;
-                    if (isRecurrentWeekly) {
-                      try {
-                        const horaInicioStr = (values as any)?.hora_inicio || "20:00";
-                        const next = calculateNextDateWithTime((values as any).dia_semana, horaInicioStr);
-                        const y = next.getFullYear();
-                        const m = String(next.getMonth() + 1).padStart(2, "0");
-                        const d = String(next.getDate()).padStart(2, "0");
-                        nextYmd = `${y}-${m}-${d}`;
-                      } catch {
-                        nextYmd = null;
-                      }
+                  let nextYmd: string | null = null;
+                  if (isRecurrentWeekly) {
+                    try {
+                      const horaInicioStr = (values as any)?.hora_inicio || "20:00";
+                      const next = calculateNextDateWithTime((values as any).dia_semana, horaInicioStr);
+                      const y = next.getFullYear();
+                      const m = String(next.getMonth() + 1).padStart(2, "0");
+                      const d = String(next.getDate()).padStart(2, "0");
+                      nextYmd = `${y}-${m}-${d}`;
+                    } catch {
+                      nextYmd = null;
                     }
+                  }
 
-                    const makeDiaSemanaFromFecha = (fechaValue: any): number | null => {
-                      try {
-                        if (!fechaValue) return null;
-                        const plain = String(fechaValue).split("T")[0];
-                        const [y, m, d] = plain.split("-").map((n) => parseInt(n, 10));
-                        if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
-                        const dt = new Date(y, m - 1, d);
-                        const day = dt.getDay();
-                        return typeof day === "number" && day >= 0 && day <= 6 ? day : null;
-                      } catch {
-                        return null;
-                      }
-                    };
+                  const makeDiaSemanaFromFecha = (fechaValue: any): number | null => {
+                    try {
+                      if (!fechaValue) return null;
+                      const plain = String(fechaValue).split("T")[0];
+                      const [y, m, d] = plain.split("-").map((n) => parseInt(n, 10));
+                      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+                      const dt = new Date(y, m - 1, d);
+                      const day = dt.getDay();
+                      return typeof day === "number" && day >= 0 && day <= 6 ? day : null;
+                    } catch {
+                      return null;
+                    }
+                  };
 
-                    return (
-                      <div
-                        style={{
-                          marginTop: 24,
-                          padding: 20,
-                          background: `${colors.dark}44`,
-                          borderRadius: 12,
-                          border: `1px solid ${colors.light}22`,
-                        }}
-                      >
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "end" }}>
-                          <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-                            <input
-                              type="checkbox"
-                              checked={isRecurrentWeekly}
-                              onChange={(e) => {
-                                const next = e.target.checked;
-                                if (!next) {
-                                  setValue("dia_semana" as any, null as any);
-                                  return;
-                                }
-                                const fromFecha = makeDiaSemanaFromFecha((values as any)?.fecha);
-                                setValue("dia_semana" as any, ((fromFecha ?? 5) as any) as any);
-                              }}
-                              style={{ width: 20, height: 20, cursor: "pointer" }}
-                            />
-                            <span style={{ fontSize: "1rem", fontWeight: 600, color: colors.light }}>🔁 Recurrente semanal</span>
-                          </label>
+                  return (
+                    <div className="ecf__recurrent-box">
+                      <div className="ecf__recurrent-grid">
+                        <label className="ecf__toggle">
+                          <input
+                            type="checkbox"
+                            checked={isRecurrentWeekly}
+                            onChange={(e) => {
+                              const next = e.target.checked;
+                              if (!next) {
+                                setValue("dia_semana" as any, null as any);
+                                return;
+                              }
+                              const fromFecha = makeDiaSemanaFromFecha((values as any)?.fecha);
+                              setValue("dia_semana" as any, ((fromFecha ?? 5) as any) as any);
+                            }}
+                          />
+                          <span className="ecf__toggle-label">Recurrente semanal</span>
+                        </label>
 
-                          <label style={{ fontSize: "0.9rem", fontWeight: 600, color: colors.light, opacity: isRecurrentWeekly ? 1 : 0.7 }}>
-                            Día (recurrente)
+                        <div className="ecf__field">
+                          <label className="ecf__label">Día de la semana</label>
+                          <div className="ecf__select-wrap">
                             <select
+                              className="ecf__select"
                               disabled={!isRecurrentWeekly}
                               value={isRecurrentWeekly ? String((values as any).dia_semana) : ""}
                               onChange={(e) => setValue("dia_semana" as any, parseInt(e.target.value, 10) as any)}
-                              style={{
-                                width: "100%",
-                                marginTop: 8,
-                                padding: "12px 14px",
-                                borderRadius: 12,
-                                background: "#2b2b2b",
-                                border: `2px solid ${colors.light}33`,
-                                color: "#fff",
-                                cursor: isRecurrentWeekly ? "pointer" : "not-allowed",
-                                opacity: isRecurrentWeekly ? 1 : 0.6,
-                              }}
                             >
                               <option value="" disabled>
                                 Selecciona…
@@ -750,286 +672,244 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                                 </option>
                               ))}
                             </select>
-                          </label>
-                        </div>
-
-                        {isRecurrentWeekly && (
-                          <div style={{ marginTop: 10, fontSize: "0.85rem", opacity: 0.8, color: colors.light }}>
-                            Próxima ocurrencia aprox.: <b>{nextYmd || "—"}</b> · La fecha específica queda bloqueada; edita el día.
+                            <svg className="ecf__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                              <path d="M6 9l6 6 6-6" />
+                            </svg>
                           </div>
-                        )}
+                        </div>
                       </div>
-                    );
-                  })()}
+
+                      {isRecurrentWeekly && (
+                        <div className="ecf__recurrent-hint">
+                          Próxima ocurrencia aprox.: <strong>{nextYmd || "—"}</strong>
+                          {" · "}
+                          La fecha específica queda bloqueada; edita el día.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Ubicación */}
+              <div className="ecf__section">
+                <div className="ecf__section-header">
+                  <div className="ecf__section-icon ecf__section-icon--location">
+                    <MapPin size={18} aria-hidden />
+                  </div>
+                  <div>
+                    <h2 className="ecf__section-title">Ubicación del evento</h2>
+                  </div>
                 </div>
 
-                {/* Ubicación */}
-                <div className="event-create-form-section">
-                  <h2>📍 Ubicación del Evento</h2>
+                {orgLocations.length > 0 && (
+                  <div className="ecf__field ecf__location-select-block">
+                    <label className="ecf__label">Elegir ubicación existente o ingresa una nueva</label>
 
-                  {orgLocations.length > 0 && (
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                        Elegir ubicación existente o ingresa una nueva
-                      </label>
-
-                      <div style={{ position: "relative" }}>
-                        <select
-                          value={selectedLocationId}
-                          onChange={(e) => {
-                            const nextId = e.target.value;
-                            if (!nextId) {
-                              clearLocationSelection();
-                              return;
-                            }
-                            const found = orgLocations.find((loc: any) => String(loc.id ?? "") === String(nextId));
-                            applyOrganizerLocationToForm(found || null);
-                          }}
-                          style={{
-                            width: "100%",
-                            padding: "12px 14px",
-                            background: "#2b2b2b",
-                            border: "1px solid rgba(255,255,255,0.25)",
-                            color: "#fff",
-                            outline: "none",
-                            fontSize: 14,
-                            borderRadius: 12,
-                            appearance: "none",
-                            WebkitAppearance: "none",
-                          }}
-                        >
-                          <option value="" style={{ background: "#2b2b2b", color: "#fff" }}>
-                            — Escribir manualmente —
+                    <div className="ecf__select-wrap">
+                      <select
+                        className="ecf__select"
+                        value={selectedLocationId}
+                        onChange={(e) => {
+                          const nextId = e.target.value;
+                          if (!nextId) {
+                            clearLocationSelection();
+                            return;
+                          }
+                          const found = orgLocations.find((loc: any) => String(loc.id ?? "") === String(nextId));
+                          applyOrganizerLocationToForm(found || null);
+                        }}
+                      >
+                        <option value="">— Escribir manualmente —</option>
+                        {orgLocations.map((loc: any) => (
+                          <option key={loc.id} value={String(loc.id)}>
+                            {loc.nombre || loc.direccion || "Ubicación"}
                           </option>
-                          {orgLocations.map((loc: any) => (
-                            <option key={loc.id} value={String(loc.id)} style={{ color: "#fff", background: "#2b2b2b" }}>
-                              {loc.nombre || loc.direccion || "Ubicación"}
-                            </option>
-                          ))}
-                        </select>
-                        <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "rgba(255,255,255,0.6)" }}>
-                          ▼
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="event-create-form-grid-2">
-                    <div>
-                      <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                        Nombre de la ubicación
-                      </label>
-                      <input
-                        type="text"
-                        value={(values as any)?.lugar || ""}
-                        onChange={(e) => updateManualLocationField("lugar", e.target.value)}
-                        placeholder="Ej: Sede Central / Salón Principal"
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          borderRadius: 12,
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: "1rem",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                        Dirección
-                      </label>
-                      <input
-                        type="text"
-                        value={(values as any)?.direccion || ""}
-                        onChange={(e) => updateManualLocationField("direccion", e.target.value)}
-                        placeholder="Calle, número, colonia"
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          borderRadius: 12,
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: "1rem",
-                        }}
-                      />
+                        ))}
+                      </select>
+                      <svg className="ecf__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
                     </div>
                   </div>
-
-                  <div className="event-create-form-grid-2" style={{ marginTop: 16 }}>
-                    <div>
-                      <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                        Ciudad
-                      </label>
-                      <input
-                        type="text"
-                        value={(values as any)?.ciudad || ""}
-                        onChange={(e) => updateManualLocationField("ciudad", e.target.value)}
-                        placeholder="Ciudad"
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          borderRadius: 12,
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: "1rem",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", marginBottom: 8, fontSize: "1rem", fontWeight: 600, color: colors.light }}>
-                        Notas o referencias
-                      </label>
-                      <input
-                        type="text"
-                        value={(values as any)?.referencias || ""}
-                        onChange={(e) => updateManualLocationField("referencias", e.target.value)}
-                        placeholder="Ej. Entrada lateral, 2do piso"
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          borderRadius: 12,
-                          background: `${colors.dark}cc`,
-                          border: `2px solid ${colors.light}33`,
-                          color: colors.light,
-                          fontSize: "1rem",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Zones chips (optional) */}
-                  {zonaTags.length > 0 && (
-                    <div style={{ marginTop: 16 }}>
-                      <div style={{ fontSize: 13, fontWeight: 900, marginBottom: 8, color: colors.light }}>Zonas</div>
-                      <ZonaGroupedChips allTags={zonaTags} selectedIds={(((values as any)?.zonas || []) as number[]) ?? []} onToggle={handleZonaToggle} mode="edit" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Cronograma + costos */}
-                <div className="event-create-form-section">
-                  <h2>📅 Cronograma del Evento</h2>
-                  <ScheduleEditor
-                    schedule={(((values as any)?.cronograma || []) as any[]) ?? []}
-                    onChangeSchedule={(cronograma) => setValue("cronograma" as any, cronograma as any)}
-                    costos={(((values as any)?.costos || []) as any[]) ?? []}
-                    onChangeCostos={(costos) => setValue("costos" as any, costos as any)}
-                    ritmos={ritmoTags}
-                    zonas={zonaTags}
-                    eventFecha={(values as any)?.fecha || ""}
-                    hideCostsSection
-                    onSaveCosto={() => showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', "info")}
-                  />
-                </div>
-
-                {/* Flyer */}
-                <div className="event-create-form-section">
-                  <h2>🖼️ Flyer del Evento</h2>
-                  <DateFlyerUploader
-                    value={(values as any)?.flyer_url || null}
-                    onChange={(url) => setValue("flyer_url" as any, url as any)}
-                    dateId={initialData?.id}
-                    parentId={(props as any).parentId}
-                    onUploadPromiseChange={(promise) => {
-                      flyerUploadPromiseRef.current = promise;
-                      setIsFlyerUploading(!!promise);
-                    }}
-                  />
-                </div>
-
-                {/* Estado */}
-                <div className="event-create-form-section">
-                  <h2>🌐 Estado de Publicación</h2>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                      <input
-                        type="radio"
-                        name="estado_publicacion"
-                        value="borrador"
-                        checked={(values as any)?.estado_publicacion === "borrador"}
-                        onChange={(e) => setValue("estado_publicacion" as any, e.target.value)}
-                        style={{ transform: "scale(1.2)" }}
-                      />
-                      <span style={{ color: colors.light, fontSize: "1rem" }}>📝 Borrador</span>
-                    </label>
-
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                      <input
-                        type="radio"
-                        name="estado_publicacion"
-                        value="publicado"
-                        checked={(values as any)?.estado_publicacion === "publicado"}
-                        onChange={(e) => setValue("estado_publicacion" as any, e.target.value)}
-                        style={{ transform: "scale(1.2)" }}
-                      />
-                      <span style={{ color: colors.light, fontSize: "1rem" }}>🌐 Público</span>
-                    </label>
-
-                    <span style={{ fontSize: "0.9rem", opacity: 0.8, color: colors.light }}>Visible públicamente y permite RSVP</span>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Actions */}
-            <div className="event-create-form-actions">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleCancel}
-                style={{
-                  padding: "12px 24px",
-                  borderRadius: 25,
-                  border: `2px solid ${colors.light}33`,
-                  background: "transparent",
-                  color: colors.light,
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                ❌ Cancelar
-              </motion.button>
-
-              <div className="event-create-form-actions-buttons">
-                {isDirty && (
-                  <span style={{ fontSize: "0.9rem", color: colors.orange, fontWeight: 600, textAlign: "center" }}>
-                    💾 Cambios sin guardar
-                  </span>
                 )}
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || isFlyerUploading || (!isParent && !(values as any)?.fecha && typeof (values as any)?.dia_semana !== "number")}
-                  style={{
-                    padding: "12px 24px",
-                    borderRadius: 25,
-                    border: "none",
-                    background:
-                      isSubmitting || ( !isParent && !(values as any)?.fecha && typeof (values as any)?.dia_semana !== "number")
-                        ? `${colors.light}33`
-                        : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-                    color: colors.light,
-                    fontSize: "1rem",
-                    fontWeight: 700,
-                    cursor: isSubmitting || isFlyerUploading ? "not-allowed" : "pointer",
-                    opacity: isSubmitting || isFlyerUploading ? 0.6 : 1,
-                  }}
-                >
-                  {isSubmitting ? "⏳ Guardando..." : isFlyerUploading ? "Subiendo flyer..." : isEditing ? "💾 Actualizar" : "✨ Crear"}
-                </motion.button>
+                <div className="ecf__grid-2">
+                  <div className="ecf__field">
+                    <label className="ecf__label">Nombre de la ubicación</label>
+                    <input
+                      type="text"
+                      className="ecf__input"
+                      value={(values as any)?.lugar || ""}
+                      onChange={(e) => updateManualLocationField("lugar", e.target.value)}
+                      placeholder="Ej: Sede Central / Salón Principal"
+                    />
+                  </div>
+
+                  <div className="ecf__field">
+                    <label className="ecf__label">Dirección</label>
+                    <input
+                      type="text"
+                      className="ecf__input"
+                      value={(values as any)?.direccion || ""}
+                      onChange={(e) => updateManualLocationField("direccion", e.target.value)}
+                      placeholder="Calle, número, colonia"
+                    />
+                  </div>
+                </div>
+
+                <div className="ecf__grid-2 ecf__grid-2--mt">
+                  <div className="ecf__field">
+                    <label className="ecf__label">Ciudad</label>
+                    <input
+                      type="text"
+                      className="ecf__input"
+                      value={(values as any)?.ciudad || ""}
+                      onChange={(e) => updateManualLocationField("ciudad", e.target.value)}
+                      placeholder="Ciudad"
+                    />
+                  </div>
+
+                  <div className="ecf__field">
+                    <label className="ecf__label">Notas o referencias</label>
+                    <input
+                      type="text"
+                      className="ecf__input"
+                      value={(values as any)?.referencias || ""}
+                      onChange={(e) => updateManualLocationField("referencias", e.target.value)}
+                      placeholder="Ej. Entrada lateral, 2do piso"
+                    />
+                  </div>
+                </div>
+
+                {/* Zones chips (optional) */}
+                {zonaTags.length > 0 && (
+                  <div className="ecf__zones-block">
+                    <div className="ecf__label">Zonas</div>
+                    <ZonaGroupedChips allTags={zonaTags} selectedIds={(((values as any)?.zonas || []) as number[]) ?? []} onToggle={handleZonaToggle} mode="edit" />
+                  </div>
+                )}
               </div>
+
+              {/* Cronograma + costos */}
+              <div className="ecf__section">
+                <div className="ecf__section-header">
+                  <div className="ecf__section-icon ecf__section-icon--schedule">
+                    <Clock size={18} aria-hidden />
+                  </div>
+                  <div>
+                    <h2 className="ecf__section-title">Cronograma del evento</h2>
+                  </div>
+                </div>
+                <ScheduleEditor
+                  schedule={(((values as any)?.cronograma || []) as any[]) ?? []}
+                  onChangeSchedule={(cronograma) => setValue("cronograma" as any, cronograma as any)}
+                  costos={(((values as any)?.costos || []) as any[]) ?? []}
+                  onChangeCostos={(costos) => setValue("costos" as any, costos as any)}
+                  ritmos={ritmoTags}
+                  zonas={zonaTags}
+                  eventFecha={(values as any)?.fecha || ""}
+                  hideCostsSection
+                  onSaveCosto={() => showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', "info")}
+                />
+              </div>
+
+              {/* Flyer */}
+              <div className="ecf__section">
+                <div className="ecf__section-header">
+                  <div className="ecf__section-icon ecf__section-icon--media">
+                    <Image size={18} aria-hidden />
+                  </div>
+                  <div>
+                    <h2 className="ecf__section-title">Flyer del evento</h2>
+                  </div>
+                </div>
+                <DateFlyerUploader
+                  value={(values as any)?.flyer_url || null}
+                  onChange={(url) => setValue("flyer_url" as any, url as any)}
+                  dateId={initialData?.id}
+                  parentId={(props as any).parentId}
+                  onUploadPromiseChange={(promise) => {
+                    flyerUploadPromiseRef.current = promise;
+                    setIsFlyerUploading(!!promise);
+                  }}
+                />
+              </div>
+
+              {/* Estado */}
+              <div className="ecf__section">
+                <div className="ecf__section-header">
+                  <div className="ecf__section-icon ecf__section-icon--status">
+                    <Globe size={18} aria-hidden />
+                  </div>
+                  <div>
+                    <h2 className="ecf__section-title">Estado de publicación</h2>
+                  </div>
+                </div>
+                <div className="ecf__radio-group">
+                  <label className="ecf__radio-option">
+                    <input
+                      type="radio"
+                      name="estado_publicacion"
+                      value="borrador"
+                      checked={(values as any)?.estado_publicacion === "borrador"}
+                      onChange={(e) => setValue("estado_publicacion" as any, e.target.value)}
+                    />
+                    <div>
+                      <div className="ecf__radio-label">Borrador</div>
+                      <div className="ecf__radio-desc">Solo visible para ti</div>
+                    </div>
+                  </label>
+
+                  <label className="ecf__radio-option">
+                    <input
+                      type="radio"
+                      name="estado_publicacion"
+                      value="publicado"
+                      checked={(values as any)?.estado_publicacion === "publicado"}
+                      onChange={(e) => setValue("estado_publicacion" as any, e.target.value)}
+                    />
+                    <div>
+                      <div className="ecf__radio-label">Público</div>
+                      <div className="ecf__radio-desc">Visible y permite RSVP</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Actions */}
+          <div className="ecf__actions">
+            <button type="button" className="ecf__btn ecf__btn--cancel" onClick={handleCancel}>
+              Cancelar
+            </button>
+
+            <div className="ecf__actions-right">
+              {isDirty && <span className="ecf__dirty-hint">Cambios sin guardar</span>}
+
+              <button
+                type="button"
+                className="ecf__btn ecf__btn--submit"
+                onClick={handleSubmit}
+                disabled={
+                  isSubmitting ||
+                  isFlyerUploading ||
+                  (!isParent && !(values as any)?.fecha && typeof (values as any)?.dia_semana !== "number")
+                }
+              >
+                {isSubmitting
+                  ? "Guardando…"
+                  : isFlyerUploading
+                  ? "Subiendo flyer…"
+                  : isEditing
+                  ? "Guardar cambios"
+                  : "Crear"}
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </React.Fragment>
+    </div>
   );
 }

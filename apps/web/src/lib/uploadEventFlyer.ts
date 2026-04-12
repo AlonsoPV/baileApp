@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { resizeImageIfNeeded } from "./imageResize";
+import { buildSupabaseStoragePublicUrl } from "../utils/supabaseStoragePublicUrl";
 
 export type UploadEventFlyerInput = {
   file: File;
@@ -37,11 +38,15 @@ export async function uploadEventFlyer({ file, parentId, dateId }: UploadEventFl
 
   const { data: up, error: upErr } = await supabase.storage
     .from("media")
-    .upload(path, processedFile, { upsert: true, contentType: processedFile.type });
+    .upload(path, processedFile, {
+      upsert: true,
+      cacheControl: "31536000",
+      contentType: processedFile.type || undefined,
+    });
 
   if (upErr) throw upErr;
-  const { data: pub } = supabase.storage.from("media").getPublicUrl(up.path);
-  if (!pub?.publicUrl) throw new Error("No se pudo obtener URL pública del flyer.");
-  return pub.publicUrl;
+  const publicUrl = buildSupabaseStoragePublicUrl(up.path, { bucket: "media" });
+  if (!publicUrl) throw new Error("No se pudo obtener URL pública del flyer.");
+  return publicUrl;
 }
 

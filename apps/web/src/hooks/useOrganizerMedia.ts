@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import { MediaItem } from "../lib/storage";
 import { useMyOrganizer } from "./useOrganizer";
 import { resizeImageIfNeeded } from "../lib/imageResize";
+import { buildSupabaseStoragePublicUrl } from "../utils/supabaseStoragePublicUrl";
 
 const BUCKET = "media"; // ✅ Bucket unificado
 
@@ -36,11 +37,9 @@ async function uploadOrgFile(orgId: number, file: File): Promise<MediaItem> {
 
   if (error) throw new Error(`Error al subir archivo: ${error.message}`);
 
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
-
   return {
     id: path,
-    url: urlData.publicUrl,
+    url: buildSupabaseStoragePublicUrl(path, { bucket: BUCKET }),
     type,
     created_at: new Date().toISOString(),
   };

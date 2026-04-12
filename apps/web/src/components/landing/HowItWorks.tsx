@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Download, Filter, Music, ArrowRight } from "lucide-react";
 import { landingContent } from "@/config/content";
+import { track, LANDING_EVENTS } from "@/lib/track";
 
 const STEP_ICONS = [Download, Filter, Music];
 const STEP_ACCENTS = [
@@ -10,11 +11,21 @@ const STEP_ACCENTS = [
   "landing-how-it-works__step--3",
 ];
 
-export function HowItWorks() {
+interface HowItWorksProps {
+  onOpenDownload: () => void;
+}
+
+export function HowItWorks({ onOpenDownload }: HowItWorksProps) {
   const { title, steps } = landingContent.howItWorks;
+
+  const handleDownload = () => {
+    track(LANDING_EVENTS.CTA_DOWNLOAD, { location: "how_it_works" });
+    onOpenDownload();
+  };
 
   return (
     <motion.section
+      id="como-funciona"
       className="landing-section landing-how-it-works"
       aria-labelledby="how-heading"
       initial={{ opacity: 0 }}
@@ -63,6 +74,13 @@ export function HowItWorks() {
               </React.Fragment>
             );
           })}
+        </div>
+
+        <div className="landing-how-it-works__cta">
+          <button type="button" className="btn btn-primary" onClick={handleDownload}>
+            {landingContent.hero.ctaPrimary}
+          </button>
+          <p className="landing-how-it-works__cta-note">iOS y Android · Sin costo</p>
         </div>
       </div>
     </motion.section>

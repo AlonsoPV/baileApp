@@ -7,21 +7,20 @@ export const landingContent = {
   hero: {
     /** Badge de posicionamiento sobre el título */
     kicker: "La comunidad de baile en México",
-    /** Headline con "Dónde Bailar" en gradiente */
-    headlineBefore: "Encuentra con ",
-    headlineGrad: "Dónde Bailar",
-    headlineAfter: " eventos y clases de baile cerca de ti",
+    /** Headline con gradiente en palabra clave */
+    headlineBefore: "Encuentra ",
+    headlineGrad: "dónde bailar",
+    headlineAfter: " este fin de semana",
     /** Subheadline orientado a conversión */
     subheadline:
-      "Eventos, clases y academias de baile filtradas por ritmo, zona y fecha.",
-    ctaPrimary: "Descargar la app gratis",
+      "Sin grupos de WhatsApp, sin historias que desaparecen. Eventos y clases de salsa, bachata y más, en un solo lugar.",
+    ctaPrimary: "Descargar gratis",
     ctaSecondary: "Soy academia o maestro",
-    ctaMicrocopy: "Gratis · Sin spam · Descarga en segundos",
+    ctaMicrocopy: "iOS y Android · Gratis · Sin tarjeta",
     badges: [
       "Eventos verificados",
-      "Filtra por zona",
-      "Salsa, bachata, kizomba",
-      "Descubre qué bailar hoy",
+      "Filtra por ritmo y zona",
+      "Salsa · Bachata · Kizomba",
     ],
   },
 
@@ -32,9 +31,8 @@ export const landingContent = {
       "Flyers perdidos, historias que se borran, grupos llenos de ruido. Encuentra eventos y clases de baile con información real, en un solo lugar.",
     solutionHeadline: "Todo lo que necesitas para decidir dónde bailar.",
     solutionPoints: [
-      "Eventos y clases en un solo lugar, con fechas y lugares verificados",
-      "Filtra por ritmo, zona y fecha — encuentra salsa, bachata y más al instante",
-      "Una comunidad que busca bailar; información clara, sin scroll infinito",
+      "Eventos y clases verificados, con fecha, lugar y precio real",
+      "Filtra por ritmo y zona. Encuentra lo que buscas en segundos",
     ],
   },
 
@@ -187,18 +185,16 @@ export const landingContent = {
       },
     ],
     metrics: [
-      { value: "500+", label: "Eventos mensuales", placeholder: true },
-      { value: "50+", label: "Academias y maestros", placeholder: true },
-      { value: "10k+", label: "Bailarines en la app", placeholder: true },
+      { value: "500+", label: "Eventos publicados" },
+      { value: "50+", label: "Academias y maestros" },
+      { value: "CDMX", label: "Disponible en" },
     ],
-    alliesTitle: "Academias y espacios que ya confían en la plataforma",
-    alliesPlaceholder: "Logo academia 1 · Logo academia 2 · Logo academia 3",
   },
 
   b2b: {
-    title: "Si enseñas u organizas: toma control de tu audiencia",
+    title: "Para academias y organizadores",
     subtitle:
-      "Deja de depender del algoritmo. Llega a bailarines que buscan clases y eventos con intención real. Visibilidad, leads y profesionalización.",
+      "Llega a bailarines que ya buscan clases y eventos. Sin depender del algoritmo.",
     visionLine:
       "Ser la plataforma de referencia para descubrir y gestionar la vida del baile.",
     benefits: [
@@ -244,10 +240,6 @@ export const landingContent = {
         q: "¿Cómo moderan el contenido?",
         a: "Revisamos eventos y perfiles para mantener información verídica y respetuosa.",
       },
-      /* {
-        q: "¿Puedo desactivar notificaciones?",
-        a: "Sí. Puedes elegir qué notificaciones recibir o desactivarlas por completo.",
-      }, */
       {
         q: "¿Mis datos están seguros?",
         a: "Sí. No vendemos tus datos. Revisa nuestra política de privacidad.",

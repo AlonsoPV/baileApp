@@ -1,4 +1,20 @@
 import { supabase } from "@/lib/supabase";
+import { withStableCacheBust } from "./cacheBuster";
+import { toDirectPublicStorageUrl } from "./imageOptimization";
+
+type BuildStoragePublicUrlOptions = {
+  bucket?: string;
+  version?: string | number | null;
+};
+
+export function buildSupabaseStoragePublicUrl(
+  path: string,
+  options?: BuildStoragePublicUrlOptions
+): string {
+  const bucket = options?.bucket || "media";
+  const baseUrl = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  return withStableCacheBust(baseUrl, options?.version ?? null) ?? baseUrl;
+}
 
 /**
  * Resolves a Supabase Storage reference to a public URL.
@@ -49,9 +65,27 @@ export function resolveSupabaseStoragePublicUrl(
   }
 
   try {
-    return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+    return buildSupabaseStoragePublicUrl(path, { bucket });
   } catch {
     return v;
   }
+}
+
+export function resolveVersionedSupabaseStoragePublicUrl(
+  maybePath?: string | null,
+  version?: string | number | null,
+  options?: { defaultBucket?: string }
+): string | undefined {
+  const resolved = resolveSupabaseStoragePublicUrl(maybePath, options);
+  return withStableCacheBust(resolved, version ?? null) ?? resolved;
+}
+
+export function resolveVersionedSupabaseStorageDirectUrl(
+  maybePath?: string | null,
+  version?: string | number | null,
+  options?: { defaultBucket?: string }
+): string | undefined {
+  const resolved = resolveVersionedSupabaseStoragePublicUrl(maybePath, version, options);
+  return toDirectPublicStorageUrl(resolved) ?? resolved;
 }
 

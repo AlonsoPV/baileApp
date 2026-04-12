@@ -5,6 +5,7 @@ export interface FollowProfile {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
+  updated_at?: string | null;
 }
 
 export function useFollowLists(userId?: string) {
@@ -31,6 +32,7 @@ export function useFollowLists(userId?: string) {
         id: profile.user_id,
         display_name: profile.display_name ?? null,
         avatar_url: profile.avatar_url ?? null,
+        updated_at: profile.updated_at ?? null,
       }))
     );
 
@@ -39,6 +41,7 @@ export function useFollowLists(userId?: string) {
         id: profile.user_id,
         display_name: profile.display_name ?? null,
         avatar_url: profile.avatar_url ?? null,
+        updated_at: profile.updated_at ?? null,
       }))
     );
   };

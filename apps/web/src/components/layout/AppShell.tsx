@@ -12,6 +12,7 @@ import { useIsAdmin } from '@/hooks/useRoleRequests';
 import { getMediaBySlot } from '@/utils/mediaSlots';
 import SeoHead from '@/components/SeoHead';
 import JoinCommunityForm from '@/components/forms/JoinCommunityForm';
+import { resolveVersionedSupabaseStorageDirectUrl } from '@/utils/supabaseStoragePublicUrl';
 
 export default function AppShell() {
   const { user, signOut } = useAuth();
@@ -67,11 +68,16 @@ export default function AppShell() {
   }, []);
 
   // Obtener avatar con la misma lógica que UserProfileLive (priorizar p1)
+  const profileImageVersion = profile?.updated_at ?? profile?.created_at ?? profile?.user_id ?? null;
   const avatarUrl = (() => {
     const safeMedia = media || [];
     const p1 = getMediaBySlot(safeMedia as any, 'p1');
-    if (p1?.url) return p1.url;
-    if (profile?.avatar_url) return profile.avatar_url;
+    if (p1?.url) {
+      return resolveVersionedSupabaseStorageDirectUrl(p1.url, profileImageVersion, { defaultBucket: 'media' }) ?? p1.url;
+    }
+    if (profile?.avatar_url) {
+      return resolveVersionedSupabaseStorageDirectUrl(profile.avatar_url, profileImageVersion, { defaultBucket: 'media' }) ?? profile.avatar_url;
+    }
     return undefined;
   })();
 

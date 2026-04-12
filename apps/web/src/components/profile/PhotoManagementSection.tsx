@@ -2,8 +2,7 @@ import React from 'react';
 import { getMediaBySlot, normalizeMediaArray } from '../../utils/mediaSlots';
 import ImageWithFallback from '../ImageWithFallback';
 import ExploreResponsiveImage from '@/components/explore/ExploreResponsiveImage';
-import { getDisplayImageUrl } from '../../utils/storageUrl';
-import { resolveSupabaseStoragePublicUrl } from '../../utils/supabaseStoragePublicUrl';
+import { resolveSupabaseStoragePublicUrl, resolveVersionedSupabaseStorageDirectUrl } from '../../utils/supabaseStoragePublicUrl';
 import { toDirectPublicStorageUrl } from '../../utils/imageOptimization';
 
 interface PhotoManagementSectionProps {
@@ -340,7 +339,9 @@ export const PhotoManagementSection: React.FC<PhotoManagementSectionProps> = ({
               ? normalizeSlotUrl((mediaItem as any).url || (mediaItem as any).path)
               : undefined;
             const slotImageUrl =
-              rawBase && typeof rawBase === "string" ? getDisplayImageUrl(rawBase, imageVersion) : "";
+              rawBase && typeof rawBase === "string"
+                ? resolveVersionedSupabaseStorageDirectUrl(rawBase, imageVersion ?? null, { defaultBucket: "media" }) || rawBase
+                : "";
             const isDataUrl = !!rawBase?.startsWith("data:");
             
             // Debug: verificar que estamos usando el slot correcto

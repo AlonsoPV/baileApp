@@ -9,6 +9,7 @@ import { useToast } from '../../components/Toast';
 import { supabase, getBucketPublicUrl } from '../../lib/supabase';
 import { isValidDisplayName } from '../../utils/validation';
 import { mergeProfile } from '../../utils/mergeProfile';
+import { resolveVersionedSupabaseStorageDirectUrl } from '../../utils/supabaseStoragePublicUrl';
 
 // Hoisted: evita recrear en cada render
 const JOURNEY_HIGHLIGHTS = [
@@ -54,6 +55,12 @@ export function ProfileBasics() {
   const { profile, isLoading: profileLoading, updateProfileFields } = useUserProfile();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const existingAvatarUrl =
+    resolveVersionedSupabaseStorageDirectUrl(
+      profile?.avatar_url,
+      profile?.updated_at ?? profile?.created_at ?? profile?.user_id ?? null,
+      { defaultBucket: 'media' }
+    ) ?? profile?.avatar_url ?? '';
 
   // Inicializar desde perfil (solo una vez)
   useEffect(() => {
@@ -64,11 +71,11 @@ export function ProfileBasics() {
         setRolBaile((profile as any).rol_baile as 'lead' | 'follow' | 'ambos');
       }
       if (profile.avatar_url) {
-        setAvatarPreview(profile.avatar_url);
+        setAvatarPreview(existingAvatarUrl);
       }
       profileInitializedRef.current = true;
     }
-  }, [profile]);
+  }, [existingAvatarUrl, profile]);
 
   // Redirección fuera del render
   useEffect(() => {
@@ -290,6 +297,7 @@ export function ProfileBasics() {
             .from('media')
             .upload(fileName, fileToUpload, {
               upsert: true,
+              cacheControl: '31536000',
               contentType: contentType,
             });
           uploadError = res.error;
@@ -660,7 +668,7 @@ export function ProfileBasics() {
                   }}>
                     {avatarPreview || profile?.avatar_url ? (
                       <img
-                        src={avatarPreview || profile?.avatar_url || ''}
+                        src={avatarPreview || existingAvatarUrl || ''}
                         alt="Avatar preview"
                         style={{
                           width: '100%',

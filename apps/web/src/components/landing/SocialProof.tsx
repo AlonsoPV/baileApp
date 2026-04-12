@@ -4,12 +4,7 @@ import { landingContent } from "@/config/content";
 import { Quote } from "lucide-react";
 
 export function SocialProof() {
-  const {
-    sectionTitle,
-    testimonials,
-    alliesTitle,
-    alliesPlaceholder,
-  } = landingContent.socialProof;
+  const { sectionTitle, testimonials, metrics } = landingContent.socialProof;
 
   return (
     <motion.section
@@ -23,6 +18,17 @@ export function SocialProof() {
     >
       <div className="landing-container">
         <h2 className="landing-social-proof__title">{sectionTitle}</h2>
+
+        {metrics.length > 0 && (
+          <div className="landing-social-proof__metrics">
+            {metrics.map((m, i) => (
+              <div key={i} className="landing-social-proof__metric">
+                <p className="landing-social-proof__metric-value">{m.value}</p>
+                <p className="landing-social-proof__metric-label">{m.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="landing-social-proof__testimonials">
           {testimonials.map((t, i) => (
@@ -40,16 +46,6 @@ export function SocialProof() {
             </blockquote>
           ))}
         </div>
-
-      {/*   <div className="landing-social-proof__allies">
-          <h3 className="landing-social-proof__allies-title">{alliesTitle}</h3>
-          <p
-            className="landing-social-proof__allies-placeholder landing-muted"
-            aria-label="Placeholder de logos de academias aliadas"
-          >
-            {alliesPlaceholder}
-          </p>
-        </div> */}
       </div>
     </motion.section>
   );

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { MediaItem } from "../lib/storage";
 import { resizeImageIfNeeded } from "../lib/imageResize";
+import { buildSupabaseStoragePublicUrl } from "../utils/supabaseStoragePublicUrl";
 
 type MediaItemWithSlot = MediaItem & { slot?: string };
 
@@ -32,11 +33,9 @@ async function uploadEventDateFile(dateId: number, file: File): Promise<MediaIte
 
   if (error) throw new Error(`Error al subir archivo: ${error.message}`);
 
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
-
   return {
     id: path, // usamos path como id estable
-    url: urlData.publicUrl,
+    url: buildSupabaseStoragePublicUrl(path, { bucket: BUCKET }),
     type,
     created_at: new Date().toISOString(),
   };

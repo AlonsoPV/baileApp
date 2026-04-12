@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { supabase } from "../lib/supabase";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, upsertMediaSlot, removeMediaSlot, MediaItem } from "../utils/mediaSlots";
 import { extractStoragePathFromPublicUrl } from "../utils/storageUrl";
+import { buildSupabaseStoragePublicUrl } from "../utils/supabaseStoragePublicUrl";
 
 const KEY = (uid?: string) => ["profile","media-slots", uid];
 const BUCKET = "media";
@@ -80,7 +81,11 @@ export function useUserMediaSlots() {
 
       const { data, error } = await supabase.storage
         .from(BUCKET)
-        .upload(path, file, { upsert: true });
+        .upload(path, file, {
+          upsert: true,
+          cacheControl: "31536000",
+          contentType: file.type || undefined,
+        });
 
       if (error) {
         logProfileImage(isReplace ? "REPLACE" : "UPLOAD", "storage-error", {
@@ -98,11 +103,10 @@ export function useUserMediaSlots() {
         path,
       });
 
-      const { data: publicUrl } = supabase.storage.from(BUCKET).getPublicUrl(path);
       const item: MediaItem = {
         slot,
         kind,
-        url: publicUrl.publicUrl,
+        url: buildSupabaseStoragePublicUrl(path, { bucket: BUCKET }),
         title: `${kind === 'photo' ? 'Foto' : 'Video'} ${slot.toUpperCase()}`
       };
 
@@ -112,7 +116,7 @@ export function useUserMediaSlots() {
       logProfileImage(isReplace ? "REPLACE" : "UPLOAD", "db-ok", {
         userId: user.id,
         slot,
-        publicUrl: publicUrl.publicUrl?.slice(0, 80),
+        publicUrl: item.url?.slice(0, 80),
       });
 
       return next;
@@ -125,6 +129,7 @@ export function useUserMediaSlots() {
       await qc.invalidateQueries({ queryKey: ["user-public-profile-fields", user?.id] });
       // Forzar refetch inmediato para que los cambios se reflejen de inmediato
       await qc.refetchQueries({ queryKey: KEY(user?.id) });
+      await qc.refetchQueries({ queryKey: ["profile","me", user?.id] });
     },
   });
 
@@ -180,6 +185,7 @@ export function useUserMediaSlots() {
       await qc.invalidateQueries({ queryKey: ["user-public-profile-fields", user?.id] });
       // Forzar refetch inmediato para que los cambios se reflejen de inmediato
       await qc.refetchQueries({ queryKey: KEY(user?.id) });
+      await qc.refetchQueries({ queryKey: ["profile","me", user?.id] });
     },
   });
 

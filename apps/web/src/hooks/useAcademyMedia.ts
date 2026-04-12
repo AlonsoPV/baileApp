@@ -4,6 +4,7 @@ import { MediaItem } from "../lib/storage";
 import { useAcademyMy } from "./useAcademy";
 import { resizeImageIfNeeded } from "../lib/imageResize";
 import { normalizeMediaArray } from "../utils/mediaSlots";
+import { buildSupabaseStoragePublicUrl } from "../utils/supabaseStoragePublicUrl";
 
 type MediaItemWithSlot = MediaItem & { slot?: string };
 
@@ -44,11 +45,9 @@ async function uploadAcademyFile(academyId: number, file: File): Promise<MediaIt
 
   console.log('[AcademyMediaStorage] Upload successful:', data);
 
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
-
   return {
     id: path,
-    url: urlData.publicUrl,
+    url: buildSupabaseStoragePublicUrl(path, { bucket: BUCKET }),
     type,
     created_at: new Date().toISOString(),
   };

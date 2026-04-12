@@ -25,7 +25,12 @@ import { useTranslation } from "react-i18next";
 import { useProfileSwitchMetrics } from "../../hooks/useProfileSwitchMetrics";
 import { isEventUpcomingOrToday, getEventPrimaryDate } from "../../utils/eventDateExpiration";
 import { Modal } from "../../components/ui/Modal";
-import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
+import {
+  buildSupabaseStoragePublicUrl,
+  resolveSupabaseStoragePublicUrl,
+  resolveVersionedSupabaseStorageDirectUrl,
+  resolveVersionedSupabaseStoragePublicUrl,
+} from "../../utils/supabaseStoragePublicUrl";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { buildShareUrl } from "@/utils/shareUrls";
 import { routes } from "../../routes/registry";
@@ -182,11 +187,15 @@ export const UserProfileLive: React.FC = () => {
     (maybePath?: string): string | undefined => resolveSupabaseStoragePublicUrl(maybePath),
     []
   );
+  const profileImageVersion = profile?.updated_at ?? profile?.created_at ?? user?.id ?? null;
 
-  const getCommunityAvatarUrl = React.useCallback((p: { avatar_url?: string | null }) => {
-    const raw = toSupabasePublicUrl(p?.avatar_url ?? undefined) ?? p?.avatar_url ?? undefined;
-    return (raw && typeof raw === 'string') ? (toDirectPublicStorageUrl(raw) || raw) : null;
-  }, [toSupabasePublicUrl]);
+  const getCommunityAvatarUrl = React.useCallback((p: { avatar_url?: string | null; updated_at?: string | null }) => {
+    return resolveVersionedSupabaseStorageDirectUrl(
+      p?.avatar_url ?? undefined,
+      p?.updated_at ?? null,
+      { defaultBucket: 'media' }
+    ) ?? null;
+  }, []);
   const showCommunityAvatarImg = React.useCallback((person: { id: string; avatar_url?: string | null }, url: string | null) => {
     const valid = url && (url.startsWith('http') || url.startsWith('data:'));
     return valid && !communityAvatarErrors.has(person.id);
@@ -201,8 +210,7 @@ export const UserProfileLive: React.FC = () => {
       if (!raw || typeof raw !== 'string') return undefined;
       const v = raw.trim();
       if (!v || v.includes('undefined') || v === '/default-media.png') return undefined;
-      const pub = toSupabasePublicUrl(v) ?? v;
-      return toDirectPublicStorageUrl(pub) ?? pub;
+      return resolveVersionedSupabaseStorageDirectUrl(v, profileImageVersion, { defaultBucket: 'media' }) ?? undefined;
     };
 
     // Prioridad requerida:
@@ -211,7 +219,14 @@ export const UserProfileLive: React.FC = () => {
     const fromAvatarSlot = resolve(getMediaBySlot(safeMedia as any, 'avatar')?.url ?? null);
     const fromP1 = resolve(getMediaBySlot(safeMedia as any, 'p1')?.url ?? null);
     return fromProfile || fromAvatarSlot || fromP1;
-  }, [safeMedia, profile?.avatar_url, toSupabasePublicUrl]);
+  }, [profileImageVersion, safeMedia, profile?.avatar_url]);
+  const navAvatarUrl = React.useMemo(
+    () =>
+      resolveVersionedSupabaseStoragePublicUrl(profile?.avatar_url ?? null, profileImageVersion, {
+        defaultBucket: 'media',
+      }) ?? profile?.avatar_url ?? null,
+    [profile?.avatar_url, profileImageVersion]
+  );
 
   // Reset avatarError cuando cambia avatarUrl
   React.useEffect(() => {
@@ -228,16 +243,18 @@ export const UserProfileLive: React.FC = () => {
 
       const { error: uploadError } = await supabase.storage
         .from('media')
-        .upload(path, processedFile, { upsert: true });
+        .upload(path, processedFile, {
+          upsert: true,
+          cacheControl: '31536000',
+          contentType: processedFile.type || undefined,
+        });
 
       if (uploadError) throw uploadError;
-
-      const { data: publicUrl } = supabase.storage.from('media').getPublicUrl(path);
 
       await updateProfileFields({
         respuestas: {
           ...profile?.respuestas,
-          cover_url: publicUrl.publicUrl
+          cover_url: buildSupabaseStoragePublicUrl(path, { bucket: 'media' })
         }
       });
     } catch (error) {
@@ -257,7 +274,11 @@ export const UserProfileLive: React.FC = () => {
 
       const { error: uploadError } = await supabase.storage
         .from('media')
-        .upload(path, processedFile, { upsert: true });
+        .upload(path, processedFile, {
+          upsert: true,
+          cacheControl: '31536000',
+          contentType: processedFile.type || undefined,
+        });
 
       if (uploadError) throw uploadError;
 
@@ -278,7 +299,11 @@ export const UserProfileLive: React.FC = () => {
 
       const { error: uploadError } = await supabase.storage
         .from('media')
-        .upload(path, file, { upsert: true });
+        .upload(path, file, {
+          upsert: true,
+          cacheControl: '31536000',
+          contentType: file.type || undefined,
+        });
 
       if (uploadError) throw uploadError;
 
@@ -400,7 +425,7 @@ export const UserProfileLive: React.FC = () => {
           <UserProfileHero
             user={profile}
             avatarUrl={avatarUrl}
-            avatarUrlSameAsNav={profile?.avatar_url}
+            avatarUrlSameAsNav={navAvatarUrl}
             avatarCacheKey={(profile as { updated_at?: string })?.updated_at ?? null}
             allTags={allTags}
             ritmosSlugs={normalizeRitmosToSlugs(profile, allTags)}
@@ -788,7 +813,7 @@ export const UserProfileLive: React.FC = () => {
                     {showImg ? (
                       <ExploreResponsiveImage
                         rawUrl={avatarUrl!}
-                        cacheVersion={null}
+                        cacheVersion={person.updated_at ?? null}
                         preset="listThumb"
                         sizes={EXPLORE_SIZES_LIST_THUMB}
                         alt={person.display_name || t('profile')}

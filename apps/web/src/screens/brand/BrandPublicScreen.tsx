@@ -7,6 +7,7 @@ import SocialMediaSection from "../../components/profile/SocialMediaSection";
 import { BioSection } from "../../components/profile/BioSection";
 import { colors, typography, spacing, borderRadius } from "../../theme/colors";
 import { supabase } from "../../lib/supabase";
+import { resolveVersionedSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 import { 
   FaInstagram, 
   FaFacebookF, 
@@ -138,8 +139,21 @@ export default function BrandProfileLive() {
   const media: string[] = Array.isArray((brand as any).media)
     ? (brand as any).media.map((m: any) => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
     : [];
-  const avatarUrl = (brand as any).avatar_url || media[0] || undefined;
-  const portadaUrl = (brand as any).portada_url as string | undefined;
+  const brandImageVersion =
+    ((brand as any)?.updated_at as string | undefined) ||
+    ((brand as any)?.created_at as string | undefined) ||
+    ((brand as any)?.id as string | number | undefined) ||
+    null;
+  const avatarUrl = resolveVersionedSupabaseStoragePublicUrl(
+    (brand as any).avatar_url || media[0] || undefined,
+    brandImageVersion,
+    { defaultBucket: "media" }
+  );
+  const portadaUrl = resolveVersionedSupabaseStoragePublicUrl(
+    (brand as any).portada_url as string | undefined,
+    brandImageVersion,
+    { defaultBucket: "media" }
+  );
 
   // Normalizaciones para catálogo
   const productos: any[] = Array.isArray((brand as any)?.productos) ? ((brand as any).productos as any[]) : [];

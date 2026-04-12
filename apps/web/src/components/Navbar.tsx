@@ -11,6 +11,7 @@ import { LanguageSwitcher } from './settings/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { useRenderLogger } from '@/hooks/useRenderLogger';
 import { useProfilePrefetch } from '@/hooks/useProfilePrefetch';
+import { resolveVersionedSupabaseStorageDirectUrl } from '@/utils/supabaseStoragePublicUrl';
 
 interface NavbarProps {
   onMenuToggle?: () => void;
@@ -42,7 +43,15 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
     [user?.email]
   );
 
-  const avatarUrl = React.useMemo(() => profile?.avatar_url, [profile?.avatar_url]);
+  const avatarUrl = React.useMemo(
+    () =>
+      resolveVersionedSupabaseStorageDirectUrl(
+        profile?.avatar_url,
+        profile?.updated_at ?? profile?.created_at ?? (profile as any)?.user_id ?? null,
+        { defaultBucket: 'media' }
+      ) ?? profile?.avatar_url,
+    [profile?.avatar_url, profile?.updated_at, profile?.created_at, (profile as any)?.user_id]
+  );
 
   const profileAriaLabel = React.useMemo(
     () => hasUnread ? 'Ir a mi perfil — tienes notificaciones nuevas' : 'Ir a mi perfil',

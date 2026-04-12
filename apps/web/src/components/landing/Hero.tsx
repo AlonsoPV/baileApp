@@ -1,22 +1,67 @@
-import React, { useRef, useCallback } from "react";
-import { Smartphone, Check, MapPin, Music, Zap, ChevronLeft, ChevronRight, Globe } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Smartphone, Check, MapPin, Music, Globe, ChevronLeft, ChevronRight } from "lucide-react";
 import { landingContent } from "@/config/content";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
 import { track, LANDING_EVENTS } from "@/lib/track";
 import { Modal } from "@/components/ui/Modal";
 import EventCard from "@/components/explore/cards/EventCard";
-import { SEO_LOGO_URL } from "@/lib/seoConfig";
+import { useHeroEvents } from "@/hooks/useHeroEvents";
 import "@/components/explore/cards/Card.css";
 
 const { hero } = landingContent;
 
-const BADGE_ICONS = [Check, MapPin, Music, Zap] as const;
+const BADGE_ICONS = [Check, MapPin, Music] as const;
 
-/** Mock para el slider del hero: misma forma que EventCard (item.__ui) — diseño idéntico a EventCard */
-const HERO_MOCK_SLIDER_EVENTS = [
-  { id: 0, nombre: "Salsa Night", hora_inicio: "21:00", __ui: { flyerUrl: undefined, fechaYmd: "2025-03-14", costoMonto: 0, hasDiscount: false, lugarNombre: "Roma Norte" } },
-  { id: 0, nombre: "Bachata Night", hora_inicio: "20:30", __ui: { flyerUrl: undefined, fechaYmd: "2025-03-15", costoMonto: 0, hasDiscount: false, lugarNombre: "Condesa" } },
-  { id: 0, nombre: "Kizomba Night", hora_inicio: "19:00", __ui: { flyerUrl: undefined, fechaYmd: "2025-03-16", costoMonto: 0, hasDiscount: false, lugarNombre: "Polanco" } },
+/** Fallback si aún no hay datos o la query falla — misma forma que EventCard + __ui */
+const HERO_SLIDER_FALLBACK: any[] = [
+  {
+    id: -1,
+    nombre: "Salsa Night",
+    hora_inicio: "21:00",
+    updated_at: "2025-01-01T00:00:00Z",
+    __ui: {
+      fechaYmd: "2025-03-14",
+      horaHm: "21:00",
+      lugarNombre: "Roma Norte",
+      costoMonto: 0,
+      hasDiscount: false,
+      ritmosNombres: [],
+      flyerUrl: undefined,
+      sortKey: "",
+    },
+  },
+  {
+    id: -2,
+    nombre: "Bachata Night",
+    hora_inicio: "20:30",
+    updated_at: "2025-01-01T00:00:00Z",
+    __ui: {
+      fechaYmd: "2025-03-15",
+      horaHm: "20:30",
+      lugarNombre: "Condesa",
+      costoMonto: 0,
+      hasDiscount: false,
+      ritmosNombres: [],
+      flyerUrl: undefined,
+      sortKey: "",
+    },
+  },
+  {
+    id: -3,
+    nombre: "Kizomba Night",
+    hora_inicio: "19:00",
+    updated_at: "2025-01-01T00:00:00Z",
+    __ui: {
+      fechaYmd: "2025-03-16",
+      horaHm: "19:00",
+      lugarNombre: "Polanco",
+      costoMonto: 0,
+      hasDiscount: false,
+      ritmosNombres: [],
+      flyerUrl: undefined,
+      sortKey: "",
+    },
+  },
 ];
 
 interface HeroProps {
@@ -24,25 +69,115 @@ interface HeroProps {
   onOpenB2B: () => void;
 }
 
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
+
 export function Hero({ onOpenDownload }: HeroProps) {
+  const { items: fetchedItems } = useHeroEvents();
+  const events = fetchedItems.length > 0 ? fetchedItems : HERO_SLIDER_FALLBACK;
+  const n = events.length;
+
   const sliderRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const [interactionPause, setInteractionPause] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  useEffect(() => {
+    if (fetchedItems.length > 0) setCurrentIndex(0);
+  }, [fetchedItems]);
+
+  const bumpInteractionPause = useCallback(() => {
+    setInteractionPause(true);
+  }, []);
+
+  useEffect(() => {
+    if (!interactionPause) return;
+    const t = window.setTimeout(() => setInteractionPause(false), 8000);
+    return () => window.clearTimeout(t);
+  }, [interactionPause]);
+
+  const scrollSlideIntoView = useCallback(
+    (index: number) => {
+      const container = sliderRef.current;
+      if (!container) return;
+      const slide = container.children[index] as HTMLElement | undefined;
+      slide?.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+    },
+    [prefersReducedMotion]
+  );
+
+  useEffect(() => {
+    if (n === 0) return;
+    setCurrentIndex((i) => Math.min(i, n - 1));
+  }, [n]);
+
+  useEffect(() => {
+    if (n === 0) return;
+    scrollSlideIntoView(currentIndex);
+  }, [currentIndex, n, scrollSlideIntoView]);
+
+  const nextSlide = useCallback(() => {
+    if (n < 2) return;
+    setCurrentIndex((i) => (i + 1) % n);
+  }, [n]);
+
+  const prevSlide = useCallback(() => {
+    if (n < 2) return;
+    setCurrentIndex((i) => (i - 1 + n) % n);
+  }, [n]);
+
+  const goToSlide = useCallback(
+    (i: number) => {
+      if (i < 0 || i >= n) return;
+      setCurrentIndex(i);
+      bumpInteractionPause();
+    },
+    [n, bumpInteractionPause]
+  );
+
+  useEffect(() => {
+    if (prefersReducedMotion || hovered || interactionPause || n < 2) return;
+    const id = window.setInterval(() => {
+      setCurrentIndex((i) => (i + 1) % n);
+    }, 3500);
+    return () => window.clearInterval(id);
+  }, [prefersReducedMotion, hovered, interactionPause, n]);
+
+  const handleNavPrev = () => {
+    bumpInteractionPause();
+    prevSlide();
+  };
+  const handleNavNext = () => {
+    bumpInteractionPause();
+    nextSlide();
+  };
 
   const handleDownloadClick = () => {
     track(LANDING_EVENTS.CTA_DOWNLOAD, { location: "hero" });
     onOpenDownload();
   };
 
-  const scrollSlider = useCallback((dir: "prev" | "next") => {
-    const el = sliderRef.current;
-    if (!el) return;
-    const firstSlide = el.firstElementChild as HTMLElement | null;
-    const slideWidth = firstSlide?.offsetWidth ?? el.clientWidth;
-    const gap = 10;
-    el.scrollBy({ left: dir === "next" ? slideWidth + gap : -(slideWidth + gap), behavior: "smooth" });
-  }, []);
+  const handleMobileMockupCta = () => {
+    track(LANDING_EVENTS.CTA_DOWNLOAD, { location: "hero_mockup_mobile" });
+    onOpenDownload();
+  };
 
   return (
-    <main className="landing-hero bg-grid landing-body-bg min-h-[100dvh] min-h-[100vh] flex flex-col justify-center" id="descargar" aria-label="Presentación principal">
+    <main className="landing-hero bg-grid landing-body-bg min-h-[100dvh] min-h-[100vh] flex flex-col justify-center" id="eventos" aria-label="Presentación principal">
       <div className="landing-container landing-hero__inner relative z-10">
         <div className="landing-hero__row1">
           <div className="landing-hero__col1">
@@ -60,10 +195,10 @@ export function Hero({ onOpenDownload }: HeroProps) {
             <p className="landing-hero__sub">
               {hero.subheadline}
             </p>
-            <div className="landing-hero__ctas">
+            <div className="landing-hero__ctas" id="descargar">
               <button type="button" className="btn btn-primary" onClick={handleDownloadClick}>
                 <Smartphone size={20} strokeWidth={2} aria-hidden />
-                Descargar app
+                {hero.ctaPrimary}
               </button>
               <a
                 href="https://dondebailar.com.mx/explore"
@@ -78,27 +213,49 @@ export function Hero({ onOpenDownload }: HeroProps) {
             </div>
           </div>
           <div className="landing-hero__col2">
-            <div className="hero-mockup" aria-hidden>
-              <div className="hero-mockup__device">
-                <div className="hero-mockup__screen" style={{ ["--hero-screen-bg" as string]: `url(${SEO_LOGO_URL})` }}>
+            <div className="hero-mockup">
+              <div
+                className="hero-mockup__device"
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+              >
+                <div className="hero-mockup__screen">
                   <div className="hero-mockup__slider-wrap">
-                    <div className="hero-mockup__slider" ref={sliderRef} role="list" style={{ pointerEvents: "none" }}>
-                      {HERO_MOCK_SLIDER_EVENTS.map((item, idx) => (
-                        <div key={idx} className="hero-mockup__slide">
-                          <EventCard item={item} priority />
+                    <div className="hero-mockup__slider" ref={sliderRef} role="list">
+                      {events.map((item, idx) => (
+                        <div key={`${item.id ?? "e"}-${idx}`} className="hero-mockup__slide" role="listitem">
+                          <EventCard item={item} priority={idx === 0} />
                         </div>
                       ))}
                     </div>
-                    <nav className="hero-mockup__nav" aria-label="Navegar eventos">
-                      <button type="button" className="hero-mockup__nav-btn" onClick={() => scrollSlider("prev")} aria-label="Anterior">
+                    <nav className="hero-mockup__nav" aria-label="Eventos en el mockup">
+                      <button type="button" className="hero-mockup__nav-btn" onClick={handleNavPrev} aria-label="Evento anterior">
                         <ChevronLeft size={18} strokeWidth={2.5} />
                       </button>
-                      <button type="button" className="hero-mockup__nav-btn" onClick={() => scrollSlider("next")} aria-label="Siguiente">
+                      <button type="button" className="hero-mockup__nav-btn" onClick={handleNavNext} aria-label="Siguiente evento">
                         <ChevronRight size={18} strokeWidth={2.5} />
                       </button>
                     </nav>
+                    <div className="hero-mockup__dots" role="tablist" aria-label="Posición en el carrusel">
+                      {events.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          role="tab"
+                          aria-selected={i === currentIndex}
+                          aria-label={`Evento ${i + 1} de ${n}`}
+                          className={`hero-mockup__dot ${i === currentIndex ? "hero-mockup__dot--active" : ""}`}
+                          onClick={() => goToSlide(i)}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
+              </div>
+              <div className="hero-mockup__mobile-cta">
+                <button type="button" className="hero-mockup__mobile-cta-btn" onClick={handleMobileMockupCta}>
+                  Ver la app
+                </button>
               </div>
             </div>
           </div>

@@ -1397,7 +1397,7 @@ export default function OrganizerEventDateEditScreen() {
                         />
                       </div>
                       <div>
-                <label className="org-editor-field">Teléfono / WhatsApp para más información</label>
+                <label className="org-editor-field">Teléfono o WhatsApp para más información</label>
                         <input
                           type="tel"
                   value={form.telefono_contacto || ''}

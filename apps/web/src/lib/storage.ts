@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { resizeImageIfNeeded } from "./imageResize";
+import { buildSupabaseStoragePublicUrl } from "../utils/supabaseStoragePublicUrl";
 
 export type MediaItem = {
   id: string;           // filename
@@ -11,8 +12,7 @@ export type MediaItem = {
 const BUCKET = "user-media";
 
 export function publicUrl(path: string) {
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  return buildSupabaseStoragePublicUrl(path, { bucket: BUCKET });
 }
 
 export async function uploadUserFile(userId: string, file: File) {

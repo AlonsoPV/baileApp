@@ -6,8 +6,7 @@ import RitmosChips from "../RitmosChips";
 import ZonaGroupedChips from "./ZonaGroupedChips";
 import { BioSection } from "./BioSection";
 import { colors } from "../../theme/colors";
-import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
-import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
+import { resolveVersionedSupabaseStorageDirectUrl } from "../../utils/supabaseStoragePublicUrl";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { EXPLORE_SIZES_PROFILE_AVATAR_HERO } from "@/utils/supabaseResponsiveImage";
 
@@ -86,12 +85,11 @@ export const UserProfileHero: React.FC<UserProfileHeroProps> = ({
     if (!avatarUrl) return undefined;
     const raw = String(avatarUrl).trim();
     if (!raw || raw.includes("undefined") || raw === "/default-media.png") return undefined;
-    const step1 = resolveSupabaseStoragePublicUrl(raw) ?? raw;
-    const step2 = toDirectPublicStorageUrl(step1) ?? step1;
-    if (!step2) return undefined;
-    if (/^https?:\/\//i.test(step2) || step2.startsWith("data:")) return step2;
+    const resolved = resolveVersionedSupabaseStorageDirectUrl(raw, avatarCacheKey ?? null, { defaultBucket: "media" }) ?? raw;
+    if (!resolved) return undefined;
+    if (/^https?:\/\//i.test(resolved) || resolved.startsWith("data:")) return resolved;
     return undefined;
-  }, [avatarUrl, avatarError, avatarUrlSameAsNav]);
+  }, [avatarUrl, avatarCacheKey, avatarError, avatarUrlSameAsNav]);
 
   return (
     <>
