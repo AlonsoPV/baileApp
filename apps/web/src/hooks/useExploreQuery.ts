@@ -137,11 +137,11 @@ const SELECT_ORGANIZERS_EXPLORE = `
   nombre_publico,
   bio,
   media,
-  avatar_url,
-  banner_url,
-  portada_url,
+  ritmos,
   zonas,
   ritmos_seleccionados,
+  estado_aprobacion,
+  created_at,
   updated_at
 `;
 
@@ -211,10 +211,8 @@ const SELECT_USERS_EXPLORE = `
   display_name,
   bio,
   avatar_url,
-  media,
+  ritmos,
   zonas,
-  ritmos_seleccionados,
-  updated_at,
   created_at
 `;
 
@@ -482,17 +480,8 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
   else if (type === "usuarios") {
     // La vista v_user_public ya filtra por onboarding_complete = true
     if (search) query = query.ilike("display_name", search.pattern);
-    if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
-      const parts: string[] = [];
-      if ((ritmos?.length || 0) > 0) {
-        const set = `{${(ritmos as number[]).join(',')}}`;
-        parts.push(`ritmos.ov.${set}`);
-      }
-      if ((selectedCatalogIds?.length || 0) > 0) {
-        const setCat = `{${selectedCatalogIds.join(',')}}`;
-        parts.push(`ritmos_seleccionados.ov.${setCat}`);
-      }
-      if (parts.length > 0) query = query.or(parts.join(','));
+    if ((ritmos?.length || 0) > 0) {
+      query = query.overlaps("ritmos", ritmos as any);
     }
     if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
     

@@ -2,10 +2,10 @@ import React from "react";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
-import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
+import { ritmoLabelsFromMap, zonaNamesFromMap, type ExploreTagMaps } from "@/utils/exploreTagMaps";
 import "./EventSocialGridCard.css";
 
 export type ProfileExploreGridVariant = "academy" | "teacher" | "dancer" | "organizer";
@@ -14,6 +14,7 @@ export type ProfileExploreGridCardProps = {
   variant: ProfileExploreGridVariant;
   item: any;
   priority?: boolean;
+  tagMaps?: ExploreTagMaps;
 };
 
 function resolveTeacherImage(item: any): string | undefined {
@@ -96,19 +97,13 @@ function profileTitle(variant: ProfileExploreGridVariant, item: any): string {
 
 function ritmoLabels(item: any, allTags: any[] | undefined): string[] {
   try {
-    const labelByCatalogId = new Map<string, string>();
-    RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
-    const catalogIds = (item.ritmosSeleccionados || item.ritmos_seleccionados || []) as string[];
-    if (Array.isArray(catalogIds) && catalogIds.length > 0) {
-      return catalogIds.map((id) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
-    }
-    const nums = (item.ritmos || []) as number[];
-    if (Array.isArray(allTags) && nums.length > 0) {
-      return nums
-        .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === "ritmo"))
-        .filter(Boolean)
-        .map((tag: any) => tag.nombre as string);
-    }
+    const ritmoById = new Map<number, string>();
+    (allTags || []).forEach((tag: any) => {
+      if (tag?.tipo === "ritmo" && typeof tag?.id === "number") {
+        ritmoById.set(tag.id, String(tag.nombre || ""));
+      }
+    });
+    return ritmoLabelsFromMap(item, ritmoById);
   } catch {
     /* ignore */
   }
@@ -118,8 +113,8 @@ function ritmoLabels(item: any, allTags: any[] | undefined): string[] {
 /**
  * Misma estructura y clases CSS que `ClassExploreGridCard` / `EventSocialGridCard` (carrusel Explore).
  */
-function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExploreGridCardProps) {
-  const { data: allTags } = useTags() as any;
+function ProfileExploreGridCard({ variant, item, priority = false, tagMaps }: ProfileExploreGridCardProps) {
+  const { data: allTags } = useTags(undefined, { enabled: !tagMaps }) as any;
   const href = React.useMemo(() => profileHref(variant, item), [variant, item]);
 
   const rawImg = React.useMemo(() => {
@@ -141,11 +136,20 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
   const showPlaceholder = !rawImg || imageError;
 
   const title = profileTitle(variant, item);
-  const zonaNombres: string[] = (item.zonas || [])
-    .map((zid: number) => allTags?.find((tag: any) => tag.id === zid && tag.tipo === "zona")?.nombre)
-    .filter(Boolean);
+  const zonaNombres = React.useMemo(
+    () =>
+      tagMaps
+        ? zonaNamesFromMap(item.zonas, tagMaps.zonaById)
+        : ((item.zonas || [])
+            .map((zid: number) => allTags?.find((tag: any) => tag.id === zid && tag.tipo === "zona")?.nombre)
+            .filter(Boolean) as string[]),
+    [allTags, item.zonas, tagMaps],
+  );
 
-  const ritmos = ritmoLabels(item, allTags);
+  const ritmos = React.useMemo(
+    () => (tagMaps ? ritmoLabelsFromMap(item, tagMaps.ritmoById) : ritmoLabels(item, allTags)),
+    [allTags, item, tagMaps],
+  );
   const primaryZone = zonaNombres[0] || "";
   const primaryRhythm = ritmos[0] || "";
 

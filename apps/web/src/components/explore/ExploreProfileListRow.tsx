@@ -3,10 +3,10 @@ import { ChevronRight } from "lucide-react";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
-import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
+import { ritmoLabelsFromMap, zonaNamesFromMap, type ExploreTagMaps } from "@/utils/exploreTagMaps";
 import "@/components/explore/EventListRow.css";
 
 export type ExploreProfileListVariant = "academy" | "teacher" | "dancer" | "organizer";
@@ -15,6 +15,7 @@ export type ExploreProfileListRowProps = {
   variant: ExploreProfileListVariant;
   item: any;
   priority?: boolean;
+  tagMaps?: ExploreTagMaps;
 };
 
 function resolveTeacherImage(item: any): string | undefined {
@@ -71,8 +72,8 @@ function resolveDancerImage(item: any): string | undefined {
   );
 }
 
-function ExploreProfileListRow({ variant, item, priority = false }: ExploreProfileListRowProps) {
-  const { data: allTags } = useTags() as any;
+function ExploreProfileListRow({ variant, item, priority = false, tagMaps }: ExploreProfileListRowProps) {
+  const { data: allTags } = useTags(undefined, { enabled: !tagMaps }) as any;
 
   const title = React.useMemo(() => {
     if (variant === "academy") {
@@ -123,29 +124,30 @@ function ExploreProfileListRow({ variant, item, priority = false }: ExploreProfi
   React.useEffect(() => setImageError(false), [rawImg, cacheKey]);
   const showPlaceholder = !rawImg || imageError;
 
-  const zonaNombres: string[] = (item.zonas || [])
-    .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === "zona")?.nombre)
-    .filter(Boolean);
+  const zonaNombres = React.useMemo(
+    () =>
+      tagMaps
+        ? zonaNamesFromMap(item.zonas, tagMaps.zonaById)
+        : ((item.zonas || [])
+            .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === "zona")?.nombre)
+            .filter(Boolean) as string[]),
+    [allTags, item.zonas, tagMaps],
+  );
   const ritmoNombres = React.useMemo(() => {
     try {
-      const labelByCatalogId = new Map<string, string>();
-      RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
-      const catalogIds = (item.ritmosSeleccionados || item.ritmos_seleccionados || []) as string[];
-      if (Array.isArray(catalogIds) && catalogIds.length > 0) {
-        return catalogIds.map((id) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
-      }
-      const nums = (item.ritmos || []) as number[];
-      if (Array.isArray(allTags) && nums.length > 0) {
-        return nums
-          .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === "ritmo"))
-          .filter(Boolean)
-          .map((tag: any) => tag.nombre as string);
-      }
+      if (tagMaps) return ritmoLabelsFromMap(item, tagMaps.ritmoById);
+      const ritmoById = new Map<number, string>();
+      (allTags || []).forEach((tag: any) => {
+        if (tag?.tipo === "ritmo" && typeof tag?.id === "number") {
+          ritmoById.set(tag.id, String(tag.nombre || ""));
+        }
+      });
+      return ritmoLabelsFromMap(item, ritmoById);
     } catch {
       /* ignore */
     }
     return [] as string[];
-  }, [allTags, item]);
+  }, [allTags, item, tagMaps]);
 
   const bioSnippet = (item.bio || "")
     .replace(/\s+/g, " ")

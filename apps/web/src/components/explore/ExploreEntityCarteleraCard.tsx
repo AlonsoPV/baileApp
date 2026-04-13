@@ -3,11 +3,11 @@ import { useTranslation } from "react-i18next";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
-import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useFmtDate } from "@/hooks/useFmtDate";
 import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
+import { ritmoLabelsFromMap, zonaNamesFromMap, type ExploreTagMaps } from "@/utils/exploreTagMaps";
 import "./EventCarteleraCard.css";
 
 export type ExploreEntityCarteleraVariant = "clase" | "academy" | "teacher" | "dancer" | "organizer";
@@ -16,6 +16,7 @@ export type ExploreEntityCarteleraCardProps = {
   variant: ExploreEntityCarteleraVariant;
   item: any;
   priority?: boolean;
+  tagMaps?: ExploreTagMaps;
 };
 
 function buildClaseHref(item: any): string {
@@ -92,10 +93,15 @@ function resolveDancerImage(item: any): string | undefined {
   );
 }
 
-function ExploreEntityCarteleraCard({ variant, item, priority = false }: ExploreEntityCarteleraCardProps) {
+function ExploreEntityCarteleraCard({
+  variant,
+  item,
+  priority = false,
+  tagMaps,
+}: ExploreEntityCarteleraCardProps) {
   const fmtDateLocalized = useFmtDate();
   const { t } = useTranslation();
-  const { data: allTags } = useTags() as any;
+  const { data: allTags } = useTags(undefined, { enabled: !tagMaps }) as any;
 
   const href = React.useMemo(() => {
     if (variant === "clase") return buildClaseHref(item);
@@ -143,9 +149,15 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
     return item.nombre_publico || item.nombre || "Organizador";
   }, [item, variant]);
 
-  const zonaNombres: string[] = (item.zonas || [])
-    .map((zid: number) => allTags?.find((tag: any) => tag.id === zid && tag.tipo === "zona")?.nombre)
-    .filter(Boolean);
+  const zonaNombres = React.useMemo(
+    () =>
+      tagMaps
+        ? zonaNamesFromMap(item.zonas, tagMaps.zonaById)
+        : ((item.zonas || [])
+            .map((zid: number) => allTags?.find((tag: any) => tag.id === zid && tag.tipo === "zona")?.nombre)
+            .filter(Boolean) as string[]),
+    [allTags, item.zonas, tagMaps],
+  );
 
   const isSemanal = variant === "clase" && Array.isArray(item.diasSemana) && item.diasSemana.length > 0 && !item.fecha;
 
@@ -224,22 +236,19 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
   const ritmoNames = React.useMemo(() => {
     if (variant !== "clase") return [] as string[];
     try {
-      const labelByCatalogId = new Map<string, string>();
-      RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
-      const catalogIds = (item.ritmosSeleccionados || []) as string[];
-      if (catalogIds.length > 0) return catalogIds.map((id) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
-      const nums = (item.ritmos || []) as number[];
-      if (Array.isArray(allTags) && nums.length > 0) {
-        return nums
-          .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === "ritmo"))
-          .filter(Boolean)
-          .map((tag: any) => tag.nombre as string);
-      }
+      if (tagMaps) return ritmoLabelsFromMap(item, tagMaps.ritmoById);
+      const ritmoById = new Map<number, string>();
+      (allTags || []).forEach((tag: any) => {
+        if (tag?.tipo === "ritmo" && typeof tag?.id === "number") {
+          ritmoById.set(tag.id, String(tag.nombre || ""));
+        }
+      });
+      return ritmoLabelsFromMap(item, ritmoById);
     } catch {
       /* ignore */
     }
     return [];
-  }, [variant, item, allTags]);
+  }, [variant, item, allTags, tagMaps]);
 
   const bioSnippet = `${String(item.bio || "").replace(/\s+/g, " ").trim().slice(0, 72)}${String(item.bio || "").trim().length > 72 ? "…" : ""}`;
   const primaryProfileLine = zonaNombres[0] || ritmoNames[0] || bioSnippet || "";

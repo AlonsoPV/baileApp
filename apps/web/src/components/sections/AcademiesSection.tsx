@@ -11,6 +11,7 @@ import '../explore/exploreFechasCartelera.css';
 import type { ExploreFilters } from '../../state/exploreFilters';
 import { useSmartLoading } from '../../hooks/useSmartLoading';
 import { RefreshingIndicator } from '../loading/RefreshingIndicator';
+import type { ExploreTagMaps } from '@/utils/exploreTagMaps';
 
 type HorizontalCarouselPassthrough = Omit<ComponentProps<typeof HorizontalCarousel>, 'items' | 'renderItem'>;
 
@@ -18,6 +19,8 @@ interface AcademiesSectionProps {
   filters: ExploreFilters;
   q?: string;
   enabled?: boolean;
+  externalData?: any[];
+  isLoading?: boolean;
   renderAs?: 'grid' | 'slider' | 'list' | 'cartelera' | 'carousel';
   maxItems?: number;
   itemHeight?: number;
@@ -30,33 +33,51 @@ interface AcademiesSectionProps {
   onNavigatePrepare?: () => void;
   /** Vista `carousel`: mismas props que el carrusel de clases/fechas (fechasGridSliderProps). */
   gridCarouselProps?: HorizontalCarouselPassthrough;
+  tagMaps?: ExploreTagMaps;
 }
 
 /**
  * Componente wrapper para sección de academias con loading inteligente
  */
-function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slider', maxItems, itemHeight, itemWidth, navPosition = 'overlay', eagerPerCarousel = 0, onNavigatePrepare, gridCarouselProps }: AcademiesSectionProps) {
+function AcademiesSectionContent({
+  filters,
+  q,
+  enabled = true,
+  externalData,
+  isLoading: externalLoading,
+  renderAs = 'slider',
+  maxItems,
+  itemHeight,
+  itemWidth,
+  navPosition = 'overlay',
+  eagerPerCarousel = 0,
+  onNavigatePrepare,
+  gridCarouselProps,
+  tagMaps,
+}: AcademiesSectionProps) {
+  const hasExternalData = externalData !== undefined;
   const academiasQuery = useExploreQuery({
     type: 'academias',
     q: q || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
     pageSize: maxItems || 12,
-    enabled,
+    enabled: enabled && !hasExternalData,
   });
 
   const { isFirstLoad, isRefetching } = useSmartLoading({
-    data: academiasQuery.data,
-    isLoading: academiasQuery.isLoading,
-    isFetching: academiasQuery.isFetching,
-    error: academiasQuery.error,
+    data: hasExternalData ? { pages: [{ data: externalData ?? [] }] } : academiasQuery.data,
+    isLoading: hasExternalData ? (externalLoading ?? false) : academiasQuery.isLoading,
+    isFetching: hasExternalData ? false : academiasQuery.isFetching,
+    error: hasExternalData ? null : academiasQuery.error,
   } as any);
 
   // ✅ TODOS LOS HOOKS DEBEN IR ANTES DE CUALQUIER EARLY RETURN
   const academiasData = React.useMemo(() => {
+    if (hasExternalData) return externalData ?? [];
     if (!academiasQuery.data?.pages) return [];
     return academiasQuery.data.pages.flatMap(page => page.data || []);
-  }, [academiasQuery.data]);
+  }, [academiasQuery.data, externalData, hasExternalData]);
 
   const itemsToShow = React.useMemo(() => {
     return maxItems ? academiasData.slice(0, maxItems) : academiasData;
@@ -100,7 +121,12 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
               onClickCapture={() => onNavigatePrepare?.()}
               style={{ width: '100%' }}
             >
-              <ExploreProfileListRow variant="academy" item={academia} priority={idx < eagerPerCarousel} />
+              <ExploreProfileListRow
+                variant="academy"
+                item={academia}
+                priority={idx < eagerPerCarousel}
+                tagMaps={tagMaps}
+              />
             </div>
           ))}
         </div>
@@ -120,7 +146,12 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
               onClickCapture={() => onNavigatePrepare?.()}
               style={{ minWidth: 0 }}
             >
-              <ExploreEntityCarteleraCard variant="academy" item={academia} priority={idx < eagerPerCarousel} />
+              <ExploreEntityCarteleraCard
+                variant="academy"
+                item={academia}
+                priority={idx < eagerPerCarousel}
+                tagMaps={tagMaps}
+              />
             </div>
           ))}
         </div>
@@ -150,7 +181,7 @@ function AcademiesSectionContent({ filters, q, enabled = true, renderAs = 'slide
               onClickCapture={() => onNavigatePrepare?.()}
               style={wrapStyle}
             >
-              <ProfileExploreGridCard variant="academy" item={academia} priority={idx < 3} />
+              <ProfileExploreGridCard variant="academy" item={academia} priority={idx < 3} tagMaps={tagMaps} />
             </div>
           )}
         />

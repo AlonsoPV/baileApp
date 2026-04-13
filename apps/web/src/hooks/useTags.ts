@@ -4,6 +4,9 @@ import { Tag } from '../types/db';
 import { withTimeout } from '../utils/withTimeout';
 
 const TAGS_QUERY_TIMEOUT_MS = 7_000;
+type UseTagsOptions = {
+  enabled?: boolean;
+};
 
 async function fetchTags(tipo?: 'ritmo' | 'zona'): Promise<Tag[]> {
   let query = supabase
@@ -20,10 +23,11 @@ async function fetchTags(tipo?: 'ritmo' | 'zona'): Promise<Tag[]> {
   return data || [];
 }
 
-export function useTags(tipo?: 'ritmo' | 'zona') {
+export function useTags(tipo?: 'ritmo' | 'zona', options?: UseTagsOptions) {
   const query = useQuery({
     queryKey: ['tags', tipo],
     queryFn: () => fetchTags(tipo),
+    enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5, // 5 minutos - tags cambian poco
     gcTime: 1000 * 60 * 10, // 10 minutos en cache
   });

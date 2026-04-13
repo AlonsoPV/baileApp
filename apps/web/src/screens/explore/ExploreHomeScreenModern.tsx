@@ -43,10 +43,13 @@ import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
 import { useToast } from "../../components/Toast";
 import { mark, notifyError, notifyReady } from "@/utils/performanceLogger";
 import { normalizeEventsForCards } from "@/utils/normalizeEventsForCards";
-import { getEffectiveEventDate, getEffectiveEventDateYmd, normalizeDateOnly } from "@/utils/effectiveEventDate";
+import { getEffectiveEventDateYmd } from "@/utils/effectiveEventDate";
 import { sortFechasByRecentFirst } from "@/utils/exploreFechasGrid";
-import { shouldHideExploreClassForBlackout } from "@/config/classBlackoutDates";
 import { getLocaleFromI18n } from "@/utils/locale";
+import { useFilteredFechas } from "@/hooks/explore/useFilteredFechas";
+import { useClassesList } from "@/hooks/explore/useClassesList";
+import { buildEventOccurrenceKey } from "@/utils/exploreEventOccurrence";
+import { buildExploreTagMaps } from "@/utils/exploreTagMaps";
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -71,18 +74,6 @@ function getTodayCDMX(): string {
     day: '2-digit'
   });
   return formatter.format(new Date());
-}
-
-function buildEventOccurrenceKey(event: any): string {
-  const instanceId = event?.instance_id;
-  if (instanceId) return `instance_${String(instanceId)}`;
-
-  const effectiveDate = getEffectiveEventDateYmd(event);
-  const horaInicio = String(event?.hora_inicio || event?.evento_hora_inicio || "");
-  const parentOrOwn = String(event?.parent_id ?? event?.id ?? "no_id");
-  // Incluir id: dos events_date con mismo parent/fecha/hora no deben colisionar una card.
-  if (effectiveDate) return `${parentOrOwn}_${effectiveDate}_${horaInicio}_${String(event?.id ?? "no_id")}`;
-  return `id_${String(event?.id ?? "no_id")}`;
 }
 
 function flattenQueryData(data?: { pages?: Array<{ data?: any[] }> }) {
@@ -140,17 +131,23 @@ function useExploreCardDimensions(isMobile: boolean) {
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     setDimensions(compute());
-    const handler = () => setDimensions(compute());
-    window.addEventListener('resize', handler);
+    let rafId: number | null = null;
+    const handler = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        setDimensions(compute());
+      });
+    };
+    window.addEventListener('resize', handler, { passive: true });
     const vv = window.visualViewport;
     if (vv) {
-      vv.addEventListener('resize', handler);
-      vv.addEventListener('scroll', handler);
+      vv.addEventListener('resize', handler, { passive: true });
     }
     return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener('resize', handler);
       vv?.removeEventListener('resize', handler);
-      vv?.removeEventListener('scroll', handler);
     };
   }, [compute]);
 
@@ -185,11 +182,19 @@ function useExploreFechasGridDimensions(isMobile: boolean) {
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     setDimensions(compute());
-    const handler = () => setDimensions(compute());
-    window.addEventListener("resize", handler);
+    let rafId: number | null = null;
+    const handler = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        setDimensions(compute());
+      });
+    };
+    window.addEventListener("resize", handler, { passive: true });
     const vv = window.visualViewport;
-    vv?.addEventListener("resize", handler);
+    vv?.addEventListener("resize", handler, { passive: true });
     return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handler);
       vv?.removeEventListener("resize", handler);
     };
@@ -2502,6 +2507,7 @@ export default function ExploreHomeScreen() {
   }, [openFilterDropdown]);
 
   const { data: allTags } = useTags();
+  const tagMaps = React.useMemo(() => buildExploreTagMaps(allTags as any[] | null), [allTags]);
   const rhythmContext = React.useMemo(() => mapExploreTypeToContext(filters.type), [filters.type]);
   const zoneContext = React.useMemo(() => mapExploreTypeToZoneContext(filters.type), [filters.type]);
   const {
@@ -2935,107 +2941,15 @@ export default function ExploreHomeScreen() {
     }
   }, [fechasError]);
 
-  const filteredFechas = React.useMemo(() => {
-    const isValidDiaSemana = (value: any): value is number =>
-      Number.isInteger(value) && value >= 0 && value <= 6;
-    const todayOnly = normalizeDateOnly(todayYmd);
-    // Server ya filtra por estado_publicacion=publicado; si no viene el campo, incluimos igual
-    const allFechas = fechasData.filter((d: any) => !d?.estado_publicacion || d.estado_publicacion === 'publicado');
-    const includePastEvents = !!qDeferred && qDeferred.trim().length > 0;
-    const dateFrom = filters.dateFrom ? normalizeDateOnly(filters.dateFrom) : null;
-    const dateTo = filters.dateTo ? normalizeDateOnly(filters.dateTo) : null;
-    const hasDateRange = dateFrom !== null || dateTo !== null;
-    const nextRecurringYmd = (dayValue: any) => {
-      if (!todayOnly) return null;
-      const day = Number(dayValue);
-      if (!Number.isFinite(day) || day < 0 || day > 6) return null;
-      const currentDay = todayOnly.getDay();
-      let offset = day - currentDay;
-      if (offset < 0) offset += 7;
-      const next = new Date(todayOnly.getFullYear(), todayOnly.getMonth(), todayOnly.getDate() + offset);
-      const year = next.getFullYear();
-      const month = String(next.getMonth() + 1).padStart(2, '0');
-      const dayNum = String(next.getDate()).padStart(2, '0');
-      return `${year}-${month}-${dayNum}`;
-    };
-
-    const upcoming = allFechas.filter((fecha: any) => {
-      if (includePastEvents) return true;
-      const hasDiaSemana = isValidDiaSemana(fecha?.dia_semana);
-      let eventDateOnly = normalizeDateOnly(getEffectiveEventDate(fecha));
-
-      // Si hay rango de fechas (ej. "Hoy" con from=to=hoy), usar solo la fecha de INICIO del evento.
-      // - Eventos que empiezan hoy se muestran en "Hoy" aunque ya haya pasado la hora de inicio.
-      // - Eventos que empiezan sábado y terminan domingo 2am no se muestran en "Domingo".
-      if (hasDateRange) {
-        // Recurrentes: si no vienen como ocurrencia materializada, evaluar por próxima ocurrencia.
-        if (!eventDateOnly && hasDiaSemana && fecha._recurrence_index === undefined) {
-          try {
-            const nextYmd = nextRecurringYmd(fecha.dia_semana);
-            eventDateOnly = normalizeDateOnly(nextYmd);
-          } catch {
-            // Si falla el cálculo, no ocultar agresivamente un recurrente.
-            return true;
-          }
-        }
-        if (!eventDateOnly) return false;
-        if (dateFrom && eventDateOnly < dateFrom) return false;
-        if (dateTo && eventDateOnly > dateTo) return false;
-        return true;
-      }
-
-      // Si no hay rango de fechas, solo mostrar eventos futuros
-      if (!eventDateOnly && hasDiaSemana) {
-        // Plantilla recurrente sin ocurrencia materializada: sigue vigente por dia_semana.
-        return true;
-      }
-      if (!eventDateOnly || !todayOnly) return false;
-      return eventDateOnly >= todayOnly;
-    });
-
-    const deduped = (() => {
-      const map = new Map<string, any>();
-      for (const event of upcoming) {
-        const key = buildEventOccurrenceKey(event);
-        if (!map.has(key)) map.set(key, event);
-      }
-      return Array.from(map.values());
-    })();
-
-    // Orden robusto en UI: primero por fecha, luego por hora, luego por id.
-    // Esto evita mezclas cuando los datos vienen de múltiples fuentes/páginas.
-    const toSortableHora = (raw?: string | null) => {
-      if (!raw) return "99:99";
-      const s = String(raw).trim();
-      if (!s) return "99:99";
-      if (s.includes(":")) {
-        const [hh = "99", mm = "99"] = s.split(":");
-        return `${hh.padStart(2, "0").slice(-2)}:${mm.padStart(2, "0").slice(0, 2)}`;
-      }
-      if (s.length === 4) return `${s.slice(0, 2)}:${s.slice(2, 4)}`;
-      return "99:99";
-    };
-
-    return [...deduped].sort((a: any, b: any) => {
-      const ymdA = getEffectiveEventDateYmd(a);
-      const ymdB = getEffectiveEventDateYmd(b);
-      if (ymdA !== ymdB) return ymdA < ymdB ? -1 : 1;
-
-      const horaA = toSortableHora(a?.hora_inicio ?? a?.evento_hora_inicio);
-      const horaB = toSortableHora(b?.hora_inicio ?? b?.evento_hora_inicio);
-      if (horaA !== horaB) return horaA < horaB ? -1 : 1;
-
-      const nameA = String(a?.nombre || a?.events_parent?.nombre || "");
-      const nameB = String(b?.nombre || b?.events_parent?.nombre || "");
-      const byName = nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
-      if (byName !== 0) return byName;
-
-      const idA = Number(a?.id ?? 0);
-      const idB = Number(b?.id ?? 0);
-      if (Number.isFinite(idA) && Number.isFinite(idB) && idA !== idB) return idA - idB;
-      return String(a?.id ?? "").localeCompare(String(b?.id ?? ""));
-    });
-  }, [fechasData, todayYmd, qDeferred, filters.dateFrom, filters.dateTo, filters.datePreset, selectedType]);
+  const filteredFechas = useFilteredFechas({
+    fechasData,
+    todayYmd,
+    qDeferred,
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
+    datePreset: filters.datePreset,
+    selectedType,
+  });
 
   /** Eventos con __ui precomputado: cero hooks/queries por card en Explore. */
   const normalizedFechas = React.useMemo(
@@ -3234,11 +3148,11 @@ export default function ExploreHomeScreen() {
             height: "100%",
           }}
         >
-          <ProfileExploreGridCard variant="teacher" item={item} priority={idx === 0} />
+          <ProfileExploreGridCard variant="teacher" item={item} priority={idx === 0} tagMaps={tagMaps} />
         </div>
       );
     },
-    [handlePreNavigate, t]
+    [handlePreNavigate, t, tagMaps]
   );
 
   const renderUsuarioCarouselItem = React.useCallback(
@@ -3260,10 +3174,11 @@ export default function ExploreHomeScreen() {
           variant="dancer"
           item={item}
           priority={idx === 0}
+          tagMaps={tagMaps}
         />
       </div>
     ),
-    [handlePreNavigate]
+    [handlePreNavigate, tagMaps]
   );
 
   const renderOrganizerCarouselItem = React.useCallback(
@@ -3296,11 +3211,11 @@ export default function ExploreHomeScreen() {
             height: "100%",
           }}
         >
-          <ProfileExploreGridCard variant="organizer" item={item} priority={idx === 0} />
+          <ProfileExploreGridCard variant="organizer" item={item} priority={idx === 0} tagMaps={tagMaps} />
         </div>
       );
     },
-    [handlePreNavigate, t]
+    [handlePreNavigate, t, tagMaps]
   );
 
   const renderMarcaCarouselItem = React.useCallback(
@@ -3627,314 +3542,20 @@ export default function ExploreHomeScreen() {
     return () => cancelAnimationFrame(rafId);
   }, [filteredFechas.length, fechasLoading]);
 
-  const classesList = React.useMemo(() => {
-    const dayNames = [
-      t('sunday'),
-      t('monday'),
-      t('tuesday'),
-      t('wednesday'),
-      t('thursday'),
-      t('friday'),
-      t('saturday'),
-    ];
-    const allA = academiasData;
-    const allM = maestrosData;
-    const selectedRitmoSet = new Set<number>(filters.ritmos || []);
-    const selectedZonaSet = new Set<number>(filters.zonas || []);
-    const ritmoIdBySlugLocal = new Map<string, number>();
-    for (const t of (allTags || []) as any[]) {
-      if (t?.tipo === 'ritmo' && typeof t?.id === 'number' && typeof t?.slug === 'string') {
-        ritmoIdBySlugLocal.set(String(t.slug).trim().toLowerCase(), t.id);
-      }
-    }
-
-    const parseYmdToDate = (value?: string | null) => {
-      if (!value) return null;
-      const plain = String(value).split('T')[0];
-      const [year, month, day] = plain.split('-').map((part) => parseInt(part, 10));
-      if (
-        Number.isFinite(year) &&
-        Number.isFinite(month) &&
-        Number.isFinite(day)
-      ) {
-        return new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      }
-      const parsed = new Date(value);
-      return Number.isNaN(parsed.getTime()) ? null : parsed;
-    };
-
-    const rangeFrom = parseYmdToDate(filters.dateFrom);
-    const rangeTo = parseYmdToDate(filters.dateTo);
-    const todayBase = parseYmdToDate(todayYmd);
-    const weekEnd = todayBase ? addDays(todayBase, 6) : null;
-
-    const resolveOwnerCover = (owner: any) => {
-      const direct = owner?.avatar_url || owner?.portada_url || owner?.banner_url || owner?.avatar || owner?.portada || owner?.banner;
-      if (direct) return String(direct);
-      const media = Array.isArray(owner?.media) ? owner.media : [];
-      if (media.length) {
-        const bySlot = media.find((m: any) => m?.slot === 'cover' || m?.slot === 'p1' || m?.slot === 'avatar');
-        if (bySlot?.url) return String(bySlot.url);
-        if ((bySlot as any)?.path) return String((bySlot as any).path);
-        const first = media[0];
-        return String(first?.url || (first as any)?.path || (typeof first === 'string' ? first : ''));
-      }
-      return undefined as unknown as string | undefined;
-    };
-
-    const dayNameToNumber = (dayName: string | number): number | null => {
-      if (typeof dayName === 'number' && dayName >= 0 && dayName <= 6) {
-        return dayName;
-      }
-      const normalized = String(dayName).toLowerCase().trim();
-      const map: Record<string, number> = {
-        'domingo': 0, 'dom': 0,
-        'lunes': 1, 'lun': 1,
-        'martes': 2, 'mar': 2,
-        'miércoles': 3, 'miercoles': 3, 'mié': 3, 'mie': 3,
-        'jueves': 4, 'jue': 4,
-        'viernes': 5, 'vie': 5,
-        'sábado': 6, 'sabado': 6, 'sáb': 6, 'sab': 6,
-      };
-      return map[normalized] ?? null;
-    };
-
-    const mapClase = (owner: any, c: any, ownerType: 'academy' | 'teacher', cronogramaIndex: number) => {
-      const baseClase = {
-        titulo: c?.titulo,
-        fecha: c?.fecha,
-        diasSemana: c?.diasSemana || (typeof c?.diaSemana === 'number' ? [dayNames[c.diaSemana] || ''] : undefined),
-        inicio: c?.inicio,
-        fin: c?.fin,
-        // Campos para construir filtros dinámicos (ritmos/zonas realmente visibles).
-        // No hacer fallback al owner para evitar ritmos sobrantes en contexto "clases".
-        ritmos: c?.ritmos ?? [],
-        ritmoId: c?.ritmoId,
-        ritmoIds: c?.ritmoIds ?? [],
-        estilos: c?.estilos ?? [],
-        ritmos_seleccionados: c?.ritmosSeleccionados ?? c?.ritmos_seleccionados ?? [],
-        zonas: c?.zonas ?? owner?.zonas ?? [],
-        ubicacion: c?.ubicacion || owner?.ubicaciones?.[0]?.nombre || owner?.ciudad || owner?.direccion || '',
-        ownerType,
-        ownerId: owner?.id,
-        ownerName: owner?.nombre_publico,
-        ownerCoverUrl: resolveOwnerCover(owner),
-        cronogramaIndex
-      };
-
-      if (baseClase.diasSemana && Array.isArray(baseClase.diasSemana) && baseClase.diasSemana.length > 1) {
-        const expanded: any[] = [];
-        for (const dayStr of baseClase.diasSemana) {
-          const dayNum = dayNameToNumber(dayStr);
-          if (dayNum !== null) {
-            expanded.push({
-              ...baseClase,
-              diaSemana: dayNum,
-              diasSemana: [dayStr],
-            });
-          }
-        }
-        return expanded.length > 0 ? expanded : [baseClase];
-      }
-
-      return [baseClase];
-    };
-
-    const fromAcademies = allA.flatMap((ac: any) => {
-      const cronogramaData = ac?.cronograma || ac?.horarios || [];
-      return Array.isArray(cronogramaData)
-        ? cronogramaData.flatMap((c: any, idx: number) => mapClase(ac, c, 'academy', idx))
-        : [];
-    });
-    const fromTeachers = allM.flatMap((tc: any) => {
-      const cronogramaData = tc?.cronograma || tc?.horarios || [];
-      return Array.isArray(cronogramaData)
-        ? cronogramaData.flatMap((c: any, idx: number) => mapClase(tc, c, 'teacher', idx))
-        : [];
-    });
-
-    const merged = [...fromAcademies, ...fromTeachers].filter(x => x && (x.titulo || x.fecha || (x.diasSemana && x.diasSemana[0])));
-    const classMatchesSelectedFilters = (item: any) => {
-      if (selectedRitmoSet.size > 0) {
-        const itemRitmoIds = new Set<number>();
-        const addNum = (v: any) => {
-          const n = Number(v);
-          if (Number.isFinite(n) && n > 0) itemRitmoIds.add(Math.trunc(n));
-        };
-        const addArr = (arr: any) => {
-          if (!Array.isArray(arr)) return;
-          arr.forEach(addNum);
-        };
-        addNum(item?.ritmoId);
-        addArr(item?.ritmoIds);
-        addArr(item?.ritmos);
-        addArr(item?.estilos);
-        const slugs = [
-          ...(Array.isArray(item?.ritmos_seleccionados) ? item.ritmos_seleccionados : []),
-          ...(Array.isArray(item?.ritmosSeleccionados) ? item.ritmosSeleccionados : []),
-        ];
-        for (const raw of slugs) {
-          const key = String(raw ?? '').trim().toLowerCase();
-          if (!key) continue;
-          const mapped = ritmoIdBySlugLocal.get(key);
-          if (typeof mapped === 'number') itemRitmoIds.add(mapped);
-        }
-        let hit = false;
-        itemRitmoIds.forEach((id) => {
-          if (selectedRitmoSet.has(id)) hit = true;
-        });
-        if (!hit) return false;
-      }
-
-      if (selectedZonaSet.size > 0) {
-        const itemZonaIds = new Set<number>();
-        const addZona = (v: any) => {
-          const n = Number(v);
-          if (Number.isFinite(n) && n > 0) itemZonaIds.add(Math.trunc(n));
-        };
-        addZona(item?.zonaId);
-        addZona(item?.zona);
-        if (Array.isArray(item?.zonas)) item.zonas.forEach(addZona);
-        if (Array.isArray(item?.zonaIds)) item.zonaIds.forEach(addZona);
-        let hit = false;
-        itemZonaIds.forEach((id) => {
-          if (selectedZonaSet.has(id)) hit = true;
-        });
-        if (!hit) return false;
-      }
-      return true;
-    };
-    const mergedByRhythmAndZone = merged.filter(classMatchesSelectedFilters);
-    const weekdayIndex = (name: string) => dayNames.findIndex(d => d.toLowerCase() === String(name).toLowerCase());
-    const nextOccurrence = (c: any): Date | null => {
-      try {
-        if (c.fecha) {
-          return parseYmdToDate(c.fecha);
-        }
-        const days: string[] = Array.isArray(c.diasSemana) ? c.diasSemana : [];
-        if (!days.length) return null;
-        const today = new Date();
-        const todayIdx = today.getDay();
-        let minDelta: number | null = null;
-        for (const dn of days) {
-          const idx = weekdayIndex(dn);
-          if (idx < 0) continue;
-          const delta = idx >= todayIdx
-            ? idx - todayIdx
-            : (idx - todayIdx + 7) % 7;
-          if (minDelta === null || delta < minDelta) minDelta = delta;
-        }
-        if (minDelta === null) return null;
-        const upcoming = addDays(today, minDelta);
-        return new Date(Date.UTC(
-          upcoming.getUTCFullYear(),
-          upcoming.getUTCMonth(),
-          upcoming.getUTCDate(),
-          12, 0, 0
-        ));
-      } catch { return null; }
-    };
-    const preset = filters.datePreset || 'todos';
-    const includePastClasses = !!qDeferred && qDeferred.trim().length > 0;
-
-    const matchesPresetAndRange = (item: any) => {
-      const occurrence = nextOccurrence(item);
-      if (occurrence && todayBase && !includePastClasses) {
-        const occurrenceDate = new Date(Date.UTC(
-          occurrence.getUTCFullYear(),
-          occurrence.getUTCMonth(),
-          occurrence.getUTCDate(),
-          0, 0, 0
-        ));
-        const todayDate = new Date(Date.UTC(
-          todayBase.getUTCFullYear(),
-          todayBase.getUTCMonth(),
-          todayBase.getUTCDate(),
-          0, 0, 0
-        ));
-        if (occurrenceDate < todayDate) return false;
-      }
-      if (rangeFrom && occurrence && occurrence < rangeFrom) return false;
-      if (rangeTo && occurrence && occurrence > rangeTo) return false;
-      if (preset === 'todos') return true;
-      if (!occurrence) return true;
-      if (preset === 'hoy') {
-        return occurrence.toISOString().slice(0, 10) === todayYmd;
-      }
-      if (preset === 'semana') {
-        if (!todayBase || !weekEnd) return true;
-        return occurrence >= todayBase && occurrence <= weekEnd;
-      }
-      if (preset === 'siguientes') {
-        if (!weekEnd) return true;
-        return occurrence > weekEnd;
-      }
-      return true;
-    };
-
-    const filtered = mergedByRhythmAndZone
-      .filter(matchesPresetAndRange)
-      .filter((item: any) => !shouldHideExploreClassForBlackout(item));
-
-    // Función helper para convertir hora HH:MM a minutos desde medianoche para comparación
-    const timeToMinutes = (timeStr?: string | null): number | null => {
-      if (!timeStr) return null;
-      const parts = String(timeStr).trim().split(':');
-      if (parts.length >= 2) {
-        const hours = parseInt(parts[0], 10);
-        const minutes = parseInt(parts[1], 10);
-        if (Number.isFinite(hours) && Number.isFinite(minutes)) {
-          return hours * 60 + minutes;
-        }
-      }
-      return null;
-    };
-    
-    const sorted = [...filtered].sort((a, b) => {
-      // Primero ordenar por fecha
-      const dateA = nextOccurrence(a);
-      const dateB = nextOccurrence(b);
-      if (!dateA && !dateB) {
-        // Si ambas no tienen fecha, ordenar por hora
-        const timeA = timeToMinutes(a.inicio);
-        const timeB = timeToMinutes(b.inicio);
-        if (timeA === null && timeB === null) return 0;
-        if (timeA === null) return 1;
-        if (timeB === null) return -1;
-        return timeA - timeB;
-      }
-      if (!dateA) return 1;
-      if (!dateB) return -1;
-      
-      const dateDiff = dateA.getTime() - dateB.getTime();
-      
-      // Si las fechas son iguales (mismo día), ordenar por hora de inicio
-      if (dateDiff === 0) {
-        const timeA = timeToMinutes(a.inicio);
-        const timeB = timeToMinutes(b.inicio);
-        if (timeA === null && timeB === null) return 0;
-        if (timeA === null) return 1; // Sin hora va al final
-        if (timeB === null) return -1; // Sin hora va al final
-        return timeA - timeB; // Ordenar por hora ascendente
-      }
-      
-      return dateDiff;
-    });
-    return sorted;
-  }, [
-    t,
-    i18n.language,
+  const classesList = useClassesList({
     academiasData,
     maestrosData,
-    allTags,
-    filters.ritmos,
-    filters.zonas,
-    filters.datePreset,
-    filters.dateFrom,
-    filters.dateTo,
+    allTags: allTags as any[] | undefined,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    datePreset: filters.datePreset,
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
     qDeferred,
     todayYmd,
-  ]);
+    t,
+    language: i18n.language,
+  });
 
   const validUsuarios = React.useMemo(
     () =>
@@ -4721,7 +4342,7 @@ export default function ExploreHomeScreen() {
                           const rowKey = `${item.ownerType || "owner"}-${item.ownerId ?? "unknown"}-${item.titulo ?? "class"}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join("-") : "semana")}-${idx}`;
                           return (
                             <div key={rowKey} role="listitem" onClickCapture={handlePreNavigate} style={{ width: "100%" }}>
-                              <ClaseListRow item={item} priority={idx === 0} />
+                              <ClaseListRow item={item} priority={idx === 0} tagMaps={tagMaps} />
                             </div>
                           );
                         })}
@@ -4739,7 +4360,7 @@ export default function ExploreHomeScreen() {
                           const rowKey = `${item.ownerType || "owner"}-${item.ownerId ?? "unknown"}-${item.titulo ?? "class"}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join("-") : "semana")}-${idx}`;
                           return (
                             <div key={rowKey} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
-                              <ExploreEntityCarteleraCard variant="clase" item={item} priority={idx === 0} />
+                              <ExploreEntityCarteleraCard variant="clase" item={item} priority={idx === 0} tagMaps={tagMaps} />
                             </div>
                           );
                         })}
@@ -4778,6 +4399,8 @@ export default function ExploreHomeScreen() {
                 filters={filters}
                 q={qDeferred || undefined}
                 enabled={showAll || selectedType === 'academias'}
+                externalData={academiasData}
+                isLoading={academiasLoading}
                 maxItems={12}
                 renderAs={
                   exploreSectionViews.academias === "list"
@@ -4792,6 +4415,7 @@ export default function ExploreHomeScreen() {
                 navPosition={(isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay'}
                 eagerPerCarousel={EAGER_OTHERS}
                 onNavigatePrepare={handlePreNavigate}
+                tagMaps={tagMaps}
               />
               {!academiasLoading && academiasData.length === 0 && (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
@@ -4847,7 +4471,7 @@ export default function ExploreHomeScreen() {
                               onClickCapture={handlePreNavigate}
                               style={{ width: "100%" }}
                             >
-                              <ExploreProfileListRow variant="teacher" item={item} priority={idx === 0} />
+                              <ExploreProfileListRow variant="teacher" item={item} priority={idx === 0} tagMaps={tagMaps} />
                             </div>
                           );
                         })}
@@ -4864,7 +4488,7 @@ export default function ExploreHomeScreen() {
                           }
                           return (
                             <div key={item.id ?? idx} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
-                              <ExploreEntityCarteleraCard variant="teacher" item={item} priority={idx === 0} />
+                              <ExploreEntityCarteleraCard variant="teacher" item={item} priority={idx === 0} tagMaps={tagMaps} />
                             </div>
                           );
                         })}
@@ -4919,6 +4543,7 @@ export default function ExploreHomeScreen() {
                                 variant="dancer"
                                 item={item}
                                 priority={idx === 0}
+                                tagMaps={tagMaps}
                               />
                             </div>
                           ))}
@@ -4936,6 +4561,7 @@ export default function ExploreHomeScreen() {
                                 variant="dancer"
                                 item={item}
                                 priority={idx === 0}
+                                tagMaps={tagMaps}
                               />
                             </div>
                           ))}
@@ -5017,7 +4643,7 @@ export default function ExploreHomeScreen() {
                             onClickCapture={handlePreNavigate}
                             style={{ width: "100%" }}
                           >
-                            <ExploreProfileListRow variant="organizer" item={item} priority={idx === 0} />
+                            <ExploreProfileListRow variant="organizer" item={item} priority={idx === 0} tagMaps={tagMaps} />
                           </div>
                         );
                       })}
@@ -5034,7 +4660,7 @@ export default function ExploreHomeScreen() {
                         }
                         return (
                           <div key={item.id ?? idx} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
-                            <ExploreEntityCarteleraCard variant="organizer" item={item} priority={idx === 0} />
+                            <ExploreEntityCarteleraCard variant="organizer" item={item} priority={idx === 0} tagMaps={tagMaps} />
                           </div>
                         );
                       })}

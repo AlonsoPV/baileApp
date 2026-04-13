@@ -172,6 +172,16 @@ export default function HorizontalSlider<T>({
   const getNearestItemIndex = useCallback((scroller: HTMLElement) => {
     const nodes = getCarouselItems(scroller);
     if (!nodes.length) return -1;
+    const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
+    if (isMobileViewport && nodes.length > 6) {
+      const paddingLeft = getScrollPaddingLeftPx(scroller);
+      const inferredStep =
+        nodes.length > 1
+          ? Math.max(1, nodes[1].offsetLeft - nodes[0].offsetLeft)
+          : Math.max(1, nodes[0].offsetWidth);
+      const approxIndex = Math.round((scroller.scrollLeft + paddingLeft) / inferredStep);
+      return Math.max(0, Math.min(nodes.length - 1, approxIndex));
+    }
     const paddingLeft = getScrollPaddingLeftPx(scroller);
     const targetLeft = scroller.scrollLeft + paddingLeft;
     let nearestIndex = 0;

@@ -3,15 +3,16 @@ import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LiveLink from "../LiveLink";
 import { useTags } from "@/hooks/useTags";
-import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useFmtDate } from "@/hooks/useFmtDate";
 import { toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
+import { ritmoLabelsFromMap, type ExploreTagMaps } from "@/utils/exploreTagMaps";
 import "@/components/explore/EventListRow.css";
 
 export type ClaseListRowProps = {
   item: any;
   priority?: boolean;
+  tagMaps?: ExploreTagMaps;
 };
 
 function buildClaseHref(item: any): string {
@@ -38,10 +39,10 @@ function buildClaseHref(item: any): string {
   return `/clase?type=${item.ownerType || "teacher"}`;
 }
 
-function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
+function ClaseListRow({ item, priority = false, tagMaps }: ClaseListRowProps) {
   const fmtDateLocalized = useFmtDate();
   const { t } = useTranslation();
-  const { data: allTags } = useTags() as any;
+  const { data: allTags } = useTags(undefined, { enabled: !tagMaps }) as any;
   const href = React.useMemo(() => buildClaseHref(item), [item]);
 
   const bg = toDirectPublicStorageUrl(item.ownerCoverUrl as any) ?? undefined;
@@ -128,24 +129,19 @@ function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
 
   const ritmoNames = React.useMemo(() => {
     try {
-      const labelByCatalogId = new Map<string, string>();
-      RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
-      const catalogIds = (item.ritmosSeleccionados || []) as string[];
-      if (Array.isArray(catalogIds) && catalogIds.length > 0) {
-        return catalogIds.map((id) => labelByCatalogId.get(id)!).filter(Boolean) as string[];
-      }
-      const nums = (item.ritmos || []) as number[];
-      if (Array.isArray(allTags) && nums.length > 0) {
-        return nums
-          .map((id: number) => allTags.find((tag: any) => tag.id === id && tag.tipo === "ritmo"))
-          .filter(Boolean)
-          .map((tag: any) => tag.nombre as string);
-      }
+      if (tagMaps) return ritmoLabelsFromMap(item, tagMaps.ritmoById);
+      const ritmoById = new Map<number, string>();
+      (allTags || []).forEach((tag: any) => {
+        if (tag?.tipo === "ritmo" && typeof tag?.id === "number") {
+          ritmoById.set(tag.id, String(tag.nombre || ""));
+        }
+      });
+      return ritmoLabelsFromMap(item, ritmoById);
     } catch {
       /* ignore */
     }
     return [] as string[];
-  }, [item, allTags]);
+  }, [item, allTags, tagMaps]);
 
   const timeLine =
     item.inicio || item.fin
