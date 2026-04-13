@@ -49,9 +49,10 @@ export function useMyRoleRequests() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('role_requests')
-        .select('*')
+        .select('id, user_id, role_slug, role, full_name, email, phone, socials, status, note, admin_note, reviewed_by, reviewed_at, created_at, updated_at')
         .eq('user_id', user!.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
       if (error) throw error;
       return data || [];
     },
@@ -89,7 +90,11 @@ export function useAdminRoleRequests(status?: RoleRequestStatus) {
   return useQuery<RoleRequest[]>({
     queryKey: ['role_requests_admin', status],
     queryFn: async () => {
-      let q = supabase.from('role_requests').select('*').order('created_at', { ascending: false });
+      let q = supabase
+        .from('role_requests')
+        .select('id, user_id, role_slug, role, full_name, email, phone, socials, status, note, admin_note, reviewed_by, reviewed_at, created_at, updated_at')
+        .order('created_at', { ascending: false })
+        .limit(50);
       if (status) q = q.eq('status', status);
       const { data, error } = await q;
       if (error) throw error;

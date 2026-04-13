@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
 import { supabase } from '../../../lib/supabase';
 import type { CompetitionGroup } from '../../../types/competitionGroup';
@@ -238,14 +237,28 @@ export default function CompetitionGroupCard({ group }: Props) {
             -webkit-line-clamp: 2 !important;
           }
         }
+        .competition-group-card-mobile {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .competition-group-card-mobile:hover {
+          transform: translateY(-8px) scale(1.03);
+          box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+        }
+        .competition-group-card-mobile:active {
+          transform: scale(0.98);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .competition-group-card-mobile {
+            transition: none;
+          }
+          .competition-group-card-mobile:hover,
+          .competition-group-card-mobile:active {
+            transform: none;
+          }
+        }
       `}</style>
       <LiveLink to={href} asCard={false}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.15 }}
+        <div
           className="competition-group-card competition-group-card-mobile"
           style={{ position: "relative" }}
         >
@@ -337,7 +350,7 @@ export default function CompetitionGroupCard({ group }: Props) {
         )}
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
-      </motion.div>
+        </div>
       </LiveLink>
     </>
   );

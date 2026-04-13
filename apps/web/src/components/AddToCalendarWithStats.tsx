@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -12,6 +11,7 @@ import { isNativeApp } from "@/utils/isNativeApp";
 import { getCalendarAddMenuVisibility } from "@/utils/calendarAddOptions";
 import { logger } from "@/utils/logger";
 import { CalendarDays } from "lucide-react";
+import { useAddToCalendarStatus } from "@/hooks/useAddToCalendar";
 
 type AddToCalendarProps = {
   eventId: string | number;
@@ -62,9 +62,9 @@ export default function AddToCalendarWithStats({
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
   const [calendarError, setCalendarError] = useState<{ code?: string; message: string } | null>(null);
-  const [count, setCount] = useState<number>(0);
-  const [alreadyAdded, setAlreadyAdded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [countOverride, setCountOverride] = useState<number | null>(null);
+  const [alreadyAddedOverride, setAlreadyAddedOverride] = useState<boolean | null>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const routerLocation = useLocation();
@@ -75,72 +75,23 @@ export default function AddToCalendarWithStats({
 
   // Determinar si es una clase (tiene classId, academyId o teacherId)
   const isClass = !!(classId || academyId || teacherId);
+  const { count: fetchedCount, alreadyAdded: fetchedAlreadyAdded } = useAddToCalendarStatus({
+    eventId,
+    userId: user?.id,
+    classId,
+    fecha,
+  });
 
-  // Cargar número de interesados (solo fechas futuras)
   useEffect(() => {
-    const loadCount = async () => {
-      if (isClass && classId) {
-        // Para clases: contar solo fechas futuras o NULL
-        const nowCDMX = new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" });
-        const todayCDMX = new Date(nowCDMX).toISOString().split('T')[0]; // YYYY-MM-DD
+    setCountOverride(null);
+  }, [fetchedCount]);
 
-        let classCountQuery = supabase
-          .from("clase_asistencias")
-          .select("*", { count: "exact", head: true })
-          .eq("class_id", classId)
-          .eq("status", "tentative");
-        if (fecha) {
-          classCountQuery = classCountQuery.eq("fecha_especifica", fecha);
-        } else {
-          classCountQuery = classCountQuery.or(`fecha_especifica.is.null,fecha_especifica.gte.${todayCDMX}`);
-        }
-        const { count, error } = await classCountQuery;
-
-      if (!error && typeof count === "number") {
-        setCount(count);
-        }
-      } else {
-        // Para eventos: usar la función RPC get_event_rsvp_stats que ya filtra por fecha
-        const eventDateIdNum = typeof eventId === 'number' ? eventId : parseInt(eventIdStr, 10);
-        
-        if (isNaN(eventDateIdNum)) {
-          setCount(0);
-          return;
-        }
-        
-        try {
-          const { data: stats, error } = await supabase
-            .rpc('get_event_rsvp_stats', { event_id: eventDateIdNum });
-          
-          if (!error && stats && Array.isArray(stats) && stats.length > 0) {
-            // La función retorna { interesado: number, total: number }
-            setCount(stats[0].interesado || 0);
-          } else {
-            setCount(0);
-          }
-        } catch (err) {
-          logger.error("[AddToCalendarWithStats] Error obteniendo stats:", err);
-          setCount(0);
-        }
-      }
-    };
-    loadCount();
-  }, [eventIdStr, isClass, classId, fecha]);
-
-  // Verificar si el usuario ya dio clic
   useEffect(() => {
-    const checkIfAdded = async () => {
-      if (!user?.id) return;
-      const { data } = await supabase
-        .from("eventos_interesados")
-        .select("id")
-        .eq("event_id", eventIdStr)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      setAlreadyAdded(!!data);
-    };
-    checkIfAdded();
-  }, [user, eventIdStr]);
+    setAlreadyAddedOverride(null);
+  }, [fetchedAlreadyAdded]);
+
+  const count = countOverride ?? fetchedCount;
+  const alreadyAdded = alreadyAddedOverride ?? fetchedAlreadyAdded;
 
   const inNative = isNativeApp(routerLocation.search);
   const calAddOpts = useMemo(() => getCalendarAddMenuVisibility(), []);
@@ -241,8 +192,8 @@ export default function AddToCalendarWithStats({
         invalidateRelatedMetrics();
       }
       setAdded(true);
-      setAlreadyAdded(true);
-      setCount((prev) => prev + 1);
+      setAlreadyAddedOverride(true);
+      setCountOverride((prev) => (prev ?? fetchedCount) + 1);
       const rn = (window as any).ReactNativeWebView;
       if (rn?.postMessage) {
         rn.postMessage(
@@ -424,8 +375,8 @@ export default function AddToCalendarWithStats({
       }
 
       setAdded(true);
-      setAlreadyAdded(true);
-      setCount((prev) => prev + 1);
+      setAlreadyAddedOverride(true);
+      setCountOverride((prev) => (prev ?? fetchedCount) + 1);
 
       setTimeout(() => setAdded(false), 2000);
       setOpen(false);
@@ -653,9 +604,7 @@ export default function AddToCalendarWithStats({
   if (showAsIcon) {
     return (
       <div ref={buttonRef} style={{ position: "relative", display: "inline-block" }}>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+        <button
           onClick={() => setOpen((v) => !v)}
           disabled={loading}
           style={{
@@ -682,77 +631,63 @@ export default function AddToCalendarWithStats({
           aria-label={added ? t('event_added_calendar') : t('add_event_calendar')}
         >
           {added ? "✅" : loading ? "⏳" : "📅"}
-        </motion.button>
+        </button>
 
         {/* Contador en tooltip/modal pequeño */}
-        <AnimatePresence initial={false}>
-          {count > 0 && (
-            <motion.div
-              key={count}
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-8px',
-                minWidth: '20px',
-                height: '20px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #7F7CFF, #21D4FD)',
-                color: 'white',
-                fontSize: '10px',
-                fontWeight: '800',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 6px',
-                boxShadow: '0 2px 10px rgba(33, 212, 253, 0.35)',
-                border: '2px solid rgba(255, 255, 255, 0.95)',
-                zIndex: 5
-              }}
-              aria-live="polite"
-            >
-              {count > 99 ? '99+' : count}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {count > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              minWidth: '20px',
+              height: '20px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #7F7CFF, #21D4FD)',
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: '800',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 6px',
+              boxShadow: '0 2px 10px rgba(33, 212, 253, 0.35)',
+              border: '2px solid rgba(255, 255, 255, 0.95)',
+              zIndex: 5
+            }}
+            aria-live="polite"
+          >
+            {count > 99 ? '99+' : count}
+          </div>
+        )}
 
         {typeof document !== 'undefined' && document.body && createPortal(
           <>
             {calendarError && (
-              <AnimatePresence>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 10000,
+                  background: "rgba(0,0,0,0.6)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 24,
+                }}
+                onClick={() => setCalendarError(null)}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
                   style={{
-                    position: "fixed",
-                    inset: 0,
-                    zIndex: 10000,
-                    background: "rgba(0,0,0,0.6)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    background: "rgba(20,20,28,0.98)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 16,
                     padding: 24,
+                    maxWidth: 360,
+                    width: "100%",
                   }}
-                  onClick={() => setCalendarError(null)}
                 >
-                  <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      background: "rgba(20,20,28,0.98)",
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: 16,
-                      padding: 24,
-                      maxWidth: 360,
-                      width: "100%",
-                    }}
-                  >
                     <h3 style={{ color: "#fff", marginBottom: 12, fontSize: 18, fontWeight: 700 }}>
                       {calendarError.code === "PERMISSION_DENIED"
                         ? t("calendar_permission_required")
@@ -822,48 +757,37 @@ export default function AddToCalendarWithStats({
                         {t("close")}
                       </button>
                     </div>
-                  </motion.div>
-                </motion.div>
-              </AnimatePresence>
+                </div>
+              </div>
             )}
-            <AnimatePresence>
-              {open && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 9998,
-                    background: 'rgba(0, 0, 0, 0.3)',
-                  }}
-                  onClick={() => setOpen(false)}
-                />
-              )}
-            </AnimatePresence>
-            <AnimatePresence>
-              {open && menuPosition && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  style={{
-                    position: 'fixed',
-                    top: `${menuPosition.top}px`,
-                    left: `${menuPosition.left}px`,
-                    minWidth: 200,
-                    background: 'rgba(20,20,28,0.98)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 12,
-                    boxShadow: '0 18px 44px rgba(0,0,0,0.5)',
-                    overflow: 'hidden',
-                    zIndex: 9999,
-                    backdropFilter: 'blur(20px)',
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
+            {open && (
+              <div
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 9998,
+                  background: 'rgba(0, 0, 0, 0.3)',
+                }}
+                onClick={() => setOpen(false)}
+              />
+            )}
+            {open && menuPosition && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: `${menuPosition.top}px`,
+                  left: `${menuPosition.left}px`,
+                  minWidth: 200,
+                  background: 'rgba(20,20,28,0.98)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 12,
+                  boxShadow: '0 18px 44px rgba(0,0,0,0.5)',
+                  overflow: 'hidden',
+                  zIndex: 9999,
+                  backdropFilter: 'blur(20px)',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
                   {inNative ? (
                     <>
                       <MenuItem
@@ -900,9 +824,8 @@ export default function AddToCalendarWithStats({
                       )}
                     </>
                   )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+              </div>
+            )}
           </>,
           document.body
         )}
@@ -913,9 +836,7 @@ export default function AddToCalendarWithStats({
   // Versión con botón completo y contador
   return (
     <div style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 12, flexWrap: 'wrap' }}>
-      <motion.button
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+      <button
         onClick={() => setOpen((v) => !v)}
         disabled={loading}
         style={{
@@ -972,7 +893,7 @@ export default function AddToCalendarWithStats({
           )}
           <span>{added ? t('added_to_calendar') : loading ? t('adding_to_calendar') : t('add_to_calendar_button')}</span>
         </span>
-      </motion.button>
+      </button>
 
       {/* Contador de interesados en formato pill */}
       {/* <AnimatePresence initial={false}>
@@ -1022,37 +943,30 @@ export default function AddToCalendarWithStats({
       {typeof document !== 'undefined' && document.body && createPortal(
         <>
           {calendarError && (
-            <AnimatePresence>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 10000,
+                background: "rgba(0,0,0,0.6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 24,
+              }}
+              onClick={() => setCalendarError(null)}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
                 style={{
-                  position: "fixed",
-                  inset: 0,
-                  zIndex: 10000,
-                  background: "rgba(0,0,0,0.6)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  background: "rgba(20,20,28,0.98)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: 16,
                   padding: 24,
+                  maxWidth: 360,
+                  width: "100%",
                 }}
-                onClick={() => setCalendarError(null)}
               >
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    background: "rgba(20,20,28,0.98)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    borderRadius: 16,
-                    padding: 24,
-                    maxWidth: 360,
-                    width: "100%",
-                  }}
-                >
                   <h3 style={{ color: "#fff", marginBottom: 12, fontSize: 18, fontWeight: 700 }}>
                     {calendarError.code === "PERMISSION_DENIED"
                       ? t("calendar_permission_required")
@@ -1122,49 +1036,38 @@ export default function AddToCalendarWithStats({
                       {t("close")}
                     </button>
                   </div>
-                </motion.div>
-              </motion.div>
-            </AnimatePresence>
+              </div>
+            </div>
           )}
-          <AnimatePresence>
-            {open && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{
-                  position: 'fixed',
-                  inset: 0,
-                  zIndex: 9998,
-                  background: 'rgba(0, 0, 0, 0.3)',
-                }}
-                onClick={() => setOpen(false)}
-              />
-            )}
-          </AnimatePresence>
-          <AnimatePresence>
-            {open && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  position: "fixed",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  minWidth: 240,
-                  background: "rgba(20,20,28,0.95)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: 12,
-                  boxShadow: "0 18px 44px rgba(0,0,0,0.45)",
-                  overflow: "hidden",
-                  zIndex: 9999,
-                  backdropFilter: "blur(20px)",
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
+          {open && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9998,
+                background: 'rgba(0, 0, 0, 0.3)',
+              }}
+              onClick={() => setOpen(false)}
+            />
+          )}
+          {open && (
+            <div
+              style={{
+                position: "fixed",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                minWidth: 240,
+                background: "rgba(20,20,28,0.95)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 12,
+                boxShadow: "0 18px 44px rgba(0,0,0,0.45)",
+                overflow: "hidden",
+                zIndex: 9999,
+                backdropFilter: "blur(20px)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
                 {inNative ? (
                   <>
                     <MenuItem label={t('add_to_calendar_button')} onClick={() => handleAddNative()} icon="📅" />
@@ -1181,9 +1084,8 @@ export default function AddToCalendarWithStats({
                     )}
                   </>
                 )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+            </div>
+          )}
         </>,
         document.body
       )}

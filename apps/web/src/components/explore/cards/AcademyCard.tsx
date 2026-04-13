@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
@@ -57,13 +56,7 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
 
   return (
     <LiveLink to={urls.academyLive(id)} asCard={false}>
-      <motion.article
-        className="explore-card explore-card-mobile"
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.01, transition: { duration: 0.18 } }}
-        whileTap={{ scale: 0.99 }}
-      >
+      <article className="explore-card explore-card-mobile">
         <div className="explore-card-media">
           {showPlaceholder && (
             <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
@@ -92,7 +85,7 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
             {zonaNombres[0] ? <div className="explore-card-tag">{zonaNombres[0]}</div> : null}
           </div>
         </div>
-      </motion.article>
+      </article>
     </LiveLink>
   );
 }

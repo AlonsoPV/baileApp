@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import "@/styles/landing.css";
 import SeoHead from "@/components/SeoHead";
 import { LandingNav } from "@/components/landing/LandingNav";
@@ -16,6 +17,7 @@ import { ResponsivePreview } from "@/components/landing/ResponsivePreview";
 import { useLandingOverflowDebug } from "@/hooks/useLandingOverflowDebug";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
+import { fetchExplorePage } from "@/hooks/useExploreQuery";
 
 const jsonLdApp = {
   "@context": "https://schema.org",
@@ -33,6 +35,7 @@ const jsonLdApp = {
 
 export default function Landing() {
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const openDownload = useCallback(() => setDownloadModalOpen(true), []);
   const closeDownload = useCallback(() => setDownloadModalOpen(false), []);
@@ -42,6 +45,25 @@ export default function Landing() {
   }, []);
 
   useLandingOverflowDebug();
+
+  useEffect(() => {
+    void queryClient.prefetchInfiniteQuery({
+      queryKey: ["explore", "fechas", "", "", "", "", "", 12],
+      queryFn: ({ pageParam = 0 }) =>
+        fetchExplorePage(
+          {
+            type: "fechas",
+            q: "",
+            ritmos: [],
+            zonas: [],
+            pageSize: 12,
+          },
+          pageParam as number
+        ),
+      initialPageParam: 0,
+      staleTime: 60_000,
+    });
+  }, [queryClient]);
 
   return (
     <div className="landing landing-body-bg min-h-screen">

@@ -54,6 +54,8 @@ export function MediaGrid({ items, onRemove }:{
             <img 
               src={m.url} 
               alt="Media"
+              loading="lazy"
+              decoding="async"
               style={{
                 width: '100%',
                 height: '100%',

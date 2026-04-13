@@ -2652,7 +2652,7 @@ export default function TrendingDetail() {
                           <div key={x.candidate_id} style={{ display:'flex', alignItems:'center', gap: 10, border:'1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: 8, background:'rgba(255,255,255,0.04)' }}>
                             <div style={{ width: 30, textAlign:'center' }}>{i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : i+1}</div>
                             <a href={urls.userLive(x.user_id)} title={x.display_name || 'Usuario'} style={{ display:'inline-block' }}>
-                              <img src={x.avatar_url || 'https://placehold.co/48x48'} alt={x.display_name || 'Usuario'} style={{ width: 40, height: 40, borderRadius: 8, objectFit:'cover' }} />
+                              <img src={x.avatar_url || 'https://placehold.co/48x48'} alt={x.display_name || 'Usuario'} loading="lazy" decoding="async" style={{ width: 40, height: 40, borderRadius: 8, objectFit:'cover' }} />
                             </a>
                             <div style={{ minWidth: 0, flex: 1 }}>
                               <a href={urls.userLive(x.user_id)} style={{ color:'#fff', textDecoration:'none', fontWeight: 800, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', display:'block' }}>{x.display_name || 'Usuario'}</a>

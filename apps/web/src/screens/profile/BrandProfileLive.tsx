@@ -1023,7 +1023,7 @@ export default function BrandProfileLive() {
               <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
                 {partners.map((p: any) => (
                   <a key={p.id} href={p.href} style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 999, padding: '.45rem .7rem', background: 'rgba(255,255,255,0.06)', color: '#fff' }}>
-                    <img src={p.logo_url} alt={p.name} style={{ width: 22, height: 22, borderRadius: '50%' }} />
+                    <img src={p.logo_url} alt={p.name} loading="lazy" decoding="async" style={{ width: 22, height: 22, borderRadius: '50%' }} />
                     <span>{p.name}</span>
                   </a>
                 ))}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { colors, typography, spacing, borderRadius, transitions } from '../theme/colors';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -28,6 +28,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }, 4000);
   }, []);
 
+  const value = useMemo(() => ({ showToast }), [showToast]);
+
   const removeToast = (id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
@@ -51,7 +53,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={value}>
       {children}
       
       {/* Toast Container */}

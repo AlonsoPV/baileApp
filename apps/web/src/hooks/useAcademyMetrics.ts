@@ -797,8 +797,8 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
       };
     },
     refetchInterval: 5000, // Refrescar cada 5 segundos
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
   
   return {

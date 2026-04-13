@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
 type EventDateCreatePayload = Record<string, any>;
@@ -130,22 +130,33 @@ export function useEventDatesByParent(parentId?: number) {
 export function useEventDate(dateId?: number) {
   return useQuery({
     queryKey: ["event", "date", dateId],
-    queryFn: async () => {
-      if (!dateId) return null;
-      const { data, error } = await supabase
-        .from("events_date")
-        .select("*")
-        .eq("id", dateId)
-        .maybeSingle();
-      if (error) {
-        throw error;
-      }
-      return data;
-    },
+    queryFn: async () => fetchEventDateById(dateId),
     enabled: !!dateId,
     // Reduce refetch churn when opening/closing the drawer.
     staleTime: 1000 * 30,
     gcTime: 1000 * 60 * 10,
+  });
+}
+
+export async function fetchEventDateById(dateId?: number) {
+  if (!dateId) return null;
+  const { data, error } = await supabase
+    .from("events_date")
+    .select("*")
+    .eq("id", dateId)
+    .maybeSingle();
+  if (error) {
+    throw error;
+  }
+  return data;
+}
+
+export async function prefetchEventDate(queryClient: QueryClient, dateId?: number) {
+  if (!dateId) return null;
+  return queryClient.prefetchQuery({
+    queryKey: ["event", "date", dateId],
+    queryFn: () => fetchEventDateById(dateId),
+    staleTime: 1000 * 30,
   });
 }
 

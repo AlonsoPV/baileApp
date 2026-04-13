@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import LiveLink from '../../LiveLink';
 import { useTags } from '../../../hooks/useTags';
 import { RITMOS_CATALOG } from '../../../lib/ritmosCatalog';
@@ -214,12 +213,8 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
   return (
     <>
       <LiveLink to={href} asCard={false}>
-        <motion.article
+        <article
           className="class-card class-card-mobile"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.01, transition: { duration: 0.18 } }}
-          whileTap={{ scale: 0.99 }}
           style={fillHeight ? ({ height: '100%', alignSelf: 'stretch' } as React.CSSProperties) : undefined}
         >
           <div className="class-card-media">
@@ -274,7 +269,7 @@ export default function ClassCard({ item, fillHeight = false, priority = false }
               </div>
             </div>
           </div>
-        </motion.article>
+        </article>
       </LiveLink>
     </>
   );

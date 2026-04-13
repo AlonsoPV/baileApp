@@ -1,5 +1,6 @@
 import React from 'react';
 import { useExploreQuery } from '../../hooks/useExploreQuery';
+import { cronoItemToClases } from '../../hooks/useLiveClasses';
 import { GridSkeleton } from '../skeletons/GridSkeleton';
 import ClassCard from '../explore/cards/ClassCard';
 import HorizontalCarousel from '../explore/HorizontalCarousel';
@@ -72,32 +73,48 @@ function ClassesSectionContent({ filters, q, enabled = true, renderAs = 'slider'
   const classesList = React.useMemo(() => {
     const classes: any[] = [];
     
-    // Agregar clases de academias (si tienen clases)
+    // Derivar clases reales desde cronograma/costos/ubicaciones del perfil.
     academiasData.forEach((academia: any) => {
-      if (academia.clases && Array.isArray(academia.clases)) {
-        academia.clases.forEach((clase: any) => {
+      const cronograma = Array.isArray(academia?.cronograma) ? academia.cronograma : [];
+      const costos = Array.isArray(academia?.costos) ? academia.costos : [];
+      const ubicaciones = Array.isArray(academia?.ubicaciones) ? academia.ubicaciones : [];
+
+      cronograma.forEach((item: any, index: number) => {
+        const derived = cronoItemToClases(item, index, academia.id, undefined, ubicaciones, costos);
+        derived.forEach((clase: any) => {
           classes.push({
             ...clase,
             ownerType: 'academy',
             ownerId: academia.id,
             ownerName: academia.nombre_publico || academia.nombre,
+            ownerCoverUrl: academia.portada_url || academia.avatar_url || null,
+            ritmosSeleccionados: clase.ritmos_seleccionados || academia.ritmos_seleccionados || [],
+            ritmos: clase.ritmos || academia.ritmos || [],
           });
         });
-      }
+      });
     });
 
-    // Agregar clases de maestros (si tienen clases)
+    // Derivar clases reales desde cronograma/costos/ubicaciones del perfil.
     maestrosData.forEach((maestro: any) => {
-      if (maestro.clases && Array.isArray(maestro.clases)) {
-        maestro.clases.forEach((clase: any) => {
+      const cronograma = Array.isArray(maestro?.cronograma) ? maestro.cronograma : [];
+      const costos = Array.isArray(maestro?.costos) ? maestro.costos : [];
+      const ubicaciones = Array.isArray(maestro?.ubicaciones) ? maestro.ubicaciones : [];
+
+      cronograma.forEach((item: any, index: number) => {
+        const derived = cronoItemToClases(item, index, undefined, maestro.id, ubicaciones, costos);
+        derived.forEach((clase: any) => {
           classes.push({
             ...clase,
             ownerType: 'teacher',
             ownerId: maestro.id,
             ownerName: maestro.nombre_publico || maestro.nombre,
+            ownerCoverUrl: maestro.portada_url || maestro.avatar_url || null,
+            ritmosSeleccionados: clase.ritmos_seleccionados || maestro.ritmos_seleccionados || [],
+            ritmos: clase.ritmos || maestro.ritmos || [],
           });
         });
-      }
+      });
     });
 
     return classes;

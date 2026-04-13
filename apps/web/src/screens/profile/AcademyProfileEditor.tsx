@@ -1454,6 +1454,184 @@ export default function AcademyProfileEditor() {
     return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
   }, [ritmoTags, (form as any)?.ritmos_seleccionados, (academy as any)?.ritmos_seleccionados]);
 
+  const locationsForCrearClase = useMemo(
+    () =>
+      (((form as any).ubicaciones || []) as any[]).map((u: any, i: number) => ({
+        id: u?.id || String(i),
+        nombre: u?.nombre,
+        direccion: u?.direccion,
+        referencias: u?.referencias,
+        zonas: u?.zonaIds || u?.zonas || (typeof u?.zona_id === 'number' ? [u.zona_id] : []),
+      })),
+    [(form as any).ubicaciones]
+  );
+
+  const handleCrearClaseCancel = useCallback(() => {
+    setEditingIndex(null);
+    setEditInitial(undefined);
+    setStatusMsg(null);
+  }, []);
+
+  const handleCrearClaseSubmit = useCallback((c: any) => {
+    const currentCrono = ([...((form as any).cronograma || [])] as any[]);
+    const currentCostos = ([...((form as any).costos || [])] as any[]);
+
+    if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
+      const prev = currentCrono[editingIndex];
+      const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
+
+      let ubicacionStr = (
+        [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
+      ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+      const match = c?.ubicacionId
+        ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
+        : undefined;
+      if (!ubicacionStr.trim() && match) {
+        ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
+      }
+
+      const ritmoIds = Array.isArray(c.ritmoIds)
+        ? c.ritmoIds
+        : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
+      const classId = ensureClassId(prev);
+
+      const costoIdx = currentCostos.findIndex((x: any) => {
+        if (x?.classId && classId && String(x.classId) === String(classId)) return true;
+        if (x?.referenciaCosto && String(x.referenciaCosto) === String(classId)) return true;
+        if (x?.cronogramaIndex !== null && x?.cronogramaIndex !== undefined && x.cronogramaIndex === editingIndex) return true;
+        return (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase();
+      });
+
+      const costoId = costoIdx >= 0 && currentCostos[costoIdx]?.id ? currentCostos[costoIdx].id : Date.now();
+      const updatedCosto = {
+        id: costoId,
+        nombre: c.nombre,
+        tipo: c.tipo,
+        precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+        regla: c.regla || '',
+        classId,
+        referenciaCosto: String(classId),
+        cronogramaIndex: editingIndex,
+      } as any;
+      if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
+
+      const updatedItem = {
+        ...prev,
+        id: classId,
+        tipo: 'clase',
+        titulo: c.nombre,
+        descripcion: c.descripcion || undefined,
+        fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
+        fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
+        diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
+        diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
+          const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+          return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
+        })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
+          const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+          return [dayNames[c.diaSemana]] as string[];
+        })() : undefined),
+        recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
+        horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
+        inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
+        fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
+        duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
+        nivel: c.nivel || undefined,
+        referenciaCosto: String(classId),
+        costo: updatedCosto,
+        ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
+        ritmoIds,
+        ritmos: ritmoIds,
+        zonaId: c.zonaId,
+        ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
+        ubicacionId: c.ubicacionId || (match?.id || null)
+      };
+      currentCrono[editingIndex] = updatedItem;
+
+      setField('cronograma' as any, currentCrono as any);
+      setField('costos' as any, currentCostos as any);
+
+      const rollbackData = {
+        cronograma: [...((form as any).cronograma || [])],
+        costos: [...((form as any).costos || [])],
+      };
+
+      return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada', rollbackData).then(() => {
+        setEditingIndex(null);
+        setEditInitial(undefined);
+      });
+    }
+
+    let ubicacionStr = (
+      [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
+    ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
+    const match = c?.ubicacionId
+      ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
+      : undefined;
+    if (!ubicacionStr.trim() && match) {
+      ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
+    }
+
+    const ritmoIds = Array.isArray(c.ritmoIds)
+      ? c.ritmoIds
+      : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
+    const newClassId = generateClassId();
+    const newClassIndex = currentCrono.length;
+
+    const newCosto = {
+      id: Date.now(),
+      nombre: c.nombre,
+      tipo: c.tipo,
+      precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+      regla: c.regla || '',
+      classId: newClassId,
+      referenciaCosto: String(newClassId),
+      cronogramaIndex: newClassIndex
+    } as any;
+
+    const nextCrono = ([...currentCrono, {
+      id: newClassId,
+      tipo: 'clase',
+      titulo: c.nombre,
+      descripcion: c.descripcion || undefined,
+      fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
+      fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
+      diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
+      diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
+        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
+      })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
+        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        return [dayNames[c.diaSemana]] as string[];
+      })() : undefined),
+      recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
+      horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
+      inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
+      fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
+      duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
+      nivel: c.nivel || undefined,
+      referenciaCosto: String(newClassId),
+      costo: newCosto,
+      ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
+      ritmoIds,
+      ritmos: ritmoIds,
+      zonaId: c.zonaId,
+      ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
+      ubicacionId: c.ubicacionId || (match?.id || null)
+    }] as any);
+    const nextCostos = ([...currentCostos, newCosto] as any);
+
+    setField('cronograma' as any, nextCrono as any);
+    setField('costos' as any, nextCostos as any);
+
+    const rollbackData = {
+      cronograma: [...currentCrono],
+      costos: [...currentCostos],
+    };
+
+    return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada', rollbackData);
+  }, [editingIndex, form, setField, autoSaveClasses]);
+
   // ✅ Esperar a que auth termine de cargar antes de renderizar
   if (authLoading && !authTimeoutReached) {
     return (
@@ -2323,197 +2501,12 @@ export default function AcademyProfileEditor() {
                         zonas={zonasForCrearClase}
                         zonaTags={zonaTags}
                         selectedZonaIds={((form as any).zonas || []) as number[]}
-                        locations={((form as any).ubicaciones || []).map((u: any, i: number) => ({
-                          id: u?.id || String(i),
-                          nombre: u?.nombre,
-                          direccion: u?.direccion,
-                          referencias: u?.referencias,
-                          zonas: u?.zonaIds || u?.zonas || (typeof u?.zona_id === 'number' ? [u.zona_id] : []),
-                        }))}
+                        locations={locationsForCrearClase}
                         editIndex={editingIndex}
                         editValue={editInitial}
                         title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
-                        onCancel={() => { setEditingIndex(null); setEditInitial(undefined); setStatusMsg(null); }}
-                        onSubmit={(c) => {
-                          const currentCrono = ([...((form as any).cronograma || [])] as any[]);
-                          const currentCostos = ([...((form as any).costos || [])] as any[]);
-
-                          if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
-                            const prev = currentCrono[editingIndex];
-                            const prevNombre = (prev?.referenciaCosto || prev?.titulo || '') as string;
-
-                            let ubicacionStr = (
-                              [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
-                            ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
-                            const match = c?.ubicacionId
-                              ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
-                              : undefined;
-                            if (!ubicacionStr.trim() && match) {
-                              ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
-                            }
-
-                            // Usar siempre los ritmos seleccionados en el formulario.
-                            // Si el usuario quitó todos los chips, ritmoIds será [] y debemos respetarlo
-                            const ritmoIds = Array.isArray(c.ritmoIds)
-                              ? c.ritmoIds
-                              : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
-                            const classId = ensureClassId(prev); // Obtener ID de la clase (preservar existente o generar nuevo)
-
-                            // Buscar el costo por ID de clase (más confiable que por nombre)
-                            const costoIdx = currentCostos.findIndex((x: any) => {
-                              // Buscar por ID de clase (más confiable - no cambia aunque cambie el nombre)
-                              if (x?.classId && classId && String(x.classId) === String(classId)) return true;
-                              // Buscar por referenciaCosto que sea el ID (para compatibilidad)
-                              if (x?.referenciaCosto && String(x.referenciaCosto) === String(classId)) return true;
-                              // Buscar por índice del cronograma (fallback)
-                              if (x?.cronogramaIndex !== null && x?.cronogramaIndex !== undefined && x.cronogramaIndex === editingIndex) return true;
-                              // Buscar por nombre anterior (último fallback para costos antiguos)
-                              return (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase();
-                            });
-
-                            const costoId = costoIdx >= 0 && currentCostos[costoIdx]?.id
-                              ? currentCostos[costoIdx].id
-                              : Date.now(); // Generar ID único si no existe
-                            const updatedCosto = {
-                              id: costoId, // ID único del costo
-                              nombre: c.nombre, // Mantener nombre para visualización
-                              tipo: c.tipo,
-                              precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
-                              regla: c.regla || '',
-                              classId: classId, // ID de la clase (referencia principal)
-                              referenciaCosto: String(classId), // También guardar como referenciaCosto para compatibilidad
-                              cronogramaIndex: editingIndex // Guardar índice para búsqueda futura
-                            } as any;
-                            if (costoIdx >= 0) currentCostos[costoIdx] = updatedCosto; else currentCostos.push(updatedCosto);
-
-                            const updatedItem = {
-                              ...prev,
-                              id: classId,
-                              tipo: 'clase',
-                              titulo: c.nombre,
-                              descripcion: c.descripcion || undefined,
-                              fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
-                              fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
-                              diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
-                              diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
-                                // Convertir números a nombres de días
-                                const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                                return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
-                              })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
-                                const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                                return [dayNames[c.diaSemana]] as string[];
-                              })() : undefined),
-                              recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
-                              horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
-                              inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
-                              fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
-                              duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
-                              nivel: c.nivel || undefined,
-                              referenciaCosto: String(classId), // Usar ID de clase en lugar del nombre
-                              costo: updatedCosto, // Incluir costo directamente en el item del cronograma
-                              ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
-                              ritmoIds,
-                              // Mantener campo legado "ritmos" sincronizado con ritmoIds
-                              ritmos: ritmoIds,
-                              zonaId: c.zonaId,
-                              ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
-                              ubicacionId: c.ubicacionId || (match?.id || null)
-                            };
-                            currentCrono[editingIndex] = updatedItem;
-
-                            // Actualización optimista: actualizar UI inmediatamente
-                            setField('cronograma' as any, currentCrono as any);
-                            setField('costos' as any, currentCostos as any);
-
-                            // Guardar datos para rollback
-                            const rollbackData = {
-                              cronograma: [...((form as any).cronograma || [])],
-                              costos: [...((form as any).costos || [])],
-                            };
-
-                            // Persistir en backend (sin mostrar mensaje, el componente ya lo hace)
-                            return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada', rollbackData)
-                              .then(() => {
-                                setEditingIndex(null);
-                                setEditInitial(undefined);
-                              });
-                          } else {
-                            let ubicacionStr = (
-                              [c.ubicacionNombre, c.ubicacionDireccion].filter(Boolean).join(' · ')
-                            ) + (c.ubicacionNotas ? ` (${c.ubicacionNotas})` : '');
-                            const match = c?.ubicacionId
-                              ? ((form as any).ubicaciones || []).find((u: any) => (u?.id || '') === c.ubicacionId)
-                              : undefined;
-                            if (!ubicacionStr.trim() && match) {
-                              ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
-                            }
-
-                            // Para nuevas clases, usar directamente los ritmos seleccionados (puede ser [] si no eligió ninguno)
-                            const ritmoIds = Array.isArray(c.ritmoIds)
-                              ? c.ritmoIds
-                              : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
-                            const newClassId = generateClassId(); // Generar ID único para la nueva clase
-                            const newClassIndex = currentCrono.length; // Índice de la nueva clase en el cronograma
-
-                            const newCosto = {
-                              id: Date.now(), // ID único del costo
-                              nombre: c.nombre, // Mantener nombre para visualización
-                              tipo: c.tipo,
-                              precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
-                              regla: c.regla || '',
-                              classId: newClassId, // ID de la clase (referencia principal)
-                              referenciaCosto: String(newClassId), // También guardar como referenciaCosto para compatibilidad
-                              cronogramaIndex: newClassIndex // Guardar índice para búsqueda futura
-                            } as any;
-
-                            const nextCrono = ([...currentCrono, {
-                              id: newClassId,
-                              tipo: 'clase',
-                              titulo: c.nombre,
-                              descripcion: c.descripcion || undefined,
-                              fechaModo: c.fechaModo || (c.fecha ? 'especifica' : ((c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0) ? 'semanal' : undefined)),
-                              fecha: c.fechaModo === 'especifica' ? c.fecha : (c.fechaModo === 'por_agendar' ? undefined : undefined),
-                              diaSemana: c.fechaModo === 'semanal' ? ((c.diasSemana && c.diasSemana.length > 0) ? c.diasSemana[0] : c.diaSemana) : (c.fechaModo === 'por_agendar' ? null : null),
-                              diasSemana: c.fechaModo === 'semanal' && c.diasSemana && c.diasSemana.length > 0 ? (() => {
-                                // Convertir números a nombres de días
-                                const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                                return c.diasSemana.map((dia: number) => dayNames[dia] || null).filter((d: string | null) => d !== null);
-                              })() : (c.fechaModo === 'semanal' && c.diaSemana !== null && c.diaSemana !== undefined ? (() => {
-                                const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-                                return [dayNames[c.diaSemana]] as string[];
-                              })() : undefined),
-                              recurrente: c.fechaModo === 'semanal' ? 'semanal' : undefined,
-                              horarioModo: c.fechaModo === 'por_agendar' ? 'duracion' : (c.horarioModo || (c.duracionHoras ? 'duracion' : 'especifica')),
-                              inicio: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.inicio),
-                              fin: c.fechaModo === 'por_agendar' ? undefined : (c.horarioModo === 'duracion' ? undefined : c.fin),
-                              duracionHoras: c.fechaModo === 'por_agendar' ? c.duracionHoras : (c.horarioModo === 'duracion' ? c.duracionHoras : undefined),
-                              nivel: c.nivel || undefined,
-                              referenciaCosto: String(newClassId), // Usar ID de clase en lugar del nombre
-                              costo: newCosto, // Incluir costo directamente en el item del cronograma
-                              ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
-                              ritmoIds,
-                              // Mantener campo legado "ritmos" sincronizado con ritmoIds
-                              ritmos: ritmoIds,
-                              zonaId: c.zonaId,
-                              ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
-                              ubicacionId: c.ubicacionId || (match?.id || null)
-                            }] as any);
-                            const nextCostos = ([...currentCostos, newCosto] as any);
-                            
-                            // Actualización optimista: actualizar UI inmediatamente
-                            setField('cronograma' as any, nextCrono as any);
-                            setField('costos' as any, nextCostos as any);
-
-                            // Guardar datos para rollback
-                            const rollbackData = {
-                              cronograma: [...currentCrono],
-                              costos: [...currentCostos],
-                            };
-
-                            // Persistir en backend
-                            return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada', rollbackData);
-                          }
-                        }}
+                        onCancel={handleCrearClaseCancel}
+                        onSubmit={handleCrearClaseSubmit}
                       />
                     )}
 

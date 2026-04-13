@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useTags } from "../../../hooks/useTags";
@@ -57,13 +56,7 @@ export default function TeacherCard({ item, priority = false }: { item: any; pri
     <>
       <style>{EXPLORE_CARD_STYLES}</style>
       <LiveLink to={urls.teacherLive(item.id)} asCard={false}>
-        <motion.article
-          className="explore-card explore-card-mobile"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
-        >
+        <article className="explore-card explore-card-mobile">
           <div className="explore-card-media">
             {showPlaceholder && (
               <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
@@ -96,7 +89,7 @@ export default function TeacherCard({ item, priority = false }: { item: any; pri
               ))}
             </div>
           </div>
-        </motion.article>
+        </article>
       </LiveLink>
     </>
   );

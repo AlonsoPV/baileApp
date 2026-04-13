@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LiveLink from "../LiveLink";
@@ -156,13 +155,7 @@ function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
 
   return (
     <LiveLink to={href} asCard={false}>
-      <motion.article
-        className="event-list-row"
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.16 }}
-        whileTap={{ scale: 0.99 }}
-      >
+      <article className="event-list-row">
         <div className="event-list-row__thumb" aria-hidden={showPlaceholder}>
           {showPlaceholder ? (
             <div className="event-list-row__thumb-placeholder">
@@ -201,7 +194,7 @@ function ClaseListRow({ item, priority = false }: ClaseListRowProps) {
         <div className="event-list-row__chevron" aria-hidden>
           <ChevronRight strokeWidth={2} />
         </div>
-      </motion.article>
+      </article>
     </LiveLink>
   );
 }

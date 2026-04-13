@@ -9,7 +9,6 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDefaultProfile } from '@/hooks/useDefaultProfile';
 import { LanguageSwitcher } from './settings/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
-import { useRenderLogger } from '@/hooks/useRenderLogger';
 import { useProfilePrefetch } from '@/hooks/useProfilePrefetch';
 import { resolveVersionedSupabaseStorageDirectUrl } from '@/utils/supabaseStoragePublicUrl';
 
@@ -28,9 +27,6 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
   const { getDefaultRoute } = useDefaultProfile();
   const { prefetchDefaultProfile } = useProfilePrefetch();
   
-  // Performance: Log renders in development
-  useRenderLogger('Navbar', { userId: user?.id, hasUnread, isMenuOpen });
-
   // Prefetch profile data on hover for faster navigation
   const handleAvatarMouseEnter = React.useCallback(() => {
     prefetchDefaultProfile().catch(() => {

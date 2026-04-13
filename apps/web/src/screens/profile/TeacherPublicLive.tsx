@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback, Suspense, lazy } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
 import { useTags } from "../../hooks/useTags";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import ImageWithFallback from "../../components/ImageWithFallback";
@@ -10,7 +9,6 @@ import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { useLiveClasses } from "@/hooks/useLiveClasses";
-import { supabase } from "../../lib/supabase";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useTeacherAcademies } from "../../hooks/useAcademyTeacherInvitations";
@@ -23,6 +21,7 @@ import { getLocaleFromI18n } from "../../utils/locale";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import { buildShareUrl } from "@/utils/shareUrls";
 import { routes } from "../../routes/registry";
+import { useTeacherPublic } from "@/hooks/useTeacher";
 
 // Lazy load heavy components
 const BioSection = lazy(() => import("../../components/profile/BioSection").then(m => ({ default: m.BioSection })));
@@ -431,22 +430,13 @@ export default function TeacherProfileLive() {
   }), [t]);
 
   // Fetch public teacher profile
-  const { data: teacher, isLoading } = useQuery({
-    queryKey: ['teacher-public', teacherId],
-    enabled: !!teacherId,
-    staleTime: 60_000,
-    gcTime: 300_000,
-    retry: 1,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles_teacher')
-        .select('*')
-        .eq('id', teacherId)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    }
-  });
+  const teacherIdNum = useMemo(() => {
+    if (!teacherId) return undefined;
+    const num = Number(teacherId);
+    return Number.isNaN(num) ? undefined : num;
+  }, [teacherId]);
+
+  const { data: teacher, isLoading } = useTeacherPublic(teacherIdNum ?? 0);
 
   // Evitar loops infinitos de "Cargando maestro..." en WebView si hay problemas de red
   const [loadingTimedOut, setLoadingTimedOut] = React.useState(false);
@@ -466,11 +456,6 @@ export default function TeacherProfileLive() {
     () => normalizeMediaArray((teacher as PublicTeacher)?.media),
     [(teacher as PublicTeacher)?.media],
   );
-  const teacherIdNum = useMemo(() => {
-    if (!teacherId) return undefined;
-    const num = Number(teacherId);
-    return Number.isNaN(num) ? undefined : num;
-  }, [teacherId]);
   
   const { data: classesFromTables, isLoading: classesLoading } = useLiveClasses(
     teacherIdNum ? { teacherId: teacherIdNum } : undefined

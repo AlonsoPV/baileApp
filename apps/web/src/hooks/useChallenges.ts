@@ -34,8 +34,9 @@ export function useChallengesList() {
     queryFn: async (): Promise<Challenge[]> => {
       const { data, error } = await supabase
         .from('challenges')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, owner_id, title, description, ritmo_slug, cover_image_url, owner_video_url, requirements, status, visibility, submission_deadline, voting_deadline, created_at, updated_at')
+        .order('created_at', { ascending: false })
+        .limit(50);
       if (error) throw error;
       return (data as Challenge[]) || [];
     }
@@ -50,7 +51,7 @@ export function useChallenge(id?: string) {
       if (!id) return null;
       const { data, error } = await supabase
         .from('challenges')
-        .select('*')
+        .select('id, owner_id, title, description, ritmo_slug, cover_image_url, owner_video_url, requirements, status, visibility, submission_deadline, voting_deadline, created_at, updated_at')
         .eq('id', id)
         .maybeSingle();
       if (error) throw error;
@@ -67,9 +68,10 @@ export function useChallengeSubmissions(id?: string) {
       if (!id) return [];
       const { data, error } = await supabase
         .from('challenge_submissions')
-        .select('*')
+        .select('id, challenge_id, user_id, video_url, caption, status, created_at')
         .eq('challenge_id', id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
       if (error) throw error;
       return (data as Submission[]) || [];
     }
@@ -187,8 +189,9 @@ export function useChallengeLeaderboard(challengeId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('v_challenge_leaderboard')
-        .select('*')
-        .eq('challenge_id', challengeId);
+        .select('challenge_id, submission_id, user_id, votes')
+        .eq('challenge_id', challengeId)
+        .limit(50);
       if (error) throw error;
       return data as { challenge_id: string; submission_id: string; user_id: string; votes: number }[];
     }

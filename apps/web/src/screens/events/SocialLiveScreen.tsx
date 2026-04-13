@@ -129,7 +129,7 @@ export function SocialLiveScreen() {
           <div style={{ width: 360, maxWidth: '85vw' }}>
             <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.25)' }}>
               {ev.flyer && (
-                <img src={ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img src={ev.flyer} alt={ev.nombre} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               )}
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px', background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
                 <div style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 6, textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{ev.nombre}</div>

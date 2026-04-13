@@ -88,8 +88,9 @@ export function useEventsWithRSVPStats(params?: {
     queryFn: async () => {
       let req = supabase
         .from("events_with_rsvp_stats")
-        .select("*")
-        .order("fecha", { ascending: true });
+        .select("id, fecha, lugar, ciudad, direccion, zona, evento_estilos, total, total_interesado")
+        .order("fecha", { ascending: true })
+        .limit(100);
       
       if (dateFrom) req = req.gte("fecha", dateFrom);
       if (dateTo) req = req.lte("fecha", dateTo);

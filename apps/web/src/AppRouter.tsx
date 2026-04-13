@@ -129,6 +129,18 @@ function RouteSuspense({
   );
 }
 
+function ExploreRouteSuspense({ children }: { children: React.ReactNode }) {
+  return <RouteSuspense layout="appContent">{children}</RouteSuspense>;
+}
+
+function PublicDeepLinkRouteSuspense({ children }: { children: React.ReactNode }) {
+  return <RouteSuspense layout="appContent">{children}</RouteSuspense>;
+}
+
+function OrganizerEditorRouteSuspense({ children }: { children: React.ReactNode }) {
+  return <RouteSuspense layout="appContent">{children}</RouteSuspense>;
+}
+
 /**
  * HomeEntry - Determina qué mostrar en la ruta raíz (/)
  * 
@@ -200,7 +212,7 @@ export default function AppRouter() {
       <Route element={<AppShell />}>
         <Route element={<RouteSuspense layout="appContent"><Outlet /></RouteSuspense>}>
           {/* Public */}
-          <Route path="/explore" element={<ExploreHomeScreen />} />
+          <Route path="/explore" element={<ExploreRouteSuspense><ExploreHomeScreen /></ExploreRouteSuspense>} />
           <Route path="/explore/list" element={<ExploreListScreen />} />
           <Route path="/quienes-somos" element={<QuienesSomosScreen />} />
           <Route path="/about" element={<AboutScreen />} />
@@ -211,7 +223,7 @@ export default function AppRouter() {
           <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
           <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
           <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
-          <Route path="/social/fecha/:id" element={<EventDatePublicScreen />} />
+          <Route path="/social/fecha/:id" element={<PublicDeepLinkRouteSuspense><EventDatePublicScreen /></PublicDeepLinkRouteSuspense>} />
           <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
           <Route path="/profile/organizer/:id" element={<OrganizerPublicScreen />} />
           <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
@@ -253,7 +265,7 @@ export default function AppRouter() {
             <Route path="/profile/brand" element={<BrandProfileLive />} />
             <Route path="/profile/brand/edit" element={<BrandProfileEditor />} />
             <Route path={routes.organizer.edit} element={<OrganizerEditScreen />} />
-            <Route path="/profile/organizer/edit" element={<OrganizerProfileEditor />} />
+            <Route path="/profile/organizer/edit" element={<OrganizerEditorRouteSuspense><OrganizerProfileEditor /></OrganizerEditorRouteSuspense>} />
             <Route path="/events/parent/new" element={<OrganizerEventParentCreateScreen />} />
             <Route path="/events/parent/:id/edit" element={<OrganizerEventParentEditScreen />} />
             <Route path="/events/date/new/:parentId" element={<EventDateEditScreen />} />

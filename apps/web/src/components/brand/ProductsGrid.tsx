@@ -51,6 +51,8 @@ export default function ProductsGrid({ items }: { items: BrandProduct[] }) {
               <img 
                 src={p.imagen_url} 
                 alt={p.titulo} 
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: '100%',
                   aspectRatio: '1/1',

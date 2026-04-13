@@ -22,7 +22,7 @@ function dayNameToNumber(dayName: string): number | null {
 /**
  * Convierte un item del cronograma JSONB a uno o más objetos Clase
  */
-function cronoItemToClases(
+export function cronoItemToClases(
   item: any,
   index: number,
   academyId?: number,

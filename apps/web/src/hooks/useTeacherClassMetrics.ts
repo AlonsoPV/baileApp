@@ -89,8 +89,8 @@ export function useTeacherClassMetrics(teacherId?: number) {
       return { global, porClase };
     },
     refetchInterval: 5000,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 
   return {

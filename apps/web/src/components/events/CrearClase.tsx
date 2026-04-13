@@ -271,7 +271,7 @@ function parseNivelesFromStored(
   return [...new Set(out)];
 }
 
-export default function CrearClase({
+const CrearClase = React.memo(function CrearClase({
   value,
   editIndex,
   editValue,
@@ -1418,4 +1418,6 @@ export default function CrearClase({
       </motion.div>
     </div>
   );
-}
+});
+
+export default CrearClase;

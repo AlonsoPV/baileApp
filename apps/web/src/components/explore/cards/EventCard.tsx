@@ -1,5 +1,4 @@
 import React from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { urls } from "../../../lib/urls";
 import { useFmtDate } from "../../../hooks/useFmtDate";
@@ -39,26 +38,12 @@ const toNumericId = (v: any): number | null => {
   return null;
 };
 
-function useEventCardMotion() {
-  const reduceMotion = useReducedMotion();
-  return React.useMemo(
-    () => ({
-      reduceMotion,
-      initial: reduceMotion ? (false as const) : ({ opacity: 0, scale: 0.98 } as const),
-      hover: reduceMotion ? undefined : { scale: 1.02, y: -6, transition: { duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] as const } },
-      tap: reduceMotion ? undefined : { scale: 0.99 },
-    }),
-    [reduceMotion]
-  );
-}
-
 /** Card "tonta": usa solo item.__ui precomputado. Cero hooks de datos, cero queries. */
 function EventCardDumb({ item, priority = false }: EventCardProps) {
   const fmtDateLocalized = useFmtDate();
   const ui = item?.__ui!;
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
-  const motionPrefs = useEventCardMotion();
   const flyerCacheKey =
     ((item as any)?.updated_at as string | undefined) ||
     ((item as any)?.created_at as string | undefined) ||
@@ -78,12 +63,8 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
 
   return (
     <LiveLink to={linkTo} asCard={false}>
-      <motion.article
+      <article
         className="card event-card-mobile"
-        initial={motionPrefs.initial}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={motionPrefs.hover}
-        whileTap={motionPrefs.tap}
       >
         <div className="media">
           <div className="media__frame">
@@ -156,7 +137,7 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
             transition: "box-shadow .2s ease",
           }}
         />
-      </motion.article>
+      </article>
     </LiveLink>
   );
 }
@@ -166,8 +147,6 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
   const fmtDateLocalized = useFmtDate();
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
-  const motionPrefs = useEventCardMotion();
-
   const toUrl = (u: string | null | undefined) =>
     u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined;
   let flyer: string | undefined;
@@ -233,12 +212,8 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
 
   return (
     <LiveLink to={linkTo} asCard={false}>
-      <motion.article
+      <article
         className="card event-card-mobile"
-        initial={motionPrefs.initial}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={motionPrefs.hover}
-        whileTap={motionPrefs.tap}
       >
         <div className="media">
           <div className="media__frame">
@@ -311,7 +286,7 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
             transition: "box-shadow .2s ease",
           }}
         />
-      </motion.article>
+      </article>
     </LiveLink>
   );
 }

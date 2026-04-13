@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DateFlyerUploader from "./DateFlyerUploader";
-import { supabase } from "../../lib/supabase";
-import { useEventDate } from "../../hooks/useEventDate";
+import { useEventDate, useUpdateEventDate } from "../../hooks/useEventDate";
 import { useToast } from "../Toast";
 
 type Props = {
@@ -14,6 +13,7 @@ type Props = {
 export default function EventDateDrawer({ open, dateId, onClose, onUpdated }: Props) {
   const { showToast } = useToast();
   const { data: date, isLoading } = useEventDate(open && dateId ? dateId : undefined);
+  const updateEventDate = useUpdateEventDate();
   const parentId = useMemo(() => (date as any)?.parent_id ?? null, [date]);
 
   const [draft, setDraft] = useState({
@@ -111,7 +111,7 @@ export default function EventDateDrawer({ open, dateId, onClose, onUpdated }: Pr
                 onChange={async (url) => {
                   try {
                     if (!dateId) return;
-                    await supabase.from("events_date").update({ flyer_url: url || null }).eq("id", dateId);
+                    await updateEventDate.mutateAsync({ id: dateId, patch: { flyer_url: url || null } });
                     onUpdated?.(dateId, { flyer_url: url || null });
                     showToast(url ? "Flyer guardado ✅" : "Flyer removido ✅", "success");
                   } catch (e: any) {
@@ -224,8 +224,7 @@ export default function EventDateDrawer({ open, dateId, onClose, onUpdated }: Pr
                         ciudad: draft.ciudad || null,
                         direccion: draft.direccion || null,
                       };
-                      const { error } = await supabase.from("events_date").update(patch).eq("id", dateId);
-                      if (error) throw error;
+                      await updateEventDate.mutateAsync({ id: dateId, patch });
                       onUpdated?.(dateId, patch);
                       showToast("Guardado ✅", "success");
                     } catch (e: any) {

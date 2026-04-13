@@ -13,7 +13,7 @@ export default function ProfileGallery({ items = [] as Array<{ type: 'image' | '
         {items.map((it, i) => (
           <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)' }}>
             {it.type === 'image' ? (
-              <img src={it.url} alt={`media-${i}`} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+              <img src={it.url} alt={`media-${i}`} loading="lazy" decoding="async" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
             ) : (
               <video src={it.url} controls style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
             )}

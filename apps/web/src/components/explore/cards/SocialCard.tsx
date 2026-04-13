@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { normalizeAndOptimizeUrl } from "../../../utils/imageOptimization";
@@ -89,6 +88,23 @@ export default function SocialCard({ item }: { item: SocialItem }) {
       <style>{`
         .social-card-mobile {
           width: 100%;
+          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .social-card-mobile:hover {
+          transform: translateY(-8px) scale(1.03);
+          box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(240, 147, 251, 0.16);
+        }
+        .social-card-mobile:active {
+          transform: scale(0.98);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .social-card-mobile {
+            transition: none;
+          }
+          .social-card-mobile:hover,
+          .social-card-mobile:active {
+            transform: none;
+          }
         }
         @media (max-width: 768px) {
           .social-card-mobile {
@@ -101,12 +117,8 @@ export default function SocialCard({ item }: { item: SocialItem }) {
         }
       `}</style>
       <LiveLink to={to} asCard={false}>
-        <motion.div
+        <div
           className="social-card-mobile"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
           style={{
           position: 'relative',
           borderRadius: '1.25rem',
@@ -214,7 +226,7 @@ export default function SocialCard({ item }: { item: SocialItem }) {
         </div>
 
         <div aria-hidden style={{ pointerEvents: 'none', position: 'absolute', inset: -2, borderRadius: 18, boxShadow: '0 0 0 0px rgba(255,255,255,0)', transition: 'box-shadow .2s ease' }} className="card-focus-ring" />
-      </motion.div>
+      </div>
     </LiveLink>
     </>
   );

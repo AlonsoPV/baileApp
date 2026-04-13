@@ -11,7 +11,6 @@ import { OffCanvasMenu } from '@ui/index';
 import { useIsAdmin } from '@/hooks/useRoleRequests';
 import { getMediaBySlot } from '@/utils/mediaSlots';
 import SeoHead from '@/components/SeoHead';
-import JoinCommunityForm from '@/components/forms/JoinCommunityForm';
 import { resolveVersionedSupabaseStorageDirectUrl } from '@/utils/supabaseStoragePublicUrl';
 
 export default function AppShell() {
@@ -423,8 +422,6 @@ export default function AppShell() {
         </div>
         <footer className="app-footer">
           <div className="app-footer-content">
-            <JoinCommunityForm />
-            <div className="footer-separator" />
             <Link to="/soporte" className="app-footer-link">
               <span>🛟</span>
               <span className="footer-link-text">{t('footer_support')}</span>

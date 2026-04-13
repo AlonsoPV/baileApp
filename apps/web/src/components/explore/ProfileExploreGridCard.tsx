@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useTags } from "@/hooks/useTags";
@@ -166,13 +165,7 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
 
   return (
     <LiveLink to={href} asCard={false}>
-      <motion.article
-        className="event-social-grid-card"
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.15 }}
-        whileTap={{ scale: 0.99 }}
-      >
+      <article className="event-social-grid-card">
         <div className="event-social-grid-card__media">
           {showPlaceholder ? (
             <div className="event-social-grid-card__placeholder" aria-hidden>
@@ -210,7 +203,7 @@ function ProfileExploreGridCard({ variant, item, priority = false }: ProfileExpl
             </div>
           ) : null}
         </div>
-      </motion.article>
+      </article>
     </LiveLink>
   );
 }

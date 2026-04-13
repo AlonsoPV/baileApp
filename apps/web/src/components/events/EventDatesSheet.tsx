@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../Toast";
 import { useBulkUpdateEventDates } from "../../hooks/useBulkUpdateEventDates";
+import { prefetchEventDate, useUpdateEventDate } from "../../hooks/useEventDate";
 import { uploadEventFlyer } from "../../lib/uploadEventFlyer";
 import { supabase } from "../../lib/supabase";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
@@ -511,6 +512,7 @@ export default function EventDatesSheet({
   const { showToast } = useToast();
   const qc = useQueryClient();
   const bulkUpdate = useBulkUpdateEventDates();
+  const updateEventDate = useUpdateEventDate();
   const { zonas: zonaCatalog = [] } = useTags("zona");
   const zonaTagsForBulk = useMemo(
     () =>
@@ -617,15 +619,7 @@ export default function EventDatesSheet({
       // 1) Seed cache immediately from already-rendered row (instant drawer render).
       qc.setQueryData(["event", "date", id], (prev: any) => prev ?? row);
       // 2) Prefetch in background to get any missing fields and ensure freshness.
-      void qc.prefetchQuery({
-        queryKey: ["event", "date", id],
-        queryFn: async () => {
-          const { data, error } = await supabase.from("events_date").select("*").eq("id", id).maybeSingle();
-          if (error) throw error;
-          return data;
-        },
-        staleTime: 1000 * 30,
-      });
+      void prefetchEventDate(qc, id);
     },
     [qc]
   );
@@ -640,15 +634,7 @@ export default function EventDatesSheet({
         seedAndPrefetchDate(row);
         return;
       }
-      void qc.prefetchQuery({
-        queryKey: ["event", "date", id],
-        queryFn: async () => {
-          const { data, error } = await supabase.from("events_date").select("*").eq("id", id).maybeSingle();
-          if (error) throw error;
-          return data;
-        },
-        staleTime: 1000 * 30,
-      });
+      void prefetchEventDate(qc, id);
     },
     [qc, seedAndPrefetchDate, sortedRows]
   );
@@ -791,8 +777,7 @@ export default function EventDatesSheet({
   const updateRow = useCallback(
     async (rowId: number, patch: Record<string, any>, successMsg?: string) => {
       try {
-        const { error } = await supabase.from("events_date").update(patch).eq("id", rowId);
-        if (error) throw error;
+        await updateEventDate.mutateAsync({ id: rowId, patch });
         onRowsPatched?.([rowId], patch);
         applyLocalPatch([rowId], patch);
         // Refrescar caches/listas para que la UI refleje el cambio aunque el parent no pase onRowsPatched.
@@ -814,7 +799,7 @@ export default function EventDatesSheet({
         throw e;
       }
     },
-    [onRowsPatched, showToast, qc, sortedRows, applyLocalPatch]
+    [updateEventDate, onRowsPatched, showToast, qc, sortedRows, applyLocalPatch]
   );
 
   const toggleEstadoPublicacion = useCallback(

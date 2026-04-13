@@ -50,8 +50,48 @@ export type Round = {
   status: "pending" | "active" | "closed" | "completed";
 };
 
+const SELECT_TRENDING_LIST = `
+  id,
+  title,
+  description,
+  status,
+  starts_at,
+  ends_at,
+  allowed_vote_mode,
+  cover_url,
+  created_by,
+  created_at,
+  updated_at,
+  rounds_config,
+  lists_config,
+  current_round_number,
+  total_rounds,
+  participants_lists
+`;
+
+const SELECT_TRENDING_RITMOS = `
+  id,
+  trending_id,
+  ritmo_slug
+`;
+
+const SELECT_TRENDING_CANDIDATES = `
+  id,
+  trending_id,
+  user_id,
+  display_name,
+  avatar_url,
+  bio_short,
+  list_name,
+  ritmo_slug
+`;
+
 export async function listTrendings(status?: Trending["status"]) {
-  let q = supabase.from("trendings").select("*").order("created_at", { ascending: false });
+  let q = supabase
+    .from("trendings")
+    .select(SELECT_TRENDING_LIST)
+    .order("created_at", { ascending: false })
+    .limit(50);
   if (status) q = q.eq("status", status);
   const { data, error } = await q;
   if (error) throw error;
@@ -59,7 +99,11 @@ export async function listTrendings(status?: Trending["status"]) {
 }
 
 export async function getTrending(id: number) {
-  const { data, error } = await supabase.from("trendings").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("trendings")
+    .select(SELECT_TRENDING_LIST)
+    .eq("id", id)
+    .maybeSingle();
   if (error) throw error;
   return data as Trending;
 }
@@ -67,9 +111,10 @@ export async function getTrending(id: number) {
 export async function getTrendingRitmos(trendingId: number) {
   const { data, error } = await supabase
     .from("trending_ritmos")
-    .select("*")
+    .select(SELECT_TRENDING_RITMOS)
     .eq("trending_id", trendingId)
-    .order("ritmo_slug", { ascending: true });
+    .order("ritmo_slug", { ascending: true })
+    .limit(50);
   if (error) throw error;
   return data ?? [];
 }
@@ -77,8 +122,9 @@ export async function getTrendingRitmos(trendingId: number) {
 export async function getTrendingCandidates(trendingId: number) {
   const { data, error } = await supabase
     .from("trending_candidates")
-    .select("*")
-    .eq("trending_id", trendingId);
+    .select(SELECT_TRENDING_CANDIDATES)
+    .eq("trending_id", trendingId)
+    .limit(50);
   if (error) throw error;
   return data ?? [];
 }

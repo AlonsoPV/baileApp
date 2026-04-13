@@ -75,6 +75,46 @@ export interface EventsLiveParams {
   ciudad?: string; // Filtrar por ciudad específica
 }
 
+const ORGANIZER_LIVE_SELECT = `
+  id,
+  user_id,
+  nombre_publico,
+  bio,
+  media,
+  estilos,
+  zonas,
+  redes_sociales,
+  respuestas,
+  estado_aprobacion,
+  created_at,
+  updated_at
+`;
+
+const EVENT_LIVE_SELECT = `
+  id,
+  parent_id,
+  fecha,
+  hora_inicio,
+  hora_fin,
+  lugar,
+  direccion,
+  ciudad,
+  zona,
+  aforo_total,
+  estado_publicacion,
+  media,
+  created_at,
+  evento_nombre,
+  evento_descripcion,
+  evento_estilos,
+  sede_general,
+  requisitos,
+  organizador_nombre,
+  organizador_id,
+  organizador_user_id,
+  organizador_media
+`;
+
 // =====================================================
 // HOOKS - ORGANIZADORES LIVE
 // =====================================================
@@ -91,8 +131,9 @@ export function useOrganizersLive(params?: OrganizersLiveParams) {
     queryFn: async () => {
       let req = supabase
         .from("organizers_live")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select(ORGANIZER_LIVE_SELECT)
+        .order("created_at", { ascending: false })
+        .limit(30);
 
       if (q) {
         req = req.ilike("nombre_publico", `%${q}%`);
@@ -116,7 +157,7 @@ export function useOrganizerLiveById(id?: number) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("organizers_live")
-        .select("*")
+        .select(ORGANIZER_LIVE_SELECT)
         .eq("id", id)
         .maybeSingle();
 
@@ -143,8 +184,9 @@ export function useEventsLive(params?: EventsLiveParams) {
       // Consulta sobre events_live (ya viene "solo publicado/aprobado")
       let req = supabase
         .from("events_live")
-        .select("*")
-        .order("fecha", { ascending: true });
+        .select(EVENT_LIVE_SELECT)
+        .order("fecha", { ascending: true })
+        .limit(50);
 
       const s = String(q ?? "").trim();
       const esc = s.replace(/\\/g, "\\\\").replace(/,/g, "\\,");
@@ -196,7 +238,7 @@ export function useEventLiveById(id?: number) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events_live")
-        .select("*")
+        .select(EVENT_LIVE_SELECT)
         .eq("id", id)
         .maybeSingle();
 
@@ -217,9 +259,10 @@ export function useEventsByOrganizerLive(organizerId?: number) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events_live")
-        .select("*")
+        .select(EVENT_LIVE_SELECT)
         .eq("organizador_id", organizerId)
-        .order("fecha", { ascending: true });
+        .order("fecha", { ascending: true })
+        .limit(50);
 
       if (error) throw error;
       return (data || []) as EventLive[];
@@ -239,7 +282,7 @@ export function useUpcomingEventsLive(limit: number = 10) {
       
       const { data, error } = await supabase
         .from("events_live")
-        .select("*")
+        .select(EVENT_LIVE_SELECT)
         .gte("fecha", today)
         .order("fecha", { ascending: true })
         .limit(limit);
@@ -262,7 +305,7 @@ export function useFeaturedEventsLive(limit: number = 6) {
       
       const { data, error } = await supabase
         .from("events_live")
-        .select("*")
+        .select(EVENT_LIVE_SELECT)
         .gte("fecha", today)
         .not("aforo_total", "is", null)
         .order("fecha", { ascending: true })

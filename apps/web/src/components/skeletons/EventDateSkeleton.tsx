@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 const colors = {
   dark: '#121212',
@@ -21,10 +20,7 @@ export function EventDateSkeleton() {
     >
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
         {/* Header Skeleton */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
+        <div
           style={{
             borderRadius: '18px',
             background: 'linear-gradient(135deg, rgba(40,30,45,0.92), rgba(30,20,40,0.92))',
@@ -80,13 +76,10 @@ export function EventDateSkeleton() {
               borderRadius: '8px',
             }}
           />
-        </motion.div>
+        </div>
 
         {/* RSVP Section Skeleton */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.1 }}
+        <div
           style={{
             padding: '1.5rem',
             marginBottom: '1.5rem',
@@ -112,13 +105,10 @@ export function EventDateSkeleton() {
               borderRadius: '12px',
             }}
           />
-        </motion.div>
+        </div>
 
         {/* Location Section Skeleton */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.2 }}
+        <div
           style={{
             padding: '1.25rem',
             marginBottom: '1.25rem',
@@ -144,7 +134,7 @@ export function EventDateSkeleton() {
               borderRadius: '12px',
             }}
           />
-        </motion.div>
+        </div>
       </div>
 
       <style>{`

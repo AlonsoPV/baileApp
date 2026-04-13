@@ -218,12 +218,24 @@ function EventParentCard({
   isMobile,
   orgLocations,
   onOpenDateDrawer,
+  extraRows = [],
 }: any) {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: dates } = useDatesByParent(parent.id);
   const [expanded, setExpanded] = useState(false);
   const [datesSearch, setDatesSearch] = useState('');
+  const mergedDates = useMemo(() => {
+    const merged = [...(dates || []), ...((extraRows as any[]) || [])];
+    const seen = new Set<number>();
+    return merged.filter((row: any) => {
+      const id = Number(row?.id);
+      if (!Number.isFinite(id)) return true;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [dates, extraRows]);
 
   const startFrecuentesFromDate = (fromDateId: number) => {
     const params = new URLSearchParams(location.search);
@@ -293,7 +305,7 @@ function EventParentCard({
     }
   };
 
-  const availableDates = (dates || []).filter((d: any) => {
+  const availableDates = mergedDates.filter((d: any) => {
     try {
       const displayYmd = getDisplayFechaYmd(d);
       if (!displayYmd) return false;
@@ -306,7 +318,7 @@ function EventParentCard({
     }
   });
 
-  const pastDates = (dates || [])
+  const pastDates = mergedDates
     .filter((d: any) => {
       try {
         // Los eventos recurrentes semanales no se consideran "pasados":
@@ -362,7 +374,7 @@ function EventParentCard({
     >
       {/* Fechas del social (tarjeta de social desactivada) */}
       <div style={{ position: 'relative', zIndex: 2 }}>
-        {dates && dates.length > 0 ? (
+        {mergedDates.length > 0 ? (
           <>
             <motion.button
               whileHover={{ scale: 1.01 }}
@@ -646,9 +658,8 @@ export default function OrganizerProfileEditor() {
   // Drawer para edición individual desde tabla bulk (override flyer + ajustes puntuales)
   const [drawerDateId, setDrawerDateId] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [independentDatesSearch, setIndependentDatesSearch] = useState('');
-  /** Búsqueda en fechas con parent_id que no está en los sociales de esta cuenta (p. ej. tras reasignar organizer_id en BD). */
-  const [mislinkedDatesSearch, setMislinkedDatesSearch] = useState('');
+  const [extraDatesSearch, setExtraDatesSearch] = useState('');
+  const [extraDatesExpanded, setExtraDatesExpanded] = useState(true);
 
   const bulkOrganizerId = (org as any)?.id ? Number((org as any).id) : undefined;
   const patchBulkCache = useCallback((ids: number[], patch: Record<string, any>) => {
@@ -5935,7 +5946,7 @@ export default function OrganizerProfileEditor() {
                     return db.getTime() - da.getTime();
                   });
 
-                const matchIndependentSearch = (d: any, q: string) => {
+                const matchExtraDatesSearch = (d: any, q: string) => {
                   if (!q || !q.trim()) return true;
                   const term = q.trim().toLowerCase();
                   const nombre = (d?.nombre ?? d?.events_parent?.nombre ?? '').toString().toLowerCase();
@@ -5945,10 +5956,9 @@ export default function OrganizerProfileEditor() {
                   const ciudad = (d?.ciudad ?? '').toString().toLowerCase();
                   const direccion = (d?.direccion ?? '').toString().toLowerCase();
                   const hora = (d?.hora_inicio ?? '').toString().toLowerCase();
-                  return [nombre, fechaYmd, fechaFormatted, lugar, ciudad, direccion, hora].some((s) => s.includes(term));
+                  const pid = d?.parent_id != null ? String(d.parent_id) : "";
+                  return [nombre, fechaYmd, fechaFormatted, lugar, ciudad, direccion, hora, pid].some((s) => s.includes(term));
                 };
-                const independentAvailableFiltered = independentAvailable.filter((d: any) => matchIndependentSearch(d, independentDatesSearch));
-                const independentPastFiltered = independentPast.filter((d: any) => matchIndependentSearch(d, independentDatesSearch));
 
                 const mislinkedAvailable = mislinkedDates.filter((d: any) => {
                   try {
@@ -5985,14 +5995,30 @@ export default function OrganizerProfileEditor() {
                     return db.getTime() - da.getTime();
                   });
 
-                const matchMislinkedSearch = (d: any, q: string) => {
-                  if (!q || !q.trim()) return true;
-                  const term = q.trim().toLowerCase();
-                  const pid = d?.parent_id != null ? String(d.parent_id) : "";
-                  return matchIndependentSearch(d, q) || pid.includes(term);
+                const compareAvailableDates = (a: any, b: any) => {
+                  const ymdA = getDisplayFechaYmd(a) ?? '';
+                  const ymdB = getDisplayFechaYmd(b) ?? '';
+                  if (ymdA !== ymdB) return ymdA.localeCompare(ymdB);
+                  const horaA = String(a?.hora_inicio || '99:99');
+                  const horaB = String(b?.hora_inicio || '99:99');
+                  if (horaA !== horaB) return horaA.localeCompare(horaB);
+                  return Number(a?.id || 0) - Number(b?.id || 0);
                 };
-                const mislinkedAvailableFiltered = mislinkedAvailable.filter((d: any) => matchMislinkedSearch(d, mislinkedDatesSearch));
-                const mislinkedPastFiltered = mislinkedPast.filter((d: any) => matchMislinkedSearch(d, mislinkedDatesSearch));
+
+                const extraAvailable = [...mislinkedAvailable, ...independentAvailable].sort(compareAvailableDates);
+                const extraPast = [...mislinkedPast, ...independentPast].sort((a: any, b: any) => {
+                  const da = parseLocalYmd(getDisplayFechaYmd(a) || a.fecha);
+                  const db = parseLocalYmd(getDisplayFechaYmd(b) || b.fecha);
+                  if (!da || !db) return 0;
+                  if (db.getTime() !== da.getTime()) return db.getTime() - da.getTime();
+                  const horaA = String(a?.hora_inicio || '99:99');
+                  const horaB = String(b?.hora_inicio || '99:99');
+                  if (horaA !== horaB) return horaB.localeCompare(horaA);
+                  return Number(b?.id || 0) - Number(a?.id || 0);
+                });
+
+                const extraAvailableFiltered = extraAvailable.filter((d: any) => matchExtraDatesSearch(d, extraDatesSearch));
+                const extraPastFiltered = extraPast.filter((d: any) => matchExtraDatesSearch(d, extraDatesSearch));
                 
                 return (
                   <>
@@ -6012,6 +6038,7 @@ export default function OrganizerProfileEditor() {
                           >
                             <EventParentCard
                               parent={parent}
+                              extraRows={index === 0 ? [...mislinkedDates, ...independentDates] : []}
                               onDelete={handleDeleteEvent}
                               isDeleting={deleteParent.isPending}
                               onDuplicateDate={handleDuplicateDate}
@@ -6030,212 +6057,154 @@ export default function OrganizerProfileEditor() {
                       </motion.div>
                     ) : null}
 
-                    {/* Fechas con parent_id que no corresponde a un social de esta cuenta (p. ej. organizer_id movido en BD) */}
-                    {mislinkedDates.length > 0 && (
-                      <div
-                        className="dates-block"
+                    {/* Fechas fuera de los sociales listados: mostrarlas en una sola sección colapsable */}
+                    {(!parents?.length && (mislinkedDates.length > 0 || independentDates.length > 0)) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="org-event-dates-wrapper"
                         style={{ marginTop: parents && parents.length > 0 ? "2rem" : 0 }}
-                        data-test-id="organizer-mislinked-dates"
+                        data-test-id="organizer-extra-dates"
                       >
-                        <div className="dates-section-search-wrap">
-                          <input
-                            id="org-dates-filter-mislinked"
-                            type="text"
-                            role="searchbox"
-                            inputMode="search"
-                            enterKeyHint="search"
-                            className="dates-section-search"
-                            placeholder="Buscar por nombre, fecha, parent_id…"
-                            value={mislinkedDatesSearch}
-                            onChange={(e) => setMislinkedDatesSearch(e.target.value)}
-                            aria-label="Buscar fechas con social ajeno"
-                            name="org-dates-filter-mislinked"
-                            autoComplete="off"
-                            autoCorrect="off"
-                            spellCheck={false}
-                            data-lpignore="true"
-                          />
-                        </div>
-                        {mislinkedAvailable.length > 0 && (
-                          <details className="dates-section dates-section--available" open>
-                            <summary>
-                              <span className="dates-section-title">
-                                <span className="dates-section-icon available">✓</span>
-                                Próximas (social no listado)
-                                <span className="dates-section-count">
-                                  ({mislinkedAvailableFiltered.length}
-                                  {mislinkedDatesSearch.trim() ? ` de ${mislinkedAvailable.length}` : ""})
-                                </span>
+                        <div style={{ position: 'relative', zIndex: 2 }}>
+                          <motion.button
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            type="button"
+                            onClick={() => setExtraDatesExpanded((v) => !v)}
+                            className={`org-dates-collapse-trigger${extraDatesExpanded ? ' org-dates-collapse-trigger--expanded' : ''}`}
+                            aria-expanded={extraDatesExpanded}
+                          >
+                            <div className="org-dates-collapse-trigger__left">
+                              <span className="org-dates-collapse-trigger__icon" aria-hidden>
+                                📅
                               </span>
-                              <span className="dates-chevron">▼</span>
-                            </summary>
-                            <div className="dates-section-inner">
-                              <EventDatesSheet
-                                rows={mislinkedAvailableFiltered.map((d: any) => ({
-                                  ...d,
-                                  fecha: getDisplayFechaYmd(d) || d.fecha,
-                                }))}
-                                variant="embedded"
-                                showHeader={false}
-                                onOpenRow={(id) => {
-                                  setDrawerDateId(Number(id));
-                                  setDrawerOpen(true);
-                                }}
-                                onStartFrecuentes={(fromDateId) => {
-                                  const params = new URLSearchParams(location.search);
-                                  params.set("mode", "frecuentes");
-                                  params.set("fromDateId", String(fromDateId));
-                                  navigate({ pathname: location.pathname, search: params.toString() });
-                                }}
-                                onViewRow={(id) => navigate(`/social/fecha/${id}`)}
-                                onDeleteRow={(row) => handleDeleteDate(row as any)}
-                                onDeleteRows={deleteDatesBulk as any}
-                                deletingRowId={deletingDateId as any}
-                              />
-                            </div>
-                          </details>
-                        )}
-                        {mislinkedPast.length > 0 && (
-                          <details className="dates-section dates-section--past" style={{ marginTop: "0.75rem" }}>
-                            <summary>
-                              <span className="dates-section-title">
-                                <span className="dates-section-icon past">⏱</span>
-                                Pasadas (social no listado)
-                                <span className="dates-section-count">
-                                  ({mislinkedPastFiltered.length}
-                                  {mislinkedDatesSearch.trim() ? ` de ${mislinkedPast.length}` : ""})
+                              <div className="org-dates-collapse-trigger__stats">
+                                <span className="org-dates-stat-pill org-dates-stat-pill--avail">
+                                  <span aria-hidden>✓</span>
+                                  {extraAvailable.length} disponible
+                                  {extraAvailable.length !== 1 ? 's' : ''}
                                 </span>
-                              </span>
-                              <span className="dates-chevron">▼</span>
-                            </summary>
-                            <div className="dates-section-inner">
-                              <EventDatesSheet
-                                rows={mislinkedPastFiltered.map((d: any) => ({
-                                  ...d,
-                                  fecha: getDisplayFechaYmd(d) || d.fecha,
-                                }))}
-                                variant="embedded"
-                                showHeader={false}
-                                onOpenRow={(id) => {
-                                  setDrawerDateId(Number(id));
-                                  setDrawerOpen(true);
-                                }}
-                                onStartFrecuentes={(fromDateId) => {
-                                  const params = new URLSearchParams(location.search);
-                                  params.set("mode", "frecuentes");
-                                  params.set("fromDateId", String(fromDateId));
-                                  navigate({ pathname: location.pathname, search: params.toString() });
-                                }}
-                                onViewRow={(id) => navigate(`/social/fecha/${id}`)}
-                                onDeleteRow={(row) => handleDeleteDate(row as any)}
-                                onDeleteRows={deleteDatesBulk as any}
-                                deletingRowId={deletingDateId as any}
-                              />
-                            </div>
-                          </details>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Fechas independientes (sin parent_id) */}
-                    {independentDates.length > 0 && (
-                      <div style={{ marginTop: parents && parents.length > 0 ? '2rem' : 0 }}>
-                        <div className="dates-block">
-                          {/* Barra de búsqueda de eventos (fechas independientes) */}
-                          <div className="dates-section-search-wrap">
-                            <input
-                              id="org-dates-filter-independent"
-                              type="text"
-                              role="searchbox"
-                              inputMode="search"
-                              enterKeyHint="search"
-                              className="dates-section-search"
-                              placeholder="Buscar por nombre, fecha, lugar..."
-                              value={independentDatesSearch}
-                              onChange={(e) => setIndependentDatesSearch(e.target.value)}
-                              aria-label="Buscar eventos"
-                              name="org-dates-filter-independent"
-                              autoComplete="off"
-                              autoCorrect="off"
-                              spellCheck={false}
-                              data-lpignore="true"
-                            />
-                          </div>
-                          {/* Fechas disponibles */}
-                          {independentAvailable.length > 0 && (
-                            <details className="dates-section dates-section--available" open>
-                              <summary>
-                                <span className="dates-section-title">
-                                  <span className="dates-section-icon available">✓</span>
-                                  Fechas disponibles
-                                  <span className="dates-section-count">
-                                    ({independentAvailableFiltered.length}{independentDatesSearch.trim() ? ` de ${independentAvailable.length}` : ''})
-                                  </span>
+                                <span className="org-dates-stat-pill org-dates-stat-pill--past">
+                                  <span aria-hidden>⏱</span>
+                                  {extraPast.length} pasada
+                                  {extraPast.length !== 1 ? 's' : ''}
                                 </span>
-                                <span className="dates-chevron">▼</span>
-                              </summary>
-                              <div className="dates-section-inner">
-                                <EventDatesSheet
-                                  rows={independentAvailableFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
-                                  variant="embedded"
-                                  showHeader={false}
-                                  onOpenRow={(id) => {
-                                    setDrawerDateId(Number(id));
-                                    setDrawerOpen(true);
-                                  }}
-                                  onStartFrecuentes={(fromDateId) => {
-                                    const params = new URLSearchParams(location.search);
-                                    params.set('mode', 'frecuentes');
-                                    params.set('fromDateId', String(fromDateId));
-                                    navigate({ pathname: location.pathname, search: params.toString() });
-                                  }}
-                                  onViewRow={(id) => navigate(`/social/fecha/${id}`)}
-                                  onDeleteRow={(row) => handleDeleteDate(row as any)}
-                                  onDeleteRows={deleteDatesBulk as any}
-                                  deletingRowId={deletingDateId as any}
-                                />
                               </div>
-                            </details>
-                          )}
-                          
-                          {/* Fechas pasadas */}
-                          {independentPast.length > 0 && (
-                            <details className="dates-section dates-section--past">
-                              <summary>
-                                <span className="dates-section-title">
-                                  <span className="dates-section-icon past">⏱</span>
-                                  Fechas pasadas
-                                  <span className="dates-section-count">
-                                    ({independentPastFiltered.length}{independentDatesSearch.trim() ? ` de ${independentPast.length}` : ''})
-                                  </span>
-                                </span>
-                                <span className="dates-chevron">▼</span>
-                              </summary>
-                              <div className="dates-section-inner">
-                                <EventDatesSheet
-                                  rows={independentPastFiltered.map((d: any) => ({ ...d, fecha: getDisplayFechaYmd(d) || d.fecha }))}
-                                  variant="embedded"
-                                  showHeader={false}
-                                  onOpenRow={(id) => {
-                                    setDrawerDateId(Number(id));
-                                    setDrawerOpen(true);
-                                  }}
-                                  onStartFrecuentes={(fromDateId) => {
-                                    const params = new URLSearchParams(location.search);
-                                    params.set('mode', 'frecuentes');
-                                    params.set('fromDateId', String(fromDateId));
-                                    navigate({ pathname: location.pathname, search: params.toString() });
-                                  }}
-                                  onViewRow={(id) => navigate(`/social/fecha/${id}`)}
-                                  onDeleteRow={(row) => handleDeleteDate(row as any)}
-                                  onDeleteRows={deleteDatesBulk as any}
-                                  deletingRowId={deletingDateId as any}
-                                />
+                            </div>
+                            <motion.span
+                              animate={{ rotate: extraDatesExpanded ? 180 : 0 }}
+                              transition={{ duration: 0.28 }}
+                              className="org-dates-collapse-trigger__chevron"
+                              aria-hidden
+                            >
+                              ▼
+                            </motion.span>
+                          </motion.button>
+
+                          {extraDatesExpanded && (
+                            <div style={{ marginTop: '1rem' }}>
+                              <div className="dates-block">
+                                <div className="dates-section-search-wrap">
+                                  <input
+                                    id="org-dates-filter-extra"
+                                    type="text"
+                                    role="searchbox"
+                                    inputMode="search"
+                                    enterKeyHint="search"
+                                    className="dates-section-search"
+                                    placeholder="Buscar por nombre, fecha, lugar o parent_id..."
+                                    value={extraDatesSearch}
+                                    onChange={(e) => setExtraDatesSearch(e.target.value)}
+                                    aria-label="Buscar fechas fuera de los sociales listados"
+                                    name="org-dates-filter-extra"
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    spellCheck={false}
+                                    data-lpignore="true"
+                                  />
+                                </div>
+                                {extraAvailable.length > 0 && (
+                                  <details className="dates-section dates-section--available" open>
+                                    <summary>
+                                      <span className="dates-section-title">
+                                        <span className="dates-section-icon available">✓</span>
+                                        Fechas disponibles
+                                        <span className="dates-section-count">
+                                          ({extraAvailableFiltered.length}{extraDatesSearch.trim() ? ` de ${extraAvailable.length}` : ''})
+                                        </span>
+                                      </span>
+                                      <span className="dates-chevron">▼</span>
+                                    </summary>
+                                    <div className="dates-section-inner">
+                                      <EventDatesSheet
+                                        rows={extraAvailableFiltered.map((d: any) => ({
+                                          ...d,
+                                          fecha: getDisplayFechaYmd(d) || d.fecha,
+                                        }))}
+                                        variant="embedded"
+                                        showHeader={false}
+                                        onOpenRow={(id) => {
+                                          setDrawerDateId(Number(id));
+                                          setDrawerOpen(true);
+                                        }}
+                                        onStartFrecuentes={(fromDateId) => {
+                                          const params = new URLSearchParams(location.search);
+                                          params.set('mode', 'frecuentes');
+                                          params.set('fromDateId', String(fromDateId));
+                                          navigate({ pathname: location.pathname, search: params.toString() });
+                                        }}
+                                        onViewRow={(id) => navigate(`/social/fecha/${id}`)}
+                                        onDeleteRow={(row) => handleDeleteDate(row as any)}
+                                        onDeleteRows={deleteDatesBulk as any}
+                                        deletingRowId={deletingDateId as any}
+                                      />
+                                    </div>
+                                  </details>
+                                )}
+                                {extraPast.length > 0 && (
+                                  <details className="dates-section dates-section--past" style={{ marginTop: "0.75rem" }}>
+                                    <summary>
+                                      <span className="dates-section-title">
+                                        <span className="dates-section-icon past">⏱</span>
+                                        Fechas pasadas
+                                        <span className="dates-section-count">
+                                          ({extraPastFiltered.length}{extraDatesSearch.trim() ? ` de ${extraPast.length}` : ''})
+                                        </span>
+                                      </span>
+                                      <span className="dates-chevron">▼</span>
+                                    </summary>
+                                    <div className="dates-section-inner">
+                                      <EventDatesSheet
+                                        rows={extraPastFiltered.map((d: any) => ({
+                                          ...d,
+                                          fecha: getDisplayFechaYmd(d) || d.fecha,
+                                        }))}
+                                        variant="embedded"
+                                        showHeader={false}
+                                        onOpenRow={(id) => {
+                                          setDrawerDateId(Number(id));
+                                          setDrawerOpen(true);
+                                        }}
+                                        onStartFrecuentes={(fromDateId) => {
+                                          const params = new URLSearchParams(location.search);
+                                          params.set('mode', 'frecuentes');
+                                          params.set('fromDateId', String(fromDateId));
+                                          navigate({ pathname: location.pathname, search: params.toString() });
+                                        }}
+                                        onViewRow={(id) => navigate(`/social/fecha/${id}`)}
+                                        onDeleteRow={(row) => handleDeleteDate(row as any)}
+                                        onDeleteRows={deleteDatesBulk as any}
+                                        deletingRowId={deletingDateId as any}
+                                      />
+                                    </div>
+                                  </details>
+                                )}
                               </div>
-                            </details>
+                            </div>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     )}
                     
                     {!parents?.length && independentDates.length === 0 && mislinkedDates.length === 0 && (

@@ -152,43 +152,12 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
 
       console.log("[useOrganizerEventMetrics] 🔍 Consultando métricas para organizerId:", organizerId, "filtros:", filters);
 
-      // Obtener todas las fechas del organizador
-      // Primero obtener los parent_ids
-      const { data: parents, error: parentsError } = await supabase
-        .from("events_parent")
-        .select("id")
-        .eq("organizer_id", organizerId);
-
-      if (parentsError) {
-        console.error("[useOrganizerEventMetrics] Error obteniendo eventos padre:", parentsError);
-        throw parentsError;
-      }
-
-      const parentIds = (parents || []).map((p: any) => p.id);
-      if (parentIds.length === 0) {
-        return {
-          global: {
-            totalRsvps: 0,
-            totalAsistentes: 0,
-            porRol: { leader: 0, follower: 0, ambos: 0, otros: 0 },
-            zonas: [],
-            ritmos: [],
-            byZone: {},
-            totalPurchases: 0,
-          },
-          porFecha: [],
-          byDate: [],
-          perRSVP: [],
-          series: [],
-          items: [],
-        };
-      }
-
-      // Obtener fechas del organizador; filtrar por fecha del EVENTO (no por created_at del RSVP)
+      // Obtener fechas del organizador directo desde events_date para evitar
+      // el waterfall events_parent -> events_date.
       let datesQuery = supabase
         .from("events_date")
         .select("id, nombre, fecha, parent_id")
-        .in("parent_id", parentIds);
+        .eq("organizer_id", organizerId);
 
       if (dateRange.from) {
         datesQuery = datesQuery.gte("fecha", dateRange.from);
@@ -224,30 +193,22 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
         };
       }
 
-      // Obtener RSVPs para las instancias en el rango (ya filtrado por events_date.fecha)
-      const { data: rsvps, error: rsvpError } = await supabase
+      // Obtener RSVPs y compras en una sola pasada; luego derivar ambas métricas en cliente.
+      const { data: rsvpRows, error: rsvpError } = await supabase
         .from("event_rsvp")
-        .select("id, event_date_id, user_id, created_at")
+        .select("id, event_date_id, user_id, created_at, status")
         .in("event_date_id", eventDateIds)
-        .eq("status", "interesado");
+        .in("status", ["interesado", "pagado"]);
 
       if (rsvpError) {
         console.error("[useOrganizerEventMetrics] Error obteniendo RSVPs:", rsvpError);
         throw rsvpError;
       }
 
-      const rsvpData = rsvps || [];
+      const rows = rsvpRows || [];
+      const rsvpData = rows.filter((row: any) => row.status === "interesado");
+      const purchaseRows = rows.filter((row: any) => row.status === "pagado");
       console.log("[useOrganizerEventMetrics] 📊 RSVPs encontrados:", rsvpData.length);
-
-      // Obtener compras (status = 'pagado') para las instancias en el rango
-      const { data: purchaseRows, error: purchaseError } = await supabase
-        .from("event_rsvp")
-        .select("id, event_date_id, created_at")
-        .in("event_date_id", eventDateIds)
-        .eq("status", "pagado");
-      if (purchaseError) {
-        console.error("[useOrganizerEventMetrics] Error obteniendo compras (event_rsvp):", purchaseError);
-      }
 
       // Obtener información de usuarios
       const userIds = [...new Set(rsvpData.map((r: any) => r.user_id))];
@@ -468,8 +429,8 @@ export function useOrganizerEventMetrics(organizerId?: number, filters?: Metrics
       return { global, porFecha, byDate, perRSVP, series, items };
     },
     refetchInterval: 5000,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 
   return {

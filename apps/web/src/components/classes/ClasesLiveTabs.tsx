@@ -61,7 +61,7 @@ type Props = {
   creatorName?: string | null;
 };
 
-export default function ClasesLiveTabs({ 
+const ClasesLiveTabs = React.memo(function ClasesLiveTabs({ 
   classes, 
   title = "Clases", 
   subtitle,
@@ -1304,4 +1304,6 @@ export default function ClasesLiveTabs({
       </div>
     </div>
   );
-}
+});
+
+export default ClasesLiveTabs;

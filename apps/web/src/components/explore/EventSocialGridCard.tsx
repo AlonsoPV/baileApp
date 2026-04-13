@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
 import { useFmtDate } from "@/hooks/useFmtDate";
@@ -64,13 +63,7 @@ function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCard
 
   return (
     <LiveLink to={linkTo} asCard={false}>
-      <motion.article
-        className="event-social-grid-card"
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.15 }}
-        whileTap={{ scale: 0.99 }}
-      >
+      <article className="event-social-grid-card">
         <div className="event-social-grid-card__media">
           {showPlaceholder ? (
             <div className="event-social-grid-card__placeholder" aria-hidden>
@@ -116,7 +109,7 @@ function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCard
             {ui.hasDiscount ? <span className="event-social-grid-card__discount">%</span> : null}
           </div>
         </div>
-      </motion.article>
+      </article>
     </LiveLink>
   );
 }
@@ -189,13 +182,7 @@ function EventSocialGridCardFallback({ item, priority = false }: EventSocialGrid
 
   return (
     <LiveLink to={linkTo} asCard={false}>
-      <motion.article
-        className="event-social-grid-card"
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.15 }}
-        whileTap={{ scale: 0.99 }}
-      >
+      <article className="event-social-grid-card">
         <div className="event-social-grid-card__media">
           {showPlaceholder ? (
             <div className="event-social-grid-card__placeholder" aria-hidden>
@@ -241,7 +228,7 @@ function EventSocialGridCardFallback({ item, priority = false }: EventSocialGrid
             {showDiscount ? <span className="event-social-grid-card__discount">%</span> : null}
           </div>
         </div>
-      </motion.article>
+      </article>
     </LiveLink>
   );
 }

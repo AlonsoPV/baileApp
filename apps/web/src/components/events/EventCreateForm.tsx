@@ -379,6 +379,18 @@ export default function EventCreateForm(props: EventCreateFormProps) {
     else navigate(-1);
   }, [props, navigate]);
 
+  const handleScheduleChange = useCallback((cronograma: any[]) => {
+    setValue("cronograma" as any, cronograma as any);
+  }, [setValue]);
+
+  const handleCostosChange = useCallback((costos: any[]) => {
+    setValue("costos" as any, costos as any);
+  }, [setValue]);
+
+  const handleScheduleCostSaved = useCallback(() => {
+    showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', "info");
+  }, [showToast]);
+
   const rootClass = ["ecf", props.className].filter(Boolean).join(" ");
 
   if (isLoadingInitial) {
@@ -803,14 +815,14 @@ export default function EventCreateForm(props: EventCreateFormProps) {
                 </div>
                 <ScheduleEditor
                   schedule={(((values as any)?.cronograma || []) as any[]) ?? []}
-                  onChangeSchedule={(cronograma) => setValue("cronograma" as any, cronograma as any)}
+                  onChangeSchedule={handleScheduleChange}
                   costos={(((values as any)?.costos || []) as any[]) ?? []}
-                  onChangeCostos={(costos) => setValue("costos" as any, costos as any)}
+                  onChangeCostos={handleCostosChange}
                   ritmos={ritmoTags}
                   zonas={zonaTags}
                   eventFecha={(values as any)?.fecha || ""}
                   hideCostsSection
-                  onSaveCosto={() => showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', "info")}
+                  onSaveCosto={handleScheduleCostSaved}
                 />
               </div>
 

@@ -932,6 +932,18 @@ export default function OrganizerEventDateEditScreen() {
     );
   }
 
+  const handleScheduleChange = useCallback((cronograma: any[]) => {
+    setForm((prev) => ({ ...prev, cronograma }));
+  }, []);
+
+  const handleCostosChange = useCallback((costos: any[]) => {
+    setForm((prev) => ({ ...prev, costos }));
+  }, []);
+
+  const handleScheduleCostSaved = useCallback(() => {
+    showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "💾 Guardar Cambios".', 'info');
+  }, [showToast]);
+
   // ====== UI con la estructura/diseño solicitados ======
   return (
     <>
@@ -1582,16 +1594,14 @@ export default function OrganizerEventDateEditScreen() {
           <div className="org-editor-card">
                     <ScheduleEditor
               schedule={form.cronograma || []}
-              onChangeSchedule={(cronograma) => setForm((prev) => ({ ...prev, cronograma }))}
+              onChangeSchedule={handleScheduleChange}
               costos={form.costos || []}
-              onChangeCostos={(costos) => setForm((prev) => ({ ...prev, costos }))}
+              onChangeCostos={handleCostosChange}
                       ritmos={ritmoTags}
                       zonas={zonaTags}
               eventFecha={form.fecha}
               hideCostsSection
-                      onSaveCosto={() => {
-                showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "💾 Guardar Cambios".', 'info');
-                      }}
+                      onSaveCosto={handleScheduleCostSaved}
                     />
                   </div>
 

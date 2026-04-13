@@ -2,9 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useQuery } from '@tanstack/react-query';
 import { useTags } from "../../hooks/useTags";
-import { supabase } from '@/lib/supabase';
 import NotFound from '@/screens/system/NotFound';
 import ImageWithFallback from "../../components/ImageWithFallback";
 import RitmosChips from "../../components/RitmosChips";
@@ -36,8 +34,7 @@ import CompetitionGroupCard from "../../components/explore/cards/CompetitionGrou
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import OrganizerPublicFaqSection from "../../components/organizer/OrganizerPublicFaqSection";
 import { parseOrganizerFaqFromDb } from "../../utils/organizerFaq";
-
-const isUUID = (v?: string) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+import { useOrganizerPublic } from "@/hooks/useOrganizerPublic";
 
 // FAQ Accordion (mismo diseño)
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -118,30 +115,7 @@ export function OrganizerPublicScreen() {
     } catch {}
   }, [routeId]);
 
-  const { data: org, isLoading, isError } = useQuery({
-    queryKey: ['org-public', routeId],
-    enabled: !!routeId,
-    queryFn: async () => {
-      if (!routeId) return null;
-      // Intentar como ID numérico primero
-      const numId = parseInt(routeId, 10);
-      if (!isNaN(numId)) {
-        const { data, error } = await supabase.from('v_organizers_public').select('*').eq('id', numId).maybeSingle();
-        if (error) throw error;
-        if (data) return data;
-      }
-      // Intentar como UUID
-      if (isUUID(routeId)) {
-        const { data, error } = await supabase.from('v_organizers_public').select('*').eq('user_id', routeId).maybeSingle();
-        if (error) throw error;
-        if (data) return data;
-      }
-      // Intentar como slug
-      const { data, error } = await supabase.from('v_organizers_public').select('*').eq('slug', routeId).maybeSingle();
-      if (error) throw error;
-      return data ?? null;
-    }
-  });
+  const { data: org, isLoading, isError } = useOrganizerPublic(routeId);
 
   // Evitar loops infinitos de "Cargando organizador..." en WebView
   const [loadingTimedOut, setLoadingTimedOut] = React.useState(false);
@@ -504,7 +478,7 @@ export function OrganizerPublicScreen() {
           <div style={{ width: 350, maxWidth: '80vw' }}>
             <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.3)' }}>
               {ev.flyer && (
-                <img src={toDirectPublicStorageUrl(ev.flyer) || ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+                <img src={toDirectPublicStorageUrl(ev.flyer) || ev.flyer} alt={ev.nombre} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
               )}
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing[4], background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
                 <div style={{ 

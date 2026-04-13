@@ -109,10 +109,10 @@ export function useTeacherMy() {
   });
 }
 
-export function useTeacherPublic(id: number) {
+export function useTeacherPublic(teacherId: number) {
   return useQuery({
-    queryKey: ['teacher','public', id],
-    enabled: typeof id === 'number' && !Number.isNaN(id) && id > 0,
+    queryKey: ['teacher-public', teacherId],
+    enabled: typeof teacherId === 'number' && !Number.isNaN(teacherId) && teacherId > 0,
     staleTime: 1000 * 60 * 2, // 2 minutos - datos públicos cambian poco
     gcTime: 1000 * 60 * 10, // 10 minutos en cache
     refetchOnWindowFocus: false,
@@ -121,7 +121,7 @@ export function useTeacherPublic(id: number) {
       const { data, error } = await supabase
         .from(TABLE)
         .select('*')
-        .eq('id', id)
+        .eq('id', teacherId)
         .maybeSingle();
       if (error) throw error;
       return normalizeTeacherProfile(data as TeacherProfile | null);

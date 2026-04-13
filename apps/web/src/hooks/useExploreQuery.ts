@@ -131,6 +131,93 @@ function getNowCDMX(): Date {
   return new Date(Date.UTC(y, m - 1, d, h, min, 0));
 }
 
+const SELECT_ORGANIZERS_EXPLORE = `
+  id,
+  user_id,
+  nombre_publico,
+  bio,
+  media,
+  avatar_url,
+  banner_url,
+  portada_url,
+  zonas,
+  ritmos_seleccionados,
+  updated_at
+`;
+
+const SELECT_TEACHERS_EXPLORE = `
+  id,
+  user_id,
+  nombre_publico,
+  bio,
+  media,
+  avatar_url,
+  portada_url,
+  cronograma,
+  costos,
+  ubicaciones,
+  zonas,
+  ritmos_seleccionados,
+  updated_at
+`;
+
+const SELECT_ACADEMIES_EXPLORE = `
+  id,
+  user_id,
+  nombre_publico,
+  bio,
+  media,
+  avatar_url,
+  portada_url,
+  cronograma,
+  costos,
+  ubicaciones,
+  zonas,
+  ritmos_seleccionados,
+  updated_at
+`;
+
+const SELECT_BRANDS_EXPLORE = `
+  id,
+  user_id,
+  nombre_publico,
+  nombre,
+  bio,
+  media,
+  avatar_url,
+  banner_url,
+  portada_url,
+  zonas,
+  ritmos_seleccionados,
+  updated_at
+`;
+
+const SELECT_SOCIALES_EXPLORE = `
+  id,
+  organizer_id,
+  nombre,
+  descripcion,
+  biografia,
+  estilos,
+  ritmos_seleccionados,
+  zonas,
+  media,
+  created_at,
+  updated_at
+`;
+
+const SELECT_USERS_EXPLORE = `
+  user_id,
+  display_name,
+  bio,
+  avatar_url,
+  media,
+  zonas,
+  ritmos_seleccionados,
+  updated_at,
+  created_at
+`;
+
 /**
  * Determina qué tabla o vista usar para cada tipo de exploración
  * Para eventos y organizadores, usamos las vistas LIVE que solo muestran contenido aprobado/publicado
@@ -142,21 +229,21 @@ function baseSelect(type: ExploreType) {
       return { table: "events_date", select: SELECT_EVENTS_CARD };
     case "organizadores":  
       // Usar vista pública que solo muestra organizadores aprobados
-      return { table: "v_organizers_public", select: "*" };
+      return { table: "v_organizers_public", select: SELECT_ORGANIZERS_EXPLORE };
     case "maestros":       
-      return { table: "profiles_teacher", select: "*" };   // si aún no existe, dejar preparado
+      return { table: "profiles_teacher", select: SELECT_TEACHERS_EXPLORE };   // si aún no existe, dejar preparado
     case "academias":      
-      return { table: "profiles_academy", select: "*" };    // usar profiles_academy
+      return { table: "profiles_academy", select: SELECT_ACADEMIES_EXPLORE };    // usar profiles_academy
     case "marcas":         
-      return { table: "profiles_brand", select: "*" };     // idem
+      return { table: "profiles_brand", select: SELECT_BRANDS_EXPLORE };     // idem
     case "sociales":
       // Eventos padre (sociales) — simplificado para asegurar retorno de filas
-      return { table: "events_parent", select: `*` };
+      return { table: "events_parent", select: SELECT_SOCIALES_EXPLORE };
     case "usuarios":       
       // Usar vista pública que ya filtra por onboarding_complete
-      return { table: "v_user_public", select: "*" };
+      return { table: "v_user_public", select: SELECT_USERS_EXPLORE };
     default:               
-      return { table: "events_date", select: "*" };
+      return { table: "events_date", select: SELECT_EVENTS_CARD };
   }
 }
 
@@ -480,7 +567,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       } else if (parentIds.length > 0) {
         let parentQuery = supabase
           .from("events_date")
-          .select(select as any)
+          .select(SELECT_EVENTS_CARD)
           .eq("estado_publicacion", "publicado")
           .in("parent_id", parentIds as any);
       
@@ -527,7 +614,8 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       const { data: parentMatches } = await (parentQuery as any)
         .order("fecha", { ascending: true, nullsFirst: false })
         .order("hora_inicio", { ascending: true, nullsFirst: false })
-        .order("id", { ascending: true });
+        .order("id", { ascending: true })
+        .limit(10);
       const pmEnd = performance.now();
       perfLog({ hook: 'useExploreQuery', step: 'search_parent_matches_events_date', duration_ms: pmEnd - pmStart, rows: (parentMatches as any[])?.length ?? 0, data: parentMatches });
       

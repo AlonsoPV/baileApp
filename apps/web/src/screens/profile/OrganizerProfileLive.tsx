@@ -1427,7 +1427,7 @@ export function OrganizerProfileLive() {
           <div style={{ width: 350, maxWidth: '80vw' }}>
             <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 5', background: 'rgba(0,0,0,0.3)' }}>
               {ev.flyer && (
-                <img src={toDirectPublicStorageUrl(ev.flyer) || ev.flyer} alt={ev.nombre} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+                <img src={toDirectPublicStorageUrl(ev.flyer) || ev.flyer} alt={ev.nombre} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
               )}
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing[4], background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.0) 100%)', color: '#fff' }}>
                 <div style={{ 

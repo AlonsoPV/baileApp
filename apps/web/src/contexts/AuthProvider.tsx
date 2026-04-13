@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useProfileMode } from '@/state/profileMode';
@@ -307,15 +307,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [qc]);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
     return { data, error };
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     // ✅ Guardrail (localhost / WebViews):
     // If there is a stale/corrupt local session, Supabase may immediately attempt a refresh
     // and emit a "TOKEN_REFRESHED with null session" → the app looks like it logs in and instantly logs out.
@@ -351,9 +351,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     return { data, error };
-  };
+  }, [qc]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       // ✅ ACTUALIZAR ESTADO LOCAL INMEDIATAMENTE (antes de llamar a signOut)
       // Esto asegura que la UI se actualice de forma instantánea
@@ -408,17 +408,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       useProfileMode.getState().setMode("usuario");
       return { error: e };
     }
-  };
+  }, [qc]);
+
+  const value = useMemo(
+    () => ({
+      session,
+      user,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+    }),
+    [session, user, loading, signUp, signIn, signOut],
+  );
 
   return (
-    <Ctx.Provider value={{ 
-      session, 
-      user, 
-      loading, 
-      signUp, 
-      signIn, 
-      signOut 
-    }}>
+    <Ctx.Provider value={value}>
       {children}
     </Ctx.Provider>
   );

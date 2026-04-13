@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
@@ -257,13 +256,7 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
 
   return (
     <LiveLink to={href} asCard={false}>
-      <motion.article
-        className="event-cartelera-card"
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.16 }}
-        whileTap={{ scale: 0.99 }}
-      >
+      <article className="event-cartelera-card">
         <div className="event-cartelera-card__frame">
           {showPlaceholder ? (
             <div className="event-cartelera-card__placeholder" aria-hidden>
@@ -315,7 +308,7 @@ function ExploreEntityCarteleraCard({ variant, item, priority = false }: Explore
             )}
           </div>
         </div>
-      </motion.article>
+      </article>
     </LiveLink>
   );
 }

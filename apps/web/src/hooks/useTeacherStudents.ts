@@ -121,8 +121,8 @@ export function useTeacherStudentsGlobalMetrics(
       };
     },
     refetchInterval: 5000,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 
   return {
@@ -178,8 +178,8 @@ export function useTeacherStudentsList(teacherId: string | number | undefined, f
       }));
     },
     refetchInterval: 5000,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 
   return {
@@ -265,8 +265,8 @@ export function useTeacherStudentDetail(
         })),
       };
     },
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 
   return {

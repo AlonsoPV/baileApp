@@ -80,7 +80,7 @@ function useResponsivePadding() {
   return padding;
 }
 
-export default function FilterBar({
+const FilterBar = React.memo(function FilterBar({
   filters,
   onFiltersChange,
   className = '',
@@ -1747,7 +1747,9 @@ export default function FilterBar({
       </AnimatePresence>
     </div>
   );
-}
+});
+
+export default FilterBar;
 
 // Componente auxiliar: Botón de filtro
 function FilterButton({ 

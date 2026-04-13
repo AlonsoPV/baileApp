@@ -1,8 +1,6 @@
 import React from 'react';
 import { useSearchParams, useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import ClasesLive from '@/components/events/ClasesLive';
 import TeacherCard from '@/components/explore/cards/TeacherCard';
 import AcademyCard from '@/components/explore/cards/AcademyCard';
 import AddToCalendarWithStats from '@/components/AddToCalendarWithStats';
@@ -831,28 +829,22 @@ export default function ClassPublicScreen() {
       <div className="class-actions-row">
         {/* Abrir Maps */}
         {mapsHref && (
-          <motion.a
+          <a
             href={mapsHref}
             target="_blank"
             rel="noopener noreferrer"
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.97 }}
             className="class-hero__cta class-hero__cta--maps"
             aria-label={t('view_on_maps', 'Abrir en Google Maps')}
             title={t('view_on_maps', 'Abrir en Google Maps')}
           >
             <MapPin size={18} strokeWidth={2.25} aria-hidden />
             <span>Maps</span>
-          </motion.a>
+          </a>
         )}
 
         {/* Add to calendar (existente) */}
         {selectedClass && (
-          <motion.div
-            className="class-hero__action-slot class-hero__action-slot--calendar class-hero__cta class-hero__cta--calendar"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.97 }}
-          >
+          <div className="class-hero__action-slot class-hero__action-slot--calendar class-hero__cta class-hero__cta--calendar">
             <AddToCalendarWithStats
               eventId={classStableId || idNum}
               classId={classStableId || undefined}
@@ -1000,7 +992,7 @@ export default function ClassPublicScreen() {
               showAsIcon={false}
               calendarGlyph="lucide-calendar-days"
             />
-          </motion.div>
+          </div>
         )}
       </div>
     );
@@ -1977,11 +1969,8 @@ export default function ClassPublicScreen() {
       `}</style>
       <div className="date-public-inner">
         {/* Hero (oscuro, compacto) */}
-        <motion.section
+        <section
           className="class-hero"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.32 }}
           aria-label={t('class', 'Clase')}
         >
           {heroBgUri && <div className="class-hero__bg" style={{ backgroundImage: `url(${heroBgUri})` }} />}
@@ -1993,23 +1982,17 @@ export default function ClassPublicScreen() {
             <header className="class-hero__topbar">
               <span className="class-hero__eyebrow">{creatorTypeLabel}</span>
               <div className="class-hero__quick-actions">
-                <motion.button
+                <button
                   type="button"
-                  whileHover={{ scale: 1.06 }}
-                  whileTap={{ scale: 0.92 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                   onClick={handleShare}
                   className="class-hero__icon-btn"
                   aria-label={t('share', 'Compartir')}
                   title={t('share', 'Compartir')}
                 >
                   <Share2 size={18} strokeWidth={2.25} aria-hidden />
-                </motion.button>
-                <motion.button
+                </button>
+                <button
                   type="button"
-                  whileHover={{ scale: 1.06 }}
-                  whileTap={{ scale: 0.92 }}
-                  transition={{ type: 'spring', stiffness: 380, damping: 20 }}
                   onClick={onToggleFavorite}
                   disabled={user ? togglingClass : false}
                   className={`class-hero__icon-btn${classFavoriteActive ? ' class-hero__icon-btn--active' : ''}`}
@@ -2021,7 +2004,7 @@ export default function ClassPublicScreen() {
                   }}
                 >
                   {classFavoriteActive ? <Heart size={18} fill="currentColor" strokeWidth={2.25} aria-hidden /> : <Heart size={18} strokeWidth={2.25} aria-hidden />}
-                </motion.button>
+                </button>
               </div>
             </header>
 
@@ -2080,7 +2063,7 @@ export default function ClassPublicScreen() {
               {renderHeroMapsCalendar()}
             </div>
           </div>
-        </motion.section>
+        </section>
 
         {!user && (
           <div
@@ -2208,12 +2191,10 @@ export default function ClassPublicScreen() {
           <div className="class-actions-row">
             {/* WhatsApp (existente) */}
             {user && whatsappNumber && (
-              <motion.a
+              <a
                 href={buildClassWhatsAppUrl(whatsappNumber, whatsappMessageTemplate, classTitle, t('hello_from_db')) || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                whileHover={{ scale: 1.03, y: -1 }}
-                whileTap={{ scale: 0.98 }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -2234,15 +2215,13 @@ export default function ClassPublicScreen() {
               >
                 <FaWhatsapp size={18} />
                 <span>{t('consult_whatsapp')}</span>
-              </motion.a>
+              </a>
             )}
 
             {/* Pago Stripe (existente) */}
             {typeof classPrice === 'number' && classPrice > 0 && !!profile?.stripe_account_id && (
-              <motion.button
+              <button
                 type="button"
-                whileHover={{ scale: 1.03, y: -1 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={handlePayClick}
                 disabled={createCheckout.isPending}
                 style={{
@@ -2271,7 +2250,7 @@ export default function ClassPublicScreen() {
                         classPrice,
                       )}`}
                 </span>
-              </motion.button>
+              </button>
             )}
           </div>
         </section>

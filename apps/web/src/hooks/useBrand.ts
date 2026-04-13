@@ -4,6 +4,29 @@ import { BrandProfile } from '../types/brand';
 import { useAuth } from '@/contexts/AuthProvider';
 
 const TABLE = 'profiles_brand';
+const BRAND_PUBLIC_PROFILE_SELECT = `
+  id,
+  user_id,
+  nombre_publico,
+  nombre,
+  bio,
+  avatar_url,
+  portada_url,
+  media,
+  productos,
+  policies,
+  size_guide,
+  fit_tips,
+  conversion,
+  ritmos,
+  ritmos_seleccionados,
+  zonas,
+  redes_sociales,
+  whatsapp_number,
+  whatsapp_message_template,
+  created_at,
+  updated_at
+`;
 
 export function useMyBrand() {
   const { user, loading: authLoading } = useAuth();
@@ -43,6 +66,26 @@ export function useBrandPublic(id: number) {
       if (error) throw error;
       return data as BrandProfile | null;
     }
+  });
+}
+
+export function useBrandPublicProfile(id?: string | number | null) {
+  const numericId = typeof id === "number" ? id : Number(id);
+
+  return useQuery({
+    queryKey: ["brand-public", id ?? ""],
+    enabled: Number.isFinite(numericId) && numericId > 0,
+    staleTime: 120_000,
+    gcTime: 300_000,
+    queryFn: async (): Promise<BrandProfile | null> => {
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select(BRAND_PUBLIC_PROFILE_SELECT)
+        .eq("id", numericId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as BrandProfile | null;
+    },
   });
 }
 

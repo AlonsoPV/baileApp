@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useCreateEventDate } from "../../hooks/useEventDate";
@@ -381,6 +381,18 @@ export default function OrganizerEventDateCreateScreen() {
       </div>
     );
   }
+
+  const handleScheduleChange = useCallback((cronograma: any[]) => {
+    setDateForm((prev) => ({ ...prev, cronograma }));
+  }, []);
+
+  const handleCostosChange = useCallback((costos: any[]) => {
+    setDateForm((prev) => ({ ...prev, costos }));
+  }, []);
+
+  const handleScheduleCostSaved = useCallback(() => {
+    showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
+  }, [showToast]);
 
   return (
     <>
@@ -864,16 +876,14 @@ export default function OrganizerEventDateCreateScreen() {
               </h3>
               <ScheduleEditor
                 schedule={dateForm.cronograma || []}
-                onChangeSchedule={(cronograma) => setDateForm((prev) => ({ ...prev, cronograma }))}
+                onChangeSchedule={handleScheduleChange}
                 costos={dateForm.costos || []}
-                onChangeCostos={(costos) => setDateForm((prev) => ({ ...prev, costos }))}
+                onChangeCostos={handleCostosChange}
                 ritmos={ritmoTags}
                 zonas={zonaTags}
                 eventFecha={dateForm.fecha}
                 hideCostsSection
-                onSaveCosto={() => {
-                  showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
-                }}
+                onSaveCosto={handleScheduleCostSaved}
               />
             </div>
 

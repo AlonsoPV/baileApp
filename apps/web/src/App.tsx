@@ -1,7 +1,8 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import AppRouter from './AppRouter';
-import { initHotjar, trackPageView } from './lib/hotjar';
+
+const loadHotjar = () => import('./lib/hotjar');
 
 /**
  * Componente que hace scroll automático al top cuando cambia la ruta
@@ -34,7 +35,9 @@ function HotjarTracker() {
   React.useEffect(() => {
     // Inicializar Hotjar solo una vez, después del mount (no bloquea render inicial)
     const timer = setTimeout(() => {
-      initHotjar();
+      void loadHotjar().then(({ initHotjar }) => {
+        initHotjar();
+      });
     }, 0);
 
     return () => clearTimeout(timer);
@@ -45,7 +48,9 @@ function HotjarTracker() {
     if (pathname) {
       // Pequeño delay para asegurar que Hotjar está inicializado
       const timer = setTimeout(() => {
-        trackPageView(pathname);
+        void loadHotjar().then(({ trackPageView }) => {
+          trackPageView(pathname);
+        });
       }, 100);
 
       return () => clearTimeout(timer);

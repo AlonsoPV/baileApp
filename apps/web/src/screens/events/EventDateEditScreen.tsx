@@ -881,6 +881,18 @@ export function EventDateEditScreen() {
     }
   }, [bulkRows, createdDateIdByRow, queryClient, showToast]);
 
+  const handleScheduleChange = useCallback((cronograma: any[]) => {
+    setForm((prev) => ({ ...prev, cronograma }));
+  }, []);
+
+  const handleCostosChange = useCallback((costos: any[]) => {
+    setForm((prev) => ({ ...prev, costos }));
+  }, []);
+
+  const handleScheduleCostSaved = useCallback(() => {
+    showToast('💰 Costo guardado en el formulario. Recuerda presionar Guardar al final.', 'info');
+  }, [showToast]);
+
   return (
     <div
       className="event-date-editor"
@@ -1365,16 +1377,14 @@ export function EventDateEditScreen() {
       <div className="org-editor-card">
         <ScheduleEditor
           schedule={form.cronograma || []}
-          onChangeSchedule={(cronograma) => setForm((prev) => ({ ...prev, cronograma }))}
+          onChangeSchedule={handleScheduleChange}
           costos={form.costos || []}
-          onChangeCostos={(costos) => setForm((prev) => ({ ...prev, costos }))}
+          onChangeCostos={handleCostosChange}
           eventFecha={form.fecha}
           ritmos={ritmoTags}
           zonas={zonaTags}
           hideCostsSection
-          onSaveCosto={() => {
-            showToast('💰 Costo guardado en el formulario. Recuerda presionar Guardar al final.', 'info');
-          }}
+          onSaveCosto={handleScheduleCostSaved}
         />
       </div>
 

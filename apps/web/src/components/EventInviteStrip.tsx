@@ -116,6 +116,8 @@ export function EventInviteStrip({ items }:{ items: EventInviteItem[] }) {
                     <img 
                       src={ev.cover} 
                       alt={ev.title}
+                      loading="lazy"
+                      decoding="async"
                       style={{
                         width: '100%',
                         height: '100%',

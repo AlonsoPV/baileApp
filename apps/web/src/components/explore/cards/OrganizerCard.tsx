@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
@@ -39,17 +38,7 @@ export default function OrganizerCard({ item, priority = false }: OrganizerCardP
     <>
       <style>{EXPLORE_CARD_STYLES}</style>
       <LiveLink to={`/organizer/${item.id}`} asCard={false}>
-        <motion.article
-          className="explore-card explore-card-mobile"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{
-            scale: 1.03,
-            y: -8,
-            transition: { duration: 0.2 }
-          }}
-          whileTap={{ scale: 0.98 }}
-        >
+        <article className="explore-card explore-card-mobile">
           <div className="explore-card-media">
             {showPlaceholder && (
               <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
@@ -75,7 +64,7 @@ export default function OrganizerCard({ item, priority = false }: OrganizerCardP
           <div className="explore-card-content">
             <h3 className="explore-card-title">{item?.nombre_publico || 'Organizador'}</h3>
           </div>
-        </motion.article>
+        </article>
       </LiveLink>
     </>
   );

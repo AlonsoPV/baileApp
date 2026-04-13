@@ -196,8 +196,8 @@ export function useAcademyClassMetrics(academyId?: number) {
       };
     },
     refetchInterval: 3000, // Refrescar cada 3 segundos
-    staleTime: 0, // Los datos se consideran obsoletos inmediatamente
-    gcTime: 0, // No cachear los datos (gcTime reemplaza a cacheTime en React Query v5)
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 
   return {

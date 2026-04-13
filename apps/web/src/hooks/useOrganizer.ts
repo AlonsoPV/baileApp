@@ -40,9 +40,8 @@ export function useMyOrganizer() {
       }
       return data || null;
     },
-    staleTime: 0, // Siempre considerar los datos como obsoletos para forzar refetch
-    refetchOnWindowFocus: true, // Refrescar cuando vuelves a la ventana para detectar aprobaciones
-    refetchInterval: 30000, // Refrescar cada 30 segundos para detectar cambios de aprobación
+    staleTime: 30_000, // Permite reutilizar cache breve sin mantener polling constante
+    refetchOnWindowFocus: true, // Refrescar al volver a la ventana si ya está stale
     placeholderData: (previousData) => previousData, // Keep previous data during transitions
     retry: (failureCount, error: any) => {
       // No reintentar si es error 406 o PGRST116

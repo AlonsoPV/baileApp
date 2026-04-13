@@ -221,7 +221,7 @@ const getTipoIcon = (tipo?: ScheduleItem["tipo"]) => {
   }
 };
 
-export default function ScheduleEditorPlus({
+const ScheduleEditorPlus = React.memo(function ScheduleEditorPlus({
   schedule = [],
   onChangeSchedule,
   costos = [],
@@ -1238,4 +1238,6 @@ export default function ScheduleEditorPlus({
       */}
     </div>
   );
-}
+});
+
+export default ScheduleEditorPlus;

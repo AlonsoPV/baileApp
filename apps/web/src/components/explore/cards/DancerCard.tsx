@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import LiveLink from "../../LiveLink";
 import { useTags } from "../../../hooks/useTags";
 import { supabase } from "../../../lib/supabase";
@@ -119,13 +118,7 @@ export default function DancerCard({ item, to, priority = false }: Props) {
     <>
       <style>{EXPLORE_CARD_STYLES}</style>
       <LiveLink to={href} asCard={false}>
-        <motion.article
-          className="explore-card explore-card-mobile"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.2 } }}
-          whileTap={{ scale: 0.98 }}
-        >
+        <article className="explore-card explore-card-mobile">
           <div className="explore-card-media">
             {showPlaceholder && (
               <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
@@ -161,7 +154,7 @@ export default function DancerCard({ item, to, priority = false }: Props) {
               ))}
             </div>
           </div>
-        </motion.article>
+        </article>
       </LiveLink>
     </>
   );
