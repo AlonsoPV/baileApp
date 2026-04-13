@@ -604,7 +604,9 @@ export default function OrganizerProfileEditor() {
   // Estado local para edición de ubicaciones por social (no se guarda en profiles_organizer)
   const [locationsDraftByParent, setLocationsDraftByParent] = useState<Record<number, any[]>>({});
 
-  // Estado para formulario de crear fecha
+  // Estado para formulario de crear fecha.
+  // `selectedParentId` se conserva solo como detalle interno para casos
+  // derivados (ej. editar desde una fecha existente o invalidar caches).
   const [showDateForm, setShowDateForm] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
   const createEventDate = useCreateEventDate();
@@ -1229,10 +1231,11 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      // Asegurar parent_id: si hay evento(s) y no hay selección, usar el primero para que la fecha quede vinculada
+      // Si no hay parent seleccionado explicitamente, dejamos que `useCreateEventDate`
+      // resuelva o cree el padre automaticamente para este organizador.
       const parentIdToUse: number | null = selectedParentId
         ? Number(selectedParentId)
-        : (parents && parents.length > 0 ? Number((parents[0] as any).id) : null);
+        : null;
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -1377,10 +1380,11 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      // Asegurar parent_id cuando hay eventos (igual que en crear fecha única)
+      // El formulario ya no fuerza un social/padre visible; si no hay uno
+      // seleccionado por un flujo interno, el hook lo resuelve.
       const parentIdToUse: number | null = selectedParentId
         ? Number(selectedParentId)
-        : (parents && parents.length > 0 ? Number((parents[0] as any).id) : null);
+        : null;
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -1455,6 +1459,8 @@ export default function OrganizerProfileEditor() {
 
       const created = await createEventDate.mutateAsync(payloads);
       const createdDates = Array.isArray(created) ? created : [created];
+      const resolvedParentIdForKeys =
+        createdDates.find((row: any) => typeof row?.parent_id === 'number')?.parent_id ?? parentIdToUse;
 
       // Mapear rowId -> dateId de forma robusta (sin depender del orden).
       // Key: fecha|hora_inicio|hora_fin|lugar|ciudad|parent_id
@@ -1491,7 +1497,7 @@ export default function OrganizerProfileEditor() {
           hora_fin: row.hora_fin || null,
           lugar: resolvedLugar,
           ciudad: resolvedCiudad,
-          parent_id: parentIdToUse,
+          parent_id: resolvedParentIdForKeys,
         });
         const arr = buckets.get(key) || [];
         const id = arr.shift();
@@ -4909,10 +4915,6 @@ export default function OrganizerProfileEditor() {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       setShowDateForm(!showDateForm);
-                      // Al abrir el formulario, fijar parent por defecto si hay al menos uno (así parent_id nunca queda null)
-                      if (!showDateForm && parents && parents.length > 0 && !selectedParentId) {
-                        setSelectedParentId((parents[0] as any).id);
-                      }
                     }}
                     className={`org-events-action-button ${showDateForm ? 'org-events-action-button--active' : 'org-events-action-button--primary'}`}
                   >

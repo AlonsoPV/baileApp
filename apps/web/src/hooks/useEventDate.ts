@@ -1,6 +1,99 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 
+type EventDateCreatePayload = Record<string, any>;
+
+function toOrganizerId(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function needsResolvedParent(payload: EventDateCreatePayload): boolean {
+  const organizerId = toOrganizerId(payload.organizer_id);
+  const parentId = toOrganizerId(payload.parent_id);
+  return organizerId != null && parentId == null;
+}
+
+function buildMinimalParentFromDate(payload: EventDateCreatePayload, organizerId: number) {
+  const bio = typeof payload.biografia === "string" ? payload.biografia.trim() : "";
+  const name = typeof payload.nombre === "string" ? payload.nombre.trim() : "";
+  return {
+    organizer_id: organizerId,
+    nombre: name || "Social sin nombre",
+    descripcion: bio || null,
+    biografia: bio,
+    ritmos_seleccionados: Array.isArray(payload.ritmos_seleccionados) ? payload.ritmos_seleccionados : [],
+    estilos: Array.isArray(payload.estilos) ? payload.estilos : [],
+    zonas: Array.isArray(payload.zonas) ? payload.zonas : [],
+    ubicaciones: Array.isArray(payload.ubicaciones) ? payload.ubicaciones : [],
+    media: [],
+  };
+}
+
+async function resolveParentIdsForPayloads(payloads: EventDateCreatePayload[]) {
+  const organizerIdsNeedingParent = [
+    ...new Set(
+      payloads
+        .filter(needsResolvedParent)
+        .map((payload) => toOrganizerId(payload.organizer_id))
+        .filter((id): id is number => id != null)
+    ),
+  ];
+
+  if (organizerIdsNeedingParent.length === 0) {
+    return payloads;
+  }
+
+  const firstParentByOrganizer: Record<number, number> = {};
+  const { data: parents, error: parentsError } = await supabase
+    .from("events_parent")
+    .select("id, organizer_id")
+    .in("organizer_id", organizerIdsNeedingParent)
+    .order("created_at", { ascending: false });
+
+  if (parentsError) {
+    console.error("[useCreateEventDate] Error fetching parents by organizer", parentsError);
+    throw parentsError;
+  }
+
+  (parents || []).forEach((parent: any) => {
+    const organizerId = toOrganizerId(parent.organizer_id);
+    const parentId = toOrganizerId(parent.id);
+    if (organizerId != null && parentId != null && !(organizerId in firstParentByOrganizer)) {
+      firstParentByOrganizer[organizerId] = parentId;
+    }
+  });
+
+  for (const organizerId of organizerIdsNeedingParent) {
+    if (firstParentByOrganizer[organizerId] != null) continue;
+
+    const sourcePayload = payloads.find((payload) => toOrganizerId(payload.organizer_id) === organizerId);
+    const minimalParent = buildMinimalParentFromDate(sourcePayload || {}, organizerId);
+    const { data: newParent, error: parentErr } = await supabase
+      .from("events_parent")
+      .insert(minimalParent)
+      .select("id")
+      .single();
+
+    if (parentErr) {
+      console.error("[useCreateEventDate] Error creating parent for organizer", organizerId, parentErr);
+      throw parentErr;
+    }
+
+    const newParentId = toOrganizerId(newParent?.id);
+    if (newParentId != null) {
+      firstParentByOrganizer[organizerId] = newParentId;
+    }
+  }
+
+  return payloads.map((payload) => {
+    if (!needsResolvedParent(payload)) return payload;
+    const organizerId = toOrganizerId(payload.organizer_id);
+    const resolvedParentId = organizerId != null ? firstParentByOrganizer[organizerId] : null;
+    return resolvedParentId != null ? { ...payload, parent_id: resolvedParentId } : payload;
+  });
+}
+
 export function useEventDatesByParent(parentId?: number) {
   return useQuery({
     queryKey: ["event", "dates", parentId],
@@ -61,63 +154,8 @@ export function useCreateEventDate() {
   return useMutation({
     mutationFn: async (payload: any | any[]) => {
       const isArray = Array.isArray(payload);
-      let payloads = isArray ? [...payload] : [{ ...payload }];
-
-      // Usar organizer_id como "parent": si viene organizer_id y no parent_id, buscar o crear
-      // un events_parent para ese organizador y usar su id como parent_id (una fecha = un parent por org).
-      const organizerIdsNeedingParent = [...new Set(
-        payloads
-          .filter((p: any) => (p.organizer_id != null && p.organizer_id !== '') && (p.parent_id == null || p.parent_id === ''))
-          .map((p: any) => Number(p.organizer_id))
-          .filter((id: number) => Number.isFinite(id))
-      )];
-      const firstParentByOrganizer: Record<number, number> = {};
-
-      if (organizerIdsNeedingParent.length > 0) {
-        const { data: parents } = await supabase
-          .from("events_parent")
-          .select("id, organizer_id")
-          .in("organizer_id", organizerIdsNeedingParent)
-          .order("created_at", { ascending: false });
-        (parents || []).forEach((p: any) => {
-          const oid = Number(p.organizer_id);
-          if (Number.isFinite(oid) && !(oid in firstParentByOrganizer) && p.id != null) {
-            firstParentByOrganizer[oid] = Number(p.id);
-          }
-        });
-
-        for (const oid of organizerIdsNeedingParent) {
-          if (firstParentByOrganizer[oid] != null) continue;
-          const firstPayload = payloads.find((p: any) => Number(p.organizer_id) === oid);
-          const { data: newParent, error: parentErr } = await supabase
-            .from("events_parent")
-            .insert({
-              organizer_id: oid,
-              nombre: firstPayload?.nombre ?? "Mi evento",
-              descripcion: firstPayload?.biografia ?? null,
-              estilos: firstPayload?.estilos ?? [],
-              zonas: firstPayload?.zonas ?? [],
-              media: [],
-            })
-            .select("id")
-            .single();
-          if (parentErr) {
-            console.error("[useCreateEventDate] Error creating parent for organizer", oid, parentErr);
-            throw parentErr;
-          }
-          if (newParent?.id != null) firstParentByOrganizer[oid] = Number(newParent.id);
-        }
-
-        payloads = payloads.map((p: any) => {
-          const oid = p.organizer_id != null ? Number(p.organizer_id) : null;
-          const needParent = oid != null && Number.isFinite(oid) && (p.parent_id == null || p.parent_id === '');
-          const resolvedParentId = needParent ? firstParentByOrganizer[oid] : undefined;
-          if (resolvedParentId != null) {
-            return { ...p, parent_id: resolvedParentId };
-          }
-          return p;
-        });
-      }
+      const initialPayloads = isArray ? payload.map((item: any) => ({ ...item })) : [{ ...payload }];
+      const payloads = await resolveParentIdsForPayloads(initialPayloads);
 
       console.log(`[useCreateEventDate] Creating ${payloads.length} date(s)`);
 
