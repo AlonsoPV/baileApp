@@ -55,25 +55,38 @@ function getManualChunk(id: string): string | undefined {
   return undefined;
 }
 
-function supabasePreconnectPlugin() {
+function htmlHeadOptimizationsPlugin() {
   let viteMode = "production";
   return {
-    name: "inject-supabase-preconnect",
+    name: "html-head-optimizations",
     configResolved(config: { mode: string }) {
       viteMode = config.mode;
     },
-    transformIndexHtml(html: string) {
+    transformIndexHtml(html: string, ctx?: { bundle?: Record<string, unknown> }) {
       const env = loadEnv(viteMode, process.cwd(), "");
       const base = (env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
-      if (!base) return html;
-      const tag = `    <link rel="preconnect" href="${base}" crossorigin />\n`;
-      return html.replace(/<\/head>/i, `${tag}  </head>`);
+      let nextHtml = html;
+      const tags: string[] = [];
+
+      if (ctx?.bundle && Object.prototype.hasOwnProperty.call(ctx.bundle, "assets/main.css")) {
+        nextHtml = nextHtml.replace(
+          `<link rel="stylesheet" crossorigin href="/assets/main.css">`,
+          `    <link rel="preload" href="/assets/main.css" as="style" />\n    <link rel="stylesheet" crossorigin href="/assets/main.css">`,
+        );
+      }
+
+      if (base) {
+        tags.push(`    <link rel="preconnect" href="${base}" crossorigin />`);
+      }
+
+      if (!tags.length) return nextHtml;
+      return nextHtml.replace(/<\/head>/i, `${tags.join("\n")}\n  </head>`);
     },
   };
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), supabasePreconnectPlugin()],
+  plugins: [react(), tailwindcss(), htmlHeadOptimizationsPlugin()],
   test: {
     dir: "src",
     // Keep the suite intentionally small and stable.
@@ -132,6 +145,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: getManualChunk,
+        assetFileNames: (assetInfo) => {
+          const originalName = assetInfo.names?.[0] ?? assetInfo.name ?? "";
+          if (originalName === "index.css") {
+            return "assets/main.css";
+          }
+          return "assets/[name]-[hash][extname]";
+        },
       },
     },
   },
