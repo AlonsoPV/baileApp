@@ -12,11 +12,6 @@ import OnboardingGate from './guards/OnboardingGate';
 // System Screens
 import NotFound from './screens/system/NotFound';
 
-// Deep-link / WebView: these routes must not rely on a separate lazy chunk (second network
-// fetch often fails in RN WebView and RouteLoadErrorBoundary shows "No se pudo cargar la pantalla").
-import EventDatePublicScreen from './screens/events/EventDatePublicScreen';
-import ClassPublicScreen from './screens/classes/ClassPublicScreen';
-
 import StripeOnboardingSuccess from './screens/payments/StripeOnboardingSuccess';
 import StripeOnboardingRefresh from './screens/payments/StripeOnboardingRefresh';
 import PaymentSuccess from './screens/payments/PaymentSuccess';
@@ -29,6 +24,8 @@ const Login = React.lazy(() =>
 const Signup = React.lazy(() =>
   import('./screens/auth/Signup').then((m) => ({ default: m.Signup })),
 );
+const EventDatePublicScreen = React.lazy(() => import('./screens/events/EventDatePublicScreen'));
+const ClassPublicScreen = React.lazy(() => import('./screens/classes/ClassPublicScreen'));
 const AuthCallback = React.lazy(() => import('./screens/auth/AuthCallback'));
 const PinSetup = React.lazy(() => import('./screens/auth/PinSetup'));
 const PinLogin = React.lazy(() => import('./screens/auth/PinLogin'));
@@ -137,6 +134,24 @@ function PublicDeepLinkRouteSuspense({ children }: { children: React.ReactNode }
   return <RouteSuspense layout="appContent">{children}</RouteSuspense>;
 }
 
+function NativeAwarePublicEventDateRoute() {
+  const location = useLocation();
+  return (
+    <PublicDeepLinkRouteSuspense key={isNativeApp(location.search) ? "native" : "web"}>
+      <EventDatePublicScreen />
+    </PublicDeepLinkRouteSuspense>
+  );
+}
+
+function NativeAwarePublicClassRoute() {
+  const location = useLocation();
+  return (
+    <PublicDeepLinkRouteSuspense key={isNativeApp(location.search) ? "native" : "web"}>
+      <ClassPublicScreen />
+    </PublicDeepLinkRouteSuspense>
+  );
+}
+
 function OrganizerEditorRouteSuspense({ children }: { children: React.ReactNode }) {
   return <RouteSuspense layout="appContent">{children}</RouteSuspense>;
 }
@@ -223,7 +238,7 @@ export default function AppRouter() {
           <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
           <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
           <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
-          <Route path="/social/fecha/:id" element={<PublicDeepLinkRouteSuspense><EventDatePublicScreen /></PublicDeepLinkRouteSuspense>} />
+          <Route path="/social/fecha/:id" element={<NativeAwarePublicEventDateRoute />} />
           <Route path="/profile/organizer" element={<OrganizerProfileLiveNew />} />
           <Route path="/profile/organizer/:id" element={<OrganizerPublicScreen />} />
           <Route path="/academia/:academyId" element={<AcademyPublicScreen />} />
@@ -242,8 +257,8 @@ export default function AppRouter() {
           <Route path="/competition-groups/:id" element={<CompetitionGroupDetail />} />
           <Route path="/competition-groups/:id/edit" element={<CompetitionGroupForm />} />
           {/* Clase pública (usa query o params) */}
-          <Route path="/clase" element={<ClassPublicScreen />} />
-          <Route path="/clase/:type/:id" element={<ClassPublicScreen />} />
+          <Route path="/clase" element={<NativeAwarePublicClassRoute />} />
+          <Route path="/clase/:type/:id" element={<NativeAwarePublicClassRoute />} />
           {/* Challenges (público: lista y detalle) */}
           <Route path="/challenges" element={<ChallengesList />} />
           <Route path="/challenges/:id" element={<ChallengeDetail />} />

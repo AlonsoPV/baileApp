@@ -66,6 +66,17 @@ export default function HorizontalSlider<T>({
     clientWidth: 0,
     maxScrollLeft: 0,
   });
+  const itemMetricsRef = useRef<{
+    scrollPaddingLeft: number;
+    itemOffsets: number[];
+    itemStep: number;
+    itemCount: number;
+  }>({
+    scrollPaddingLeft: 0,
+    itemOffsets: [],
+    itemStep: 0,
+    itemCount: 0,
+  });
   const isScrollingRef = useRef(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const navStateRef = useRef<{ canLeft: boolean; canRight: boolean; activeIndex: number }>({
@@ -103,7 +114,25 @@ export default function HorizontalSlider<T>({
     const maxScrollLeft = Math.max(0, el.scrollWidth - clientWidth);
     layoutRef.current.clientWidth = clientWidth;
     layoutRef.current.maxScrollLeft = maxScrollLeft;
-  }, []);
+    const nodes = Array.from(el.querySelectorAll<HTMLElement>("[data-carousel-item]"));
+    const cs = getComputedStyle(el);
+    const rawPaddingLeft = cs.scrollPaddingLeft || "0";
+    const parsedPaddingLeft = parseFloat(rawPaddingLeft);
+    const itemOffsets = nodes.map((node) => node.offsetLeft);
+    const itemStep =
+      itemOffsets.length > 1
+        ? Math.max(1, itemOffsets[1] - itemOffsets[0])
+        : nodes[0]
+          ? Math.max(1, nodes[0].offsetWidth)
+          : Math.max(1, Math.round(clientWidth * scrollStep));
+
+    itemMetricsRef.current = {
+      scrollPaddingLeft: Number.isFinite(parsedPaddingLeft) ? parsedPaddingLeft : 0,
+      itemOffsets,
+      itemStep,
+      itemCount: nodes.length,
+    };
+  }, [scrollStep]);
 
   useEffect(() => {
     updateLayoutMetrics();
@@ -162,39 +191,26 @@ export default function HorizontalSlider<T>({
     return Array.from(scroller.querySelectorAll<HTMLElement>("[data-carousel-item]"));
   }, []);
 
-  const getScrollPaddingLeftPx = useCallback((el: HTMLElement) => {
-    const cs = getComputedStyle(el);
-    const raw = cs.scrollPaddingLeft || "0";
-    const n = parseFloat(raw);
-    return Number.isFinite(n) ? n : 0;
-  }, []);
-
   const getNearestItemIndex = useCallback((scroller: HTMLElement) => {
-    const nodes = getCarouselItems(scroller);
-    if (!nodes.length) return -1;
+    const metrics = itemMetricsRef.current;
+    if (!metrics.itemCount) return -1;
     const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
-    if (isMobileViewport && nodes.length > 6) {
-      const paddingLeft = getScrollPaddingLeftPx(scroller);
-      const inferredStep =
-        nodes.length > 1
-          ? Math.max(1, nodes[1].offsetLeft - nodes[0].offsetLeft)
-          : Math.max(1, nodes[0].offsetWidth);
-      const approxIndex = Math.round((scroller.scrollLeft + paddingLeft) / inferredStep);
-      return Math.max(0, Math.min(nodes.length - 1, approxIndex));
+    if (isMobileViewport && metrics.itemCount > 6) {
+      const approxIndex = Math.round((scroller.scrollLeft + metrics.scrollPaddingLeft) / metrics.itemStep);
+      return Math.max(0, Math.min(metrics.itemCount - 1, approxIndex));
     }
-    const paddingLeft = getScrollPaddingLeftPx(scroller);
-    const targetLeft = scroller.scrollLeft + paddingLeft;
+    const targetLeft = scroller.scrollLeft + metrics.scrollPaddingLeft;
     let nearestIndex = 0;
     let nearestDistance = Number.POSITIVE_INFINITY;
-    for (let i = 0; i < nodes.length; i += 1) {
-      const distance = Math.abs(nodes[i].offsetLeft - targetLeft);
+    for (let i = 0; i < metrics.itemOffsets.length; i += 1) {
+      const distance = Math.abs(metrics.itemOffsets[i] - targetLeft);
       if (distance < nearestDistance) {
         nearestDistance = distance;
         nearestIndex = i;
       }
     }
     return nearestIndex;
-  }, [getCarouselItems, getScrollPaddingLeftPx]);
+  }, []);
 
   const applyActiveItemClass = useCallback((scroller: HTMLElement, activeIndex: number) => {
     const nodes = getCarouselItems(scroller);
@@ -211,9 +227,10 @@ export default function HorizontalSlider<T>({
     const el = scrollerRef.current;
     if (!el) return;
     const itemNodes = getCarouselItems(el);
+    const { clientWidth, maxScrollLeft } = layoutRef.current;
     // En móviles/tabs, el slider puede medir 0 en primer render.
     // Si hay más de 1 item, mantenemos "Siguiente" habilitado de forma provisional.
-    if (el.clientWidth <= 0 || el.scrollWidth <= 0 || itemNodes.length === 0) {
+    if (clientWidth <= 0 || maxScrollLeft < 0 || itemNodes.length === 0) {
       const provisionalCanRight = (items?.length ?? 0) > 1;
       if (navStateRef.current.canLeft !== false) {
         navStateRef.current.canLeft = false;
@@ -500,7 +517,11 @@ export default function HorizontalSlider<T>({
               Math.min(nodes.length - 1, startIndex + (totalDx < 0 ? 1 : -1)),
             );
           }
-          const targetLeft = Math.max(0, nodes[targetIndex].offsetLeft - getScrollPaddingLeftPx(el));
+          const targetLeft = Math.max(
+            0,
+            (itemMetricsRef.current.itemOffsets[targetIndex] ?? nodes[targetIndex].offsetLeft) -
+              itemMetricsRef.current.scrollPaddingLeft,
+          );
           el.scrollTo({ left: targetLeft, behavior: "smooth" });
           navStateRef.current.activeIndex = targetIndex;
           applyActiveItemClass(el, targetIndex);
@@ -527,7 +548,6 @@ export default function HorizontalSlider<T>({
     allowUserScroll,
     getCarouselItems,
     getNearestItemIndex,
-    getScrollPaddingLeftPx,
     isAndroidTouch,
     items?.length,
     scheduleNavStateUpdate,
@@ -611,37 +631,30 @@ export default function HorizontalSlider<T>({
     }
   }, []);
 
-  const getGapPx = useCallback((el: HTMLElement) => {
-    const cs = getComputedStyle(el);
-    const raw = cs.columnGap || cs.gap || "0";
-    const n = parseFloat(raw);
-    return Number.isFinite(n) ? n : 0;
-  }, []);
-
   const getScrollStep = useCallback((scroller: HTMLElement) => {
-    const item = scroller.querySelector<HTMLElement>("[data-carousel-item]");
-    const gapValue = getGapPx(scroller);
-    if (item) return item.offsetWidth + gapValue;
+    if (itemMetricsRef.current.itemStep > 0) return itemMetricsRef.current.itemStep;
     return Math.round(scroller.clientWidth * scrollStep);
-  }, [getGapPx, scrollStep]);
+  }, [scrollStep]);
 
   const scrollByCard = useCallback((dir: 1 | -1) => {
     const el = scrollerRef.current;
     if (!el) return;
     const itemNodes = getCarouselItems(el);
     const currentIndex = getNearestItemIndex(el);
-    const scrollPaddingLeft = getScrollPaddingLeftPx(el);
+    const scrollPaddingLeft = itemMetricsRef.current.scrollPaddingLeft;
     const step = getScrollStep(el);
-    const before = el.scrollLeft;
     if (itemNodes.length > 0 && currentIndex >= 0) {
       const nextIndex = Math.max(0, Math.min(itemNodes.length - 1, currentIndex + dir));
-      const targetLeft = Math.max(0, itemNodes[nextIndex].offsetLeft - scrollPaddingLeft);
+      const targetLeft = Math.max(
+        0,
+        (itemMetricsRef.current.itemOffsets[nextIndex] ?? itemNodes[nextIndex].offsetLeft) - scrollPaddingLeft,
+      );
       el.scrollTo({ left: targetLeft, behavior: "smooth" });
     } else {
       el.scrollBy({ left: dir * step, behavior: "smooth" });
     }
     scheduleNavStateUpdate();
-  }, [getCarouselItems, getNearestItemIndex, getScrollPaddingLeftPx, getScrollStep, scheduleNavStateUpdate]);
+  }, [getCarouselItems, getNearestItemIndex, getScrollStep, scheduleNavStateUpdate]);
 
   const navButtonBottomStyle: React.CSSProperties = {
     width: 42,

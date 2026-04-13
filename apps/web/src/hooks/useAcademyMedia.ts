@@ -185,10 +185,37 @@ export function useAcademyMedia() {
     },
   });
 
+  const replaceMedia = useMutation({
+    mutationFn: async (nextList: MediaItemWithSlot[]) => {
+      if (!academyId) throw new Error("No academy");
+      await save(nextList);
+      return nextList;
+    },
+    onMutate: async (nextList) => {
+      const key = ["academy", "media", academyId] as const;
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<MediaItemWithSlot[]>(key);
+      qc.setQueryData(key, nextList);
+      return { previous };
+    },
+    onError: (_error, _nextList, context) => {
+      const key = ["academy", "media", academyId] as const;
+      if (context?.previous) qc.setQueryData(key, context.previous);
+    },
+    onSuccess: (nextList) => {
+      qc.setQueryData(["academy", "media", academyId], nextList);
+      qc.invalidateQueries({ queryKey: ["academy", "media", academyId] });
+      qc.invalidateQueries({ queryKey: ["academy", "mine"] });
+      qc.invalidateQueries({ queryKey: ["academy", "public", academyId] });
+      qc.invalidateQueries({ queryKey: ["academy"] });
+    },
+  });
+
   return { 
     media: q.data || [], 
     isLoading: q.isLoading, 
     add, 
-    remove 
+    remove,
+    replaceMedia,
   };
 }

@@ -43,24 +43,39 @@ export default function AppShell() {
     try { document.documentElement.style.overflow = ""; } catch {}
   }, [menuOpen]);
 
-  // Sync content top offset with real navbar height (useLayoutEffect = antes del pintado → menos CLS).
-  React.useLayoutEffect(() => {
+  // Sync content top offset with real navbar height without forcing synchronous layout during boot.
+  React.useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const setNavOffset = () => {
+    const setNavOffset = (nextHeight?: number) => {
       const nav = document.querySelector('.nav-root') as HTMLElement | null;
       if (!nav) return;
-      const h = Math.max(0, Math.round(nav.getBoundingClientRect().height));
+      const measuredHeight =
+        typeof nextHeight === 'number' && Number.isFinite(nextHeight)
+          ? nextHeight
+          : nav.offsetHeight;
+      const h = Math.max(0, Math.round(measuredHeight));
       document.documentElement.style.setProperty('--app-navbar-offset', `${h}px`);
     };
 
     setNavOffset();
-    const raf = requestAnimationFrame(setNavOffset);
+    const raf = requestAnimationFrame(() => setNavOffset());
+    const nav = document.querySelector('.nav-root') as HTMLElement | null;
+    const ro =
+      nav && typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver((entries) => {
+            const entry = entries[0];
+            if (!entry) return;
+            setNavOffset(entry.contentRect.height);
+          })
+        : null;
+    if (nav && ro) ro.observe(nav);
     window.addEventListener('resize', setNavOffset);
     window.addEventListener('orientationchange', setNavOffset as EventListener);
 
     return () => {
       cancelAnimationFrame(raf);
+      ro?.disconnect();
       window.removeEventListener('resize', setNavOffset);
       window.removeEventListener('orientationchange', setNavOffset as EventListener);
     };
@@ -144,14 +159,14 @@ export default function AppShell() {
           overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
-          padding-top: var(--app-navbar-offset);
+          padding-top: var(--app-navbar-offset, 64px);
           padding-left: 1rem;
           padding-right: 1rem;
           padding-bottom: 0rem;
         }
         @media (max-width: 768px) {
           .app-shell-content {
-            padding-top: var(--app-navbar-offset);
+            padding-top: var(--app-navbar-offset, 64px);
             padding-bottom: 0.25rem;
             padding-left: 0.75rem;
             padding-right: 0.75rem;
@@ -161,14 +176,14 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-shell-content {
-            padding-top: var(--app-navbar-offset);
+            padding-top: var(--app-navbar-offset, 64px);
             padding-bottom: .25rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
           }
         }
         .app-shell-content.android-tight-top {
-          padding-top: max(0px, calc(var(--app-navbar-offset) - 2px)) !important;
+          padding-top: max(0px, calc(var(--app-navbar-offset, 64px) - 2px)) !important;
         }
         @media (max-width: 430px) {
           .app-shell-content {

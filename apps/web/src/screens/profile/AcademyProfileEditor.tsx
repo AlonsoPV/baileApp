@@ -8,11 +8,10 @@ import RitmosChips from "@/components/RitmosChips";
 import { RITMOS_CATALOG } from "@/lib/ritmosCatalog";
 import { useHydratedForm } from "../../hooks/useHydratedForm";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
-import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
+import { getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
 import { ProfileNavigationToggle } from "../../components/profile/ProfileNavigationToggle";
-import { PhotoManagementSection } from "../../components/profile/PhotoManagementSection";
-import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
+import OrganizerGalleryEditor from "../../components/profile/gallery/OrganizerGalleryEditor";
 import TeacherCard from "../../components/explore/cards/TeacherCard";
 import FAQEditor from "../../components/common/FAQEditor";
 import ReviewsEditor from "../../components/common/ReviewsEditor";
@@ -182,9 +181,22 @@ const STYLES = `
         .academy-editor-inner h2,
         .academy-editor-inner h3,
         .academy-editor-card h2,
+        .org-editor-card h2,
+        .org-editor-card h3,
         .org-editor__card h2 {
           color: #fff;
           text-shadow: rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px;
+        }
+        .org-editor-card {
+          margin-bottom: 2rem;
+          padding: 1.2rem;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          color: #FFFFFF;
+        }
+        .org-editor-card p {
+          color: rgba(255, 255, 255, 0.9);
         }
         .photos-two-columns {
           display: grid;
@@ -874,7 +886,9 @@ export default function AcademyProfileEditor() {
   }, [user?.id, authLoading, academy?.id, isLoading, approvedRoles]);
   const { data: allTags } = useTags();
   const { allowedIds, isLoading: allowedLoading } = useAllowedRitmos();
-  const { media, add, remove } = useAcademyMedia();
+  const { media, add, remove, replaceMedia } = useAcademyMedia();
+  const [uploading, setUploading] = React.useState<Record<string, boolean>>({});
+  const [removing, setRemoving] = React.useState<Record<string, boolean>>({});
   const upsert = useUpsertAcademy();
   const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
   const [editInitial, setEditInitial] = React.useState<any>(undefined);
@@ -1400,25 +1414,43 @@ export default function AcademyProfileEditor() {
     [profileId, setStatusMsg, upsert, setField, showToast],
   );
 
-  const uploadFile = useCallback(async (file: File, slot: string) => {
-    try {
-      await add.mutateAsync({ file, slot });
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    }
-  }, [add]);
-
-  const removeFile = useCallback(async (slot: string) => {
-    try {
-      const mediaItem = getMediaBySlot(media as unknown as MediaSlotItem[], slot) as any;
-      const pathOrId = mediaItem?.id ?? mediaItem?.path;
-      if (pathOrId) {
-        await remove.mutateAsync(pathOrId);
+  const uploadFile = useCallback(
+    async (file: File, slot: string, kind: "photo" | "video" = "photo") => {
+      setUploading((prev) => ({ ...prev, [slot]: true }));
+      try {
+        await add.mutateAsync({ file, slot });
+        showToast(`${kind === "photo" ? "Foto" : "Video"} subido correctamente`, "success");
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        showToast("Error al subir el archivo", "error");
+      } finally {
+        setUploading((prev) => ({ ...prev, [slot]: false }));
       }
-    } catch (error) {
-      console.error('Error removing file:', error);
-    }
-  }, [media, remove]);
+    },
+    [add, showToast],
+  );
+
+  const removeFile = useCallback(
+    async (slot: string) => {
+      setRemoving((prev) => ({ ...prev, [slot]: true }));
+      try {
+        const mediaItem = getMediaBySlot(media as unknown as MediaSlotItem[], slot) as any;
+        const pathOrId = mediaItem?.id ?? mediaItem?.path;
+        if (pathOrId) {
+          await remove.mutateAsync(pathOrId);
+          showToast("Archivo eliminado", "success");
+        } else {
+          showToast("No se encontró el archivo", "error");
+        }
+      } catch (error) {
+        console.error("Error removing file:", error);
+        showToast("Error al eliminar el archivo", "error");
+      } finally {
+        setRemoving((prev) => ({ ...prev, [slot]: false }));
+      }
+    },
+    [media, remove, showToast],
+  );
 
   // Memoizar datos derivados de ritmos y zonas
   const ritmoTags = useMemo(() => (allTags || []).filter((t: any) => t.tipo === 'ritmo'), [allTags]);
@@ -3547,73 +3579,25 @@ export default function AcademyProfileEditor() {
                 })()}
               </div>
 
-              {/* Gestión de Fotos - Dos Columnas */}
-              <div className="media-management-section" style={{ marginBottom: '3rem' }}>
-                <div className="media-management-header">
-                  <div className="media-management-icon">
-                    📷
-                  </div>
-                  <div>
-                    <h2 style={{
-                      fontSize: '1.75rem',
-                      fontWeight: 900,
-                      margin: 0,
-                      color: '#fff',
-                      textShadow: '0 2px 8px rgba(229, 57, 53, 0.3), 0 0 16px rgba(251, 140, 0, 0.2)'
-                    }}>
-                      Gestión de Fotos
-                    </h2>
-                    <p style={{
-                      fontSize: '0.95rem',
-                      opacity: 0.85,
-                      margin: '0.25rem 0 0 0',
-                      color: 'rgba(255, 255, 255, 0.9)',
-                      fontWeight: 500
-                    }}>
-                      Administra las fotos de tu academia
-                    </p>
-                  </div>
-                </div>
-                <div className="media-management-content">
-                  <div className="photos-two-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                {/* Columna 1: Avatar / Foto Principal — solo este slot muestra "Subiendo..." cuando se sube p1 */}
-                <PhotoManagementSection
-                  media={media}
-                  uploading={{ p1: add.isPending && (add as any).variables?.slot === 'p1' }}
-                  uploadFile={uploadFile}
-                  removeFile={removeFile}
-                      title="👤 Avatar / Foto Principal"
-                      description="Foto principal que aparece en tu perfil (p1)"
-                  slots={['p1']}
-                  isMainPhoto={true}
-                />
-
-                {/* Columna 2: Fotos Destacadas */}
-                <PhotoManagementSection
-                  media={media}
-                  uploading={Object.fromEntries(['p2', 'p3'].map(slot => [slot, add.isPending && (add as any).variables?.slot === slot]))}
-                  uploadFile={uploadFile}
-                  removeFile={removeFile}
-                      title="⭐ Fotos Destacadas"
-                      description="Fotos que se muestran en secciones destacadas (p2 - p3)"
-                  slots={['p2', 'p3']}
-                  isMainPhoto={false}
-                  verticalLayout={true}
-                />
-              </div>
-
-              {/* Fotos Adicionales */}
-              <PhotoManagementSection
-                media={media}
-                uploading={Object.fromEntries(PHOTO_SLOTS.slice(3).map(slot => [slot, add.isPending && (add as any).variables?.slot === slot]))}
-                uploadFile={uploadFile}
-                removeFile={removeFile}
-                    title="📸 Fotos Adicionales"
-                    description="Más fotos para mostrar diferentes aspectos de tu academia (p4-p10)"
-                slots={PHOTO_SLOTS.slice(3)} // p4-p10
+              <OrganizerGalleryEditor
+                media={media as any[]}
+                onUploadPhoto={(file, slot) => uploadFile(file, slot, "photo")}
+                onRemovePhoto={removeFile}
+                onReplaceMedia={async (nextMedia) => {
+                  await replaceMedia.mutateAsync(nextMedia as any);
+                  showToast("Orden de galería actualizado", "success");
+                }}
+                busySlots={
+                  new Set([
+                    ...Object.entries(uploading)
+                      .filter(([, busy]) => Boolean(busy))
+                      .map(([slot]) => slot),
+                    ...Object.entries(removing)
+                      .filter(([, busy]) => Boolean(busy))
+                      .map(([slot]) => slot),
+                  ])
+                }
               />
-                </div>
-              </div>
 
               {/* Gestión de Videos */}
             {/*   <div className="media-management-section" style={{ marginBottom: '3rem' }}>

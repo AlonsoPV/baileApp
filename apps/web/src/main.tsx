@@ -13,6 +13,7 @@ import './i18n';
 import { installNativeAuthBridge } from "./native/nativeAuthBridge";
 import { mark } from "./utils/performanceLogger";
 import { startScrollLockWatchdog } from "./utils/scrollLockWatchdog";
+import { isNativeApp } from "./utils/isNativeApp";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -40,6 +41,13 @@ if (import.meta.env.DEV) startScrollLockWatchdog();
 const hostWindow = typeof window !== "undefined" ? (window as any) : undefined;
 const isEmbeddedWebView = !!hostWindow?.ReactNativeWebView;
 const canLoadVercelSignals = !isEmbeddedWebView;
+
+// Keep public deep-link screens out of the main web bundle, but warm them early in native/WebView
+// to reduce the chance of route-chunk fetch failures after boot.
+if (typeof window !== "undefined" && isNativeApp(window.location.search)) {
+  void import("./screens/events/EventDatePublicScreen");
+  void import("./screens/classes/ClassPublicScreen");
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

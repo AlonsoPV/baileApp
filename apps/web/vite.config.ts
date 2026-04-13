@@ -76,7 +76,10 @@ function htmlHeadOptimizationsPlugin() {
       }
 
       if (base) {
-        tags.push(`    <link rel="preconnect" href="${base}" crossorigin />`);
+        nextHtml = nextHtml.replace(
+          /(<link rel="apple-touch-icon"[^>]*>\s*)/i,
+          `$1    <link rel="preconnect" href="${base}" crossorigin />\n`,
+        );
       }
 
       if (!tags.length) return nextHtml;
