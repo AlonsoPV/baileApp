@@ -7,6 +7,7 @@ import { useUpdateParent, useUpdateDate } from "../../hooks/useEvents";
 import { useToast } from "../../components/Toast";
 import { Breadcrumbs } from "../../components/Breadcrumbs";
 import type { EventParent, EventDate } from "../../types/events";
+import { mergeWhatsappIntoUpdatePatch } from "../../utils/eventWhatsapp";
 
 export default function EventEditScreen() {
   const { dateId } = useParams();
@@ -90,13 +91,11 @@ export default function EventEditScreen() {
     setIsLoading(true);
     try {
       console.log('[EventEditScreen] Updating date:', q.data.date.id);
-      await updateDate.mutateAsync({
+      const datePatch: Record<string, unknown> = {
         id: q.data.date.id,
         nombre: (date as any).nombre || null,
         biografia: (date as any).biografia || null,
         djs: (date as any).djs || null,
-        telefono_contacto: (date as any).telefono_contacto || null,
-        mensaje_contacto: (date as any).mensaje_contacto || null,
         fecha: date.fecha,
         hora_inicio: date.hora_inicio || null,
         hora_fin: date.hora_fin || null,
@@ -112,7 +111,11 @@ export default function EventEditScreen() {
         costos: Array.isArray((date as any).costos) ? (date as any).costos : [],
         flyer_url: (date as any).flyer_url || null,
         estado_publicacion: date.estado_publicacion || "borrador"
-      });
+      };
+      // No campos de WhatsApp en EventForm: no marcamos toques; no re-enviar contacto salvo que exista UI dedicada.
+      mergeWhatsappIntoUpdatePatch(datePatch, date as any, { phone: false, message: false });
+
+      await updateDate.mutateAsync(datePatch as any);
 
       await qc.invalidateQueries({ queryKey: ["event-full", id] });
       console.log('[EventEditScreen] Date updated successfully');

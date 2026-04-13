@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useEventDate, useUpdateEventDate } from "../../hooks/useEventDate";
 import { useTags } from "../../hooks/useTags";
@@ -9,6 +9,13 @@ import ZonaGroupedChips from "../profile/ZonaGroupedChips";
 import ScheduleEditor from "../../components/events/ScheduleEditor";
 import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import { useToast } from "../Toast";
+import {
+  eventDateHasOwnWhatsappPhone,
+  getOrganizerWhatsappHintPhone,
+  mergeWhatsappIntoUpdatePatch,
+  whatsappFormDebugLog,
+} from "../../utils/eventWhatsapp";
+import { EventWhatsappFormFields } from "./EventWhatsappFormFields";
 
 type Props = {
   open: boolean;
@@ -24,6 +31,32 @@ const colors = {
   blue: "#1E88E5",
   dark: "#121212",
   light: "#F5F5F5",
+};
+
+const EMPTY_FORM = {
+  nombre: "",
+  biografia: "",
+  djs: "",
+  telefono_contacto: "",
+  mensaje_contacto: "",
+  fecha: "",
+  hora_inicio: "",
+  hora_fin: "",
+  dia_semana: null as number | null,
+  lugar: "",
+  ciudad: "",
+  direccion: "",
+  referencias: "",
+  requisitos: "",
+  zona: null as number | null,
+  estilos: [] as number[],
+  ritmos_seleccionados: [] as string[],
+  zonas: [] as number[],
+  cronograma: [] as any[],
+  costos: [] as any[],
+  flyer_url: null as string | null,
+  estado_publicacion: "borrador" as "borrador" | "publicado",
+  ubicaciones: [] as any[],
 };
 
 const toFormLocation = (loc?: OrganizerLocation | null) => {
@@ -57,36 +90,50 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
 
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [whatsappPhoneTouched, setWhatsappPhoneTouched] = useState(false);
+  const [whatsappMessageTouched, setWhatsappMessageTouched] = useState(false);
 
-  const [form, setForm] = useState({
-    nombre: "",
-    biografia: "",
-    djs: "",
-    telefono_contacto: "",
-    mensaje_contacto: "",
-    fecha: "",
-    hora_inicio: "",
-    hora_fin: "",
-    dia_semana: null as number | null,
-    lugar: "",
-    ciudad: "",
-    direccion: "",
-    referencias: "",
-    requisitos: "",
-    zona: null as number | null,
-    estilos: [] as number[],
-    ritmos_seleccionados: [] as string[],
-    zonas: [] as number[],
-    cronograma: [] as any[],
-    costos: [] as any[],
-    flyer_url: null as string | null,
-    estado_publicacion: "borrador" as "borrador" | "publicado",
-    ubicaciones: [] as any[],
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  const lastHydratedDateIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!date) return;
+    if (!open) {
+      whatsappFormDebugLog("[WHATSAPP_FORM_RESET]", { reason: "drawer_closed", dateId });
+      lastHydratedDateIdRef.current = null;
+      setForm(EMPTY_FORM);
+      setSelectedLocationId("");
+      setWhatsappPhoneTouched(false);
+      setWhatsappMessageTouched(false);
+    }
+  }, [open, dateId]);
+
+  useEffect(() => {
+    if (!open || !dateId) return;
+    whatsappFormDebugLog("[WHATSAPP_FORM_RESET]", { reason: "date_id_changed", dateId });
+    lastHydratedDateIdRef.current = null;
+    setForm(EMPTY_FORM);
+    setSelectedLocationId("");
+    setWhatsappPhoneTouched(false);
+    setWhatsappMessageTouched(false);
+  }, [dateId, open]);
+
+  useEffect(() => {
+    if (!date || !open) return;
     const d: any = date;
+    const nid = Number(d.id);
+    if (!Number.isFinite(nid)) return;
+    if (dateId != null && nid !== Number(dateId)) return;
+    if (lastHydratedDateIdRef.current === nid) return;
+    lastHydratedDateIdRef.current = nid;
+
+    whatsappFormDebugLog("[WHATSAPP_FORM_INIT]", {
+      dateId: nid,
+      telefono_contacto: d.telefono_contacto ?? null,
+      mensaje_contacto: d.mensaje_contacto ?? null,
+    });
+    setWhatsappPhoneTouched(false);
+    setWhatsappMessageTouched(false);
     setForm({
       nombre: d.nombre || "",
       biografia: d.biografia || "",
@@ -129,7 +176,7 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
     } catch {
       // ignore
     }
-  }, [date, orgLocations]);
+  }, [date, orgLocations, open]);
 
   const isRecurrentWeekly = form.dia_semana !== null && form.dia_semana !== undefined;
 
@@ -207,12 +254,10 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
     if (!dateId) return;
     try {
       setSaving(true);
-      const patch: any = {
+      const patch: Record<string, unknown> = {
         nombre: form.nombre || null,
         biografia: form.biografia || null,
         djs: form.djs || null,
-        telefono_contacto: form.telefono_contacto || null,
-        mensaje_contacto: form.mensaje_contacto || null,
         fecha: form.fecha || null,
         hora_inicio: form.hora_inicio || null,
         hora_fin: form.hora_fin || null,
@@ -232,6 +277,10 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
         estado_publicacion: form.estado_publicacion || "borrador",
         ubicaciones: Array.isArray(form.ubicaciones) ? form.ubicaciones : [],
       };
+      mergeWhatsappIntoUpdatePatch(patch, form, {
+        phone: whatsappPhoneTouched,
+        message: whatsappMessageTouched,
+      });
       await updateDate.mutateAsync({ id: dateId, patch });
       onUpdated?.(dateId, patch);
       showToast("Cambios guardados ✅", "success");
@@ -338,26 +387,25 @@ export default function EventDateFullDrawer({ open, dateId, onClose, onUpdated }
                       placeholder="5 bachatas x 1 salsa"
                     />
                   </label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    <label style={{ fontSize: 13, fontWeight: 700, opacity: 0.95 }}>
-                      Teléfono/WhatsApp
-                      <input
-                        value={form.telefono_contacto}
-                        onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
-                        style={{ width: "100%", marginTop: 6, padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.25)", color: "#fff" }}
-                        placeholder="+52..."
-                      />
-                    </label>
-                    <label style={{ fontSize: 13, fontWeight: 700, opacity: 0.95 }}>
-                      Mensaje WhatsApp
-                      <input
-                        value={form.mensaje_contacto}
-                        onChange={(e) => setForm({ ...form, mensaje_contacto: e.target.value })}
-                        style={{ width: "100%", marginTop: 6, padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(0,0,0,0.25)", color: "#fff" }}
-                        placeholder="Hola! Me interesa..."
-                      />
-                    </label>
-                  </div>
+                  <EventWhatsappFormFields
+                    preset="drawer"
+                    telefono={form.telefono_contacto}
+                    mensaje={form.mensaje_contacto}
+                    onTelefonoChange={(v) => setForm({ ...form, telefono_contacto: v })}
+                    onMensajeChange={(v) => setForm({ ...form, mensaje_contacto: v })}
+                    onPhoneTouched={() => setWhatsappPhoneTouched(true)}
+                    onMessageTouched={() => setWhatsappMessageTouched(true)}
+                    hasOwnSavedPhone={eventDateHasOwnWhatsappPhone(date as any)}
+                    organizerPhoneHint={getOrganizerWhatsappHintPhone(myOrg as any)}
+                    eventNombre={form.nombre}
+                    onMensajeFocusTemplate={(nombre) => {
+                      setWhatsappMessageTouched(true);
+                      setForm((prev) => ({
+                        ...prev,
+                        mensaje_contacto: `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`,
+                      }));
+                    }}
+                  />
                 </div>
               </div>
 

@@ -5,7 +5,7 @@ import { useEventDateSuspense } from "../../hooks/useEventDateSuspense";
 import { useEventParent } from "../../hooks/useEventParent";
 import { useTags } from "../../hooks/useTags";
 import { useEventRSVP, type RSVPStatus } from "../../hooks/useRSVP";
-import { useMyOrganizer } from "../../hooks/useOrganizer";
+import { useMyOrganizer, useOrganizerPublic } from "../../hooks/useOrganizer";
 import AddToCalendarWithStats from "../../components/AddToCalendarWithStats";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
@@ -39,6 +39,7 @@ import { supabase } from "../../lib/supabase";
 import { useUserFavorites } from "@/hooks/useUserFavorites";
 import { useGuestFavorites } from "@/hooks/useGuestFavorites";
 import { normalizeEventCosts } from "../../utils/normalizeEventCosts";
+import { buildEventWhatsappUrl, getEventWhatsapp } from "../../utils/eventWhatsapp";
 
 const colors = {
   coral: '#FF3D57',
@@ -72,35 +73,6 @@ function getEventDateAboutSectionBody(date: any): string {
   const raw = date?.biografia;
   if (typeof raw !== "string") return "";
   return raw.trim();
-}
-
-function buildWhatsAppUrl(phone?: string | null, message?: string | null, eventName?: string | null) {
-  if (!phone) return undefined;
-  const cleanedPhone = phone.replace(/[^\d]/g, ''); // digits only
-  if (!cleanedPhone) return undefined;
-
-  const text = typeof message === 'string' ? message : '';
-  const trimmed = text.trim();
-
-  // Build the base message
-  let baseMessage = '';
-  if (trimmed) {
-    // Custom message: use as-is (assumes correct format)
-    baseMessage = trimmed;
-  } else if (eventName && eventName.trim()) {
-    baseMessage = `I'm interested in the event: ${eventName.trim()}`;
-  } else {
-    baseMessage = "I'm interested in this event";
-  }
-
-  const hasPrefix =
-    baseMessage.toLowerCase().includes("hi, i'm from donde bailar mx") ||
-    baseMessage.toLowerCase().includes('hola vengo de donde bailar mx');
-
-  const fullMessage = hasPrefix ? baseMessage : `Hi, I'm from Donde Bailar MX, ${baseMessage}`;
-
-  const encoded = encodeURIComponent(fullMessage);
-  return `https://api.whatsapp.com/send?phone=${cleanedPhone}&text=${encoded}`;
 }
 
 /**
@@ -208,6 +180,16 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   // Optional queries (not using Suspense)
   const { data: parent } = useEventParent(date?.parent_id ?? undefined);
   const { data: myOrganizer } = useMyOrganizer();
+
+  const organizerIdForWhatsapp = React.useMemo(() => {
+    const fromDate = (date as any)?.organizer_id;
+    const fromParent = (parent as any)?.organizer_id;
+    if (typeof fromDate === "number" && Number.isFinite(fromDate)) return fromDate;
+    if (typeof fromParent === "number" && Number.isFinite(fromParent)) return fromParent;
+    return undefined;
+  }, [date, parent]);
+
+  const { data: organizerPublic } = useOrganizerPublic(organizerIdForWhatsapp);
   const { data: ritmos } = useTags('ritmo');
   const { data: zonas } = useTags('zona');
 
@@ -383,6 +365,10 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
 
   const dateName = date.nombre || parent?.nombre || 'Dance event';
+  const eventWhatsapp = React.useMemo(
+    () => getEventWhatsapp(date as any, parent as any, organizerPublic as any),
+    [date, parent, organizerPublic],
+  );
   const aboutText = React.useMemo(() => resolveEventAboutText(date, parent), [date, parent]);
   const aboutSectionBody = React.useMemo(() => getEventDateAboutSectionBody(date), [date]);
   const calendarButton = (
@@ -680,16 +666,17 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
               </div>
             </section>
           )}
-          {date.telefono_contacto && (
+          {eventWhatsapp.phone && (
             <section id="event-section-contact" className="eds-section eds-section--contact">
               <div className="eds-section-header">
                 <h2 className="eds-section-title">{t('contact', 'Contact')}</h2>
                 <div className="eds-section-underline" aria-hidden />
               </div>
               <ContactSection
-                whatsappUrl={buildWhatsAppUrl((date as any).telefono_contacto, (date as any).mensaje_contacto, dateName) || '#'}
+                whatsappUrl={buildEventWhatsappUrl(eventWhatsapp.phone, eventWhatsapp.message, dateName) || '#'}
                 whatsappLabel={t('consult_whatsapp', 'Contact via WhatsApp')}
                 organizerName={parent?.nombre}
+                showOrganizerContactBadge={eventWhatsapp.source === "organizer"}
               />
             </section>
           )}

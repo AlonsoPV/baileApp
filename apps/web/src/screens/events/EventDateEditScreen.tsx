@@ -16,6 +16,14 @@ import RitmosChips from "../../components/RitmosChips";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  buildEventWhatsappPayload,
+  eventDateHasOwnWhatsappPhone,
+  getOrganizerWhatsappHintPhone,
+  mergeWhatsappIntoUpdatePatch,
+  whatsappFormDebugLog,
+} from "../../utils/eventWhatsapp";
+import { EventWhatsappFormFields } from "../../components/events/EventWhatsappFormFields";
 
 const colors = {
   coral: '#FF3D57',
@@ -251,6 +259,8 @@ export function EventDateEditScreen() {
   });
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
   const [didImportLegacy, setDidImportLegacy] = useState(false);
+  const [whatsappPhoneTouched, setWhatsappPhoneTouched] = useState(false);
+  const [whatsappMessageTouched, setWhatsappMessageTouched] = useState(false);
 
   // Modo: Único vs Frecuentes (bulk planner)
   const [bulkMode, setBulkMode] = useState(false);
@@ -275,6 +285,12 @@ export function EventDateEditScreen() {
       return;
     }
   }, []);
+
+  useEffect(() => {
+    whatsappFormDebugLog("[WHATSAPP_FORM_RESET]", { screen: "EventDateEditScreen", id, isNew });
+    setWhatsappPhoneTouched(false);
+    setWhatsappMessageTouched(false);
+  }, [id, isNew]);
 
   useEffect(() => {
     if (currentDate) {
@@ -599,8 +615,7 @@ export function EventDateEditScreen() {
           nombre: form.nombre?.trim() || null,
           biografia: form.biografia?.trim() || null,
           djs: form.djs?.trim() || null,
-          telefono_contacto: form.telefono_contacto?.trim() || null,
-          mensaje_contacto: form.mensaje_contacto?.trim() || null,
+          ...buildEventWhatsappPayload(form),
           fecha: form.fecha,
           hora_inicio: form.hora_inicio || null,
           hora_fin: form.hora_fin || null,
@@ -622,13 +637,11 @@ export function EventDateEditScreen() {
         showToast('Fecha creada ✅', 'success');
       } else {
         console.log('[EventDateEditScreen] Updating date with id:', id);
-        const updatePayload = {
+        const updatePayload: Record<string, unknown> = {
           id: Number(id),
           nombre: form.nombre?.trim() || null,
           biografia: form.biografia?.trim() || null,
           djs: form.djs?.trim() || null,
-          telefono_contacto: form.telefono_contacto?.trim() || null,
-          mensaje_contacto: form.mensaje_contacto?.trim() || null,
           fecha: form.fecha,
           hora_inicio: form.hora_inicio || null,
           hora_fin: form.hora_fin || null,
@@ -645,13 +658,19 @@ export function EventDateEditScreen() {
           costos: Array.isArray(form.costos) ? form.costos : [],
           flyer_url: form.flyer_url?.trim() || null,
           estado_publicacion: form.estado_publicacion
-        } as any;
+        };
+        mergeWhatsappIntoUpdatePatch(updatePayload, form, {
+          phone: whatsappPhoneTouched,
+          message: whatsappMessageTouched,
+        });
         console.log('[EventDateEditScreen] Update payload:', updatePayload);
-        const updatedData = await update.mutateAsync(updatePayload);
+        const updatedData = await update.mutateAsync(updatePayload as any);
         console.log('[EventDateEditScreen] Date updated successfully:', updatedData);
         
         // Actualizar el estado local con los datos actualizados de la BD
         if (updatedData) {
+          setWhatsappPhoneTouched(false);
+          setWhatsappMessageTouched(false);
           setForm({
             nombre: (updatedData as any).nombre || "",
             biografia: (updatedData as any).biografia || "",
@@ -721,8 +740,7 @@ export function EventDateEditScreen() {
         nombre: form.nombre?.trim() || null,
         biografia: form.biografia?.trim() || null,
         djs: form.djs?.trim() || null,
-        telefono_contacto: form.telefono_contacto?.trim() || null,
-        mensaje_contacto: form.mensaje_contacto?.trim() || null,
+        ...buildEventWhatsappPayload(form),
         lugar: resolvedLugar,
         direccion: resolvedDireccion,
         ciudad: resolvedCiudad,
@@ -1076,53 +1094,24 @@ export function EventDateEditScreen() {
               }}
             />
           </div>
-          <div>
-            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-              Teléfono / WhatsApp
-            </label>
-            <input
-              type="tel"
-              value={form.telefono_contacto}
-              onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
-              placeholder="Ej: 55 1234 5678"
-              className="org-editor-input"
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '12px',
-                background: `${colors.dark}cc`,
-                border: `1px solid ${colors.light}33`,
-                color: '#FFFFFF',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label className="org-editor-field" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-              Mensaje de saludo para WhatsApp
-            </label>
-            <textarea
-              value={form.mensaje_contacto}
-              onChange={(e) => setForm({ ...form, mensaje_contacto: e.target.value })}
-              onFocus={() => {
-                if (!form.mensaje_contacto) {
-                  const nombre = form.nombre || 'este evento';
-                  const template = `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`;
-                  setForm((prev) => ({ ...prev, mensaje_contacto: template }));
-                }
-              }}
-              rows={2}
-              placeholder='Ejemplo: "Hola! Vengo de Donde Bailar MX..."'
-              className="org-editor-textarea"
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '12px',
-                background: `${colors.dark}cc`,
-                border: `1px solid ${colors.light}33`,
-                color: colors.light,
-                fontSize: '1rem',
-                resize: 'vertical',
+          <div style={{ gridColumn: "1 / -1" }}>
+            <EventWhatsappFormFields
+              preset="orgEditor"
+              telefono={form.telefono_contacto}
+              mensaje={form.mensaje_contacto}
+              onTelefonoChange={(v) => setForm({ ...form, telefono_contacto: v })}
+              onMensajeChange={(v) => setForm({ ...form, mensaje_contacto: v })}
+              onPhoneTouched={() => setWhatsappPhoneTouched(true)}
+              onMessageTouched={() => setWhatsappMessageTouched(true)}
+              hasOwnSavedPhone={!isNew && eventDateHasOwnWhatsappPhone(currentDate as any)}
+              organizerPhoneHint={getOrganizerWhatsappHintPhone(org as any)}
+              eventNombre={form.nombre}
+              onMensajeFocusTemplate={(nombre) => {
+                setWhatsappMessageTouched(true);
+                setForm((prev) => ({
+                  ...prev,
+                  mensaje_contacto: `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`,
+                }));
               }}
             />
           </div>

@@ -15,6 +15,8 @@ import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import type { AcademyLocation } from "../../types/academy";
 import { supabase } from "../../lib/supabase";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
+import { buildEventWhatsappPayload, getOrganizerWhatsappHintPhone } from "../../utils/eventWhatsapp";
+import { EventWhatsappFormFields } from "../../components/events/EventWhatsappFormFields";
 
 const colors = {
   coral: '#FF3D57',
@@ -213,10 +215,10 @@ export default function OrganizerEventDateCreateScreen() {
       // parent_id obligatorio: URL, o primer evento del organizador si la URL no trae parent válido
       const effectiveParentId =
         (parentIdNum != null && Number.isFinite(parentIdNum) ? parentIdNum : null) ??
-        (parents?.length ? Number((parents[0] as any)?.id) : null);
+        (parents?.length === 1 ? Number((parents[0] as any)?.id) : null);
 
       if (effectiveParentId == null) {
-        showToast('Selecciona un evento (social) o crea uno antes de agregar una fecha', 'error');
+        showToast('Selecciona explícitamente a qué social pertenece esta fecha antes de guardarla', 'error');
         return;
       }
 
@@ -226,8 +228,7 @@ export default function OrganizerEventDateCreateScreen() {
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
         djs: dateForm.djs || null,
-        telefono_contacto: dateForm.telefono_contacto || null,
-        mensaje_contacto: dateForm.mensaje_contacto || null,
+        ...buildEventWhatsappPayload(dateForm),
         hora_inicio: dateForm.hora_inicio || null,
         hora_fin: dateForm.hora_fin || null,
         lugar: resolvedLugar,
@@ -553,35 +554,22 @@ export default function OrganizerEventDateCreateScreen() {
                     className="org-editor-textarea"
                   />
                 </div>
-                <div>
-                  <label className="org-editor-field">
-                    Teléfono o WhatsApp para más información
-                  </label>
-                  <input
-                    type="tel"
-                    value={dateForm.telefono_contacto}
-                    onChange={(e) => setDateForm({ ...dateForm, telefono_contacto: e.target.value })}
-                    placeholder="Ejemplo: 55 1234 5678"
-                    className="org-editor-input"
-                  />
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label className="org-editor-field">
-                    Mensaje de saludo para WhatsApp
-                  </label>
-                  <textarea
-                    value={dateForm.mensaje_contacto}
-                    onChange={(e) => setDateForm({ ...dateForm, mensaje_contacto: e.target.value })}
-                    onFocus={(e) => {
-                      if (!dateForm.mensaje_contacto) {
-                        const nombre = dateForm.nombre || 'este evento';
-                        const template = `me interesa el evento "${nombre}".`;
-                        setDateForm(prev => ({ ...prev, mensaje_contacto: template }));
-                      }
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <EventWhatsappFormFields
+                    preset="orgEditor"
+                    telefono={dateForm.telefono_contacto}
+                    mensaje={dateForm.mensaje_contacto}
+                    onTelefonoChange={(v) => setDateForm({ ...dateForm, telefono_contacto: v })}
+                    onMensajeChange={(v) => setDateForm({ ...dateForm, mensaje_contacto: v })}
+                    hasOwnSavedPhone={false}
+                    organizerPhoneHint={getOrganizerWhatsappHintPhone(org as any)}
+                    eventNombre={dateForm.nombre}
+                    onMensajeFocusTemplate={(nombre) => {
+                      setDateForm((prev) => ({
+                        ...prev,
+                        mensaje_contacto: `me interesa el evento "${nombre}".`,
+                      }));
                     }}
-                    placeholder='Ejemplo: "me interesa el evento de esta fecha..."'
-                    rows={2}
-                    className="org-editor-textarea"
                   />
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useEventDate, useUpdateEventDate } from "../../hooks/useEventDate";
@@ -13,6 +13,14 @@ import { RITMOS_CATALOG } from "../../lib/ritmosCatalog";
 import { useToast } from "../../components/Toast";
 import { supabase } from "../../lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  buildEventWhatsappPayload,
+  eventDateHasOwnWhatsappPhone,
+  getOrganizerWhatsappHintPhone,
+  mergeWhatsappIntoUpdatePatch,
+  whatsappFormDebugLog,
+} from "../../utils/eventWhatsapp";
+import { EventWhatsappFormFields } from "../../components/events/EventWhatsappFormFields";
 
 const colors = {
   coral: '#FF3D57',
@@ -337,6 +345,9 @@ export default function OrganizerEventDateEditScreen() {
     ubicaciones: [] as any[],
   });
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const [whatsappPhoneTouched, setWhatsappPhoneTouched] = useState(false);
+  const [whatsappMessageTouched, setWhatsappMessageTouched] = useState(false);
+  const lastHydratedDateIdRef = useRef<number | null>(null);
 
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     try {
@@ -471,35 +482,52 @@ export default function OrganizerEventDateEditScreen() {
   }, [orgLocations, form.lugar, form.direccion, form.ciudad, form.referencias, selectedLocationId]);
 
   useEffect(() => {
-    if (date) {
-      console.log('📥 [OrganizerEventDateEditScreen] Cargando fecha:', date);
-      const fechaStr = date.fecha || '';
-      
-      setForm({
-        nombre: date.nombre || '',
-        biografia: (date as any).biografia || '',
-        djs: (date as any).djs || '',
-        telefono_contacto: (date as any).telefono_contacto || '',
-        mensaje_contacto: (date as any).mensaje_contacto || '',
-        fecha: fechaStr,
-        hora_inicio: date.hora_inicio || '',
-        hora_fin: date.hora_fin || '',
-        lugar: (date as any).lugar || '',
-        ciudad: (date as any).ciudad || '',
-        direccion: (date as any).direccion || '',
-        referencias: (date as any).referencias || '',
-        requisitos: (date as any).requisitos || '',
-        zona: (date as any).zona || null,
-        estilos: (date as any).estilos || [],
-        ritmos_seleccionados: ((date as any).ritmos_seleccionados || []) as string[],
-        zonas: (date as any).zonas || [],
-        cronograma: (date as any).cronograma || [],
-        costos: (date as any).costos || [],
-        flyer_url: (date as any).flyer_url || null,
-        estado_publicacion: (date as any).estado_publicacion || 'borrador',
-        ubicaciones: (date as any).ubicaciones || [],
-      });
-    }
+    whatsappFormDebugLog("[WHATSAPP_FORM_RESET]", { screen: "OrganizerEventDateEditScreen", dateIdNum });
+    lastHydratedDateIdRef.current = null;
+    setWhatsappPhoneTouched(false);
+    setWhatsappMessageTouched(false);
+  }, [dateIdNum]);
+
+  useEffect(() => {
+    if (!date) return;
+    const nid = Number((date as any).id);
+    if (!Number.isFinite(nid)) return;
+    if (lastHydratedDateIdRef.current === nid) return;
+    lastHydratedDateIdRef.current = nid;
+
+    console.log('📥 [OrganizerEventDateEditScreen] Cargando fecha:', date);
+    whatsappFormDebugLog("[WHATSAPP_FORM_INIT]", {
+      dateId: nid,
+      telefono_contacto: (date as any).telefono_contacto ?? null,
+    });
+    setWhatsappPhoneTouched(false);
+    setWhatsappMessageTouched(false);
+    const fechaStr = date.fecha || '';
+
+    setForm({
+      nombre: date.nombre || '',
+      biografia: (date as any).biografia || '',
+      djs: (date as any).djs || '',
+      telefono_contacto: (date as any).telefono_contacto || '',
+      mensaje_contacto: (date as any).mensaje_contacto || '',
+      fecha: fechaStr,
+      hora_inicio: date.hora_inicio || '',
+      hora_fin: date.hora_fin || '',
+      lugar: (date as any).lugar || '',
+      ciudad: (date as any).ciudad || '',
+      direccion: (date as any).direccion || '',
+      referencias: (date as any).referencias || '',
+      requisitos: (date as any).requisitos || '',
+      zona: (date as any).zona || null,
+      estilos: (date as any).estilos || [],
+      ritmos_seleccionados: ((date as any).ritmos_seleccionados || []) as string[],
+      zonas: (date as any).zonas || [],
+      cronograma: (date as any).cronograma || [],
+      costos: (date as any).costos || [],
+      flyer_url: (date as any).flyer_url || null,
+      estado_publicacion: (date as any).estado_publicacion || 'borrador',
+      ubicaciones: (date as any).ubicaciones || [],
+    });
   }, [date]);
 
   const addBulkRow = useCallback(() => {
@@ -658,8 +686,7 @@ export default function OrganizerEventDateEditScreen() {
         nombre: form.nombre || null,
         biografia: form.biografia || null,
         djs: form.djs || null,
-        telefono_contacto: form.telefono_contacto || null,
-        mensaje_contacto: form.mensaje_contacto || null,
+        ...buildEventWhatsappPayload(form),
         requisitos: form.requisitos || null,
         estilos: form.estilos || [],
         ritmos_seleccionados: form.ritmos_seleccionados || [],
@@ -834,12 +861,10 @@ export default function OrganizerEventDateEditScreen() {
       console.log('💾 [OrganizerEventDateEditScreen] Guardando fecha...');
       
       // Payload con TODAS las columnas que existen en events_date
-      const patch = {
+      const patch: Record<string, unknown> = {
         nombre: form.nombre || null,
         biografia: form.biografia || null,
         djs: form.djs || null,
-        telefono_contacto: form.telefono_contacto || null,
-        mensaje_contacto: form.mensaje_contacto || null,
         fecha: form.fecha,
         hora_inicio: form.hora_inicio || null,
         hora_fin: form.hora_fin || null,
@@ -857,13 +882,20 @@ export default function OrganizerEventDateEditScreen() {
         flyer_url: form.flyer_url || null,
         estado_publicacion: form.estado_publicacion || 'borrador',
         dia_semana: null
-      } as any;
+      };
+
+      mergeWhatsappIntoUpdatePatch(patch, form, {
+        phone: whatsappPhoneTouched,
+        message: whatsappMessageTouched,
+      });
 
       console.log('📦 [OrganizerEventDateEditScreen] Patch:', patch);
       
-      const updated = await updateDate.mutateAsync({ id: dateIdNum, patch });
+      const updated = await updateDate.mutateAsync({ id: dateIdNum, patch: patch as any });
       
       console.log('✅ [OrganizerEventDateEditScreen] Fecha actualizada:', updated);
+      setWhatsappPhoneTouched(false);
+      setWhatsappMessageTouched(false);
       setStatusMsg({ type: 'ok', text: '✅ Fecha actualizada exitosamente' });
       
       // Navegar después de un breve delay para mostrar el mensaje
@@ -1408,31 +1440,25 @@ export default function OrganizerEventDateEditScreen() {
                           className="org-editor-textarea"
                         />
                       </div>
-                      <div>
-                <label className="org-editor-field">Teléfono o WhatsApp para más información</label>
-                        <input
-                          type="tel"
-                  value={form.telefono_contacto || ''}
-                  onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
-                          placeholder="Ejemplo: 55 1234 5678"
-                          className="org-editor-input"
-                        />
-                      </div>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                <label className="org-editor-field">Mensaje de saludo para WhatsApp</label>
-                        <textarea
-                  value={form.mensaje_contacto || ''}
-                  onChange={(e) => setForm({ ...form, mensaje_contacto: e.target.value })}
-                          onFocus={() => {
-                    if (!form.mensaje_contacto) {
-                      const nombre = form.nombre || 'este evento';
-                              const template = `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`;
-                      setForm((prev) => ({ ...prev, mensaje_contacto: template }));
-                            }
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <EventWhatsappFormFields
+                          preset="orgEditor"
+                          telefono={form.telefono_contacto || ""}
+                          mensaje={form.mensaje_contacto || ""}
+                          onTelefonoChange={(v) => setForm({ ...form, telefono_contacto: v })}
+                          onMensajeChange={(v) => setForm({ ...form, mensaje_contacto: v })}
+                          onPhoneTouched={() => setWhatsappPhoneTouched(true)}
+                          onMessageTouched={() => setWhatsappMessageTouched(true)}
+                          hasOwnSavedPhone={eventDateHasOwnWhatsappPhone(date as any)}
+                          organizerPhoneHint={getOrganizerWhatsappHintPhone(myOrg as any)}
+                          eventNombre={form.nombre}
+                          onMensajeFocusTemplate={(nombre) => {
+                            setWhatsappMessageTouched(true);
+                            setForm((prev) => ({
+                              ...prev,
+                              mensaje_contacto: `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`,
+                            }));
                           }}
-                  placeholder='Ejemplo: "Hola! Vengo de Donde Bailar MX..."'
-                          rows={2}
-                          className="org-editor-textarea"
                         />
                       </div>
                     </div>

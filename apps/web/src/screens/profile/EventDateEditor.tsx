@@ -11,6 +11,7 @@ import { PhotoManagementSection } from "../../components/profile/PhotoManagement
 import { VideoManagementSection } from "../../components/profile/VideoManagementSection";
 import { ensureMaxVideoDuration } from "../../utils/videoValidation";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
+import { buildEventWhatsappPayload } from "../../utils/eventWhatsapp";
 
 const colors = {
   coral: "#FF3D57",
@@ -128,8 +129,7 @@ export const EventDateEditor: React.FC = () => {
       nombre: values?.nombre || null,
       biografia: values?.biografia || null,
       djs: values?.djs || null,
-      telefono_contacto: values?.telefono_contacto || null,
-      mensaje_contacto: values?.mensaje_contacto || null,
+      ...buildEventWhatsappPayload(values || {}),
 
       hora_inicio: values?.hora_inicio || null,
       hora_fin: values?.hora_fin || null,

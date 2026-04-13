@@ -56,6 +56,8 @@ import PendingFlyersPanel from "../../components/events/PendingFlyersPanel";
 import { useEventDatesBulk } from "../../hooks/useEventDatesBulk";
 import { useUploadFlyerQueue } from "../../hooks/useUploadFlyerQueue";
 import { Calendar, Clock, FileText, Globe, Image, MapPin, Music } from "lucide-react";
+import { buildEventWhatsappPayload, getOrganizerWhatsappHintPhone } from "../../utils/eventWhatsapp";
+import { EventWhatsappFormFields } from "../../components/events/EventWhatsappFormFields";
 import "../../styles/dateCreateForm.css";
 
 const colors = {
@@ -107,6 +109,34 @@ const makeRowId = () => {
     return `row_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   }
 };
+
+const createEmptyDateForm = () => ({
+  nombre: '',
+  biografia: '',
+  djs: '',
+  telefono_contacto: '',
+  mensaje_contacto: '',
+  fecha: '',
+  hora_inicio: '',
+  hora_fin: '',
+  lugar: '',
+  ciudad: '',
+  direccion: '',
+  referencias: '',
+  requisitos: '',
+  ubicaciones: [] as AcademyLocation[],
+  zona: null as number | null,
+  estilos: [] as number[],
+  ritmos_seleccionados: [] as string[],
+  zonas: [] as number[],
+  cronograma: [] as any[],
+  costos: [] as any[],
+  flyer_url: null as string | null,
+  estado_publicacion: 'borrador' as 'borrador' | 'publicado',
+  repetir_semanal: false,
+  semanas_repetir: 4,
+  dia_semana: null as number | null,
+});
 
 const BulkRowItem = React.memo(function BulkRowItem({
   row,
@@ -627,33 +657,7 @@ export default function OrganizerProfileEditor() {
   const [parentToDelete, setParentToDelete] = useState<{ id: number; nombre: string } | null>(null);
   const [deletingParentId, setDeletingParentId] = useState<number | null>(null);
   const [selectedDateLocationId, setSelectedDateLocationId] = useState<string>('');
-  const [dateForm, setDateForm] = useState({
-    nombre: '',
-    biografia: '',
-    djs: '',
-    telefono_contacto: '',
-    mensaje_contacto: '',
-    fecha: '',
-    hora_inicio: '',
-    hora_fin: '',
-    lugar: '',
-    ciudad: '',
-    direccion: '',
-    referencias: '',
-    requisitos: '',
-    ubicaciones: [] as AcademyLocation[],
-    zona: null as number | null,
-    estilos: [] as number[],
-    ritmos_seleccionados: [] as string[],
-    zonas: [] as number[],
-    cronograma: [] as any[],
-    costos: [] as any[],
-    flyer_url: null as string | null,
-    estado_publicacion: 'borrador' as 'borrador' | 'publicado',
-    repetir_semanal: false,
-    semanas_repetir: 4,
-    dia_semana: null as number | null,
-  });
+  const [dateForm, setDateForm] = useState(createEmptyDateForm);
 
   // Drawer para edición individual desde tabla bulk (override flyer + ajustes puntuales)
   const [drawerDateId, setDrawerDateId] = useState<number | null>(null);
@@ -710,6 +714,7 @@ export default function OrganizerProfileEditor() {
     setBulkRows((prev) => [...prev, { ...base, ...(partial || {}) }]);
   }, [dateForm.estado_publicacion, dateForm.hora_fin, dateForm.hora_inicio]);
 
+
   // Auto-abrir Frecuentes desde query params (p.ej. al “convertir” desde el editor de fecha)
   useEffect(() => {
     if (didAutoOpenFrecuentes) return;
@@ -744,8 +749,8 @@ export default function OrganizerProfileEditor() {
       nombre: f.nombre || '',
       biografia: f.biografia || '',
       djs: f.djs || '',
-      telefono_contacto: f.telefono_contacto || '',
-      mensaje_contacto: f.mensaje_contacto || '',
+      telefono_contacto: '',
+      mensaje_contacto: '',
       fecha: f.fecha ? String(f.fecha).split('T')[0] : '',
       hora_inicio: f.hora_inicio || '',
       hora_fin: f.hora_fin || '',
@@ -872,6 +877,15 @@ export default function OrganizerProfileEditor() {
     setBulkGeneralFlyerUrl(null);
     setBulkShowAllFlyers(false);
   }, []);
+
+  const openFreshDateForm = useCallback(() => {
+    setShowDateForm(true);
+    setSelectedDateLocationId('');
+    setSelectedParentId(parents.length === 1 ? Number((parents[0] as any)?.id) : null);
+    setDateForm(createEmptyDateForm());
+    setBulkMode(false);
+    clearBulk();
+  }, [parents, clearBulk]);
 
   const handleDateUbicacionesChange = (list: AcademyLocation[]) => {
     const zonasSet = new Set<number>();
@@ -1242,11 +1256,14 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      // Si no hay parent seleccionado explicitamente, dejamos que `useCreateEventDate`
-      // resuelva o cree el padre automaticamente para este organizador.
       const parentIdToUse: number | null = selectedParentId
         ? Number(selectedParentId)
         : null;
+
+      if (!parentIdToUse) {
+        showToast('Selecciona a qué social pertenece esta fecha antes de guardarla', 'error');
+        return;
+      }
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -1293,8 +1310,7 @@ export default function OrganizerProfileEditor() {
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
         djs: dateForm.djs || null,
-        telefono_contacto: dateForm.telefono_contacto || null,
-        mensaje_contacto: dateForm.mensaje_contacto || null,
+        ...buildEventWhatsappPayload(dateForm),
         hora_inicio: dateForm.hora_inicio || null,
         hora_fin: dateForm.hora_fin || null,
         lugar: resolvedLugar,
@@ -1337,33 +1353,7 @@ export default function OrganizerProfileEditor() {
       }
       
       setShowDateForm(false);
-      setDateForm({
-        nombre: '',
-        biografia: '',
-        djs: '',
-        telefono_contacto: '',
-        mensaje_contacto: '',
-        fecha: '',
-        hora_inicio: '',
-        hora_fin: '',
-        lugar: '',
-        ciudad: '',
-        direccion: '',
-        referencias: '',
-        requisitos: '',
-        ubicaciones: [],
-        zona: null,
-        estilos: [],
-        ritmos_seleccionados: [],
-        zonas: [],
-        cronograma: [],
-        costos: [],
-        flyer_url: null,
-        estado_publicacion: 'borrador',
-        repetir_semanal: false,
-        semanas_repetir: 4,
-        dia_semana: null,
-      });
+      setDateForm(createEmptyDateForm());
       setSelectedDateLocationId('');
       setSelectedParentId(null);
     } catch (err: any) {
@@ -1391,11 +1381,14 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      // El formulario ya no fuerza un social/padre visible; si no hay uno
-      // seleccionado por un flujo interno, el hook lo resuelve.
       const parentIdToUse: number | null = selectedParentId
         ? Number(selectedParentId)
         : null;
+
+      if (!parentIdToUse) {
+        showToast('Selecciona a qué social pertenece este lote de fechas antes de guardarlo', 'error');
+        return;
+      }
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -1441,8 +1434,7 @@ export default function OrganizerProfileEditor() {
         nombre: dateForm.nombre || null,
         biografia: dateForm.biografia || null,
         djs: dateForm.djs || null,
-        telefono_contacto: dateForm.telefono_contacto || null,
-        mensaje_contacto: dateForm.mensaje_contacto || null,
+        ...buildEventWhatsappPayload(dateForm),
         lugar: resolvedLugar,
         direccion: resolvedDireccion,
         ciudad: resolvedCiudad,
@@ -4925,7 +4917,16 @@ export default function OrganizerProfileEditor() {
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      setShowDateForm(!showDateForm);
+                      if (showDateForm) {
+                        setShowDateForm(false);
+                        setSelectedDateLocationId('');
+                        setSelectedParentId(null);
+                        setDateForm(createEmptyDateForm());
+                        clearBulk();
+                        setBulkMode(false);
+                        return;
+                      }
+                      openFreshDateForm();
                     }}
                     className={`org-events-action-button ${showDateForm ? 'org-events-action-button--active' : 'org-events-action-button--primary'}`}
                   >
@@ -4973,6 +4974,27 @@ export default function OrganizerProfileEditor() {
                     </div>
                     <div className="dcf__card-body dcf__stack">
                       <div className="dcf__field">
+                        <label className="dcf__label">Social al que pertenece esta fecha</label>
+                        <div className="dcf__select-wrap">
+                          <select
+                            className="dcf__select"
+                            value={selectedParentId ? String(selectedParentId) : ''}
+                            onChange={(e) => setSelectedParentId(e.target.value ? Number(e.target.value) : null)}
+                          >
+                            <option value="">Selecciona un social</option>
+                            {(parents || []).map((parent: any) => (
+                              <option key={parent.id} value={String(parent.id)}>
+                                {parent.nombre || `Social ${parent.id}`}
+                              </option>
+                            ))}
+                          </select>
+                          <svg className="dcf__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                            <path d="M6 9l6 6 6-6" />
+                          </svg>
+                        </div>
+                        <p className="dcf__helper">Cada fecha se guarda dentro del social seleccionado; ya no se asigna implícitamente a otro social.</p>
+                      </div>
+                      <div className="dcf__field">
                         <label className="dcf__label">
                           {t('event_name')}
                           <span className="dcf__label-req">*</span>
@@ -5005,33 +5027,22 @@ export default function OrganizerProfileEditor() {
                           className="dcf__textarea"
                         />
                       </div>
-                      <div className="dcf__field">
-                        <label className="dcf__label">{t('phone_whatsapp_info')}</label>
-                        <input
-                          type="tel"
-                          value={dateForm.telefono_contacto}
-                          onChange={(e) => setDateForm({ ...dateForm, telefono_contacto: e.target.value })}
-                          placeholder={t('phone_placeholder')}
-                          className="dcf__input"
-                        />
-                      </div>
-                      <div className="dcf__field">
-                        <label className="dcf__label">{t('whatsapp_greeting')}</label>
-                        <textarea
-                          value={dateForm.mensaje_contacto}
-                          onChange={(e) => setDateForm({ ...dateForm, mensaje_contacto: e.target.value })}
-                          onFocus={() => {
-                            if (!dateForm.mensaje_contacto) {
-                              const nombre = dateForm.nombre || 'este evento';
-                              const template = `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`;
-                              setDateForm(prev => ({ ...prev, mensaje_contacto: template }));
-                            }
-                          }}
-                          placeholder={t('whatsapp_greeting_placeholder')}
-                          rows={2}
-                          className="dcf__textarea"
-                        />
-                      </div>
+                      <EventWhatsappFormFields
+                        preset="dcf"
+                        telefono={dateForm.telefono_contacto}
+                        mensaje={dateForm.mensaje_contacto}
+                        onTelefonoChange={(v) => setDateForm({ ...dateForm, telefono_contacto: v })}
+                        onMensajeChange={(v) => setDateForm({ ...dateForm, mensaje_contacto: v })}
+                        hasOwnSavedPhone={false}
+                        organizerPhoneHint={getOrganizerWhatsappHintPhone(org as any)}
+                        eventNombre={dateForm.nombre}
+                        onMensajeFocusTemplate={(nombre) => {
+                          setDateForm((prev) => ({
+                            ...prev,
+                            mensaje_contacto: `Hola! Vengo de Donde Bailar MX, me interesa el evento "${nombre}".`,
+                          }));
+                        }}
+                      />
                     </div>
                   </div>
 
@@ -5671,35 +5682,10 @@ export default function OrganizerProfileEditor() {
                       className="dcf__btn"
                       onClick={() => {
                         setShowDateForm(false);
-                        setDateForm({
-                          nombre: '',
-                          biografia: '',
-                          djs: '',
-                          telefono_contacto: '',
-                          mensaje_contacto: '',
-                          fecha: '',
-                          dia_semana: null,
-                          hora_inicio: '',
-                          hora_fin: '',
-                          lugar: '',
-                          ciudad: '',
-                          direccion: '',
-                          referencias: '',
-                          requisitos: '',
-                          ubicaciones: [],
-                          zona: null,
-                          estilos: [],
-                          ritmos_seleccionados: [],
-                          zonas: [],
-                          cronograma: [],
-                          costos: [],
-                          flyer_url: null,
-                          estado_publicacion: 'borrador',
-                          repetir_semanal: false,
-                          semanas_repetir: 4
-                        });
+                        setDateForm(createEmptyDateForm());
                         setSelectedDateLocationId('');
                         setSelectedParentId(null);
+                        clearBulk();
                       }}
                     >
                       {t('cancel')}
