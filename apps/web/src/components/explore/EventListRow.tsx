@@ -50,35 +50,35 @@ function MetaLine({
   hasDiscountMark?: boolean;
   priceAria: string;
 }) {
-  const hasLeadingMeta = Boolean(timeText || priceLabel);
   const isFree = priceLabel === "Gratis";
 
   return (
     <div className="event-list-row__meta">
-      {timeText ? (
-        <span className="event-list-row__meta-time" title={`Hora ${timeText}`}>
-          {timeText}
-        </span>
-      ) : null}
-      {timeText && priceLabel ? <span className="event-list-row__meta-dot">·</span> : null}
-      {priceLabel ? (
-        <span
-          className={`event-list-row__meta-price ${isFree ? "event-list-row__meta-price--free" : ""}`}
-          aria-label={priceAria}
-        >
-          {priceLabel}
-        </span>
-      ) : null}
-      {hasDiscountMark ? (
-        <span className="event-list-row__meta-badge event-list-row__discount" aria-hidden>
-          %
-        </span>
-      ) : null}
-      {placeText && hasLeadingMeta ? <span className="event-list-row__meta-dot">·</span> : null}
+      <div className="event-list-row__meta-primary">
+        {timeText ? (
+          <span className="event-list-row__meta-time" title={`Hora ${timeText}`}>
+            {timeText}
+          </span>
+        ) : null}
+        {timeText && priceLabel ? <span className="event-list-row__meta-dot">·</span> : null}
+        {priceLabel ? (
+          <span
+            className={`event-list-row__meta-price ${isFree ? "event-list-row__meta-price--free" : ""}`}
+            aria-label={priceAria}
+          >
+            {priceLabel}
+          </span>
+        ) : null}
+        {hasDiscountMark ? (
+          <span className="event-list-row__meta-badge event-list-row__discount" aria-hidden>
+            %
+          </span>
+        ) : null}
+      </div>
       {placeText ? (
-        <span className="event-list-row__meta-place" title={placeText}>
+        <div className="event-list-row__meta-place" title={placeText}>
           {placeText}
-        </span>
+        </div>
       ) : null}
     </div>
   );

@@ -56,7 +56,7 @@ import PendingFlyersPanel from "../../components/events/PendingFlyersPanel";
 import { useEventDatesBulk } from "../../hooks/useEventDatesBulk";
 import { useUploadFlyerQueue } from "../../hooks/useUploadFlyerQueue";
 import { Calendar, Clock, FileText, Globe, Image, MapPin, Music } from "lucide-react";
-import { buildEventWhatsappPayload, getOrganizerWhatsappHintPhone } from "../../utils/eventWhatsapp";
+import { buildEventWhatsappPayload } from "../../utils/eventWhatsapp";
 import { EventWhatsappFormFields } from "../../components/events/EventWhatsappFormFields";
 import "../../styles/dateCreateForm.css";
 
@@ -651,6 +651,11 @@ export default function OrganizerProfileEditor() {
   // derivados (ej. editar desde una fecha existente o invalidar caches).
   const [showDateForm, setShowDateForm] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
+  const resolvedDateParentId = useMemo(() => {
+    if (selectedParentId && Number.isFinite(Number(selectedParentId))) return Number(selectedParentId);
+    const firstParentId = (parents || []).find((parent: any) => Number.isFinite(Number(parent?.id)))?.id;
+    return firstParentId != null ? Number(firstParentId) : null;
+  }, [selectedParentId, parents]);
   const createEventDate = useCreateEventDate();
   const [deletingDateId, setDeletingDateId] = useState<number | null>(null);
   const [dateToDelete, setDateToDelete] = useState<{ id: number; nombre: string } | null>(null);
@@ -881,11 +886,11 @@ export default function OrganizerProfileEditor() {
   const openFreshDateForm = useCallback(() => {
     setShowDateForm(true);
     setSelectedDateLocationId('');
-    setSelectedParentId(parents.length === 1 ? Number((parents[0] as any)?.id) : null);
+    setSelectedParentId(null);
     setDateForm(createEmptyDateForm());
     setBulkMode(false);
     clearBulk();
-  }, [parents, clearBulk]);
+  }, [clearBulk]);
 
   const handleDateUbicacionesChange = (list: AcademyLocation[]) => {
     const zonasSet = new Set<number>();
@@ -1256,14 +1261,7 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      const parentIdToUse: number | null = selectedParentId
-        ? Number(selectedParentId)
-        : null;
-
-      if (!parentIdToUse) {
-        showToast('Selecciona a qué social pertenece esta fecha antes de guardarla', 'error');
-        return;
-      }
+      const parentIdToUse: number | null = resolvedDateParentId;
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -1381,14 +1379,7 @@ export default function OrganizerProfileEditor() {
     }
 
     try {
-      const parentIdToUse: number | null = selectedParentId
-        ? Number(selectedParentId)
-        : null;
-
-      if (!parentIdToUse) {
-        showToast('Selecciona a qué social pertenece este lote de fechas antes de guardarlo', 'error');
-        return;
-      }
+      const parentIdToUse: number | null = resolvedDateParentId;
 
       const selectedOrganizerLocation = selectedDateLocationId
         ? orgLocations.find((loc) => String(loc.id ?? '') === selectedDateLocationId)
@@ -1571,9 +1562,9 @@ export default function OrganizerProfileEditor() {
       queryClient.invalidateQueries({ queryKey: ["event-dates", "bulk"] });
       queryClient.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
       queryClient.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
-      if (selectedParentId) {
-        queryClient.invalidateQueries({ queryKey: ["event", "dates", selectedParentId] });
-        queryClient.invalidateQueries({ queryKey: ["dates", selectedParentId] });
+      if (resolvedDateParentId) {
+        queryClient.invalidateQueries({ queryKey: ["event", "dates", resolvedDateParentId] });
+        queryClient.invalidateQueries({ queryKey: ["dates", resolvedDateParentId] });
       }
       showToast(t('flyer_saved'), 'success');
     } catch (e: any) {
@@ -1611,9 +1602,9 @@ export default function OrganizerProfileEditor() {
       queryClient.invalidateQueries({ queryKey: ["event-dates", "bulk"] });
       queryClient.invalidateQueries({ queryKey: ["event-dates", "by-organizer"] });
       queryClient.invalidateQueries({ queryKey: ["event-parents", "by-organizer"] });
-      if (selectedParentId) {
-        queryClient.invalidateQueries({ queryKey: ["event", "dates", selectedParentId] });
-        queryClient.invalidateQueries({ queryKey: ["dates", selectedParentId] });
+      if (resolvedDateParentId) {
+        queryClient.invalidateQueries({ queryKey: ["event", "dates", resolvedDateParentId] });
+        queryClient.invalidateQueries({ queryKey: ["dates", resolvedDateParentId] });
       }
 
       showToast(t('dates_published'), 'success');
@@ -4930,7 +4921,7 @@ export default function OrganizerProfileEditor() {
                     }}
                     className={`org-events-action-button ${showDateForm ? 'org-events-action-button--active' : 'org-events-action-button--primary'}`}
                   >
-                    <span>{showDateForm ? '✖️' : '📅'}</span>
+                   
                     <span>{showDateForm ? t('close') : t('create_date')}</span>
                   </motion.button>
 
@@ -4974,27 +4965,6 @@ export default function OrganizerProfileEditor() {
                     </div>
                     <div className="dcf__card-body dcf__stack">
                       <div className="dcf__field">
-                        <label className="dcf__label">Social al que pertenece esta fecha</label>
-                        <div className="dcf__select-wrap">
-                          <select
-                            className="dcf__select"
-                            value={selectedParentId ? String(selectedParentId) : ''}
-                            onChange={(e) => setSelectedParentId(e.target.value ? Number(e.target.value) : null)}
-                          >
-                            <option value="">Selecciona un social</option>
-                            {(parents || []).map((parent: any) => (
-                              <option key={parent.id} value={String(parent.id)}>
-                                {parent.nombre || `Social ${parent.id}`}
-                              </option>
-                            ))}
-                          </select>
-                          <svg className="dcf__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                            <path d="M6 9l6 6 6-6" />
-                          </svg>
-                        </div>
-                        <p className="dcf__helper">Cada fecha se guarda dentro del social seleccionado; ya no se asigna implícitamente a otro social.</p>
-                      </div>
-                      <div className="dcf__field">
                         <label className="dcf__label">
                           {t('event_name')}
                           <span className="dcf__label-req">*</span>
@@ -5034,7 +5004,7 @@ export default function OrganizerProfileEditor() {
                         onTelefonoChange={(v) => setDateForm({ ...dateForm, telefono_contacto: v })}
                         onMensajeChange={(v) => setDateForm({ ...dateForm, mensaje_contacto: v })}
                         hasOwnSavedPhone={false}
-                        organizerPhoneHint={getOrganizerWhatsappHintPhone(org as any)}
+                        organizerPhoneHint={null}
                         eventNombre={dateForm.nombre}
                         onMensajeFocusTemplate={(nombre) => {
                           setDateForm((prev) => ({
@@ -5576,7 +5546,7 @@ export default function OrganizerProfileEditor() {
                               }
                             }}
                             dateId={null}
-                            parentId={selectedParentId || undefined}
+                            parentId={resolvedDateParentId || undefined}
                           />
                           <div className="dcf__bulk-flyer-actions">
                             <button
@@ -5626,7 +5596,7 @@ export default function OrganizerProfileEditor() {
                       value={dateForm.flyer_url || null}
                       onChange={(url) => setDateForm({ ...dateForm, flyer_url: url })}
                       dateId={null}
-                      parentId={selectedParentId || undefined}
+                      parentId={resolvedDateParentId || undefined}
                     />
                     </div>
                   </div>
@@ -5781,7 +5751,7 @@ export default function OrganizerProfileEditor() {
                                   <DateFlyerUploader
                                     value={r.flyer_url || null}
                                     dateId={Number(dateId)}
-                                    parentId={selectedParentId || undefined}
+                                    parentId={resolvedDateParentId || undefined}
                                     onStatusChange={(status) => {
                                       if (status === 'UPLOADING') updateBulkRow(r.id, { flyer_status: 'UPLOADING' });
                                       if (status === 'DONE') updateBulkRow(r.id, { flyer_status: 'DONE' });

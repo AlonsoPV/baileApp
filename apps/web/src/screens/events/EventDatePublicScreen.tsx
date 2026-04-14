@@ -501,7 +501,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   }, [shareUrl, dateName, t, showToast]);
 
   const dateStr = formatHeaderDate(displayYmd || "", i18n.language);
-  /** Time range for hero + info card; if no hora_fin in DB, end matches Add to calendar (+2h when applicable). */
+  /** Time text for hero + info card; if no hora_fin in DB, show only hora_inicio. */
   const timeRange = React.useMemo(() => {
     const hi = date.hora_inicio;
     const hf = date.hora_fin;
@@ -513,15 +513,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     }
     const startFmt = formatHeaderTime(hi);
     if (!startFmt) return "";
-    const locale = getLocale(i18n.language || "es");
-    const endFmt = calendarEnd.toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: "America/Mexico_City",
-    });
-    return `${startFmt} - ${endFmt}`;
-  }, [date.hora_inicio, date.hora_fin, calendarEnd, i18n.language]);
+    return startFmt;
+  }, [date.hora_inicio, date.hora_fin]);
   const venueName = date.lugar || '';
   const costsSummary = React.useMemo(() => {
     const normalized = normalizeEventCosts((date as any)?.costos || []);

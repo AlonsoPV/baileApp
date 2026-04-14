@@ -166,19 +166,17 @@ export function EventWhatsappFormFields({
         ? hintBoxStyle
         : { ...hintBoxStyle, marginTop: 8 };
 
-  const fallbackHints = !hasOwnSavedPhone && (
+  const fallbackHints = !hasOwnSavedPhone && organizerPhoneHint ? (
     <div style={fallbackBoxStyle}>
       <div style={{ fontWeight: preset === "dcf" ? 600 : 700, marginBottom: 4 }}>
         Este evento está usando el WhatsApp del organizador.
       </div>
       <div style={{ opacity: 0.95 }}>Si quieres uno distinto, escríbelo aquí.</div>
-      {organizerPhoneHint ? (
-        <div style={{ marginTop: 8, fontSize: preset === "dcf" ? 13 : 12, opacity: 0.88 }}>
-          Contacto del organizador (referencia): {organizerPhoneHint}
-        </div>
-      ) : null}
+      <div style={{ marginTop: 8, fontSize: preset === "dcf" ? 13 : 12, opacity: 0.88 }}>
+        Contacto del organizador (referencia): {organizerPhoneHint}
+      </div>
     </div>
-  );
+  ) : null;
 
   if (preset === "dcf") {
     return (

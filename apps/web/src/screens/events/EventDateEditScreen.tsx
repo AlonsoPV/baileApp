@@ -1104,7 +1104,7 @@ export function EventDateEditScreen() {
               onPhoneTouched={() => setWhatsappPhoneTouched(true)}
               onMessageTouched={() => setWhatsappMessageTouched(true)}
               hasOwnSavedPhone={!isNew && eventDateHasOwnWhatsappPhone(currentDate as any)}
-              organizerPhoneHint={getOrganizerWhatsappHintPhone(org as any)}
+              organizerPhoneHint={isNew ? null : getOrganizerWhatsappHintPhone(org as any)}
               eventNombre={form.nombre}
               onMensajeFocusTemplate={(nombre) => {
                 setWhatsappMessageTouched(true);

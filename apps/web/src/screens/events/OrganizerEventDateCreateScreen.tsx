@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { useCreateEventDate } from "../../hooks/useEventDate";
 import { useEventParent } from "../../hooks/useEventParent";
-import { useEventParentsByOrganizer } from "../../hooks/useEventParentsByOrganizer";
 import { useMyOrganizer } from "../../hooks/useOrganizer";
 import { useOrganizerLocations, type OrganizerLocation } from "../../hooks/useOrganizerLocations";
 import { useTags } from "../../hooks/useTags";
@@ -15,7 +14,7 @@ import DateFlyerUploader from "../../components/events/DateFlyerUploader";
 import type { AcademyLocation } from "../../types/academy";
 import { supabase } from "../../lib/supabase";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
-import { buildEventWhatsappPayload, getOrganizerWhatsappHintPhone } from "../../utils/eventWhatsapp";
+import { buildEventWhatsappPayload } from "../../utils/eventWhatsapp";
 import { EventWhatsappFormFields } from "../../components/events/EventWhatsappFormFields";
 
 const colors = {
@@ -51,7 +50,6 @@ export default function OrganizerEventDateCreateScreen() {
 
   const { data: parent, isLoading } = useEventParent(parentIdNum);
   const { data: org } = useMyOrganizer();
-  const { data: parents = [] } = useEventParentsByOrganizer((org as any)?.id);
   const { data: orgLocations = [] } = useOrganizerLocations((org as any)?.id);
   const { data: allTags } = useTags();
   const ritmoTags = allTags?.filter(tag => tag.tipo === 'ritmo') || [];
@@ -212,13 +210,12 @@ export default function OrganizerEventDateCreateScreen() {
       const resolvedZona = resolvedZonaFromLocation();
       const resolvedZonas = resolvedZonasFromLocations();
 
-      // parent_id obligatorio: URL, o primer evento del organizador si la URL no trae parent válido
+      // parent_id obligatorio: la fecha se guarda solo dentro del social de la URL.
       const effectiveParentId =
-        (parentIdNum != null && Number.isFinite(parentIdNum) ? parentIdNum : null) ??
-        (parents?.length === 1 ? Number((parents[0] as any)?.id) : null);
+        parentIdNum != null && Number.isFinite(parentIdNum) ? parentIdNum : null;
 
       if (effectiveParentId == null) {
-        showToast('Selecciona explícitamente a qué social pertenece esta fecha antes de guardarla', 'error');
+        showToast('Abre la creación desde el social al que pertenecerá esta fecha', 'error');
         return;
       }
 
@@ -318,8 +315,7 @@ export default function OrganizerEventDateCreateScreen() {
 
   const handleCancel = () => {
     const effectiveParentId =
-      (parentIdNum != null && Number.isFinite(parentIdNum) ? parentIdNum : null) ??
-      (parents?.length ? Number((parents[0] as any)?.id) : null);
+      parentIdNum != null && Number.isFinite(parentIdNum) ? parentIdNum : null;
     if (effectiveParentId != null) {
       navigate(`/social/${effectiveParentId}`);
     } else {
@@ -562,7 +558,7 @@ export default function OrganizerEventDateCreateScreen() {
                     onTelefonoChange={(v) => setDateForm({ ...dateForm, telefono_contacto: v })}
                     onMensajeChange={(v) => setDateForm({ ...dateForm, mensaje_contacto: v })}
                     hasOwnSavedPhone={false}
-                    organizerPhoneHint={getOrganizerWhatsappHintPhone(org as any)}
+                    organizerPhoneHint={null}
                     eventNombre={dateForm.nombre}
                     onMensajeFocusTemplate={(nombre) => {
                       setDateForm((prev) => ({
