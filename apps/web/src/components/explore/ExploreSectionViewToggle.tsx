@@ -12,8 +12,8 @@ type Props = {
   groupLabel?: string;
   /**
    * Mismo orden que Sociales en Explore:
-   * LayoutGrid → carousel, Images → cartelera, List → lista.
-   * Si es false: solo cartelera + lista.
+   * List → lista, LayoutGrid → carousel, Images → cartelera.
+   * Si es false: lista + cartelera (mismo orden visual).
    */
   likeFechas?: boolean;
 };
@@ -74,11 +74,21 @@ export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFech
       <>
         <button
           type="button"
+          aria-pressed={value === "list"}
+          onClick={() => onChange("list")}
+          title={t("explore_fechas_view_list") || "Lista"}
+          aria-label={t("explore_fechas_view_list") || "Vista en lista"}
+          style={segment(value === "list", false)}
+        >
+          <List size={18} aria-hidden />
+        </button>
+        <button
+          type="button"
           aria-pressed={value === "carousel"}
           onClick={() => onChange("carousel")}
           title={t("explore_fechas_view_cards") || "Tarjetas"}
           aria-label={t("explore_fechas_view_cards") || "Vista en tarjetas"}
-          style={segment(value === "carousel", false)}
+          style={segment(value === "carousel", true)}
         >
           <LayoutGrid size={18} aria-hidden />
         </button>
@@ -92,16 +102,6 @@ export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFech
         >
           <Images size={18} aria-hidden />
         </button>
-        <button
-          type="button"
-          aria-pressed={value === "list"}
-          onClick={() => onChange("list")}
-          title={t("explore_fechas_view_list") || "Lista"}
-          aria-label={t("explore_fechas_view_list") || "Vista en lista"}
-          style={segment(value === "list", true)}
-        >
-          <List size={18} aria-hidden />
-        </button>
       </>,
       label
     );
@@ -112,23 +112,23 @@ export function ExploreSectionViewToggle({ value, onChange, groupLabel, likeFech
     <>
       <button
         type="button"
-        aria-pressed={value === "cartelera"}
-        onClick={() => onChange("cartelera")}
-        title={t("explore_fechas_view_cartelera") || "Cartelera"}
-        aria-label={t("explore_fechas_view_cartelera") || "Vista cartelera"}
-        style={segment(value === "cartelera", false)}
-      >
-        <Images size={18} aria-hidden />
-      </button>
-      <button
-        type="button"
         aria-pressed={value === "list"}
         onClick={() => onChange("list")}
         title={t("explore_fechas_view_list") || "Lista"}
         aria-label={t("explore_fechas_view_list") || "Vista en lista"}
-        style={segment(value === "list", true)}
+        style={segment(value === "list", false)}
       >
         <List size={18} aria-hidden />
+      </button>
+      <button
+        type="button"
+        aria-pressed={value === "cartelera"}
+        onClick={() => onChange("cartelera")}
+        title={t("explore_fechas_view_cartelera") || "Cartelera"}
+        aria-label={t("explore_fechas_view_cartelera") || "Vista cartelera"}
+        style={segment(value === "cartelera", true)}
+      >
+        <Images size={18} aria-hidden />
       </button>
     </>,
     label
