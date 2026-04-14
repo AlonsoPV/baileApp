@@ -62,6 +62,18 @@ function marksToMap() {
   return out;
 }
 
+function postBridgeMessage(type: "READY_SHELL" | "READY", extra: Record<string, unknown> = {}): void {
+  try {
+    if (typeof window !== "undefined" && (window as any).ReactNativeWebView?.postMessage) {
+      (window as any).ReactNativeWebView.postMessage(
+        JSON.stringify({ type, t: now(), marks: marksToMap(), ...extra })
+      );
+    }
+  } catch {
+    // ignore
+  }
+}
+
 /**
  * Obtiene el tiempo entre dos hitos por nombre.
  */
@@ -85,6 +97,21 @@ export function logReport(): void {
 }
 
 /**
+ * Para uso dentro de WebView: notifica al host nativo que la shell visual ya pintó.
+ * El host puede ocultar el splash nativo sin esperar a los datos iniciales.
+ */
+export function notifyReadyShell(): void {
+  try {
+    if (typeof performance !== "undefined" && typeof performance.mark === "function") {
+      performance.mark("web_ready_shell");
+    }
+  } catch {}
+
+  postBridgeMessage("READY_SHELL");
+  mark("web_ready_shell", false);
+}
+
+/**
  * Para uso dentro de WebView: notifica al host nativo que la app web está "lista" (ej. primera pantalla pintada).
  * El host puede ocultar el skeleton cuando recibe este mensaje.
  */
@@ -96,15 +123,7 @@ export function notifyReady(): void {
     }
   } catch {}
 
-  try {
-    if (typeof window !== "undefined" && (window as any).ReactNativeWebView?.postMessage) {
-      (window as any).ReactNativeWebView.postMessage(
-        JSON.stringify({ type: "READY", t: now(), marks: marksToMap() })
-      );
-    }
-  } catch {
-    // ignore
-  }
+  postBridgeMessage("READY");
   mark("web_ready", false);
 }
 

@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import * as ExpoLinking from "expo-linking";
+import * as SplashScreen from "expo-splash-screen";
 import {
   addToCalendar,
   openGoogleCalendarTemplateFallback,
@@ -44,6 +45,9 @@ const LOAD_TIMEOUT_MS = 20_000;
 /** Tras este tiempo desde onLoadStart (solo Android), banner suave “sigue cargando”. iOS: desactivado. */
 const ANDROID_LOAD_SLOW_HINT_MS = 3_000;
 const IOS_LOAD_SLOW_HINT_MS = 9_000_000;
+
+/** Máximo tiempo mostrando el splash nativo antes de soltar control a la WebView. */
+const SPLASH_MAX_DURATION_MS = 5_000;
 
 /** Android: tiempo mínimo con NetInfo “offline” antes del copy fuerte “Sin conexión”. */
 const ANDROID_OFFLINE_CONFIRM_MS = 1_500;
@@ -320,10 +324,60 @@ export default function WebAppScreen() {
   const [androidOfflineNetCopyOk, setAndroidOfflineNetCopyOk] = React.useState(() => Platform.OS !== "android");
   const onErrorDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const slowLoadHintTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shellReadyReceivedRef = React.useRef(false);
+  const splashHiddenRef = React.useRef(false);
+
+  const logReadyPhase = React.useCallback((phase: "READY_SHELL" | "READY", elapsedMs: number, msg: any) => {
+    if (typeof console?.log === "function") {
+      console.log(`[PERF] ${phase.toLowerCase()}: ${elapsedMs.toFixed(2)}ms`);
+    }
+
+    const marks = msg?.marks;
+    const appStart = typeof marks?.app_start === "number" ? marks.app_start : undefined;
+    const shellReady = typeof marks?.web_ready_shell === "number" ? marks.web_ready_shell : undefined;
+    const ready = typeof marks?.web_ready === "number" ? marks.web_ready : undefined;
+
+    if (typeof appStart === "number" && typeof shellReady === "number" && typeof console?.log === "function") {
+      console.log(`[PERF] js_start_to_ready_shell: ${(shellReady - appStart).toFixed(2)}ms`);
+    }
+    if (phase === "READY" && typeof appStart === "number" && typeof ready === "number" && typeof console?.log === "function") {
+      console.log(`[PERF] js_start_to_ready: ${(ready - appStart).toFixed(2)}ms`);
+    }
+  }, []);
+
+  const hideNativeSplash = React.useCallback((reason: string) => {
+    if (splashHiddenRef.current) return;
+    splashHiddenRef.current = true;
+    if (typeof console?.log === "function") {
+      console.log(`[PERF] native_splash_hide: ${reason}`);
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        SplashScreen.hideAsync().catch(() => {});
+      });
+    });
+  }, []);
 
   const getNetworkSnapshot = React.useCallback((): ConnectivitySnapshot => {
     return { ...networkSnapshotRef.current };
   }, []);
+
+  React.useEffect(() => {
+    if (hasError || webViewImportError) {
+      hideNativeSplash("error");
+    }
+  }, [hasError, hideNativeSplash, webViewImportError]);
+
+  React.useEffect(() => {
+    const splashTimeout = setTimeout(() => {
+      if (!splashHiddenRef.current) {
+        console.warn("[splash] timeout - hiding native splash for safety");
+        hideNativeSplash("timeout");
+      }
+    }, SPLASH_MAX_DURATION_MS);
+
+    return () => clearTimeout(splashTimeout);
+  }, [hideNativeSplash]);
 
   const logDiagnosticEvent = React.useCallback(
     (event: string, payload: Record<string, unknown> = {}) => {
@@ -873,16 +927,21 @@ export default function WebAppScreen() {
         return;
       }
 
-      if (nativeAuthInProgress) return;
+      if (msg?.type === "READY_SHELL") {
+        if (!shellReadyReceivedRef.current) {
+          shellReadyReceivedRef.current = true;
+          logReadyPhase("READY_SHELL", Date.now() - loadStartTimeRef.current, msg);
+          hideNativeSplash("ready_shell");
+        }
+        return;
+      }
 
-      // Handshake READY: web indica que primera pantalla está lista; ocultar loader y medir TTI
+      // Handshake READY: web indica que primera pantalla útil está lista; medir TTI
       if (msg?.type === "READY") {
         if (!readyReceivedRef.current) {
           readyReceivedRef.current = true;
           const elapsed = Date.now() - loadStartTimeRef.current;
-          if (typeof console?.log === "function") {
-            console.log(`[PERF] webview_ready: ${elapsed.toFixed(2)}ms`);
-          }
+          logReadyPhase("READY", elapsed, msg);
           markPerformance("webview_ready");
           PerformanceLogger.mark("web_ready");
           PerformanceLogger.measure("app_start_to_web_ready", "app_start", "web_ready");
@@ -897,9 +956,12 @@ export default function WebAppScreen() {
           setSlowLoadHint(false);
           clearOnErrorDebounce();
           setLoading(false);
+          hideNativeSplash("ready");
         }
         return;
       }
+
+      if (nativeAuthInProgress) return;
 
       if (msg?.type === "NATIVE_AUTH_APPLE") {
         setNativeAuthInProgress(true);

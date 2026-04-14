@@ -1,6 +1,8 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import AppRouter from './AppRouter';
+import { isNativeApp } from './utils/isNativeApp';
+import { notifyReadyShell } from './utils/performanceLogger';
 
 const loadHotjar = () => import('./lib/hotjar');
 
@@ -60,9 +62,38 @@ function HotjarTracker() {
   return null;
 }
 
+function NativeShellReadyReporter() {
+  const location = useLocation();
+  const sentRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (sentRef.current || !isNativeApp(location.search)) return;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (sentRef.current) return;
+        sentRef.current = true;
+
+        const hostWindow = window as any;
+        const perfState = (hostWindow.__baileappPerf = hostWindow.__baileappPerf ?? {});
+        perfState.firstRender = Date.now();
+
+        if (typeof perfState.jsStart === 'number' && typeof console?.log === 'function') {
+          console.log(`[perf] JS start → READY_SHELL: ${perfState.firstRender - perfState.jsStart}ms`);
+        }
+
+        notifyReadyShell();
+      });
+    });
+  }, [location.search]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <>
+      <NativeShellReadyReporter />
       <ScrollToTop />
       <HotjarTracker />
       <AppRouter />

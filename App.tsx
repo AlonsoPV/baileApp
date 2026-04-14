@@ -31,6 +31,14 @@ markPerformance("env_report_generated");
 
 const queryClient = new QueryClient();
 
+function hideNativeSplashOnNextPaint() {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    });
+  });
+}
+
 // ✅ Validar ENV al inicio (antes de renderizar)
 // Uses ENV (from Constants.expoConfig.extra) which is reliable in bare RN
 const { url, key } = assertEnv();
@@ -250,6 +258,12 @@ function AppContent() {
       });
   }, []);
 
+  React.useEffect(() => {
+    if (lastCrash || !url || !key) {
+      hideNativeSplashOnNextPaint();
+    }
+  }, [key, lastCrash, url]);
+
   // ✅ Dev-only diagnostics for Google Sign-In iOS CI issues
   React.useEffect(() => {
     if (!__DEV__) return;
@@ -380,7 +394,7 @@ function AppContent() {
 }
 
 /**
- * Arranque: splash nativo (#000) → AppLoadingScreen (#000 + spinner) → app.
+ * Arranque: splash nativo (#000) → fallback negro mínimo → web/app lista.
  * prepare() puede ampliarse (fuentes, caché, etc.) sin bloquear más de lo necesario.
  */
 function AppBootstrap() {

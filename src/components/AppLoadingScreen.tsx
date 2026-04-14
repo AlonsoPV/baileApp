@@ -1,21 +1,15 @@
 import React from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import * as SplashScreen from "expo-splash-screen";
 
 /**
- * Pantalla de carga inicial: fondo negro + indicador blanco.
- * Al montarse, oculta el splash nativo para evitar parpadeo (mismo color #000).
+ * Fallback mínimo mientras JS termina de montar.
+ * El splash nativo se oculta más tarde, cuando la WebView/web ya está lista o si ocurre un error.
  */
 export default function AppLoadingScreen() {
-  React.useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
-  }, []);
-
   return (
     <View style={styles.container} accessibilityLabel="Cargando aplicación">
       <StatusBar style="light" />
-      <ActivityIndicator size="large" color="#FFFFFF" />
     </View>
   );
 }

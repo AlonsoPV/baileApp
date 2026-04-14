@@ -21,6 +21,21 @@
     </noscript>
     <!-- Evita zoom automático en focus (iOS/Android) y escalado inesperado en WebView -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body { min-height: 100%; margin: 0; }
+      body {
+        background: #0b0d10;
+        color: #ffffff;
+        font-family: Inter, Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #root, #overlay-root {
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+    </style>
     <title>Dónde Bailar | Clases, sociales y academias de baile en México</title>
   </head>
   <body>

@@ -164,8 +164,10 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   newArchEnabled: false, // ⚠️ Deshabilitado temporalmente debido a crash en TurboModules (iOS 18.1)
 
+  // iOS: solo color (storyboard / assets nativos en repo). Sin `image` aquí para no forzar splash con logo en iOS.
+  // Android: el drawable `splashscreen_logo` lo genera el plugin `expo-splash-screen` (bloque `android` abajo);
+  // sin imagen, el prebuild puede dejar @drawable/splashscreen_logo sin archivo y falla el link de recursos.
   splash: {
-    // Sin imagen para evitar mostrar logo legado en la cortina de carga nativa.
     backgroundColor: "#000000",
   },
 
@@ -334,6 +336,18 @@ const config: ExpoConfig = {
   plugins: [
     // Android release signing from UPLOAD_* (gradle.properties or env). See docs/ANDROID_PLAY_AAB_BUILD.md
     withAndroidReleaseSigning as ExpoConfig["plugins"] extends (infer U)[] ? U : never,
+    // Solo Android: genera splashscreen_logo + capas; iOS sigue usando `splash` legacy de arriba (sin image).
+    [
+      "expo-splash-screen",
+      {
+        android: {
+          backgroundColor: "#000000",
+          image: "./assets/adaptive-icon.png",
+          resizeMode: "contain",
+          imageWidth: 100,
+        },
+      },
+    ],
     [
       "expo-calendar",
       {

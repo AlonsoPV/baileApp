@@ -114,9 +114,6 @@ export function RouteLoadingFallback({ layout = "fullscreen" }: { layout?: Route
           white-space: nowrap;
           border: 0;
         }
-        @keyframes route-fallback-spin {
-          to { transform: rotate(360deg); }
-        }
         .route-fallback-fs-panel {
           width: 100%;
           max-width: 420px;
@@ -147,18 +144,6 @@ export function RouteLoadingFallback({ layout = "fullscreen" }: { layout?: Route
         <div className="route-fallback-fs-field" />
         <div className="route-fallback-fs-field" style={{ height: 44, maxWidth: "45%", marginTop: 8 }} />
       </div>
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          marginTop: 24,
-          border: "3px solid rgba(255,255,255,0.12)",
-          borderTopColor: "rgba(245,114,128,0.9)",
-          borderRadius: "50%",
-          animation: "route-fallback-spin 0.9s linear infinite",
-        }}
-        aria-hidden
-      />
       <span className="route-fallback__visually-hidden">Cargando…</span>
     </div>
   );

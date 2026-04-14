@@ -42,9 +42,17 @@ const hostWindow = typeof window !== "undefined" ? (window as any) : undefined;
 const isEmbeddedWebView = !!hostWindow?.ReactNativeWebView;
 const canLoadVercelSignals = !isEmbeddedWebView;
 
+if (hostWindow) {
+  hostWindow.__baileappPerf = hostWindow.__baileappPerf ?? {};
+  if (typeof hostWindow.__baileappPerf.jsStart !== "number") {
+    hostWindow.__baileappPerf.jsStart = Date.now();
+  }
+}
+
 // Keep public deep-link screens out of the main web bundle, but warm them early in native/WebView
 // to reduce the chance of route-chunk fetch failures after boot.
 if (typeof window !== "undefined" && isNativeApp(window.location.search)) {
+  void import("./screens/explore/ExploreHomeScreenModern");
   void import("./screens/events/EventDatePublicScreen");
   void import("./screens/classes/ClassPublicScreen");
 }
