@@ -2,18 +2,17 @@ import React from "react";
 import { ChevronRight } from "lucide-react";
 import LiveLink from "../LiveLink";
 import { urls } from "@/lib/urls";
-import { useFmtDate } from "@/hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "@/utils/eventCosts";
-import { resolveEventDateYmd } from "@/utils/eventDateDisplay";
+import type { ExploreTagMaps } from "@/utils/exploreTagMaps";
 import "./EventListRow.css";
 
 export interface EventListRowProps {
   item: any;
   priority?: boolean;
-  /** Solo cuando item.__ui no existe (fallback). */
+  tagMaps?: ExploreTagMaps;
   allTags?: any[] | null;
 }
 
@@ -39,38 +38,53 @@ const toNumericId = (v: any): number | null => {
 };
 
 function MetaLine({
-  dateText,
   timeText,
   priceLabel,
   placeText,
   hasDiscountMark = false,
   priceAria,
 }: {
-  dateText?: string;
   timeText?: string;
   priceLabel: string;
   placeText?: string;
   hasDiscountMark?: boolean;
   priceAria: string;
 }) {
+  const hasLeadingMeta = Boolean(timeText || priceLabel);
+  const isFree = priceLabel === "Gratis";
+
   return (
     <div className="event-list-row__meta">
-      {dateText ? <span title={dateText}>{dateText}</span> : null}
-      {dateText && timeText ? <span className="event-list-row__dot">·</span> : null}
-      {timeText ? <span title={`Hora ${timeText}`}>{timeText}</span> : null}
-      {(dateText || timeText) ? <span className="event-list-row__dot">·</span> : null}
-      <span className="event-list-row__tag--cost" aria-label={priceAria}>
-        <span>{priceLabel}</span>
-        {hasDiscountMark ? <span className="event-list-row__discount">%</span> : null}
-      </span>
-      {placeText ? <span className="event-list-row__dot">·</span> : null}
-      {placeText ? <span title={placeText}>{placeText}</span> : null}
+      {timeText ? (
+        <span className="event-list-row__meta-time" title={`Hora ${timeText}`}>
+          {timeText}
+        </span>
+      ) : null}
+      {timeText && priceLabel ? <span className="event-list-row__meta-dot">·</span> : null}
+      {priceLabel ? (
+        <span
+          className={`event-list-row__meta-price ${isFree ? "event-list-row__meta-price--free" : ""}`}
+          aria-label={priceAria}
+        >
+          {priceLabel}
+        </span>
+      ) : null}
+      {hasDiscountMark ? (
+        <span className="event-list-row__meta-badge event-list-row__discount" aria-hidden>
+          %
+        </span>
+      ) : null}
+      {placeText && hasLeadingMeta ? <span className="event-list-row__meta-dot">·</span> : null}
+      {placeText ? (
+        <span className="event-list-row__meta-place" title={placeText}>
+          {placeText}
+        </span>
+      ) : null}
     </div>
   );
 }
 
 function EventListRowDumb({ item, priority = false }: EventListRowProps) {
-  const fmtDateLocalized = useFmtDate();
   const ui = item?.__ui!;
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
@@ -125,7 +139,6 @@ function EventListRowDumb({ item, priority = false }: EventListRowProps) {
             </div>
           )}
           <MetaLine
-            dateText={ui.fechaYmd ? fmtDateLocalized(ui.fechaYmd) : ""}
             timeText={horaInicio ? formatHHMM(horaInicio) : ""}
             priceLabel={ui.costoMonto === 0 ? "Gratis" : `$${ui.costoMonto?.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`}
             placeText={ui.lugarNombre || ""}
@@ -143,7 +156,6 @@ function EventListRowDumb({ item, priority = false }: EventListRowProps) {
 }
 
 function EventListRowWithTags({ item, priority = false }: EventListRowProps) {
-  const fmtDateLocalized = useFmtDate();
   const eventId = toNumericId(item?.id) ?? toNumericId(item?.event_date_id) ?? toNumericId(item?._original_id);
   const linkTo = eventId ? urls.eventDateLive(eventId) : "#";
 
@@ -196,7 +208,6 @@ function EventListRowWithTags({ item, priority = false }: EventListRowProps) {
     return s;
   }, [lugar]);
   const ownerLabel = item.ownerName || item.organizador_nombre || item.organizer_name || "";
-  const fecha = React.useMemo(() => resolveEventDateYmd(item), [item]);
   const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
   const costMonto = React.useMemo(() => {
@@ -241,7 +252,6 @@ function EventListRowWithTags({ item, priority = false }: EventListRowProps) {
             </div>
           )}
           <MetaLine
-            dateText={fecha ? fmtDateLocalized(fecha) : ""}
             timeText={horaInicio ? formatHHMM(horaInicio) : ""}
             priceLabel={costMonto === 0 ? "Gratis" : `$${costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`}
             placeText={lugarSoloNombre || ""}

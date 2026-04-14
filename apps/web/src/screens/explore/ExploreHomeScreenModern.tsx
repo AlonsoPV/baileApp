@@ -3247,6 +3247,19 @@ export default function ExploreHomeScreen() {
     [handlePreNavigate, t]
   );
 
+  const formatFechasListDate = React.useCallback((ymd?: string | null) => {
+    if (!ymd) return "";
+    try {
+      const [y, m, d] = String(ymd).split("-").map(Number);
+      if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return String(ymd);
+      return new Date(y, m - 1, d)
+        .toLocaleDateString(getLocaleFromI18n(), { weekday: "long", day: "numeric", month: "short" })
+        .replace(",", "");
+    } catch {
+      return String(ymd);
+    }
+  }, []);
+
   const renderFechaListItem = React.useCallback(
     (fechaEvento: any, idx: number) => {
       if ((fechaEvento as any)?.__type === "load_more") {
@@ -3266,19 +3279,32 @@ export default function ExploreHomeScreen() {
         (fechaEvento as any)?._recurrence_index !== undefined
           ? `${(fechaEvento as any)?._original_id || fechaEvento?.id}_${(fechaEvento as any)?._recurrence_index}_${getEffectiveEventDateYmd(fechaEvento)}_${String(fechaEvento?.hora_inicio || fechaEvento?.evento_hora_inicio || "")}`
           : buildEventOccurrenceKey(fechaEvento);
+      const currentDate = getEffectiveEventDateYmd(fechaEvento);
+      const prevItem = idx > 0 ? fechasSliderItems[idx - 1] : null;
+      const prevDate = prevItem && (prevItem as any)?.__type !== "load_more" ? getEffectiveEventDateYmd(prevItem) : null;
+      const isNewDay = Boolean(currentDate && currentDate !== prevDate);
+      const separatorLabel = currentDate ? formatFechasListDate(currentDate) : "";
 
       return (
-        <div
-          key={key}
-          role="listitem"
-          onClickCapture={handlePreNavigate}
-          style={{ width: "100%" }}
-        >
-          <EventListRow item={fechaEvento} priority={idx === 0} allTags={allTags as any[]} />
-        </div>
+        <React.Fragment key={key}>
+          {isNewDay && separatorLabel ? (
+            <div className="explore-fechas-list__date-sep" role="separator" aria-label={separatorLabel}>
+              <div className="explore-fechas-list__date-sep-line" />
+              <span className="explore-fechas-list__date-sep-label">{separatorLabel}</span>
+              <div className="explore-fechas-list__date-sep-line" />
+            </div>
+          ) : null}
+          <div
+            role="listitem"
+            onClickCapture={handlePreNavigate}
+            style={{ width: "100%" }}
+          >
+            <EventListRow item={fechaEvento} priority={idx === 0} tagMaps={tagMaps} />
+          </div>
+        </React.Fragment>
       );
     },
-    [handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t, allTags]
+    [fechasQuery.isFetchingNextPage, fechasSliderItems, formatFechasListDate, handlePreNavigate, onLoadMoreFechas, t, tagMaps]
   );
 
   const renderFechaCarteleraItem = React.useCallback(

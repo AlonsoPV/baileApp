@@ -2,13 +2,36 @@
 .explore-fechas-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
   width: 100%;
   max-width: min(560px, 100%);
   margin: 0 auto;
   padding: 0 max(8px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px))
     max(8px, env(safe-area-inset-left, 0px));
   box-sizing: border-box;
+}
+
+.explore-fechas-list__date-sep {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 4px 4px;
+}
+
+.explore-fechas-list__date-sep-line {
+  flex: 1;
+  height: 0.5px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.explore-fechas-list__date-sep-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .explore-fechas-list__load-more {
@@ -24,18 +47,18 @@
   width: 100%;
   min-width: 0;
   min-height: 0;
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(18, 22, 31, 0.72);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+  padding: 10px;
+  border-radius: 14px;
+  border: 0.5px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
   cursor: pointer;
   text-align: left;
   position: relative;
   overflow: hidden;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 
 .event-list-row:focus-visible {
@@ -44,15 +67,14 @@
 }
 
 .event-list-row:hover {
-  background: rgba(24, 29, 40, 0.8);
-  border-color: rgba(255, 255, 255, 0.14);
-  transform: scale(1.01);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .event-list-row__thumb {
   flex: 0 0 auto;
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   border-radius: 10px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.06);
@@ -109,8 +131,8 @@
 }
 
 .event-list-row__owner {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.35);
   font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   min-width: 0;
   white-space: nowrap;
@@ -119,7 +141,7 @@
 }
 
 .event-list-row__owner strong {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 700;
 }
 
@@ -136,9 +158,9 @@
 
 .event-list-row__meta {
   display: flex;
-  flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  flex-wrap: nowrap;
   font-size: 0.75rem;
   line-height: 1.3;
   color: rgba(255, 255, 255, 0.84);
@@ -148,26 +170,41 @@
   overflow: hidden;
 }
 
-.event-list-row__meta span {
+.event-list-row__meta-time,
+.event-list-row__meta-price,
+.event-list-row__meta-dot,
+.event-list-row__meta-badge,
+.event-list-row__meta-place {
   display: inline-flex;
   align-items: center;
-  min-width: 0;
   white-space: nowrap;
+}
+
+.event-list-row__meta-time,
+.event-list-row__meta-price,
+.event-list-row__meta-dot,
+.event-list-row__meta-badge {
+  flex-shrink: 0;
+}
+
+.event-list-row__meta-price {
+  color: rgba(255, 232, 182, 0.96);
+  font-weight: 700;
+}
+
+.event-list-row__meta-price--free {
+  color: #5dcaa5;
+}
+
+.event-list-row__meta-place {
+  flex-shrink: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.event-list-row__tag--cost {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: rgba(255, 232, 182, 0.96);
-  flex-shrink: 0;
-}
-
 .event-list-row__discount {
   display: inline-flex;
-  margin-left: 2px;
   padding: 0 4px;
   border-radius: 4px;
   font-size: 0.625rem;
@@ -176,9 +213,8 @@
   color: #ffe082;
 }
 
-.event-list-row__dot {
+.event-list-row__meta-dot {
   color: rgba(255, 255, 255, 0.34);
-  flex-shrink: 0;
 }
 
 .event-list-row__chevron {
@@ -220,12 +256,12 @@
 
 @media (min-width: 769px) {
   .event-list-row__thumb {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
   }
 }
 
 /* Android WebView perf mode */
 .explore-container.android-mobile .event-list-row {
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  box-shadow: none;
 }
