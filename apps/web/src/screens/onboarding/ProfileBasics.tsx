@@ -297,7 +297,7 @@ export function ProfileBasics() {
             .from('media')
             .upload(fileName, fileToUpload, {
               upsert: true,
-              cacheControl: '31536000',
+              cacheControl: 'public, max-age=31536000, immutable',
               contentType: contentType,
             });
           uploadError = res.error;

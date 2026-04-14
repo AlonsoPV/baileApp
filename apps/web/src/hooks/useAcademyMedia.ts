@@ -33,7 +33,7 @@ async function uploadAcademyFile(academyId: number, file: File): Promise<MediaIt
   console.log('[AcademyMediaStorage] Uploading file:', { academyId, fileName: processedFile.name, type, path, originalSize: file.size, processedSize: processedFile.size });
 
   const { data, error } = await supabase.storage.from(BUCKET).upload(path, processedFile, {
-    cacheControl: "31536000",
+    cacheControl: "public, max-age=31536000, immutable",
     upsert: false,
     contentType: processedFile.type || undefined,
   });

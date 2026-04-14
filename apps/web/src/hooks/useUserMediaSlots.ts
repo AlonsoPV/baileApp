@@ -83,7 +83,7 @@ export function useUserMediaSlots() {
         .from(BUCKET)
         .upload(path, file, {
           upsert: true,
-          cacheControl: "31536000",
+          cacheControl: "public, max-age=31536000, immutable",
           contentType: file.type || undefined,
         });
 

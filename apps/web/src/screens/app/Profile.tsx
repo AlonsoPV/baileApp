@@ -117,7 +117,7 @@ export function Profile() {
           .from('media')
           .upload(fileName, avatarFile, {
             upsert: true,
-            cacheControl: '31536000',
+            cacheControl: 'public, max-age=31536000, immutable',
             contentType: avatarFile.type || undefined,
           });
 

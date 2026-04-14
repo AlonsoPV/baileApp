@@ -40,7 +40,7 @@ export async function uploadEventFlyer({ file, parentId, dateId }: UploadEventFl
     .from("media")
     .upload(path, processedFile, {
       upsert: true,
-      cacheControl: "31536000",
+      cacheControl: "public, max-age=31536000, immutable",
       contentType: processedFile.type || undefined,
     });
 

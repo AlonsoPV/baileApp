@@ -109,7 +109,7 @@ export default function TrendingAdmin() {
         const key = `trending-covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
         const { error: upErr } = await supabase.storage.from('media').upload(key, processedCoverFile, {
           upsert: true,
-          cacheControl: '31536000',
+          cacheControl: 'public, max-age=31536000, immutable',
           contentType: processedCoverFile.type || undefined,
         });
         if (upErr) throw upErr;

@@ -26,7 +26,7 @@ async function uploadEventDateFile(dateId: number, file: File): Promise<MediaIte
   const path = `event-dates/${dateId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
 
   const { data, error } = await supabase.storage.from(BUCKET).upload(path, processedFile, {
-    cacheControl: "31536000",
+    cacheControl: "public, max-age=31536000, immutable",
     upsert: false,
     contentType: processedFile.type || undefined,
   });
