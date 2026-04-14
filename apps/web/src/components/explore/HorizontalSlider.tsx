@@ -66,6 +66,7 @@ export default function HorizontalSlider<T>({
     clientWidth: 0,
     maxScrollLeft: 0,
   });
+  const itemNodesRef = useRef<HTMLElement[]>([]);
   const itemMetricsRef = useRef<{
     scrollPaddingLeft: number;
     itemOffsets: number[];
@@ -119,6 +120,7 @@ export default function HorizontalSlider<T>({
     const rawPaddingLeft = cs.scrollPaddingLeft || "0";
     const parsedPaddingLeft = parseFloat(rawPaddingLeft);
     const itemOffsets = nodes.map((node) => node.offsetLeft);
+    itemNodesRef.current = nodes;
     const itemStep =
       itemOffsets.length > 1
         ? Math.max(1, itemOffsets[1] - itemOffsets[0])
@@ -188,7 +190,12 @@ export default function HorizontalSlider<T>({
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
   const getCarouselItems = useCallback((scroller: HTMLElement) => {
-    return Array.from(scroller.querySelectorAll<HTMLElement>("[data-carousel-item]"));
+    const cachedNodes = itemNodesRef.current;
+    if (cachedNodes.length > 0) return cachedNodes;
+
+    const nodes = Array.from(scroller.querySelectorAll<HTMLElement>("[data-carousel-item]"));
+    itemNodesRef.current = nodes;
+    return nodes;
   }, []);
 
   const getNearestItemIndex = useCallback((scroller: HTMLElement) => {
@@ -507,21 +514,17 @@ export default function HorizontalSlider<T>({
 
     const onTouchEnd = () => {
       if (axisLock === "x") {
-        const nodes = getCarouselItems(el);
-        if (nodes.length > 0) {
+        const { itemCount, itemOffsets, scrollPaddingLeft } = itemMetricsRef.current;
+        if (itemCount > 0) {
           const swipeThreshold = 28;
           let targetIndex = getNearestItemIndex(el);
           if (Math.abs(totalDx) >= swipeThreshold) {
             targetIndex = Math.max(
               0,
-              Math.min(nodes.length - 1, startIndex + (totalDx < 0 ? 1 : -1)),
+              Math.min(itemCount - 1, startIndex + (totalDx < 0 ? 1 : -1)),
             );
           }
-          const targetLeft = Math.max(
-            0,
-            (itemMetricsRef.current.itemOffsets[targetIndex] ?? nodes[targetIndex].offsetLeft) -
-              itemMetricsRef.current.scrollPaddingLeft,
-          );
+          const targetLeft = Math.max(0, (itemOffsets[targetIndex] ?? 0) - scrollPaddingLeft);
           el.scrollTo({ left: targetLeft, behavior: "smooth" });
           navStateRef.current.activeIndex = targetIndex;
           applyActiveItemClass(el, targetIndex);
@@ -639,16 +642,12 @@ export default function HorizontalSlider<T>({
   const scrollByCard = useCallback((dir: 1 | -1) => {
     const el = scrollerRef.current;
     if (!el) return;
-    const itemNodes = getCarouselItems(el);
+    const { itemCount, itemOffsets, scrollPaddingLeft } = itemMetricsRef.current;
     const currentIndex = getNearestItemIndex(el);
-    const scrollPaddingLeft = itemMetricsRef.current.scrollPaddingLeft;
     const step = getScrollStep(el);
-    if (itemNodes.length > 0 && currentIndex >= 0) {
-      const nextIndex = Math.max(0, Math.min(itemNodes.length - 1, currentIndex + dir));
-      const targetLeft = Math.max(
-        0,
-        (itemMetricsRef.current.itemOffsets[nextIndex] ?? itemNodes[nextIndex].offsetLeft) - scrollPaddingLeft,
-      );
+    if (itemCount > 0 && currentIndex >= 0) {
+      const nextIndex = Math.max(0, Math.min(itemCount - 1, currentIndex + dir));
+      const targetLeft = Math.max(0, (itemOffsets[nextIndex] ?? 0) - scrollPaddingLeft);
       el.scrollTo({ left: targetLeft, behavior: "smooth" });
     } else {
       el.scrollBy({ left: dir * step, behavior: "smooth" });

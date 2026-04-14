@@ -1,4 +1,5 @@
 import React from 'react';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import AppRouter from './AppRouter';
 import { isNativeApp } from './utils/isNativeApp';
@@ -92,11 +93,11 @@ function NativeShellReadyReporter() {
 
 export default function App() {
   return (
-    <>
+    <LazyMotion features={domAnimation}>
       <NativeShellReadyReporter />
       <ScrollToTop />
       <HotjarTracker />
       <AppRouter />
-    </>
+    </LazyMotion>
   );
 }

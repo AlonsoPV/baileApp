@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -90,15 +90,9 @@ function getManualChunk(id: string): string | undefined {
 }
 
 function htmlHeadOptimizationsPlugin() {
-  let viteMode = "production";
   return {
     name: "html-head-optimizations",
-    configResolved(config: { mode: string }) {
-      viteMode = config.mode;
-    },
     transformIndexHtml(html: string, ctx?: { bundle?: Record<string, unknown> }) {
-      const env = loadEnv(viteMode, process.cwd(), "");
-      const base = (env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
       let nextHtml = html;
       const mainCssPath = getMainCssBundlePath(ctx?.bundle);
 
@@ -116,13 +110,6 @@ function htmlHeadOptimizationsPlugin() {
             ].join("\n"),
           );
         }
-      }
-
-      if (base && !nextHtml.includes(`rel="preconnect" href="${base}"`)) {
-        nextHtml = nextHtml.replace(
-          /(<link rel="apple-touch-icon"[^>]*>\s*)/i,
-          `$1    <link rel="preconnect" href="${base}" />\n`,
-        );
       }
 
       return nextHtml;
@@ -178,11 +165,12 @@ export default defineConfig({
     port: 5173,
   },
   resolve: {
-    alias: {
-      "@ui": path.resolve(__dirname, "../../packages/ui/src"),
-      "@theme": path.resolve(__dirname, "src/theme"),
-      "@": path.resolve(__dirname, "src")
-    },
+    alias: [
+      { find: /^framer-motion$/, replacement: path.resolve(__dirname, "src/lib/framerMotionLite.ts") },
+      { find: "@ui", replacement: path.resolve(__dirname, "../../packages/ui/src") },
+      { find: "@theme", replacement: path.resolve(__dirname, "src/theme") },
+      { find: "@", replacement: path.resolve(__dirname, "src") },
+    ],
     dedupe: ["react", "react-dom"], // 👈 Asegura una sola copia de React
   },
   build: {
