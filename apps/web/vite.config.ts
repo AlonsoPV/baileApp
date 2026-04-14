@@ -166,7 +166,6 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      { find: /^framer-motion$/, replacement: path.resolve(__dirname, "src/lib/framerMotionLite.ts") },
       { find: "@ui", replacement: path.resolve(__dirname, "../../packages/ui/src") },
       { find: "@theme", replacement: path.resolve(__dirname, "src/theme") },
       { find: "@", replacement: path.resolve(__dirname, "src") },
