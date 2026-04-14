@@ -2432,8 +2432,8 @@ export default function ExploreHomeScreen() {
   const [isPending, startTransition] = React.useTransition();
   const [visibleCount, setVisibleCount] = React.useState(INITIAL_LIMIT);
   const [fechasViewMode, setFechasViewModeState] = React.useState<FechasViewMode>(() => {
-    if (typeof window === "undefined") return "carousel";
-    return readFechasViewMode() ?? "carousel";
+    if (typeof window === "undefined") return "list";
+    return readFechasViewMode() ?? "list";
   });
   const setFechasViewMode = React.useCallback((mode: FechasViewMode) => {
     setFechasViewModeState(mode);
