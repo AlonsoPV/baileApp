@@ -4,6 +4,40 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getMainCssBundlePath(bundle?: Record<string, unknown>): string | null {
+  if (!bundle) return null;
+
+  for (const fileName of Object.keys(bundle)) {
+    if (!fileName.endsWith(".css")) continue;
+    if (fileName === "assets/main.css") return fileName;
+
+    const asset = bundle[fileName] as
+      | {
+          name?: string;
+          names?: string[];
+          originalFileNames?: string[];
+        }
+      | undefined;
+
+    const candidateNames = [
+      ...(asset?.names ?? []),
+      ...(asset?.originalFileNames ?? []),
+      asset?.name ?? "",
+      fileName,
+    ];
+
+    if (candidateNames.some((name) => name === "index.css" || name.endsWith("/index.css"))) {
+      return fileName;
+    }
+  }
+
+  return null;
+}
+
 function getManualChunk(id: string): string | undefined {
   if (!id.includes("node_modules")) return undefined;
 
@@ -66,24 +100,32 @@ function htmlHeadOptimizationsPlugin() {
       const env = loadEnv(viteMode, process.cwd(), "");
       const base = (env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
       let nextHtml = html;
-      const tags: string[] = [];
+      const mainCssPath = getMainCssBundlePath(ctx?.bundle);
 
-      if (ctx?.bundle && Object.prototype.hasOwnProperty.call(ctx.bundle, "assets/main.css")) {
-        nextHtml = nextHtml.replace(
-          `<link rel="stylesheet" crossorigin href="/assets/main.css">`,
-          `    <link rel="preload" href="/assets/main.css" as="style" />\n    <link rel="stylesheet" crossorigin href="/assets/main.css">`,
+      if (mainCssPath) {
+        const stylesheetTagPattern = new RegExp(
+          `<link rel="stylesheet"(?: crossorigin)? href="/${escapeRegExp(mainCssPath)}">`,
         );
+
+        if (stylesheetTagPattern.test(nextHtml)) {
+          nextHtml = nextHtml.replace(
+            stylesheetTagPattern,
+            [
+              `    <link rel="preload" href="/${mainCssPath}" as="style" onload="this.onload=null;this.rel='stylesheet'">`,
+              `    <noscript><link rel="stylesheet" href="/${mainCssPath}"></noscript>`,
+            ].join("\n"),
+          );
+        }
       }
 
-      if (base) {
+      if (base && !nextHtml.includes(`rel="preconnect" href="${base}"`)) {
         nextHtml = nextHtml.replace(
           /(<link rel="apple-touch-icon"[^>]*>\s*)/i,
-          `$1    <link rel="preconnect" href="${base}" crossorigin />\n`,
+          `$1    <link rel="preconnect" href="${base}" />\n`,
         );
       }
 
-      if (!tags.length) return nextHtml;
-      return nextHtml.replace(/<\/head>/i, `${tags.join("\n")}\n  </head>`);
+      return nextHtml;
     },
   };
 }
