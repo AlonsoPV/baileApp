@@ -35,7 +35,6 @@ import {
   ExternalLink,
   MapPin,
   Heart,
-  Music2,
   Share2,
 } from 'lucide-react';
 import { routes } from '@/routes/registry';
@@ -187,7 +186,7 @@ export default function ClassPublicScreen() {
     return { idToLabel, labelToIdLower, tagNameToSlugLower };
   }, []);
 
-  const { ritmoLabels, ritmoPrincipalLabel } = React.useMemo(() => {
+  const { ritmoLabels } = React.useMemo(() => {
     const labels: string[] = [];
     const slugsCandidate = [
       ...(Array.isArray((selectedClass as any)?.ritmos_seleccionados) ? ((selectedClass as any).ritmos_seleccionados as any[]) : []),
@@ -236,8 +235,7 @@ export default function ClassPublicScreen() {
       });
     }
     const uniq = [...new Set(labels)].filter(Boolean);
-    const primary = uniq[0] || '';
-    return { ritmoLabels: uniq, ritmoPrincipalLabel: primary };
+    return { ritmoLabels: uniq };
   }, [selectedClass, ritmoCatalogMaps]);
 
   const nivelLabel = React.useMemo(() => {
@@ -2011,19 +2009,11 @@ export default function ClassPublicScreen() {
             <div className="class-hero__layout">
               <div className="class-hero__copy">
                 <h1 className="class-hero__title">{classTitle}</h1>
-                {(ritmoPrincipalLabel || nivelLabel) && (
+                {nivelLabel && (
                   <div className="class-hero__badges" role="list" aria-label={t('class_details', 'Detalle de la clase')}>
-                    {ritmoPrincipalLabel ? (
-                      <span className="class-hero__badge class-hero__badge--ritmo" role="listitem">
-                        <Music2 size={13} strokeWidth={2.5} aria-hidden />
-                        {ritmoPrincipalLabel}
-                      </span>
-                    ) : null}
-                    {nivelLabel ? (
-                      <span className="class-hero__badge class-hero__badge--nivel" role="listitem">
-                        {nivelLabel}
-                      </span>
-                    ) : null}
+                    <span className="class-hero__badge class-hero__badge--nivel" role="listitem">
+                      {nivelLabel}
+                    </span>
                   </div>
                 )}
                 <p className="class-hero__organizer">

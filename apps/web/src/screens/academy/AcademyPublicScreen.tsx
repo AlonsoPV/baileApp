@@ -636,6 +636,7 @@ export default function AcademyPublicScreen() {
   
   // promotionTypeMeta dentro del componente para usar t()
   const promotionTypeMeta = React.useMemo(() => ({
+    clase_suelta: { icon: '🎫', label: t('single_class') },
     promocion: { icon: '✨', label: t('promotion') },
     paquete: { icon: '🧾', label: t('package') },
     descuento: { icon: '💸', label: t('discount') },

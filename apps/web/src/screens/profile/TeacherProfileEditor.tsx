@@ -36,7 +36,7 @@ import { useAllowedRitmosTeacher } from "../../hooks/useAllowedRitmosTeacher";
 const TeacherMetricsPanel = React.lazy(() => import("../../components/profile/TeacherMetricsPanel").then(m => ({ default: m.TeacherMetricsPanel })));
 const TeacherStudentsPanelLazy = React.lazy(() => import("../../components/profile/TeacherStudentsPanel").then(m => ({ default: m.TeacherStudentsPanel })));
 const UbicacionesEditor = React.lazy(() => import("../../components/locations/UbicacionesEditor"));
-const CrearClase = React.lazy(() => import("../../components/events/CrearClase"));
+import ProfileEditorCrearClaseForm from "../../components/profile/ProfileEditorCrearClaseForm";
 const CostsPromotionsEditor = React.lazy(() => import("../../components/events/CostsPromotionsEditor"));
 const FAQEditor = React.lazy(() => import("../../components/common/FAQEditor"));
 const PhotoManagementSection = React.lazy(() => import("../../components/profile/PhotoManagementSection").then(m => ({ default: m.PhotoManagementSection })));
@@ -1575,7 +1575,12 @@ export default function TeacherProfileEditor() {
   }, [profileId, setField, upsert]);
 
   const autoSaveClasses = React.useCallback(
-    async (cronogramaItems: any[], costosItems: any[], successText: string) => {
+    async (
+      cronogramaItems: any[],
+      costosItems: any[],
+      successText: string,
+      rollbackData?: { cronograma: any[]; costos: any[] },
+    ) => {
       if (!profileId) {
         setStatusMsg({ type: 'err', text: '💾 Guarda el perfil una vez para activar el guardado de clases' });
         setTimeout(() => setStatusMsg(null), 3200);
@@ -1593,12 +1598,16 @@ export default function TeacherProfileEditor() {
         if (process.env.NODE_ENV === 'development') {
           console.error('[TeacherProfileEditor] Error guardando clases', error);
         }
+        if (rollbackData) {
+          setField('cronograma' as any, rollbackData.cronograma as any);
+          setField('costos' as any, rollbackData.costos as any);
+        }
         setStatusMsg({ type: 'err', text: '❌ No se pudieron guardar las clases' });
         setTimeout(() => setStatusMsg(null), 3200);
         throw error;
       }
     },
-    [profileId, upsert],
+    [profileId, upsert, setField],
   );
 
   // Handlers para editar/eliminar clases (movidos fuera de función condicional)
@@ -1702,14 +1711,14 @@ export default function TeacherProfileEditor() {
         ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
       }
 
-      const ritmoIds = c.ritmoIds && c.ritmoIds.length
+      const ritmoIds = Array.isArray(c.ritmoIds)
         ? c.ritmoIds
-        : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : (prev?.ritmoIds || []));
+        : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
       const classId = ensureClassId(prev);
-      
+
       const costoIdx = currentCostos.findIndex((x: any) => {
-        if (x?.classId && x.classId === classId) return true;
-        if (x?.referenciaCosto && Number(x.referenciaCosto) === classId) return true;
+        if (x?.classId && classId && String(x.classId) === String(classId)) return true;
+        if (x?.referenciaCosto && String(x.referenciaCosto) === String(classId)) return true;
         if (x?.cronogramaIndex !== null && x?.cronogramaIndex !== undefined && x.cronogramaIndex === editingIndex) return true;
         return (x?.nombre || '').trim().toLowerCase() === (prevNombre || '').trim().toLowerCase();
       });
@@ -1755,6 +1764,7 @@ export default function TeacherProfileEditor() {
         costo: updatedCosto,
         ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
         ritmoIds,
+        ritmos: ritmoIds,
         zonaId: c.zonaId,
         ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
         ubicacionId: c.ubicacionId || (match?.id || null)
@@ -1764,7 +1774,12 @@ export default function TeacherProfileEditor() {
       setField('cronograma' as any, currentCrono as any);
       setField('costos' as any, currentCostos as any);
 
-      return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada')
+      const rollbackData = {
+        cronograma: [...((form as any).cronograma || [])],
+        costos: [...((form as any).costos || [])],
+      };
+
+      return autoSaveClasses(currentCrono, currentCostos, '✅ Clase actualizada', rollbackData)
         .then(() => {
           setEditingIndex(null);
           setEditInitial(undefined);
@@ -1780,7 +1795,7 @@ export default function TeacherProfileEditor() {
         ubicacionStr = ([match?.nombre, match?.direccion].filter(Boolean).join(' · ')) + (match?.referencias ? ` (${match.referencias})` : '');
       }
 
-      const ritmoIds = c.ritmoIds && c.ritmoIds.length
+      const ritmoIds = Array.isArray(c.ritmoIds)
         ? c.ritmoIds
         : (c.ritmoId !== null && c.ritmoId !== undefined ? [c.ritmoId] : []);
       const newClassId = generateClassId();
@@ -1822,6 +1837,7 @@ export default function TeacherProfileEditor() {
         costo: newCosto,
         ritmoId: ritmoIds.length ? ritmoIds[0] ?? null : null,
         ritmoIds,
+        ritmos: ritmoIds,
         zonaId: c.zonaId,
         ubicacion: (ubicacionStr && ubicacionStr.trim()) || c.ubicacion || ((form as any).ubicaciones || [])[0]?.nombre || '',
         ubicacionId: c.ubicacionId || (match?.id || null)
@@ -1830,7 +1846,12 @@ export default function TeacherProfileEditor() {
       setField('cronograma' as any, nextCrono as any);
       setField('costos' as any, nextCostos as any);
 
-      return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada');
+      const rollbackData = {
+        cronograma: [...currentCrono],
+        costos: [...currentCostos],
+      };
+
+      return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada', rollbackData);
     }
   }, [form, editingIndex, setField, autoSaveClasses, ensureClassId, generateClassId, setEditingIndex, setEditInitial]);
 
@@ -1862,14 +1883,30 @@ export default function TeacherProfileEditor() {
     const ritmoTags = (allTags || []).filter((t: any) => t.tipo === 'ritmo');
     const labelByCatalogId = new Map<string, string>();
     RITMOS_CATALOG.forEach(g => g.items.forEach(i => labelByCatalogId.set(i.id, i.label)));
+
     const localSelected: string[] = ((form as any)?.ritmos_seleccionados || []) as string[];
-    if (Array.isArray(localSelected) && localSelected.length > 0) {
-      const localLabels = new Set(localSelected.map(id => labelByCatalogId.get(id)).filter(Boolean));
-      const filtered = ritmoTags.filter((t: any) => localLabels.has(t.nombre));
-      if (filtered.length > 0) return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+    const savedSelected: string[] = ((teacher as any)?.ritmos_seleccionados || []) as string[];
+    const combinedSelected = [...new Set([...localSelected, ...savedSelected])];
+
+    if (combinedSelected.length > 0) {
+      const selectedLabels = combinedSelected
+        .map(slug => labelByCatalogId.get(slug))
+        .filter(Boolean);
+
+      const filtered = ritmoTags.filter((t: any) =>
+        selectedLabels.some(label =>
+          label && t.nombre &&
+          label.toLowerCase().trim() === t.nombre.toLowerCase().trim()
+        )
+      );
+
+      if (filtered.length > 0) {
+        return filtered.map((t: any) => ({ id: t.id, nombre: t.nombre }));
+      }
     }
+
     return ritmoTags.map((t: any) => ({ id: t.id, nombre: t.nombre }));
-  }, [allTags, form]);
+  }, [allTags, (form as any)?.ritmos_seleccionados, (teacher as any)?.ritmos_seleccionados]);
 
   const zonasForCrearClase = React.useMemo(() => 
     (allTags || []).filter((t: any) => t.tipo === 'zona').map((t: any) => ({ id: t.id, nombre: t.nombre })),
@@ -2425,56 +2462,21 @@ export default function TeacherProfileEditor() {
             </React.Suspense>
             {/* Crear Clase rápida */}
             <div>
-              {statusMsg && (
-                <div style={{
-                  marginBottom: 12,
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  border: statusMsg.type === 'ok' ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(239,68,68,0.4)',
-                  background: statusMsg.type === 'ok' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-                  color: '#fff',
-                  fontSize: 14
-                }}>
-                  {statusMsg.text}
-                </div>
-              )}
-
-              {/* Mensaje si no tiene perfil guardado */}
-              {!teacher && (
-                <div style={{
-                  padding: '1.5rem',
-                  marginBottom: '1rem',
-                  background: 'rgba(255, 140, 66, 0.15)',
-                  border: '2px solid rgba(255, 140, 66, 0.3)',
-                  borderRadius: '12px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚠️</div>
-                  <p style={{ fontSize: '1rem', fontWeight: '600', margin: 0 }}>
-                    Debes guardar el perfil del maestro primero antes de crear clases
-                  </p>
-                  <p style={{ fontSize: '0.875rem', opacity: 0.8, margin: '0.5rem 0 0 0' }}>
-                    Completa el nombre del maestro y haz clic en 💾 Guardar arriba
-                  </p>
-                </div>
-              )}
-
-              {teacher && (
-                <React.Suspense fallback={<div role="status" aria-live="polite">Cargando editor de clases...</div>}>
-                <CrearClase
-                    ritmos={ritmosForCrearClase}
-                    zonas={zonasForCrearClase}
-                    zonaTags={zonaTagsForCrearClase}
+              <ProfileEditorCrearClaseForm
+                profileKind="teacher"
+                profileSaved={!!teacher}
+                statusMsg={statusMsg}
+                ritmos={ritmosForCrearClase}
+                zonas={zonasForCrearClase}
+                zonaTags={zonaTagsForCrearClase}
                 selectedZonaIds={((form as any).zonas || []) as number[]}
-                    locations={locationsForCrearClase}
-                editIndex={editingIndex}
-                editValue={editInitial}
+                locations={locationsForCrearClase}
+                editingIndex={editingIndex}
+                editInitial={editInitial}
                 title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
                 onCancel={handleClassCancel}
                 onSubmit={handleClassSubmit}
-                  />
-                </React.Suspense>
-              )}
+              />
 
               {teacher && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (() => {
                 const cronograma = (form as any).cronograma;

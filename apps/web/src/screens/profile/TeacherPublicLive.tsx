@@ -348,6 +348,7 @@ const CarouselComponent = React.memo(function CarouselComponent({ photos, t }: {
 // promotionTypeMeta se define dentro del componente para usar t()
 
 const promotionTypeStyles: Record<string, { background: string; border: string; color: string }> = {
+  clase_suelta: { background: 'rgba(46,163,188,0.16)', border: '1px solid rgba(56,189,248,0.35)', color: '#7dd3fc' },
   promocion: { background: 'rgba(240,147,251,0.16)', border: '1px solid rgba(240,147,251,0.28)', color: '#f3c6ff' },
   paquete: { background: 'rgba(59,130,246,0.18)', border: '1px solid rgba(59,130,246,0.35)', color: '#a7c8ff' },
   descuento: { background: 'rgba(255,138,101,0.18)', border: '1px solid rgba(255,138,101,0.35)', color: '#ffc1b3' },
@@ -422,6 +423,7 @@ export default function TeacherProfileLive() {
   
   // promotionTypeMeta dentro del componente para usar t()
   const promotionTypeMeta = React.useMemo(() => ({
+    clase_suelta: { icon: '🎫', label: t('single_class') },
     promocion: { icon: '✨', label: t('promotion') },
     paquete: { icon: '🧾', label: t('package') },
     descuento: { icon: '💸', label: t('discount') },

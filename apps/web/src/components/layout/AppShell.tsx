@@ -54,9 +54,10 @@ export default function AppShell() {
         typeof nextHeight === 'number' && Number.isFinite(nextHeight)
           ? nextHeight
           : nav.offsetHeight;
-      const h = Math.max(0, Math.round(measuredHeight));
+      const h = Math.max(80, Math.round(measuredHeight));
       document.documentElement.style.setProperty('--app-navbar-offset', `${h}px`);
     };
+    const handleNavOffsetChange = () => setNavOffset();
 
     setNavOffset();
     const raf = requestAnimationFrame(() => setNavOffset());
@@ -70,14 +71,14 @@ export default function AppShell() {
           })
         : null;
     if (nav && ro) ro.observe(nav);
-    window.addEventListener('resize', setNavOffset);
-    window.addEventListener('orientationchange', setNavOffset as EventListener);
+    window.addEventListener('resize', handleNavOffsetChange);
+    window.addEventListener('orientationchange', handleNavOffsetChange);
 
     return () => {
       cancelAnimationFrame(raf);
       ro?.disconnect();
-      window.removeEventListener('resize', setNavOffset);
-      window.removeEventListener('orientationchange', setNavOffset as EventListener);
+      window.removeEventListener('resize', handleNavOffsetChange);
+      window.removeEventListener('orientationchange', handleNavOffsetChange);
     };
   }, []);
 
@@ -159,14 +160,14 @@ export default function AppShell() {
           overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
-          padding-top: var(--app-navbar-offset, 64px);
+          padding-top: var(--app-navbar-offset, 80px);
           padding-left: 1rem;
           padding-right: 1rem;
           padding-bottom: 0rem;
         }
         @media (max-width: 768px) {
           .app-shell-content {
-            padding-top: var(--app-navbar-offset, 64px);
+            padding-top: var(--app-navbar-offset, 80px);
             padding-bottom: 0.25rem;
             padding-left: 0.75rem;
             padding-right: 0.75rem;
@@ -176,14 +177,14 @@ export default function AppShell() {
         }
         @media (max-width: 480px) {
           .app-shell-content {
-            padding-top: var(--app-navbar-offset, 64px);
+            padding-top: var(--app-navbar-offset, 80px);
             padding-bottom: .25rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
           }
         }
         .app-shell-content.android-tight-top {
-          padding-top: max(0px, calc(var(--app-navbar-offset, 64px) - 2px)) !important;
+          padding-top: max(0px, calc(var(--app-navbar-offset, 80px) - 2px)) !important;
         }
         @media (max-width: 430px) {
           .app-shell-content {

@@ -17,7 +17,7 @@ import FAQEditor from "../../components/common/FAQEditor";
 import ReviewsEditor from "../../components/common/ReviewsEditor";
 import UbicacionesEditor from "../../components/locations/UbicacionesEditor";
 import BankAccountEditor, { type BankAccountData } from "../../components/profile/BankAccountEditor";
-import CrearClase from "../../components/events/CrearClase";
+import ProfileEditorCrearClaseForm from "../../components/profile/ProfileEditorCrearClaseForm";
 import { useAllowedRitmos } from "@/hooks/useAllowedRitmos";
 import { getDraftKey } from "../../utils/draftKeys";
 import { useDrafts } from "../../state/drafts";
@@ -2493,54 +2493,21 @@ export default function AcademyProfileEditor() {
                   />
                   {/* Crear Clase rápida  */}
                   <div ref={classFormRef} className="academy-editor-classes-inner">
-                    {statusMsg && (
-                      <div style={{
-                        marginBottom: 12,
-                        padding: '10px 12px',
-                        borderRadius: 10,
-                        border: statusMsg.type === 'ok' ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(239,68,68,0.4)',
-                        background: statusMsg.type === 'ok' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-                        color: '#fff',
-                        fontSize: 14
-                      }}>
-                        {statusMsg.text}
-                      </div>
-                    )}
-
-                    {/* Mensaje si no tiene perfil guardado */}
-                    {!academy && (
-                      <div style={{
-                        padding: '1.5rem',
-                        marginBottom: '1rem',
-                        background: 'rgba(255, 140, 66, 0.15)',
-                        border: '2px solid rgba(255, 140, 66, 0.3)',
-                        borderRadius: '12px',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚠️</div>
-                        <p style={{ fontSize: '1rem', fontWeight: '600', margin: 0 }}>
-                          Debes guardar el perfil de la academia primero antes de crear clases
-                        </p>
-                        <p style={{ fontSize: '0.875rem', opacity: 0.8, margin: '0.5rem 0 0 0' }}>
-                          Completa el nombre de la academia y haz clic en 💾 Guardar arriba
-                        </p>
-                      </div>
-                    )}
-
-                    {academy && (
-                      <CrearClase
-                        ritmos={ritmosForCrearClase}
-                        zonas={zonasForCrearClase}
-                        zonaTags={zonaTags}
-                        selectedZonaIds={((form as any).zonas || []) as number[]}
-                        locations={locationsForCrearClase}
-                        editIndex={editingIndex}
-                        editValue={editInitial}
-                        title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
-                        onCancel={handleCrearClaseCancel}
-                        onSubmit={handleCrearClaseSubmit}
-                      />
-                    )}
+                    <ProfileEditorCrearClaseForm
+                      profileKind="academy"
+                      profileSaved={!!academy}
+                      statusMsg={statusMsg}
+                      ritmos={ritmosForCrearClase}
+                      zonas={zonasForCrearClase}
+                      zonaTags={zonaTags}
+                      selectedZonaIds={((form as any).zonas || []) as number[]}
+                      locations={locationsForCrearClase}
+                      editingIndex={editingIndex}
+                      editInitial={editInitial}
+                      title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
+                      onCancel={handleCrearClaseCancel}
+                      onSubmit={handleCrearClaseSubmit}
+                    />
 
                     {academy && (
                       <div style={{ marginTop: 16 }} className="academy-editor-created-classes">

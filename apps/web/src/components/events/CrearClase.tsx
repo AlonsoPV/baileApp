@@ -1,10 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import {
+  ChevronDown,
+  Calendar,
+  MapPin,
+  Music,
+  Save,
+  Tag,
+  X,
+} from 'lucide-react';
+import '@/styles/crearClase.css';
 import ZonaGroupedChips from '../profile/ZonaGroupedChips';
 import RitmosChips from '../RitmosChips';
 import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
 
-// Mapeo de nombres de tags a slugs del catálogo (para compatibilidad con variaciones de nombres)
 const TAG_NAME_TO_SLUG_MAP: Record<string, string> = {
   'Salsa On 1': 'salsa_on1',
   'Moderna': 'moderna',
@@ -34,23 +43,6 @@ const TAG_NAME_TO_SLUG_MAP: Record<string, string> = {
   'Yoga': 'yoga',
   'Pilates': 'pilates',
   'Cumbia Sonidera': 'cumbia_sonidera',
-};
-
-const colors = {
-  coral: '#FF3D57',
-  orange: '#FF8C42',
-  yellow: '#FFD166',
-  blue: '#1E88E5',
-  purple: '#7C4DFF',
-  dark: '#0F1115',
-  panel: 'rgba(255,255,255,0.06)',
-  line: 'rgba(255,255,255,0.12)',
-  soft: 'rgba(255,255,255,0.08)',
-  text: '#FFFFFF',
-  mut: 'rgba(255,255,255,0.7)',
-  ok: '#10B981',
-  warn: '#F59E0B',
-  err: '#EF4444',
 };
 
 export type CrearClaseValue = {
@@ -101,86 +93,6 @@ type Props = {
   enableDate?: boolean;
 };
 
-const card: React.CSSProperties = {
-  position: 'relative',
-  borderRadius: 20,
-  background: 'linear-gradient(135deg, rgba(19,21,27,0.9), rgba(16,18,24,0.9))',
-  padding: 20,
-  overflow: 'hidden',
-  border: `1px solid ${colors.line}`,
-  boxShadow: '0 18px 44px rgba(0,0,0,0.45)',
-  backdropFilter: 'blur(10px)'
-};
-
-/** Filas responsivas: 2 cols en desktop, 1 col en móvil (ver .crear-clase__row en <style>) */
-const label: React.CSSProperties = { fontSize: 12, color: colors.mut, marginBottom: 6, letterSpacing: .2 };
-
-const fieldShell = (invalid = false): React.CSSProperties => ({
-  position: 'relative',
-  borderRadius: 12,
-  border: `1px solid ${invalid ? colors.err + '66' : colors.line}`,
-  background: colors.panel,
-  transition: 'all .2s ease',
-  boxShadow: invalid ? '0 0 0 3px rgba(239,68,68,0.15)' : 'inset 0 0 0 1px rgba(255,255,255,0.02)',
-});
-
-const inputBase: React.CSSProperties = {
-  width: '100%',
-  border: 'none',
-  outline: 'none',
-  background: 'transparent',
-  color: colors.text,
-  padding: '12px 14px 12px 40px',
-  fontSize: 14,
-};
-
-const leftIcon = (emoji = '🎛️'): React.CSSProperties => ({
-  position: 'absolute',
-  left: 10,
-  top: 9,
-  width: 22,
-  height: 22,
-  borderRadius: 8,
-  display: 'grid',
-  placeItems: 'center',
-  fontSize: 14,
-  opacity: .9
-});
-
-const chipWrap: React.CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap' };
-const chip = (active: boolean): React.CSSProperties => ({
-  padding: '8px 12px',
-  borderRadius: 999,
-  border: active ? `1px solid ${colors.blue}` : `1px solid ${colors.soft}`,
-  background: active ? 'linear-gradient(135deg, rgba(30,136,229,0.22), rgba(124,77,255,0.18))' : 'rgba(255,255,255,0.04)',
-  color: active ? colors.text : colors.mut,
-  fontSize: 13,
-  cursor: 'pointer',
-  userSelect: 'none',
-  transition: 'all .15s ease',
-  boxShadow: active ? '0 6px 16px rgba(30,136,229,0.25)' : 'none'
-});
-
-const sectionHeader: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 10,
-  margin: '18px 0 10px'
-};
-
-const divider: React.CSSProperties = {
-  height: 1,
-  background: colors.line,
-  margin: '10px 0 14px',
-  borderRadius: 1
-};
-
-const helpText = (warn = false): React.CSSProperties => ({
-  fontSize: 12,
-  color: warn ? colors.warn : colors.mut,
-  marginTop: 6
-});
-
 const normalizeTime = (t?: string) => {
   if (!t) return '';
   const [hh = '', mm = ''] = t.split(':');
@@ -200,12 +112,6 @@ const diasSemana = [
   { id: 5, nombre: 'Viernes' },
   { id: 6, nombre: 'Sábado' },
 ];
-
-// Convertir números a nombres de días (para guardar en backend)
-const numberToDayName = (num: number): string | null => {
-  const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-  return (num >= 0 && num <= 6) ? dayNames[num] : null;
-};
 
 // Convertir nombres de días a números (para cargar desde backend)
 const dayNameToNumber = (dayName: string | number): number | null => {
@@ -453,23 +359,20 @@ const CrearClase = React.memo(function CrearClase({
     });
   }, [onChange]);
 
-  // Ajustar horarioModo cuando cambia fechaModo a 'por_agendar'
+  // Temporal: UI sin "Por agendar" ni modo horario "Duracion" — normalizar datos legacy al cargar / al cambiar modo
   useEffect(() => {
-    if (enableDate && form.fechaModo === 'por_agendar' && form.horarioModo !== 'duracion') {
-      setForm(prev => {
-        const updated = {
-          ...prev,
-          horarioModo: 'duracion' as const,
-          // Limpiar inicio y fin cuando se cambia a por_agendar
-          inicio: undefined,
-          fin: undefined
-        };
-        // Usar ref para onChange para mantener array de dependencias estable
-        onChangeRef.current?.({ ...updated, nivel: nivelesToNivelString(updated.niveles) });
-        return updated;
-      });
-    }
-  }, [form.fechaModo, form.horarioModo, enableDate]);
+    if (!enableDate) return;
+    setForm(prev => {
+      let fechaModo = prev.fechaModo;
+      let horarioModo = prev.horarioModo;
+      if (fechaModo === 'por_agendar') fechaModo = 'semanal';
+      if (fechaModo !== 'por_agendar' && horarioModo === 'duracion') horarioModo = 'especifica';
+      if (fechaModo === prev.fechaModo && horarioModo === prev.horarioModo) return prev;
+      const next = { ...prev, fechaModo, horarioModo };
+      onChangeRef.current?.({ ...next, nivel: nivelesToNivelString(next.niveles) });
+      return next;
+    });
+  }, [enableDate, form.fechaModo, form.horarioModo]);
 
   const setField = useCallback((k: keyof CrearClaseValue, v: any) => {
     updateForm(prev => ({ ...prev, [k]: v }));
@@ -490,147 +393,86 @@ const CrearClase = React.memo(function CrearClase({
     });
   }, [updateForm]);
 
-  const toggleRitmoChip = useCallback((ritmoId: number) => {
-    updateForm(prev => {
-      const baseIds = prev.ritmoIds && prev.ritmoIds.length
-        ? prev.ritmoIds
-        : (prev.ritmoId !== null && prev.ritmoId !== undefined ? [prev.ritmoId] : []);
-      const exists = baseIds.includes(ritmoId);
-      const nextIds = exists ? baseIds.filter(id => id !== ritmoId) : [...baseIds, ritmoId];
-      return {
-        ...prev,
-        ritmoIds: nextIds,
-        ritmoId: nextIds.length ? nextIds[0] ?? null : null,
-      };
-    });
-  }, [updateForm]);
-
-  // Convertir ritmos disponibles (tag IDs) a slugs del catálogo para allowedIds
   const allowedRitmoSlugs = useMemo(() => {
-    // Si no hay ritmos disponibles, mostrar todos (undefined = sin filtro)
     if (!ritmos || ritmos.length === 0) return undefined;
-    
-    // Crear mapa de tag nombre → catálogo slug (usando normalizeRitmos para mejor compatibilidad)
+
     const nameToSlug = new Map<string, string>();
-    RITMOS_CATALOG.forEach(g => {
-      g.items.forEach(item => {
+    RITMOS_CATALOG.forEach((g) => {
+      g.items.forEach((item) => {
         nameToSlug.set(item.label, item.id);
-        // También agregar variaciones comunes
         nameToSlug.set(item.label.toLowerCase().trim(), item.id);
       });
     });
-    
-    // También usar el mapeo de nombres a slugs
-    Object.entries(TAG_NAME_TO_SLUG_MAP).forEach(([name, slug]: [string, string]) => {
+
+    Object.entries(TAG_NAME_TO_SLUG_MAP).forEach(([name, slug]) => {
       nameToSlug.set(name, slug);
       nameToSlug.set(name.toLowerCase().trim(), slug);
     });
-    
-    // Convertir tag nombres → slugs del catálogo
+
     const slugs = ritmos
-      .map(r => {
-        if (!r || !r.nombre) return null;
-        // Intentar coincidencia exacta primero
+      .map((r) => {
+        if (!r?.nombre) return null;
         let slug = nameToSlug.get(r.nombre);
-        if (slug) {
-          console.log(`[CrearClase] Mapeo encontrado (exacto): "${r.nombre}" -> "${slug}"`);
-          return slug;
-        }
-        // Intentar case-insensitive
+        if (slug) return slug;
         slug = nameToSlug.get(r.nombre.toLowerCase().trim());
-        if (slug) {
-          console.log(`[CrearClase] Mapeo encontrado (case-insensitive): "${r.nombre}" -> "${slug}"`);
-          return slug;
-        }
-        // Intentar buscar en el catálogo por label
-        const catalogItem = RITMOS_CATALOG.flatMap(g => g.items).find(
-          item => item.label.toLowerCase().trim() === r.nombre.toLowerCase().trim()
+        if (slug) return slug;
+        const catalogItem = RITMOS_CATALOG.flatMap((g) => g.items).find(
+          (item) => item.label.toLowerCase().trim() === r.nombre.toLowerCase().trim(),
         );
-        if (catalogItem) {
-          console.log(`[CrearClase] Mapeo encontrado (catálogo): "${r.nombre}" -> "${catalogItem.id}"`);
-          return catalogItem.id;
-        }
-        console.warn(`[CrearClase] No se encontró mapeo para: "${r.nombre}"`);
-        return null;
+        return catalogItem?.id || null;
       })
       .filter(Boolean) as string[];
-    
-    console.log('[CrearClase] Resultado del mapeo:', {
-      ritmosInput: ritmos.map(r => r.nombre),
-      slugsOutput: slugs,
-      total: slugs.length
-    });
-    
-    // Si no se encontraron coincidencias, mostrar todos (undefined = sin filtro)
-    // Esto evita que el componente no se renderice cuando hay allowedIds pero no hay coincidencias
-    if (slugs.length === 0) {
-      console.warn('[CrearClase] No se encontraron coincidencias, mostrando todos los ritmos');
-      return undefined;
-    }
-    
-    return slugs;
+
+    return slugs.length === 0 ? undefined : slugs;
   }, [ritmos]);
 
-  // Convertir ritmoIds (tag IDs numéricos) a slugs del catálogo para RitmosChips
-  // Similar a AcademyProfileEditor.tsx pero adaptado para convertir IDs → slugs
   const selectedCatalogIds = useMemo(() => {
     const ritmoIds = form.ritmoIds && form.ritmoIds.length
       ? form.ritmoIds
       : (form.ritmoId !== null && form.ritmoId !== undefined ? [form.ritmoId] : []);
-    
+
     if (ritmoIds.length === 0 || !ritmos || ritmos.length === 0) return [];
-    
-    // Crear mapa de tag ID → tag nombre
+
     const tagIdToName = new Map<number, string>();
-    ritmos.forEach(r => {
-      if (r && r.id && r.nombre) {
+    ritmos.forEach((r) => {
+      if (r?.id && r?.nombre) {
         tagIdToName.set(r.id, r.nombre);
-        // También agregar variaciones case-insensitive
         tagIdToName.set(r.id, r.nombre.toLowerCase().trim());
       }
     });
-    
-    // Crear mapa de tag nombre → catálogo slug
+
     const nameToSlug = new Map<string, string>();
-    RITMOS_CATALOG.forEach(g => {
-      g.items.forEach(item => {
+    RITMOS_CATALOG.forEach((g) => {
+      g.items.forEach((item) => {
         nameToSlug.set(item.label, item.id);
         nameToSlug.set(item.label.toLowerCase().trim(), item.id);
       });
     });
-    
-    // También usar el mapeo de nombres a slugs
-    Object.entries(TAG_NAME_TO_SLUG_MAP).forEach(([name, slug]: [string, string]) => {
+
+    Object.entries(TAG_NAME_TO_SLUG_MAP).forEach(([name, slug]) => {
       nameToSlug.set(name, slug);
       nameToSlug.set(name.toLowerCase().trim(), slug);
     });
-    
-    // Convertir tag IDs → nombres → slugs
+
     return ritmoIds
-      .map(id => {
+      .map((id) => {
         const tagName = tagIdToName.get(id);
         if (!tagName) return null;
-        // Intentar coincidencia exacta
         let slug = nameToSlug.get(tagName);
         if (slug) return slug;
-        // Intentar case-insensitive
         slug = nameToSlug.get(tagName.toLowerCase().trim());
         if (slug) return slug;
-        // Intentar buscar en el catálogo por label
-        const catalogItem = RITMOS_CATALOG.flatMap(g => g.items).find(
-          item => item.label.toLowerCase().trim() === tagName.toLowerCase().trim()
+        const catalogItem = RITMOS_CATALOG.flatMap((g) => g.items).find(
+          (item) => item.label.toLowerCase().trim() === tagName.toLowerCase().trim(),
         );
         return catalogItem?.id || null;
       })
       .filter(Boolean) as string[];
   }, [form.ritmoIds, form.ritmoId, ritmos]);
 
-  // Manejar cambio de ritmos desde RitmosChips (slugs → tag IDs)
-  // Similar a AcademyProfileEditor.tsx pero adaptado para convertir slugs → IDs
   const onChangeCatalog = useCallback((slugs: string[]) => {
     if (!ritmos || ritmos.length === 0) {
-      // Si no hay ritmos disponibles, no podemos mapear
-      updateForm(prev => ({
+      updateForm((prev) => ({
         ...prev,
         ritmoIds: [],
         ritmoId: null,
@@ -638,43 +480,37 @@ const CrearClase = React.memo(function CrearClase({
       return;
     }
 
-    // Crear mapa de catálogo slug → tag nombre
     const slugToName = new Map<string, string>();
-    RITMOS_CATALOG.forEach(g => {
-      g.items.forEach(item => {
+    RITMOS_CATALOG.forEach((g) => {
+      g.items.forEach((item) => {
         slugToName.set(item.id, item.label);
       });
     });
-    
-    // Crear mapa de tag nombre → tag ID (con variaciones case-insensitive)
+
     const nameToTagId = new Map<string, number>();
-    ritmos.forEach(r => {
-      if (r && r.nombre && r.id) {
+    ritmos.forEach((r) => {
+      if (r?.nombre && r?.id) {
         nameToTagId.set(r.nombre, r.id);
         nameToTagId.set(r.nombre.toLowerCase().trim(), r.id);
       }
     });
-    
-    // Convertir slugs → nombres → tag IDs
+
     const tagIds = slugs
-      .map(slug => {
+      .map((slug) => {
         const catalogLabel = slugToName.get(slug);
         if (!catalogLabel) return null;
-        // Intentar coincidencia exacta
         let tagId = nameToTagId.get(catalogLabel);
         if (tagId) return tagId;
-        // Intentar case-insensitive
         tagId = nameToTagId.get(catalogLabel.toLowerCase().trim());
         if (tagId) return tagId;
-        // Buscar en ritmos por nombre (case-insensitive)
-        const matchingRitmo = ritmos.find(r => 
-          r.nombre && r.nombre.toLowerCase().trim() === catalogLabel.toLowerCase().trim()
+        const matchingRitmo = ritmos.find(
+          (r) => r.nombre && r.nombre.toLowerCase().trim() === catalogLabel.toLowerCase().trim(),
         );
         return matchingRitmo?.id || null;
       })
       .filter((id): id is number => typeof id === 'number');
-    
-    updateForm(prev => ({
+
+    updateForm((prev) => ({
       ...prev,
       ritmoIds: tagIds,
       ritmoId: tagIds.length > 0 ? tagIds[0] : null,
@@ -711,24 +547,22 @@ const CrearClase = React.memo(function CrearClase({
   const canSubmit = useMemo(() => {
     const nombreOk = (form.nombre || '').trim().length > 0;
     const porAgendar = form.fechaModo === 'por_agendar';
-    const horarioModo = form.horarioModo || (porAgendar ? 'duracion' : 'especifica');
-    // Si es por agendar, siempre requiere duración
-    const horarioOk = porAgendar 
+    const nextHorarioModo = form.horarioModo || (porAgendar ? 'duracion' : 'especifica');
+    const horarioOk = porAgendar
       ? Boolean(form.duracionHoras && form.duracionHoras > 0)
-      : (
-        horarioModo === 'duracion' 
-          ? Boolean(form.duracionHoras && form.duracionHoras > 0) 
-          : Boolean(form.inicio && form.fin)
-      );
+      : nextHorarioModo === 'duracion'
+        ? Boolean(form.duracionHoras && form.duracionHoras > 0)
+        : Boolean(form.inicio && form.fin);
     const fechaOk = enableDate
-      ? form.fechaModo === 'por_agendar' ? true
-        : form.fechaModo === 'especifica' ? Boolean(form.fecha)
-        : (form.diasSemana && form.diasSemana.length > 0) || form.diaSemana !== null
+      ? form.fechaModo === 'por_agendar'
+        ? true
+        : form.fechaModo === 'especifica'
+          ? Boolean(form.fecha)
+          : (form.diasSemana && form.diasSemana.length > 0) || form.diaSemana !== null
       : true;
     return nombreOk && horarioOk && fechaOk;
-  }, [form, enableDate]);
+  }, [enableDate, form]);
 
-  // Validaciones visuales (solo estilos, sin cambiar estructura)
   const porAgendar = form.fechaModo === 'por_agendar';
   const horarioModo = form.horarioModo || (porAgendar ? 'duracion' : 'especifica');
   const invalid = {
@@ -739,20 +573,6 @@ const CrearClase = React.memo(function CrearClase({
     fin: porAgendar ? false : (horarioModo === 'especifica' ? !form.fin : false),
     duracion: (porAgendar || horarioModo === 'duracion') ? !(form.duracionHoras && form.duracionHoras > 0) : false,
   };
-
-  const completion = useMemo(() => {
-    const total = enableDate ? 5 : 4;
-    let done = 0;
-    if (!invalid.nombre) done++;
-    if (horarioModo === 'duracion' ? !invalid.duracion : (!invalid.inicio && !invalid.fin)) done++;
-    if (enableDate) {
-      if (form.fechaModo === 'por_agendar') done++;
-      else if (form.fechaModo === 'especifica' ? !invalid.fecha : !invalid.dia) done++;
-    }
-    const hasRitmo = (form.ritmoIds && form.ritmoIds.length > 0) || !!form.ritmoId;
-    if (hasRitmo) done++;
-    return Math.round((done / total) * 100);
-  }, [invalid, form.fechaModo, form.ritmoIds, form.ritmoId, enableDate, horarioModo]);
 
   const isEditing = (editIndex !== null && editIndex !== undefined) || Boolean(editValue);
 
@@ -786,462 +606,398 @@ const CrearClase = React.memo(function CrearClase({
     setSelectedLocationId('');
   };
 
-  return (
-    <div style={style} className={className}>
-      <style>{`
-        .crear-clase-shell { box-sizing: border-box; max-width: 100%; }
-        @media (max-width: 640px) {
-          .crear-clase-shell { padding: 14px 12px !important; border-radius: 16px !important; }
-        }
-        @media (max-width: 400px) {
-          .crear-clase-shell { padding: 12px 10px !important; }
-        }
-        .crear-clase__row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px;
-          width: 100%;
-          min-width: 0;
-        }
-        .crear-clase__row > * { min-width: 0; }
-        @media (max-width: 640px) {
-          .crear-clase__row { grid-template-columns: 1fr; }
-        }
-        .crear-clase__actions {
-          display: flex;
-          gap: 12px;
-          justify-content: flex-end;
-          margin-top: 8px;
-          flex-wrap: wrap;
-        }
-        @media (max-width: 480px) {
-          .crear-clase__actions {
-            flex-direction: column-reverse;
-            align-items: stretch;
-          }
-          .crear-clase__actions button { width: 100%; }
-        }
-      `}</style>
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }} 
-        animate={{ opacity: 1, y: 0 }}
-        style={card as any}
-        className="crear-clase-shell"
-      >
-        {/* Accent bar / progreso */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${colors.blue}, ${colors.purple})` }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, height: 4, background: colors.ok, width: `${completion}%`, transition: 'width .25s ease' }} />
+  const normalizeComparable = useCallback((source?: CrearClaseValue | null) => ({
+    nombre: source?.nombre || '',
+    tipo: source?.tipo || 'clases sueltas',
+    precio: source?.precio ?? null,
+    regla: source?.regla || '',
+    niveles: parseNivelesFromStored(source?.nivel, source?.niveles),
+    descripcion: source?.descripcion || '',
+    fechaModo: enableDate ? (source?.fechaModo || 'especifica') : undefined,
+    fecha: enableDate ? (source?.fecha || '') : undefined,
+    diaSemana: enableDate ? (source?.diaSemana ?? null) : null,
+    diasSemana: enableDate && Array.isArray(source?.diasSemana)
+      ? source!.diasSemana!.map((d: string | number) => typeof d === 'number' ? d : dayNameToNumber(d)).filter((d: number | null) => d !== null)
+      : (source?.diaSemana !== null && source?.diaSemana !== undefined ? [source.diaSemana] : []),
+    horarioModo: source?.horarioModo || (source?.duracionHoras ? 'duracion' : (source?.fechaModo === 'por_agendar' ? 'duracion' : 'especifica')),
+    inicio: normalizeTime(source?.inicio),
+    fin: normalizeTime(source?.fin),
+    duracionHoras: source?.duracionHoras ?? null,
+    ritmoId: source?.ritmoId ?? (source?.ritmoIds && source.ritmoIds.length ? source.ritmoIds[0] ?? null : null),
+    ritmoIds: source?.ritmoIds ? [...source.ritmoIds] : (source?.ritmoId ? [source.ritmoId] : []),
+    zonaId: source?.zonaId ?? null,
+    ubicacionNombre: source?.ubicacionNombre || '',
+    ubicacionDireccion: source?.ubicacionDireccion || '',
+    ubicacionNotas: source?.ubicacionNotas || '',
+    ubicacionId: source?.ubicacionId ?? null,
+  }), [enableDate]);
 
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)', flexShrink: 0 }}>➕</div>
-          <div style={{ minWidth: 0, flex: '1 1 200px' }}>
-            <h2 style={{ margin: 0, fontSize: 'clamp(1rem, 4vw, 1.25rem)', fontWeight: 900, color: colors.text }}>{title}</h2>
-            <div style={{ fontSize: 12, color: colors.mut }}>Completa los campos — {completion}%</div>
+  const initialComparable = useMemo(
+    () => normalizeComparable(editValue || value),
+    [editValue, normalizeComparable, value],
+  );
+
+  const currentComparable = useMemo(
+    () => normalizeComparable(form),
+    [form, normalizeComparable],
+  );
+
+  const isDirty = useMemo(
+    () => JSON.stringify(initialComparable) !== JSON.stringify(currentComparable),
+    [currentComparable, initialComparable],
+  );
+
+  const toggleDia = useCallback((dayId: number) => {
+    const diasActuales = form.diasSemana || [];
+    const exists = diasActuales.includes(dayId);
+    const next = exists ? diasActuales.filter((dia) => dia !== dayId) : [...diasActuales, dayId].sort((a, b) => a - b);
+    setField('diasSemana', next);
+    setField('diaSemana', next.length > 0 ? next[0] : null);
+  }, [form.diasSemana, setField]);
+
+  const handleFechaModoChange = useCallback((modo: NonNullable<CrearClaseValue['fechaModo']>) => {
+    setField('fechaModo', modo);
+    // if (modo === 'por_agendar') { setField('horarioModo', 'duracion'); return; } // opcion oculta temporalmente
+    if (!form.horarioModo || form.horarioModo === 'duracion') {
+      setField('horarioModo', 'especifica');
+    }
+  }, [form.horarioModo, setField]);
+
+  const handleCancel = useCallback(() => {
+    setSubmitState('idle');
+    resetForm();
+    onCancel?.();
+  }, [onCancel]);
+
+  const handleSubmit = useCallback(async () => {
+    if (submitState === 'saving' || !canSubmit) return;
+    try {
+      setSubmitState('saving');
+      const submissionBase = enableDate ? form : (() => {
+        const { fecha, fechaModo, diaSemana, ...rest } = form;
+        return rest as CrearClaseValue;
+      })();
+      const submission = {
+        ...submissionBase,
+        nivel: nivelesToNivelString(submissionBase.niveles),
+      };
+      await Promise.resolve(onSubmit?.(submission));
+      setSubmitState('success');
+      resetForm();
+      setTimeout(() => setSubmitState('idle'), 2200);
+    } catch {
+      setSubmitState('error');
+      setTimeout(() => setSubmitState('idle'), 2500);
+    }
+  }, [canSubmit, enableDate, form, onSubmit, submitState]);
+
+  const submitLabel = useMemo(() => {
+    if (submitState === 'saving') return isEditing ? 'Guardando...' : 'Creando...';
+    if (submitState === 'success') return isEditing ? 'Clase actualizada' : 'Clase creada';
+    if (submitState === 'error') return isEditing ? 'Error al actualizar' : 'Error al crear';
+    return isEditing ? 'Guardar cambios' : 'Guardar clase';
+  }, [isEditing, submitState]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={style}
+      className={className}
+    >
+      <div className="cc">
+        <div className="cc__card">
+          <div className="cc__hd">
+            <div className="cc__icon cc__icon--teal">
+              <Tag />
+            </div>
+            <div>
+              <h3 className="cc__hd-title">Informacion basica</h3>
+              <p className="cc__hd-sub">{title}</p>
+            </div>
+          </div>
+          <div className="cc__body">
+            <div className="cc__field">
+              <label className="cc__label">
+                Nombre de la clase<span className="cc__req">*</span>
+              </label>
+              <input
+                type="text"
+                className={`cc__input${invalid.nombre ? ' cc__input--invalid' : ''}`}
+                value={form.nombre || ''}
+                onChange={(e) => setField('nombre', e.target.value)}
+                placeholder="Ej. Salsa On2 - nivel intermedio"
+              />
+              {invalid.nombre && <span className="cc__hint cc__hint--danger">Agrega un nombre.</span>}
+            </div>
+
+            <div className="cc__field">
+              <label className="cc__label">Descripcion</label>
+              <textarea
+                className="cc__textarea"
+                value={form.descripcion || ''}
+                onChange={(e) => setField('descripcion', e.target.value)}
+                placeholder="Que aprenderan, requisitos y enfoque de la clase."
+                rows={3}
+              />
+            </div>
+
+            <div className="cc__grid-2">
+              <div className="cc__field">
+                <label className="cc__label">Tipo</label>
+                <div className="cc__select-wrap">
+                  <select
+                    className="cc__select cc__select--tipo"
+                    value={form.tipo || 'clases sueltas'}
+                    onChange={(e) => setField('tipo', e.target.value as CrearClaseValue['tipo'])}
+                  >
+                    {tipos.map((tipo) => (
+                      <option key={tipo} value={tipo}>
+                        {tipo}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="cc__chev">
+                    <ChevronDown />
+                  </div>
+                </div>
+              </div>
+
+              <div className="cc__field">
+                <label className="cc__label">Niveles</label>
+                <div className="cc__chips">
+                  {niveles.map((nivel) => {
+                    const active = (form.niveles ?? []).includes(nivel);
+                    return (
+                      <button
+                        key={nivel}
+                        type="button"
+                        className={`cc__chip${active ? ' cc__chip--nivel' : ''}`}
+                        onClick={() => toggleNivelChip(nivel)}
+                      >
+                        {nivel}
+                        {active && (
+                          <span className="cc__chip-x">
+                            <X />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {isOpen && (
-          <>
-            {/* NOMBRE + TIPO */}
-            <div style={sectionHeader}><span>📝</span><b>Detalles</b></div>
-            <div className="crear-clase__row">
-              <div>
-                <div style={label}>Nombre</div>
-                <div style={fieldShell(invalid.nombre)}>
-                  <div style={leftIcon('🏷️')} />
-                  <input
-                    style={inputBase}
-                    placeholder="Ej. Bachata Sensual"
-                    value={form.nombre || ''}
-                    onChange={(e) => setField('nombre', e.target.value)}
-                  />
-                </div>
-                {invalid.nombre && <div style={helpText(true)}>Agrega un nombre</div>}
-              </div>
-
-              <div>
-                <div style={label}>Tipo</div>
-                <div style={chipWrap}>
-                  {tipos.map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setField('tipo', t)}
-                      style={chip(form.tipo === t)}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+        <div className="cc__card">
+          <div className="cc__hd">
+            <div className="cc__icon cc__icon--purple">
+              <Music />
             </div>
-
-            {/* PRECIO + REGLA */}
-            <div style={sectionHeader}><span>💰</span><b>Precio</b></div>
-            <div className="crear-clase__row">
-              <div>
-                <div style={label}>Precio (opcional)</div>
-                <div style={fieldShell()}>
-                  <div style={leftIcon('💵')} />
-                  <input
-                    style={inputBase}
-                    type="number"
-                    min={0}
-                    step="1"
-                    placeholder="Ej. 200"
-                    value={form.precio !== null && form.precio !== undefined ? form.precio : ''}
-                    onChange={(e) => {
-                      const val = e.target.value.trim();
-                      // Si está vacío, guardar como null (no mostrar nada)
-                      if (val === '' || val === null || val === undefined) {
-                        setField('precio', null);
-                      } else {
-                        const num = Number(val);
-                        // Number("") devuelve 0, pero queremos null si está vacío
-                        // Si el valor es un número válido (incluyendo 0), guardarlo
-                        if (Number.isNaN(num)) {
-                          setField('precio', null);
-                        } else {
-                          // Permitir 0 explícitamente
-                          setField('precio', num);
-                        }
-                      }
-                    }}
-                  />
-                </div>
-                <div style={helpText()}>Déjalo vacío para no mostrar precio. Pon <b>0</b> para marcar como Gratis</div>
-              </div>
-
-              <div>
-                <div style={label}>Regla o condición</div>
-                <div style={fieldShell()}>
-                  <div style={leftIcon('📋')} />
-                  <input
-                    style={inputBase}
-                    placeholder="Ej. Válido hasta el 15/Nov · 2x1 pareja"
-                    value={form.regla || ''}
-                    onChange={(e) => setField('regla', e.target.value)}
-                  />
-                </div>
-              </div>
+            <div>
+              <h3 className="cc__hd-title">Ritmos</h3>
+              <p className="cc__hd-sub">Selecciona los ritmos que cubre esta clase.</p>
             </div>
+          </div>
+          <div className="cc__body">
+            <div>
+              <RitmosChips
+                selected={selectedCatalogIds}
+                onChange={onChangeCatalog}
+                allowedIds={allowedRitmoSlugs}
+              />
+            </div>
+            {selectedCatalogIds.length === 0 && (
+              <span className="cc__hint">Opcional, pero ayuda a mejorar el descubrimiento de la clase.</span>
+            )}
+          </div>
+        </div>
 
-            {/* NIVELES (multi) */}
-            <div style={sectionHeader}><span>🏷️</span><b>Nivel</b></div>
-            <div style={{ fontSize: 12, color: colors.mut, marginBottom: 8 }}>Puedes elegir más de uno</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {niveles.map(n => (
+        <div className="cc__card">
+          <div className="cc__hd">
+            <div className="cc__icon cc__icon--blue">
+              <Calendar />
+            </div>
+            <div>
+              <h3 className="cc__hd-title">Horario</h3>
+              <p className="cc__hd-sub">Define fecha, dias y horario.</p>
+            </div>
+          </div>
+          <div className="cc__body">
+            {enableDate && (
+              <div className="cc__field">
+                <label className="cc__label">Modalidad de fecha</label>
+                <div className="cc__period-group">
+                  <button type="button" className={`cc__period${form.fechaModo === 'especifica' ? ' cc__period--active' : ''}`} onClick={() => handleFechaModoChange('especifica')}>
+                    <span className="cc__period-dot" />
+                    Fecha especifica
+                  </button>
+                  <button type="button" className={`cc__period${form.fechaModo === 'semanal' ? ' cc__period--active' : ''}`} onClick={() => handleFechaModoChange('semanal')}>
+                    <span className="cc__period-dot" />
+                    Semanal
+                  </button>
+                  {/* Temporalmente oculto: modalidad "Por agendar"
+                  <button type="button" className={`cc__period${form.fechaModo === 'por_agendar' ? ' cc__period--active' : ''}`} onClick={() => handleFechaModoChange('por_agendar')}>
+                    <span className="cc__period-dot" />
+                    Por agendar
+                  </button>
+                  */}
+                </div>
+              </div>
+            )}
+
+            {enableDate && form.fechaModo === 'especifica' && (
+              <div className="cc__field">
+                <label className="cc__label">
+                  Fecha<span className="cc__req">*</span>
+                </label>
+                <input
+                  type="date"
+                  className={`cc__input${invalid.fecha ? ' cc__input--invalid' : ''}`}
+                  value={form.fecha || ''}
+                  onChange={(e) => setField('fecha', e.target.value)}
+                />
+                {invalid.fecha && <span className="cc__hint cc__hint--danger">Selecciona una fecha.</span>}
+              </div>
+            )}
+
+            {enableDate && form.fechaModo === 'semanal' && (
+              <div className="cc__field">
+                <label className="cc__label">
+                  Dias de la semana<span className="cc__req">*</span>
+                </label>
+                <div className="cc__days">
+                  {[
+                    { id: 1, short: 'L', label: 'Lunes' },
+                    { id: 2, short: 'M', label: 'Martes' },
+                    { id: 3, short: 'X', label: 'Miercoles' },
+                    { id: 4, short: 'J', label: 'Jueves' },
+                    { id: 5, short: 'V', label: 'Viernes' },
+                    { id: 6, short: 'S', label: 'Sabado' },
+                    { id: 0, short: 'D', label: 'Domingo' },
+                  ].map((day) => {
+                    const active = (form.diasSemana || []).includes(day.id);
+                    return (
+                      <button
+                        key={day.id}
+                        type="button"
+                        className={`cc__day${active ? ' cc__day--active' : ''}`}
+                        onClick={() => toggleDia(day.id)}
+                        aria-pressed={active}
+                        aria-label={day.label}
+                      >
+                        {day.short}
+                      </button>
+                    );
+                  })}
+                </div>
+                {invalid.dia && <span className="cc__hint cc__hint--danger">Elige al menos un dia.</span>}
+              </div>
+            )}
+
+            {porAgendar && (
+              <span className="cc__hint">La fecha y hora se acordaran directamente con la academia o maestro.</span>
+            )}
+
+            {/* Temporalmente oculto: selector "Modo de horario" (Hora especifica / Duracion). Solo aplica hora inicio/fin salvo datos legacy por_agendar.
+            <div className="cc__field">
+              <label className="cc__label">Modo de horario</label>
+              <div className="cc__period-group">
                 <button
                   type="button"
-                  key={n}
-                  onClick={() => toggleNivelChip(n)}
-                  style={chip((form.niveles ?? []).includes(n))}
+                  className={`cc__period${horarioModo === 'especifica' ? ' cc__period--active' : ''}`}
+                  onClick={() => setField('horarioModo', 'especifica')}
+                  disabled={porAgendar}
                 >
-                  {n}
+                  <span className="cc__period-dot" />
+                  Hora especifica
                 </button>
-              ))}
-            </div>
-
-            {/* DESCRIPCIÓN */}
-            <div style={sectionHeader}><span>📄</span><b>Descripción</b></div>
-            <div>
-              <div style={label}>Descripción de la clase (opcional)</div>
-              <div style={fieldShell()}>
-                <div style={leftIcon('📝')} />
-                <textarea
-                  style={{
-                    ...inputBase,
-                    minHeight: '80px',
-                    resize: 'vertical',
-                    paddingTop: '12px',
-                    paddingBottom: '12px',
-                  }}
-                  placeholder="Describe la clase, qué se enseñará, requisitos, etc."
-                  value={form.descripcion || ''}
-                  onChange={(e) => setField('descripcion', e.target.value)}
-                />
+                <button
+                  type="button"
+                  className={`cc__period${horarioModo === 'duracion' ? ' cc__period--active' : ''}`}
+                  onClick={() => setField('horarioModo', 'duracion')}
+                >
+                  <span className="cc__period-dot" />
+                  Duracion
+                </button>
               </div>
             </div>
+            */}
 
-            {/* FECHA */}
-            {enableDate && (
-              <>
-                <div style={sectionHeader}><span>📅</span><b>Fecha</b></div>
-                <div className="crear-clase__row">
-                  <div>
-                    <div style={label}>Modo</div>
-                    <div style={chipWrap}>
-                      <button type="button" style={chip(form.fechaModo === 'especifica')} onClick={() => {
-                        setField('fechaModo', 'especifica');
-                        // Si cambia a específica y no tiene horarioModo, establecerlo en 'especifica'
-                        if (!form.horarioModo || form.horarioModo === 'duracion') {
-                          setField('horarioModo', 'especifica');
-                        }
-                      }}>Específica</button>
-                      <button type="button" style={chip(form.fechaModo === 'semanal')} onClick={() => {
-                        setField('fechaModo', 'semanal');
-                        // Si cambia a semanal y no tiene horarioModo, establecerlo en 'especifica'
-                        if (!form.horarioModo || form.horarioModo === 'duracion') {
-                          setField('horarioModo', 'especifica');
-                        }
-                      }}>Semanal</button>
-                      <button type="button" style={chip(form.fechaModo === 'por_agendar')} onClick={() => {
-                        setField('fechaModo', 'por_agendar');
-                        // Cuando se elige "por agendar", establecer automáticamente horarioModo a 'duracion'
-                        setField('horarioModo', 'duracion');
-                      }}>Por agendar con academia</button>
-                    </div>
-                  </div>
-                  <div>
-                    {form.fechaModo === 'por_agendar' ? (
-                      <div style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', color: colors.text, fontSize: 13 }}>
-                        📅 La fecha y hora se acordarán directamente con la academia
-                      </div>
-                    ) : form.fechaModo === 'especifica' ? (
-                      <>
-                        <div style={fieldShell(invalid.fecha)}>
-                          <div style={leftIcon('📆')} />
-                          <input
-                            style={inputBase}
-                            type="date"
-                            value={form.fecha || ''}
-                            onChange={(e) => setField('fecha', e.target.value)}
-                          />
-                        </div>
-                        {invalid.fecha && <div style={helpText(true)}>Selecciona una fecha</div>}
-                      </>
-                    ) : (
-                      <>
-                        <div style={chipWrap}>
-                          {diasSemana.map(d => {
-                            const diasSeleccionados = form.diasSemana || [];
-                            const estaSeleccionado = diasSeleccionados.includes(d.id);
-                            return (
-                              <button
-                                type="button"
-                                key={d.id}
-                                style={chip(estaSeleccionado)}
-                                onClick={() => {
-                                  const diasActuales = form.diasSemana || [];
-                                  if (estaSeleccionado) {
-                                    // Deseleccionar día
-                                    const nuevosDias = diasActuales.filter((dia: number) => dia !== d.id);
-                                    setField('diasSemana', nuevosDias);
-                                    // Si queda un solo día, también actualizar diaSemana para compatibilidad
-                                    if (nuevosDias.length === 1) {
-                                      setField('diaSemana', nuevosDias[0]);
-                                    } else if (nuevosDias.length === 0) {
-                                      setField('diaSemana', null);
-                                    }
-                                  } else {
-                                    // Seleccionar día
-                                    const nuevosDias = [...diasActuales, d.id].sort();
-                                    setField('diasSemana', nuevosDias);
-                                    // Actualizar diaSemana con el primer día para compatibilidad
-                                    setField('diaSemana', nuevosDias[0]);
-                                  }
-                                }}
-                              >
-                                {d.nombre}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {invalid.dia && <div style={helpText(true)}>Elige al menos un día de la semana</div>}
-                        {(form.diasSemana && form.diasSemana.length > 0) && (
-                          <div style={helpText()}>
-                            {form.diasSemana.length === 1 
-                              ? `Día seleccionado: ${diasSemana.find(d => d.id === form.diasSemana![0])?.nombre}`
-                              : `${form.diasSemana.length} días seleccionados: ${form.diasSemana.map(d => diasSemana.find(ds => ds.id === d)?.nombre).join(', ')}`
-                            }
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* HORARIO */}
-            {!porAgendar && (
-              <>
-                <div style={sectionHeader}><span>⏰</span><b>Horario</b></div>
-                <div className="crear-clase__row">
-                  <div>
-                    <div style={label}>Modo de horario</div>
-                    <div style={chipWrap}>
-                      <button 
-                        type="button" 
-                        style={chip(horarioModo === 'especifica')} 
-                        onClick={() => setField('horarioModo', 'especifica')}
-                      >
-                        Hora específica
-                      </button>
-                      <button 
-                        type="button" 
-                        style={chip(horarioModo === 'duracion')} 
-                        onClick={() => setField('horarioModo', 'duracion')}
-                      >
-                        Duración (horas)
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                {horarioModo === 'especifica' ? (
-                  <div className="crear-clase__row">
-                    <div>
-                      <div style={label}>Hora inicio (HH:MM)</div>
-                      <div style={fieldShell(invalid.inicio)}>
-                        <div style={leftIcon('🟢')} />
-                        <input
-                          type="time"
-                          step={60}
-                          style={inputBase}
-                          value={form.inicio || ''}
-                          onChange={(e) => setField('inicio', normalizeTime(e.target.value))}
-                        />
-                      </div>
-                      {invalid.inicio && <div style={helpText(true)}>Indica la hora de inicio</div>}
-                    </div>
-
-                    <div>
-                      <div style={label}>Hora fin (HH:MM)</div>
-                      <div style={fieldShell(invalid.fin)}>
-                        <div style={leftIcon('🔴')} />
-                        <input
-                          type="time"
-                          step={60}
-                          style={inputBase}
-                          value={form.fin || ''}
-                          onChange={(e) => setField('fin', normalizeTime(e.target.value))}
-                        />
-                      </div>
-                      {invalid.fin && <div style={helpText(true)}>Indica la hora de fin</div>}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="crear-clase__row">
-                    <div>
-                      <div style={label}>Duración (horas)</div>
-                      <div style={fieldShell(invalid.duracion)}>
-                        <div style={leftIcon('⏱️')} />
-                        <input
-                          type="number"
-                          min="0.5"
-                          step="0.5"
-                          style={inputBase}
-                          placeholder="Ej. 1.5"
-                          value={form.duracionHoras ?? ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setField('duracionHoras', val === '' ? null : parseFloat(val));
-                          }}
-                        />
-                      </div>
-                      {invalid.duracion && <div style={helpText(true)}>Indica la duración en horas (ej: 1, 1.5, 2)</div>}
-                      <div style={helpText()}>Ej: 1 = 1 hora, 1.5 = 1 hora 30 min, 2 = 2 horas</div>
-                    </div>
-                    <div></div>
-                  </div>
-                )}
-              </>
-            )}
-            
-            {/* HORARIO - Solo duración cuando es "Por agendar" */}
-            {porAgendar && (
-              <>
-                <div style={sectionHeader}><span>⏰</span><b>Duración Estimada</b></div>
-                <div className="crear-clase__row">
-                  <div>
-                    <div style={label}>Duración (horas)</div>
-                    <div style={fieldShell(invalid.duracion)}>
-                      <div style={leftIcon('⏱️')} />
-                      <input
-                        type="number"
-                        min="0.5"
-                        step="0.5"
-                        style={inputBase}
-                        placeholder="Ej. 1.5"
-                        value={form.duracionHoras ?? ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setField('duracionHoras', val === '' ? null : parseFloat(val));
-                        }}
-                      />
-                    </div>
-                    {invalid.duracion && <div style={helpText(true)}>Indica la duración estimada en horas</div>}
-                    <div style={helpText()}>Ej: 1 = 1 hora, 1.5 = 1 hora 30 min, 2 = 2 horas</div>
-                  </div>
-                  <div></div>
-                </div>
-              </>
-            )}
-
-            {/* RITMO + ZONA */}
-            <div style={sectionHeader}><span>🎶</span><b>Ritmo</b></div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <div style={label}>Ritmos (puedes elegir varios)</div>
-                <div >
-                  <RitmosChips 
-                    selected={selectedCatalogIds} 
-                    onChange={onChangeCatalog}
-                    allowedIds={allowedRitmoSlugs}
+            {horarioModo === 'especifica' && !porAgendar ? (
+              <div className="cc__grid-2">
+                <div className="cc__field">
+                  <label className="cc__label">
+                    Hora inicio<span className="cc__req">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    step={60}
+                    className={`cc__input${invalid.inicio ? ' cc__input--invalid' : ''}`}
+                    value={form.inicio || ''}
+                    onChange={(e) => setField('inicio', normalizeTime(e.target.value))}
                   />
+                  {invalid.inicio && <span className="cc__hint cc__hint--danger">Indica la hora de inicio.</span>}
                 </div>
-                {(!form.ritmoIds || form.ritmoIds.length === 0) && (
-                  <div style={helpText()}>
-                    Opcional, pero sugerido: seleccionar ritmos ayuda a mejorar el descubrimiento
-                  </div>
-                )}
+
+                <div className="cc__field">
+                  <label className="cc__label">
+                    Hora fin<span className="cc__req">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    step={60}
+                    className={`cc__input${invalid.fin ? ' cc__input--invalid' : ''}`}
+                    value={form.fin || ''}
+                    onChange={(e) => setField('fin', normalizeTime(e.target.value))}
+                  />
+                  {invalid.fin && <span className="cc__hint cc__hint--danger">Indica la hora de fin.</span>}
+                </div>
               </div>
+            ) : (
+              <div className="cc__field">
+                <label className="cc__label">
+                  Duracion en horas<span className="cc__req">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="0.5"
+                  step="0.5"
+                  className={`cc__input${invalid.duracion ? ' cc__input--invalid' : ''}`}
+                  value={form.duracionHoras ?? ''}
+                  onChange={(e) => setField('duracionHoras', e.target.value === '' ? null : parseFloat(e.target.value))}
+                  placeholder="Ej. 1.5"
+                />
+                {invalid.duracion && <span className="cc__hint cc__hint--danger">Indica la duracion en horas.</span>}
+              </div>
+            )}
+          </div>
+        </div>
 
-             {/*  <div>
-                <div style={label}>Zona</div>   
-                <div style={chipWrap}>
-                  {zonas.map(z => (
-                    <button
-                      type="button"
-                      key={z.id}
-                      style={chip(form.zonaId === z.id)}
-                      onClick={() => setField('zonaId', z.id)}
-                      title={z.nombre}
-                    >
-                      {z.nombre}
-                    </button>
-                  ))}
-                </div>
-              </div> */}
+        <div className="cc__card">
+          <div className="cc__hd">
+            <div className="cc__icon cc__icon--coral">
+              <MapPin />
             </div>
-
-            {/* UBICACIÓN */}
-            <div style={sectionHeader}><span>📍</span><b>Ubicación</b></div>
+            <div>
+              <h3 className="cc__hd-title">Ubicacion</h3>
+              <p className="cc__hd-sub">Selecciona una sede guardada o captura la ubicacion manualmente.</p>
+            </div>
+          </div>
+          <div className="cc__body">
             {Array.isArray(locations) && locations.length > 0 && (
-              <div style={{ marginBottom: 10 }}>
-                <div style={label}>Elegir ubicación existente</div>
-                <div style={fieldShell()}>
+              <div className="cc__field">
+                <label className="cc__label">Usar sede guardada</label>
+                <div className="cc__select-wrap">
                   <select
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      background: 'rgba(255,255,255,0.08)',
-                      border: 'none',
-                      color: colors.text,
-                      outline: 'none',
-                      fontSize: 14,
-                      borderRadius: 8,
-                      WebkitAppearance: 'none' as any,
-                      appearance: 'none' as any
-                    }}
+                    className="cc__select"
                     value={selectedLocationId}
                     onChange={(e) => {
                       const nextId = e.target.value;
                       setSelectedLocationId(nextId);
                       setField('ubicacionId', nextId || null);
-                      const sel = locations.find(l => (l.id || '') === nextId);
+                      const sel = locations.find((l) => (l.id || '') === nextId);
                       if (sel && nextId) {
                         setField('ubicacionNombre', sel.nombre || '');
                         setField('ubicacionDireccion', sel.direccion || '');
@@ -1253,52 +1009,57 @@ const CrearClase = React.memo(function CrearClase({
                       }
                     }}
                   >
-                    <option value="" style={{ color: '#111' }}>— Escribir manualmente —</option>
-                    {locations.map((l, i) => (
-                      <option key={l.id || i} value={l.id || ''} style={{ color: '#111' }}>{l.nombre || l.direccion || 'Ubicación'}</option>
+                    <option value="">Ingresar manualmente</option>
+                    {locations.map((location, index) => (
+                      <option key={location.id || index} value={location.id || ''}>
+                        {location.nombre || location.direccion || 'Ubicacion'}
+                      </option>
                     ))}
                   </select>
+                  <div className="cc__chev">
+                    <ChevronDown />
+                  </div>
                 </div>
               </div>
             )}
-            <div className="crear-clase__row">
-              <div>
-                <div style={label}>Nombre de la ubicación</div>
-                <div style={fieldShell()}>
-                  <div style={leftIcon('🏢')} />
-                  <input
-                    style={inputBase}
-                    placeholder="Ej. Sede Centro / Salón Principal"
-                    value={form.ubicacionNombre || ''}
-                    onChange={(e) => setField('ubicacionNombre', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div>
-                <div style={label}>Dirección</div>
-                <div style={fieldShell()}>
-                  <div style={leftIcon('📍')} />
-                  <input
-                    style={inputBase}
-                    placeholder="Calle, número, colonia, ciudad"
-                    value={form.ubicacionDireccion || ''}
-                    onChange={(e) => setField('ubicacionDireccion', e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-            <div style={{ marginTop: 10 }}>
-              <div style={label}>Notas o referencias</div>
-              <div style={fieldShell()}>
-                <div style={leftIcon('📝')} />
+
+            <div className="cc__divider" />
+
+            <div className="cc__grid-2">
+              <div className="cc__field">
+                <label className="cc__label">Nombre del lugar</label>
                 <input
-                  style={inputBase}
-                  placeholder="Ej. Entrada por la puerta lateral, 2do piso"
-                  value={form.ubicacionNotas || ''}
-                  onChange={(e) => setField('ubicacionNotas', e.target.value)}
+                  type="text"
+                  className="cc__input"
+                  value={form.ubicacionNombre || ''}
+                  onChange={(e) => setField('ubicacionNombre', e.target.value)}
+                  placeholder="Ej. Sede centro"
+                />
+              </div>
+
+              <div className="cc__field">
+                <label className="cc__label">Direccion</label>
+                <input
+                  type="text"
+                  className="cc__input"
+                  value={form.ubicacionDireccion || ''}
+                  onChange={(e) => setField('ubicacionDireccion', e.target.value)}
+                  placeholder="Calle, numero, colonia"
                 />
               </div>
             </div>
+
+            <div className="cc__field">
+              <label className="cc__label">Notas o referencias</label>
+              <input
+                type="text"
+                className="cc__input"
+                value={form.ubicacionNotas || ''}
+                onChange={(e) => setField('ubicacionNotas', e.target.value)}
+                placeholder="Ej. Entrada lateral, segundo piso"
+              />
+            </div>
+
             {(() => {
               const zoneIdsToShow = selectedLocationZonaIds.length
                 ? selectedLocationZonaIds
@@ -1309,21 +1070,15 @@ const CrearClase = React.memo(function CrearClase({
               const isLocationDriven = selectedLocationZonaIds.length > 0;
 
               return (
-                <div style={{ marginTop: 14 }}>
+                <div className="cc__field">
                   <button
                     type="button"
-                    onClick={() => setZonesExpanded(prev => !prev)}
-                    style={{
-                      ...chip(zonesExpanded),
-                      padding: '6px 10px',
-                      fontSize: 12,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
+                    className={`cc__chip${zonesExpanded ? ' cc__chip--zona' : ''}`}
+                    onClick={() => setZonesExpanded((prev) => !prev)}
+                    style={{ width: 'fit-content' }}
                   >
-                    {isLocationDriven ? 'Zonas (ubicación)' : 'Zonas (perfil)'}
-                    <span style={{ fontSize: 12 }}>{zonesExpanded ? '▾' : '▸'}</span>
+                    {isLocationDriven ? 'Zonas (ubicacion)' : 'Zonas (perfil)'}
+                    <span>{zonesExpanded ? '▾' : '▸'}</span>
                   </button>
                   {zonesExpanded && (
                     <div style={{ marginTop: 8 }}>
@@ -1342,81 +1097,30 @@ const CrearClase = React.memo(function CrearClase({
                 </div>
               );
             })()}
-
-            <div style={divider} />
-          </>
-        )}
-
-        {/* Acciones */}
-        <div className="crear-clase__actions">
-          <button
-            onClick={() => {
-              setSubmitState('idle');
-              resetForm();
-              setIsOpen(false);
-              onCancel?.();
-            }}
-            style={{
-              padding: '10px 16px',
-              borderRadius: 12,
-              border: `1px solid ${colors.line}`,
-              background: 'transparent',
-              color: colors.text,
-              cursor: 'pointer'
-            }}
-          >
-            Cancelar
-          </button>
-
-          <motion.button
-            whileHover={{ y: (!isOpen || (isOpen && submitState === 'idle' && canSubmit)) ? -1 : 0 }}
-            whileTap={{ scale: (!isOpen || (isOpen && submitState === 'idle' && canSubmit)) ? 0.98 : 1 }}
-            disabled={isOpen ? (submitState === 'saving' || !canSubmit) : false}
-            onClick={async () => {
-              if (!isOpen) { setIsOpen(true); return; }
-              if (submitState === 'saving') return;
-              try {
-                setSubmitState('saving');
-                const submissionBase = enableDate ? form : (() => {
-                  const { fecha, fechaModo, diaSemana, ...rest } = form;
-                  return rest as CrearClaseValue;
-                })();
-                const submission = {
-                  ...submissionBase,
-                  nivel: nivelesToNivelString(submissionBase.niveles),
-                };
-                await Promise.resolve(onSubmit?.(submission));
-                setSubmitState('success');
-                // Reiniciar siempre después de éxito (tanto crear como editar)
-                resetForm();
-                setTimeout(() => { setSubmitState('idle'); setIsOpen(false); }, 2200);
-              } catch (e) {
-                setSubmitState('error');
-                setTimeout(() => setSubmitState('idle'), 2500);
-              }
-            }}
-            style={{
-              padding: '12px 18px',
-              borderRadius: 12,
-              border: `1px solid ${colors.line}`,
-              background: submitState === 'saving' ? colors.soft : `linear-gradient(135deg, ${colors.blue}, ${colors.coral})`,
-              color: colors.text,
-              fontWeight: 800,
-              cursor: (!isOpen || (isOpen && submitState === 'idle' && canSubmit)) ? 'pointer' : (submitState === 'saving' ? 'wait' : 'not-allowed'),
-              boxShadow: (submitState === 'saving') ? 'none' : '0 10px 24px rgba(30,136,229,0.35)'
-            }}
-          >
-            {(() => {
-              if (!isOpen) return 'Crear clase →';
-              if (submitState === 'saving') return isEditing ? 'Guardando...' : 'Creando...';
-              if (submitState === 'success') return isEditing ? '✅ Clase actualizada' : '✅ Clase creada';
-              if (submitState === 'error') return isEditing ? '❌ Error al actualizar' : '❌ Error al crear';
-              return isEditing ? 'Guardar cambios' : 'Crear clase →';
-            })()}
-          </motion.button>
+          </div>
         </div>
-      </motion.div>
-    </div>
+
+        <div className="cc__card">
+          <div className="cc__footer">
+            <button type="button" className="cc__btn" onClick={handleCancel}>
+              Cancelar
+            </button>
+            <div className="cc__footer-right">
+              {isDirty && <span className="cc__dirty">Cambios sin guardar</span>}
+              <button
+                type="button"
+                className="cc__btn cc__btn--primary"
+                onClick={handleSubmit}
+                disabled={submitState === 'saving' || !canSubmit}
+              >
+                <Save />
+                {submitLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 });
 

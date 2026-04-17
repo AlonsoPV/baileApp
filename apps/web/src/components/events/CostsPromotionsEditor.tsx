@@ -1,18 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
+import "@/styles/costsPromotionsEditor.css";
 
-const palette = {
-  surface: "rgba(20, 22, 30, 0.7)",
-  border: "rgba(255, 255, 255, 0.12)",
-  text: "#F5F5F5",
-  accent: "#f093fb",
-  accentAlt: "#FFD166",
-  danger: "#FF3D57",
-  success: "#10B981",
-  blue: "#1E88E5",
-};
-
-export type PromotionType = "promocion" | "paquete" | "descuento" | "membresia" | "otro";
+export type PromotionType =
+  | "clase_suelta"
+  | "promocion"
+  | "paquete"
+  | "descuento"
+  | "membresia"
+  | "otro";
 
 export interface PromotionItem {
   id?: string | number;
@@ -35,9 +32,27 @@ interface CostsPromotionsEditorProps {
   hideHeader?: boolean;
 }
 
+const TIPOS_ORDEN: PromotionType[] = [
+  "clase_suelta",
+  "promocion",
+  "paquete",
+  "descuento",
+  "membresia",
+  "otro",
+];
+
+const typeOptions: Array<{ value: PromotionType; label: string; icon: string }> = [
+  { value: "clase_suelta", label: "Clase suelta", icon: "🎫" },
+  { value: "promocion", label: "Promoción", icon: "✨" },
+  { value: "paquete", label: "Paquete", icon: "🧾" },
+  { value: "descuento", label: "Descuento", icon: "💸" },
+  { value: "membresia", label: "Membresía", icon: "🎟️" },
+  { value: "otro", label: "Otro", icon: "💡" },
+];
+
 const emptyPromotion: PromotionItem = {
   nombre: "",
-  tipo: "promocion",
+  tipo: "clase_suelta",
   descripcion: "",
   condicion: "",
   precio: null,
@@ -47,27 +62,29 @@ const emptyPromotion: PromotionItem = {
   codigo: "",
 };
 
-const typeOptions: Array<{ value: PromotionType; label: string; icon: string }> = [
-  { value: "promocion", label: "Promoción", icon: "✨" },
-  { value: "paquete", label: "Paquete", icon: "🧾" },
-  { value: "descuento", label: "Descuento", icon: "💸" },
-  { value: "membresia", label: "Membresía", icon: "🎟️" },
-  { value: "otro", label: "Otro", icon: "💡" },
-];
+function normalizeTipo(raw?: string | null): PromotionType {
+  if (raw && TIPOS_ORDEN.includes(raw as PromotionType)) return raw as PromotionType;
+  return "otro";
+}
+
+function tipoBadgeClass(tipo: string): string {
+  const key = TIPOS_ORDEN.includes(tipo as PromotionType) ? tipo : "otro";
+  return `cpe__badge cpe__badge--${key}`;
+}
 
 const formatCurrency = (value?: number | string | null) => {
   if (value === undefined || value === null || value === "") return "Gratis";
   const numeric = typeof value === "string" ? Number(value) : value;
   if (numeric === null || Number.isNaN(numeric)) return `$${String(value)}`;
   try {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("es-MX", {
       style: "currency",
-      currency: "USD",
+      currency: "MXN",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(numeric);
+    }).format(Number(numeric));
   } catch {
-    return `$${Number(numeric).toLocaleString("en-US")}`;
+    return `$${Number(numeric).toLocaleString("es-MX")}`;
   }
 };
 
@@ -110,12 +127,16 @@ export default function CostsPromotionsEditor({
   const handleStartEdit = (index: number) => {
     const current = value[index];
     if (!current) return;
+    const tipo = normalizeTipo(current.tipo as string);
+    const isSingle = tipo === "clase_suelta";
     setDraft({
       ...emptyPromotion,
       ...current,
+      tipo,
       precio: current.precio ?? null,
-      validoDesde: current.validoDesde || "",
-      validoHasta: current.validoHasta || "",
+      condicion: isSingle ? "" : current.condicion || "",
+      validoDesde: isSingle ? "" : current.validoDesde || "",
+      validoHasta: isSingle ? "" : current.validoHasta || "",
     });
     setEditIndex(index);
     setMode("editing");
@@ -128,27 +149,43 @@ export default function CostsPromotionsEditor({
   };
 
   const handleFieldChange = <K extends keyof PromotionItem>(field: K, val: PromotionItem[K]) => {
-    setDraft((prev) => ({
-      ...prev,
-      [field]: val,
-    }));
+    setDraft((prev) => {
+      const next = { ...prev, [field]: val } as PromotionItem;
+      if (field === "tipo" && val === "clase_suelta") {
+        next.condicion = "";
+        next.validoDesde = "";
+        next.validoHasta = "";
+      }
+      return next;
+    });
   };
 
   const sanitizedDraft = useMemo(() => {
-    const cleaned: PromotionItem = {
+    const tipo = normalizeTipo(draft.tipo as string);
+    const base: PromotionItem = {
       ...draft,
+      tipo,
       nombre: (draft.nombre || "").trim(),
       descripcion: draft.descripcion ? draft.descripcion.trim() : "",
       condicion: draft.condicion ? draft.condicion.trim() : "",
       codigo: draft.codigo ? draft.codigo.trim() : "",
-      precio: draft.precio === null || draft.precio === undefined || Number.isNaN(draft.precio)
-        ? null
-        : Number(draft.precio),
+      precio:
+        draft.precio === null || draft.precio === undefined || Number.isNaN(draft.precio)
+          ? null
+          : Number(draft.precio),
       validoDesde: draft.validoDesde ? draft.validoDesde : undefined,
       validoHasta: draft.validoHasta ? draft.validoHasta : undefined,
       activo: draft.activo ?? true,
     };
-    return cleaned;
+    if (tipo === "clase_suelta") {
+      return {
+        ...base,
+        condicion: "",
+        validoDesde: undefined,
+        validoHasta: undefined,
+      };
+    }
+    return base;
   }, [draft]);
 
   const handleSave = () => {
@@ -163,550 +200,299 @@ export default function CostsPromotionsEditor({
     reset();
   };
 
-  const hasDates = sanitizedDraft.validoDesde || sanitizedDraft.validoHasta;
+  const draftTipo = normalizeTipo(draft.tipo as string);
+  const isClaseSueltaForm = draftTipo === "clase_suelta";
 
   return (
-    <div
-      style={{
-        background: "rgba(12, 14, 20, 0.6)",
-        borderRadius: 16,
-        border: `1px solid ${palette.border}`,
-        padding: "1.5rem",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: hideHeader ? "flex-end" : "space-between",
-          alignItems: "center",
-          gap: "1rem",
-        }}
-      >
+    <div className="cpe">
+      <div className="cpe__header">
         {!hideHeader && (
-          <div>
-            <h3 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, color: palette.text }}>{label}</h3>
-            {helperText && (
-              <p
-                style={{
-                  margin: "0.25rem 0 0",
-                  fontSize: "0.9rem",
-                  color: "rgba(255,255,255,0.7)",
-                }}
-              >
-                {helperText}
-              </p>
-            )}
+          <div style={{ minWidth: 0 }}>
+            <h3 className="cpe__title">{label}</h3>
+            {helperText ? <p className="cpe__subtitle">{helperText}</p> : null}
           </div>
         )}
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.96 }}
+          type="button"
+          whileHover={{ scale: mode === "adding" ? 1 : 1.02 }}
+          whileTap={{ scale: mode === "adding" ? 1 : 0.98 }}
+          className="cpe__btn cpe__btn--primary"
           onClick={handleStartAdd}
           disabled={mode === "adding"}
-          style={{
-            padding: "0.65rem 1.1rem",
-            borderRadius: 999,
-            border: "none",
-            background: mode === "adding"
-              ? "rgba(255,255,255,0.1)"
-              : "linear-gradient(135deg, rgba(240,147,251,0.9), rgba(30,136,229,0.9))",
-            color: palette.text,
-            fontWeight: 700,
-            cursor: mode === "adding" ? "not-allowed" : "pointer",
-            boxShadow: mode === "adding" ? "none" : "0 10px 24px rgba(240,147,251,0.35)",
-          }}
         >
-          ➕ Nueva promoción
+          <Plus size={18} strokeWidth={2.5} aria-hidden />
+          Nueva promoción
         </motion.button>
       </div>
 
-      <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div className="cpe__list">
         {value.length === 0 && mode === "idle" && (
-          <div style={{
-            padding: "1.25rem",
-            borderRadius: 14,
-            border: `1px dashed ${palette.border}`,
-            background: "rgba(255,255,255,0.04)",
-            color: "rgba(255,255,255,0.7)",
-            textAlign: "center",
-            fontSize: "0.95rem",
-          }}>
-            Aún no tienes promociones configuradas. Añade tu primer paquete o descuento especial.
+          <div className="cpe__empty">
+            Aún no tienes promociones configuradas. Añade tu primera clase suelta, paquete o descuento.
           </div>
         )}
 
-        {value.map((item, index) => (
-          <motion.div
-            key={`${item.id ?? index}-${item.nombre}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              borderRadius: 12,
-              border: `1px solid ${palette.border}`,
-              background: "rgba(28, 32, 42, 0.7)",
-              padding: "0.875rem 1rem",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0.75rem",
-              position: "relative",
-            }}
-          >
-            {/* Tipo badge compacto */}
-            <div style={{
-              padding: "0.35rem 0.6rem",
-              borderRadius: 8,
-              background: "rgba(240,147,251,0.15)",
-              border: "1px solid rgba(240,147,251,0.35)",
-              color: palette.accent,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              textTransform: "capitalize",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}>
-              {typeOptions.find((opt) => opt.value === item.tipo)?.icon ?? "✨"}
-            </div>
+        {value.map((item, index) => {
+          const tipoNorm = normalizeTipo(item.tipo as string);
+          const opt = typeOptions.find((o) => o.value === tipoNorm);
+          const isFree = item.precio === null || item.precio === 0;
+          return (
+            <motion.div
+              key={`${item.id ?? index}-${item.nombre}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="cpe__item"
+            >
+              <div className={tipoBadgeClass(tipoNorm)} title={opt?.label}>
+                <span aria-hidden>{opt?.icon ?? "💡"}</span>{" "}
+                <span className="cpe__badge-label">{opt?.label ?? "Otro"}</span>
+              </div>
 
-            {/* Contenido principal */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.5rem" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h4 style={{ 
-                    margin: 0, 
-                    color: palette.text, 
-                    fontSize: "0.95rem", 
-                    fontWeight: 700,
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical" as any,
-                    overflow: "hidden",
-                    lineHeight: 1.3,
-                  }}>
-                    {item.nombre}
-                  </h4>
-                  {item.descripcion && (
-                    <p style={{ 
-                      margin: "0.25rem 0 0", 
-                      color: "rgba(255,255,255,0.65)", 
-                      fontSize: "0.8rem", 
-                      lineHeight: 1.4,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical" as any,
-                      overflow: "hidden",
-                    }}>
-                      {item.descripcion}
-                    </p>
-                  )}
+              <div className="cpe__main">
+                <div className="cpe__row-top">
+                  <div style={{ minWidth: 0 }}>
+                    <h4 className="cpe__name">{item.nombre}</h4>
+                    {item.descripcion ? <p className="cpe__desc">{item.descripcion}</p> : null}
+                  </div>
+                  <div className={`cpe__price${isFree ? " cpe__price--free" : " cpe__price--paid"}`}>
+                    {formatCurrency(item.precio)}
+                  </div>
                 </div>
 
-                {/* Precio destacado */}
-                <div style={{
-                  padding: "0.4rem 0.75rem",
-                  borderRadius: 10,
-                  background: item.precio === null || item.precio === 0
-                    ? "rgba(16,185,129,0.15)"
-                    : "linear-gradient(135deg, rgba(30,136,229,0.2), rgba(124,77,255,0.15))",
-                  border: item.precio === null || item.precio === 0
-                    ? "1px solid rgba(16,185,129,0.4)"
-                    : "1px solid rgba(30,136,229,0.4)",
-                  color: item.precio === null || item.precio === 0 ? palette.success : palette.blue,
-                  fontWeight: 800,
-                  fontSize: "0.9rem",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  boxShadow: item.precio !== null && item.precio !== 0 ? "0 4px 12px rgba(30,136,229,0.2)" : "none",
-                }}>
-                  {formatCurrency(item.precio)}
+                <div className="cpe__meta">
+                  {item.activo === false && <span className="cpe__pill">Inactiva</span>}
+                  {item.codigo ? (
+                    <span className="cpe__pill cpe__pill--code">🎫 {item.codigo.toUpperCase()}</span>
+                  ) : null}
+                  {tipoNorm !== "clase_suelta" && item.condicion ? (
+                    <span className="cpe__pill cpe__pill--clamp">
+                      📋 {item.condicion}
+                    </span>
+                  ) : null}
+                  {tipoNorm !== "clase_suelta" && (item.validoDesde || item.validoHasta) ? (
+                    <span className="cpe__pill cpe__pill--dates">
+                      ⏰ {formatDate(item.validoDesde) ?? "hoy"}
+                      {item.validoHasta ? ` — ${formatDate(item.validoHasta)}` : ""}
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
-              {/* Badges compactos en una línea */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center", marginTop: "0.4rem" }}>
-                {item.activo === false && (
-                  <span style={{
-                    padding: "0.25rem 0.5rem",
-                    borderRadius: 6,
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.18)",
-                    color: "rgba(255,255,255,0.65)",
-                    fontSize: "0.7rem",
-                    fontWeight: 600,
-                  }}>
-                    Inactiva
-                  </span>
-                )}
-                {item.codigo && (
-                  <span style={{
-                    padding: "0.25rem 0.5rem",
-                    borderRadius: 6,
-                    background: "rgba(16,185,129,0.12)",
-                    border: "1px solid rgba(16,185,129,0.4)",
-                    color: palette.success,
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                  }}>
-                    🎫 {item.codigo.toUpperCase()}
-                  </span>
-                )}
-                {item.condicion && (
-                  <span style={{
-                    padding: "0.25rem 0.5rem",
-                    borderRadius: 6,
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: "0.7rem",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 1,
-                    WebkitBoxOrient: "vertical" as any,
-                    overflow: "hidden",
-                    maxWidth: "200px",
-                  }}>
-                    📋 {item.condicion}
-                  </span>
-                )}
-                {(item.validoDesde || item.validoHasta) && (
-                  <span style={{
-                    padding: "0.25rem 0.5rem",
-                    borderRadius: 6,
-                    background: "rgba(255,209,102,0.12)",
-                    border: "1px solid rgba(255,209,102,0.35)",
-                    color: palette.accentAlt,
-                    fontSize: "0.7rem",
-                    whiteSpace: "nowrap",
-                  }}>
-                    ⏰ {formatDate(item.validoDesde) ?? "hoy"}
-                    {item.validoHasta && ` - ${formatDate(item.validoHasta)}`}
-                  </span>
-                )}
+              <div className="cpe__actions">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="cpe__btn cpe__btn--ghost cpe__btn--icon"
+                  onClick={() => handleStartEdit(index)}
+                  title="Editar"
+                  aria-label="Editar"
+                >
+                  <Pencil size={18} />
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="cpe__btn cpe__btn--danger cpe__btn--icon"
+                  onClick={() => handleRemove(index)}
+                  title="Eliminar"
+                  aria-label="Eliminar"
+                >
+                  <Trash2 size={18} />
+                </motion.button>
               </div>
-            </div>
-
-            {/* Botones de acción como iconos */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "0.4rem", flexShrink: 0 }}>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleStartEdit(index)}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  background: "rgba(255,255,255,0.08)",
-                  color: palette.text,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.9rem",
-                  padding: 0,
-                }}
-                title="Editar"
-              >
-                ✏️
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleRemove(index)}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  border: "1px solid rgba(255,61,87,0.4)",
-                  background: "rgba(255,61,87,0.12)",
-                  color: palette.danger,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.9rem",
-                  padding: 0,
-                }}
-                title="Eliminar"
-              >
-                🗑️
-              </motion.button>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
 
       <AnimatePresence>
         {mode !== "idle" && (
           <motion.div
             key="editor"
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
+            exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.2 }}
-            style={{
-              marginTop: "1.75rem",
-              borderRadius: 18,
-              border: `1px solid rgba(240,147,251,0.25)`,
-              background: "rgba(32, 36, 48, 0.85)",
-              padding: "1.5rem",
-            }}
+            className="cpe__panel"
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: palette.text }}>
-                {mode === "adding" ? "Nueva promoción" : "Editar promoción"}
-              </h4>
-              <button
-                type="button"
-                onClick={reset}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "rgba(255,255,255,0.65)",
-                  fontSize: "0.9rem",
-                  cursor: "pointer",
-                }}
-              >
-                ✖ Cerrar
+            <div className="cpe__panel-hd">
+              <h4 className="cpe__panel-title">{mode === "adding" ? "Nueva promoción" : "Editar promoción"}</h4>
+              <button type="button" className="cpe__panel-close" onClick={reset}>
+                <X size={16} aria-hidden />
+                Cerrar
               </button>
             </div>
 
-            <div style={{ display: "grid", gap: "1rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
+            <div className="cpe__grid">
+              <div className="cpe__grid-auto">
+                <div className="cpe__field">
+                  <label className="cpe__label" htmlFor="cpe-tipo">
                     Tipo
                   </label>
-                  <select
-                    value={draft.tipo}
-                    onChange={(e) => handleFieldChange("tipo", e.target.value as PromotionType)}
-                    style={{
-                      width: "100%",
-                      padding: "0.6rem 0.75rem",
-                      borderRadius: 10,
-                      border: `1px solid ${palette.border}`,
-                      background: "rgba(10,12,16,0.8)",
-                      color: palette.text,
-                    }}
-                  >
-                    {typeOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.icon} {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="cpe__select-wrap">
+                    <select
+                      id="cpe-tipo"
+                      className="cpe__select"
+                      value={draft.tipo}
+                      onChange={(e) => handleFieldChange("tipo", e.target.value as PromotionType)}
+                    >
+                      {typeOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.icon} {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="cpe__chev" aria-hidden>
+                      <ChevronDown />
+                    </span>
+                  </div>
                 </div>
 
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
+                <div className="cpe__field">
+                  <label className="cpe__label" htmlFor="cpe-precio">
                     Precio
                   </label>
                   <input
+                    id="cpe-precio"
                     type="number"
-                    min="0"
-                    step="1000"
+                    min={0}
+                    step={1}
+                    className="cpe__input"
                     value={draft.precio ?? ""}
-                    onChange={(e) => handleFieldChange("precio", e.target.value === "" ? null : Number(e.target.value))}
-                    placeholder="Dejar vacío para Gratis"
-                    style={{
-                      width: "100%",
-                      padding: "0.6rem 0.75rem",
-                      borderRadius: 10,
-                      border: `1px solid ${palette.border}`,
-                      background: "rgba(10,12,16,0.8)",
-                      color: palette.text,
-                    }}
+                    onChange={(e) =>
+                      handleFieldChange("precio", e.target.value === "" ? null : Number(e.target.value))
+                    }
+                    placeholder="Vacío = gratis"
                   />
                 </div>
 
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
-                    Código promocional (opcional)
+                <div className="cpe__field">
+                  <label className="cpe__label" htmlFor="cpe-codigo">
+                    Código (opcional)
                   </label>
                   <input
+                    id="cpe-codigo"
                     type="text"
+                    className="cpe__input"
                     value={draft.codigo ?? ""}
                     onChange={(e) => handleFieldChange("codigo", e.target.value)}
                     placeholder="Ej. BAILE10"
-                    style={{
-                      width: "100%",
-                      padding: "0.6rem 0.75rem",
-                      borderRadius: 10,
-                      border: `1px solid ${palette.border}`,
-                      background: "rgba(10,12,16,0.8)",
-                      color: palette.text,
-                      textTransform: "uppercase",
-                    }}
+                    style={{ textTransform: "uppercase" }}
                   />
                 </div>
 
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
-                    Estado
-                  </label>
+                <div className="cpe__field">
+                  <span className="cpe__label">Estado</span>
                   <button
                     type="button"
+                    className={`cpe__btn cpe__toggle${draft.activo === false ? " cpe__toggle--off" : " cpe__toggle--on"}`}
                     onClick={() => handleFieldChange("activo", !(draft.activo ?? true))}
-                    style={{
-                      width: "100%",
-                      padding: "0.6rem 0.75rem",
-                      borderRadius: 10,
-                      border: `1px solid ${palette.border}`,
-                      background: draft.activo === false ? "rgba(255,255,255,0.08)" : "rgba(16,185,129,0.12)",
-                      color: draft.activo === false ? "rgba(255,255,255,0.75)" : palette.success,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
                   >
                     {draft.activo === false ? "Inactiva" : "Activa"}
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
-                  Nombre de la promoción *
+              <div className="cpe__field">
+                <label className="cpe__label" htmlFor="cpe-nombre">
+                  Nombre <span style={{ color: "var(--cpe-danger)" }}>*</span>
                 </label>
                 <input
+                  id="cpe-nombre"
                   type="text"
+                  className="cpe__input"
                   value={draft.nombre}
                   onChange={(e) => handleFieldChange("nombre", e.target.value)}
-                  placeholder="Ej. Paquete 4 clases + social"
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: 12,
-                    border: `1px solid ${palette.border}`,
-                    background: "rgba(10,12,16,0.8)",
-                    color: palette.text,
-                    fontSize: "1rem",
-                  }}
+                  placeholder="Ej. Clase suelta nivel intermedio"
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
+              <div className="cpe__field">
+                <label className="cpe__label" htmlFor="cpe-desc">
                   Descripción (opcional)
                 </label>
                 <textarea
+                  id="cpe-desc"
+                  className="cpe__textarea"
                   value={draft.descripcion ?? ""}
                   onChange={(e) => handleFieldChange("descripcion", e.target.value)}
-                  placeholder="Incluye clases grupales, práctica social y asesoría personalizada."
+                  placeholder="Detalle qué incluye o a quién va dirigida."
                   rows={3}
-                  style={{
-                    width: "100%",
-                    borderRadius: 12,
-                    border: `1px solid ${palette.border}`,
-                    background: "rgba(10,12,16,0.8)",
-                    color: palette.text,
-                    padding: "0.75rem",
-                    resize: "vertical",
-                    minHeight: "120px",
-                  }}
                 />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
-                  Condición / Requisitos
-                </label>
-                <textarea
-                  value={draft.condicion ?? ""}
-                  onChange={(e) => handleFieldChange("condicion", e.target.value)}
-                  placeholder="Ej. válido solo para estudiantes nuevos o a partir de 2 personas."
-                  rows={2}
-                  style={{
-                    width: "100%",
-                    borderRadius: 12,
-                    border: `1px solid ${palette.border}`,
-                    background: "rgba(10,12,16,0.8)",
-                    color: palette.text,
-                    padding: "0.75rem",
-                    resize: "vertical",
-                  }}
-                />
-              </div>
+              {!isClaseSueltaForm && (
+                <div className="cpe__field">
+                  <label className="cpe__label" htmlFor="cpe-cond">
+                    Condición / requisitos
+                  </label>
+                  <textarea
+                    id="cpe-cond"
+                    className="cpe__textarea"
+                    value={draft.condicion ?? ""}
+                    onChange={(e) => handleFieldChange("condicion", e.target.value)}
+                    placeholder="Ej. Solo estudiantes nuevos o mínimo 2 personas."
+                    rows={2}
+                  />
+                </div>
+              )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
-                    Vigente desde
-                  </label>
-                  <input
-                    type="date"
-                    value={draft.validoDesde || ""}
-                    onChange={(e) => handleFieldChange("validoDesde", e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.65rem 0.75rem",
-                      borderRadius: 10,
-                      border: `1px solid ${palette.border}`,
-                      background: "rgba(10,12,16,0.8)",
-                      color: palette.text,
-                    }}
-                  />
+              {!isClaseSueltaForm && (
+                <div className="cpe__grid-2">
+                  <div className="cpe__field">
+                    <label className="cpe__label" htmlFor="cpe-desde">
+                      Vigente desde
+                    </label>
+                    <input
+                      id="cpe-desde"
+                      type="date"
+                      className="cpe__input"
+                      value={draft.validoDesde || ""}
+                      onChange={(e) => handleFieldChange("validoDesde", e.target.value)}
+                    />
+                  </div>
+                  <div className="cpe__field">
+                    <label className="cpe__label" htmlFor="cpe-hasta">
+                      Vigente hasta
+                    </label>
+                    <input
+                      id="cpe-hasta"
+                      type="date"
+                      className="cpe__input"
+                      value={draft.validoHasta || ""}
+                      min={draft.validoDesde || undefined}
+                      onChange={(e) => handleFieldChange("validoHasta", e.target.value)}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
-                    Vigente hasta
-                  </label>
-                  <input
-                    type="date"
-                    value={draft.validoHasta || ""}
-                    min={draft.validoDesde || undefined}
-                    onChange={(e) => handleFieldChange("validoHasta", e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "0.65rem 0.75rem",
-                      borderRadius: 10,
-                      border: `1px solid ${palette.border}`,
-                      background: "rgba(10,12,16,0.8)",
-                      color: palette.text,
-                    }}
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
             {mode === "adding" && !draft.nombre.trim() && (
-              <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "rgba(255,255,255,0.65)" }}>
-                El nombre es obligatorio para guardar la promoción.
-              </p>
+              <p className="cpe__hint">El nombre es obligatorio para guardar.</p>
             )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1.5rem" }}>
+            <div className="cpe__footer">
               <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="cpe__btn cpe__btn--ghost"
                 onClick={reset}
-                style={{
-                  padding: "0.65rem 1.1rem",
-                  borderRadius: 999,
-                  border: `1px solid ${palette.border}`,
-                  background: "transparent",
-                  color: palette.text,
-                  cursor: "pointer",
-                }}
               >
                 Cancelar
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                type="button"
+                whileHover={{ scale: sanitizedDraft.nombre ? 1.02 : 1 }}
+                whileTap={{ scale: sanitizedDraft.nombre ? 0.98 : 1 }}
+                className="cpe__btn cpe__btn--primary"
                 disabled={!sanitizedDraft.nombre}
                 onClick={handleSave}
-                style={{
-                  padding: "0.65rem 1.4rem",
-                  borderRadius: 999,
-                  border: "none",
-                  background: sanitizedDraft.nombre
-                    ? "linear-gradient(135deg, rgba(240,147,251,0.9), rgba(30,136,229,0.9))"
-                    : "rgba(255,255,255,0.1)",
-                  color: palette.text,
-                  fontWeight: 700,
-                  cursor: sanitizedDraft.nombre ? "pointer" : "not-allowed",
-                  boxShadow: sanitizedDraft.nombre ? "0 12px 26px rgba(240,147,251,0.35)" : "none",
-                }}
               >
-                {mode === "adding" ? "Guardar promoción" : "Actualizar promoción"}
+                {mode === "adding" ? "Guardar" : "Actualizar"}
               </motion.button>
             </div>
           </motion.div>
@@ -715,4 +501,3 @@ export default function CostsPromotionsEditor({
     </div>
   );
 }
-

@@ -76,7 +76,7 @@ export default function DateFlyerUploader({
         marginBottom: '0.75rem',
         color: '#F5F5F5'
       }}>
-        Recomendado: <b>1080 × 1350 px</b> (proporción <b>4:5</b>). Formato JPG o PNG.
+        Recomendado: <b>1080 × 1350 px</b> (proporción <b>4:5</b>). Formato JPG, PNG o WebP.
       </p>
 
       <div style={{ 
@@ -208,7 +208,7 @@ export default function DateFlyerUploader({
           <input
             ref={inputRef}
             type="file"
-            accept="image/png, image/jpeg"
+            accept="image/png, image/jpeg, image/webp"
             style={{ display: 'none' }}
             onChange={(e) => handleFile(e.target.files?.[0])}
           />
