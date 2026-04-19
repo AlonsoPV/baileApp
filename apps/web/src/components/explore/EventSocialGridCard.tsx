@@ -5,7 +5,7 @@ import { useFmtDate } from "@/hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
-import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "@/utils/eventCosts";
+import { hasDiscount, formatCostoMonto, resolveEventCardCostoMonto } from "@/utils/eventCosts";
 import { resolveEventDateYmd } from "@/utils/eventDateDisplay";
 import "./EventSocialGridCard.css";
 
@@ -97,15 +97,27 @@ function EventSocialGridCardDumb({ item, priority = false }: EventSocialGridCard
               {ui.lugarNombre}
             </div>
           ) : null}
-          <div className="event-social-grid-card__price" aria-label={ui.costoMonto === 0 ? "Entrada gratis" : `Costo ${formatCostoMonto(ui.costoMonto)}`}>
-            {ui.costoMonto === 0 ? (
-              <span>Gratis</span>
-            ) : (
-              <>
-                <span className="event-social-grid-card__currency">$</span>
-                <span>{ui.costoMonto?.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
-              </>
-            )}
+          <div
+            className="event-social-grid-card__price"
+            aria-label={
+              ui.costoMonto == null
+                ? ui.hasDiscount
+                  ? "Hay descuento o preventa"
+                  : "Costo no indicado"
+                : ui.costoMonto === 0
+                  ? "Entrada gratis"
+                  : `Costo ${formatCostoMonto(ui.costoMonto)}`
+            }
+          >
+            {ui.costoMonto != null &&
+              (ui.costoMonto === 0 ? (
+                <span>Gratis</span>
+              ) : (
+                <>
+                  <span className="event-social-grid-card__currency">$</span>
+                  <span>{ui.costoMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+                </>
+              ))}
             {ui.hasDiscount ? <span className="event-social-grid-card__discount">%</span> : null}
           </div>
         </div>
@@ -166,16 +178,8 @@ function EventSocialGridCardFallback({ item, priority = false }: EventSocialGrid
     return s;
   }, [lugar]);
   const fecha = React.useMemo(() => resolveEventDateYmd(item), [item]);
-  const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
-  const costMonto = React.useMemo(() => {
-    let m = getMonto(primaryCost);
-    if (m == null) {
-      const raw = item?.costos?.[0] ?? item?.events_parent?.costos?.[0];
-      m = getMonto(raw);
-    }
-    return m ?? 0;
-  }, [item, primaryCost]);
+  const costMonto = React.useMemo(() => resolveEventCardCostoMonto(item), [item]);
 
   const dateLine = fecha ? fmtDateLocalized(fecha) : "";
   const timePart = horaInicio ? formatHHMM(horaInicio) : "";
@@ -216,15 +220,27 @@ function EventSocialGridCardFallback({ item, priority = false }: EventSocialGrid
               {lugarSoloNombre}
             </div>
           ) : null}
-          <div className="event-social-grid-card__price" aria-label={costMonto === 0 ? "Entrada gratis" : `Costo ${formatCostoMonto(costMonto)}`}>
-            {costMonto === 0 ? (
-              <span>Gratis</span>
-            ) : (
-              <>
-                <span className="event-social-grid-card__currency">$</span>
-                <span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
-              </>
-            )}
+          <div
+            className="event-social-grid-card__price"
+            aria-label={
+              costMonto == null
+                ? showDiscount
+                  ? "Hay descuento o preventa"
+                  : "Costo no indicado"
+                : costMonto === 0
+                  ? "Entrada gratis"
+                  : `Costo ${formatCostoMonto(costMonto)}`
+            }
+          >
+            {costMonto != null &&
+              (costMonto === 0 ? (
+                <span>Gratis</span>
+              ) : (
+                <>
+                  <span className="event-social-grid-card__currency">$</span>
+                  <span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+                </>
+              ))}
             {showDiscount ? <span className="event-social-grid-card__discount">%</span> : null}
           </div>
         </div>

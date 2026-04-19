@@ -938,7 +938,7 @@ export default function EventDatesSheet({
     if (!onStartFrecuentes) return;
     if (!selectedList.length) return;
     if (selectedList.length !== 1) {
-      showToast("Selecciona 1 fecha para usarla como plantilla de frecuentes", "info");
+      showToast("Selecciona 1 fecha para usarla como plantilla de Congresos", "info");
       return;
     }
     onStartFrecuentes(selectedList[0]);
@@ -2068,9 +2068,9 @@ export default function EventDatesSheet({
                 setBulkPanel(null);
                 queueMicrotask(() => startFrecuentesFromSelection());
               }}
-              title={onStartFrecuentes ? "Usar una fecha como plantilla para planificador de frecuentes" : "No disponible aquí"}
+              title={onStartFrecuentes ? "Usar una fecha como plantilla para planificador de Congresos" : "No disponible aquí"}
             >
-              📋 Frecuente
+              📋 Congresos
             </button>
             <button
               type="button"

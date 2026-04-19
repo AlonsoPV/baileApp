@@ -1978,7 +1978,7 @@ export default function ClassPublicScreen() {
           <div className="class-hero__inner">
             <div className="class-hero__ambient" aria-hidden />
             <header className="class-hero__topbar">
-              <span className="class-hero__eyebrow">{creatorTypeLabel}</span>
+              <span className="class-hero__eyebrow">{t('class', 'Clase')}</span>
               <div className="class-hero__quick-actions">
                 <button
                   type="button"

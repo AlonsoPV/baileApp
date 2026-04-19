@@ -565,6 +565,7 @@ const CrearClase = React.memo(function CrearClase({
 
   const porAgendar = form.fechaModo === 'por_agendar';
   const horarioModo = form.horarioModo || (porAgendar ? 'duracion' : 'especifica');
+  const isTipoClase = form.tipo === 'clases sueltas';
   const invalid = {
     nombre: !(form.nombre || '').trim(),
     fecha: enableDate && form.fechaModo === 'especifica' && !form.fecha,
@@ -679,6 +680,7 @@ const CrearClase = React.memo(function CrearClase({
       })();
       const submission = {
         ...submissionBase,
+        precio: submissionBase.tipo === 'clases sueltas' ? (submissionBase.precio ?? null) : null,
         nivel: nivelesToNivelString(submissionBase.niveles),
       };
       await Promise.resolve(onSubmit?.(submission));
@@ -749,7 +751,14 @@ const CrearClase = React.memo(function CrearClase({
                   <select
                     className="cc__select cc__select--tipo"
                     value={form.tipo || 'clases sueltas'}
-                    onChange={(e) => setField('tipo', e.target.value as CrearClaseValue['tipo'])}
+                    onChange={(e) => {
+                      const nextTipo = e.target.value as CrearClaseValue['tipo'];
+                      updateForm((prev) => ({
+                        ...prev,
+                        tipo: nextTipo,
+                        precio: nextTipo === 'clases sueltas' ? (prev.precio ?? null) : null,
+                      }));
+                    }}
                   >
                     {tipos.map((tipo) => (
                       <option key={tipo} value={tipo}>
@@ -786,6 +795,25 @@ const CrearClase = React.memo(function CrearClase({
                   })}
                 </div>
               </div>
+            </div>
+            <div className="cc__field">
+              <label className="cc__label">Costo (MXN)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className="cc__input"
+                value={form.precio ?? ''}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  setField('precio', raw === '' ? null : Number(raw));
+                }}
+                placeholder={isTipoClase ? 'Ej. 200' : 'Disponible solo para tipo clase'}
+                disabled={!isTipoClase}
+              />
+              {!isTipoClase && (
+                <span className="cc__hint">El costo solo se habilita para tipo "clases sueltas".</span>
+              )}
             </div>
           </div>
         </div>

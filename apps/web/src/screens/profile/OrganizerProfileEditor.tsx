@@ -69,8 +69,6 @@ const colors = {
   light: '#F5F5F5',
 };
 
-const MAX_RECURRING_WEEKS = 30;
-
 const toAcademyLocation = (loc?: OrganizerLocation | null): AcademyLocation | null => {
   if (!loc) return null;
   return {
@@ -108,6 +106,18 @@ const makeRowId = () => {
   } catch {
     return `row_${Date.now()}_${Math.random().toString(16).slice(2)}`;
   }
+};
+
+const addOneDayToYmd = (ymd?: string | null) => {
+  if (!ymd) return '';
+  const [year, month, day] = String(ymd).split('-').map((n) => parseInt(n, 10));
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return '';
+  const next = new Date(year, month - 1, day);
+  next.setDate(next.getDate() + 1);
+  const y = next.getFullYear();
+  const m = String(next.getMonth() + 1).padStart(2, '0');
+  const d = String(next.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
 
 const createEmptyDateForm = () => ({
@@ -705,19 +715,22 @@ export default function OrganizerProfileEditor() {
   }, []);
 
   const addBulkRow = useCallback((partial?: Partial<BulkRow>) => {
-    const base: BulkRow = {
-      id: makeRowId(),
-      fecha: '',
-      hora_inicio: dateForm.hora_inicio || '',
-      hora_fin: dateForm.hora_fin || '',
-      estado_publicacion: (dateForm.estado_publicacion || 'borrador') as BulkPubEstado,
-      notas: '',
-      selected: true,
-      flyer_status: 'PENDING',
-      flyer_url: null,
-    };
-    setBulkRows((prev) => [...prev, { ...base, ...(partial || {}) }]);
-  }, [dateForm.estado_publicacion, dateForm.hora_fin, dateForm.hora_inicio]);
+    setBulkRows((prev) => {
+      const lastRow = prev[prev.length - 1];
+      const base: BulkRow = {
+        id: makeRowId(),
+        fecha: lastRow?.fecha ? addOneDayToYmd(lastRow.fecha) : (dateForm.fecha || ''),
+        hora_inicio: lastRow?.hora_inicio || dateForm.hora_inicio || '',
+        hora_fin: lastRow?.hora_fin || dateForm.hora_fin || '',
+        estado_publicacion: (lastRow?.estado_publicacion || dateForm.estado_publicacion || 'borrador') as BulkPubEstado,
+        notas: '',
+        selected: true,
+        flyer_status: bulkGeneralFlyerUrl ? 'DONE' : 'PENDING',
+        flyer_url: bulkGeneralFlyerUrl || null,
+      };
+      return [...prev, { ...base, ...(partial || {}) }];
+    });
+  }, [bulkGeneralFlyerUrl, dateForm.estado_publicacion, dateForm.fecha, dateForm.hora_fin, dateForm.hora_inicio]);
 
 
   // Auto-abrir Frecuentes desde query params (p.ej. al “convertir” desde el editor de fecha)
@@ -812,39 +825,6 @@ export default function OrganizerProfileEditor() {
   }, []);
 
   const bulkSelectedCount = useMemo(() => bulkRows.filter((r) => r.selected).length, [bulkRows]);
-
-  const generateWeeklyRowsFromTemplate = useCallback(() => {
-    if (!dateForm.fecha) {
-      showToast('Selecciona una fecha base para generar ocurrencias', 'info');
-      return;
-    }
-    const semanas = Math.max(1, Math.min(MAX_RECURRING_WEEKS, dateForm.semanas_repetir || 1));
-    const [year, month, day] = dateForm.fecha.split('-').map(Number);
-    const primeraFecha = new Date(year, (month - 1), day);
-
-    const nextRows: BulkRow[] = Array.from({ length: semanas }, (_, i) => {
-      const f = new Date(primeraFecha);
-      f.setDate(f.getDate() + 7 * i);
-      const y = f.getFullYear();
-      const m = String(f.getMonth() + 1).padStart(2, '0');
-      const d = String(f.getDate()).padStart(2, '0');
-      const fechaStr = `${y}-${m}-${d}`;
-
-      return {
-        id: makeRowId(),
-        fecha: fechaStr,
-        hora_inicio: dateForm.hora_inicio || '',
-        hora_fin: dateForm.hora_fin || '',
-        estado_publicacion: (dateForm.estado_publicacion || 'borrador') as BulkPubEstado,
-        notas: '',
-        selected: true,
-        flyer_status: 'PENDING',
-        flyer_url: null,
-      };
-    });
-
-    setBulkRows((prev) => [...prev, ...nextRows]);
-  }, [dateForm.estado_publicacion, dateForm.fecha, dateForm.hora_fin, dateForm.hora_inicio, dateForm.semanas_repetir, showToast]);
 
   const validateBulkRows = useCallback((rows: BulkRow[]) => {
     const errors: Record<string, Record<string, string>> = {};
@@ -1327,7 +1307,7 @@ export default function OrganizerProfileEditor() {
       };
 
       // Modo Único: siempre se crea 1 sola fecha (sin repetición semanal).
-      // Si quieres múltiples, usa “Frecuentes” (bulk).
+      // Si quieres múltiples, usa “Congresos” (bulk).
       const datesToCreate: any[] = [{
           ...basePayload,
           fecha: dateForm.fecha,
@@ -4978,7 +4958,7 @@ export default function OrganizerProfileEditor() {
                         />
                       </div>
                       <div className="dcf__field">
-                        <label className="dcf__label">{t('biography')}</label>
+                        <label className="dcf__label">{t('description')}</label>
                         <textarea
                           value={dateForm.biografia || ''}
                           onChange={(e) => setDateForm({ ...dateForm, biografia: e.target.value })}
@@ -5051,158 +5031,7 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
-                  {/* Ubicaciones */}
-                  <div className="dcf__card">
-                    <div className="dcf__card-hd">
-                      <div className="dcf__card-icon dcf__card-icon--location">
-                        <MapPin aria-hidden />
-                      </div>
-                      <h3 className="dcf__card-title">{t('event_location')}</h3>
-                    </div>
-                    <div className="dcf__card-body">
-                    {orgLocations.length > 0 && (
-                      <div className="dcf__field dcf__field--mb-lg">
-                          <label className="dcf__label">{t('choose_existing_or_new')}</label>
-                          <div className="dcf__select-wrap">
-                            <select
-                              className="dcf__select"
-                              value={selectedDateLocationId}
-                              onChange={(e) => {
-                                const nextId = e.target.value;
-                                if (!nextId) {
-                                  setSelectedDateLocationId('');
-                                  handleDateUbicacionesChange([]);
-                                  return;
-                                }
-                                const found = orgLocations.find((loc) => String(loc.id ?? '') === nextId);
-                                applyOrganizerLocationToDateForm(found);
-                              }}
-                            >
-                              <option value="">
-                                {t('enter_manually')}
-                              </option>
-                              {orgLocations.map((loc) => (
-                                <option
-                                  key={loc.id}
-                                  value={String(loc.id)}
-                                >
-                                  {loc.nombre || loc.direccion || t('location')}
-                                </option>
-                              ))}
-                            </select>
-                            <svg className="dcf__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                              <path d="M6 9l6 6 6-6" />
-                            </svg>
-                          </div>
-                        </div>
-                    )}
-                    <div className="dcf__grid-2">
-                      <div className="dcf__field">
-                        <label className="dcf__label">{t('location_name')}</label>
-                        <input
-                          type="text"
-                          value={dateForm.lugar || ''}
-                          onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
-                          placeholder={t('location_name_placeholder')}
-                          className="dcf__input"
-                        />
-                      </div>
-                      <div className="dcf__field">
-                        <label className="dcf__label">{t('address')}</label>
-                        <input
-                          type="text"
-                          value={dateForm.direccion || ''}
-                          onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
-                          placeholder={t('address_placeholder')}
-                          className="dcf__input"
-                        />
-                      </div>
-                    </div>
-                    <div className="dcf__grid-2 dcf__mt-16">
-                      <div className="dcf__field">
-                        <label className="dcf__label">{t('city')}</label>
-                        <input
-                          type="text"
-                          value={dateForm.ciudad || ''}
-                          onChange={(e) => updateManualDateLocationField('ciudad', e.target.value)}
-                          placeholder={t('city_placeholder')}
-                          className="dcf__input"
-                        />
-                      </div>
-                      <div className="dcf__field">
-                        <label className="dcf__label">{t('notes_references')}</label>
-                        <input
-                          type="text"
-                          value={dateForm.referencias || ''}
-                          onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
-                          placeholder={t('notes_placeholder')}
-                          className="dcf__input"
-                        />
-                      </div>
-                    </div>
-
-                    {selectedDateLocationId && (dateForm.zonas || []).length > 0 && (
-                      <div className="dcf__zones-block">
-                        <label className="dcf__label">{t('zones_selected_location')}</label>
-                        <ZonaGroupedChips
-                          selectedIds={dateForm.zonas || []}
-                          allTags={zonaTags}
-                          mode="display"
-                          autoExpandSelectedParents={true}
-                          size="compact"
-                          style={{
-                            gap: '4px',
-                            fontSize: 12,
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {!selectedDateLocationId && (
-                      <div className="dcf__zones-block">
-                        <label className="dcf__label">{t('zones_city')}</label>
-                        <ZonaGroupedChips
-                          selectedIds={dateForm.zonas || []}
-                          allTags={zonaTags}
-                          mode="edit"
-                          onToggle={toggleDateZona}
-                          size="compact"
-                          style={{
-                            gap: '4px',
-                            fontSize: 12,
-                          }}
-                        />
-                      </div>
-                    )}
-                    </div>
-                  </div>
-
-                  {/* Cronograma */}
-                  <div className="dcf__card">
-                    <div className="dcf__card-hd">
-                      <div className="dcf__card-icon dcf__card-icon--schedule">
-                        <Clock aria-hidden />
-                      </div>
-                      <h3 className="dcf__card-title">{t('event_schedule')}</h3>
-                    </div>
-                    <div className="dcf__card-body">
-                    <ScheduleEditor
-                      schedule={dateForm.cronograma || []}
-                      onChangeSchedule={(cronograma) => setDateForm((prev) => ({ ...prev, cronograma }))}
-                      costos={dateForm.costos || []}
-                      onChangeCostos={(costos) => setDateForm((prev) => ({ ...prev, costos }))}
-                      ritmos={ritmoTags}
-                      zonas={zonaTags}
-                      eventFecha={dateForm.fecha}
-                      hideCostsSection
-                      onSaveCosto={() => {
-                        showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
-                      }}
-                    />
-                    </div>
-                  </div>
-
-                  {/* Fecha y Hora (último paso) */}
+                  {/* Fecha y hora (después de ritmos) */}
                   <div className="dcf__card">
                     <div className="dcf__card-hd">
                       <div className="dcf__card-icon dcf__card-icon--date">
@@ -5370,35 +5199,13 @@ export default function OrganizerProfileEditor() {
                     {/* Acciones bulk rápidas */}
                     {bulkMode && (
                       <div className="dcf__bulk-quick dcf__mt-16">
-                        {/*
-                          Requerimos fecha base para evitar que el usuario ejecute acciones sin contexto.
-                          (En especial "Generar semanal", pero el usuario pidió apagar todos los botones aquí.)
-                        */}
+                        {/* Requerimos fecha base para evitar que el usuario ejecute acciones sin contexto. */}
                         {(() => {
                           const baseReady = !!dateForm.fecha;
                           const tip = baseReady ? undefined : t('configure_base_date_tooltip');
                           return (
                             <>
                         <div className="dcf__bulk-quick-title">{t('quick_actions')}</div>
-                        <div className="dcf__bulk-weeks-row">
-                            <label className="dcf__label">{t('weeks')}</label>
-                            <input
-                              type="number"
-                              min={1}
-                              max={MAX_RECURRING_WEEKS}
-                              value={dateForm.semanas_repetir || 4}
-                              onChange={(e) => {
-                                const raw = parseInt(e.target.value, 10);
-                                const next = Number.isFinite(raw)
-                                  ? Math.max(1, Math.min(MAX_RECURRING_WEEKS, raw))
-                                  : 4;
-                                setDateForm({ ...dateForm, semanas_repetir: next });
-                              }}
-                              className="dcf__input dcf__bulk-weeks-input"
-                              inputMode="numeric"
-                              aria-label={t('weeks')}
-                            />
-                        </div>
                           <div className="dcf__bulk-btn-grid">
                           <button
                             type="button"
@@ -5407,16 +5214,7 @@ export default function OrganizerProfileEditor() {
                             disabled={!baseReady}
                             title={tip}
                           >
-                            {t('add_row')}
-                          </button>
-                          <button
-                            type="button"
-                            className="dcf__bulk-action-btn dcf__bulk-action-btn--generate"
-                            onClick={() => baseReady && generateWeeklyRowsFromTemplate()}
-                            disabled={!baseReady}
-                            title={tip}
-                          >
-                            {t('generate_weekly', { weeks: Math.max(1, Math.min(MAX_RECURRING_WEEKS, dateForm.semanas_repetir || 1)) })}
+                            ➕ Agregar siguiente día
                           </button>
                           <button
                             type="button"
@@ -5582,7 +5380,32 @@ export default function OrganizerProfileEditor() {
                     </div>
                   </div>
 
-                  {/* Flyer (solo único; después de Fecha y Hora) */}
+                  {/* Cronograma */}
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--schedule">
+                        <Clock aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('event_schedule')}</h3>
+                    </div>
+                    <div className="dcf__card-body">
+                    <ScheduleEditor
+                      schedule={dateForm.cronograma || []}
+                      onChangeSchedule={(cronograma) => setDateForm((prev) => ({ ...prev, cronograma }))}
+                      costos={dateForm.costos || []}
+                      onChangeCostos={(costos) => setDateForm((prev) => ({ ...prev, costos }))}
+                      ritmos={ritmoTags}
+                      zonas={zonaTags}
+                      eventFecha={dateForm.fecha}
+                      hideCostsSection
+                      onSaveCosto={() => {
+                        showToast('💰 Costo guardado en el formulario. Recuerda hacer click en "✨ Crear" para guardar la fecha completa.', 'info');
+                      }}
+                    />
+                    </div>
+                  </div>
+
+                  {/* Flyer (solo único) */}
                   {!bulkMode && (
                   <div className="dcf__card">
                     <div className="dcf__card-hd">
@@ -5602,7 +5425,122 @@ export default function OrganizerProfileEditor() {
                   </div>
                   )}
 
-                  {/* Estado de Publicación (solo único; después del flyer) */}
+                  {/* Ubicaciones (después del flyer en modo único) */}
+                  <div className="dcf__card">
+                    <div className="dcf__card-hd">
+                      <div className="dcf__card-icon dcf__card-icon--location">
+                        <MapPin aria-hidden />
+                      </div>
+                      <h3 className="dcf__card-title">{t('event_location')}</h3>
+                    </div>
+                    <div className="dcf__card-body">
+                    {orgLocations.length > 0 && (
+                      <div className="dcf__field dcf__field--mb-lg">
+                          <label className="dcf__label">{t('choose_existing_or_new')}</label>
+                          <div className="dcf__select-wrap">
+                            <select
+                              className="dcf__select"
+                              value={selectedDateLocationId}
+                              onChange={(e) => {
+                                const nextId = e.target.value;
+                                if (!nextId) {
+                                  setSelectedDateLocationId('');
+                                  handleDateUbicacionesChange([]);
+                                  return;
+                                }
+                                const found = orgLocations.find((loc) => String(loc.id ?? '') === nextId);
+                                applyOrganizerLocationToDateForm(found);
+                              }}
+                            >
+                              <option value="">
+                                {t('enter_manually')}
+                              </option>
+                              {orgLocations.map((loc) => (
+                                <option
+                                  key={loc.id}
+                                  value={String(loc.id)}
+                                >
+                                  {loc.nombre || loc.direccion || t('location')}
+                                </option>
+                              ))}
+                            </select>
+                            <svg className="dcf__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                              <path d="M6 9l6 6 6-6" />
+                            </svg>
+                          </div>
+                        </div>
+                    )}
+                    <div className="dcf__grid-2">
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('location_name')}</label>
+                        <input
+                          type="text"
+                          value={dateForm.lugar || ''}
+                          onChange={(e) => updateManualDateLocationField('lugar', e.target.value)}
+                          placeholder={t('location_name_placeholder')}
+                          className="dcf__input"
+                        />
+                      </div>
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('address')}</label>
+                        <input
+                          type="text"
+                          value={dateForm.direccion || ''}
+                          onChange={(e) => updateManualDateLocationField('direccion', e.target.value)}
+                          placeholder={t('address_placeholder')}
+                          className="dcf__input"
+                        />
+                      </div>
+                    </div>
+                    <div className="dcf__grid-2 dcf__mt-16">
+                      <div className="dcf__field">
+                        <label className="dcf__label">{t('notes_references')}</label>
+                        <input
+                          type="text"
+                          value={dateForm.referencias || ''}
+                          onChange={(e) => updateManualDateLocationField('referencias', e.target.value)}
+                          placeholder={t('notes_placeholder')}
+                          className="dcf__input"
+                        />
+                      </div>
+                      <div className="dcf__zones-block">
+                        {selectedDateLocationId && (dateForm.zonas || []).length > 0 ? (
+                          <>
+                            <label className="dcf__label">{t('zones_selected_location')}</label>
+                            <ZonaGroupedChips
+                              selectedIds={dateForm.zonas || []}
+                              allTags={zonaTags}
+                              mode="display"
+                              autoExpandSelectedParents={true}
+                              size="compact"
+                              style={{
+                                gap: '4px',
+                                fontSize: 12,
+                              }}
+                            />
+                          </>
+                        ) : !selectedDateLocationId ? (
+                          <>
+                            <label className="dcf__label">{t('zones_city')}</label>
+                            <ZonaGroupedChips
+                              selectedIds={dateForm.zonas || []}
+                              allTags={zonaTags}
+                              mode="edit"
+                              onToggle={toggleDateZona}
+                              size="compact"
+                              style={{
+                                gap: '4px',
+                                fontSize: 12,
+                              }}
+                            />
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+
+                  {/* Estado de Publicación (solo único; después de ubicación) */}
                   {!bulkMode && (
                   <div className="dcf__card">
                     <div className="dcf__card-hd">

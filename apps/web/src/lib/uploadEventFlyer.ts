@@ -28,8 +28,8 @@ export async function uploadEventFlyer({ file, parentId, dateId }: UploadEventFl
   const user = (await supabase.auth.getSession()).data.session?.user;
   if (!user) throw new Error("No hay sesión.");
 
-  // 1080px width y compresión para subir rápido
-  const processedFile = await resizeImageIfNeeded(file, 1080, 0.82);
+  // 600px width y compresión para subir rápido
+  const processedFile = await resizeImageIfNeeded(file, 600, 0.82);
 
   const ext = processedFile.name.split(".").pop()?.toLowerCase() || "jpg";
   const safeParent = parentId ? String(parentId) : "no-parent";

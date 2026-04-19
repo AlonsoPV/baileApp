@@ -5,7 +5,7 @@ import { useFmtDate } from "../../../hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
-import { getLowestTaquillaMonto, getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "../../../utils/eventCosts";
+import { hasDiscount, formatCostoMonto, resolveEventCardCostoMonto } from "../../../utils/eventCosts";
 import { resolveEventDateYmd } from "../../../utils/eventDateDisplay";
 import "./Card.css";
 
@@ -104,23 +104,37 @@ function EventCardDumb({ item, priority = false }: EventCardProps) {
             )}
             <div className="meta-row--time-zone">
               {horaInicio && <div className="tag">{formatHHMM(horaInicio)}</div>}
-              <div className="tag tag--cost" aria-label={ui.costoMonto === 0 ? "Entrada gratis" : `Costo taquilla ${formatCostoMonto(ui.costoMonto)}`}>
-                {ui.costoMonto === 0 ? (
-                  <span>Gratis</span>
-                ) : (
-                  <>
-                    <span className="tag__cost-icon" aria-hidden>
-                      $
+              {(ui.costoMonto != null || ui.hasDiscount) && (
+                <div
+                  className="tag tag--cost"
+                  aria-label={
+                    ui.costoMonto == null
+                      ? ui.hasDiscount
+                        ? "Hay descuento o preventa"
+                        : "Costo no indicado"
+                      : ui.costoMonto === 0
+                        ? "Entrada gratis"
+                        : `Costo taquilla ${formatCostoMonto(ui.costoMonto)}`
+                  }
+                >
+                  {ui.costoMonto != null &&
+                    (ui.costoMonto === 0 ? (
+                      <span>Gratis</span>
+                    ) : (
+                      <>
+                        <span className="tag__cost-icon" aria-hidden>
+                          $
+                        </span>
+                        <span>{ui.costoMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+                      </>
+                    ))}
+                  {ui.hasDiscount && (
+                    <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">
+                      %
                     </span>
-                    <span>{ui.costoMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
-                  </>
-                )}
-                {ui.hasDiscount && (
-                  <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">
-                    %
-                  </span>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
               {ui.lugarNombre && <div className="tag tag--location">{ui.lugarNombre}</div>}
             </div>
           </div>
@@ -197,18 +211,8 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
   }, [lugar]);
   const ownerLabel = item.ownerName || item.organizador_nombre || item.organizer_name || "";
   const fecha = React.useMemo(() => resolveEventDateYmd(item), [item]);
-  const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
-  const costMonto = React.useMemo(() => {
-    const taq = getLowestTaquillaMonto(item);
-    if (taq != null) return taq;
-    let m = getMonto(primaryCost);
-    if (m == null) {
-      const raw = item?.costos?.[0] ?? item?.events_parent?.costos?.[0];
-      m = getMonto(raw);
-    }
-    return m ?? 0;
-  }, [item, primaryCost]);
+  const costMonto = React.useMemo(() => resolveEventCardCostoMonto(item), [item]);
 
   return (
     <LiveLink to={linkTo} asCard={false}>
@@ -253,23 +257,37 @@ function EventCardWithTags({ item, priority = false }: EventCardProps) {
             )}
             <div className="meta-row--time-zone">
               {horaInicio && <div className="tag">{formatHHMM(horaInicio)}</div>}
-              <div className="tag tag--cost" aria-label={costMonto === 0 ? "Entrada gratis" : `Costo taquilla ${formatCostoMonto(costMonto)}`}>
-                {costMonto === 0 ? (
-                  <span>Gratis</span>
-                ) : (
-                  <>
-                    <span className="tag__cost-icon" aria-hidden>
-                      $
+              {(costMonto != null || showDiscount) && (
+                <div
+                  className="tag tag--cost"
+                  aria-label={
+                    costMonto == null
+                      ? showDiscount
+                        ? "Hay descuento o preventa"
+                        : "Costo no indicado"
+                      : costMonto === 0
+                        ? "Entrada gratis"
+                        : `Costo taquilla ${formatCostoMonto(costMonto)}`
+                  }
+                >
+                  {costMonto != null &&
+                    (costMonto === 0 ? (
+                      <span>Gratis</span>
+                    ) : (
+                      <>
+                        <span className="tag__cost-icon" aria-hidden>
+                          $
+                        </span>
+                        <span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+                      </>
+                    ))}
+                  {showDiscount && (
+                    <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">
+                      %
                     </span>
-                    <span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
-                  </>
-                )}
-                {showDiscount && (
-                  <span className="tag__discount-badge" aria-label="Hay descuento o preventa" title="Descuento o precio especial disponible">
-                    %
-                  </span>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
               {lugarSoloNombre && <div className="tag tag--location">{lugarSoloNombre}</div>}
             </div>
           </div>

@@ -666,7 +666,7 @@ export default function OrganizerEventDateEditScreen() {
     try {
       const parentIdToUse: number | null = (date as any)?.parent_id ? Number((date as any).parent_id) : null;
       if (!parentIdToUse) {
-        showToast('No se encontró el parent_id para crear fechas frecuentes', 'error');
+        showToast('No se encontró el parent_id para crear fechas (Congresos)', 'error');
         return;
       }
 
@@ -1682,7 +1682,7 @@ export default function OrganizerEventDateEditScreen() {
                         }}
                         aria-pressed={bulkMode}
                       >
-                        📋 Frecuentes
+                        📋 Congresos
                       </button>
                     </div>
 
@@ -1722,7 +1722,7 @@ export default function OrganizerEventDateEditScreen() {
 
                     {!bulkMode && (
                       <div style={{ marginTop: 14, padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', fontSize: 13, opacity: 0.92 }}>
-                <b>Modo Único</b>: estás editando <b>una sola fecha</b>. Si necesitas crear varias, usa <b>Frecuentes</b>.
+                <b>Modo Único</b>: estás editando <b>una sola fecha</b>. Si necesitas crear varias, usa <b>Congresos</b>.
                       </div>
                     )}
 
@@ -1850,7 +1850,7 @@ export default function OrganizerEventDateEditScreen() {
                         
                         <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
                           <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: 10, color: '#FFFFFF' }}>
-                            📋 Planificador (frecuentes)
+                            📋 Planificador (Congresos)
                           </h3>
                           <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}>
                             Seleccionadas: <b>{bulkSelectedCount}</b>

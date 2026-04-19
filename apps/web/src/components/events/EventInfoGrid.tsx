@@ -1,6 +1,6 @@
 import React from 'react';
 import { colors as themeColors } from '../../theme/colors';
-import { normalizeEventCosts } from '../../utils/normalizeEventCosts';
+import { normalizeEventCosts, normalizeCostType } from '../../utils/normalizeEventCosts';
 
 type CronoItem = { titulo?: string; inicio?: string; fin?: string; nivel?: string; tipo?: string };
 type CostoItem = { nombre?: string; regla?: string; tipo?: string; precio?: number | null };
@@ -208,14 +208,22 @@ export default function EventInfoGrid({ date }: Props) {
                   )}
                 </div>
                 <div style={{ display: 'grid', gap: '8px', minWidth: 180 }}>
-                  {costo.phases.map((phase) => (
-                    <div key={phase.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                      <span style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.9 }}>{phase.name}</span>
-                      <span style={{ fontSize: '0.95rem', fontWeight: '700', color: colors.light }}>
-                        {phase.price <= 0 ? 'Gratis' : `$${phase.price.toLocaleString()}`}
-                      </span>
-                    </div>
-                  ))}
+                  {costo.phases.map((phase) => {
+                    const phaseTipo = normalizeCostType(phase.type as string | undefined);
+                    const costTipo = normalizeCostType(costo.type as string | undefined);
+                    const priceLabel =
+                      phase.price > 0
+                        ? `$${phase.price.toLocaleString()}`
+                        : phaseTipo === 'gratis' || costTipo === 'gratis'
+                          ? 'Gratis'
+                          : 'Por definir';
+                    return (
+                      <div key={phase.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                        <span style={{ fontSize: '0.85rem', color: colors.light, opacity: 0.9 }}>{phase.name}</span>
+                        <span style={{ fontSize: '0.95rem', fontWeight: '700', color: colors.light }}>{priceLabel}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}

@@ -14,6 +14,8 @@ export interface CostsSectionProps {
   items: CostItem[];
   disclaimer?: string;
   freeLabel?: string;
+  /** Cuando no hay monto (vacío / sin definir), no usar "Gratis". */
+  pendingLabel?: string;
   formatPrice?: (value: number) => string;
 }
 
@@ -28,6 +30,7 @@ export function CostsSection({
   items,
   disclaimer = "Precios sujetos a cambios",
   freeLabel = "Gratis",
+  pendingLabel = "Por definir",
   formatPrice = defaultFormat,
 }: CostsSectionProps) {
   if (!items || items.length === 0) return null;
@@ -38,19 +41,41 @@ export function CostsSection({
         const label = item.nombre || (item.tipo ? String(item.tipo).charAt(0).toUpperCase() + String(item.tipo).slice(1).toLowerCase() : "Entrada");
         const subtitle = (item.descripcion ?? item.regla) || (item.tipo && item.tipo !== label ? item.tipo : undefined);
         const raw = item.monto ?? item.precio;
-        const isFree =
-          raw === 0 ||
+        const isEmpty =
           raw === null ||
           raw === undefined ||
-          (typeof raw === "string" && (raw === "" || raw.toLowerCase() === "gratis"));
+          (typeof raw === "string" && raw.trim() === "");
+        const rawLower = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+        const tipoLower = String(item.tipo || "").toLowerCase();
+        const isTipoGratis = tipoLower === "gratis" || tipoLower === "free";
         const num =
           typeof raw === "number"
             ? raw
-            : typeof raw === "string"
+            : typeof raw === "string" && raw.trim() !== ""
               ? parseFloat(raw.replace(/[^\d.]/g, ""))
-              : 0;
-        const priceStr = isFree ? freeLabel : Number.isFinite(num) ? formatPrice(num) : String(raw ?? freeLabel);
-        const hasNumericPrice = !isFree && Number.isFinite(num);
+              : NaN;
+        const isExplicitFreeWord = rawLower === "gratis" || rawLower === "free";
+        /** Gratis solo con precio 0 explícito y tipo gratis, o texto "gratis". */
+        const showGratis =
+          isExplicitFreeWord || (Number.isFinite(num) && num === 0 && isTipoGratis);
+        let priceStr: string;
+        let hasNumericPrice: boolean;
+        if (isEmpty) {
+          priceStr = pendingLabel;
+          hasNumericPrice = false;
+        } else if (Number.isFinite(num) && num > 0) {
+          priceStr = formatPrice(num);
+          hasNumericPrice = true;
+        } else if (showGratis) {
+          priceStr = freeLabel;
+          hasNumericPrice = false;
+        } else if (Number.isFinite(num) && num === 0) {
+          priceStr = pendingLabel;
+          hasNumericPrice = false;
+        } else {
+          priceStr = String(raw ?? pendingLabel);
+          hasNumericPrice = false;
+        }
         const priceSymbol = hasNumericPrice ? (priceStr.match(/^[^\d]+/) || ["$"])[0] : "";
         const priceNumber = hasNumericPrice ? (priceStr.replace(/^[^\d]+/, "") || priceStr) : priceStr;
 

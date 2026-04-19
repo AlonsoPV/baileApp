@@ -5,7 +5,7 @@ import { useFmtDate } from "@/hooks/useFmtDate";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
-import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "@/utils/eventCosts";
+import { hasDiscount, formatCostoMonto, resolveEventCardCostoMonto } from "@/utils/eventCosts";
 import { resolveEventDateYmd } from "@/utils/eventDateDisplay";
 import "./EventCarteleraCard.css";
 
@@ -89,21 +89,13 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
   }, [lugarFromItem]);
 
   const fechaFallback = React.useMemo(() => resolveEventDateYmd(item), [item]);
-  const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
-  const costMontoFallback = React.useMemo(() => {
-    let m = getMonto(primaryCost);
-    if (m == null) {
-      const raw = item?.costos?.[0] ?? item?.events_parent?.costos?.[0];
-      m = getMonto(raw);
-    }
-    return m ?? 0;
-  }, [item, primaryCost]);
+  const costMontoFallback = React.useMemo(() => resolveEventCardCostoMonto(item), [item]);
 
   const dateLine = ui ? (ui.fechaYmd ? fmtDateLocalized(ui.fechaYmd) : "") : fechaFallback ? fmtDateLocalized(fechaFallback) : "";
   const timePart = horaInicio ? formatHHMM(horaInicio) : "";
   const lugarLine = ui ? ui.lugarNombre || "" : lugarSoloNombre || "";
-  const costMonto = ui ? ui.costoMonto ?? 0 : costMontoFallback;
+  const costMonto = ui ? ui.costoMonto : costMontoFallback;
   const hasDisc = ui ? !!ui.hasDiscount : showDiscount;
 
   const [imageError, setImageError] = React.useState(false);
@@ -149,16 +141,25 @@ function EventCarteleraCardInner({ item, priority = false }: EventCarteleraCardP
               <span style={{ flex: 1 }} />
               <div
                 className="event-cartelera-card__price"
-                aria-label={costMonto === 0 ? "Entrada gratis" : `Costo ${formatCostoMonto(costMonto)}`}
+                aria-label={
+                  costMonto == null
+                    ? hasDisc
+                      ? "Hay descuento o preventa"
+                      : "Costo no indicado"
+                    : costMonto === 0
+                      ? "Entrada gratis"
+                      : `Costo ${formatCostoMonto(costMonto)}`
+                }
               >
-                {costMonto === 0 ? (
-                  <span>Gratis</span>
-                ) : (
-                  <>
-                    <span className="event-cartelera-card__currency">$</span>
-                    <span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
-                  </>
-                )}
+                {costMonto != null &&
+                  (costMonto === 0 ? (
+                    <span>Gratis</span>
+                  ) : (
+                    <>
+                      <span className="event-cartelera-card__currency">$</span>
+                      <span>{costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}</span>
+                    </>
+                  ))}
                 {hasDisc ? <span className="event-cartelera-card__discount">%</span> : null}
               </div>
             </div>

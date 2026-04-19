@@ -76,7 +76,7 @@ export default function DateFlyerUploader({
         marginBottom: '0.75rem',
         color: '#F5F5F5'
       }}>
-        Recomendado: <b>1080 × 1350 px</b> (proporción <b>4:5</b>). Formato JPG, PNG o WebP.
+        Recomendado: <b>600 × 750 px</b> (proporción <b>4:5</b>). Formato JPG, PNG o WebP.
       </p>
 
       <div style={{ 

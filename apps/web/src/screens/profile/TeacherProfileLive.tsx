@@ -489,6 +489,23 @@ export default function TeacherProfileLive() {
   const promotions = useMemo(() => 
     Array.isArray(teacher?.promociones) ? teacher.promociones : []
   , [teacher?.promociones]);
+  const promoBestValueIndex = useMemo(() => {
+    let bestIndex = -1;
+    let bestPerClass = Number.POSITIVE_INFINITY;
+    promotions.forEach((promo: any, index: number) => {
+      const price = typeof promo?.precio === 'number' ? promo.precio : Number(promo?.precio);
+      const name = String(promo?.nombre || '').toLowerCase();
+      const countMatch = name.match(/(\d+)\s*clases?/);
+      const classCount = countMatch ? Number(countMatch[1]) : 1;
+      if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(classCount) || classCount <= 1) return;
+      const perClass = price / classCount;
+      if (perClass < bestPerClass) {
+        bestPerClass = perClass;
+        bestIndex = index;
+      }
+    });
+    return bestIndex;
+  }, [promotions]);
 
   if (isLoading) {
     return (
@@ -980,7 +997,7 @@ export default function TeacherProfileLive() {
                     subtitle="Filtra por día — solo verás los días que sí tienen clases"
                     sourceType="teacher"
                     sourceId={teacherNumericId}
-                    isClickable={false}
+                    isClickable={true}
                     whatsappNumber={whatsappNumber}
                     whatsappMessageTemplate={whatsappMessageTemplate}
                     stripeAccountId={(teacher as any)?.stripe_account_id}
@@ -1032,15 +1049,32 @@ export default function TeacherProfileLive() {
                   const typeMeta = promotionTypeMeta[typeKey];
                   const priceLabel = formatPriceLabel(promo?.precio);
                   const isDestacado = typeKey === 'promocion' || typeKey === 'descuento';
+                  const priceMeta =
+                    typeKey === 'mensualidad'
+                      ? 'Pago mensual'
+                      : typeKey === 'paquete'
+                        ? 'Pago por paquete'
+                        : typeKey === 'clase_suelta'
+                          ? 'Pago por clase'
+                          : 'Pago unico';
                   
                   // Formatear el precio: extraer número y formatear con comas
                   let priceNumber: string | null = null;
+                  let perClassLabel: string | null = null;
+                  const rawName = String(promo?.nombre || '');
+                  const classCountMatch = rawName.toLowerCase().match(/(\d+)\s*clases?/);
+                  const classCount = classCountMatch ? Number(classCountMatch[1]) : 1;
                   if (priceLabel && priceLabel !== 'Gratis') {
                     const numeric = typeof promo?.precio === 'number' ? promo.precio : Number(promo?.precio);
                     if (!Number.isNaN(numeric) && numeric > 0) {
                       priceNumber = numeric.toLocaleString('en-US');
+                      if (classCount > 1) {
+                        const perClass = Math.round(numeric / classCount);
+                        perClassLabel = `$${perClass.toLocaleString('en-US')} por clase`;
+                      }
                     }
                   }
+                  const isPopular = index === promoBestValueIndex && classCount > 1;
 
                   return (
                     <motion.article
@@ -1048,21 +1082,31 @@ export default function TeacherProfileLive() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="promo-card"
+                      className={`promo-card${isPopular ? ' promo-card--featured' : ''}`}
                     >
                       <div className="promo-info">
-                        <span className={`promo-chip${isDestacado ? ' promo-chip--destacado' : ''}`}>
-                          {typeMeta.icon} {typeMeta.label}
-                        </span>
-                        <h3 style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{promo?.nombre || 'Promoción'}</h3>
+                        <div className="promo-title-row">
+                          <h3 style={{ fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>{promo?.nombre || 'Promoción'}</h3>
+                          {isPopular && <span className="promo-popular-badge">Mas popular</span>}
+                        </div>
+                        <div className="promo-meta-row">
+                          <span className={`promo-chip${isDestacado ? ' promo-chip--destacado' : ''}`}>
+                            {typeMeta.label}
+                          </span>
+                          {perClassLabel ? <span className="promo-dot" aria-hidden>•</span> : null}
+                          {perClassLabel ? <span className="promo-per-class">{perClassLabel}</span> : null}
+                        </div>
                         {promo?.descripcion && (
                           <p className="promo-desc">{promo.descripcion}</p>
                         )}
                       </div>
                       {priceLabel !== null && (
                         <div className={`promo-price-box${isDestacado ? ' promo-price-box--destacado' : ''}`}>
-                          <span className="promo-price">{priceNumber || priceLabel}</span>
-                          <span className="promo-unit">MXN</span>
+                          <div className="promo-price-row">
+                            <span className="promo-price">{priceNumber || priceLabel}</span>
+                            <span className="promo-unit">MXN</span>
+                          </div>
+                          <span className="promo-price-meta">{priceMeta}</span>
                         </div>
                       )}
                     </motion.article>

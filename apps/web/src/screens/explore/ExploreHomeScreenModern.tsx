@@ -777,6 +777,21 @@ const STYLES = `
     box-sizing: border-box;
     font-size: 16px;
   }
+  /* Icono de calendario del input date — más visible sobre fondo oscuro */
+  .date-filter-dropdown__range input[type="date"] {
+    color-scheme: dark;
+  }
+  .date-filter-dropdown__range input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 1;
+    width: 22px;
+    height: 22px;
+    padding: 2px 0 2px 6px;
+    filter: invert(1) brightness(1.15) drop-shadow(0 0 1px rgba(153, 229, 255, 0.5));
+  }
+  .date-filter-dropdown__range input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(1) brightness(1.35) drop-shadow(0 0 2px rgba(41, 127, 150, 0.8));
+  }
   @media (max-width: 400px) {
     .date-filter-dropdown {
       padding: 12px !important;

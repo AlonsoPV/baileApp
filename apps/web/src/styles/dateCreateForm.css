@@ -835,6 +835,10 @@
 .dcf__zones-block {
   margin-top: 16px;
 }
+/* En fila junto a otro campo (p. ej. notas), sin margen extra arriba */
+.dcf__grid-2 > .dcf__zones-block {
+  margin-top: 0;
+}
 .dcf__zones-block .dcf__label {
   display: block;
   margin-bottom: 8px;

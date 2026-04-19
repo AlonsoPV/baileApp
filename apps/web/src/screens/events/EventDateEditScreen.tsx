@@ -721,7 +721,7 @@ export function EventDateEditScreen() {
       const parentIdToUse: number | null =
         (parentId ? Number(parentId) : (currentDate as any)?.parent_id ? Number((currentDate as any).parent_id) : null);
       if (!parentIdToUse) {
-        showToast('No se encontró el parent_id para crear fechas frecuentes', 'error');
+        showToast('No se encontró el parent_id para crear fechas (Congresos)', 'error');
         return;
       }
 
@@ -1428,7 +1428,7 @@ export function EventDateEditScreen() {
             }}
             aria-pressed={bulkMode}
           >
-            📋 Frecuentes
+            📋 Congresos
           </button>
         </div>
 
@@ -1498,7 +1498,7 @@ export function EventDateEditScreen() {
 
         {!bulkMode && (
           <div style={{ marginTop: 14, padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)', fontSize: 13, opacity: 0.92 }}>
-            <b>Modo Único</b>: se crea <b>una sola fecha</b>. Si necesitas varias fechas, usa <b>Frecuentes</b>.
+            <b>Modo Único</b>: se crea <b>una sola fecha</b>. Si necesitas varias fechas, usa <b>Congresos</b>.
           </div>
         )}
 
@@ -1627,7 +1627,7 @@ export function EventDateEditScreen() {
                   {/* Planificador bulk (sheet) */}
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
                     <h3 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: 10, color: '#FFFFFF' }}>
-                      📋 Planificador (frecuentes)
+                      📋 Planificador (Congresos)
                     </h3>
                     <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10 }}>
                       Seleccionadas: <b>{bulkSelectedCount}</b>
@@ -1992,9 +1992,9 @@ export function EventDateEditScreen() {
               cursor: 'pointer',
               boxShadow: `0 10px 22px rgba(0,0,0,0.28), 0 0 0 1px rgba(39,195,255,0.06) inset`,
             }}
-            title="Abrir Frecuentes con esta fecha como plantilla"
+            title="Abrir Congresos con esta fecha como plantilla"
           >
-            📋 Convertir a Frecuentes
+            📋 Convertir a Congresos
           </motion.button>
         )}
 
@@ -2017,7 +2017,7 @@ export function EventDateEditScreen() {
             boxShadow: `0 12px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset`,
             letterSpacing: 0.2,
           }}
-          title={bulkMode ? 'En Frecuentes se guarda desde "Guardar fechas"' : undefined}
+          title={bulkMode ? 'En Congresos se guarda desde "Guardar fechas"' : undefined}
         >
           {(create.isPending || update.isPending) ? 'Guardando...' : '💾 Guardar'}
         </motion.button>

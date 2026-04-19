@@ -444,7 +444,7 @@ export default function EventCreateForm(props: EventCreateFormProps) {
               </div>
 
               <div className="ecf__field">
-                <label className="ecf__label">Biografía</label>
+                <label className="ecf__label">Descripción</label>
                 <textarea
                   className="ecf__textarea"
                   value={(values as any)?.biografia || ""}

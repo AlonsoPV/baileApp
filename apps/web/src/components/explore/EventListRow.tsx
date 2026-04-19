@@ -5,7 +5,7 @@ import { urls } from "@/lib/urls";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "@/utils/imageOptimization";
 import ExploreResponsiveImage from "@/components/explore/ExploreResponsiveImage";
 import { getMediaBySlot, normalizeMediaArray } from "@/utils/mediaSlots";
-import { getPrimaryCost, hasDiscount, getMonto, formatCostoMonto } from "@/utils/eventCosts";
+import { hasDiscount, formatCostoMonto, resolveEventCardCostoMonto } from "@/utils/eventCosts";
 import type { ExploreTagMaps } from "@/utils/exploreTagMaps";
 import "./EventListRow.css";
 
@@ -140,10 +140,22 @@ function EventListRowDumb({ item, priority = false }: EventListRowProps) {
           )}
           <MetaLine
             timeText={horaInicio ? formatHHMM(horaInicio) : ""}
-            priceLabel={ui.costoMonto === 0 ? "Gratis" : `$${ui.costoMonto?.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`}
+            priceLabel={
+              ui.costoMonto == null
+                ? ""
+                : ui.costoMonto === 0
+                  ? "Gratis"
+                  : `$${ui.costoMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`
+            }
             placeText={ui.lugarNombre || ""}
             hasDiscountMark={!!ui.hasDiscount}
-            priceAria={ui.costoMonto === 0 ? "Entrada gratis" : `Costo taquilla ${formatCostoMonto(ui.costoMonto)}`}
+            priceAria={
+              ui.costoMonto == null
+                ? ""
+                : ui.costoMonto === 0
+                  ? "Entrada gratis"
+                  : `Costo taquilla ${formatCostoMonto(ui.costoMonto)}`
+            }
           />
         </div>
 
@@ -208,16 +220,8 @@ function EventListRowWithTags({ item, priority = false }: EventListRowProps) {
     return s;
   }, [lugar]);
   const ownerLabel = item.ownerName || item.organizador_nombre || item.organizer_name || "";
-  const primaryCost = React.useMemo(() => getPrimaryCost(item), [item]);
   const showDiscount = React.useMemo(() => hasDiscount(item), [item]);
-  const costMonto = React.useMemo(() => {
-    let m = getMonto(primaryCost);
-    if (m == null) {
-      const raw = item?.costos?.[0] ?? item?.events_parent?.costos?.[0];
-      m = getMonto(raw);
-    }
-    return m ?? 0;
-  }, [item, primaryCost]);
+  const costMonto = React.useMemo(() => resolveEventCardCostoMonto(item), [item]);
 
   return (
     <LiveLink to={linkTo} asCard={false}>
@@ -253,10 +257,22 @@ function EventListRowWithTags({ item, priority = false }: EventListRowProps) {
           )}
           <MetaLine
             timeText={horaInicio ? formatHHMM(horaInicio) : ""}
-            priceLabel={costMonto === 0 ? "Gratis" : `$${costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`}
+            priceLabel={
+              costMonto == null
+                ? ""
+                : costMonto === 0
+                  ? "Gratis"
+                  : `$${costMonto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`
+            }
             placeText={lugarSoloNombre || ""}
             hasDiscountMark={showDiscount}
-            priceAria={costMonto === 0 ? "Entrada gratis" : `Costo taquilla ${formatCostoMonto(costMonto)}`}
+            priceAria={
+              costMonto == null
+                ? ""
+                : costMonto === 0
+                  ? "Entrada gratis"
+                  : `Costo taquilla ${formatCostoMonto(costMonto)}`
+            }
           />
         </div>
 

@@ -127,6 +127,23 @@ export function getMonto(c: EventCosto | null): number | null {
   return parseCostAmount((c as any).monto ?? (c as any).precio ?? (c as any).amount ?? (c as any).price);
 }
 
+/** Mismo criterio que Explore cards: taquilla mínima → primary → primer costo crudo. `null` = sin precio (no es "Gratis"). */
+export function resolveEventCardCostoMonto(event: any): number | null {
+  let n = getLowestTaquillaMonto(event);
+  if (n == null) {
+    n = getMonto(getPrimaryCost(event));
+  }
+  if (n == null) {
+    const raw = event?.costos?.[0] ?? event?.events_parent?.costos?.[0];
+    n = getMonto(raw);
+  }
+  const hasNormalizedCosts = normalizeEventCosts(event).length > 0;
+  if (!hasNormalizedCosts && (n == null || n === 0)) {
+    return null;
+  }
+  return n;
+}
+
 export function formatCostoMonto(monto: number): string {
   return `$${monto.toLocaleString("es-MX", { maximumFractionDigits: 0 })}`;
 }
@@ -136,13 +153,9 @@ export function formatCostoMonto(monto: number): string {
  * Returns "Gratis" when amount is 0; undefined when no price data.
  */
 export function getEventDatePriceChipLabel(event: any, localeTag = "es-MX"): string | undefined {
-  let n = getLowestTaquillaMonto(event);
-  if (n == null) n = getMonto(getPrimaryCost(event));
-  if (n == null) {
-    const raw = event?.costos?.[0] ?? event?.events_parent?.costos?.[0];
-    n = getMonto(raw);
-  }
+  let n = resolveEventCardCostoMonto(event);
   if (n == null || Number.isNaN(n)) return undefined;
+  // Solo "Gratis" con precio explícito 0; sin costo cargado → undefined (no confundir con gratis)
   if (n <= 0) return "Gratis";
   return new Intl.NumberFormat(localeTag, {
     style: "currency",

@@ -316,7 +316,9 @@
 /* Actions */
 .clt-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 2px;
 }
@@ -332,21 +334,17 @@
   flex-shrink: 0;
 }
 
-.clt-btn-detail {
+.clt-btn-detail-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 46px;
-  padding: 0 16px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
   border: none;
-  border-radius: 14px;
-  font-family: 'Barlow', system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 0.8125rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  border-radius: 12px;
   cursor: pointer;
   color: #fff;
   background: linear-gradient(145deg, rgba(122, 108, 255, 0.42), rgba(33, 212, 253, 0.12));
@@ -357,18 +355,19 @@
     box-shadow 0.22s ease,
     filter 0.2s ease;
   -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.clt-btn-detail:hover {
+.clt-btn-detail-icon:hover {
   filter: brightness(1.06);
   box-shadow: 0 14px 36px rgba(122, 108, 255, 0.26);
 }
 
-.clt-btn-detail:active {
+.clt-btn-detail-icon:active {
   transform: scale(0.985);
 }
 
-.clt-btn-detail:focus-visible {
+.clt-btn-detail-icon:focus-visible {
   outline: 2px solid rgba(122, 108, 255, 0.55);
   outline-offset: 2px;
 }

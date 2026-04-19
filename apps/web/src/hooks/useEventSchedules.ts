@@ -12,6 +12,25 @@ export type EventSchedule = {
   ritmo?: number;
 };
 
+/** Minutos desde medianoche; valores inválidos al final. */
+function horaInicioToMinutes(hora: string | undefined | null): number {
+  if (!hora || typeof hora !== "string") return Number.MAX_SAFE_INTEGER;
+  const m = hora.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return Number.MAX_SAFE_INTEGER;
+  const hh = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  if (Number.isNaN(hh) || Number.isNaN(mm)) return Number.MAX_SAFE_INTEGER;
+  return hh * 60 + mm;
+}
+
+export function sortEventSchedulesByHoraInicio(rows: EventSchedule[]): EventSchedule[] {
+  return [...rows].sort((a, b) => {
+    const diff = horaInicioToMinutes(a.hora_inicio) - horaInicioToMinutes(b.hora_inicio);
+    if (diff !== 0) return diff;
+    return (a.id ?? 0) - (b.id ?? 0);
+  });
+}
+
 export function useEventSchedules(eventDateId?: number) {
   const qc = useQueryClient();
 
@@ -25,7 +44,7 @@ export function useEventSchedules(eventDateId?: number) {
         .eq("event_date_id", eventDateId!)
         .order("hora_inicio");
       if (error) throw error;
-      return data as EventSchedule[];
+      return sortEventSchedulesByHoraInicio((data || []) as EventSchedule[]);
     },
   });
 

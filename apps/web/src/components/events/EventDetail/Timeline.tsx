@@ -1,5 +1,16 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Clock } from "lucide-react";
+
+/** Minutos desde medianoche; sin hora válida al final. */
+function inicioToMinutes(s?: string | null): number {
+  if (!s || typeof s !== "string") return Number.MAX_SAFE_INTEGER;
+  const m = s.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return Number.MAX_SAFE_INTEGER;
+  const hh = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  if (Number.isNaN(hh) || Number.isNaN(mm)) return Number.MAX_SAFE_INTEGER;
+  return hh * 60 + mm;
+}
 
 export interface TimelineItem {
   inicio?: string;
@@ -27,11 +38,18 @@ export function Timeline({
   conductedByLabel = "Conduce",
   levelLabel = "Nivel",
 }: TimelineProps) {
-  if (!items || items.length === 0) return null;
+  const sortedItems = useMemo(() => {
+    if (!items?.length) return [];
+    return [...items].sort(
+      (a, b) => inicioToMinutes(a.inicio) - inicioToMinutes(b.inicio)
+    );
+  }, [items]);
+
+  if (!sortedItems.length) return null;
 
   return (
     <section className="eds-timeline" aria-label="Cronograma">
-      {items.map((item, i) => {
+      {sortedItems.map((item, i) => {
         const time =
           item.inicio && item.fin
             ? `${item.inicio} – ${item.fin}`
@@ -52,7 +70,7 @@ export function Timeline({
           <div key={i} className="eds-timeline__row">
             <div className="eds-timeline__marker">
               <span className="eds-timeline__dot" aria-hidden />
-              {i < items.length - 1 && <span className="eds-timeline__line" aria-hidden />}
+              {i < sortedItems.length - 1 && <span className="eds-timeline__line" aria-hidden />}
             </div>
             <div className="eds-timeline__item">
               <div className="eds-timeline__content">

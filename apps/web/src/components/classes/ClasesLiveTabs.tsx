@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Clock, Eye, MapPin, Share2, Tag } from "lucide-react";
+import { ArrowUpRight, Calendar, Clock, MapPin, Share2, Tag } from "lucide-react";
 import type { Clase } from "@/types/classes";
 import { groupClassesByWeekday } from "@/utils/classesByWeekday";
 import ImageWithFallback from "@/components/ImageWithFallback";
@@ -572,14 +572,15 @@ const ClasesLiveTabs = React.memo(function ClasesLiveTabs({
                                   {isClickable && sourceType && sourceId && (
                                     <button
                                       type="button"
-                                      className="clt-btn-detail"
+                                      className="clt-btn-detail-icon"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleClassClick(c);
                                       }}
+                                      aria-label="Ir a detalle"
+                                      title="Ir a detalle"
                                     >
-                                      <Eye size={18} strokeWidth={2.25} aria-hidden />
-                                      Ver detalle
+                                      <ArrowUpRight size={18} strokeWidth={2.25} aria-hidden />
                                     </button>
                                   )}
                                   <div className="clt-actions__toolbar">
@@ -744,14 +745,15 @@ const ClasesLiveTabs = React.memo(function ClasesLiveTabs({
                                 {isClickable && sourceType && sourceId && (
                                   <button
                                     type="button"
-                                    className="clt-btn-detail"
+                                    className="clt-btn-detail-icon"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleClassClick(c);
                                     }}
+                                    aria-label="Ir a detalle"
+                                    title="Ir a detalle"
                                   >
-                                    <Eye size={18} strokeWidth={2.25} aria-hidden />
-                                    Ver detalle
+                                    <ArrowUpRight size={18} strokeWidth={2.25} aria-hidden />
                                   </button>
                                 )}
                                 <div className="clt-actions__toolbar">
@@ -1019,14 +1021,15 @@ const ClasesLiveTabs = React.memo(function ClasesLiveTabs({
                             {isClickable && sourceType && sourceId && (
                               <button
                                 type="button"
-                                className="clt-btn-detail"
+                                className="clt-btn-detail-icon"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleClassClick(c);
                                 }}
+                                aria-label="Ir a detalle"
+                                title="Ir a detalle"
                               >
-                                <Eye size={18} strokeWidth={2.25} aria-hidden />
-                                Ver detalle
+                                <ArrowUpRight size={18} strokeWidth={2.25} aria-hidden />
                               </button>
                             )}
                             <div className="clt-actions__toolbar">
@@ -1193,14 +1196,15 @@ const ClasesLiveTabs = React.memo(function ClasesLiveTabs({
                           {isClickable && sourceType && sourceId && (
                             <button
                               type="button"
-                              className="clt-btn-detail"
+                              className="clt-btn-detail-icon"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleClassClick(c);
                               }}
+                              aria-label="Ir a detalle"
+                              title="Ir a detalle"
                             >
-                              <Eye size={18} strokeWidth={2.25} aria-hidden />
-                              Ver detalle
+                              <ArrowUpRight size={18} strokeWidth={2.25} aria-hidden />
                             </button>
                           )}
                           <div className="clt-actions__toolbar">
