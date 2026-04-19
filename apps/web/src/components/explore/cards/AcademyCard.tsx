@@ -5,16 +5,23 @@ import { useTags } from "../../../hooks/useTags";
 import { getMediaBySlot, normalizeMediaArray } from "../../../utils/mediaSlots";
 import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
+import type { ExploreTagMaps } from "@/utils/exploreTagMaps";
+import { zonaNamesFromMap } from "@/utils/exploreTagMaps";
 import "./ExploreCardsShared.css";
 
 interface AcademyCardProps {
   item: any;
   /** Si true, evita lazy-loading y eleva prioridad (LCP) */
   priority?: boolean;
+  tagMaps?: ExploreTagMaps;
 }
 
-export default function AcademyCard({ item, priority = false }: AcademyCardProps) {
-  const { data: allTags } = useTags() as any;
+const AcademyCard = React.memo(function AcademyCard({
+  item,
+  priority = false,
+  tagMaps,
+}: AcademyCardProps) {
+  const { data: allTags } = useTags(undefined, { enabled: !tagMaps }) as any;
   const id = item.id;
   // Nombre robusto: aceptar múltiples campos antes de caer en el fallback
   const nombre =
@@ -50,9 +57,17 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
   const showPlaceholder = !primaryAvatar || imageError;
   const placeholderReason = !primaryAvatar ? 'URL vacía' : imageError ? 'Image load failed' : '';
 
-  const zonaNombres: string[] = (item.zonas || [])
-    .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
-    .filter(Boolean);
+  const zonaNombres = React.useMemo(
+    () =>
+      tagMaps
+        ? zonaNamesFromMap(item.zonas || [], tagMaps.zonaById)
+        : (item.zonas || [])
+            .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
+            .filter(Boolean),
+    [item.zonas, tagMaps, allTags]
+  );
+  const handleImageLoad = React.useCallback(() => setImageError(false), []);
+  const handleImageError = React.useCallback(() => setImageError(true), []);
 
   return (
     <LiveLink to={urls.academyLive(id)} asCard={false}>
@@ -72,8 +87,8 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
               preset="carouselCard"
               alt={`Imagen de ${nombre}`}
               priority={priority}
-              onLoad={() => setImageError(false)}
-              onError={() => setImageError(true)}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
           )}
         </div>
@@ -88,4 +103,6 @@ export default function AcademyCard({ item, priority = false }: AcademyCardProps
       </article>
     </LiveLink>
   );
-}
+});
+
+export default AcademyCard;

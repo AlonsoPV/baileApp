@@ -5,12 +5,14 @@ import { useTags } from "../../../hooks/useTags";
 import { toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
+import type { ExploreTagMaps } from "@/utils/exploreTagMaps";
+import { ritmoLabelsFromMap, zonaNamesFromMap } from "@/utils/exploreTagMaps";
 import "./ExploreCardsShared.css";
 
-type Props = { item: any; priority?: boolean };
+type Props = { item: any; priority?: boolean; tagMaps?: ExploreTagMaps };
 
-export default function BrandCard({ item, priority = false }: Props) {
-  const { data: allTags } = useTags() as any;
+const BrandCard = React.memo(function BrandCard({ item, priority = false, tagMaps }: Props) {
+  const { data: allTags } = useTags(undefined, { enabled: !tagMaps }) as any;
   const id = item.id;
   const nombre = item.nombre_publico || item.nombre || "Marca";
   const bio = item.bio || "";
@@ -20,8 +22,9 @@ export default function BrandCard({ item, priority = false }: Props) {
     || item.avatar_url
   ) ?? undefined;
   // Mapear ritmos por catálogo (ritmos_seleccionados) o por ids numéricos (ritmos/estilos)
-  const ritmoNombres: string[] = (() => {
+  const ritmoNombres = React.useMemo(() => {
     try {
+      if (tagMaps) return ritmoLabelsFromMap(item, tagMaps.ritmoById);
       const labelByCatalogId = new Map<string, string>();
       RITMOS_CATALOG.forEach((g) => g.items.forEach((i) => labelByCatalogId.set(i.id, i.label)));
       const selectedCatalog: string[] = Array.isArray(item?.ritmos_seleccionados) ? item.ritmos_seleccionados : [];
@@ -35,10 +38,16 @@ export default function BrandCard({ item, priority = false }: Props) {
     } catch {
       return [];
     }
-  })();
-  const zonaNombres: string[] = (item.zonas || [])
-    .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
-    .filter(Boolean);
+  }, [item, tagMaps, allTags]);
+  const zonaNombres = React.useMemo(
+    () =>
+      tagMaps
+        ? zonaNamesFromMap(item.zonas || [], tagMaps.zonaById)
+        : (item.zonas || [])
+            .map((zid: number) => allTags?.find((t: any) => t.id === zid && t.tipo === 'zona')?.nombre)
+            .filter(Boolean),
+    [item.zonas, tagMaps, allTags]
+  );
 
   // Cache-busting para la portada de la marca
   const coverCacheKey =
@@ -52,6 +61,8 @@ export default function BrandCard({ item, priority = false }: Props) {
   React.useEffect(() => setImageError(false), [cover, coverCacheKey]);
   const showPlaceholder = !cover || imageError;
   const placeholderReason = !cover ? 'URL vacía' : imageError ? 'Image load failed' : '';
+  const handleImageLoad = React.useCallback(() => setImageError(false), []);
+  const handleImageError = React.useCallback(() => setImageError(true), []);
 
   return (
     <LiveLink to={urls.brandLive(id)} asCard={false}>
@@ -71,8 +82,8 @@ export default function BrandCard({ item, priority = false }: Props) {
               preset="flyerContain"
               alt={`Imagen de ${nombre}`}
               priority={priority}
-              onLoad={() => setImageError(false)}
-              onError={() => setImageError(true)}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
             />
           )}
         </div>
@@ -89,6 +100,8 @@ export default function BrandCard({ item, priority = false }: Props) {
       </article>
     </LiveLink>
   );
-}
+});
+
+export default BrandCard;
 
 

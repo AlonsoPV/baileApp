@@ -11,6 +11,10 @@ type Props<T> = {
   renderItem: (item: T, i: number) => React.ReactNode;
   getItemKey?: (item: T, i: number) => React.Key;
   emptyText?: string;
+  minColumnWidth?: number;
+  estimatedItemHeight?: number;
+  overscanRows?: number;
+  virtualizationThreshold?: number;
 };
 
 const EMPTY_STATE_STYLE: React.CSSProperties = {
@@ -55,14 +59,27 @@ export default function InfiniteGrid<T>({
   renderItem,
   getItemKey,
   emptyText = "Sin resultados",
+  minColumnWidth = 280,
+  estimatedItemHeight = 420,
+  overscanRows = 2,
+  virtualizationThreshold = 24,
 }: Props<T>) {
   const loader = React.useRef<HTMLDivElement | null>(null);
+  const gridRef = React.useRef<HTMLDivElement | null>(null);
+  const rafRef = React.useRef<number | null>(null);
+  const [viewportState, setViewportState] = React.useState(() => ({
+    width: 0,
+    viewportTop: 0,
+    viewportHeight: typeof window !== "undefined" ? window.innerHeight : 0,
+  }));
 
   const items = React.useMemo(
     () => (query.data?.pages || []).flatMap((p) => p.data),
     [query.data?.pages]
   );
   const hasMore = !!query.hasNextPage;
+  const gapPx = 16;
+  const shouldVirtualize = items.length >= virtualizationThreshold;
 
   const resolveItemKey = React.useCallback(
     (item: T, i: number) => {
@@ -89,6 +106,95 @@ export default function InfiniteGrid<T>({
     return () => io.disconnect();
   }, [hasMore, query.isFetchingNextPage, query.fetchNextPage]);
 
+  React.useEffect(() => {
+    if (!shouldVirtualize || typeof window === "undefined") return;
+
+    const measure = () => {
+      rafRef.current = null;
+      const rect = gridRef.current?.getBoundingClientRect();
+      const width = gridRef.current?.clientWidth ?? rect?.width ?? 0;
+      const viewportTop = window.scrollY;
+      const viewportHeight = window.innerHeight;
+      setViewportState((prev) => {
+        if (
+          prev.width === width &&
+          prev.viewportTop === viewportTop &&
+          prev.viewportHeight === viewportHeight
+        ) {
+          return prev;
+        }
+        return { width, viewportTop, viewportHeight };
+      });
+    };
+
+    const scheduleMeasure = () => {
+      if (rafRef.current != null) return;
+      rafRef.current = window.requestAnimationFrame(measure);
+    };
+
+    scheduleMeasure();
+    window.addEventListener("scroll", scheduleMeasure, { passive: true });
+    window.addEventListener("resize", scheduleMeasure, { passive: true });
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && gridRef.current) {
+      ro = new ResizeObserver(scheduleMeasure);
+      ro.observe(gridRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", scheduleMeasure);
+      window.removeEventListener("resize", scheduleMeasure);
+      if (rafRef.current != null) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      ro?.disconnect();
+    };
+  }, [shouldVirtualize]);
+
+  const virtualWindow = React.useMemo(() => {
+    if (!shouldVirtualize) {
+      return {
+        startIndex: 0,
+        endIndex: items.length,
+        padTop: 0,
+        padBottom: 0,
+      };
+    }
+
+    const width = viewportState.width || 1;
+    const columnCount = Math.max(1, Math.floor((width + gapPx) / (minColumnWidth + gapPx)));
+    const totalRows = Math.ceil(items.length / columnCount);
+    const gridTop = (gridRef.current?.getBoundingClientRect().top ?? 0) + viewportState.viewportTop;
+    const relativeTop = Math.max(0, viewportState.viewportTop - gridTop);
+    const visibleStartRow = Math.max(0, Math.floor(relativeTop / estimatedItemHeight) - overscanRows);
+    const visibleEndRow = Math.min(
+      totalRows,
+      Math.ceil((relativeTop + viewportState.viewportHeight) / estimatedItemHeight) + overscanRows
+    );
+    const startIndex = visibleStartRow * columnCount;
+    const endIndex = Math.min(items.length, visibleEndRow * columnCount);
+    const padTop = visibleStartRow * estimatedItemHeight;
+    const padBottom = Math.max(0, (totalRows - visibleEndRow) * estimatedItemHeight);
+
+    return { startIndex, endIndex, padTop, padBottom };
+  }, [
+    shouldVirtualize,
+    viewportState.width,
+    viewportState.viewportTop,
+    viewportState.viewportHeight,
+    items.length,
+    minColumnWidth,
+    estimatedItemHeight,
+    overscanRows,
+  ]);
+
+  const visibleItems = React.useMemo(
+    () => items.slice(virtualWindow.startIndex, virtualWindow.endIndex),
+    [items, virtualWindow.startIndex, virtualWindow.endIndex]
+  );
+
   if (!query.isLoading && items.length === 0) {
     return (
       <div style={EMPTY_STATE_STYLE}>
@@ -100,12 +206,23 @@ export default function InfiniteGrid<T>({
 
   return (
     <>
-      <div style={GRID_STYLE}>
-        {items.map((it, i) => (
-          <div key={resolveItemKey(it, i)}>
-            {renderItem(it, i)}
+      <div ref={gridRef} style={GRID_STYLE}>
+        {shouldVirtualize && virtualWindow.padTop > 0 ? (
+          <div style={{ gridColumn: "1 / -1", height: virtualWindow.padTop }} aria-hidden />
+        ) : null}
+        {visibleItems.map((it, i) => {
+          const absoluteIndex = virtualWindow.startIndex + i;
+          return (
+          <div
+            key={resolveItemKey(it, absoluteIndex)}
+            style={{ contentVisibility: "auto", containIntrinsicSize: `${estimatedItemHeight}px` }}
+          >
+            {renderItem(it, absoluteIndex)}
           </div>
-        ))}
+        )})}
+        {shouldVirtualize && virtualWindow.padBottom > 0 ? (
+          <div style={{ gridColumn: "1 / -1", height: virtualWindow.padBottom }} aria-hidden />
+        ) : null}
       </div>
 
       <div

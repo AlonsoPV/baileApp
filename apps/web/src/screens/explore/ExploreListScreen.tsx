@@ -15,6 +15,7 @@ import type { UseInfiniteQueryResult } from "@tanstack/react-query";
 import SeoHead from "@/components/SeoHead";
 import { useTags } from "../../hooks/useTags";
 import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
+import { buildExploreTagMaps } from "@/utils/exploreTagMaps";
 import { useToast } from "../../components/Toast";
 
 type InfiniteData<T> = { pages: { data: T[]; count: number; nextPage?: number }[]; pageParams: number[] };
@@ -147,6 +148,7 @@ export default function ExploreListScreen() {
     const pages = (query.data as any)?.pages || [];
     return pages.flatMap((p: any) => p?.data || []);
   }, [query.data]);
+  const tagMaps = React.useMemo(() => buildExploreTagMaps(allTags as any[] | null), [allTags]);
 
   const available = React.useMemo(
     () => buildAvailableFilters(listItems, { ritmoNameById, zonaNameById, ritmoIdBySlug, zonaIdBySlug }),
@@ -178,46 +180,47 @@ export default function ExploreListScreen() {
 
   const totalCount = query.data?.pages[0]?.count || 0;
 
-  const renderItem = (item: any, i: number) => {
-    let CardComponent;
-    let key;
-
+  const selectedCardKind = React.useMemo(() => {
     switch (filters.type) {
-      case "fechas":
-        CardComponent = EventCard;
-        key = item.id ?? i;
-        break;
       case "organizadores":
-        CardComponent = OrganizerCard;
-        key = item.id ?? i;
-        break;
-      case "maestros":
-        CardComponent = TeacherCard;
-        key = item.id ?? i;
-        break;
-      case "academias":
-        CardComponent = AcademyCard;
-        key = item.id ?? i;
-        break;
-      case "marcas":
-        CardComponent = BrandCard;
-        key = item.id ?? i;
-        break;
       case "sociales":
-        CardComponent = OrganizerCard; // Reutilizar OrganizerCard para sociales
-        key = item.id ?? i;
-        break;
+        return "organizer";
+      case "maestros":
       case "usuarios":
-        CardComponent = TeacherCard; // Reutilizar TeacherCard para usuarios
-        key = item.user_id ?? i;
-        break;
+        return "teacher";
+      case "academias":
+        return "academy";
+      case "marcas":
+        return "brand";
+      case "fechas":
       default:
-        CardComponent = EventCard;
-        key = item.id ?? i;
+        return "event";
     }
+  }, [filters.type]);
 
-    return <CardComponent key={key} item={item} priority={i === 0} />;
-  };
+  const getItemKey = React.useCallback((item: any, i: number) => {
+    if (selectedCardKind === "teacher" && filters.type === "usuarios") {
+      return item.user_id ?? item.id ?? i;
+    }
+    return item.id ?? item._original_id ?? i;
+  }, [filters.type, selectedCardKind]);
+
+  const renderItem = React.useCallback((item: any, i: number) => {
+    const priority = i === 0;
+    switch (selectedCardKind) {
+      case "organizer":
+        return <OrganizerCard item={item} priority={priority} />;
+      case "teacher":
+        return <TeacherCard item={item} priority={priority} tagMaps={tagMaps} />;
+      case "academy":
+        return <AcademyCard item={item} priority={priority} tagMaps={tagMaps} />;
+      case "brand":
+        return <BrandCard item={item} priority={priority} tagMaps={tagMaps} />;
+      case "event":
+      default:
+        return <EventCard item={item} priority={priority} />;
+    }
+  }, [selectedCardKind, tagMaps]);
 
   return (
     <>
@@ -258,7 +261,14 @@ export default function ExploreListScreen() {
 
         {!query.isLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-            <InfiniteGrid query={typedQuery} renderItem={renderItem} emptyText="No se encontraron resultados. Intenta ajustar los filtros." />
+            <InfiniteGrid
+              query={typedQuery}
+              renderItem={renderItem}
+              getItemKey={getItemKey}
+              estimatedItemHeight={440}
+              virtualizationThreshold={18}
+              emptyText="No se encontraron resultados. Intenta ajustar los filtros."
+            />
           </motion.div>
         )}
       </div>

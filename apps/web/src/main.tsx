@@ -14,8 +14,60 @@ import { installNativeAuthBridge } from "./native/nativeAuthBridge";
 import { mark } from "./utils/performanceLogger";
 import { startScrollLockWatchdog } from "./utils/scrollLockWatchdog";
 import { isNativeApp } from "./utils/isNativeApp";
-import { SpeedInsights } from "@vercel/speed-insights/react";
-import { Analytics } from "@vercel/analytics/react";
+
+function DeferredVercelSignals({ enabled }: { enabled: boolean }) {
+  const [signals, setSignals] = React.useState<{
+    SpeedInsights?: React.ComponentType;
+    Analytics?: React.ComponentType;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (!enabled) return;
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let idleId: number | null = null;
+
+    const loadSignals = () => {
+      void Promise.all([
+        import("@vercel/speed-insights/react"),
+        import("@vercel/analytics/react"),
+      ]).then(([speedInsights, analytics]) => {
+        if (cancelled) return;
+        setSignals({
+          SpeedInsights: speedInsights.SpeedInsights,
+          Analytics: analytics.Analytics,
+        });
+      });
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(loadSignals, { timeout: 1500 });
+    } else {
+      timeoutId = setTimeout(loadSignals, 800);
+    }
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (idleId != null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+    };
+  }, [enabled]);
+
+  if (!enabled || !signals) return null;
+
+  const SpeedInsightsComponent = signals.SpeedInsights;
+  const AnalyticsComponent = signals.Analytics;
+
+  return (
+    <>
+      {SpeedInsightsComponent ? <SpeedInsightsComponent /> : null}
+      {AnalyticsComponent ? <AnalyticsComponent /> : null}
+    </>
+  );
+}
 
 // Medición de carga (hitos en memoria + postMessage WebView; sin logs en consola)
 try { performance?.mark?.("web_boot_start"); } catch {}
@@ -64,8 +116,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <ToastProvider>
             <App />
-            {canLoadVercelSignals ? <SpeedInsights /> : null}
-            {canLoadVercelSignals ? <Analytics /> : null}
+            <DeferredVercelSignals enabled={canLoadVercelSignals} />
           </ToastProvider>
         </AuthProvider>
       </BrowserRouter>

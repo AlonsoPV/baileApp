@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useExploreFilters, type DatePreset, type ExploreType } from "../../state/exploreFilters";
 import { useExploreQuery } from "../../hooks/useExploreQuery";
@@ -10,11 +10,7 @@ import { useUsedZonesByContext } from "@/hooks/useUsedZones";
 import { useZonaCatalogGroups } from "@/hooks/useZonaCatalogGroups";
 import { mapExploreTypeToContext, mapExploreTypeToZoneContext } from "@/filters/exploreContext";
 import { groupRitmos, zonaGroupsToTreeGroups } from "@/filters/exploreFilterGroups";
-import { MultiSelectTreeDropdown } from "@/components/explore/MultiSelectTreeDropdown";
-import { DateFilterDropdown } from "@/components/explore/DateFilterDropdown";
 import EventListRow from "@/components/explore/EventListRow";
-import EventSocialGridCard from "@/components/explore/EventSocialGridCard";
-import EventCarteleraCard from "@/components/explore/EventCarteleraCard";
 import "@/components/explore/exploreFechasCartelera.css";
 import { readFechasViewMode, writeFechasViewMode, type FechasViewMode } from "@/utils/fechasViewModeStorage";
 import {
@@ -38,7 +34,6 @@ import { useUserFilterPreferences } from "../../hooks/useUserFilterPreferences";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useTags } from "@/hooks/useTags";
 import SeoHead from "@/components/SeoHead";
-import { AcademiesSection } from "../../components/sections/AcademiesSection";
 import { buildAvailableFilters } from "../../filters/buildAvailableFilters";
 import { useToast } from "../../components/Toast";
 import { mark, notifyError, notifyReady } from "@/utils/performanceLogger";
@@ -50,6 +45,18 @@ import { useFilteredFechas } from "@/hooks/explore/useFilteredFechas";
 import { useClassesList } from "@/hooks/explore/useClassesList";
 import { buildEventOccurrenceKey } from "@/utils/exploreEventOccurrence";
 import { buildExploreTagMaps } from "@/utils/exploreTagMaps";
+
+const MultiSelectTreeDropdown = React.lazy(() =>
+  import("@/components/explore/MultiSelectTreeDropdown").then((m) => ({ default: m.MultiSelectTreeDropdown })),
+);
+const DateFilterDropdown = React.lazy(() =>
+  import("@/components/explore/DateFilterDropdown").then((m) => ({ default: m.DateFilterDropdown })),
+);
+const EventSocialGridCard = React.lazy(() => import("@/components/explore/EventSocialGridCard"));
+const EventCarteleraCard = React.lazy(() => import("@/components/explore/EventCarteleraCard"));
+const AcademiesSection = React.lazy(() =>
+  import("../../components/sections/AcademiesSection").then((m) => ({ default: m.AcademiesSection })),
+);
 
 // Tipo mínimo local para no depender de @tanstack/react-query a nivel de tipos.
 // Acepta la firma real de `fetchNextPage` (que devuelve un Promise con resultado),
@@ -99,6 +106,16 @@ function useDebouncedValue<T>(value: T, delay: number = 300): T {
 
 function useStableArray<T>(arr: T[]): T[] {
   return React.useMemo(() => [...arr], [JSON.stringify(arr)]);
+}
+
+function DeferredChunk({
+  children,
+  fallback = null,
+}: {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}) {
+  return <React.Suspense fallback={fallback}>{children}</React.Suspense>;
 }
 
 /** Hook para calcular dimensiones hero de cards en mobile (viewport-aware). */
@@ -2395,7 +2412,7 @@ function Section({
   headerAction?: React.ReactNode;
 }) {
   return (
-    <motion.section
+    <m.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
@@ -2412,7 +2429,7 @@ function Section({
         <SectionHeader title={title} count={count} subline={subline} actionSlot={headerAction} />
         {children}
       </div>
-    </motion.section>
+    </m.section>
   );
 }
 
@@ -2521,7 +2538,15 @@ export default function ExploreHomeScreen() {
     };
   }, [openFilterDropdown]);
 
-  const { data: allTags } = useTags();
+  const shouldLoadTags =
+    openFilterDropdown === "ritmos" ||
+    openFilterDropdown === "zonas" ||
+    selectedType === "clases" ||
+    selectedType === "academias" ||
+    selectedType === "maestros" ||
+    selectedType === "usuarios" ||
+    selectedType === "organizadores";
+  const { data: allTags } = useTags(undefined, { enabled: shouldLoadTags });
   const tagMaps = React.useMemo(() => buildExploreTagMaps(allTags as any[] | null), [allTags]);
   const rhythmContext = React.useMemo(() => mapExploreTypeToContext(filters.type), [filters.type]);
   const zoneContext = React.useMemo(() => mapExploreTypeToZoneContext(filters.type), [filters.type]);
@@ -2909,7 +2934,7 @@ export default function ExploreHomeScreen() {
     zonas: filters.zonas,
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
-    pageSize: 48,
+    pageSize: 18,
     enabled: shouldLoadFechas
   });
   const fechasLoadMore = useLoadMoreOnDemand(shouldLoadFechas ? fechasQuery : null);
@@ -3088,18 +3113,22 @@ export default function ExploreHomeScreen() {
             height: "100%",
           }}
         >
-          <EventSocialGridCard item={fechaEvento} priority={idx === 0} />
+          <DeferredChunk
+            fallback={<div style={{ minHeight: gridCardHeight > 0 ? gridCardHeight : 220, background: "rgba(255,255,255,0.05)" }} />}
+          >
+            <EventSocialGridCard item={fechaEvento} priority={idx === 0} />
+          </DeferredChunk>
         </div>
       );
     },
-    [handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
+    [gridCardHeight, handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
   );
 
   const renderClaseCarouselItem = React.useCallback(
     (item: any, idx: number) => {
       if (item?.__isCTA) {
         return (
-          <motion.div
+          <m.div
             key="cta-clases"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -3108,7 +3137,7 @@ export default function ExploreHomeScreen() {
             style={{ height: "100%", display: "flex", alignItems: "stretch" }}
           >
             <CTACard text={t("cta_classes")} sectionType="clases" idx={idx} />
-          </motion.div>
+          </m.div>
         );
       }
       const rowKey = `${item.ownerType || "owner"}-${item.ownerId ?? "unknown"}-${item.titulo ?? "class"}-${item.fecha ?? (Array.isArray(item.diasSemana) ? item.diasSemana.join("-") : "semana")}-${idx}`;
@@ -3137,7 +3166,7 @@ export default function ExploreHomeScreen() {
     (item: any, idx: number) => {
       if (item?.__isCTA) {
         return (
-          <motion.div
+          <m.div
             key="cta-maestros"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -3146,7 +3175,7 @@ export default function ExploreHomeScreen() {
             style={{ height: "100%", display: "flex", alignItems: "stretch" }}
           >
             <CTACard text={t("cta_teachers")} sectionType="maestros" idx={idx} />
-          </motion.div>
+          </m.div>
         );
       }
       return (
@@ -3200,7 +3229,7 @@ export default function ExploreHomeScreen() {
     (item: any, idx: number) => {
       if (item?.__isCTA) {
         return (
-          <motion.div
+          <m.div
             key="cta-organizadores"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -3209,7 +3238,7 @@ export default function ExploreHomeScreen() {
             style={{ height: "100%", display: "flex", alignItems: "stretch" }}
           >
             <CTACard text={t("cta_organizers")} sectionType="organizadores" idx={idx} />
-          </motion.div>
+          </m.div>
         );
       }
       return (
@@ -3344,11 +3373,15 @@ export default function ExploreHomeScreen() {
 
       return (
         <div key={key} role="listitem" onClickCapture={handlePreNavigate} style={{ minWidth: 0 }}>
-          <EventCarteleraCard item={fechaEvento} priority={idx === 0} />
+          <DeferredChunk
+            fallback={<div style={{ minHeight: cardHeight > 0 ? cardHeight : 320, borderRadius: 16, background: "rgba(255,255,255,0.05)" }} />}
+          >
+            <EventCarteleraCard item={fechaEvento} priority={idx === 0} />
+          </DeferredChunk>
         </div>
       );
     },
-    [handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
+    [cardHeight, handlePreNavigate, onLoadMoreFechas, fechasQuery.isFetchingNextPage, t]
   );
 
   const shouldLoadMaestros = selectedType === 'maestros' || selectedType === 'clases';
@@ -3903,7 +3936,7 @@ export default function ExploreHomeScreen() {
                 activeFiltersIndicatorCount={activeFiltersIndicatorCount}
               >
             {usingFavoriteFilters && user && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="filters-fav"
@@ -3936,7 +3969,7 @@ export default function ExploreHomeScreen() {
                 <button className="filters-fav__btn" type="button" onClick={resetToFavoriteFilters}>
                   <span>{t('reset_favorites')}</span>
                 </button>
-              </motion.div>
+              </m.div>
             )}
 
             <div className="filters-card">
@@ -4124,41 +4157,53 @@ export default function ExploreHomeScreen() {
                 </button>
               </div>
 
-              <MultiSelectTreeDropdown
-                label={t("rhythms")}
-                groups={ritmoTreeGroups}
-                selectedIds={stableRitmos}
-                onChange={(nextIds) => set({ ritmos: nextIds })}
-                search={true}
-                anchorEl={openFilterDropdown === "ritmos" ? ritmosPillRef.current : null}
-                open={openFilterDropdown === "ritmos"}
-                onClose={() => setOpenFilterDropdown(null)}
-                triggerRef={ritmosPillRef}
-              />
-              <MultiSelectTreeDropdown
-                label={t("zones")}
-                groups={zonaTreeGroups}
-                selectedIds={stableZonas}
-                onChange={(nextIds) => set({ zonas: nextIds })}
-                search={true}
-                anchorEl={openFilterDropdown === "zonas" ? zonasPillRef.current : null}
-                open={openFilterDropdown === "zonas"}
-                onClose={() => setOpenFilterDropdown(null)}
-                triggerRef={zonasPillRef}
-              />
-              <DateFilterDropdown
-                dateFrom={filters.dateFrom}
-                dateTo={filters.dateTo}
-                datePreset={filters.datePreset}
-                onApply={applyDateFilter}
-                onPresetSelect={applyDatePreset}
-                anchorEl={openFilterDropdown === "fechas" ? fechasPillRef.current : null}
-                open={openFilterDropdown === "fechas"}
-                onClose={() => setOpenFilterDropdown(null)}
-                triggerRef={fechasPillRef}
-                summaryText={dateSummaryText}
-                t={t}
-              />
+              {openFilterDropdown === "ritmos" ? (
+                <DeferredChunk>
+                  <MultiSelectTreeDropdown
+                    label={t("rhythms")}
+                    groups={ritmoTreeGroups}
+                    selectedIds={stableRitmos}
+                    onChange={(nextIds) => set({ ritmos: nextIds })}
+                    search={true}
+                    anchorEl={ritmosPillRef.current}
+                    open
+                    onClose={() => setOpenFilterDropdown(null)}
+                    triggerRef={ritmosPillRef}
+                  />
+                </DeferredChunk>
+              ) : null}
+              {openFilterDropdown === "zonas" ? (
+                <DeferredChunk>
+                  <MultiSelectTreeDropdown
+                    label={t("zones")}
+                    groups={zonaTreeGroups}
+                    selectedIds={stableZonas}
+                    onChange={(nextIds) => set({ zonas: nextIds })}
+                    search={true}
+                    anchorEl={zonasPillRef.current}
+                    open
+                    onClose={() => setOpenFilterDropdown(null)}
+                    triggerRef={zonasPillRef}
+                  />
+                </DeferredChunk>
+              ) : null}
+              {openFilterDropdown === "fechas" ? (
+                <DeferredChunk>
+                  <DateFilterDropdown
+                    dateFrom={filters.dateFrom}
+                    dateTo={filters.dateTo}
+                    datePreset={filters.datePreset}
+                    onApply={applyDateFilter}
+                    onPresetSelect={applyDatePreset}
+                    anchorEl={fechasPillRef.current}
+                    open
+                    onClose={() => setOpenFilterDropdown(null)}
+                    triggerRef={fechasPillRef}
+                    summaryText={dateSummaryText}
+                    t={t}
+                  />
+                </DeferredChunk>
+              ) : null}
 
               {/* Fila 3: Búsqueda colapsada. Evitar zoom: input font-size 16px (iOS no hace zoom al focus), transición max-height/opacity sin transform/scale, sin scrollIntoView. */}
               <div
@@ -4436,28 +4481,30 @@ export default function ExploreHomeScreen() {
                 likeFechas
                 groupLabel={t("explore_academies_view_group") || t("explore_classes_view_group")}
               />
-              <AcademiesSection
-                filters={filters}
-                q={qDeferred || undefined}
-                enabled={showAll || selectedType === 'academias'}
-                externalData={academiasData}
-                isLoading={academiasLoading}
-                maxItems={12}
-                renderAs={
-                  exploreSectionViews.academias === "list"
-                    ? "list"
-                    : exploreSectionViews.academias === "cartelera"
-                      ? "cartelera"
-                      : "carousel"
-                }
-                gridCarouselProps={fechasGridSliderProps}
-                itemHeight={cardHeight > 0 ? cardHeight : undefined}
-                itemWidth={cardWidth > 0 ? cardWidth : undefined}
-                navPosition={(isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay'}
-                eagerPerCarousel={EAGER_OTHERS}
-                onNavigatePrepare={handlePreNavigate}
-                tagMaps={tagMaps}
-              />
+              <DeferredChunk fallback={<div className="cards-grid">{[...Array(6)].map((_, i) => <div key={i} className="card-skeleton">{t('loading')}</div>)}</div>}>
+                <AcademiesSection
+                  filters={filters}
+                  q={qDeferred || undefined}
+                  enabled={showAll || selectedType === 'academias'}
+                  externalData={academiasData}
+                  isLoading={academiasLoading}
+                  maxItems={12}
+                  renderAs={
+                    exploreSectionViews.academias === "list"
+                      ? "list"
+                      : exploreSectionViews.academias === "cartelera"
+                        ? "cartelera"
+                        : "carousel"
+                  }
+                  gridCarouselProps={fechasGridSliderProps}
+                  itemHeight={cardHeight > 0 ? cardHeight : undefined}
+                  itemWidth={cardWidth > 0 ? cardWidth : undefined}
+                  navPosition={(isMobile ? 'bottom' : 'overlay') as 'bottom' | 'overlay'}
+                  eagerPerCarousel={EAGER_OTHERS}
+                  onNavigatePrepare={handlePreNavigate}
+                  tagMaps={tagMaps}
+                />
+              </DeferredChunk>
               {!academiasLoading && academiasData.length === 0 && (
                 <div style={{ textAlign: 'center', padding: spacing[10], color: colors.gray[300] }}>{t('no_results')}</div>
               )}

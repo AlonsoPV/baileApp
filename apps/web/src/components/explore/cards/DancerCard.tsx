@@ -5,8 +5,8 @@ import { supabase } from "../../../lib/supabase";
 import { RITMOS_CATALOG } from "../../../lib/ritmosCatalog";
 import { ensureAbsoluteImageUrl, toDirectPublicStorageUrl } from "../../../utils/imageOptimization";
 import ExploreResponsiveImage from "../../explore/ExploreResponsiveImage";
-import { EXPLORE_CARD_STYLES } from "./_sharedExploreCardStyles";
 import { resolveSupabaseStoragePublicUrl } from "../../../utils/supabaseStoragePublicUrl";
+import "./ExploreCardsShared.css";
 // no se usa urls.userLive, pedimos navegar a /app/profile con query
 
 type DancerItem = {
@@ -115,48 +115,45 @@ export default function DancerCard({ item, to, priority = false }: Props) {
   const href = to || (item.id ? `/u/${encodeURIComponent(String(item.id))}` : '#');
 
   return (
-    <>
-      <style>{EXPLORE_CARD_STYLES}</style>
-      <LiveLink to={href} asCard={false}>
-        <article className="explore-card explore-card-mobile">
-          <div className="explore-card-media">
-            {showPlaceholder && (
-              <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
-                </svg>
-              </div>
-            )}
-            {coverUrlDirect && !imageError && (
-              <ExploreResponsiveImage
-                rawUrl={coverUrlDirect}
-                cacheVersion={coverCacheKey || null}
-                preset="flyerContain"
-                alt={`Imagen de ${name}`}
-                priority={priority}
-                onLoad={() => setImageError(false)}
-                onError={() => setImageError(true)}
-              />
-            )}
-
-          </div>
-
-          <div className="explore-card-content">
-            <h3 className="explore-card-title">{name}</h3>
-            {bio && <p className="explore-card-subtitle">{bio}</p>}
-
-            <div className="explore-card-meta">
-              {zonaNames.slice(0, 1).map((z: string, i: number) => (
-                <div key={`z-${i}`} className="explore-card-tag">📍 {z}</div>
-              ))}
-              {ritmoNames.slice(0, 1).map((r: string, i: number) => (
-                <div key={`r-${i}`} className="explore-card-tag">🎵 {r}</div>
-              ))}
+    <LiveLink to={href} asCard={false}>
+      <article className="explore-card explore-card-mobile">
+        <div className="explore-card-media">
+          {showPlaceholder && (
+            <div className="explore-card-media-placeholder" data-reason={placeholderReason} aria-hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+              </svg>
             </div>
+          )}
+          {coverUrlDirect && !imageError && (
+            <ExploreResponsiveImage
+              rawUrl={coverUrlDirect}
+              cacheVersion={coverCacheKey || null}
+              preset="flyerContain"
+              alt={`Imagen de ${name}`}
+              priority={priority}
+              onLoad={() => setImageError(false)}
+              onError={() => setImageError(true)}
+            />
+          )}
+
+        </div>
+
+        <div className="explore-card-content">
+          <h3 className="explore-card-title">{name}</h3>
+          {bio && <p className="explore-card-subtitle">{bio}</p>}
+
+          <div className="explore-card-meta">
+            {zonaNames.slice(0, 1).map((z: string, i: number) => (
+              <div key={`z-${i}`} className="explore-card-tag">📍 {z}</div>
+            ))}
+            {ritmoNames.slice(0, 1).map((r: string, i: number) => (
+              <div key={`r-${i}`} className="explore-card-tag">🎵 {r}</div>
+            ))}
           </div>
-        </article>
-      </LiveLink>
-    </>
+        </div>
+      </article>
+    </LiveLink>
   );
 }
 

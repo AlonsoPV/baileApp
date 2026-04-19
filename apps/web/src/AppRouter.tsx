@@ -9,14 +9,6 @@ import { RouteLoadErrorBoundary } from './components/RouteLoadErrorBoundary';
 // Guards
 import OnboardingGate from './guards/OnboardingGate';
 
-// System Screens
-import NotFound from './screens/system/NotFound';
-
-import StripeOnboardingSuccess from './screens/payments/StripeOnboardingSuccess';
-import StripeOnboardingRefresh from './screens/payments/StripeOnboardingRefresh';
-import PaymentSuccess from './screens/payments/PaymentSuccess';
-import PaymentCanceled from './screens/payments/PaymentCanceled';
-
 // Lazy route screens (outside shell/layout to keep core boot lightweight)
 const Login = React.lazy(() =>
   import('./screens/auth/Login').then((m) => ({ default: m.Login })),
@@ -40,6 +32,11 @@ const PickZonas = React.lazy(() =>
   import('./screens/onboarding/PickZonas').then((m) => ({ default: m.PickZonas })),
 );
 const Landing = React.lazy(() => import('./pages/Landing'));
+const NotFound = React.lazy(() => import('./screens/system/NotFound'));
+const StripeOnboardingSuccess = React.lazy(() => import('./screens/payments/StripeOnboardingSuccess'));
+const StripeOnboardingRefresh = React.lazy(() => import('./screens/payments/StripeOnboardingRefresh'));
+const PaymentSuccess = React.lazy(() => import('./screens/payments/PaymentSuccess'));
+const PaymentCanceled = React.lazy(() => import('./screens/payments/PaymentCanceled'));
 
 const ProfileScreen = React.lazy(() =>
   import('./screens/profile/ProfileScreen').then((m) => ({ default: m.ProfileScreen })),
@@ -199,12 +196,12 @@ export default function AppRouter() {
       </Route>
 
       {/* Stripe Onboarding Routes - Public (no auth needed) */}
-      <Route path="/stripe/onboarding/success" element={<StripeOnboardingSuccess />} />
-      <Route path="/stripe/onboarding/refresh" element={<StripeOnboardingRefresh />} />
+      <Route path="/stripe/onboarding/success" element={<RouteSuspense><StripeOnboardingSuccess /></RouteSuspense>} />
+      <Route path="/stripe/onboarding/refresh" element={<RouteSuspense><StripeOnboardingRefresh /></RouteSuspense>} />
       
       {/* Payment Success/Cancel Routes - Public (no auth needed) */}
-      <Route path="/pago/exitoso" element={<PaymentSuccess />} />
-      <Route path="/pago/cancelado" element={<PaymentCanceled />} />
+      <Route path="/pago/exitoso" element={<RouteSuspense><PaymentSuccess /></RouteSuspense>} />
+      <Route path="/pago/cancelado" element={<RouteSuspense><PaymentCanceled /></RouteSuspense>} />
       {/* Redirect for double slashes in payment routes */}
       <Route path="//pago/exitoso" element={<Navigate to="/pago/exitoso" replace />} />
       <Route path="//pago/cancelado" element={<Navigate to="/pago/cancelado" replace />} />
@@ -311,7 +308,7 @@ export default function AppRouter() {
           <Route path="//stripe/onboarding/refresh" element={<Navigate to="/stripe/onboarding/refresh" replace />} />
 
           {/* Default and 404 (/) ya manejado por Landing fuera de AppShell) */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<RouteSuspense layout="appContent"><NotFound /></RouteSuspense>} />
         </Route>
       </Route>
     </Routes>
