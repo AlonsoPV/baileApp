@@ -26,13 +26,34 @@ const PLAY_STORE_URL =
   "https://play.google.com/store/apps/details?id=com.tuorg.dondebailarmx.app";
 const SEO_LOGO_URL =
   "https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/DB_LOGO150.webp";
-const SUPABASE_URL =
-  process.env.SUPABASE_URL ||
-  process.env.VITE_SUPABASE_URL;
-const SUPABASE_SERVER_KEY =
-  process.env.SUPABASE_SERVICE_ROLE ||
-  process.env.SUPABASE_ANON_KEY ||
-  process.env.VITE_SUPABASE_ANON_KEY;
+
+type SupabaseClient = ReturnType<typeof createClient>;
+let supabaseAdmin: SupabaseClient | null = null;
+
+function getSupabaseServerEnv(): { url: string; key: string } | null {
+  const url =
+    process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return { url, key };
+}
+
+function getSupabaseAdmin(): SupabaseClient | null {
+  const env = getSupabaseServerEnv();
+  if (!env) return null;
+  if (!supabaseAdmin) {
+    supabaseAdmin = createClient(env.url, env.key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return supabaseAdmin;
+}
 
 type ClassType = "teacher" | "academy";
 type OpenPayload = {
@@ -53,16 +74,6 @@ type ResolveOpenEntityImageResult = {
   imageUrl: string;
   imageSourceType: "flyer_url" | "media" | "cover" | "avatar" | "fallback_entity";
 };
-
-if (!SUPABASE_URL || !SUPABASE_SERVER_KEY) {
-  throw new Error(
-    "[open] Missing Supabase env. Expected SUPABASE_URL plus SUPABASE_SERVICE_ROLE or SUPABASE_ANON_KEY (VITE_* also supported).",
-  );
-}
-
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVER_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
 
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
@@ -475,11 +486,11 @@ function readShareParams(req: IncomingMessage) {
   return { entityType, id, type, index };
 }
 
-async function fetchEventPayload(id: string): Promise<OpenPayload | null> {
+async function fetchEventPayload(supabase: SupabaseClient, id: string): Promise<OpenPayload | null> {
   const dateId = parsePositiveInt(id);
   if (!dateId) return null;
 
-  const { data: date, error: dateError } = await supabaseAdmin
+  const { data: date, error: dateError } = await supabase
     .from("events_date")
     .select("*")
     .eq("id", dateId)
@@ -488,7 +499,7 @@ async function fetchEventPayload(id: string): Promise<OpenPayload | null> {
 
   let parent: Record<string, unknown> | null = null;
   if (date.parent_id) {
-    const { data: parentData } = await supabaseAdmin
+    const { data: parentData } = await supabase
       .from("events_parent")
       .select("*")
       .eq("id", date.parent_id)
@@ -517,12 +528,17 @@ async function fetchEventPayload(id: string): Promise<OpenPayload | null> {
   };
 }
 
-async function fetchClassPayload(id: string, type: ClassType, index?: number | null): Promise<OpenPayload | null> {
+async function fetchClassPayload(
+  supabase: SupabaseClient,
+  id: string,
+  type: ClassType,
+  index?: number | null,
+): Promise<OpenPayload | null> {
   const profileId = parsePositiveInt(id);
   if (!profileId) return null;
 
   const table = type === "teacher" ? "profiles_teacher" : "v_academies_public";
-  const { data: profile, error } = await supabaseAdmin
+  const { data: profile, error } = await supabase
     .from(table)
     .select("*")
     .eq("id", profileId)
@@ -550,7 +566,11 @@ async function fetchClassPayload(id: string, type: ClassType, index?: number | n
   };
 }
 
-async function fetchProfilePayload(entityType: ShareEntityType, id: string): Promise<OpenPayload | null> {
+async function fetchProfilePayload(
+  supabase: SupabaseClient,
+  entityType: ShareEntityType,
+  id: string,
+): Promise<OpenPayload | null> {
   if (!["academia", "maestro", "organizer", "user", "marca"].includes(entityType)) return null;
 
   const lookupValue = entityType === "user" ? decodeURIComponent(id) : parsePositiveInt(id);
@@ -567,7 +587,7 @@ async function fetchProfilePayload(entityType: ShareEntityType, id: string): Pro
             ? { table: "v_brands_public", column: "id" }
             : { table: "v_user_public", column: "user_id" };
 
-  const { data: profile, error } = await supabaseAdmin
+  const { data: profile, error } = await supabase
     .from(source.table)
     .select("*")
     .eq(source.column, lookupValue)
@@ -594,12 +614,12 @@ async function fetchProfilePayload(entityType: ShareEntityType, id: string): Pro
   };
 }
 
-async function resolvePayload(req: IncomingMessage): Promise<OpenPayload | null> {
+async function resolvePayload(req: IncomingMessage, supabase: SupabaseClient): Promise<OpenPayload | null> {
   const { entityType, id, type, index } = readShareParams(req);
   if (!entityType || !id) return null;
-  if (entityType === "evento") return fetchEventPayload(id);
-  if (entityType === "clase") return type ? fetchClassPayload(id, type, index) : null;
-  return fetchProfilePayload(entityType, id);
+  if (entityType === "evento") return fetchEventPayload(supabase, id);
+  if (entityType === "clase") return type ? fetchClassPayload(supabase, id, type, index) : null;
+  return fetchProfilePayload(supabase, entityType, id);
 }
 
 function renderHtml(payload: OpenPayload): string {
@@ -943,6 +963,50 @@ function renderHtml(payload: OpenPayload): string {
 </html>`;
 }
 
+function renderConfigError(): string {
+  return `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Servicio no disponible | Donde Bailar</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        font-family: Inter, system-ui, sans-serif;
+        background: linear-gradient(180deg, #0f0f14 0%, #1a1a24 100%);
+        color: #f5f5f5;
+      }
+      .box { text-align: center; max-width: 440px; }
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 16px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        color: #7ec8e3;
+        text-decoration: none;
+        background: rgba(45,156,219,0.25);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="box">
+      <h1>Enlace temporalmente no disponible</h1>
+      <p>No se pudo cargar la vista previa. Vuelve a intentar o abre la app desde la tienda.</p>
+      <a href="https://dondebailar.com.mx/explore">Explorar en la web</a>
+    </main>
+  </body>
+</html>`;
+}
+
 function renderNotFound(): string {
   return `<!doctype html>
 <html lang="es">
@@ -997,8 +1061,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    console.error(
+      "[open] Missing Supabase env. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE or SUPABASE_ANON_KEY (VITE_* / NEXT_PUBLIC_* also supported) on the serverless environment.",
+    );
+    res.statusCode = 503;
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.end(renderConfigError());
+    return;
+  }
+
   try {
-    const payload = await resolvePayload(req);
+    const payload = await resolvePayload(req, supabase);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     if (!payload) {
       res.statusCode = 404;
