@@ -4,6 +4,7 @@ import AppShell from './components/layout/AppShell';
 import { routes } from './routes/registry';
 import { isNativeApp } from './utils/isNativeApp';
 import { RouteLoadingFallback, type RouteLoadingLayout } from './components/RouteLoadingFallback';
+import { ExploreHomeLoadingFallback } from './components/explore/ExploreHomeLoadingFallback';
 import { RouteLoadErrorBoundary } from './components/RouteLoadErrorBoundary';
 
 // Guards
@@ -110,13 +111,16 @@ const MyClassAttendanceScreen = React.lazy(() => import('./screens/profile/MyCla
 function RouteSuspense({
   children,
   layout = 'fullscreen',
+  fallback,
 }: {
   children: React.ReactNode;
   layout?: RouteLoadingLayout;
+  /** Si se omite, se usa RouteLoadingFallback con `layout`. */
+  fallback?: React.ReactNode;
 }) {
   return (
     <RouteLoadErrorBoundary>
-      <Suspense fallback={<RouteLoadingFallback layout={layout} />}>
+      <Suspense fallback={fallback ?? <RouteLoadingFallback layout={layout} />}>
         {children}
       </Suspense>
     </RouteLoadErrorBoundary>
@@ -124,7 +128,11 @@ function RouteSuspense({
 }
 
 function ExploreRouteSuspense({ children }: { children: React.ReactNode }) {
-  return <RouteSuspense layout="appContent">{children}</RouteSuspense>;
+  return (
+    <RouteSuspense layout="appContent" fallback={<ExploreHomeLoadingFallback />}>
+      {children}
+    </RouteSuspense>
+  );
 }
 
 function PublicDeepLinkRouteSuspense({ children }: { children: React.ReactNode }) {

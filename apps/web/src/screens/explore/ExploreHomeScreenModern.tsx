@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { m } from "framer-motion";
@@ -143,11 +143,16 @@ function useExploreCardDimensions(isMobile: boolean) {
     return { width: cardWidthClamped, height: cardHeight };
   }, [isMobile]);
 
-  const [dimensions, setDimensions] = React.useState(compute);
+  /** Sin leer window en el primer render: evita reflow forzado (Lighthouse). Medición en useLayoutEffect. */
+  const [dimensions, setDimensions] = React.useState({ width: 0, height: 0 });
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    setDimensions(compute());
+  }, [compute]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    setDimensions(compute());
     let rafId: number | null = null;
     const handler = () => {
       if (rafId !== null) return;
@@ -194,11 +199,15 @@ function useExploreFechasGridDimensions(isMobile: boolean) {
     return { width: cardW, height: cardH, gap };
   }, [isMobile]);
 
-  const [dimensions, setDimensions] = React.useState(compute);
+  const [dimensions, setDimensions] = React.useState({ width: 0, height: 0, gap: 10 });
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    setDimensions(compute());
+  }, [compute]);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    setDimensions(compute());
     let rafId: number | null = null;
     const handler = () => {
       if (rafId !== null) return;
@@ -2402,6 +2411,8 @@ function Section({
   subline,
   sectionMinHeight,
   headerAction,
+  /** Si true: sin fade-in inicial (h2 visible de inmediato → mejor LCP en /explore). */
+  skipEntranceAnimation,
 }: {
   title: string;
   children: React.ReactNode;
@@ -2410,7 +2421,30 @@ function Section({
   subline?: string;
   sectionMinHeight?: number;
   headerAction?: React.ReactNode;
+  skipEntranceAnimation?: boolean;
 }) {
+  const sectionStyle: React.CSSProperties = {
+    marginBottom: "4rem",
+    position: "relative",
+    scrollMarginTop: "100px",
+    ...(sectionMinHeight ? { minHeight: sectionMinHeight } : {}),
+  };
+
+  const inner = (
+    <div className="section-container__main">
+      <SectionHeader title={title} count={count} subline={subline} actionSlot={headerAction} />
+      {children}
+    </div>
+  );
+
+  if (skipEntranceAnimation) {
+    return (
+      <section className="section-container" data-section-id={sectionId} style={sectionStyle}>
+        {inner}
+      </section>
+    );
+  }
+
   return (
     <m.section
       initial={{ opacity: 0, y: 12 }}
@@ -2418,17 +2452,9 @@ function Section({
       transition={{ duration: 0.4 }}
       className="section-container"
       data-section-id={sectionId}
-      style={{
-        marginBottom: '4rem',
-        position: 'relative',
-        scrollMarginTop: '100px',
-        ...(sectionMinHeight ? { minHeight: sectionMinHeight } : {}),
-      }}
+      style={sectionStyle}
     >
-      <div className="section-container__main">
-        <SectionHeader title={title} count={count} subline={subline} actionSlot={headerAction} />
-        {children}
-      </div>
+      {inner}
     </m.section>
   );
 }
@@ -4273,6 +4299,7 @@ export default function ExploreHomeScreen() {
 
           {shouldRenderSection('fechas') && (((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
             <Section
+              skipEntranceAnimation
               title={t('section_upcoming_scene')}
               count={normalizedFechas.length}
               sectionId="fechas"
