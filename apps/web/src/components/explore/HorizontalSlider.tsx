@@ -34,6 +34,15 @@ type Props<T = any> = {
   showNavButtons?: boolean;
   /** 'overlay' = botones superpuestos a los lados; 'bottom' = fila inferior dedicada (mejor UX en mobile) */
   navPosition?: 'overlay' | 'bottom';
+  /**
+   * Si false, todas las tarjetas se muestran a opacidad/escala plenas (sin atenuar la no activa).
+   * Por defecto true (efecto “peek” en carrusel).
+   */
+  dimInactive?: boolean;
+  /**
+   * Solo con navPosition === 'bottom': si false, la fila de flechas no es sticky (evita solaparse con footer/chrome).
+   */
+  stickyNavRow?: boolean;
   /** Alto fijo de cada item en mobile (hero cards). Si > 0, los items tendrán esta altura. */
   itemHeight?: number;
   /** Ancho fijo de cada item en mobile (hero cards). Si > 0, se usa como gridAutoColumns. */
@@ -56,6 +65,8 @@ export default function HorizontalSlider<T>({
   disableDesktopScroll = false,
   showNavButtons = true,
   navPosition = 'overlay',
+  dimInactive = true,
+  stickyNavRow = true,
   itemHeight,
   itemWidth,
   preferVerticalScroll = false,
@@ -655,33 +666,6 @@ export default function HorizontalSlider<T>({
     scheduleNavStateUpdate();
   }, [getCarouselItems, getNearestItemIndex, getScrollStep, scheduleNavStateUpdate]);
 
-  const navButtonBottomStyle: React.CSSProperties = {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    display: "grid",
-    placeItems: "center",
-    fontSize: 24,
-    fontWeight: 700,
-    cursor: "pointer",
-    WebkitTapHighlightColor: "transparent",
-    transition: "all 0.2s ease",
-    border: "1px solid rgba(255,255,255,0.2)",
-    boxShadow: "0 8px 22px rgba(0,0,0,0.28)",
-  };
-  const navButtonBottomActive: React.CSSProperties = {
-    background: "linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%)",
-    color: "#fff",
-    boxShadow: "0 4px 20px rgba(168, 85, 247, 0.4), 0 2px 8px rgba(0,0,0,0.2)",
-  };
-  const navButtonBottomDisabled: React.CSSProperties = {
-    background: "rgba(255,255,255,0.08)",
-    color: "rgba(255,255,255,0.35)",
-    cursor: "not-allowed",
-    boxShadow: "none",
-    border: "1px solid rgba(255,255,255,0.08)",
-  };
-
   const ArrowLeft = ({ size = 20 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -760,9 +744,13 @@ export default function HorizontalSlider<T>({
     </>
   );
 
+  const rootClassName = [className, !dimInactive ? "horizontal-slider--uniform-items" : ""]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
-      className={className}
+      className={rootClassName || undefined}
       style={{
         position: "relative",
         display: "flex",
@@ -911,6 +899,12 @@ export default function HorizontalSlider<T>({
             transform: scale(1);
             filter: saturate(1);
           }
+          .horizontal-slider--uniform-items .horizontal-slider-item,
+          .horizontal-slider--uniform-items .horizontal-slider-item.is-active {
+            opacity: 1;
+            transform: scale(1);
+            filter: saturate(1);
+          }
           .horizontal-slider-item,
           .horizontal-slider-item * {
             touch-action: pan-y;
@@ -951,12 +945,86 @@ export default function HorizontalSlider<T>({
             aspect-ratio: auto !important;
           }
           .horizontal-scroll.scrolling .horizontal-slider-grid > * { transition: none !important; }
-          .horizontal-slider-nav-row button:not(:disabled):hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 24px rgba(168, 85, 247, 0.5) !important;
+          /* Barra inferior: solo alineación; el aspecto lo llevan los .horizontal-slider-nav-btn */
+          .horizontal-slider-nav-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            max-width: 100%;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            padding: 6px 0 4px;
+            margin: 0;
           }
-          .horizontal-slider-nav-row button:not(:disabled):active {
-            transform: scale(0.98);
+          .horizontal-slider-nav-row[data-sticky="true"] {
+            position: sticky;
+            bottom: 0;
+            z-index: 4;
+            padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+          }
+          .horizontal-slider-nav-row[data-sticky="false"] {
+            position: static;
+          }
+          .horizontal-slider-nav-btn {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            padding: 0;
+            margin: 0;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 52%, #f97316 100%);
+            color: #fff;
+            cursor: pointer;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
+            box-shadow:
+              0 4px 18px rgba(168, 85, 247, 0.38),
+              0 1px 0 rgba(255, 255, 255, 0.12) inset;
+          }
+          .horizontal-slider-nav-btn:disabled {
+            background: rgba(255, 255, 255, 0.07);
+            color: rgba(255, 255, 255, 0.32);
+            border-color: rgba(255, 255, 255, 0.09);
+            cursor: not-allowed;
+            box-shadow: none;
+            filter: grayscale(0.25);
+            opacity: 0.88;
+          }
+          .horizontal-slider-nav-btn:not(:disabled):hover {
+            transform: scale(1.06);
+            filter: brightness(1.05);
+            box-shadow:
+              0 6px 26px rgba(168, 85, 247, 0.48),
+              0 1px 0 rgba(255, 255, 255, 0.14) inset;
+          }
+          .horizontal-slider-nav-btn:not(:disabled):active {
+            transform: scale(0.96);
+          }
+          .horizontal-slider-nav-btn:focus {
+            outline: none;
+          }
+          .horizontal-slider-nav-btn:focus-visible {
+            outline: 2px solid rgba(196, 181, 253, 0.95);
+            outline-offset: 2px;
+          }
+          @media (max-width: 380px) {
+            .horizontal-slider-nav-row {
+              gap: 6px;
+            }
+            .horizontal-slider-nav-btn {
+              width: 42px;
+              height: 42px;
+              min-width: 42px;
+              min-height: 42px;
+              border-radius: 12px;
+            }
           }
           .horizontal-slider-nav-overlay button:not(:disabled):hover {
             transform: translateY(-1px) scale(1.04);
@@ -1011,44 +1079,27 @@ export default function HorizontalSlider<T>({
       {navPosition === "bottom" && showNavButtons && canScroll && (
         <div
           className="horizontal-slider-nav-row"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 16,
-            flexShrink: 0,
-            maxWidth: "100%",
-            boxSizing: "border-box",
-            backdropFilter: "blur(12px)",
-            position: "sticky",
-            bottom: 0,
-            left: 0,
-            right: 0,
-          }}
+          data-sticky={stickyNavRow ? "true" : "false"}
+          role="toolbar"
+          aria-label="Navegación del carrusel"
         >
           <button
             type="button"
+            className="horizontal-slider-nav-btn horizontal-slider-nav-btn--prev"
             aria-label="Anterior"
             onClick={() => scrollByCard(-1)}
             disabled={!canLeft}
-            style={{
-              ...navButtonBottomStyle,
-              ...(canLeft ? navButtonBottomActive : navButtonBottomDisabled),
-            }}
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={18} />
           </button>
           <button
             type="button"
+            className="horizontal-slider-nav-btn horizontal-slider-nav-btn--next"
             aria-label="Siguiente"
             onClick={() => scrollByCard(1)}
             disabled={!canRight}
-            style={{
-              ...navButtonBottomStyle,
-              ...(canRight ? navButtonBottomActive : navButtonBottomDisabled),
-            }}
           >
-            <ArrowRight size={16} />
+            <ArrowRight size={18} />
           </button>
         </div>
       )}

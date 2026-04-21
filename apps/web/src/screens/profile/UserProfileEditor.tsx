@@ -26,6 +26,7 @@ import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import { useTranslation } from "react-i18next";
 import { resolveSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 import "./UserEditor.css";
+import "./profileEditorLayout.css";
 
 const colors = {
   dark: "#121212",
@@ -109,7 +110,6 @@ export default function UserProfileEditor() {
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [removing, setRemoving] = useState<{ [key: string]: boolean }>({});
   const [showFilterPreferences, setShowFilterPreferences] = useState(false);
-  const [isSocialSectionCollapsed, setIsSocialSectionCollapsed] = useState(false);
 
   // Asegurar que redes_sociales siempre sea un objeto para que al volver se vea lo guardado
   React.useEffect(() => {
@@ -358,7 +358,7 @@ const handleSave = async () => {
 
   return (
     <>
-      <div className={`editor-container${isAndroid ? " editor-container--android-tight" : ""}`}>
+      <div className={`editor-container ape-editor${isAndroid ? " editor-container--android-tight" : ""}`}>
         <div className="editor-content">
           <div className="editor-header">
             <button onClick={() => navigate(-1)} className="editor-back-btn">
@@ -412,43 +412,38 @@ const handleSave = async () => {
             </button>
           </div>
 
+          <div className="ape-profile-stack">
           <div className="editor-section glass-card-container">
             <h2 className="editor-section-title">{t("personal_information")}</h2>
+            <p className="ape-section-hint">
+              Nombre público, biografía, cómo te identificas y redes opcionales.
+            </p>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "2rem",
-                alignItems: "start",
-              }}
-              className="info-redes-grid"
-            >
-              <div>
-                <div style={{ marginBottom: "1rem" }}>
-                  <label className="editor-field">{t("username")}</label>
-                  <input
-                    type="text"
-                    value={form.display_name}
-                    onChange={(e) => setField("display_name", e.target.value)}
-                    placeholder={t("username")}
-                    className="editor-input"
-                  />
-                </div>
-
-                <div style={{ marginBottom: "1rem" }}>
-                  <label className="editor-field">{t("biography")}</label>
-                  <textarea
-                    value={form.bio || ""}
-                    onChange={(e) => setField("bio", e.target.value)}
-                    placeholder={t("tell_us_about_you")}
-                    rows={3}
-                    className="editor-textarea"
-                  />
-                </div>
+            <div className="info-redes-grid ape-info-main-row">
+              <div className="ape-info-main-row__col" style={{ minWidth: 0 }}>
+                <label className="editor-field">{t("username")}</label>
+                <input
+                  type="text"
+                  value={form.display_name}
+                  onChange={(e) => setField("display_name", e.target.value)}
+                  placeholder={t("username")}
+                  className="editor-input"
+                />
               </div>
 
-              <div className="profile-section-compact">
+              <div className="ape-info-main-row__col" style={{ minWidth: 0 }}>
+                <label className="editor-field">{t("biography")}</label>
+                <textarea
+                  value={form.bio || ""}
+                  onChange={(e) => setField("bio", e.target.value)}
+                  placeholder={t("tell_us_about_you")}
+                  rows={4}
+                  className="editor-textarea"
+                  style={{ minHeight: "120px", resize: "vertical" }}
+                />
+              </div>
+
+              <div className="profile-section-compact ape-info-main-row__identity" style={{ minWidth: 0 }}>
                 <div className="row-top">
                   <h3 className="title">{t("how_do_you_identify")}</h3>
                   <div className="identity-pills">
@@ -477,27 +472,23 @@ const handleSave = async () => {
                     ))}
                   </div>
                 </div>
+              </div>
 
-                <div className="row-bottom">
-                  <div className="row-bottom-header">
-                    <div className="row-bottom-title-group">
-                      <h4 className="subtitle">{t("social_networks")}</h4>
-                      <span className="tag">{t("optional")}</span>
+              <div className="profile-section-compact ape-info-main-row__socials" style={{ minWidth: 0 }}>
+                <details className="ape-socials-collapsible">
+                  <summary className="ape-socials-collapsible__summary">
+                    <div className="row-bottom-header ape-socials-collapsible__header">
+                      <div className="row-bottom-title-group">
+                        <h4 className="subtitle">{t("social_networks")}</h4>
+                        <span className="tag">{t("optional")}</span>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      className="row-bottom-toggle"
-                      onClick={() => setIsSocialSectionCollapsed((prev) => !prev)}
-                      aria-expanded={!isSocialSectionCollapsed}
-                      aria-controls="user-social-networks-list"
-                      title={isSocialSectionCollapsed ? "Expandir" : "Colapsar"}
-                    >
-                      {isSocialSectionCollapsed ? "▾" : "▴"}
-                    </button>
-                  </div>
+                    <span className="ape-socials-collapsible__chev" aria-hidden>
+                      ▾
+                    </span>
+                  </summary>
 
-                  {!isSocialSectionCollapsed && (
-                  <div className="social-list" id="user-social-networks-list">
+                  <div className="social-list ape-socials-collapsible__body" id="user-social-networks-list">
                     <label className="field">
                       <span className="field-icon">
                         <FaInstagram size={18} />
@@ -578,8 +569,7 @@ const handleSave = async () => {
                       </div>
                     </label>
                   </div>
-                  )}
-                </div>
+                </details>
               </div>
             </div>
           </div>
@@ -960,6 +950,7 @@ const handleSave = async () => {
             slots={["v1", "v2", "v3"]}
           />
           */}
+          </div>
         </div>
       </div>
 

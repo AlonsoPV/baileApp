@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
+import './profileEditorLayout.css';
 import { useTeacherInvitations, useRespondToInvitation, useTeacherAcademies, useRemoveInvitation } from "../../hooks/useAcademyTeacherInvitations";
 import { useLiveClasses } from "@/hooks/useLiveClasses";
 import { generateClassId, ensureClassId, stableCronogramaListKey } from "../../utils/classIdGenerator";
@@ -1626,7 +1627,12 @@ export default function TeacherProfileEditor() {
     setEditInitial({
       nombre: it.titulo || '',
       tipo: (costo?.tipo as any) || 'clases sueltas',
-      precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
+      precio:
+        costo?.tipo === 'clases sueltas' &&
+        costo?.precio !== undefined &&
+        costo?.precio !== null
+          ? costo.precio
+          : null,
       regla: costo?.regla || '',
       nivel: (it as any)?.nivel ?? null,
       descripcion: (it as any)?.descripcion || '',
@@ -1730,7 +1736,12 @@ export default function TeacherProfileEditor() {
         id: costoId,
         nombre: c.nombre,
         tipo: c.tipo,
-        precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+        precio:
+          c.tipo === 'clases sueltas' && c.precio !== null && c.precio !== undefined
+            ? c.precio === 0
+              ? 0
+              : c.precio
+            : null,
         regla: c.regla || '',
         classId: classId,
         referenciaCosto: String(classId),
@@ -1805,7 +1816,12 @@ export default function TeacherProfileEditor() {
         id: Date.now(),
         nombre: c.nombre,
         tipo: c.tipo,
-        precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+        precio:
+          c.tipo === 'clases sueltas' && c.precio !== null && c.precio !== undefined
+            ? c.precio === 0
+              ? 0
+              : c.precio
+            : null,
         regla: c.regla || '',
         classId: newClassId,
         referenciaCosto: String(newClassId),
@@ -2029,7 +2045,7 @@ export default function TeacherProfileEditor() {
   return (
     <>
       <style>{STYLES}</style>
-      <div className="academy-editor-container org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
+      <div className="academy-editor-container org-editor ape-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
       <div className="academy-editor-inner">
         {/* Header con botón volver + título centrado + toggle (diseño organizer) */}
         <div className="org-editor__header">
@@ -2102,6 +2118,7 @@ export default function TeacherProfileEditor() {
 
         {activeTab === "perfil" && (
           <div role="tabpanel" id="tabpanel-perfil" aria-labelledby="tab-perfil">
+          <div className="ape-profile-stack">
 
         {/* Mensaje de estado global */}
         {statusMsg && (
@@ -2122,7 +2139,7 @@ export default function TeacherProfileEditor() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="welcome-banner"
+            className="welcome-banner ape-welcome-banner"
           >
             <div className="welcome-banner-icon">🎓</div>
             <h3 className="welcome-banner-title">
@@ -2145,53 +2162,51 @@ export default function TeacherProfileEditor() {
           <h2 className="editor-section-title">
             👤 Información Personal
           </h2>
+          <p className="ape-section-hint">
+            Lo primero que verán los visitantes: nombre, descripción y cómo contactarte en redes.
+          </p>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '2rem',
-            alignItems: 'start'
-          }}
-            className="info-redes-grid">
-            {/* Columna 1: Información Básica */}
-            <div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label className="editor-field">
-                  🎓 Nombre del Maestro *
-                </label>
-                <input
-                  type="text"
-                  value={form.nombre_publico}
-                  onChange={(e) => setField('nombre_publico', e.target.value)}
-                  placeholder="Ej: Maestro de Baile Moderno"
-                  className="editor-input"
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label className="editor-field">
-                  📝 Descripción
-                </label>
-                <textarea
-                  value={form.bio || ''}
-                  onChange={(e) => setField('bio', e.target.value)}
-                  placeholder="Cuéntanos sobre tus inicios dando clases, su historia, metodología y lo que la hace especial..."
-                  rows={3}
-                  className="editor-textarea"
-                />
-              </div>
+          <div className="info-redes-grid ape-info-main-row">
+            <div className="ape-info-main-row__col" style={{ minWidth: 0 }}>
+              <label className="editor-field">
+                🎓 Nombre del Maestro *
+              </label>
+              <input
+                type="text"
+                value={form.nombre_publico}
+                onChange={(e) => setField('nombre_publico', e.target.value)}
+                placeholder="Ej: Maestro de Baile Moderno"
+                className="editor-input"
+              />
             </div>
 
-            {/* Columna 2: Redes Sociales Compactas */}
-            <div className="profile-section-compact">
-              {/* REDES SOCIALES */}
-              <div className="row-bottom">
-                <div className="row-bottom-header">
-                  <h4 className="subtitle">Redes Sociales</h4>
-                  <span className="tag">Opcional</span>
-                </div>
+            <div className="ape-info-main-row__col" style={{ minWidth: 0 }}>
+              <label className="editor-field">
+                📝 Descripción
+              </label>
+              <textarea
+                value={form.bio || ''}
+                onChange={(e) => setField('bio', e.target.value)}
+                placeholder="Cuéntanos sobre tus inicios dando clases, su historia, metodología y lo que la hace especial..."
+                rows={4}
+                className="editor-textarea"
+                style={{ minHeight: '120px', resize: 'vertical' }}
+              />
+            </div>
 
-                <div className="social-list">
+            <div className="profile-section-compact ape-info-main-row__socials" style={{ minWidth: 0 }}>
+              <details className="ape-socials-collapsible">
+                <summary className="ape-socials-collapsible__summary">
+                  <div className="row-bottom-header ape-socials-collapsible__header">
+                    <h4 className="subtitle">Redes Sociales</h4>
+                    <span className="tag">Opcional</span>
+                  </div>
+                  <span className="ape-socials-collapsible__chev" aria-hidden>
+                    ▾
+                  </span>
+                </summary>
+
+                <div className="social-list ape-socials-collapsible__body">
                   <SocialFieldRow
                     icon={<FaInstagram size={18} />}
                     prefix="ig/"
@@ -2259,7 +2274,7 @@ export default function TeacherProfileEditor() {
                     onChange={(v) => setNested('redes_sociales.telegram', v)}
                       />
                 </div>
-              </div>
+              </details>
             </div>
           </div>
         </div>
@@ -2733,6 +2748,7 @@ export default function TeacherProfileEditor() {
             slots={[...VIDEO_SLOTS]}
           />
         </React.Suspense> */}
+          </div>
           </div>
         )}
       </div>

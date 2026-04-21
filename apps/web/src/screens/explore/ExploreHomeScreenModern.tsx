@@ -2541,6 +2541,9 @@ export default function ExploreHomeScreen() {
   const shouldLoadTags =
     openFilterDropdown === "ritmos" ||
     openFilterDropdown === "zonas" ||
+    selectedType === "fechas" ||
+    selectedType === "sociales" ||
+    selectedType === "marcas" ||
     selectedType === "clases" ||
     selectedType === "academias" ||
     selectedType === "maestros" ||

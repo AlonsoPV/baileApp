@@ -76,8 +76,9 @@ export default function NotFound() {
             left: 0,
             right: 0,
             height: '4px',
-            background: `linear-gradient(90deg, ${colors.primary[500]}, ${colors.secondary[500]}, ${colors.primary[500]})`,
+            backgroundImage: `linear-gradient(90deg, ${colors.primary[500]}, ${colors.secondary[500]}, ${colors.primary[500]})`,
             backgroundSize: '200% 100%',
+            backgroundRepeat: 'no-repeat',
             animation: 'shimmer 3s linear infinite'
           }} />
 
@@ -91,7 +92,7 @@ export default function NotFound() {
               fontWeight: 900,
               lineHeight: 1,
               margin: 0,
-              background: `linear-gradient(135deg, ${colors.primary[500]}, ${colors.secondary[500]}, ${colors.primary[500]})`,
+              backgroundImage: `linear-gradient(135deg, ${colors.primary[500]}, ${colors.secondary[500]}, ${colors.primary[500]})`,
               backgroundSize: '200% 200%',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',

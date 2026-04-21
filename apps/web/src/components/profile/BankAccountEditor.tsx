@@ -1,4 +1,5 @@
 import React from "react";
+import "./BankAccountEditor.css";
 
 export type BankAccountData = {
   banco?: string;
@@ -11,276 +12,146 @@ export type BankAccountData = {
 interface BankAccountEditorProps {
   value: BankAccountData;
   onChange: (data: BankAccountData) => void;
+  /** Sin caja ni título interno: para cuando la tarjeta y el h2 ya están en el padre (p. ej. Academia). */
+  embedded?: boolean;
 }
 
-export default function BankAccountEditor({ value, onChange }: BankAccountEditorProps) {
+export default function BankAccountEditor({
+  value,
+  onChange,
+  embedded = false,
+}: BankAccountEditorProps) {
   const handleChange = (field: keyof BankAccountData, newValue: string) => {
     onChange({
       ...value,
-      [field]: newValue
+      [field]: newValue,
     });
   };
 
+  const rootClass = embedded
+    ? "bank-account-editor bank-account-editor--embedded"
+    : "bank-account-editor";
+
   return (
-    <div style={{
-      border: '1px solid rgba(255,255,255,0.15)',
-      borderRadius: '16px',
-      padding: '1.5rem',
-      background: 'rgba(255,255,255,0.05)',
-      marginBottom: '1.5rem'
-    }}>
-      <h3 style={{
-        fontSize: '1.25rem',
-        fontWeight: 700,
-        marginBottom: '1rem',
-        color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem'
-      }}>
-        🏦 Datos de Cuenta Bancaria
-      </h3>
-      <p style={{
-        fontSize: '0.85rem',
-        color: 'rgba(255,255,255,0.7)',
-        marginBottom: '1.25rem',
-        lineHeight: 1.5
-      }}>
-        Ingresa la información de tu cuenta bancaria para recibir pagos. Esta información es privada y solo tú puedes verla.
-      </p>
+    <div className={rootClass}>
+      {!embedded && (
+        <>
+          <h3 className="bank-account-editor__title">🏦 Datos de cuenta bancaria</h3>
+          <p className="bank-account-editor__intro">
+            Ingresa la información para recibir pagos. Es privada: solo tú puedes verla en el editor.
+          </p>
+        </>
+      )}
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '1rem'
-      }}>
-        {/* Banco */}
-        <div>
-          <label style={{
-            display: 'block',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            marginBottom: '0.5rem',
-            color: 'rgba(255,255,255,0.9)'
-          }}>
-            Banco *
-          </label>
-          <input
-            type="text"
-            value={value.banco || ''}
-            onChange={(e) => handleChange('banco', e.target.value)}
-            placeholder="Ej: BBVA, Banamex, Santander..."
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(0,0,0,0.3)',
-              color: '#fff',
-              fontSize: '0.9rem',
-              outline: 'none',
-              transition: 'all 0.2s ease'
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.4)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
-            }}
-          />
-        </div>
-
-        {/* Nombre del titular */}
-        <div>
-          <label style={{
-            display: 'block',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            marginBottom: '0.5rem',
-            color: 'rgba(255,255,255,0.9)'
-          }}>
-            Nombre del Titular *
-          </label>
-          <input
-            type="text"
-            value={value.nombre || ''}
-            onChange={(e) => handleChange('nombre', e.target.value)}
-            placeholder="Nombre completo del titular"
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(0,0,0,0.3)',
-              color: '#fff',
-              fontSize: '0.9rem',
-              outline: 'none',
-              transition: 'all 0.2s ease'
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.4)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
-            }}
-          />
-        </div>
-
-        {/* Concepto */}
-        <div>
-          <label style={{
-            display: 'block',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            marginBottom: '0.5rem',
-            color: 'rgba(255,255,255,0.9)'
-          }}>
-            Concepto de Pago
-          </label>
-          <input
-            type="text"
-            value={value.concepto || ''}
-            onChange={(e) => handleChange('concepto', e.target.value)}
-            placeholder="Ej: Clases de baile, Evento..."
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(0,0,0,0.3)',
-              color: '#fff',
-              fontSize: '0.9rem',
-              outline: 'none',
-              transition: 'all 0.2s ease'
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.4)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
-            }}
-          />
-        </div>
-
-        {/* CLABE */}
-        <div>
-          <label style={{
-            display: 'block',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            marginBottom: '0.5rem',
-            color: 'rgba(255,255,255,0.9)'
-          }}>
-            CLABE Interbancaria *
-          </label>
-          <input
-            type="text"
-            value={value.clabe || ''}
-            onChange={(e) => {
-              // Solo permitir números y máximo 18 caracteres
-              const numericValue = e.target.value.replace(/\D/g, '').slice(0, 18);
-              handleChange('clabe', numericValue);
-            }}
-            placeholder="18 dígitos"
-            maxLength={18}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(0,0,0,0.3)',
-              color: '#fff',
-              fontSize: '0.9rem',
-              outline: 'none',
-              transition: 'all 0.2s ease',
-              fontFamily: 'monospace',
-              letterSpacing: '0.05em'
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.4)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
-            }}
-          />
-          {value.clabe && value.clabe.length !== 18 && (
-            <small style={{
-              display: 'block',
-              marginTop: '0.25rem',
-              fontSize: '0.75rem',
-              color: 'rgba(255,255,255,0.6)'
-            }}>
-              La CLABE debe tener 18 dígitos
-            </small>
-          )}
-        </div>
-
-        {/* Número de cuenta */}
-        <div>
-          <label style={{
-            display: 'block',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            marginBottom: '0.5rem',
-            color: 'rgba(255,255,255,0.9)'
-          }}>
-            Número de Cuenta *
-          </label>
-          <input
-            type="text"
-            value={value.cuenta || ''}
-            onChange={(e) => {
-              // Solo permitir números
-              const numericValue = e.target.value.replace(/\D/g, '');
-              handleChange('cuenta', numericValue);
-            }}
-            placeholder="Número de cuenta"
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(0,0,0,0.3)',
-              color: '#fff',
-              fontSize: '0.9rem',
-              outline: 'none',
-              transition: 'all 0.2s ease',
-              fontFamily: 'monospace',
-              letterSpacing: '0.05em'
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.4)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
-              e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
-            }}
-          />
+      <div className="bank-account-editor__group">
+        <span className="bank-account-editor__group-label">Titular y banco</span>
+        <div className="bank-account-editor__grid">
+          <div className="bank-account-editor__field">
+            <label className="bank-account-editor__label" htmlFor="bank-account-banco">
+              Banco <span className="bank-account-editor__label-hint">(requerido)</span>
+            </label>
+            <input
+              id="bank-account-banco"
+              type="text"
+              className="bank-account-editor__input"
+              value={value.banco || ""}
+              onChange={(e) => handleChange("banco", e.target.value)}
+              placeholder="Ej. BBVA, Santander, Banorte…"
+              autoComplete="off"
+            />
+          </div>
+          <div className="bank-account-editor__field">
+            <label className="bank-account-editor__label" htmlFor="bank-account-nombre">
+              Nombre del titular <span className="bank-account-editor__label-hint">(requerido)</span>
+            </label>
+            <input
+              id="bank-account-nombre"
+              type="text"
+              className="bank-account-editor__input"
+              value={value.nombre || ""}
+              onChange={(e) => handleChange("nombre", e.target.value)}
+              placeholder="Como aparece en la cuenta"
+              autoComplete="name"
+            />
+          </div>
         </div>
       </div>
 
-      <div style={{
-        marginTop: '1rem',
-        padding: '0.75rem',
-        borderRadius: '8px',
-        background: 'rgba(255,193,7,0.1)',
-        border: '1px solid rgba(255,193,7,0.3)',
-        fontSize: '0.8rem',
-        color: 'rgba(255,255,255,0.8)',
-        lineHeight: 1.5
-      }}>
-        <strong>🔒 Privacidad:</strong> Esta información es completamente privada y solo tú puedes verla. Se utilizará únicamente para procesar pagos cuando sea necesario.
+      <div className="bank-account-editor__group">
+        <span className="bank-account-editor__group-label">Cuenta para depósitos o transferencias</span>
+        <div className="bank-account-editor__grid">
+          <div className="bank-account-editor__field">
+            <label className="bank-account-editor__label" htmlFor="bank-account-clabe">
+              CLABE interbancaria <span className="bank-account-editor__label-hint">(18 dígitos)</span>
+            </label>
+            <input
+              id="bank-account-clabe"
+              type="text"
+              inputMode="numeric"
+              className="bank-account-editor__input bank-account-editor__input--mono"
+              value={value.clabe || ""}
+              onChange={(e) => {
+                const numericValue = e.target.value.replace(/\D/g, "").slice(0, 18);
+                handleChange("clabe", numericValue);
+              }}
+              placeholder="18 dígitos"
+              maxLength={18}
+              autoComplete="off"
+            />
+            {Boolean(value.clabe) && value.clabe!.length !== 18 && (
+              <p className="bank-account-editor__field-hint">La CLABE debe tener 18 dígitos.</p>
+            )}
+          </div>
+          <div className="bank-account-editor__field">
+            <label className="bank-account-editor__label" htmlFor="bank-account-cuenta">
+              Número de cuenta <span className="bank-account-editor__label-hint">(requerido)</span>
+            </label>
+            <input
+              id="bank-account-cuenta"
+              type="text"
+              inputMode="numeric"
+              className="bank-account-editor__input bank-account-editor__input--mono"
+              value={value.cuenta || ""}
+              onChange={(e) => {
+                const numericValue = e.target.value.replace(/\D/g, "");
+                handleChange("cuenta", numericValue);
+              }}
+              placeholder="Solo números"
+              autoComplete="off"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bank-account-editor__group">
+        <span className="bank-account-editor__group-label">Opcional</span>
+        <div className="bank-account-editor__grid">
+          <div className="bank-account-editor__field bank-account-editor__field--full">
+            <label className="bank-account-editor__label" htmlFor="bank-account-concepto">
+              Concepto de pago sugerido
+            </label>
+            <input
+              id="bank-account-concepto"
+              type="text"
+              className="bank-account-editor__input"
+              value={value.concepto || ""}
+              onChange={(e) => handleChange("concepto", e.target.value)}
+              placeholder="Ej. Mensualidad clase salsa, Inscripción evento…"
+              autoComplete="off"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bank-account-editor__privacy">
+        <span className="bank-account-editor__privacy-icon" aria-hidden>
+          🔒
+        </span>
+        <span>
+          <strong>Privacidad:</strong> no se muestra en tu perfil público. Se usa solo para coordinar pagos cuando
+          aplica.
+        </span>
       </div>
     </div>
   );
 }
-

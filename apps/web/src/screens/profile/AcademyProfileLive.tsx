@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useAcademyMy } from "../../hooks/useAcademy";
 import { useAcademyMedia } from "../../hooks/useAcademyMedia";
 import { useTags } from "../../hooks/useTags";
-import ImageWithFallback from "../../components/ImageWithFallback";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
@@ -26,7 +25,10 @@ import { useCompetitionGroupsByAcademy } from "../../hooks/useCompetitionGroups"
 import { useAuth } from "@/contexts/AuthProvider";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
-import { Share2 } from "lucide-react";
+import OrganizerPublicGallery from "../../components/profile/gallery/OrganizerPublicGallery";
+import { EventHero } from "../../components/events/EventDetail";
+import "../../components/events/EventDetail/eventDetailScreen.css";
+import { routes } from "../../routes/registry";
 import "./AcademyProfileLive.css";
 
 // Lazy load heavy components
@@ -220,121 +222,6 @@ const VideoCarouselComponent = React.memo(function VideoCarouselComponent({ vide
           </div>
         )}
       </div>
-    </>
-  );
-});
-
-// Componente Carousel para fotos mejorado (memoizado)
-const CarouselComponent = React.memo(function CarouselComponent({ photos }: { photos: string[] }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const nextPhoto = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % photos.length);
-  }, [photos.length]);
-
-  const prevPhoto = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  }, [photos.length]);
-
-  const goToPhoto = useCallback((index: number) => {
-    setCurrentIndex(index);
-  }, []);
-
-  if (photos.length === 0) return null;
-
-  return (
-    <>
-     
-      <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
-        {/* Imagen principal */}
-        <div className="photo-gallery-main">
-          <ImageWithFallback
-            src={photos[currentIndex]}
-            alt={`Foto ${currentIndex + 1}`}
-            className="photo-gallery-image"
-            onClick={() => setIsFullscreen(true)}
-          />
-
-          {/* Contador */}
-          <div className="photo-gallery-counter">
-            {currentIndex + 1} / {photos.length}
-          </div>
-
-          {/* Botones de navegación */}
-          {photos.length > 1 && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
-                className="photo-gallery-nav-btn photo-gallery-nav-btn--prev"
-                aria-label="Foto anterior"
-                disabled={photos.length <= 1}
-              >
-                ‹
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
-                className="photo-gallery-nav-btn photo-gallery-nav-btn--next"
-                aria-label="Foto siguiente"
-                disabled={photos.length <= 1}
-              >
-                ›
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Miniaturas */}
-        {photos.length > 1 && (
-          <div className="photo-gallery-thumbnails" role="tablist" aria-label="Miniaturas de fotos">
-            {photos.map((photo, index) => (
-              <button
-                key={index}
-                onClick={() => goToPhoto(index)}
-                className={`photo-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
-                aria-label={`Ver foto ${index + 1}`}
-                aria-selected={index === currentIndex}
-                role="tab"
-              >
-                <ImageWithFallback
-                  src={photo}
-                  alt={`Miniatura ${index + 1}`}
-                />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Pantalla completa */}
-      {isFullscreen && (
-        <div
-          className="photo-gallery-fullscreen"
-          onClick={() => setIsFullscreen(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Vista de pantalla completa"
-        >
-          <button
-            className="photo-gallery-fullscreen-close"
-            onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
-            aria-label="Cerrar pantalla completa"
-          >
-            ✕
-          </button>
-          <div className="photo-gallery-fullscreen-content" onClick={(e) => e.stopPropagation()}>
-            <ImageWithFallback
-              src={photos[currentIndex]}
-              alt={`Foto ${currentIndex + 1} - Pantalla completa`}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain'
-              }}
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 });
@@ -561,6 +448,25 @@ export default function AcademyProfileLive() {
     }
   }, [academyId, academy, shareUrl]);
 
+  const handleBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(routes.app.explore);
+    }
+  }, [navigate]);
+
+  const heroLocationMeta = useMemo(() => {
+    const ubis = (academy as any)?.ubicaciones;
+    const first = Array.isArray(ubis) && ubis[0] ? ubis[0] : null;
+    const city =
+      (first?.ciudad && String(first.ciudad).trim()) ||
+      ((academy as any)?.ciudad && String((academy as any).ciudad).trim()) ||
+      "";
+    const venue = (first?.nombre && String(first.nombre).trim()) || "";
+    return { city, venue };
+  }, [academy]);
+
   if (isLoading) {
     return (
       <div style={{
@@ -713,225 +619,105 @@ export default function AcademyProfileLive() {
           />
         </div>
 
-        {/* Banner Principal */}
+        {/* Hero: mismo componente y estilos que EventDatePublicScreen (EventHero + eds-hero) */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="academy-banner glass-card-container"
-          style={{
-            position: 'relative',
-            margin: '0 auto',
-            overflow: 'hidden',
-            background: 'linear-gradient(165deg, rgba(8, 8, 14, 0.98) 0%, rgba(14, 12, 22, 0.97) 35%, rgba(10, 8, 16, 0.98) 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)'
-          }}
+          transition={{ duration: 0.5 }}
+          className="profile-live-hero-wrap"
         >
-          {/* Botón Volver a inicio */}
-          <motion.button
-            onClick={() => navigate('/explore')}
-            whileHover={{ scale: 1.1, x: -3 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Volver a inicio"
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              left: '1rem',
-              zIndex: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              border: 'none',
-              background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))',
-              cursor: 'pointer',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.3), rgba(255,209,102,0.25))';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset';
-            }}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: '#f093fb' }}
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </motion.button>
-          <div
-            className="academy-hero-top-actions"
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              zIndex: 12,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            <button
-              id="profile-hero-share"
-              aria-label="Compartir perfil"
-              title="Compartir"
-              onClick={onShare}
-              className="academy-hero-share-btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '44px',
-                height: '44px',
-                borderRadius: '50%',
-                border: '1px solid rgba(255,255,255,0.15)',
-                background: 'rgba(50, 50, 58, 0.8)',
-                color: '#fff',
-                cursor: 'pointer',
-                fontSize: '1.1rem'
-              }}
-            >
-              <Share2 size={20} strokeWidth={2} aria-hidden />
-            </button>
+          {copied && (
+            <div className="profile-live-copied-toast" role="status" aria-live="polite">
+              Copiado
+            </div>
+          )}
+          <div className="profile-live-hero-eds">
+            <EventHero
+              title={academy.nombre_publico || "Academia"}
+              flyerUrl={primaryAvatarUrl}
+              flyerCacheKey={
+                (academy as any)?.updated_at ?? (academy as any)?.created_at ?? academyId ?? null
+              }
+              dateStr="Academia de baile"
+              timeRange={heroLocationMeta.city}
+              venueName={heroLocationMeta.venue}
+              onShare={onShare}
+              onBack={handleBack}
+            />
           </div>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 64, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>Copiado</div>}
-          <div className="academy-banner-grid">
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-              gap: '1rem'
-            }}>
-              <div className="academy-banner-avatar">
-                {primaryAvatarUrl ? (
-                  <img
-                    src={primaryAvatarUrl}
-                    alt="Logo de la academia"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
-                  <div className="academy-banner-avatar-fallback" style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '6rem',
-                    fontWeight: '700',
-                    color: 'white'
-                  }}>
-                    {academy.nombre_publico?.[0]?.toUpperCase() || '🎓'}
-                  </div>
-                )}
-              </div>
-              {/* Badge de verificación inline */}
-              <div style={{
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.05 }}
+          className="profile-live-hero-below glass-card-container"
+        >
+          {((academy as any)?.estado_aprobacion === 'aprobado') && (
+            <div
+              style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.75rem',
-                flexWrap: 'wrap'
-              }}>
-                {((academy as any)?.estado_aprobacion === 'aprobado') && (
-                  <div className="badge" style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '.45rem',
-                    padding: '.35rem .6rem',
-                    borderRadius: '999px',
-                    fontWeight: 800,
-                    background: 'linear-gradient(135deg, #106c37, #0b5)',
-                    border: '1px solid #13a65a',
-                    boxShadow: '0 8px 18px rgba(0,0,0,.35)',
-                    fontSize: '.82rem',
-                    color: '#fff'
-                  }}>
-                    <div className="dot" style={{
-                      width: '16px',
-                      height: '16px',
-                      display: 'grid',
-                      placeItems: 'center',
-                      background: '#16c784',
-                      borderRadius: '50%',
-                      color: '#062d1f',
-                      fontSize: '.75rem',
-                      fontWeight: 900
-                    }}>✓</div>
-                    <span>Verificado</span>
-                  </div>
-                )}
+                flexWrap: 'wrap',
+                marginBottom: '1rem',
+              }}
+            >
+              <div
+                className="badge"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '.45rem',
+                  padding: '.35rem .6rem',
+                  borderRadius: '999px',
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #106c37, #0b5)',
+                  border: '1px solid #13a65a',
+                  boxShadow: '0 8px 18px rgba(0,0,0,.35)',
+                  fontSize: '.82rem',
+                  color: '#fff',
+                }}
+              >
+                <div
+                  className="dot"
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: '#16c784',
+                    borderRadius: '50%',
+                    color: '#062d1f',
+                    fontSize: '.75rem',
+                    fontWeight: 900,
+                  }}
+                >
+                  ✓
+                </div>
+                <span>Verificado</span>
               </div>
             </div>
-
-            <div>
-
-              <h1 id="profile-hero-name" style={{
-                fontSize: '3rem',
-                display: 'inline',
-                fontWeight: '800',
-                color: 'white',
-                margin: '0 0 0.5rem 0',
-                textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
-              }}>
-                {academy.nombre_publico}
-              </h1>
-             {/*  {(academy as any)?.estado_aprobacion === 'aprobado' && (
-                <span style={{
-                  marginLeft: 12,
-                  border: '1px solid rgb(255 255 255 / 40%)',
-                  background: 'rgb(25 25 25 / 70%)',
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                  fontSize: 12,
-                  color: '#9be7a1',
-                  whiteSpace: 'nowrap',
-                  verticalAlign: 'middle',
-                  display: 'inline-block'
-                }}>
-                  ✅
-                </span>
-              )} */}
-              <p id="profile-hero-type" style={{
-                fontSize: '1.25rem',
-                color: 'rgba(255, 255, 255, 0.9)',
-                margin: '0 0 0.75rem 0',
-                lineHeight: 1.4
-              }}>
-                Academia de Baile
-              </p>
-
-              <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
-                <BioSection 
-                  bio={academy.bio}
-                  redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
-                  variant="banner"
-                />
-              </div>
-
-            </div>
+          )}
+          <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
+            <BioSection
+              bio={academy.bio}
+              redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
+              variant="banner"
+            />
           </div>
-          <div id="profile-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', width: '100%' }}>
+          <div
+            id="profile-hero-chips"
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+              marginTop: '0.25rem',
+              width: '100%',
+              justifyContent: 'center',
+            }}
+          >
             {(() => {
               const slugs = normalizeRitmosToSlugs(academy, allTags);
               return slugs.length > 0 ? (
@@ -1725,40 +1511,16 @@ export default function AcademyProfileLive() {
             </motion.section>
           )}
 
-          {/* Galería de Fotos Mejorada */}
+          {/* Galería de fotos (mismo patrón que organizador: id estable para auditorías) */}
           {carouselPhotos.length > 0 && (
-            <motion.section
-              id="user-profile-photo-gallery"
-              data-baile-id="user-profile-photo-gallery"
-              data-test-id="user-profile-photo-gallery"
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="gallery-section glass-card-container"
+              className="gallery-section"
             >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1.5rem'
-              }}>
-                <h3 className="section-title">
-                  📷 Galería de Fotos
-                </h3>
-                <div style={{
-                  padding: '0.5rem 1rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '20px',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: colors.light
-                }}>
-                  {carouselPhotos.length} foto{carouselPhotos.length !== 1 ? 's' : ''}
-                </div>
-              </div>
-
-              <CarouselComponent photos={carouselPhotos} />
-            </motion.section>
+              <OrganizerPublicGallery photos={carouselPhotos} title="Galería de fotos" />
+            </motion.div>
           )}
 
 

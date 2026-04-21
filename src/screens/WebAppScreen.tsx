@@ -23,6 +23,7 @@ import { getRuntimeConfig } from "../config/runtimeConfig";
 import { AuthCoordinator } from "../auth/AuthCoordinator";
 import { markPerformance } from "../lib/performance";
 import { PerformanceLogger } from "../utils/perf";
+import { useInitialAppShell } from "../context/InitialAppShellContext";
 import { assertGoogleAuthConfig } from "../auth/assertGoogleAuthConfig";
 import { logHost, shouldAuthDebug } from "../utils/authDebug";
 import {
@@ -326,6 +327,8 @@ export default function WebAppScreen() {
   const slowLoadHintTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const shellReadyReceivedRef = React.useRef(false);
   const splashHiddenRef = React.useRef(false);
+  const { reportWebViewInitialLoadComplete } = useInitialAppShell();
+  const initialDocumentLoadReportedRef = React.useRef(false);
 
   const logReadyPhase = React.useCallback((phase: "READY_SHELL" | "READY", elapsedMs: number, msg: any) => {
     if (typeof console?.log === "function") {
@@ -1557,6 +1560,10 @@ export default function WebAppScreen() {
               url: currentUrl,
               title: e?.nativeEvent?.title ?? "",
             });
+            if (!initialDocumentLoadReportedRef.current) {
+              initialDocumentLoadReportedRef.current = true;
+              reportWebViewInitialLoadComplete();
+            }
           }}
           onNavigationStateChange={(state: any) => {
             setCanGoBackInWebView(Boolean(state?.canGoBack));

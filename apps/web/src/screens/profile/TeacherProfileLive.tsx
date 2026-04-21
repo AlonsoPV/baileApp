@@ -19,8 +19,11 @@ import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { colors } from "../../theme/colors";
 import { useCompetitionGroupsByTeacher } from "../../hooks/useCompetitionGroups";
-import { Share2 } from "lucide-react";
 import "./TeacherProfileLive.css";
+import "./profileLiveEventHero.css";
+import { EventHero } from "../../components/events/EventDetail";
+import "../../components/events/EventDetail/eventDetailScreen.css";
+import { routes } from "../../routes/registry";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 
 // Lazy load heavy components
@@ -507,6 +510,50 @@ export default function TeacherProfileLive() {
     return bestIndex;
   }, [promotions]);
 
+  const handleBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(routes.app.explore);
+    }
+  }, [navigate]);
+
+  const handleShare = useCallback(() => {
+    try {
+      const publicUrl = teacherId ? `${window.location.origin}/maestro/${teacherId}` : "";
+      const title = teacher?.nombre_publico || "Maestro";
+      const text = `Mira el perfil de ${title}`;
+      const navAny = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+      if (navAny && typeof navAny.share === "function") {
+        navAny.share({ title, text, url: publicUrl }).catch(() => {});
+      } else {
+        navigator.clipboard?.writeText(publicUrl).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }).catch(() => {});
+      }
+    } catch {
+      /* noop */
+    }
+  }, [teacherId, teacher?.nombre_publico]);
+
+  const primaryAvatarUrl = useMemo(() => {
+    if (!teacher) return null as string | null;
+    const cover = getMediaBySlot(media as unknown as MediaSlotItem[], "cover")?.url;
+    const p1 = getMediaBySlot(media as unknown as MediaSlotItem[], "p1")?.url;
+    const raw = cover || p1 || null;
+    if (!raw || typeof raw !== "string" || !raw.trim()) return null;
+    return toDirectPublicStorageUrl(raw) ?? raw;
+  }, [teacher, media]);
+
+  const heroLocationMeta = useMemo(() => {
+    const ubis = (teacher as { ubicaciones?: Array<{ ciudad?: string; nombre?: string }> })?.ubicaciones;
+    const first = Array.isArray(ubis) && ubis[0] ? ubis[0] : null;
+    const city = (first?.ciudad && String(first.ciudad).trim()) || "";
+    const venue = (first?.nombre && String(first.nombre).trim()) || "";
+    return { city, venue };
+  }, [teacher]);
+
   if (isLoading) {
     return (
       <div style={{
@@ -595,26 +642,6 @@ export default function TeacherProfileLive() {
     );
   }
 
-
-
-  // Handler para compartir
-  const handleShare = useCallback(() => {
-    try {
-      const publicUrl = teacherId ? `${window.location.origin}/maestro/${teacherId}` : '';
-      const title = teacher?.nombre_publico || 'Maestro';
-      const text = `Mira el perfil de ${title}`;
-      const navAny = (navigator as any);
-      if (navAny && typeof navAny.share === 'function') {
-        navAny.share({ title, text, url: publicUrl }).catch(() => {});
-      } else {
-        navigator.clipboard?.writeText(publicUrl).then(() => { 
-          setCopied(true); 
-          setTimeout(() => setCopied(false), 1500); 
-        }).catch(() => {});
-      }
-    } catch {}
-  }, [teacherId, teacher?.nombre_publico]);
-
   return (
     <>
       <div className="teacher-container">
@@ -628,218 +655,107 @@ export default function TeacherProfileLive() {
           />
         </div>
 
-        {/* Banner Principal */}
+        {/* Hero: mismo patrón que AcademyProfileLive (EventHero + bloque inferior) */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="teacher-banner glass-card-container"
-          style={{
-            position: 'relative',
-            margin: '0 auto',
-            overflow: 'hidden'
-          }}
+          transition={{ duration: 0.5 }}
+          className="profile-live-hero-wrap"
         >
-          {/* Botón Volver a inicio */}
-          <motion.button
-            onClick={() => navigate('/explore')}
-            whileHover={{ scale: 1.1, x: -3 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Volver a inicio"
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              left: '1rem',
-              zIndex: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              border: 'none',
-              background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))',
-              cursor: 'pointer',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.3), rgba(255,209,102,0.25))';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset';
-            }}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: '#f093fb' }}
+          {copied && (
+            <div className="profile-live-copied-toast" role="status" aria-live="polite">
+              Copiado
+            </div>
+          )}
+          <div className="profile-live-hero-eds">
+            <EventHero
+              title={(teacher as any)?.nombre_publico || "Maestro"}
+              flyerUrl={primaryAvatarUrl}
+              flyerCacheKey={
+                (teacher as any)?.updated_at ?? (teacher as any)?.created_at ?? teacherId ?? null
+              }
+              dateStr="Maestro de baile"
+              timeRange={heroLocationMeta.city}
+              venueName={heroLocationMeta.venue}
+              onShare={handleShare}
+              onBack={handleBack}
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.05 }}
+          className="profile-live-hero-below glass-card-container"
+        >
+          {((teacher as any)?.estado_aprobacion === "aprobado") && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.75rem",
+                flexWrap: "wrap",
+                marginBottom: "1rem",
+              }}
             >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </motion.button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10, fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Copiado</div>}
-          <div className="teacher-banner-grid">
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-              gap: '1rem'
-            }}>
-              <div className="teacher-banner-avatar">
-                {(() => {
-                  const raw = getMediaBySlot(media as unknown as MediaSlotItem[], 'cover')?.url || getMediaBySlot(media as unknown as MediaSlotItem[], 'p1')?.url || '';
-                  const src = raw ? (toDirectPublicStorageUrl(raw) || raw) : '';
-                  return src ? (
-                  <img
-                    src={src}
-                    alt="Foto del maestro"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center top'
-                    }}
-                  />
-                ) : (
-                  <div className="teacher-banner-avatar-fallback" style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '6rem',
-                    fontWeight: '700',
-                    color: 'white'
-                  }}>
-                    {(teacher as any)?.nombre_publico?.[0]?.toUpperCase() || '🎓'}
-                  </div>
-                );
-                })()}
-              </div>
-              {/* Badge de verificación y botón de compartir inline */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem',
-                flexWrap: 'wrap'
-              }}>
-                {((teacher as any)?.estado_aprobacion === 'aprobado') && (
-                  <div className="badge" style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '.45rem',
-                    padding: '.35rem .6rem',
-                    borderRadius: '999px',
-                    fontWeight: 800,
-                    background: 'linear-gradient(135deg, #106c37, #0b5)',
-                    border: '1px solid #13a65a',
-                    boxShadow: '0 8px 18px rgba(0,0,0,.35)',
-                    fontSize: '.82rem',
-                    color: '#fff'
-                  }}>
-                    <div className="dot" style={{
-                      width: '16px',
-                      height: '16px',
-                      display: 'grid',
-                      placeItems: 'center',
-                      background: '#16c784',
-                      borderRadius: '50%',
-                      color: '#062d1f',
-                      fontSize: '.75rem',
-                      fontWeight: 900
-                    }}>✓</div>
-                    <span>Verificado</span>
-                  </div>
-                )}
-                <button
-                  id="profile-hero-share"
-                  aria-label="Compartir perfil"
-                  title="Compartir"
-                  onClick={handleShare}
+              <div
+                className="badge"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: ".45rem",
+                  padding: ".35rem .6rem",
+                  borderRadius: "999px",
+                  fontWeight: 800,
+                  background: "linear-gradient(135deg, #106c37, #0b5)",
+                  border: "1px solid #13a65a",
+                  boxShadow: "0 8px 18px rgba(0,0,0,.35)",
+                  fontSize: ".82rem",
+                  color: "#fff",
+                }}
+              >
+                <div
+                  className="dot"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    background: 'rgba(255,255,255,0.10)',
-                    border: '1px solid rgba(255,255,255,0.25)',
-                    color: '#fff',
-                    borderRadius: 999,
-                    backdropFilter: 'blur(8px)',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                    width: "16px",
+                    height: "16px",
+                    display: "grid",
+                    placeItems: "center",
+                    background: "#16c784",
+                    borderRadius: "50%",
+                    color: "#062d1f",
+                    fontSize: ".75rem",
+                    fontWeight: 900,
                   }}
                 >
-                  <Share2 size={18} strokeWidth={2} aria-hidden />
-                </button>
+                  ✓
+                </div>
+                <span>Verificado</span>
               </div>
             </div>
-
-            <div>
-
-              <h1 id="profile-hero-name" style={{
-                fontSize: '3rem',
-                display: 'inline',
-                fontWeight: '800',
-                color: 'white',
-                margin: '0 0 0.5rem 0',
-                textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-                fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-              }}>
-                {(teacher as any)?.nombre_publico}
-              </h1>
-             {/*  {(teacher as any)?.estado_aprobacion === 'aprobado' && (
-                <span style={{
-                  marginLeft: 12,
-                  border: '1px solid rgb(255 255 255 / 40%)',
-                  background: 'rgb(25 25 25 / 70%)',
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                  fontSize: 12,
-                  color: '#9be7a1',
-                  whiteSpace: 'nowrap',
-                  verticalAlign: 'middle',
-                  display: 'inline-block'
-                }}>
-                  ✅
-                </span>
-              )} */}
-              <p id="profile-hero-type" style={{
-                fontSize: '1.25rem',
-                color: 'rgba(255, 255, 255, 0.9)',
-                margin: '0 0 0.75rem 0',
-                lineHeight: 1.4,
-                fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-              }}>
-                Maestro
-              </p>
-
-              <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
-                <Suspense fallback={null}>
-                  <BioSection 
-                    bio={teacher?.bio}
-                    redes={teacher?.redes_sociales || (teacher as any)?.respuestas?.redes}
-                    variant="banner"
-                  />
-                </Suspense>
-              </div>
-            </div>
+          )}
+          <div id="profile-hero-bio" style={{ width: "100%", marginBottom: "1rem" }}>
+            <Suspense fallback={null}>
+              <BioSection
+                bio={teacher?.bio}
+                redes={teacher?.redes_sociales || (teacher as any)?.respuestas?.redes}
+                variant="banner"
+              />
+            </Suspense>
           </div>
-          <div id="profile-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', width: '100%' }}>
+          <div
+            id="profile-hero-chips"
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+              marginTop: "0.25rem",
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
             {(() => {
               const slugs = normalizeRitmosToSlugs(teacher, allTags);
               return slugs.length > 0 ? (

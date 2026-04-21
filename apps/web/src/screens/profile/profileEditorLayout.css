@@ -1,0 +1,244 @@
+/**
+ * Layout compartido: editores de perfil (usuario, maestro, academia).
+ * Espaciado, cards, stack, fila nombre/bio/redes, redes colapsables.
+ */
+
+.ape-editor {
+  --ape-bg: #0c0e12;
+  --ape-card: rgba(16, 18, 26, 0.82);
+  --ape-card-border: rgba(255, 255, 255, 0.09);
+  --ape-card-shadow: 0 10px 36px rgba(0, 0, 0, 0.26);
+  --ape-gap: clamp(1.15rem, 2.8vw, 1.85rem);
+  --ape-radius: 18px;
+  --ape-muted: rgba(255, 255, 255, 0.62);
+  --ape-title: rgba(255, 255, 255, 0.98);
+  background: linear-gradient(180deg, var(--ape-bg) 0%, #08090d 100%);
+}
+
+.ape-editor .academy-editor-inner {
+  max-width: 880px;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* Usuario: contenido centrado */
+.ape-editor .editor-content {
+  box-sizing: border-box;
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* Tabs (academia / maestro): contenedor tipo pill */
+.ape-editor .academy-tabs,
+.ape-editor .teacher-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  margin-bottom: clamp(1.1rem, 2.5vw, 1.5rem);
+  padding: 0.35rem;
+  border-bottom: none;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.ape-editor .academy-tab-button,
+.ape-editor .teacher-tab-button {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom: none !important;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Stack principal */
+.ape-profile-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ape-gap);
+}
+
+.ape-profile-stack .editor-section,
+.ape-profile-stack .org-editor__card,
+.ape-profile-stack .glass-card-container,
+.ape-profile-stack .section-content.glass-card-container {
+  margin-bottom: 0 !important;
+}
+
+.ape-profile-stack .editor-section.glass-card-container,
+.ape-profile-stack .org-editor__card {
+  border-radius: var(--ape-radius) !important;
+  border: 1px solid var(--ape-card-border) !important;
+  background: var(--ape-card) !important;
+  box-shadow: var(--ape-card-shadow) !important;
+  padding: clamp(1rem, 2.8vw, 1.35rem) !important;
+  backdrop-filter: blur(12px);
+}
+
+.ape-profile-stack .section-content.glass-card-container:not(.editor-section) {
+  border-radius: var(--ape-radius) !important;
+  border: 1px solid var(--ape-card-border) !important;
+  background: var(--ape-card) !important;
+  box-shadow: var(--ape-card-shadow) !important;
+}
+
+.ape-profile-stack .editor-section-title,
+.ape-profile-stack h2.editor-section-title {
+  font-size: clamp(1.05rem, 2.6vw, 1.22rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+  color: var(--ape-title) !important;
+  text-shadow: none !important;
+  line-height: 1.25;
+}
+
+.ape-profile-stack .org-editor__card > h2:first-child,
+.ape-profile-stack .glass-card-container > h2:first-child,
+.ape-profile-stack .section-content.glass-card-container .editor-section-title {
+  font-size: clamp(1.05rem, 2.6vw, 1.22rem) !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+  color: var(--ape-title) !important;
+}
+
+.ape-section-hint {
+  margin: 0 0 1rem 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ape-muted);
+  line-height: 1.45;
+  max-width: 52ch;
+}
+
+.ape-profile-stack .editor-input,
+.ape-profile-stack .editor-textarea {
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(0, 0, 0, 0.28) !important;
+}
+
+.ape-profile-stack .editor-input:focus,
+.ape-profile-stack .editor-textarea:focus {
+  outline: none;
+  border-color: rgba(46, 163, 188, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(46, 163, 188, 0.12);
+}
+
+.ape-profile-stack .editor-field {
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.ape-profile-stack .info-redes-grid {
+  gap: clamp(1.1rem, 3vw, 1.75rem) !important;
+}
+
+/* Tres filas, una columna: nombre → descripción → (identidad usuario) → redes */
+.ape-profile-stack .info-redes-grid.ape-info-main-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-auto-rows: auto;
+  align-items: start;
+  gap: clamp(1.1rem, 2.8vw, 1.5rem) !important;
+}
+
+.ape-info-main-row__col .editor-field,
+.ape-info-main-row__socials .subtitle {
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.ape-info-main-row__socials {
+  width: 100%;
+}
+
+.ape-profile-stack .academy-editor-classes-inner {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 0.65rem;
+  min-width: 0;
+}
+
+.ape-editor .org-editor__header {
+  margin-bottom: 1rem;
+}
+
+.ape-editor .org-editor__title {
+  font-size: clamp(1.15rem, 3.8vw, 1.42rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.ape-profile-stack .ape-welcome-banner {
+  border-radius: var(--ape-radius) !important;
+}
+
+/* Redes: <details> nativo */
+.ape-socials-collapsible {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ape-socials-collapsible__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.2rem 0.15rem;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.ape-socials-collapsible__summary::-webkit-details-marker {
+  display: none;
+}
+
+.ape-socials-collapsible__summary::marker {
+  content: "";
+}
+
+.ape-socials-collapsible__summary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ape-socials-collapsible__header {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0 !important;
+}
+
+.ape-socials-collapsible__chev {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  line-height: 1;
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.88);
+  transition: transform 0.2s ease;
+}
+
+.ape-socials-collapsible[open] .ape-socials-collapsible__chev {
+  transform: rotate(-180deg);
+}
+
+.ape-socials-collapsible__body {
+  padding-top: 0.85rem;
+  margin-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}

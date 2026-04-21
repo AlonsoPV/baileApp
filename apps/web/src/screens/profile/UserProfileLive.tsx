@@ -17,7 +17,12 @@ import { supabase } from "../../lib/supabase";
 import { resizeImageIfNeeded } from "../../lib/imageResize";
 import { colors } from "../../theme/colors";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
-import { UserProfileHero } from "../../components/profile/UserProfileHero";
+import { EventHero } from "../../components/events/EventDetail";
+import "../../components/events/EventDetail/eventDetailScreen.css";
+import "./profileLiveEventHero.css";
+import { BioSection } from "../../components/profile/BioSection";
+import RitmosChips from "../../components/RitmosChips";
+import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useFollowerCounts } from "../../hooks/useFollowerCounts";
 import { useFollowLists } from "../../hooks/useFollowLists";
 import HorizontalSlider from "../../components/explore/HorizontalSlider";
@@ -100,8 +105,6 @@ export const UserProfileLive: React.FC = () => {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [avatarError, setAvatarError] = React.useState(false);
-
   const safeMedia = media || [];
   const {
     data: rsvpEvents,
@@ -220,18 +223,24 @@ export const UserProfileLive: React.FC = () => {
     const fromP1 = resolve(getMediaBySlot(safeMedia as any, 'p1')?.url ?? null);
     return fromProfile || fromAvatarSlot || fromP1;
   }, [profileImageVersion, safeMedia, profile?.avatar_url]);
-  const navAvatarUrl = React.useMemo(
-    () =>
-      resolveVersionedSupabaseStoragePublicUrl(profile?.avatar_url ?? null, profileImageVersion, {
-        defaultBucket: 'media',
-      }) ?? profile?.avatar_url ?? null,
-    [profile?.avatar_url, profileImageVersion]
-  );
+  const heroProfileMeta = React.useMemo(() => {
+    if (!profile) return { city: "", venue: "" };
+    const zonas = profile.zonas || [];
+    const firstZ = zonas[0];
+    const tag = allTags?.find(
+      (tg: { id: number; tipo?: string; nombre?: string }) => tg.id === firstZ && tg.tipo === "zona"
+    );
+    const city = tag?.nombre ? String(tag.nombre).trim() : "";
+    const rol = (profile as { rol_baile?: string }).rol_baile;
+    const venue =
+      rol === "lead" ? "Lead" : rol === "follow" ? "Follow" : rol === "ambos" ? "Lead & Follow" : "";
+    return { city, venue };
+  }, [profile, allTags]);
 
-  // Reset avatarError cuando cambia avatarUrl
-  React.useEffect(() => {
-    setAvatarError(false);
-  }, [avatarUrl]);
+  const ritmosSlugsHero = React.useMemo(
+    () => (profile ? normalizeRitmosToSlugs(profile, allTags) : []),
+    [profile, allTags]
+  );
 
   const handleCoverUpload = React.useCallback(async (file: File) => {
     if (!user) return;
@@ -421,30 +430,73 @@ export const UserProfileLive: React.FC = () => {
           />
         </div>
 
-        <div style={{ margin: '0 auto', maxWidth: 900 }}>
-          <UserProfileHero
-            user={profile}
-            avatarUrl={avatarUrl}
-            avatarUrlSameAsNav={navAvatarUrl}
-            avatarCacheKey={(profile as { updated_at?: string })?.updated_at ?? null}
-            allTags={allTags}
-            ritmosSlugs={normalizeRitmosToSlugs(profile, allTags)}
-            isOwnProfile
-            showFollowButton={false}
-            followState={{
-              followers: counts.followers ?? 0,
-              following: counts.following ?? 0,
-              isFollowing: false,
-              loading: false,
-            }}
-            onFollowToggle={() => {}}
-            onShare={handleShareProfile}
-            copied={copied}
-            onBack={handleBack}
-            showBackButton
-            avatarError={avatarError}
-            onAvatarError={() => setAvatarError(true)}
-          />
+        <div style={{ margin: "0 auto", maxWidth: 900, width: "100%" }}>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="profile-live-hero-wrap"
+          >
+            {copied && (
+              <div className="profile-live-copied-toast" role="status" aria-live="polite">
+                {t("copied")}
+              </div>
+            )}
+            <div className="profile-live-hero-eds">
+              <EventHero
+                title={profile.display_name || t("user")}
+                flyerUrl={avatarUrl}
+                flyerCacheKey={
+                  (profile as { updated_at?: string; created_at?: string })?.updated_at ??
+                  (profile as { created_at?: string }).created_at ??
+                  user?.id ??
+                  null
+                }
+                dateStr={t("profile")}
+                timeRange={heroProfileMeta.city}
+                venueName={heroProfileMeta.venue}
+                onShare={handleShareProfile}
+                onBack={handleBack}
+              />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.05 }}
+            className="profile-live-hero-below glass-card-container"
+          >
+            <div id="profile-hero-bio" style={{ width: "100%", marginBottom: "1rem" }}>
+              <BioSection
+                bio={profile.bio}
+                redes={profile.redes_sociales || (profile as { respuestas?: { redes?: unknown } })?.respuestas?.redes}
+                variant="banner"
+              />
+            </div>
+            <div
+              id="profile-hero-chips"
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+                marginTop: "0.25rem",
+                width: "100%",
+                justifyContent: "center",
+              }}
+            >
+              {ritmosSlugsHero.length > 0 ? (
+                <RitmosChips selected={ritmosSlugsHero} onChange={() => {}} readOnly size="compact" />
+              ) : null}
+              <ZonaGroupedChips
+                selectedIds={profile.zonas}
+                allTags={allTags}
+                mode="display"
+                icon="📍"
+                size="compact"
+              />
+            </div>
+          </motion.div>
         </div>
 
         <div
@@ -965,6 +1017,7 @@ export const UserProfileLive: React.FC = () => {
                 gap={20}
                 autoColumns="minmax(320px, 400px)"
                 showNavButtons={false}
+                dimInactive={false}
               />
             ) : rsvpsError ? (
               <motion.div
@@ -1004,6 +1057,9 @@ export const UserProfileLive: React.FC = () => {
                 }}
                 gap={20}
                 autoColumns="minmax(320px, 400px)"
+                navPosition="bottom"
+                dimInactive={false}
+                stickyNavRow={false}
               />
             ) : (
               <motion.div

@@ -88,6 +88,169 @@ import {
 import SeoHead from "@/components/SeoHead";
 import { useTranslation } from "react-i18next";
 
+function getSmartPageKindLabel(entityType: ShareEntityType): string {
+  switch (entityType) {
+    case "evento":
+      return "Evento";
+    case "clase":
+      return "Clase";
+    case "academia":
+      return "Academia";
+    case "maestro":
+      return "Maestro";
+    case "organizer":
+      return "Organizador";
+    case "user":
+      return "Perfil";
+    case "marca":
+      return "Marca";
+    default:
+      return "Donde Bailar";
+  }
+}
+
+/** Misma línea visual que el offcanvas: capas oscuras, teal #297F96, tarjeta con profundidad. */
+const SMART_PAGE_SHELL_CSS = `
+.sp-root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(165deg, #0a0c10 0%, #12151c 38%, #0c0f14 100%);
+  color: #f4f6fb;
+  padding: max(20px, env(safe-area-inset-top, 0px)) 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.sp-card {
+  width: min(100%, 380px);
+  max-width: 100%;
+  background: linear-gradient(180deg, #12151c 0%, #0c0f14 48%, #0a0c10 100%);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.sp-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(41, 127, 150, 0.14) 0%, rgba(18, 21, 28, 0) 100%);
+}
+.sp-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.sp-brand-logo { width: 36px; height: 36px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 14px rgba(0,0,0,0.35); flex-shrink: 0; }
+.sp-brand-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sp-brand-name { font-size: 1.05rem; font-weight: 700; color: #f4f6fb; letter-spacing: -0.02em; line-height: 1.2; }
+.sp-brand-tag { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(186, 230, 253, 0.55); }
+.sp-media-frame { padding: 12px 14px 0; }
+.sp-media {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sp-media img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.sp-content { padding: 18px 18px 8px; }
+.sp-title { margin: 0; font-size: 1.2rem; font-weight: 700; line-height: 1.3; color: #f8fafc; letter-spacing: -0.02em; }
+.sp-subtitle { margin: 8px 0 0; font-size: 0.92rem; color: rgba(203, 213, 225, 0.88); line-height: 1.35; }
+.sp-place { margin: 8px 0 0; font-size: 0.85rem; color: rgba(148, 163, 184, 0.95); }
+.sp-actions { padding: 8px 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.sp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-weight: 650;
+  font-size: 0.98rem;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease, filter 0.18s ease;
+}
+.sp-btn:active { transform: scale(0.99); }
+.sp-btn--primary {
+  background: linear-gradient(135deg, rgba(30, 107, 130, 0.95) 0%, rgba(41, 127, 150, 1) 50%, rgba(41, 127, 150, 0.92) 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(41, 127, 150, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.sp-btn--primary:hover { filter: brightness(1.06); }
+.sp-btn--secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sp-btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.sp-btn--muted {
+  background: rgba(41, 127, 150, 0.22);
+  color: #e0f2fe;
+  border: 1px solid rgba(41, 127, 150, 0.35);
+}
+.sp-btn--muted:hover { background: rgba(41, 127, 150, 0.32); }
+.sp-hint {
+  margin: -2px 0 0;
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.88);
+  text-align: center;
+  line-height: 1.35;
+}
+.sp-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sp-fallback p { margin: 0; font-size: 0.88rem; color: rgba(226, 232, 240, 0.88); text-align: center; }
+.sp-caption { margin: 4px 0 0; font-size: 0.78rem; color: rgba(148, 163, 184, 0.85); text-align: center; line-height: 1.4; }
+.sp-stores { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.sp-store {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  box-sizing: border-box;
+}
+.sp-store--ios { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.12); }
+.sp-store--play {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sp-page-foot {
+  margin-top: 1.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(100, 116, 139, 0.95);
+  text-align: center;
+  max-width: 380px;
+}
+.sp-page-foot span { display: block; margin-top: 6px; opacity: 0.85; word-break: break-all; font-weight: 500; letter-spacing: 0; }
+`;
+
 const PROFILE_ENTITY_TYPES: ShareEntityType[] = [
   "academia",
   "maestro",
@@ -217,6 +380,7 @@ function OpenClaseContent({
   const imageResult = resolveOpenEntityImageClase({
     profile: profile as Record<string, unknown>,
     sourceType,
+    classIndex,
   });
   const presentation = buildOpenClasePresentation(profile as Record<string, unknown>, classIndex);
 
@@ -506,292 +670,95 @@ function OpenLayout({
           url={seoUrl}
         />
       )}
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(180deg, #0f0f14 0%, #1a1a24 100%)",
-        color: "#f5f5f5",
-        padding: "2rem 1.25rem",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 420,
-          width: "100%",
-          background: "rgba(255,255,255,0.06)",
-          borderRadius: 24,
-          overflow: "hidden",
-          border: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.3)",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            aspectRatio: "16/10",
-            background: "#1a1a24",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <img
-            src={imageUrl}
-            alt=""
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-            }}
-          />
-        </div>
-        <div style={{ padding: "1.5rem 1.25rem" }}>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "1.35rem",
-              fontWeight: 800,
-              lineHeight: 1.3,
-              marginBottom: subtitle ? "0.35rem" : 0,
-            }}
-          >
-            {title}
-          </h1>
-          {subtitle && (
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.95rem",
-                color: "rgba(255,255,255,0.75)",
-                marginBottom: place ? "0.35rem" : 0,
-              }}
-            >
-              {subtitle}
-            </p>
-          )}
-          {place && (
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.9rem",
-                color: "rgba(255,255,255,0.6)",
-              }}
-            >
-              📍 {place}
-            </p>
-          )}
-        </div>
-        <div
-          style={{
-            padding: "0 1.25rem 1.5rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.875rem",
-          }}
-        >
-          <a
-            href={deepLink}
-            onClick={handleOpenInApp}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.5rem",
-              width: "100%",
-              padding: "1rem 1.25rem",
-              borderRadius: 14,
-              border: "none",
-              background: "linear-gradient(135deg, #1a7a8c 0%, #2d9cdb 100%)",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: "1.05rem",
-              cursor: "pointer",
-              textAlign: "center",
-              boxSizing: "border-box",
-              boxShadow: "0 4px 16px rgba(45,156,219,0.35), 0 1px 3px rgba(0,0,0,0.2)",
-              textDecoration: "none",
-            }}
-          >
-            <img
-              src={SEO_LOGO_URL}
-              alt=""
-              aria-hidden
-              style={{ width: 22, height: 22, borderRadius: 6, objectFit: "contain", flexShrink: 0 }}
-            />
-            <OpenInAppIcon />
-            Abrir en la app
-          </a>
-          {showIosEmbeddedHint && (
-            <p
-              style={{
-                margin: "-0.25rem 0 0",
-                fontSize: "0.82rem",
-                color: "rgba(255,255,255,0.62)",
-                textAlign: "center",
-              }}
-            >
-              Si estas en Instagram, Facebook u otro navegador embebido de iPhone, puede que necesites abrir esta pagina en Safari.
-            </p>
-          )}
-          {showFallback && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-                width: "100%",
-                padding: "0.9rem 1rem",
-                borderRadius: 14,
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                boxSizing: "border-box",
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "0.9rem",
-                  color: "rgba(255,255,255,0.78)",
-                  textAlign: "center",
-                }}
-              >
-                {fallbackMessage}
+      <style>{SMART_PAGE_SHELL_CSS}</style>
+      <div className="sp-root">
+        <div className="sp-card">
+          <header className="sp-topbar">
+            <div className="sp-brand">
+              <img src={SEO_LOGO_URL} alt="" width={36} height={36} className="sp-brand-logo" />
+              <div className="sp-brand-text">
+                <span className="sp-brand-name">Donde Bailar</span>
+                <span className="sp-brand-tag">{getSmartPageKindLabel(entityType)}</span>
+              </div>
+            </div>
+          </header>
+          <div className="sp-media-frame">
+            <div className="sp-media">
+              <img src={imageUrl} alt="" />
+            </div>
+          </div>
+          <section className="sp-content">
+            <h1 className="sp-title">{title}</h1>
+            {subtitle ? <p className="sp-subtitle">{subtitle}</p> : null}
+            {place ? <p className="sp-place">📍 {place}</p> : null}
+          </section>
+          <section className="sp-actions">
+            <a href={deepLink} onClick={handleOpenInApp} className="sp-btn sp-btn--primary">
+              <img
+                src={SEO_LOGO_URL}
+                alt=""
+                aria-hidden
+                width={22}
+                height={22}
+                style={{ borderRadius: 6, objectFit: "contain", flexShrink: 0 }}
+              />
+              <OpenInAppIcon />
+              Abrir en la app
+            </a>
+            {showIosEmbeddedHint ? (
+              <p className="sp-hint">
+                Si estas en Instagram, Facebook u otro navegador embebido de iPhone, puede que necesites
+                abrir esta pagina en Safari.
               </p>
+            ) : null}
+            {showFallback ? (
+              <div className="sp-fallback">
+                <p>{fallbackMessage}</p>
+                <a
+                  href={getStoreUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sp-btn sp-btn--muted"
+                >
+                  Descargar en tu tienda
+                </a>
+              </div>
+            ) : null}
+            <a href={canonicalUrl} className="sp-btn sp-btn--secondary">
+              <GlobeIcon />
+              Ver en navegador
+            </a>
+            <p className="sp-caption">
+              Comparte este enlace o abre el contenido en tu app, en web o desde la tienda correcta.
+            </p>
+            <div className="sp-stores">
               <a
-                href={getStoreUrl()}
+                href={APP_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                  width: "100%",
-                  padding: "0.85rem 1.25rem",
-                  borderRadius: 12,
-                  border: "none",
-                  background: "rgba(255,255,255,0.12)",
-                  color: "#fff",
-                  fontWeight: 600,
-                  fontSize: "0.95rem",
-                  textAlign: "center",
-                  textDecoration: "none",
-                  boxSizing: "border-box",
-                }}
+                aria-label="Descargar en App Store"
+                className="sp-store sp-store--ios"
               >
-                Descargar en tu tienda
+                <AppleLogoIconSmall />
+                <span>App Store</span>
+              </a>
+              <a
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Descargar en Google Play"
+                className="sp-store sp-store--play"
+              >
+                <span>Google Play</span>
               </a>
             </div>
-          )}
-          <a
-            href={canonicalUrl}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.5rem",
-              width: "100%",
-              padding: "0.95rem 1.25rem",
-              borderRadius: 14,
-              border: "1px solid rgba(255,255,255,0.25)",
-              background: "rgba(255,255,255,0.08)",
-              color: "#f0f0f0",
-              fontWeight: 600,
-              fontSize: "1rem",
-              textAlign: "center",
-              textDecoration: "none",
-              boxSizing: "border-box",
-            }}
-          >
-            <GlobeIcon />
-            Ver en navegador
-          </a>
-          <p
-            style={{
-              margin: "0.5rem 0 0",
-              fontSize: "0.8rem",
-              color: "rgba(255,255,255,0.5)",
-              textAlign: "center",
-            }}
-          >
-            Comparte este enlace o abre el contenido en tu app, en web o desde la tienda correcta.
-          </p>
-          <div
-            style={{
-              display: "flex",
-              gap: "0.75rem",
-              justifyContent: "center",
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            <a
-              href={APP_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Descargar en App Store"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                height: 40,
-                padding: "0 14px",
-                borderRadius: 8,
-                background: "#000",
-                color: "#fff",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textDecoration: "none",
-                letterSpacing: "0.01em",
-                boxSizing: "border-box",
-              }}
-            >
-              <AppleLogoIconSmall />
-              <span>App Store</span>
-            </a>
-            <a
-              href={PLAY_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Descargar en Google Play"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: 40,
-                padding: "0 14px",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                color: "#fff",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textDecoration: "none",
-                letterSpacing: "0.01em",
-                boxSizing: "border-box",
-              }}
-            >
-              <span>Google Play</span>
-            </a>
-          </div>
+          </section>
         </div>
+        <p className="sp-page-foot">
+          Donde Bailar · Clases y eventos de baile
+          <span>{shareUrl}</span>
+        </p>
       </div>
-      <p
-        style={{
-          marginTop: "1.5rem",
-          fontSize: "0.8rem",
-          color: "rgba(255,255,255,0.5)",
-        }}
-      >
-        Donde Bailar · Clases y eventos de baile
-        <span style={{ display: "block", marginTop: 4, opacity: 0.8 }}>{shareUrl}</span>
-      </p>
-    </div>
     </>
   );
 }
@@ -800,9 +767,9 @@ function OpenLoading() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: "linear-gradient(180deg, #0f0f14 0%, #1a1a24 100%)",
-        color: "#f5f5f5",
+        minHeight: "100dvh",
+        background: "linear-gradient(165deg, #0a0c10 0%, #12151c 38%, #0c0f14 100%)",
+        color: "#f4f6fb",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -814,14 +781,14 @@ function OpenLoading() {
           style={{
             width: 48,
             height: 48,
-            border: "3px solid rgba(255,255,255,0.2)",
-            borderTopColor: "#2d9cdb",
+            border: "3px solid rgba(255,255,255,0.12)",
+            borderTopColor: "#297f96",
             borderRadius: "50%",
             animation: "spin 0.8s linear infinite",
             margin: "0 auto 1rem",
           }}
         />
-        <p style={{ margin: 0, opacity: 0.8 }}>Cargando...</p>
+        <p style={{ margin: 0, opacity: 0.85 }}>Cargando...</p>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -838,9 +805,9 @@ function OpenNotFound({ entityType }: { entityType: ShareEntityType }) {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: "linear-gradient(180deg, #0f0f14 0%, #1a1a24 100%)",
-        color: "#f5f5f5",
+        minHeight: "100dvh",
+        background: "linear-gradient(165deg, #0a0c10 0%, #12151c 38%, #0c0f14 100%)",
+        color: "#f4f6fb",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -849,21 +816,22 @@ function OpenNotFound({ entityType }: { entityType: ShareEntityType }) {
         textAlign: "center",
       }}
     >
-      <h2 style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>
+      <h2 style={{ fontSize: "1.5rem", marginBottom: "0.75rem", fontWeight: 700 }}>
         No encontrado
       </h2>
-      <p style={{ marginBottom: "1.5rem", opacity: 0.8 }}>
+      <p style={{ marginBottom: "1.5rem", opacity: 0.88, color: "rgba(203, 213, 225, 0.9)" }}>
         Este {label} no existe o fue eliminado.
       </p>
       <Link
         to="/explore"
         style={{
-          padding: "0.75rem 1.5rem",
-          borderRadius: 999,
-          background: "rgba(45,156,219,0.3)",
-          color: "#7ec8e3",
-          fontWeight: 600,
+          padding: "0.85rem 1.5rem",
+          borderRadius: 14,
+          background: "linear-gradient(135deg, rgba(30, 107, 130, 0.95) 0%, rgba(41, 127, 150, 1) 100%)",
+          color: "#fff",
+          fontWeight: 650,
           textDecoration: "none",
+          boxShadow: "0 8px 24px rgba(41, 127, 150, 0.3)",
         }}
       >
         Explorar

@@ -1,0 +1,7 @@
+@import './profileEditorLayout.css';
+
+/* Solo Academia: ritmos / bloque clases */
+.ape-profile-stack .academy-editor-card .rhythms-zones-two-columns h2 {
+  font-size: 1.05rem !important;
+  text-shadow: none !important;
+}

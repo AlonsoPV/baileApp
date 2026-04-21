@@ -7,28 +7,28 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUserMedia } from '@/hooks/useUserMedia';
 import { useDefaultProfile } from '@/hooks/useDefaultProfile';
-import { OffCanvasMenu } from '@ui/index';
+import { OffCanvasMenu, type OffCanvasMenuSection } from '@ui/index';
 import { useIsAdmin } from '@/hooks/useRoleRequests';
 import { getMediaBySlot } from '@/utils/mediaSlots';
 import SeoHead from '@/components/SeoHead';
 import { resolveVersionedSupabaseStorageDirectUrl } from '@/utils/supabaseStoragePublicUrl';
+import { SEO_LOGO_URL } from '@/lib/seoConfig';
 
 export default function AppShell() {
   const { user, signOut } = useAuth();
   const { profile } = useUserProfile();
   const { media } = useUserMedia();
-  const { getDefaultRoute, getDefaultEditRoute, getDefaultProfileInfo } = useDefaultProfile();
+  const { getDefaultRoute, getDefaultProfileInfo } = useDefaultProfile();
+  const defaultProfileInfo = getDefaultProfileInfo();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { data: isSuperAdmin } = useIsAdmin();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isAndroid = React.useMemo(
     () => typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent),
     []
   );
-
-  const defaultProfileInfo = getDefaultProfileInfo();
 
   // Mobile Chrome guard: ensure we never leave the page scroll-locked.
   // Some overlays (menus/modals) can set body overflow hidden; make sure it's released on route changes.
@@ -120,16 +120,98 @@ export default function AppShell() {
     }
   }, [signOut, navigate, isLoggingOut]);
 
-  const menuItems = [
-    // { id: 'challenges', label: 'Retos', icon: '🏆', onClick: () => navigate('/challenges') },
-    // { id: 'trending', label: 'Trending', icon: '📈', onClick: () => navigate('/trending') },
-    { id: 'roles-info', label: 'Want to know more about our roles?', icon: '🎭', onClick: () => navigate('/app/roles/info') },
-    { id: 'validation-info', label: 'What do profiles with ✅ mean?', icon: '✅', onClick: () => navigate('/validation/info') },
-    { id: 'support', label: 'Support', icon: '🛟', onClick: () => navigate('/soporte') },
-    { id: 'legal', label: 'Privacy notice', icon: '🔒', onClick: () => navigate('/aviso-de-privacidad') },
-    isSuperAdmin ? { id: 'admin', label: 'Admin', icon: '🛡️', onClick: () => navigate('/admin/roles') } : null,
-    { id: 'logout', label: 'Log out', icon: '🚪', onClick: handleLogout },
-  ].filter(Boolean) as Array<{ id: string; label: string; icon?: string; onClick: () => void }>;
+  const handleViewProfile = React.useCallback(() => {
+    navigate(getDefaultRoute());
+    setMenuOpen(false);
+  }, [navigate, getDefaultRoute]);
+
+  const menuSections = React.useMemo((): OffCanvasMenuSection[] => {
+    const helpItems: OffCanvasMenuSection['items'] = [
+      {
+        id: 'roles-info',
+        label: t('offcanvas_roles_prompt'),
+        subtitle: t('offcanvas_sub_roles'),
+        icon: '🎭',
+        onClick: () => navigate('/app/roles/info'),
+        activePath: '/app/roles/info',
+      },
+      {
+        id: 'validation-info',
+        label: t('validation_info'),
+        subtitle: t('offcanvas_sub_validation'),
+        icon: '✅',
+        onClick: () => navigate('/validation/info'),
+        activePath: '/validation/info',
+      },
+      {
+        id: 'support',
+        label: t('footer_support'),
+        subtitle: t('offcanvas_sub_support'),
+        icon: '🛟',
+        onClick: () => navigate('/soporte'),
+        activePath: '/soporte',
+      },
+      {
+        id: 'legal',
+        label: t('legal'),
+        subtitle: t('offcanvas_sub_legal'),
+        icon: '🔒',
+        onClick: () => navigate('/aviso-de-privacidad'),
+        activePath: '/aviso-de-privacidad',
+      },
+    ];
+
+    const sections: OffCanvasMenuSection[] = [
+      {
+        id: 'main',
+        title: t('offcanvas_section_main'),
+        items: [
+          {
+            id: 'explore',
+            label: t('home'),
+            subtitle: t('offcanvas_sub_explore'),
+            icon: '🏠',
+            onClick: () => navigate('/explore'),
+            activePath: '/explore',
+            activeExact: true,
+          },
+        ],
+      },
+      {
+        id: 'resources',
+        title: t('offcanvas_section_help'),
+        items: helpItems,
+      },
+    ];
+
+    if (isSuperAdmin) {
+      sections.push({
+        id: 'admin',
+        title: t('offcanvas_section_admin'),
+        items: [
+          {
+            id: 'admin',
+            label: t('admin'),
+            icon: '🛡️',
+            onClick: () => navigate('/admin/roles'),
+            activePath: '/admin/roles',
+          },
+        ],
+      });
+    }
+
+    return sections;
+  }, [t, i18n.language, isSuperAdmin, navigate]);
+
+  const logoutItem = React.useMemo(
+    () => ({
+      id: 'logout',
+      label: t('logout'),
+      icon: '🚪',
+      onClick: handleLogout,
+    }),
+    [t, i18n.language, handleLogout]
+  );
 
   return (
     <>
@@ -455,15 +537,27 @@ export default function AppShell() {
           </div>
         </footer>
 
-        {user && menuOpen && (
+        {user && (
           <OffCanvasMenu
-            isOpen={true}
+            isOpen={menuOpen}
             onClose={() => setMenuOpen(false)}
-            menuItems={menuItems}
-            userName={user.email?.split('@')[0] || 'User'}
+            pathname={location.pathname}
+            menuSections={menuSections}
+            logoutItem={logoutItem}
+            userName={user.email?.split('@')[0] || t('user')}
             userEmail={user.email || ''}
             userAvatar={avatarUrl}
             displayName={profile?.display_name || undefined}
+            profileBadge={defaultProfileInfo?.name}
+            brandName={t('where_dance')}
+            brandLogoUrl={SEO_LOGO_URL}
+            menuTitle={t('offcanvas_menu_title')}
+            closeLabel={t('close')}
+            onViewProfile={handleViewProfile}
+            viewProfileLabel={t('offcanvas_view_profile')}
+            footerInfoLabel={t('offcanvas_footer_info')}
+            footerLegalLabel={t('legal')}
+            disabledItemHint={t('coming_soon')}
           />
         )}
       </div>

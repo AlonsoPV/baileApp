@@ -91,6 +91,8 @@ type Props = {
   style?: React.CSSProperties;
   className?: string;
   enableDate?: boolean;
+  /** Perfil editor: el formulario inicia colapsado; al editar una clase se expande solo. */
+  defaultExpanded?: boolean;
 };
 
 const normalizeTime = (t?: string) => {
@@ -102,6 +104,16 @@ const normalizeTime = (t?: string) => {
 const tipos: Array<NonNullable<CrearClaseValue['tipo']>> = [
   'clases sueltas', 'paquetes', 'coreografia', 'entrenamiento', 'otro', 'personalizado'
 ];
+
+/** Solo tiene sentido persistir precio cuando el tipo es "clases sueltas". */
+export function normalizePrecioForTipo(
+  tipo: CrearClaseValue['tipo'] | undefined,
+  precio: number | null | undefined
+): number | null {
+  if (tipo !== 'clases sueltas') return null;
+  if (precio === null || precio === undefined) return null;
+  return precio === 0 ? 0 : precio;
+}
 
 const diasSemana = [
   { id: 0, nombre: 'Domingo' },
@@ -192,9 +204,24 @@ const CrearClase = React.memo(function CrearClase({
   title = 'Crear Clase',
   style,
   className,
-  enableDate = true
+  enableDate = true,
+  defaultExpanded = false,
 }: Props) {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(defaultExpanded);
+  const prevEditingRef = useRef(false);
+
+  /** Al entrar en edición (índice o datos) se expande; al salir se colapsa de nuevo. */
+  useEffect(() => {
+    const editing =
+      (editIndex !== null && editIndex !== undefined) || Boolean(editValue);
+    if (editing && !prevEditingRef.current) {
+      setIsOpen(true);
+    }
+    if (!editing && prevEditingRef.current) {
+      setIsOpen(false);
+    }
+    prevEditingRef.current = editing;
+  }, [editIndex, editValue]);
   const [submitState, setSubmitState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   // Usar ref para onChange para evitar cambios en el array de dependencias
@@ -206,7 +233,7 @@ const CrearClase = React.memo(function CrearClase({
   const [form, setForm] = useState<CrearClaseValue>({
     nombre: value?.nombre || '',
     tipo: value?.tipo || 'clases sueltas',
-    precio: value?.precio ?? null,
+    precio: normalizePrecioForTipo(value?.tipo, value?.precio),
     regla: value?.regla || '',
     niveles: parseNivelesFromStored(value?.nivel, value?.niveles),
     descripcion: value?.descripcion || '',
@@ -270,7 +297,7 @@ const CrearClase = React.memo(function CrearClase({
       setForm({
         nombre: effective?.nombre || '',
         tipo: effective?.tipo || 'clases sueltas',
-        precio: effective?.precio ?? null,
+        precio: normalizePrecioForTipo(effective?.tipo, effective?.precio),
         regla: effective?.regla || '',
         niveles: parseNivelesFromStored(effective?.nivel, effective?.niveles),
         descripcion: effective?.descripcion || '',
@@ -294,7 +321,6 @@ const CrearClase = React.memo(function CrearClase({
         ubicacionNotas: effective?.ubicacionNotas || '',
         ubicacionId: effective?.ubicacionId ?? null,
       });
-      setIsOpen(true);
       setSelectedLocationId((effective?.ubicacionId as any) || '');
       
       // Actualizar refs
@@ -610,7 +636,7 @@ const CrearClase = React.memo(function CrearClase({
   const normalizeComparable = useCallback((source?: CrearClaseValue | null) => ({
     nombre: source?.nombre || '',
     tipo: source?.tipo || 'clases sueltas',
-    precio: source?.precio ?? null,
+    precio: normalizePrecioForTipo(source?.tipo, source?.precio),
     regla: source?.regla || '',
     niveles: parseNivelesFromStored(source?.nivel, source?.niveles),
     descripcion: source?.descripcion || '',
@@ -667,6 +693,7 @@ const CrearClase = React.memo(function CrearClase({
   const handleCancel = useCallback(() => {
     setSubmitState('idle');
     resetForm();
+    setIsOpen(false);
     onCancel?.();
   }, [onCancel]);
 
@@ -680,12 +707,13 @@ const CrearClase = React.memo(function CrearClase({
       })();
       const submission = {
         ...submissionBase,
-        precio: submissionBase.tipo === 'clases sueltas' ? (submissionBase.precio ?? null) : null,
+        precio: normalizePrecioForTipo(submissionBase.tipo, submissionBase.precio),
         nivel: nivelesToNivelString(submissionBase.niveles),
       };
       await Promise.resolve(onSubmit?.(submission));
       setSubmitState('success');
       resetForm();
+      setIsOpen(false);
       setTimeout(() => setSubmitState('idle'), 2200);
     } catch {
       setSubmitState('error');
@@ -708,6 +736,54 @@ const CrearClase = React.memo(function CrearClase({
       className={className}
     >
       <div className="cc">
+        <div className="cc__card cc__card--collapse">
+          <button
+            type="button"
+            className="cc__collapse-trigger"
+            onClick={() => setIsOpen((v) => !v)}
+            aria-expanded={isOpen}
+            aria-controls="crear-clase-form-panel"
+            id="crear-clase-collapse-toggle"
+          >
+            <div className="cc__hd cc__hd--collapse">
+              <div className="cc__icon cc__icon--teal">
+                <Tag />
+              </div>
+              <div className="cc__collapse-text">
+                <h3 className="cc__hd-title">{title}</h3>
+                <p className="cc__hd-sub">
+                  {isOpen
+                    ? "Completa nombre, horario, ritmos y ubicación."
+                    : "Pulsa para desplegar el formulario de la clase."}
+                </p>
+              </div>
+              <ChevronDown
+                className={`cc__collapse-chev${isOpen ? " cc__collapse-chev--open" : ""}`}
+                aria-hidden
+              />
+            </div>
+          </button>
+          {!isOpen && isDirty && (
+            <div className="cc__collapse-dirty">
+              <span>Cambios sin guardar.</span>{" "}
+              <button
+                type="button"
+                className="cc__collapse-dirty-btn"
+                onClick={() => setIsOpen(true)}
+              >
+                Continuar editando
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div
+          id="crear-clase-form-panel"
+          role="region"
+          aria-labelledby="crear-clase-collapse-toggle"
+        >
+          {isOpen ? (
+            <>
         <div className="cc__card">
           <div className="cc__hd">
             <div className="cc__icon cc__icon--teal">
@@ -805,6 +881,7 @@ const CrearClase = React.memo(function CrearClase({
                 className="cc__input"
                 value={form.precio ?? ''}
                 onChange={(e) => {
+                  if (!isTipoClase) return;
                   const raw = e.target.value;
                   setField('precio', raw === '' ? null : Number(raw));
                 }}
@@ -1146,6 +1223,9 @@ const CrearClase = React.memo(function CrearClase({
               </button>
             </div>
           </div>
+        </div>
+            </>
+          ) : null}
         </div>
       </div>
     </motion.div>

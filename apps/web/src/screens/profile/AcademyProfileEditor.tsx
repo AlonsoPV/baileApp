@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { validateZonasAgainstCatalog } from "../../utils/validateZonas";
 import '@/styles/organizer.css';
+import './AcademyProfileEditor.css';
 import CostsPromotionsEditor from "../../components/events/CostsPromotionsEditor";
 import { generateClassId, ensureClassId } from "../../utils/classIdGenerator";
 import { useAvailableTeachers, useAcceptedTeachers, useSendInvitation, useCancelInvitation } from "../../hooks/useAcademyTeacherInvitations";
@@ -1539,7 +1540,12 @@ export default function AcademyProfileEditor() {
         id: costoId,
         nombre: c.nombre,
         tipo: c.tipo,
-        precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+        precio:
+          c.tipo === 'clases sueltas' && c.precio !== null && c.precio !== undefined
+            ? c.precio === 0
+              ? 0
+              : c.precio
+            : null,
         regla: c.regla || '',
         classId,
         referenciaCosto: String(classId),
@@ -1614,7 +1620,12 @@ export default function AcademyProfileEditor() {
       id: Date.now(),
       nombre: c.nombre,
       tipo: c.tipo,
-      precio: c.precio !== null && c.precio !== undefined ? (c.precio === 0 ? 0 : c.precio) : null,
+      precio:
+        c.tipo === 'clases sueltas' && c.precio !== null && c.precio !== undefined
+          ? c.precio === 0
+            ? 0
+            : c.precio
+          : null,
       regla: c.regla || '',
       classId: newClassId,
       referenciaCosto: String(newClassId),
@@ -1796,7 +1807,7 @@ export default function AcademyProfileEditor() {
   return (
     <>
       <style>{STYLES}</style>
-      <div className="academy-editor-container org-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
+      <div className="academy-editor-container org-editor ape-editor" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
         <div className="academy-editor-inner">
           {/* Header con botón volver + título centrado + toggle (diseño organizer) */}
           <div className="org-editor__header">
@@ -1872,7 +1883,7 @@ export default function AcademyProfileEditor() {
           )}
 
           {activeTab === "perfil" && (
-            <>
+            <div className="ape-profile-stack">
 
               {/* Mensaje de estado global */}
               {statusMsg && (
@@ -1881,7 +1892,7 @@ export default function AcademyProfileEditor() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   style={{
-                    marginBottom: '1.5rem',
+                    marginBottom: 0,
                     padding: '1rem 1.5rem',
                     borderRadius: '12px',
                     border: statusMsg.type === 'ok' ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(239,68,68,0.4)',
@@ -1902,11 +1913,12 @@ export default function AcademyProfileEditor() {
               {/* Banner de Bienvenida (para perfiles nuevos o recién aprobados) */}
               {(!academy || showWelcomeBanner) && (
                 <motion.div
+                  className="ape-welcome-banner"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   style={{
                     padding: '1.5rem',
-                    marginBottom: '2rem',
+                    marginBottom: 0,
                     background: 'linear-gradient(135deg, rgba(229, 57, 53, 0.2) 0%, rgba(251, 140, 0, 0.2) 100%)',
                     border: '2px solid rgba(229, 57, 53, 0.4)',
                     borderRadius: '16px',
@@ -1985,6 +1997,9 @@ export default function AcademyProfileEditor() {
                     {sectionSaving.personal ? '⏳ Guardando...' : '💾 Guardar sección'}
                   </button>
                 </div>
+                <p className="ape-section-hint">
+                  Lo primero que verán los visitantes: nombre, descripción y cómo contactarte en redes.
+                </p>
                 
                 {sectionStatus.personal && (
                   <motion.div
@@ -2010,52 +2025,50 @@ export default function AcademyProfileEditor() {
                   </motion.div>
                 )}
 
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '2rem',
-                  alignItems: 'start'
-                }}
-                  className="info-redes-grid">
-                  {/* Columna 1: Información Básica */}
-                  <div>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label className="editor-field">
-                        🎓 Nombre de la Academia *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.nombre_publico}
-                        onChange={(e) => setField('nombre_publico', e.target.value)}
-                        placeholder="Ej: Academia de Baile Moderno"
-                        className="editor-input"
-                      />
-                    </div>
-
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label className="editor-field">
-                        📝 Descripción
-                      </label>
-                      <textarea
-                        value={form.bio || ''}
-                        onChange={(e) => setField('bio', e.target.value)}
-                        placeholder="Cuéntanos sobre tu academia, su historia, metodología y lo que la hace especial..."
-                        rows={3}
-                        className="editor-textarea"
-                      />
-                    </div>
+                <div className="info-redes-grid ape-info-main-row">
+                  {/* Columna 1: Nombre */}
+                  <div className="ape-info-main-row__col" style={{ minWidth: 0 }}>
+                    <label className="editor-field">
+                      🎓 Nombre de la Academia *
+                    </label>
+                    <input
+                      type="text"
+                      value={form.nombre_publico}
+                      onChange={(e) => setField('nombre_publico', e.target.value)}
+                      placeholder="Ej: Academia de Baile Moderno"
+                      className="editor-input"
+                    />
                   </div>
 
-                  {/* Columna 2: Redes Sociales Compactas */}
-                  <div className="profile-section-compact">
-                    {/* REDES SOCIALES */}
-                    <div className="row-bottom">
-                      <div className="row-bottom-header">
-                        <h4 className="subtitle">Redes Sociales</h4>
-                        <span className="tag">Opcional</span>
-                      </div>
+                  {/* Columna 2: Descripción */}
+                  <div className="ape-info-main-row__col" style={{ minWidth: 0 }}>
+                    <label className="editor-field">
+                      📝 Descripción
+                    </label>
+                    <textarea
+                      value={form.bio || ''}
+                      onChange={(e) => setField('bio', e.target.value)}
+                      placeholder="Cuéntanos sobre tu academia, su historia, metodología y lo que la hace especial..."
+                      rows={4}
+                      className="editor-textarea"
+                      style={{ minHeight: '120px', resize: 'vertical' }}
+                    />
+                  </div>
 
-                      <div className="social-list">
+                  {/* Columna 3: Redes Sociales */}
+                  <div className="profile-section-compact ape-info-main-row__socials" style={{ minWidth: 0 }}>
+                    <details className="ape-socials-collapsible">
+                      <summary className="ape-socials-collapsible__summary">
+                        <div className="row-bottom-header ape-socials-collapsible__header">
+                          <h4 className="subtitle">Redes Sociales</h4>
+                          <span className="tag">Opcional</span>
+                        </div>
+                        <span className="ape-socials-collapsible__chev" aria-hidden>
+                          ▾
+                        </span>
+                      </summary>
+
+                      <div className="social-list ape-socials-collapsible__body">
                         {/* Instagram */}
                         <label className="field">
                           <span className="field-icon">
@@ -2192,7 +2205,7 @@ export default function AcademyProfileEditor() {
                           </div>
                         </label>
                       </div>
-                    </div>
+                    </details>
                   </div>
                 </div>
               </div>
@@ -2482,6 +2495,9 @@ export default function AcademyProfileEditor() {
                 >
                   🗓️ Horarios, Costos y Ubicación
                 </h2>
+                <p className="ape-section-hint" style={{ marginTop: '-0.75rem' }}>
+                  Sedes, precios y clases en un solo lugar. Aquí defines dónde enseñas y qué ofreces.
+                </p>
 
                 <div style={{ display: 'grid', gap: '1.5rem', minWidth: 0 }}>
                   {/* Ubicaciones */}
@@ -2587,7 +2603,12 @@ export default function AcademyProfileEditor() {
                             setEditInitial({
                               nombre: it.titulo || '',
                               tipo: (costo?.tipo as any) || 'clases sueltas',
-                              precio: costo?.precio !== undefined && costo?.precio !== null ? costo.precio : null,
+                              precio:
+                                costo?.tipo === 'clases sueltas' &&
+                                costo?.precio !== undefined &&
+                                costo?.precio !== null
+                                  ? costo.precio
+                                  : null,
                               regla: costo?.regla || '',
                               nivel: (it as any)?.nivel ?? null,
                               descripcion: (it as any)?.descripcion || '',
@@ -2702,89 +2723,131 @@ export default function AcademyProfileEditor() {
 
               {/* Cuenta Bancaria */}
               <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
-                    🏦 Cuenta Bancaria
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={handleSaveCuentaBancaria}
-                    disabled={sectionSaving['cuenta-bancaria']}
-                    style={{
-                      padding: '0.625rem 1.25rem',
-                      borderRadius: '10px',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
-                      background: sectionSaving['cuenta-bancaria'] 
-                        ? 'rgba(16, 185, 129, 0.2)' 
-                        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))',
-                      color: '#fff',
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      cursor: sectionSaving['cuenta-bancaria'] ? 'not-allowed' : 'pointer',
-                      opacity: sectionSaving['cuenta-bancaria'] ? 0.6 : 1,
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!sectionSaving['cuenta-bancaria']) {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3))';
-                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.6)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!sectionSaving['cuenta-bancaria']) {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))';
-                        e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-                      }
-                    }}
-                  >
-                    {sectionSaving['cuenta-bancaria'] ? '⏳ Guardando...' : '💾 Guardar sección'}
-                  </button>
-                </div>
-                
-                {sectionStatus['cuenta-bancaria'] && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    style={{
-                      marginBottom: '1rem',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '10px',
-                      border: sectionStatus['cuenta-bancaria'].type === 'ok' 
-                        ? '1px solid rgba(16,185,129,0.4)' 
-                        : '1px solid rgba(239,68,68,0.4)',
-                      background: sectionStatus['cuenta-bancaria'].type === 'ok' 
-                        ? 'rgba(16,185,129,0.15)' 
-                        : 'rgba(239,68,68,0.15)',
-                      color: '#fff',
-                      fontSize: '0.875rem',
-                      fontWeight: '500'
-                    }}
-                  >
-                    {sectionStatus['cuenta-bancaria'].text}
-                  </motion.div>
-                )}
-                
-                <BankAccountEditor
-                  value={(form as any).cuenta_bancaria || {}}
-                  onChange={(v) => setField('cuenta_bancaria' as any, v as any)}
-                />
+                <details className="ape-socials-collapsible">
+                  <summary className="ape-socials-collapsible__summary">
+                    <div className="ape-socials-collapsible__header" style={{ width: '100%' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          flexWrap: 'wrap',
+                          gap: '1rem',
+                          width: '100%',
+                        }}
+                      >
+                        <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
+                          🏦 Cuenta bancaria
+                        </h2>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSaveCuentaBancaria();
+                          }}
+                          disabled={sectionSaving['cuenta-bancaria']}
+                          style={{
+                            padding: '0.625rem 1.25rem',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(16, 185, 129, 0.4)',
+                            background: sectionSaving['cuenta-bancaria']
+                              ? 'rgba(16, 185, 129, 0.2)'
+                              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))',
+                            color: '#fff',
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            cursor: sectionSaving['cuenta-bancaria'] ? 'not-allowed' : 'pointer',
+                            opacity: sectionSaving['cuenta-bancaria'] ? 0.6 : 1,
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            alignSelf: 'flex-start',
+                            flexShrink: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!sectionSaving['cuenta-bancaria']) {
+                              e.currentTarget.style.background =
+                                'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3))';
+                              e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!sectionSaving['cuenta-bancaria']) {
+                              e.currentTarget.style.background =
+                                'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2))';
+                              e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                            }
+                          }}
+                        >
+                          {sectionSaving['cuenta-bancaria'] ? '⏳ Guardando...' : '💾 Guardar sección'}
+                        </button>
+                      </div>
+                    </div>
+                    <span className="ape-socials-collapsible__chev" aria-hidden>
+                      ▾
+                    </span>
+                  </summary>
+
+                  <div className="ape-socials-collapsible__body">
+                    <p className="ape-section-hint" style={{ marginTop: 0 }}>
+                      Datos para transferencias y pagos. No son visibles en tu perfil público.
+                    </p>
+
+                    {sectionStatus['cuenta-bancaria'] && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        style={{
+                          marginBottom: '1rem',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '10px',
+                          border:
+                            sectionStatus['cuenta-bancaria'].type === 'ok'
+                              ? '1px solid rgba(16,185,129,0.4)'
+                              : '1px solid rgba(239,68,68,0.4)',
+                          background:
+                            sectionStatus['cuenta-bancaria'].type === 'ok'
+                              ? 'rgba(16,185,129,0.15)'
+                              : 'rgba(239,68,68,0.15)',
+                          color: '#fff',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                        }}
+                      >
+                        {sectionStatus['cuenta-bancaria'].text}
+                      </motion.div>
+                    )}
+
+                    <BankAccountEditor
+                      embedded
+                      value={(form as any).cuenta_bancaria || {}}
+                      onChange={(v) => setField('cuenta_bancaria' as any, v as any)}
+                    />
+                  </div>
+                </details>
               </div>
 
               {/* Maestros Invitados */}
               {academyId && (
                 <>
                   <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                    <div className="teacher-invite-header">
-                      <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
-                        🎭 Maestros Invitados
-                      </h2>
-                      <button
-                        onClick={() => setShowTeacherModal(true)}
-                        style={{
+                    <details className="ape-socials-collapsible">
+                      <summary className="ape-socials-collapsible__summary">
+                        <div className="teacher-invite-header ape-socials-collapsible__header" style={{ marginBottom: 0 }}>
+                          <h2 style={{ fontSize: '1.5rem', color: colors.light, margin: 0 }}>
+                            🎭 Maestros Invitados
+                          </h2>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setShowTeacherModal(true);
+                            }}
+                            style={{
                           padding: '0.5rem 1rem',
                           background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
                           border: 'none',
@@ -2800,8 +2863,13 @@ export default function AcademyProfileEditor() {
                       >
                         👥 Invitar Maestro
                       </button>
-                    </div>
+                        </div>
+                        <span className="ape-socials-collapsible__chev" aria-hidden>
+                          ▾
+                        </span>
+                      </summary>
 
+                      <div className="ape-socials-collapsible__body">
                     {acceptedTeachers && acceptedTeachers.length > 0 ? (
                       <div className="teachers-grid">
                         {acceptedTeachers.map((t: any) => {
@@ -2895,6 +2963,8 @@ export default function AcademyProfileEditor() {
                         </p>
                       </div>
                     )}
+                      </div>
+                    </details>
                   </div>
 
                   {/* Modal para seleccionar maestro */}
@@ -3204,13 +3274,20 @@ export default function AcademyProfileEditor() {
 
               {/* Información para Estudiantes */}
               <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <details className="ape-socials-collapsible">
+                  <summary className="ape-socials-collapsible__summary">
+                    <div className="ape-socials-collapsible__header" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0, flexWrap: 'wrap', gap: '1rem', width: '100%' }}>
                   <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
                     💬 Información para Estudiantes
                   </h2>
                   <button
                     type="button"
-                    onClick={handleSaveFAQ}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSaveFAQ();
+                    }}
                     disabled={sectionSaving.faq}
                     style={{
                       padding: '0.625rem 1.25rem',
@@ -3244,7 +3321,17 @@ export default function AcademyProfileEditor() {
                   >
                     {sectionSaving.faq ? '⏳ Guardando...' : '💾 Guardar sección'}
                   </button>
-                </div>
+                      </div>
+                    </div>
+                    <span className="ape-socials-collapsible__chev" aria-hidden>
+                      ▾
+                    </span>
+                  </summary>
+
+                  <div className="ape-socials-collapsible__body">
+                <p className="ape-section-hint">
+                  Preguntas frecuentes para que los alumnos resuelvan dudas sin escribirte.
+                </p>
                 
                 {sectionStatus.faq && (
                   <motion.div
@@ -3271,17 +3358,26 @@ export default function AcademyProfileEditor() {
                 )}
 
                 <FAQEditor value={(form as any).faq || []} onChange={(v: any) => setField('faq' as any, v as any)} />
+                  </div>
+                </details>
               </div>
 
               {/* Reseñas de Alumnos */}
               <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <details className="ape-socials-collapsible">
+                  <summary className="ape-socials-collapsible__summary">
+                    <div className="ape-socials-collapsible__header" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0, flexWrap: 'wrap', gap: '1rem', width: '100%' }}>
                   <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
                     ⭐ Reseñas de Alumnos
                   </h2>
                   <button
                     type="button"
-                    onClick={handleSaveResenas}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSaveResenas();
+                    }}
                     disabled={sectionSaving.resenas}
                     style={{
                       padding: '0.625rem 1.25rem',
@@ -3315,7 +3411,17 @@ export default function AcademyProfileEditor() {
                   >
                     {sectionSaving.resenas ? '⏳ Guardando...' : '💾 Guardar sección'}
                   </button>
-                </div>
+                      </div>
+                    </div>
+                    <span className="ape-socials-collapsible__chev" aria-hidden>
+                      ▾
+                    </span>
+                  </summary>
+
+                  <div className="ape-socials-collapsible__body">
+                <p className="ape-section-hint">
+                  Testimonios reales generan confianza; puedes actualizarlos cuando quieras.
+                </p>
                 
                 {sectionStatus.resenas && (
                   <motion.div
@@ -3348,6 +3454,8 @@ export default function AcademyProfileEditor() {
                   value={(form as any).reseñas || []}
                   onChange={(v: any) => setField('reseñas' as any, v as any)}
                 />
+                  </div>
+                </details>
               </div>
 
               {/* Stripe Payout Settings */}
@@ -3396,16 +3504,29 @@ export default function AcademyProfileEditor() {
                   const verMasLink = (form as any)?.respuestas?.ver_mas_link || '';
 
                   return (
-                    <div>
-                      <h2 className="editor-section-title" style={{
-                        fontSize: '1.5rem',
-                        marginBottom: '1.5rem',
-                        color: colors.light
-                      }}>
-                        📖 Un poco más de nosotros
-                      </h2>
+                    <details className="ape-socials-collapsible">
+                      <summary className="ape-socials-collapsible__summary">
+                        <div className="ape-socials-collapsible__header">
+                          <h2
+                            className="editor-section-title"
+                            style={{
+                              fontSize: '1.5rem',
+                              margin: 0,
+                              color: colors.light,
+                            }}
+                          >
+                            📖 Un poco más de nosotros
+                          </h2>
+                        </div>
+                        <span className="ape-socials-collapsible__chev" aria-hidden>
+                          ▾
+                        </span>
+                      </summary>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '2rem' }}>
+                      <div
+                        className="ape-socials-collapsible__body"
+                        style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: 0 }}
+                      >
                         {/* Carga de foto */}
                         <div>
                           <div style={{
@@ -3541,7 +3662,7 @@ export default function AcademyProfileEditor() {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </details>
                   );
                 })()}
               </div>
@@ -3605,7 +3726,7 @@ export default function AcademyProfileEditor() {
               />
                 </div>
               </div> */}
-            </>
+            </div>
           )}
 
         </div>

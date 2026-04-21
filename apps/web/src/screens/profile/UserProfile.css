@@ -730,8 +730,8 @@
     .events-section > div:first-child {
       margin-bottom: 0.9rem !important;
     }
-    /* Botones dentro de Eventos de Interés más compactos y sin pegarse a los bordes */
-    .events-section button {
+    /* CTA del bloque vacío; no afecta flechas del carrusel (.horizontal-slider-nav-btn) */
+    .events-section button:not(.horizontal-slider-nav-btn) {
       padding: 0.6rem 1.1rem !important;
       border-radius: 10px !important;
       font-size: 0.85rem !important;

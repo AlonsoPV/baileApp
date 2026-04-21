@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "http";
 import { createClient } from "@supabase/supabase-js";
+import { pickClassItemFlyerUrl, selectCronogramaClassItem } from "../src/utils/classFlyerImage";
 type ShareEntityType =
   | "evento"
   | "clase"
@@ -241,14 +242,25 @@ function resolveOpenEntityImageEvento(data: {
     const url = resolveUrl(date.flyer_url as string);
     if (url) return { imageUrl: url, imageSourceType: "flyer_url" };
   }
+  const parentFlyerRaw = parent?.flyer_url ?? parent?.portada_url;
+  if (isNonEmptyImageUrl(parentFlyerRaw)) {
+    const url = resolveUrl(parentFlyerRaw as string);
+    if (url) return { imageUrl: url, imageSourceType: "flyer_url" };
+  }
   const dateMedia = normalizeMediaArray(date?.media);
-  const dateFirst = getMediaBySlot(dateMedia, "cover")?.url || getMediaBySlot(dateMedia, "p1")?.url;
+  const dateFirst =
+    getMediaBySlot(dateMedia, "flyer")?.url ||
+    getMediaBySlot(dateMedia, "cover")?.url ||
+    getMediaBySlot(dateMedia, "p1")?.url;
   if (dateFirst) {
     const url = resolveUrl(dateFirst);
     if (url) return { imageUrl: url, imageSourceType: "media" };
   }
   const parentMedia = normalizeMediaArray(parent?.media);
-  const parentFirst = getMediaBySlot(parentMedia, "cover")?.url || getMediaBySlot(parentMedia, "p1")?.url;
+  const parentFirst =
+    getMediaBySlot(parentMedia, "flyer")?.url ||
+    getMediaBySlot(parentMedia, "cover")?.url ||
+    getMediaBySlot(parentMedia, "p1")?.url;
   if (parentFirst) {
     const url = resolveUrl(parentFirst);
     if (url) return { imageUrl: url, imageSourceType: "media" };
@@ -276,8 +288,15 @@ function resolveOpenEntityImageEvento(data: {
 
 function resolveOpenEntityImageClase(data: {
   profile: Record<string, unknown>;
+  classIndex?: number;
 }): ResolveOpenEntityImageResult {
-  const profile = data.profile;
+  const { profile, classIndex } = data;
+  const classItem = selectCronogramaClassItem(profile, classIndex);
+  const fromClassItem = pickClassItemFlyerUrl(classItem);
+  if (fromClassItem) {
+    const url = resolveUrl(fromClassItem);
+    if (url) return { imageUrl: url, imageSourceType: "flyer_url" };
+  }
   const mediaArr = Array.isArray(profile?.media) ? profile.media : [];
   const normalized = normalizeMediaArray(mediaArr);
   const cover = getMediaBySlot(normalized, "cover")?.url;
@@ -512,7 +531,7 @@ async function fetchClassPayload(id: string, type: ClassType, index?: number | n
 
   const imageResult = resolveOpenEntityImageClase({
     profile: profile as Record<string, unknown>,
-    sourceType: type,
+    classIndex: index ?? undefined,
   });
   const presentation = buildOpenClasePresentation(profile as Record<string, unknown>, index ?? undefined);
 
@@ -594,6 +613,9 @@ function renderHtml(payload: OpenPayload): string {
   const seoDescription = escapeHtml(payload.seoDescription);
   const seoImage = escapeHtml(payload.seoImage);
   const imageUrl = escapeHtml(payload.imageUrl);
+  const kindTag = escapeHtml(
+    payload.entityLabel === "evento" ? "Evento" : payload.entityLabel === "clase" ? "Clase" : "Perfil",
+  );
 
   return `<!doctype html>
 <html lang="es">
@@ -620,161 +642,174 @@ function renderHtml(payload: OpenPayload): string {
       body {
         margin: 0;
         min-height: 100vh;
+        min-height: 100dvh;
         font-family: Inter, system-ui, sans-serif;
-        background: linear-gradient(180deg, #0f0f14 0%, #1a1a24 100%);
-        color: #f5f5f5;
+        background: linear-gradient(165deg, #0a0c10 0%, #12151c 38%, #0c0f14 100%);
+        color: #f4f6fb;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 24px 16px;
+        padding: max(20px, env(safe-area-inset-top, 0px)) 18px calc(24px + env(safe-area-inset-bottom, 0px));
       }
-      .card {
-        width: min(100%, 420px);
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 24px;
+      .sp-root { width: 100%; max-width: 380px; }
+      .sp-card {
+        background: linear-gradient(180deg, #12151c 0%, #0c0f14 48%, #0a0c10 100%);
+        border-radius: 20px;
         overflow: hidden;
-        box-shadow: 0 24px 48px rgba(0,0,0,0.3);
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+        border: 1px solid rgba(255, 255, 255, 0.06);
       }
-      .media {
+      .sp-topbar {
+        display: flex;
+        align-items: center;
+        padding: 14px 18px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background: linear-gradient(180deg, rgba(41, 127, 150, 0.14) 0%, rgba(18, 21, 28, 0) 100%);
+      }
+      .sp-brand { display: flex; align-items: center; gap: 12px; }
+      .sp-brand-logo { width: 36px; height: 36px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+      .sp-brand-text { display: flex; flex-direction: column; gap: 2px; }
+      .sp-brand-name { font-size: 1.05rem; font-weight: 700; color: #f4f6fb; letter-spacing: -0.02em; }
+      .sp-brand-tag { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(186, 230, 253, 0.55); }
+      .sp-media-frame { padding: 12px 14px 0; }
+      .sp-media {
         width: 100%;
         aspect-ratio: 16 / 10;
-        background: #1a1a24;
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.08);
       }
-      .media img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
-      .content { padding: 24px 20px 20px; }
-      h1 {
-        margin: 0 0 6px;
-        font-size: 1.35rem;
-        line-height: 1.3;
-      }
-      p {
-        margin: 0;
-      }
-      .subtitle {
-        color: rgba(255,255,255,0.76);
-        font-size: 0.95rem;
-      }
-      .place {
-        margin-top: 6px;
-        color: rgba(255,255,255,0.6);
-        font-size: 0.9rem;
-      }
-      .actions {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding: 0 20px 24px;
-      }
-      .button {
+      .sp-media img { display: block; width: 100%; height: 100%; object-fit: contain; }
+      .sp-content { padding: 18px 18px 8px; }
+      .sp-title { margin: 0; font-size: 1.2rem; font-weight: 700; line-height: 1.3; color: #f8fafc; }
+      .sp-subtitle { margin: 8px 0 0; font-size: 0.92rem; color: rgba(203, 213, 225, 0.88); }
+      .sp-place { margin: 8px 0 0; font-size: 0.85rem; color: rgba(148, 163, 184, 0.95); }
+      .sp-actions { padding: 8px 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+      .sp-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 10px;
         width: 100%;
         min-height: 52px;
         padding: 14px 18px;
         border-radius: 14px;
+        font-weight: 650;
+        font-size: 0.98rem;
+        text-align: center;
         text-decoration: none;
-        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        box-sizing: border-box;
       }
-      .button-primary {
-        background: linear-gradient(135deg, #1a7a8c 0%, #2d9cdb 100%);
-        color: white;
+      .sp-btn--primary {
+        background: linear-gradient(135deg, rgba(30, 107, 130, 0.95) 0%, rgba(41, 127, 150, 1) 50%, rgba(41, 127, 150, 0.92) 100%);
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(41, 127, 150, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
       }
-      .button-secondary {
-        background: rgba(255,255,255,0.08);
-        color: #f0f0f0;
-        border: 1px solid rgba(255,255,255,0.25);
+      .sp-btn--secondary {
+        background: rgba(255, 255, 255, 0.04);
+        color: #e5e7eb;
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
       .notice {
         display: none;
-        padding: 14px 16px;
+        padding: 14px;
         border-radius: 14px;
-        border: 1px solid rgba(255,255,255,0.12);
-        background: rgba(255,255,255,0.08);
-        color: rgba(255,255,255,0.82);
-        font-size: 0.92rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(226, 232, 240, 0.88);
+        font-size: 0.88rem;
         text-align: center;
       }
       .notice.is-visible { display: block; }
       .hint {
         display: none;
-        margin: -4px 0 0;
-        color: rgba(255,255,255,0.62);
-        font-size: 0.82rem;
+        margin: -2px 0 0;
+        color: rgba(148, 163, 184, 0.88);
+        font-size: 0.8rem;
         text-align: center;
+        line-height: 1.35;
       }
       .hint.is-visible { display: block; }
-      .stores {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-      }
-      .store {
+      .sp-stores { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+      .sp-store {
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         min-height: 40px;
         padding: 0 14px;
-        border-radius: 8px;
+        border-radius: 10px;
         text-decoration: none;
         font-size: 0.75rem;
         font-weight: 600;
-        color: white;
+        color: #fff;
       }
-      .store-app { background: #000; }
-      .store-play {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.18);
+      .sp-store--ios { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.12); }
+      .sp-store--play { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+      .sp-caption {
+        margin: 4px 0 0;
+        font-size: 0.78rem;
+        color: rgba(148, 163, 184, 0.85);
+        text-align: center;
+        line-height: 1.4;
       }
-      .caption {
-        margin-top: 10px;
-        color: rgba(255,255,255,0.54);
-        font-size: 0.8rem;
+      .sp-page-foot {
+        margin-top: 1.25rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: rgba(100, 116, 139, 0.95);
         text-align: center;
       }
-      .share-url {
-        display: block;
-        margin-top: 4px;
-        opacity: 0.8;
-        word-break: break-word;
-      }
+      .share-url { display: block; margin-top: 6px; opacity: 0.85; word-break: break-all; font-weight: 500; letter-spacing: 0; }
     </style>
   </head>
   <body>
-    <main class="card">
-      <div class="media">
-        <img src="${imageUrl}" alt="" />
+    <div class="sp-root">
+    <main class="sp-card">
+      <header class="sp-topbar">
+        <div class="sp-brand">
+          <img src="${escapeHtml(SEO_LOGO_URL)}" alt="" width="36" height="36" class="sp-brand-logo" />
+          <div class="sp-brand-text">
+            <span class="sp-brand-name">Donde Bailar</span>
+            <span class="sp-brand-tag">${kindTag}</span>
+          </div>
+        </div>
+      </header>
+      <div class="sp-media-frame">
+        <div class="sp-media">
+          <img src="${imageUrl}" alt="" />
+        </div>
       </div>
-      <section class="content">
-        <h1>${title}</h1>
-        ${subtitle ? `<p class="subtitle">${subtitle}</p>` : ""}
-        ${place ? `<p class="place">${place}</p>` : ""}
+      <section class="sp-content">
+        <h1 class="sp-title">${title}</h1>
+        ${subtitle ? `<p class="sp-subtitle">${subtitle}</p>` : ""}
+        ${place ? `<p class="sp-place">📍 ${place}</p>` : ""}
       </section>
-      <section class="actions">
-        <a id="open-in-app" class="button button-primary" href="${deepLink}">Abrir en la app</a>
+      <section class="sp-actions">
+        <a id="open-in-app" class="sp-btn sp-btn--primary" href="${deepLink}">
+          <img src="${escapeHtml(SEO_LOGO_URL)}" alt="" width="22" height="22" style="border-radius:6px;object-fit:contain;flex-shrink:0" />
+          Abrir en la app
+        </a>
         <p id="ios-browser-hint" class="hint"></p>
         <div id="fallback-notice" class="notice">
           Si la app no se abrio automaticamente, usa Ver en navegador o descarga la app.
         </div>
-        <a class="button button-secondary" href="${canonicalUrl}">Ver en navegador</a>
-        <div class="stores">
-          <a class="store store-app" href="${escapeHtml(APP_STORE_URL)}" target="_blank" rel="noopener noreferrer">App Store</a>
-          <a class="store store-play" href="${escapeHtml(PLAY_STORE_URL)}" target="_blank" rel="noopener noreferrer">Google Play</a>
+        <a class="sp-btn sp-btn--secondary" href="${canonicalUrl}">Ver en navegador</a>
+        <div class="sp-stores">
+          <a class="sp-store sp-store--ios" href="${escapeHtml(APP_STORE_URL)}" target="_blank" rel="noopener noreferrer">App Store</a>
+          <a class="sp-store sp-store--play" href="${escapeHtml(PLAY_STORE_URL)}" target="_blank" rel="noopener noreferrer">Google Play</a>
         </div>
-        <p class="caption">
+        <p class="sp-caption">
           Smart page oficial de Donde Bailar para abrir este ${escapeHtml(payload.entityLabel)} en app o web.
           <span class="share-url">${shareUrl}</span>
         </p>
       </section>
     </main>
+    </div>
     <script>
       (function () {
         var deepLink = ${JSON.stringify(payload.deepLink)};

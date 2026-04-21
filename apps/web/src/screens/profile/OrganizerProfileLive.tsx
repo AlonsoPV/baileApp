@@ -11,7 +11,6 @@ import { getLocale } from "../../utils/locale";
 import { getEventDatePriceChipLabel } from "../../utils/eventCosts";
 import { extractLugarNombre, resolveFlyerUrlForEventDate } from "../../utils/normalizeEventsForCards";
 import RitmosChips from "../../components/RitmosChips";
-import ImageWithFallback from "../../components/ImageWithFallback";
 import { normalizeRitmosToSlugs } from "../../utils/normalizeRitmos";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
@@ -29,6 +28,7 @@ import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
 import OrganizerPublicGallery from "../../components/profile/gallery/OrganizerPublicGallery";
+import UbicacionesLive from "../../components/locations/UbicacionesLive";
 import { buildShareUrl } from "@/utils/shareUrls";
 
 // CSS constante a nivel de módulo para evitar reinserción en cada render
@@ -851,253 +851,6 @@ const VideoCarouselComponent = React.memo<{ videos: string[] }>(({ videos }) => 
 });
 
 VideoCarouselComponent.displayName = 'VideoCarouselComponent';
-
-// Componente de Carrusel Moderno - memoizado y con callbacks
-const CarouselComponent = React.memo<{ photos: string[] }>(({ photos }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const nextPhoto = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % photos.length);
-  }, [photos.length]);
-
-  const prevPhoto = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  }, [photos.length]);
-
-  const goToPhoto = useCallback((index: number) => {
-    setCurrentIndex(index);
-  }, []);
-
-  if (photos.length === 0) return null;
-
-  const hasMultiplePhotos = photos.length > 1;
-
-  return (
-    <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{
-        position: 'relative',
-        height: '350px',
-        borderRadius: borderRadius['2xl'],
-        overflow: 'hidden',
-        border: `2px solid ${colors.glass.medium}`,
-        background: colors.dark[400],
-        boxShadow: colors.shadows.glass
-      }}>
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -100 }}
-          transition={{ duration: 0.3 }}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%'
-          }}
-        >
-          <ImageWithFallback
-            src={photos[currentIndex]}
-            alt={`Foto ${currentIndex + 1}`}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              objectPosition: 'center',
-              cursor: 'pointer'
-            }}
-            onClick={() => setIsFullscreen(true)}
-          />
-        </motion.div>
-
-        <div style={{
-          position: 'absolute',
-          top: spacing[4],
-          right: spacing[4],
-          background: colors.glass.darker,
-          color: colors.gray[50],
-          padding: `${spacing[2]} ${spacing[4]}`,
-          borderRadius: borderRadius.full,
-          fontSize: typography.fontSize.sm,
-          fontWeight: typography.fontWeight.semibold,
-          backdropFilter: 'blur(10px)'
-        }}>
-          {currentIndex + 1} / {photos.length}
-        </div>
-
-        {hasMultiplePhotos && (
-          <>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={prevPhoto}
-              disabled={!hasMultiplePhotos}
-              style={{
-                position: 'absolute',
-                left: spacing[4],
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: colors.glass.darker,
-                color: colors.light,
-                border: 'none',
-                borderRadius: borderRadius.full,
-                width: '48px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: hasMultiplePhotos ? 'pointer' : 'not-allowed',
-                fontSize: typography.fontSize.xl,
-                transition: transitions.normal,
-                backdropFilter: 'blur(10px)',
-                opacity: hasMultiplePhotos ? 1 : 0.5
-              }}
-            >
-              ‹
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={nextPhoto}
-              disabled={!hasMultiplePhotos}
-              style={{
-                position: 'absolute',
-                right: spacing[4],
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: colors.glass.darker,
-                color: colors.light,
-                border: 'none',
-                borderRadius: borderRadius.full,
-                width: '48px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: hasMultiplePhotos ? 'pointer' : 'not-allowed',
-                fontSize: typography.fontSize.xl,
-                transition: transitions.normal,
-                backdropFilter: 'blur(10px)',
-                opacity: hasMultiplePhotos ? 1 : 0.5
-              }}
-            >
-              ›
-            </motion.button>
-          </>
-        )}
-      </div>
-
-      {hasMultiplePhotos && (
-        <div style={{
-          display: 'flex',
-          gap: spacing[2],
-          marginTop: spacing[4],
-          justifyContent: 'center',
-          flexWrap: 'wrap'
-        }}>
-          {photos.map((photo, index) => (
-            <motion.button
-              key={index}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => goToPhoto(index)}
-              style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: borderRadius.lg,
-                overflow: 'hidden',
-                border: currentIndex === index
-                  ? `3px solid ${colors.primary[500]}`
-                  : `2px solid ${colors.glass.medium}`,
-                cursor: 'pointer',
-                background: 'transparent',
-                padding: 0,
-                transition: transitions.normal
-              }}
-            >
-              <ImageWithFallback
-                src={photo}
-                alt={`Miniatura ${index + 1}`}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-            </motion.button>
-          ))}
-        </div>
-      )}
-
-      {isFullscreen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: colors.glass.darker,
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: spacing[8]
-          }}
-          onClick={() => setIsFullscreen(false)}
-        >
-          <div style={{
-            position: 'relative',
-            maxWidth: '90vw',
-            maxHeight: '90vh',
-            borderRadius: borderRadius['2xl'],
-            overflow: 'hidden'
-          }}>
-            <ImageWithFallback
-              src={photos[currentIndex]}
-              alt={`Foto ${currentIndex + 1} - Pantalla completa`}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain'
-              }}
-            />
-
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsFullscreen(false)}
-              style={{
-                position: 'absolute',
-                top: spacing[4],
-                right: spacing[4],
-                background: colors.glass.darker,
-                color: colors.light,
-                border: 'none',
-                borderRadius: borderRadius.full,
-                width: '48px',
-                height: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: typography.fontSize.xl,
-                fontWeight: typography.fontWeight.bold,
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              ×
-            </motion.button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-});
-
-CarouselComponent.displayName = 'CarouselComponent';
 
 export function OrganizerProfileLive() {
   const { t, i18n } = useTranslation();
@@ -1950,55 +1703,12 @@ export function OrganizerProfileLive() {
                 borderRadius: borderRadius['2xl']
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4], marginBottom: spacing[6] }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  background: colors.gradients.primary,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: typography.fontSize['2xl'],
-                  boxShadow: colors.shadows.glow
-                }}>
-                  📍
-                </div>
-                <div>
-                  <h3 className="section-title">Ubicaciones</h3>
-                  <p style={{ fontSize: typography.fontSize.sm, opacity: 0.8, margin: 0, color: colors.light }}>
-                    Lugares donde realizamos nuestros sociales
-                  </p>
-                </div>
-              </div>
-              <div style={{ display: 'grid', gap: spacing[3] }}>
-                {aggregatedLocations.map((u: any, idx: number) => (
-                  <div key={idx} style={{
-                    display: 'grid',
-                    gap: 8,
-                    padding: '12px 14px',
-                    borderRadius: 12,
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    background: 'rgba(255,255,255,0.05)'
-                  }}>
-                    <div style={{ fontWeight: 700 }}>{u?.nombre || t('location')}</div>
-                    <div style={{ opacity: 0.9 }}>{u?.direccion}</div>
-                    {u?.referencias && <div style={{ opacity: 0.75, fontSize: 13 }}>Ref: {u.referencias}</div>}
-                    {!!(u?.zonaIds?.length) && (
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {(u.zonaIds as number[]).map((zid) => {
-                          const z = allTags?.find((t: any) => t.id === zid && t.tipo === 'zona');
-                          return z ? (
-                            <span key={zid} style={{ fontSize: 12, fontWeight: 600, color: '#fff', border: '1px solid rgba(25,118,210,0.35)', background: 'rgba(25,118,210,0.16)', padding: '2px 8px', borderRadius: 999 }}>
-                              {z.nombre}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <UbicacionesLive
+                ubicaciones={aggregatedLocations}
+                title="Ubicaciones"
+                description="Lugares donde realizamos nuestros sociales"
+                headingSize={typography.fontSize['2xl']}
+              />
             </motion.section>
           )}
 

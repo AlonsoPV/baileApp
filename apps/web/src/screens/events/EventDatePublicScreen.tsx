@@ -385,6 +385,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
 
   const toUrl = (u: string | null | undefined) =>
     u ? (toDirectPublicStorageUrl(ensureAbsoluteImageUrl(u) ?? u) ?? u) : undefined;
+  const flyerDate = getMediaBySlot(dateMedia, 'flyer')?.url;
+  const flyerParent = getMediaBySlot(parentMedia, 'flyer')?.url;
   const p1Date = getMediaBySlot(dateMedia, 'p1')?.url;
   const p1Parent = getMediaBySlot(parentMedia, 'p1')?.url;
   const avatarSlot = [...dateMedia, ...parentMedia].find((m: any) => m?.slot === 'avatar');
@@ -396,13 +398,16 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const firstUrl = firstDateUrl || firstParentUrl;
   const baseFlyerUrl =
     (date.flyer_url ? toUrl(date.flyer_url) : undefined) ||
+    (flyerDate ? toUrl(flyerDate) : undefined) ||
+    ((parent as any)?.flyer_url ? toUrl((parent as any).flyer_url) : undefined) ||
+    (flyerParent ? toUrl(flyerParent) : undefined) ||
+    ((parent as any)?.portada_url ? toUrl((parent as any).portada_url) : undefined) ||
     (p1Date ? toUrl(p1Date) : undefined) ||
     (p1Parent ? toUrl(p1Parent) : undefined) ||
     (avatarUrl ? toUrl(avatarUrl) : undefined) ||
     ((date as any).avatar_url ? toUrl((date as any).avatar_url) : undefined) ||
     ((parent as any)?.avatar_url ? toUrl((parent as any).avatar_url) : undefined) ||
     ((date as any).portada_url ? toUrl((date as any).portada_url) : undefined) ||
-    ((parent as any)?.portada_url ? toUrl((parent as any).portada_url) : undefined) ||
     (firstUrl ? toUrl(firstUrl) : undefined);
   const flyerCacheKey =
     ((date as any)?.updated_at as string | undefined) ||

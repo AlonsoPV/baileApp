@@ -39,6 +39,65 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
+/* Barra colapsable (perfil editor: formulario inicia cerrado) */
+.cc__collapse-trigger {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  display: block;
+}
+
+.cc__hd--collapse {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border-bottom: none !important;
+}
+
+.cc__collapse-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cc__collapse-chev {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-right: 12px;
+  color: var(--cc-muted);
+  transition: transform 0.2s ease;
+}
+
+.cc__collapse-chev--open {
+  transform: rotate(180deg);
+}
+
+.cc__collapse-dirty {
+  padding: 0 16px 12px 16px;
+  font-size: 13px;
+  color: var(--cc-hint);
+  border-top: 0.5px solid var(--cc-border);
+}
+
+.cc__collapse-dirty-btn {
+  background: none;
+  border: none;
+  color: var(--cc-accent);
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+}
+
 .cc__hd {
   display: flex;
   align-items: center;

@@ -1,4 +1,38 @@
 
+/* EventHero (eds-hero): variables como en .event-detail-screen */
+.academy-profile-hero-eds {
+  --eds-text: #ffffff;
+  --eds-accent: #eb377f;
+  --eds-radius-sm: 12px;
+  --eds-accent-glow: 0 0 20px rgba(235, 55, 127, 0.15), 0 0 40px rgba(41, 127, 150, 0.08);
+}
+
+.academy-profile-hero-wrap {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.academy-profile-copied-toast {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: 64px;
+  z-index: 20;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.academy-hero-below {
+  margin-top: 0.75rem;
+  margin-bottom: 2rem;
+}
+
 .academy-container { width: 100%; max-width: 900px; margin: 0 auto; }
 .academy-banner { width: 100%; max-width: 900px; margin: 0 auto; position: relative; }
 .glass-card-container {

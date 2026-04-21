@@ -1,0 +1,43 @@
+/**
+ * Hero tipo EventDate (EventHero + eds-hero) en perfiles live.
+ * Compartido: academia, maestro, usuario.
+ */
+
+.profile-live-hero-eds {
+  --eds-text: #ffffff;
+  --eds-accent: #eb377f;
+  --eds-radius-sm: 12px;
+  --eds-accent-glow: 0 0 20px rgba(235, 55, 127, 0.15), 0 0 40px rgba(41, 127, 150, 0.08);
+}
+
+.profile-live-hero-wrap {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.profile-live-copied-toast {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: 64px;
+  z-index: 20;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.profile-live-hero-below {
+  margin-top: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+#profile-hero-chips {
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}

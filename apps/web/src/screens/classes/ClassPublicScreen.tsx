@@ -38,6 +38,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { routes } from '@/routes/registry';
+import { pickClassItemFlyerUrl } from '@/utils/classFlyerImage';
 
 type SourceType = 'teacher' | 'academy';
 
@@ -138,6 +139,10 @@ export default function ClassPublicScreen() {
     return 0;
   })();
   const selectedClass = classesArr[selectedClassIndex] ?? classesArr[0];
+  const classPromoImageRaw = React.useMemo(
+    () => pickClassItemFlyerUrl(selectedClass),
+    [selectedClass],
+  );
   const classFavoriteActive = user
     ? isClassFavorite(sourceType as SourceType, idNum, selectedClassIndex)
     : guestFavorites.isClassFavorite(sourceType as SourceType, idNum, selectedClassIndex);
@@ -700,12 +705,17 @@ export default function ClassPublicScreen() {
   const classTimes = scheduleLabel ? ` · Horario: ${scheduleLabel}` : '';
   const seoDescription = `${classTitle} con ${creatorName} en ${locationName}${classTimes}${ritmosLabel ? ` · Ritmos: ${ritmosLabel}` : ''}.`;
   const seoImageRaw =
+    classPromoImageRaw ||
     getMediaBySlot(mediaList, 'p1')?.url ||
     getMediaBySlot(mediaList, 'cover')?.url ||
     profile?.avatar_url ||
     profile?.banner_url ||
     SEO_LOGO_URL;
-  const seoImage = seoImageRaw === SEO_LOGO_URL ? SEO_LOGO_URL : (toDirectPublicStorageUrl(seoImageRaw) || seoImageRaw);
+  const seoImage = (() => {
+    if (!seoImageRaw || seoImageRaw === SEO_LOGO_URL) return SEO_LOGO_URL;
+    const pub = resolveSupabaseStoragePublicUrl(seoImageRaw, { defaultBucket: 'media' }) || seoImageRaw;
+    return toDirectPublicStorageUrl(pub) || pub;
+  })();
   const classUrl = `${SEO_BASE_URL}/clase/${isTeacher ? 'teacher' : 'academy'}/${idNum}${classIndexParam ? `?i=${classIndexParam}` : classIdParam ? `?classId=${classIdParam}` : ''}`;
   const shareUrl = buildShareUrl('clase', String(idNum), {
     type: isTeacher ? 'teacher' : 'academy',
@@ -726,6 +736,7 @@ export default function ClassPublicScreen() {
 
   const heroBgUri = (() => {
     const raw =
+      classPromoImageRaw ||
       profile?.banner_url ||
       (getMediaBySlot(mediaList, 'cover') as any)?.url ||
       null;

@@ -6,6 +6,7 @@
 import { getMediaBySlot, normalizeMediaArray } from "./mediaSlots";
 import { toDirectPublicStorageUrl } from "./imageOptimization";
 import { SEO_LOGO_URL } from "../lib/seoConfig";
+import { pickClassItemFlyerUrl, selectCronogramaClassItem } from "./classFlyerImage";
 
 const IMAGE_URL_FIELDS = ["url", "src", "image_url", "flyer_url", "cover_url", "avatar_url", "path"];
 
@@ -102,15 +103,27 @@ export function resolveOpenEntityImageEvento(data: {
     if (url) return { imageUrl: url, imageSourceType: "flyer_url" };
   }
 
+  const parentFlyerRaw = parent?.flyer_url ?? parent?.portada_url;
+  if (isNonEmptyImageUrl(parentFlyerRaw)) {
+    const url = resolveUrl(parentFlyerRaw as string);
+    if (url) return { imageUrl: url, imageSourceType: "flyer_url" };
+  }
+
   const dateMedia = normalizeMediaArray(date?.media);
-  const dateFirst = getMediaBySlot(dateMedia, "cover")?.url || getMediaBySlot(dateMedia, "p1")?.url;
+  const dateFirst =
+    getMediaBySlot(dateMedia, "flyer")?.url ||
+    getMediaBySlot(dateMedia, "cover")?.url ||
+    getMediaBySlot(dateMedia, "p1")?.url;
   if (dateFirst) {
     const url = resolveUrl(dateFirst);
     if (url) return { imageUrl: url, imageSourceType: "media" };
   }
 
   const parentMedia = normalizeMediaArray(parent?.media);
-  const parentFirst = getMediaBySlot(parentMedia, "cover")?.url || getMediaBySlot(parentMedia, "p1")?.url;
+  const parentFirst =
+    getMediaBySlot(parentMedia, "flyer")?.url ||
+    getMediaBySlot(parentMedia, "cover")?.url ||
+    getMediaBySlot(parentMedia, "p1")?.url;
   if (parentFirst) {
     const url = resolveUrl(parentFirst);
     if (url) return { imageUrl: url, imageSourceType: "media" };
@@ -142,12 +155,21 @@ export function resolveOpenEntityImageEvento(data: {
   };
 }
 
-/** Clase: profile (academy o teacher) */
+/** Clase: flyer/cover del ítem del cronograma primero; luego medios del perfil. */
 export function resolveOpenEntityImageClase(data: {
   profile: Record<string, unknown>;
   sourceType: "teacher" | "academy";
+  /** Índice en cronograma/horarios (query ?i=); si no hay, se usa la primera clase. */
+  classIndex?: number;
 }): ResolveOpenEntityImageResult {
-  const { profile, sourceType } = data;
+  const { profile, classIndex } = data;
+  const classItem = selectCronogramaClassItem(profile, classIndex);
+  const fromClassItem = pickClassItemFlyerUrl(classItem);
+  if (fromClassItem) {
+    const url = resolveUrl(fromClassItem);
+    if (url) return { imageUrl: url, imageSourceType: "flyer_url" };
+  }
+
   const mediaList = profile?.media;
   const mediaArr = Array.isArray(mediaList) ? mediaList : [];
   const normalized = normalizeMediaArray(mediaArr);

@@ -122,11 +122,17 @@ export default function SocialCard({ item }: { item: SocialItem }) {
           style={{
           position: 'relative',
           borderRadius: '1.25rem',
-          background: cover
-            ? `url(${cover})`
-            : 'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          ...(cover
+            ? {
+                backgroundImage: `url(${cover})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+              }
+            : {
+                backgroundImage:
+                  'linear-gradient(135deg, rgba(40, 30, 45, 0.95), rgba(30, 20, 40, 0.95))',
+              }),
           padding: '1.5rem',
           cursor: 'pointer',
           overflow: 'hidden',

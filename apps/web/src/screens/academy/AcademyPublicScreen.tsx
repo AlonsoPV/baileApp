@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAcademyPublic } from "../../hooks/useAcademy";
 import { useTags } from "../../hooks/useTags";
-import ImageWithFallback from "../../components/ImageWithFallback";
 import { toDirectPublicStorageUrl } from "../../utils/imageOptimization";
 import { PHOTO_SLOTS, VIDEO_SLOTS, getMediaBySlot, normalizeMediaArray } from "../../utils/mediaSlots";
 import type { MediaItem as MediaSlotItem } from "../../utils/mediaSlots";
@@ -33,10 +32,12 @@ import { ProfileSkeleton } from "../../components/skeletons/ProfileSkeleton";
 import { RefreshingIndicator } from "../../components/loading/RefreshingIndicator";
 import { useSmartLoading } from "../../hooks/useSmartLoading";
 import { useTranslation } from "react-i18next";
-import { Share2 } from "lucide-react";
 import { getLocaleFromI18n } from "../../utils/locale";
 import { routes } from "../../routes/registry";
 import { VideoPlayerWithPiP } from "../../components/video/VideoPlayerWithPiP";
+import OrganizerPublicGallery from "../../components/profile/gallery/OrganizerPublicGallery";
+import { EventHero } from "../../components/events/EventDetail";
+import "../../components/events/EventDetail/eventDetailScreen.css";
 import "./AcademyPublicScreen.css";
 
 // FAQ
@@ -320,281 +321,6 @@ const VideoCarouselComponent: React.FC<{ videos: string[] }> = React.memo(({ vid
   );
 });
 
-// Componente Carousel para fotos mejorado
-const CarouselComponent: React.FC<{ photos: string[] }> = React.memo(({ photos }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const { t } = useTranslation();
-  if (photos.length === 0) return null;
-
-  const nextPhoto = useCallback(() => setCurrentIndex((prev) => (prev + 1) % photos.length), [photos.length]);
-  const prevPhoto = useCallback(() => setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length), [photos.length]);
-  const goToPhoto = useCallback((index: number) => setCurrentIndex(index), []);
-
-  return (
-    <>
-      <style>{`
-        .photo-gallery-main {
-          position: relative;
-          height: 350px;
-          border-radius: 20px;
-          overflow: hidden;
-          border: 2px solid rgba(255, 255, 255, 0.15);
-          background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.1));
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .photo-gallery-main:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
-          border-color: rgba(255, 255, 255, 0.25);
-        }
-        .photo-gallery-image {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          object-position: center;
-          cursor: pointer;
-          transition: transform 0.3s ease;
-        }
-        .photo-gallery-image:hover {
-          transform: scale(1.02);
-        }
-        .photo-gallery-counter {
-          position: absolute;
-          top: 1.25rem;
-          right: 1.25rem;
-          background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
-          backdrop-filter: blur(10px);
-          color: white;
-          padding: 0.6rem 1.2rem;
-          border-radius: 24px;
-          font-size: 0.875rem;
-          font-weight: 700;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-        .photo-gallery-nav-btn {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
-          backdrop-filter: blur(10px);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.25);
-          border-radius: 50%;
-          width: 52px;
-          height: 52px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          font-size: 1.5rem;
-          font-weight: 700;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-        .photo-gallery-nav-btn:hover {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
-          transform: translateY(-50%) scale(1.1);
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-        }
-        .photo-gallery-nav-btn:active {
-          transform: translateY(-50%) scale(0.95);
-        }
-        .photo-gallery-nav-btn--prev {
-          left: 1.25rem;
-        }
-        .photo-gallery-nav-btn--next {
-          right: 1.25rem;
-        }
-        .photo-gallery-thumbnails {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-          gap: 0.75rem;
-          margin-top: 1.5rem;
-          max-width: 100%;
-        }
-        .photo-gallery-thumb {
-          position: relative;
-          aspect-ratio: 1;
-          border-radius: 12px;
-          overflow: hidden;
-          border: 3px solid transparent;
-          cursor: pointer;
-          background: rgba(255, 255, 255, 0.05);
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        .photo-gallery-thumb:hover {
-          transform: translateY(-4px) scale(1.05);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-        .photo-gallery-thumb.active {
-          border-color: #E53935;
-          box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.3), 0 8px 24px rgba(229, 57, 53, 0.4);
-        }
-        .photo-gallery-thumb img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .photo-gallery-fullscreen {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(0, 0, 0, 0.95);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          cursor: pointer;
-          backdrop-filter: blur(10px);
-        }
-        .photo-gallery-fullscreen-content {
-          max-width: 95vw;
-          max-height: 95vh;
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-          border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-        .photo-gallery-fullscreen-close {
-          position: absolute;
-          top: 1.5rem;
-          right: 1.5rem;
-          background: rgba(0, 0, 0, 0.7);
-          backdrop-filter: blur(10px);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          width: 48px;
-          height: 48px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          font-size: 1.5rem;
-          font-weight: 700;
-          transition: all 0.2s ease;
-          z-index: 1001;
-        }
-        .photo-gallery-fullscreen-close:hover {
-          background: rgba(255, 255, 255, 0.1);
-          transform: scale(1.1);
-        }
-        @media (max-width: 768px) {
-          .photo-gallery-main {
-            border-radius: 16px;
-          }
-          .photo-gallery-counter {
-            top: 1rem;
-            right: 1rem;
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-          }
-          .photo-gallery-nav-btn {
-            width: 44px;
-            height: 44px;
-            font-size: 1.25rem;
-          }
-          .photo-gallery-nav-btn--prev {
-            left: 1rem;
-          }
-          .photo-gallery-nav-btn--next {
-            right: 1rem;
-          }
-          .photo-gallery-thumbnails {
-            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-            gap: 0.6rem;
-            margin-top: 1.25rem;
-          }
-        }
-        @media (max-width: 480px) {
-          .photo-gallery-main {
-            border-radius: 12px;
-          }
-          .photo-gallery-counter {
-            top: 0.75rem;
-            right: 0.75rem;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.75rem;
-          }
-          .photo-gallery-nav-btn {
-            width: 40px;
-            height: 40px;
-            font-size: 1.1rem;
-          }
-          .photo-gallery-nav-btn--prev {
-            left: 0.75rem;
-          }
-          .photo-gallery-nav-btn--next {
-            right: 0.75rem;
-          }
-          .photo-gallery-thumbnails {
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 0.5rem;
-            margin-top: 1rem;
-          }
-        }
-      `}</style>
-      <div style={{ position: 'relative', maxWidth: '1000px', margin: '0 auto' }}>
-        <div className="photo-gallery-main">
-          <ImageWithFallback
-            src={photos[currentIndex]}
-            alt={t('see_photo', { index: currentIndex + 1 })}
-            className="photo-gallery-image"
-            onClick={() => setIsFullscreen(true)}
-          />
-
-          <div className="photo-gallery-counter">
-            {currentIndex + 1} / {photos.length}
-          </div>
-
-          {photos.length > 1 && (
-            <>
-              <button onClick={(e) => { e.stopPropagation(); prevPhoto(); }} className="photo-gallery-nav-btn photo-gallery-nav-btn--prev" aria-label="Foto anterior" disabled={photos.length <= 1}>‹</button>
-              <button onClick={(e) => { e.stopPropagation(); nextPhoto(); }} className="photo-gallery-nav-btn photo-gallery-nav-btn--next" aria-label="Foto siguiente" disabled={photos.length <= 1}>›</button>
-            </>
-          )}
-        </div>
-
-        {photos.length > 1 && (
-          <div className="photo-gallery-thumbnails">
-            {photos.map((photo, index) => (
-              <button
-                key={index}
-                onClick={() => goToPhoto(index)}
-                className={`photo-gallery-thumb ${index === currentIndex ? 'active' : ''}`}
-                aria-label={t('see_photo', { index: index + 1 })}
-              >
-                <ImageWithFallback src={photo} alt={t('thumbnail', { index: index + 1 })} />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {isFullscreen && (
-        <div className="photo-gallery-fullscreen" onClick={() => setIsFullscreen(false)}>
-          <button
-            className="photo-gallery-fullscreen-close"
-            onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
-            aria-label={t('close_fullscreen')}
-          >
-            ✕
-          </button>
-          <div className="photo-gallery-fullscreen-content" onClick={(e) => e.stopPropagation()}>
-            <ImageWithFallback src={photos[currentIndex]} alt={t('see_photo_fullscreen', { index: currentIndex + 1 })} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-          </div>
-        </div>
-      )}
-    </>
-  );
-});
-
 // promotionTypeMeta se define dentro del componente para usar t()
 
 const formatCurrency = (value?: number | string | null) => {
@@ -633,6 +359,33 @@ export default function AcademyPublicScreen() {
   const { isFirstLoad, isRefetching } = useSmartLoading(academyQuery);
   const { data: allTags } = useTags();
   const [copied, setCopied] = React.useState(false);
+
+  const onShare = React.useCallback(() => {
+    if (!id || Number.isNaN(id) || !academy) return;
+    try {
+      const url = buildShareUrl("academia", String(id));
+      const title = (academy as any)?.nombre_publico || t("academy");
+      const text = t("check_academy_profile", { name: title });
+      const navAny = navigator as any;
+      if (navAny?.share) {
+        navAny
+          .share({ title, text, url })
+          .catch(() => {
+            navigator.clipboard?.writeText(url).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }).catch(() => {});
+          });
+      } else {
+        navigator.clipboard?.writeText(url).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        }).catch(() => {});
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [id, academy, t]);
   
   // promotionTypeMeta dentro del componente para usar t()
   const promotionTypeMeta = React.useMemo(() => ({
@@ -770,6 +523,18 @@ export default function AcademyPublicScreen() {
     return toDirectPublicStorageUrl(raw) ?? raw;
   }, [media, academy]);
 
+  const heroLocationMeta = useMemo(() => {
+    if (!academy) return { city: "", venue: "" };
+    const ubis = (academy as any)?.ubicaciones;
+    const first = Array.isArray(ubis) && ubis[0] ? ubis[0] : null;
+    const city =
+      (first?.ciudad && String(first.ciudad).trim()) ||
+      ((academy as any)?.ciudad && String((academy as any).ciudad).trim()) ||
+      "";
+    const venue = (first?.nombre && String(first.nombre).trim()) || "";
+    return { city, venue };
+  }, [academy]);
+
   const getRitmoNombres = useMemo(() => {
     const names: string[] = [];
     if (allTags) {
@@ -858,184 +623,105 @@ export default function AcademyPublicScreen() {
       <div className="academy-container" style={{ position: 'relative' }}>
         {/* ❌ Toggle eliminado */}
 
-        {/* Banner Principal */}
+        {/* Hero: mismo patrón que EventDatePublicScreen / AcademyProfileLive */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="academy-banner glass-card-container"
-          style={{ position: 'relative', margin: '0.5rem auto 0 auto', overflow: 'hidden' }}
+          transition={{ duration: 0.5 }}
+          className="academy-profile-hero-wrap"
         >
-          {/* Botón Volver a inicio */}
-          <motion.button
-            type="button"
-            onClick={handleBack}
-            whileHover={{ scale: 1.1, x: -3 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label={t('back_to_start')}
-            style={{
-              position: 'absolute',
-              top: '1rem',
-              left: '1rem',
-              zIndex: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              border: 'none',
-              background: 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))',
-              cursor: 'pointer',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.3), rgba(255,209,102,0.25))';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(240,147,251,0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(240,147,251,0.2), rgba(255,209,102,0.15))';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset';
-            }}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: '#f093fb' }}
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </motion.button>
-          {copied && <div role="status" aria-live="polite" style={{ position: 'absolute', top: 14, right: 12, padding: '4px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', fontSize: 12, fontWeight: 700, zIndex: 10 }}>{t('copied')}</div>}
-          <div className="academy-banner-grid">
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '1rem' }}>
-              <div className="academy-banner-avatar">
-                {primaryAvatarUrl ? (
-                  <img
-                    src={primaryAvatarUrl}
-                    alt={t('dance_academy')}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div className="academy-banner-avatar-fallback" style={{
-                    width: '100%', height: '100%', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', fontSize: '6rem', fontWeight: 700, color: 'white'
-                  }}>
-                    {(academy as any).nombre_publico?.[0]?.toUpperCase() || '🎓'}
-                  </div>
-                )}
-              </div>
-              {/* Badge de verificación y botón de compartir inline */}
-              <div style={{
+          {copied && (
+            <div className="academy-profile-copied-toast" role="status" aria-live="polite">
+              {t('copied')}
+            </div>
+          )}
+          <div className="academy-profile-hero-eds">
+            <EventHero
+              title={(academy as any)?.nombre_publico || academyName}
+              flyerUrl={primaryAvatarUrl}
+              flyerCacheKey={
+                (academy as any)?.updated_at ?? (academy as any)?.created_at ?? id ?? null
+              }
+              dateStr={t('dance_academy')}
+              timeRange={heroLocationMeta.city}
+              venueName={heroLocationMeta.venue}
+              onShare={onShare}
+              onBack={handleBack}
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.05 }}
+          className="academy-hero-below glass-card-container"
+        >
+          {((academy as any)?.estado_aprobacion === 'aprobado') && (
+            <div
+              style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.75rem',
-                flexWrap: 'wrap'
-              }}>
-                {((academy as any)?.estado_aprobacion === 'aprobado') && (
-                  <div className="badge" style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '.45rem',
-                    padding: '.35rem .6rem',
-                    borderRadius: '999px',
-                    fontWeight: 800,
-                    background: 'linear-gradient(135deg, #106c37, #0b5)',
-                    border: '1px solid #13a65a',
-                    boxShadow: '0 8px 18px rgba(0,0,0,.35)',
-                    fontSize: '.82rem',
-                    color: '#fff'
-                  }}>
-                    <div className="dot" style={{
-                      width: '16px',
-                      height: '16px',
-                      display: 'grid',
-                      placeItems: 'center',
-                      background: '#16c784',
-                      borderRadius: '50%',
-                      color: '#062d1f',
-                      fontSize: '.75rem',
-                      fontWeight: 900
-                    }}>✓</div>
-                    <span>{t('verified')}</span>
-                  </div>
-                )}
-                <button
-                  id="profile-hero-share"
-                  aria-label={t('share_profile')}
-                  title={t('share')}
-                  onClick={() => {
-                    try {
-                      const url = buildShareUrl('academia', String(id));
-                      const title = (academy as any)?.nombre_publico || t('academy');
-                      const text = t('check_academy_profile', { name: title });
-                      const navAny = (navigator as any);
-                      if (navAny && typeof navAny.share === 'function') {
-                        navAny.share({ title, text, url }).catch(() => {});
-                      } else {
-                        navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {});
-                      }
-                    } catch {}
-                  }}
+                flexWrap: 'wrap',
+                marginBottom: '1rem',
+              }}
+            >
+              <div
+                className="badge"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '.45rem',
+                  padding: '.35rem .6rem',
+                  borderRadius: '999px',
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #106c37, #0b5)',
+                  border: '1px solid #13a65a',
+                  boxShadow: '0 8px 18px rgba(0,0,0,.35)',
+                  fontSize: '.82rem',
+                  color: '#fff',
+                }}
+              >
+                <div
+                  className="dot"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 1rem',
-                    background: 'rgba(255,255,255,0.10)',
-                    border: '1px solid rgba(255,255,255,0.25)',
-                    color: '#fff',
-                    borderRadius: 999,
-                    backdropFilter: 'blur(8px)',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: 700
+                    width: '16px',
+                    height: '16px',
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: '#16c784',
+                    borderRadius: '50%',
+                    color: '#062d1f',
+                    fontSize: '.75rem',
+                    fontWeight: 900,
                   }}
                 >
-                  <Share2 size={18} strokeWidth={2} aria-hidden />
-                </button>
+                  ✓
+                </div>
+                <span>{t('verified')}</span>
               </div>
             </div>
-
-            <div>
-              <h1 id="profile-hero-name" style={{
-                fontSize: '3rem', display: 'inline', fontWeight: 800, color: 'white',
-                margin: '0 0 0.5rem 0', textShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-                fontFamily: "'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-              }}>
-                {academy.nombre_publico}
-              </h1>
-
-              <p id="profile-hero-type" style={{ 
-                fontSize: '1.25rem', 
-                color: 'rgba(255, 255, 255, 0.9)', 
-                margin: '0 0 0.75rem 0', 
-                lineHeight: 1.4,
-                fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-              }}>
-                {t('dance_academy')}
-              </p>
-
-              <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
-                <BioSection 
-                  bio={(academy as any)?.bio}
-                  redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
-                  variant="banner"
-                />
-              </div>
-
-            </div>
+          )}
+          <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
+            <BioSection
+              bio={(academy as any)?.bio}
+              redes={(academy as any)?.redes_sociales || (academy as any)?.respuestas?.redes}
+              variant="banner"
+            />
           </div>
-          <div id="profile-hero-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem', width: '100%' }}>
+          <div
+            id="profile-hero-chips"
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+              marginTop: '0.25rem',
+              width: '100%',
+              justifyContent: 'center',
+            }}
+          >
             {(() => {
               const slugs = normalizeRitmosToSlugs(academy, allTags);
               return slugs.length > 0 ? (
@@ -1889,41 +1575,16 @@ export default function AcademyPublicScreen() {
             </motion.section>
           )}
 
-          {/* Galería de Fotos Mejorada */}
+          {/* Galería de fotos (mismo patrón que organizador: id estable para auditorías) */}
           {carouselPhotos.length > 0 && (
-            <motion.section
-              id="user-profile-photo-gallery"
-              data-baile-id="user-profile-photo-gallery"
-              data-test-id="user-profile-photo-gallery"
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="gallery-section glass-card-container"
+              className="gallery-section"
             >
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1.5rem'
-              }}>
-                <h3 className="section-title">
-                  📷 {t('photo_gallery')}
-                </h3>
-                <div style={{
-                  padding: '0.5rem 1rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '20px',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: colors.light,
-                  fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                }}>
-                  {carouselPhotos.length} {carouselPhotos.length !== 1 ? t('photos') : t('photo')}
-                </div>
-              </div>
-
-              <CarouselComponent photos={carouselPhotos} />
-            </motion.section>
+              <OrganizerPublicGallery photos={carouselPhotos} title={t('photo_gallery')} />
+            </motion.div>
           )}
         </div>
       </div>

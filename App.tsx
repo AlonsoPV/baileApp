@@ -19,6 +19,8 @@ import { AuthCoordinator } from "./src/auth/AuthCoordinator";
 import { formatFingerprint, getConfigFingerprint, getNativeGoogleConfigStatus, getRuntimeConfig } from "./src/config/runtimeConfig";
 import { PerformanceLogger } from "./src/utils/perf";
 import AppLoadingScreen from "./src/components/AppLoadingScreen";
+import InitialStartupCurtain from "./src/components/InitialStartupCurtain";
+import { InitialAppShellProvider } from "./src/context/InitialAppShellContext";
 
 // Mantener splash nativo (iOS/Android) hasta que la capa JS pinte la pantalla negra + loader
 void SplashScreen.preventAutoHideAsync();
@@ -383,11 +385,16 @@ function AppContent() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        {shouldShowDebug ? <ConfigDebug /> : null}
-        <ErrorBoundary title="Error al iniciar la app">
-          <RootNavigator />
-        </ErrorBoundary>
-        <StatusBar style="auto" />
+        <InitialAppShellProvider>
+          <View style={{ flex: 1 }}>
+            {shouldShowDebug ? <ConfigDebug /> : null}
+            <ErrorBoundary title="Error al iniciar la app">
+              <RootNavigator />
+            </ErrorBoundary>
+            <InitialStartupCurtain />
+            <StatusBar style="auto" />
+          </View>
+        </InitialAppShellProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

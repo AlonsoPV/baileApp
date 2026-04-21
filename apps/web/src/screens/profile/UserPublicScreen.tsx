@@ -867,6 +867,7 @@ export const UserProfileLive: React.FC = () => {
                 gap={20}
                 autoColumns="minmax(320px, 400px)"
                 showNavButtons={false}
+                dimInactive={false}
               />
             ) : rsvpsError ? (
               <motion.div
@@ -902,6 +903,9 @@ export const UserProfileLive: React.FC = () => {
                 )}
                 gap={20}
                 autoColumns="minmax(320px, 400px)"
+                navPosition="bottom"
+                dimInactive={false}
+                stickyNavRow={false}
               />
             ) : (
               <motion.div

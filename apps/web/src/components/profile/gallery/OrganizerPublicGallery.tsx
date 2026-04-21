@@ -7,12 +7,15 @@ type OrganizerPublicGalleryProps = {
   photos: string[];
   title?: string;
   maxVisibleThumbs?: number;
+  /** Stable DOM id for audits / e2e (default: organizer-profile-photo-gallery). */
+  galleryDomId?: string;
 };
 
 export default function OrganizerPublicGallery({
   photos,
   title = "Galería de fotos",
   maxVisibleThumbs = 4,
+  galleryDomId = "organizer-profile-photo-gallery",
 }: OrganizerPublicGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
   const [index, setIndex] = React.useState(0);
@@ -27,9 +30,9 @@ export default function OrganizerPublicGallery({
 
   return (
     <section
-      id="organizer-profile-photo-gallery"
-      data-baile-id="organizer-profile-photo-gallery"
-      data-test-id="organizer-profile-photo-gallery"
+      id={galleryDomId}
+      data-baile-id={galleryDomId}
+      data-test-id={galleryDomId}
       className="glass-card"
       style={{
         marginBottom: spacing[8],
