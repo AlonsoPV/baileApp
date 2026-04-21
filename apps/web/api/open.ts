@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "http";
 import { createClient } from "@supabase/supabase-js";
-import { pickClassItemFlyerUrl, selectCronogramaClassItem } from "../src/utils/classFlyerImage";
+
 type ShareEntityType =
   | "evento"
   | "clase"
@@ -48,9 +48,14 @@ function getSupabaseAdmin(): SupabaseClient | null {
   const env = getSupabaseServerEnv();
   if (!env) return null;
   if (!supabaseAdmin) {
-    supabaseAdmin = createClient(env.url, env.key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    try {
+      supabaseAdmin = createClient(env.url, env.key, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+    } catch (e) {
+      console.error("[open] createClient failed", e);
+      return null;
+    }
   }
   return supabaseAdmin;
 }
@@ -216,6 +221,37 @@ function normalizeMediaArray(raw: unknown): Array<{ slot: string; url: string }>
 
 function getMediaBySlot(list: Array<{ slot: string; url: string }>, slot: string): { slot: string; url: string } | undefined {
   return list.find((item) => item.slot === slot);
+}
+
+/** Misma lógica que `src/utils/classFlyerImage` (sin importar `../src` en serverless). */
+function selectCronogramaClassItem(profile: Record<string, unknown>, classIndex?: number): unknown {
+  const cronograma = (profile?.cronograma || profile?.horarios || []) as unknown[];
+  if (!Array.isArray(cronograma) || cronograma.length === 0) return undefined;
+  if (
+    classIndex != null &&
+    Number.isFinite(classIndex) &&
+    classIndex >= 0 &&
+    classIndex < cronograma.length
+  ) {
+    return cronograma[classIndex];
+  }
+  return cronograma[0];
+}
+
+function pickClassItemFlyerUrl(classItem: unknown): string | undefined {
+  if (!classItem || typeof classItem !== "object") return undefined;
+  const c = classItem as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
+  const direct = str(c.flyer_url) || str(c.cover_url) || str(c.portada_url) || str(c.imagen);
+  if (direct) return direct;
+  const classMedia = normalizeMediaArray((c as { media?: unknown }).media);
+  return (
+    getMediaBySlot(classMedia, "flyer")?.url ||
+    getMediaBySlot(classMedia, "cover")?.url ||
+    getMediaBySlot(classMedia, "p1")?.url ||
+    classMedia.find((m) => m.url)?.url ||
+    undefined
+  );
 }
 
 function extractFirstValidImageUrl(input: unknown): string | null {
@@ -1055,24 +1091,24 @@ function renderNotFound(): string {
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  if (req.method !== "GET") {
-    res.statusCode = 405;
-    res.end("Method Not Allowed");
-    return;
-  }
-
-  const supabase = getSupabaseAdmin();
-  if (!supabase) {
-    console.error(
-      "[open] Missing Supabase env. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE or SUPABASE_ANON_KEY (VITE_* / NEXT_PUBLIC_* also supported) on the serverless environment.",
-    );
-    res.statusCode = 503;
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.end(renderConfigError());
-    return;
-  }
-
   try {
+    if (req.method !== "GET") {
+      res.statusCode = 405;
+      res.end("Method Not Allowed");
+      return;
+    }
+
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      console.error(
+        "[open] Missing Supabase env or createClient failed. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE or SUPABASE_ANON_KEY (VITE_* / NEXT_PUBLIC_* also supported) for serverless.",
+      );
+      res.statusCode = 503;
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.end(renderConfigError());
+      return;
+    }
+
     const payload = await resolvePayload(req, supabase);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     if (!payload) {
@@ -1084,7 +1120,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.statusCode = 200;
     res.end(renderHtml(payload));
   } catch (error) {
-    console.error("[open] Failed to render smart page", error);
+    console.error("[open] Failed to handle request", error);
+    if (res.headersSent) return;
     res.statusCode = 500;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.end(renderNotFound());
