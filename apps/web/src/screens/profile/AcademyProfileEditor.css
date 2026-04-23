@@ -1,5 +1,79 @@
 @import './profileEditorLayout.css';
 
+.ape-section-info-hint {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.ape-section-info-hint__btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 2px;
+  border: none;
+  background: none;
+  cursor: help;
+  line-height: 0;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.ape-section-info-hint__btn:hover,
+.ape-section-info-hint__btn:focus-visible {
+  color: rgba(100, 200, 255, 0.95);
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.ape-section-info-hint__icon {
+  font-size: 1.05rem;
+  display: block;
+}
+
+.ape-section-info-hint__tip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  bottom: auto;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.75rem;
+  min-width: 11rem;
+  max-width: 22rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  color: #fff;
+  background: rgba(20, 22, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.ape-section-info-hint__tip code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+.ape-section-info-hint__btn:hover .ape-section-info-hint__tip,
+.ape-section-info-hint__btn:focus-visible .ape-section-info-hint__tip {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
 /* Solo Academia: ritmos / bloque clases */
 .ape-profile-stack .academy-editor-card .rhythms-zones-two-columns h2 {
   font-size: 1.05rem !important;

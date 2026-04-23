@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Smartphone, Check, MapPin, Music, Globe, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CalendarRange, Check, MapPin, Music, Globe, ChevronLeft, ChevronRight } from "lucide-react";
 import { landingContent } from "@/config/content";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
 import { track, LANDING_EVENTS } from "@/lib/track";
@@ -10,7 +11,7 @@ import "@/components/explore/cards/Card.css";
 
 const { hero } = landingContent;
 
-const BADGE_ICONS = [Check, MapPin, Music] as const;
+const BADGE_ICONS = [Check, Music] as const;
 
 /** Fallback si aún no hay datos o la query falla — misma forma que EventCard + __ui */
 const HERO_SLIDER_FALLBACK: any[] = [
@@ -66,7 +67,6 @@ const HERO_SLIDER_FALLBACK: any[] = [
 
 interface HeroProps {
   onOpenDownload: () => void;
-  onOpenB2B: () => void;
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -106,15 +106,19 @@ export function Hero({ onOpenDownload }: HeroProps) {
     return () => window.clearTimeout(t);
   }, [interactionPause]);
 
+  /** Solo desplaza el scroll interno del carrusel — nunca `scrollIntoView` (puede mover el scroll de la página). */
   const scrollSlideIntoView = useCallback(
     (index: number) => {
       const container = sliderRef.current;
       if (!container) return;
       const slide = container.children[index] as HTMLElement | undefined;
-      slide?.scrollIntoView({
+      if (!slide) return;
+      const cRect = container.getBoundingClientRect();
+      const sRect = slide.getBoundingClientRect();
+      const nextLeft = container.scrollLeft + (sRect.left - cRect.left);
+      container.scrollTo({
+        left: Math.max(0, nextLeft),
         behavior: prefersReducedMotion ? "auto" : "smooth",
-        block: "nearest",
-        inline: "nearest",
       });
     },
     [prefersReducedMotion]
@@ -166,9 +170,12 @@ export function Hero({ onOpenDownload }: HeroProps) {
     nextSlide();
   };
 
-  const handleDownloadClick = () => {
-    track(LANDING_EVENTS.CTA_DOWNLOAD, { location: "hero" });
-    onOpenDownload();
+  const handleExplorePrimary = () => {
+    track(LANDING_EVENTS.CTA_EXPLORE, { location: "hero", target: "fechas" });
+  };
+
+  const handleExploreSecondary = () => {
+    track(LANDING_EVENTS.CTA_EXPLORE, { location: "hero", target: "explore_home" });
   };
 
   const handleMobileMockupCta = () => {
@@ -196,21 +203,25 @@ export function Hero({ onOpenDownload }: HeroProps) {
               {hero.subheadline}
             </p>
             <div className="landing-hero__ctas" id="descargar">
-              <button type="button" className="btn btn-primary" onClick={handleDownloadClick}>
-                <Smartphone size={20} strokeWidth={2} aria-hidden />
+              <Link
+                to="/explore/list?type=sociales"
+                className="btn btn-primary landing-hero__cta-link"
+                onClick={handleExplorePrimary}
+              >
+                <CalendarRange size={20} strokeWidth={2} aria-hidden />
                 {hero.ctaPrimary}
-              </button>
-              <a
-                href="https://dondebailar.com.mx/explore"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-ghost landing-hero__web-btn"
-                aria-label="Ir a la web"
+              </Link>
+              <Link
+                to="/explore"
+                className="btn btn-ghost landing-hero__web-btn landing-hero__cta-link"
+                onClick={handleExploreSecondary}
+                aria-label={hero.ctaSecondary}
               >
                 <Globe size={20} strokeWidth={2} aria-hidden />
-                Web
-              </a>
+                {hero.ctaSecondary}
+              </Link>
             </div>
+            <p className="landing-hero__microcopy">{hero.ctaMicrocopy}</p>
           </div>
           <div className="landing-hero__col2">
             <div className="hero-mockup">
@@ -315,16 +326,24 @@ export function DownloadModal({
   onClose: () => void;
 }) {
   const handleStoreClick = (store: "ios" | "android") => {
-    if (store === "android") return; // Android: próximamente
     track(LANDING_EVENTS.CTA_DOWNLOAD, { store });
     window.open(store === "ios" ? APP_STORE_URL : PLAY_STORE_URL, "_blank");
     onClose();
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      panelClassName="download-modal-panel w-full max-w-md border border-white/12 shadow-2xl"
+      contentClassName="download-modal-body"
+      ariaLabelledBy="download-modal-heading"
+    >
       <div className="download-modal-content">
-        <p className="download-modal-subtitle">Elige tu plataforma</p>
+        <h2 id="download-modal-heading" className="download-modal-title">
+          Elige tu plataforma
+        </h2>
+        <p className="download-modal-lead">Descarga gratis en iPhone o Android.</p>
         <div className="download-modal-buttons">
           <button
             type="button"
@@ -339,15 +358,14 @@ export function DownloadModal({
           </button>
           <button
             type="button"
-            disabled
-            className="download-modal-btn download-modal-btn--play download-modal-btn--soon"
-            aria-label="Google Play próximamente"
+            onClick={() => handleStoreClick("android")}
+            className="download-modal-btn download-modal-btn--play"
+            aria-label="Descargar en Google Play para Android"
           >
             <span className="download-modal-btn__icon download-modal-btn__icon--play">
               <GooglePlayIcon />
             </span>
             <span className="download-modal-btn__label">Google Play</span>
-            <span className="download-modal-btn__note">Próximamente</span>
           </button>
         </div>
       </div>

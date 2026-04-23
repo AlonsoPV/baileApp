@@ -34,7 +34,7 @@ import { supabase } from "@/lib/supabase";
 import { AcademyMetricsPanel } from "../../components/profile/AcademyMetricsPanel";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import { useMyCompetitionGroups, useDeleteCompetitionGroup } from "../../hooks/useCompetitionGroups";
-import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram } from 'react-icons/fa';
+import { FaInstagram, FaFacebookF, FaTiktok, FaYoutube, FaWhatsapp, FaGlobe, FaTelegram, FaInfoCircle } from 'react-icons/fa';
 import { StripePayoutSettings } from "../../components/payments/StripePayoutSettings";
 import { useMyApprovedRoles } from "../../hooks/useMyApprovedRoles";
 import ClassDatesSheet from "../../components/classes/ClassDatesSheet";
@@ -45,6 +45,22 @@ import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
 const AcademyStudentsPanelLazy = React.lazy(() =>
   import("../../components/profile/AcademyStudentsPanel").then((m) => ({ default: m.AcademyStudentsPanel })),
 );
+
+function ApeSectionInfoHint({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <span className="ape-section-info-hint" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        className="ape-section-info-hint__btn"
+        aria-label={label}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FaInfoCircle className="ape-section-info-hint__icon" aria-hidden />
+        <span className="ape-section-info-hint__tip">{children}</span>
+      </button>
+    </span>
+  );
+}
 
 const colors = {
   primary: '#E53935',
@@ -1957,9 +1973,14 @@ export default function AcademyProfileEditor() {
               {/* Información Personal */}
               <div className="editor-section glass-card-container" style={{ marginBottom: '3rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                  <h2 className="editor-section-title" style={{ margin: 0 }}>
-                    👤 Información Personal
-                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <h2 className="editor-section-title" style={{ margin: 0 }}>
+                      👤 Información Personal
+                    </h2>
+                    <ApeSectionInfoHint label="Lo primero que verán los visitantes: nombre, descripción y cómo contactarte en redes.">
+                      Lo primero que verán los visitantes: nombre, descripción y cómo contactarte en redes.
+                    </ApeSectionInfoHint>
+                  </div>
                   <button
                     type="button"
                     onClick={handleSavePersonalInfo}
@@ -1997,9 +2018,6 @@ export default function AcademyProfileEditor() {
                     {sectionSaving.personal ? '⏳ Guardando...' : '💾 Guardar sección'}
                   </button>
                 </div>
-                <p className="ape-section-hint">
-                  Lo primero que verán los visitantes: nombre, descripción y cómo contactarte en redes.
-                </p>
                 
                 {sectionStatus.personal && (
                   <motion.div
@@ -2229,9 +2247,17 @@ export default function AcademyProfileEditor() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                      <h2 className="editor-section-title" style={{ margin: 0, fontSize: '1.35rem' }}>
-                        WhatsApp para Clases
-                      </h2>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                        <h2 className="editor-section-title" style={{ margin: 0, fontSize: '1.35rem' }}>
+                          WhatsApp para Clases
+                        </h2>
+                        <ApeSectionInfoHint label="Configura el contacto y mensaje que aparecerá en cada clase. Usa {nombre} o {clase} para variables.">
+                          <>
+                            Configura el contacto y mensaje que aparecerá en cada clase. Usa <code>{"{nombre}"}</code> o <code>{"{clase}"}</code> para
+                            variables.
+                          </>
+                        </ApeSectionInfoHint>
+                      </div>
                       <button
                         type="button"
                         onClick={handleSaveWhatsApp}
@@ -2270,9 +2296,6 @@ export default function AcademyProfileEditor() {
                         {sectionSaving.whatsapp ? '⏳ Guardando...' : '💾 Guardar sección'}
                       </button>
                     </div>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                      Configura el contacto y mensaje que aparecerá en cada clase. Usa <code style={{ background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 4, fontSize: '0.85rem' }}>{'{nombre}'}</code> o <code style={{ background: 'rgba(255,255,255,0.12)', padding: '2px 6px', borderRadius: 4, fontSize: '0.85rem' }}>{'{clase}'}</code> para variables.
-                    </p>
                   </div>
                 </div>
                 
@@ -2435,9 +2458,11 @@ export default function AcademyProfileEditor() {
                     {/* Header Estilos */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
                       <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1E88E5,#7C4DFF)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(30,136,229,0.35)' }}>🎵</div>
-                      <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                         <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Estilos que Enseñamos</h2>
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Selecciona los ritmos que enseña la academia</div>
+                        <ApeSectionInfoHint label="Selecciona los ritmos que enseña la academia">
+                          Selecciona los ritmos que enseña la academia
+                        </ApeSectionInfoHint>
                       </div>
                     </div>
 
@@ -2462,9 +2487,11 @@ export default function AcademyProfileEditor() {
                     {/* Header Zonas */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1rem' }}>
                       <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1976D2,#00BCD4)', display: 'grid', placeItems: 'center', boxShadow: '0 10px 24px rgba(25,118,210,0.35)' }}>🗺️</div>
-                      <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                         <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#fff', textShadow: 'rgba(0, 0, 0, 0.8) 0px 2px 4px, rgba(0, 0, 0, 0.6) 0px 0px 8px, rgba(0, 0, 0, 0.8) -1px -1px 0px, rgba(0, 0, 0, 0.8) 1px -1px 0px, rgba(0, 0, 0, 0.8) -1px 1px 0px, rgba(0, 0, 0, 0.8) 1px 1px 0px' }}>Zonas</h2>
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Indica las zonas donde opera la academia</div>
+                        <ApeSectionInfoHint label="Indica las zonas donde opera la academia">
+                          Indica las zonas donde opera la academia
+                        </ApeSectionInfoHint>
                       </div>
                     </div>
 
@@ -2485,19 +2512,21 @@ export default function AcademyProfileEditor() {
 
               {/* Horarios, Costos y Ubicación (unificado) */}
               <div className="org-editor__card" style={{ marginBottom: '3rem' }}>
-                <h2
-                  style={{
-                    fontSize: 'clamp(1.15rem, 4vw, 1.5rem)',
-                    marginBottom: '1.5rem',
-                    color: colors.light,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  🗓️ Horarios, Costos y Ubicación
-                </h2>
-                <p className="ape-section-hint" style={{ marginTop: '-0.75rem' }}>
-                  Sedes, precios y clases en un solo lugar. Aquí defines dónde enseñas y qué ofreces.
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                  <h2
+                    style={{
+                      fontSize: 'clamp(1.15rem, 4vw, 1.5rem)',
+                      margin: 0,
+                      color: colors.light,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    🗓️ Horarios, Costos y Ubicación
+                  </h2>
+                  <ApeSectionInfoHint label="Sedes, precios y clases en un solo lugar. Aquí defines dónde enseñas y qué ofreces.">
+                    Sedes, precios y clases en un solo lugar. Aquí defines dónde enseñas y qué ofreces.
+                  </ApeSectionInfoHint>
+                </div>
 
                 <div style={{ display: 'grid', gap: '1.5rem', minWidth: 0 }}>
                   {/* Ubicaciones */}
@@ -2736,9 +2765,14 @@ export default function AcademyProfileEditor() {
                           width: '100%',
                         }}
                       >
-                        <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
-                          🏦 Cuenta bancaria
-                        </h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
+                            🏦 Cuenta bancaria
+                          </h2>
+                          <ApeSectionInfoHint label="Datos para transferencias y pagos. No son visibles en tu perfil público.">
+                            Datos para transferencias y pagos. No son visibles en tu perfil público.
+                          </ApeSectionInfoHint>
+                        </div>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -2791,10 +2825,6 @@ export default function AcademyProfileEditor() {
                   </summary>
 
                   <div className="ape-socials-collapsible__body">
-                    <p className="ape-section-hint" style={{ marginTop: 0 }}>
-                      Datos para transferencias y pagos. No son visibles en tu perfil público.
-                    </p>
-
                     {sectionStatus['cuenta-bancaria'] && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
@@ -3278,9 +3308,14 @@ export default function AcademyProfileEditor() {
                   <summary className="ape-socials-collapsible__summary">
                     <div className="ape-socials-collapsible__header" style={{ width: '100%' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0, flexWrap: 'wrap', gap: '1rem', width: '100%' }}>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
-                    💬 Información para Estudiantes
-                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
+                      💬 Información para Estudiantes
+                    </h2>
+                    <ApeSectionInfoHint label="Preguntas frecuentes para que los alumnos resuelvan dudas sin escribirte.">
+                      Preguntas frecuentes para que los alumnos resuelvan dudas sin escribirte.
+                    </ApeSectionInfoHint>
+                  </div>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -3329,10 +3364,6 @@ export default function AcademyProfileEditor() {
                   </summary>
 
                   <div className="ape-socials-collapsible__body">
-                <p className="ape-section-hint">
-                  Preguntas frecuentes para que los alumnos resuelvan dudas sin escribirte.
-                </p>
-                
                 {sectionStatus.faq && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -3368,9 +3399,15 @@ export default function AcademyProfileEditor() {
                   <summary className="ape-socials-collapsible__summary">
                     <div className="ape-socials-collapsible__header" style={{ width: '100%' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0, flexWrap: 'wrap', gap: '1rem', width: '100%' }}>
-                  <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
-                    ⭐ Reseñas de Alumnos
-                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <h2 style={{ fontSize: '1.5rem', margin: 0, color: colors.light }}>
+                      ⭐ Reseñas de Alumnos
+                    </h2>
+                    <ApeSectionInfoHint label="Testimonios reales generan confianza; puedes actualizarlos cuando quieras. Añade testimonios de alumnos que han tomado clases en tu academia.">
+                      Testimonios reales generan confianza; puedes actualizarlos cuando quieras. Añade testimonios de alumnos que han tomado clases en tu
+                      academia.
+                    </ApeSectionInfoHint>
+                  </div>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -3419,10 +3456,6 @@ export default function AcademyProfileEditor() {
                   </summary>
 
                   <div className="ape-socials-collapsible__body">
-                <p className="ape-section-hint">
-                  Testimonios reales generan confianza; puedes actualizarlos cuando quieras.
-                </p>
-                
                 {sectionStatus.resenas && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
@@ -3446,10 +3479,6 @@ export default function AcademyProfileEditor() {
                     {sectionStatus.resenas.text}
                   </motion.div>
                 )}
-                
-                <p style={{ marginTop: 0, marginBottom: '1.25rem', fontSize: '0.95rem', color: 'rgba(255,255,255,0.72)', maxWidth: 560 }}>
-                  Añade testimonios de alumnos que han tomado clases en tu academia
-                </p>
                 <ReviewsEditor
                   value={(form as any).reseñas || []}
                   onChange={(v: any) => setField('reseñas' as any, v as any)}

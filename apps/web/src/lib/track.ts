@@ -34,6 +34,7 @@ export function track(eventName: string, payload?: TrackPayload): void {
 export const LANDING_EVENTS = {
   CTA_DOWNLOAD: "cta_download",
   CTA_B2B: "cta_b2b",
+  CTA_EXPLORE: "cta_explore",
   LEAD_SUBMIT: "lead_submit",
   FILTER_CHANGE: "filter_change",
 } as const;

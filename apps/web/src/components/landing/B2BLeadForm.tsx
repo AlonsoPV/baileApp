@@ -31,7 +31,7 @@ export function B2BLeadForm() {
   const errors = {
     name: touched && !name.trim() ? "Requerido" : "",
     contact: touched && !contact.trim() ? "Requerido" : "",
-    role: touched && !role ? "Elige un rol" : "",
+    role: touched && !role ? "Elige una opción" : "",
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -59,9 +59,7 @@ export function B2BLeadForm() {
             <h2 id="b2b-heading" className="landing-b2b__title">
               {b2b.title}
             </h2>
-            <p className="landing-b2b__sub">
-              {b2b.subtitle}
-            </p>
+            <p className="landing-b2b__sub">{b2b.subtitle}</p>
 
             <div className="landing-b2b__bullets">
               {BULLETS.map((item, i) => {
@@ -90,12 +88,16 @@ export function B2BLeadForm() {
                 {b2b.form.successMessage}
               </p>
             ) : (
-              <form onSubmit={handleSubmit} noValidate>
+              <form className="landing-b2b-form" onSubmit={handleSubmit} noValidate>
                 <div className="landing-field">
-                  <div className="label">Nombre completo</div>
+                  <label className="label" htmlFor="b2b-name">
+                    Nombre o academia
+                  </label>
                   <input
+                    id="b2b-name"
                     type="text"
-                    placeholder="Ej. Juan Pérez"
+                    autoComplete="organization"
+                    placeholder={b2b.form.namePlaceholder}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onBlur={() => setTouched(true)}
@@ -103,16 +105,22 @@ export function B2BLeadForm() {
                     aria-describedby={errors.name ? "b2b-name-err" : undefined}
                   />
                   {errors.name && (
-                    <p id="b2b-name-err" className="landing-error">{errors.name}</p>
+                    <p id="b2b-name-err" className="landing-error">
+                      {errors.name}
+                    </p>
                   )}
                 </div>
 
                 <div className="landing-field">
-                  <div className="label">WhatsApp / Email</div>
+                  <label className="label" htmlFor="b2b-contact">
+                    WhatsApp o email
+                  </label>
                   <input
+                    id="b2b-contact"
                     type="text"
                     inputMode="email"
-                    placeholder="Ej. 55 1234 5678"
+                    autoComplete="email"
+                    placeholder={b2b.form.contactPlaceholder}
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                     onBlur={() => setTouched(true)}
@@ -120,33 +128,45 @@ export function B2BLeadForm() {
                     aria-describedby={errors.contact ? "b2b-contact-err" : undefined}
                   />
                   {errors.contact && (
-                    <p id="b2b-contact-err" className="landing-error">{errors.contact}</p>
+                    <p id="b2b-contact-err" className="landing-error">
+                      {errors.contact}
+                    </p>
                   )}
                 </div>
 
-                <div className="landing-field">
-                  <div className="label">Soy…</div>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as Role | "")}
-                    onBlur={() => setTouched(true)}
-                    aria-invalid={!!errors.role}
+                <fieldset className="landing-field landing-field--radios">
+                  <legend className="label">Soy…</legend>
+                  <div
+                    className="landing-b2b__roles"
+                    role="radiogroup"
+                    aria-label="Tipo de perfil"
                     aria-describedby={errors.role ? "b2b-role-err" : undefined}
                   >
-                    <option value="">Selecciona</option>
                     {b2b.form.roleOptions.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
+                      <label key={r} className="landing-b2b__role">
+                        <input
+                          type="radio"
+                          name="b2b-role"
+                          value={r}
+                          checked={role === r}
+                          onChange={() => {
+                            setRole(r);
+                            setTouched(true);
+                          }}
+                        />
+                        <span>{r}</span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
                   {errors.role && (
-                    <p id="b2b-role-err" className="landing-error">{errors.role}</p>
+                    <p id="b2b-role-err" className="landing-error">
+                      {errors.role}
+                    </p>
                   )}
-                </div>
+                </fieldset>
 
                 <button type="submit" className="btn btn-primary btn-wide">
-                  <span>QUIERO APARECER EN DONDE BAILAR</span>
+                  <span>{b2b.form.submit}</span>
                 </button>
               </form>
             )}

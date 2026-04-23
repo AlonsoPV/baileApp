@@ -1,10 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { landingContent } from "@/config/content";
-import { Quote } from "lucide-react";
 
 export function SocialProof() {
-  const { sectionTitle, testimonials, metrics } = landingContent.socialProof;
+  const { testimonials, metrics } = landingContent.socialProof;
+  const featured = testimonials[0];
 
   return (
     <motion.section
@@ -17,35 +17,29 @@ export function SocialProof() {
       transition={{ duration: 0.35 }}
     >
       <div className="landing-container">
-        <h2 className="landing-social-proof__title">{sectionTitle}</h2>
-
         {metrics.length > 0 && (
-          <div className="landing-social-proof__metrics">
-            {metrics.map((m, i) => (
-              <div key={i} className="landing-social-proof__metric">
-                <p className="landing-social-proof__metric-value">{m.value}</p>
-                <p className="landing-social-proof__metric-label">{m.label}</p>
+          <div className="sp-metrics-bar" role="list">
+            {metrics.map((m) => (
+              <div key={m.label} className="sp-metrics-bar__item" role="listitem">
+                <span className="sp-metrics-bar__value">{m.value}</span>
+                <span className="sp-metrics-bar__label">{m.label}</span>
               </div>
             ))}
           </div>
         )}
 
-        <div className="landing-social-proof__testimonials">
-          {testimonials.map((t, i) => (
-            <blockquote key={i} className="landing-social-proof__card">
-              <Quote
-                className="landing-social-proof__quote-icon"
-                style={{ color: "var(--lb-accent)" }}
-                aria-hidden
-              />
-              <p className="landing-social-proof__quote">&ldquo;{t.quote}&rdquo;</p>
-              <footer className="landing-social-proof__author">
-                <cite className="not-italic font-semibold">{t.author}</cite>
-                <span className="landing-muted">{t.role}</span>
+        {featured && (
+          <blockquote className="sp-featured-quote">
+            <div className="sp-featured-quote__bar" aria-hidden />
+            <div className="sp-featured-quote__body">
+              <p className="sp-featured-quote__text">&ldquo;{featured.quote}&rdquo;</p>
+              <footer className="sp-featured-quote__footer">
+                <strong className="sp-featured-quote__author">{featured.author}</strong>
+                <span className="sp-featured-quote__role">{featured.role}</span>
               </footer>
-            </blockquote>
-          ))}
-        </div>
+            </div>
+          </blockquote>
+        )}
       </div>
     </motion.section>
   );

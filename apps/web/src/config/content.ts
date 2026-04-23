@@ -1,39 +1,27 @@
 /**
  * Textos principales de la landing Donde Bailar MX.
- * Copy orientado a dolores, retención y posicionamiento (infraestructura / industria).
+ * Copy orientado a conversión (CDMX, eventos, exploración web primero).
  */
 
 export const landingContent = {
   hero: {
-    /** Badge de posicionamiento sobre el título */
-    kicker: "La comunidad de baile en México",
-    /** Headline con gradiente en palabra clave */
-    headlineBefore: "Encuentra ",
-    headlineGrad: "dónde bailar",
-    headlineAfter: " este fin de semana",
-    /** Subheadline orientado a conversión */
+    kicker: "La comunidad de baile en CDMX",
+    headlineBefore: "Nunca más te pierdas un ",
+    headlineGrad: "evento de baile",
+    headlineAfter: " en CDMX",
     subheadline:
-      "Sin grupos de WhatsApp, sin historias que desaparecen. Eventos y clases de salsa, bachata y más, en un solo lugar.",
-    ctaPrimary: "Descargar gratis",
-    ctaSecondary: "Soy academia o maestro",
-    ctaMicrocopy: "iOS y Android · Gratis · Sin tarjeta",
-    badges: [
-      "Eventos verificados",
-      "Filtra por ritmo y zona",
-      "Salsa · Bachata · Kizomba",
-    ],
+      "Todos los eventos de baile de CDMX en un solo lugar. Sin grupos de WhatsApp, sin stories que desaparecen.",
+    ctaPrimary: "Ver eventos de esta semana",
+    ctaSecondary: "Ver en la web primero",
+    ctaMicrocopy: "Gratis · Sin registro para explorar · iOS y Android",
+    badges: ["500+ eventos publicados", "Salsa · Bachata · Kizomba y más"],
   },
 
-  /** Bloque problema → solución (emocional y claro) */
-  painSolution: {
-    painHeadline: "¿No sabes dónde bailar hoy?",
-    painSubline:
-      "Flyers perdidos, historias que se borran, grupos llenos de ruido. Encuentra eventos y clases de baile con información real, en un solo lugar.",
-    solutionHeadline: "Todo lo que necesitas para decidir dónde bailar.",
-    solutionPoints: [
-      "Eventos y clases verificados, con fecha, lugar y precio real",
-      "Filtra por ritmo y zona. Encuentra lo que buscas en segundos",
-    ],
+  midCta: {
+    title: "Esta semana hay sociales en tu zona",
+    microcopy: "Gratis · Sin registro para explorar",
+    ctaPrimary: "Ver eventos ahora",
+    ctaSecondary: "Explorar en la web",
   },
 
   demo: {
@@ -47,135 +35,68 @@ export const landingContent = {
     viewDetails: "Ver detalles",
   },
 
-  /** Factor WOW: posicionamiento infraestructura / sistema operativo */
-  factorWow: {
-    overline: "Factor WOW",
-    tagline: "Donde Bailar no es una app de contenido. Es infraestructura.",
-    pillars: [
-      "Convierte flyers, historias y mensajes en data estructurada.",
-      "Transforma decisiones improvisadas en decisiones guiadas por información real.",
-      "Le da a una industria sin sistema un sistema operativo propio.",
-    ],
-  },
-
-  /** Usuario buscador: no se vende descubrimiento, se vende decisión */
-  decisionNotDiscovery: {
-    overline: "Para quien busca",
-    headline: "Toda la info para decidir. Sin scroll infinito.",
-    subline: "Clases y eventos por fecha, zona, ritmo y precio. Comparas, eliges y planificas en minutos.",
-    points: [
-      { label: "Todo en un solo lugar", text: "Fecha, zona, precio y ritmo. Sin flyers perdidos ni historias que desaparecen." },
-      { label: "Compara y elige", text: "Ves las opciones del día o la semana. Decides con información real, no por likes." },
-      { label: "Planifica tu semana", text: "Menos tiempo buscando, más tiempo bailando. Tu agenda de baile lista en minutos." },
-    ],
-    closing: "Información clara que te ayuda a decidir.",
-    ctaPrimary: "Descargar la app",
-    ctaSecondary: "Explorar en la web",
-  },
-
-  /** Retención: lock-in funcional + comunidad */
-  retention: {
-    overline: "Retención de usuarios",
-    headline: "Por qué la gente vuelve.",
-    subline: "No es solo abrir la app: es tener una agenda de baile y una comunidad con la misma intención.",
-    points: [
-      { label: "Tu agenda de baile", text: "Próximos eventos y clases que guardaste. La app se vuelve tu referencia para planear la semana." },
-      { label: "Ritmos y lugares guardados", text: "Sigues a tus academias y maestros favoritos. La información llega cuando la necesitas." },
-      { label: "Comunidad con intención", text: "Otros usuarios que buscan aprender y crecer. Menos ruido, más conexiones reales." },
-    ],
-  },
-
-  /** Business case: para academias y organizadores */
-  businessCase: {
-    overline: "Para academias y organizadores",
-    headline: "Llega a quien ya está buscando.",
-    subline: "En Donde Bailar tu audiencia no es el algoritmo: son bailarines que buscan clases y eventos por ritmo, zona y fecha.",
-    items: [
-      { title: "Visibilidad con intención", description: "Apareces cuando buscan tu ritmo o tu zona. Gente que quiere bailar, no solo scrollear.", icon: "Target" },
-      { title: "Menos ruido, más conversión", description: "Leads que llegan desde la app con una pregunta concreta. Menos tiempo explicando, más alumnos en clase.", icon: "Users" },
-      { title: "Publica y actualiza en minutos", description: "Eventos y horarios en un formato que la gente usa. Sin depender de stories ni grupos.", icon: "BarChart3" },
-      { title: "Referencia del ecosistema", description: "Formas parte de la plataforma que la comunidad usa para planear. Presencia seria y profesional.", icon: "Compass" },
-    ],
-  },
-
   benefits: {
-    title: "Lo que ganas desde el día uno",
-    subtitle: "Diseñado para que encuentres y para que te encuentren.",
+    title: "Por qué la comunidad lo usa cada semana",
+    subtitle: "",
     items: [
       {
         title: "Eventos verificados",
         description:
-          "Solo eventos y sociales verificados: fechas, lugares y horarios confirmados. Sin sorpresas.",
+          "Fecha, lugar y precio confirmados. No más llegar a un lugar cerrado.",
         icon: "CalendarCheck",
       },
       {
-        title: "Filtra por ritmo y zona",
-        description:
-          "Salsa, bachata, kizomba, tango… y por colonia o zona. Encuentra lo que buscas en segundos.",
+        title: "Filtra en segundos",
+        description: "Por ritmo, zona y precio. Encuentra lo que buscas sin scroll infinito.",
         icon: "Filter",
       },
       {
-        title: "Clases y academias al día",
-        description:
-          "Horarios actualizados. Menos llamadas y mensajes perdidos; más tiempo bailando.",
-        icon: "Clock",
-      },
-      {
-        title: "Tú decides qué ver",
-        description:
-          "Sin depender del feed. Notificaciones opcionales. La información va a tu ritmo.",
+        title: "Sin algoritmo",
+        description: "Ves lo que hay, no lo que el algoritmo decide mostrarte.",
         icon: "BellOff",
       },
       {
-        title: "Gratis y sin trucos",
-        description:
-          "Descarga gratis. Sin suscripciones escondidas. La comunidad crece cuando la barrera es baja.",
-        icon: "Gift",
-      },
-      {
-        title: "Tu ciudad, siempre actualizada",
-        description:
-          "Contenido local. Actualizado cada día. La referencia para descubrir y gestionar tu vida del baile.",
-        icon: "MapPin",
+        title: "Siempre actualizado",
+        description: "Los organizadores actualizan directamente. La info es del día.",
+        icon: "RefreshCw",
       },
     ],
   },
 
   howItWorks: {
-    title: "En tres pasos",
+    title: "En 3 pasos, esta semana bailas",
     steps: [
       {
         step: 1,
         title: "Descarga",
-        description: "Instala la app. Sin formularios largos ni barreras.",
+        description: "Gratis en iOS y Android. En 30 segundos estás dentro.",
       },
       {
         step: 2,
         title: "Filtra",
-        description: "Elige fecha, ritmo y zona. Información real, no algoritmo.",
+        description: "Salsa, bachata, kizomba — por zona y día. Solo eventos verificados.",
       },
       {
         step: 3,
-        title: "Baila",
-        description: "Llega al evento o clase. Conecta con la comunidad.",
+        title: "Ve y baila",
+        description: "Llega sabiendo precio, horario y lugar. Sin sorpresas.",
       },
     ],
   },
 
   socialProof: {
-    sectionTitle: "La comunidad ya está aquí",
     testimonials: [
       {
         quote:
-          "Por fin un lugar donde todo está actualizado. Dejé de depender de grupos y stories para saber qué hay.",
-        author: "Ana M.",
-        role: "Bailarina",
+          "Antes buscaba en 4 grupos de WhatsApp para saber qué había el fin de semana. Ahora abro Donde Bailar y en 30 segundos ya sé a dónde voy.",
+        author: "Ana Martínez",
+        role: "Bailarina de salsa · CDMX Sur",
       },
       {
         quote:
-          "Publicamos nuestros eventos y nos llegan alumnos con intención real. No es like por like, es gente que quiere bailar.",
+          "Publicamos nuestros eventos y nos llegan alumnos que ya saben el precio y el horario. Menos mensajes, más inscripciones.",
         author: "Estudio Salsa CDMX",
-        role: "Academia",
+        role: "Academia · Roma Norte",
       },
       {
         quote:
@@ -187,14 +108,13 @@ export const landingContent = {
     metrics: [
       { value: "500+", label: "Eventos publicados" },
       { value: "50+", label: "Academias y maestros" },
-      { value: "CDMX", label: "Disponible en" },
+      { value: "CDMX", label: "Ciudad de lanzamiento" },
     ],
   },
 
   b2b: {
     title: "Para academias y organizadores",
-    subtitle:
-      "Llega a bailarines que ya buscan clases y eventos. Sin depender del algoritmo.",
+    subtitle: "Llega a bailarines que ya buscan clases y eventos. Sin depender del algoritmo.",
     visionLine:
       "Ser la plataforma de referencia para descubrir y gestionar la vida del baile.",
     benefits: [
@@ -212,12 +132,11 @@ export const landingContent = {
       },
     ],
     form: {
-      namePlaceholder: "Nombre o nombre de academia",
+      namePlaceholder: "Nombre o academia",
       contactPlaceholder: "WhatsApp o email",
-      rolePlaceholder: "Rol",
       roleOptions: ["Academia", "Maestro", "Organizador"] as const,
       submit: "Quiero que me contacten",
-      successMessage: "Gracias. Te contactaremos pronto.",
+      successMessage: "Recibido. Te escribimos en menos de 24h.",
     },
   },
 
@@ -226,23 +145,19 @@ export const landingContent = {
     items: [
       {
         q: "¿La app tiene costo?",
-        a: "No. La descarga y el uso básico son gratuitos.",
+        a: "No. La descarga y el uso son completamente gratuitos.",
       },
       {
         q: "¿En qué ciudades está disponible?",
-        a: "Por ahora nos enfocamos en CDMX y área metropolitana. Pronto más ciudades.",
+        a: "Estamos enfocados en CDMX y área metropolitana. Pronto más ciudades.",
       },
       {
         q: "¿Cómo publico mi evento o clase?",
-        a: "Regístrate como academia, maestro u organizador desde la app o contáctanos por el formulario.",
-      },
-      {
-        q: "¿Cómo moderan el contenido?",
-        a: "Revisamos eventos y perfiles para mantener información verídica y respetuosa.",
+        a: "Regístrate como academia, maestro u organizador desde la app o déjanos tus datos arriba y te contactamos.",
       },
       {
         q: "¿Mis datos están seguros?",
-        a: "Sí. No vendemos tus datos. Revisa nuestra política de privacidad.",
+        a: "Sí. No vendemos tus datos. Consulta nuestra política de privacidad.",
       },
     ],
   },

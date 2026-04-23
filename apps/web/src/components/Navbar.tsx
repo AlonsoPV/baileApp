@@ -199,53 +199,100 @@ export function Navbar({ onMenuToggle, isMenuOpen }: NavbarProps) {
         .nav-hamburger {
           width: 42px;
           height: 42px;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.25);
-          background: rgba(0,0,0,0.12);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          background: linear-gradient(
+            165deg,
+            rgba(255, 255, 255, 0.16) 0%,
+            rgba(255, 255, 255, 0.05) 45%,
+            rgba(0, 0, 0, 0.12) 100%
+          );
           display: inline-flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
-          box-shadow: none;
+          transition:
+            transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1),
+            background 0.2s ease,
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 4px 14px rgba(0, 0, 0, 0.18);
           padding: 0;
+          -webkit-backdrop-filter: blur(10px);
+          backdrop-filter: blur(10px);
         }
 
         .nav-hamburger:hover {
-          background: rgba(255,255,255,0.18);
-          border-color: rgba(255,255,255,0.35);
+          background: linear-gradient(
+            165deg,
+            rgba(255, 255, 255, 0.24) 0%,
+            rgba(255, 255, 255, 0.1) 50%,
+            rgba(0, 0, 0, 0.08) 100%
+          );
+          border-color: rgba(255, 255, 255, 0.42);
           transform: translateY(-1px);
-          box-shadow: none;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.22),
+            0 6px 18px rgba(0, 0, 0, 0.22);
         }
 
         .nav-hamburger:active {
-          transform: translateY(0px) scale(0.98);
+          transform: translateY(0) scale(0.97);
+        }
+
+        .nav-hamburger[data-open="true"] {
+          background: linear-gradient(
+            165deg,
+            rgba(41, 127, 150, 0.45) 0%,
+            rgba(41, 127, 150, 0.22) 100%
+          );
+          border-color: rgba(153, 229, 255, 0.55);
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.2),
+            0 0 0 1px rgba(153, 229, 255, 0.2),
+            0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .nav-hamburger[data-open="true"]:hover {
+          border-color: rgba(153, 229, 255, 0.65);
         }
 
         .nav-hamburger-bars {
-          width: 18px;
-          height: 14px;
+          width: 19px;
+          height: 15px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
         }
 
         .nav-hamburger-bar {
-          height: 2px;
-          background: rgba(255,255,255,0.95);
+          height: 2.5px;
+          background: rgba(255, 255, 255, 0.98);
           border-radius: 999px;
-          transition: transform 0.16s ease, opacity 0.16s ease, width 0.16s ease;
+          transition:
+            transform 0.28s cubic-bezier(0.65, 0, 0.35, 1),
+            opacity 0.2s ease,
+            width 0.2s ease,
+            background 0.2s ease;
           width: 100%;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+        }
+
+        .nav-hamburger[data-open="true"] .nav-hamburger-bar {
+          box-shadow: none;
         }
 
         .nav-hamburger[data-open="true"] .nav-hamburger-bar:nth-child(1) {
-          transform: translateY(6px) rotate(45deg);
+          transform: translateY(6.25px) rotate(45deg);
         }
         .nav-hamburger[data-open="true"] .nav-hamburger-bar:nth-child(2) {
           opacity: 0;
+          transform: scaleX(0.2);
         }
         .nav-hamburger[data-open="true"] .nav-hamburger-bar:nth-child(3) {
-          transform: translateY(-6px) rotate(-45deg);
+          transform: translateY(-6.25px) rotate(-45deg);
         }
 
         /* Escritorio: > 1024px */

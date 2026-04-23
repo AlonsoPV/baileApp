@@ -11,6 +11,10 @@ export interface ModalProps {
   ariaLabelledBy?: string;
   /** id for aria-describedby on the dialog */
   ariaDescribedBy?: string;
+  /** Sustituye el fondo por defecto del panel (ej. gradiente del modal de descarga) */
+  panelClassName?: string;
+  /** Sustituye el padding del contenedor del children (por defecto `p-6`) */
+  contentClassName?: string;
 }
 
 export function Modal({
@@ -20,6 +24,8 @@ export function Modal({
   children,
   ariaLabelledBy,
   ariaDescribedBy,
+  panelClassName,
+  contentClassName,
 }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -64,7 +70,11 @@ export function Modal({
         aria-label="Cerrar modal"
       />
       <div
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[#1a0a2e] shadow-xl border border-white/10"
+        className={
+          panelClassName?.trim()
+            ? `relative max-h-[90vh] w-full overflow-y-auto rounded-2xl shadow-xl ${panelClassName}`
+            : "relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-[#1a0a2e] shadow-xl border border-white/10"
+        }
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
@@ -92,7 +102,7 @@ export function Modal({
             <X className="h-5 w-5" />
           </button>
         )}
-        <div className="p-6">{children}</div>
+        <div className={contentClassName ?? "p-6"}>{children}</div>
       </div>
     </div>
   );

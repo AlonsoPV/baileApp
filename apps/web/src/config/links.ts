@@ -26,7 +26,8 @@ export const APP_STORE_URL =
   readEnv("VITE_APP_STORE_URL") || "https://apps.apple.com/mx/app/donde-bailar-mx/id6756324774";
 
 export const PLAY_STORE_URL =
-  readEnv("VITE_PLAY_STORE_URL") || "https://play.google.com/store/apps/details?id=com.tuorg.dondebailarmx.app";
+  readEnv("VITE_PLAY_STORE_URL") ||
+  "https://play.google.com/store/apps/details?id=com.tuorg.dondebailarmx.app&pcampaignid=web_share";
 
 export const WHATSAPP_URL =
   readEnv("VITE_WHATSAPP_URL") || "https://wa.me/+525511981149";

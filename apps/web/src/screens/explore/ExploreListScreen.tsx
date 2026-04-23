@@ -30,6 +30,7 @@ const colors = {
 
 const typeLabels: Record<string, string> = {
   fechas: 'Sociales',
+  sociales: 'Sociales',
   clases: 'Clases',
   academias: 'Academias',
   maestros: 'Maestros',
@@ -39,6 +40,7 @@ const typeLabels: Record<string, string> = {
 
 const typeIcons: Record<string, string> = {
   fechas: '📆',
+  sociales: '📆',
   clases: '🎓',
   academias: '🏫',
   maestros: '🎓',

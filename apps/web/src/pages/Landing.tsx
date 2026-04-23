@@ -6,7 +6,6 @@ import SeoHead from "@/components/SeoHead";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Hero, DownloadModal } from "@/components/landing/Hero";
 import { B2BLeadForm } from "@/components/landing/B2BLeadForm";
-import { PainSolution } from "@/components/landing/PainSolution";
 import { BenefitGrid } from "@/components/landing/BenefitGrid";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { MidCTA } from "@/components/landing/MidCTA";
@@ -18,6 +17,7 @@ import { useLandingOverflowDebug } from "@/hooks/useLandingOverflowDebug";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
 import { fetchExplorePage } from "@/hooks/useExploreQuery";
+import { landingContent } from "@/config/content";
 
 const jsonLdApp = {
   "@context": "https://schema.org",
@@ -25,8 +25,7 @@ const jsonLdApp = {
   name: "Donde Bailar",
   applicationCategory: "LifestyleApplication",
   operatingSystem: "Android, iOS",
-  description:
-    "Encuentra dónde bailar: eventos de salsa y bachata, clases de baile, academias y maestros. Filtra por ritmo, zona y fecha.",
+  description: `${landingContent.hero.headlineBefore}${landingContent.hero.headlineGrad}${landingContent.hero.headlineAfter}. ${landingContent.hero.subheadline}`,
   url: SEO_BASE_URL,
   image: SEO_LOGO_URL,
   offers: { "@type": "Offer", price: "0", priceCurrency: "MXN" },
@@ -48,11 +47,11 @@ export default function Landing() {
 
   useEffect(() => {
     void queryClient.prefetchInfiniteQuery({
-      queryKey: ["explore", "fechas", "", "", "", "", "", 12],
+      queryKey: ["explore", "sociales", "", "", "", "", "", 12],
       queryFn: ({ pageParam = 0 }) =>
         fetchExplorePage(
           {
-            type: "fechas",
+            type: "sociales",
             q: "",
             ritmos: [],
             zonas: [],
@@ -75,21 +74,19 @@ export default function Landing() {
 
       <LandingNav onOpenDownload={openDownload} />
 
-      <Hero onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
-
-      <PainSolution />
-
-      <HowItWorks onOpenDownload={openDownload} />
+      <Hero onOpenDownload={openDownload} />
 
       <SocialProof />
 
-      <MidCTA onOpenDownload={openDownload} onOpenB2B={scrollToB2B} />
+      <HowItWorks />
 
       <BenefitGrid />
 
-      <B2BLeadForm />
+      <MidCTA />
 
       <FAQ />
+
+      <B2BLeadForm />
 
       <Footer onDownloadClick={openDownload} onB2BClick={scrollToB2B} />
 

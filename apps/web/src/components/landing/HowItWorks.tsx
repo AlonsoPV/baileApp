@@ -1,6 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Download, Filter, Music, ArrowRight } from "lucide-react";
+import { Download, Filter, Music, ArrowRight, CalendarRange } from "lucide-react";
 import { landingContent } from "@/config/content";
 import { track, LANDING_EVENTS } from "@/lib/track";
 
@@ -11,17 +12,9 @@ const STEP_ACCENTS = [
   "landing-how-it-works__step--3",
 ];
 
-interface HowItWorksProps {
-  onOpenDownload: () => void;
-}
-
-export function HowItWorks({ onOpenDownload }: HowItWorksProps) {
+export function HowItWorks() {
   const { title, steps } = landingContent.howItWorks;
-
-  const handleDownload = () => {
-    track(LANDING_EVENTS.CTA_DOWNLOAD, { location: "how_it_works" });
-    onOpenDownload();
-  };
+  const { hero } = landingContent;
 
   return (
     <motion.section
@@ -77,10 +70,15 @@ export function HowItWorks({ onOpenDownload }: HowItWorksProps) {
         </div>
 
         <div className="landing-how-it-works__cta">
-          <button type="button" className="btn btn-primary" onClick={handleDownload}>
-            {landingContent.hero.ctaPrimary}
-          </button>
-          <p className="landing-how-it-works__cta-note">iOS y Android · Sin costo</p>
+          <Link
+            to="/explore/list?type=sociales"
+            className="btn btn-primary landing-how-it-works__cta-link"
+            onClick={() => track(LANDING_EVENTS.CTA_EXPLORE, { location: "how_it_works", target: "fechas" })}
+          >
+            <CalendarRange size={20} strokeWidth={2} aria-hidden />
+            {hero.ctaPrimary}
+          </Link>
+          <p className="landing-how-it-works__cta-note">{hero.ctaMicrocopy}</p>
         </div>
       </div>
     </motion.section>

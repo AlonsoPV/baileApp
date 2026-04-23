@@ -1,29 +1,17 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Smartphone, Building2 } from "lucide-react";
+import { CalendarRange, Globe } from "lucide-react";
 import { landingContent } from "@/config/content";
 import { track, LANDING_EVENTS } from "@/lib/track";
 
-export function MidCTA({
-  onOpenDownload,
-  onOpenB2B,
-}: {
-  onOpenDownload: () => void;
-  onOpenB2B: () => void;
-}) {
-  const handleDownload = () => {
-    track(LANDING_EVENTS.CTA_DOWNLOAD, { location: "mid" });
-    onOpenDownload();
-  };
-  const handleB2B = () => {
-    track(LANDING_EVENTS.CTA_B2B, { location: "mid" });
-    onOpenB2B();
-  };
+const { midCta } = landingContent;
 
+export function MidCTA() {
   return (
     <motion.section
       className="landing-section landing-mid-cta"
-      style={{ background: "var(--lb-bg2)" }}
+      style={{ background: "var(--lb-bg)" }}
       aria-label="Llamado a la acción"
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
@@ -32,27 +20,25 @@ export function MidCTA({
     >
       <div className="landing-container">
         <div className="landing-mid-cta__card">
-          <h2 className="landing-mid-cta__title">Listo para encontrar dónde bailar en CDMX</h2>
-          <p className="landing-mid-cta__microcopy">
-            {landingContent.hero.ctaMicrocopy}
-          </p>
+          <h2 className="landing-mid-cta__title">{midCta.title}</h2>
+          <p className="landing-mid-cta__microcopy">{midCta.microcopy}</p>
           <div className="landing-mid-cta__buttons">
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="btn btn-primary landing-mid-cta__btn"
+            <Link
+              to="/explore/list?type=sociales"
+              className="btn btn-primary landing-mid-cta__btn landing-mid-cta__link"
+              onClick={() => track(LANDING_EVENTS.CTA_EXPLORE, { location: "mid", target: "fechas" })}
             >
-              <Smartphone size={20} strokeWidth={2} aria-hidden />
-              {landingContent.hero.ctaPrimary}
-            </button>
-            <button
-              type="button"
-              onClick={handleB2B}
-              className="btn btn-ghost landing-mid-cta__btn"
+              <CalendarRange size={20} strokeWidth={2} aria-hidden />
+              {midCta.ctaPrimary}
+            </Link>
+            <Link
+              to="/explore"
+              className="btn btn-ghost landing-mid-cta__btn landing-mid-cta__link"
+              onClick={() => track(LANDING_EVENTS.CTA_EXPLORE, { location: "mid", target: "explore_home" })}
             >
-              <Building2 size={20} strokeWidth={2} aria-hidden />
-              {landingContent.hero.ctaSecondary}
-            </button>
+              <Globe size={20} strokeWidth={2} aria-hidden />
+              {midCta.ctaSecondary}
+            </Link>
           </div>
         </div>
       </div>
