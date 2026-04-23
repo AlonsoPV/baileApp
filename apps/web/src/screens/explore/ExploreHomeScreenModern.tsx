@@ -2468,6 +2468,10 @@ export default function ExploreHomeScreen() {
     if (filters.type === "marcas") set({ type: "fechas" });
   }, [filters.type, set]);
   const selectedType = (!filters.type || filters.type === 'all' ? 'fechas' : filters.type) as ExploreType;
+  /** `sociales` en list usa otra query; en home el feed principal es el mismo que fechas (ocurrencias). */
+  const isFechasLike = selectedType === 'fechas' || selectedType === 'sociales';
+  /** Alinea el pill "Tipo" con TYPE_OPTIONS (solo incluye id `fechas` para sociales). */
+  const exploreTypeMenuId = filters.type === 'sociales' ? 'fechas' : (filters.type || 'fechas');
   const showAll = false;
 
   const ritmosPillRef = React.useRef<HTMLButtonElement | null>(null);
@@ -2609,10 +2613,13 @@ export default function ExploreHomeScreen() {
 
   React.useEffect(() => {
     if (!showAll) {
-      const section = selectedType as ExploreSectionId | undefined;
-      if (section) {
-        setMountedSections(new Set([section]));
-      }
+      const mountId: ExploreSectionId | null =
+        selectedType === 'sociales'
+          ? 'fechas'
+          : ALL_EXPLORE_SECTIONS.includes(selectedType as ExploreSectionId)
+            ? (selectedType as ExploreSectionId)
+            : null;
+      if (mountId) setMountedSections(new Set([mountId]));
       return;
     }
 
@@ -2643,10 +2650,16 @@ export default function ExploreHomeScreen() {
     };
   }, [showAll, selectedType]);
 
-  const shouldRenderSection = React.useCallback((section: ExploreSectionId) => {
-    if (!showAll) return selectedType === section;
-    return mountedSections.has(section);
-  }, [mountedSections, selectedType, showAll]);
+  const shouldRenderSection = React.useCallback(
+    (section: ExploreSectionId) => {
+      if (!showAll) {
+        if (section === 'fechas' && isFechasLike) return true;
+        return selectedType === section;
+      }
+      return mountedSections.has(section);
+    },
+    [mountedSections, selectedType, showAll, isFechasLike],
+  );
 
   const sliderProps = React.useMemo(
     () => ({
@@ -2955,7 +2968,7 @@ export default function ExploreHomeScreen() {
     try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch { }
   }, []);
 
-  const shouldLoadFechas = selectedType === 'fechas';
+  const shouldLoadFechas = isFechasLike;
   const fechasQuery = useExploreQuery({
     type: 'fechas',
     q: qDeferred || undefined,
@@ -3027,11 +3040,11 @@ export default function ExploreHomeScreen() {
   );
   const hasExactDateFilter = React.useMemo(
     () =>
-      selectedType === 'fechas' &&
+      isFechasLike &&
       !!filters.dateFrom &&
       !!filters.dateTo &&
       filters.dateFrom === filters.dateTo,
-    [selectedType, filters.dateFrom, filters.dateTo],
+    [isFechasLike, filters.dateFrom, filters.dateTo],
   );
 
   React.useEffect(() => {
@@ -3059,7 +3072,7 @@ export default function ExploreHomeScreen() {
   );
   const hasMoreServer = !!fechasQuery.hasNextPage;
   const hasMoreClient = normalizedFechas.length > visibleCount;
-  const showLoadMoreCard = selectedType === 'fechas' && (hasMoreClient || hasMoreServer);
+  const showLoadMoreCard = isFechasLike && (hasMoreClient || hasMoreServer);
   const loadMoreBusyRef = React.useRef(false);
 
   const onLoadMoreFechas = React.useCallback(async () => {
@@ -3519,9 +3532,9 @@ export default function ExploreHomeScreen() {
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
-    if (selectedType !== 'fechas') return;
+    if (!isFechasLike) return;
     void runZoneWarmupPage('fechas', fechasQuery);
-  }, [hasZoneFilter, selectedType, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.isLoading, fechasQuery.fetchNextPage, runZoneWarmupPage]);
+  }, [hasZoneFilter, isFechasLike, fechasQuery.hasNextPage, fechasQuery.isFetchingNextPage, fechasQuery.isLoading, fechasQuery.fetchNextPage, runZoneWarmupPage]);
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
@@ -3696,7 +3709,7 @@ export default function ExploreHomeScreen() {
         ...marcasData,
       ];
     }
-    if (type === 'fechas') return filteredFechas;
+    if (type === 'fechas' || type === 'sociales') return filteredFechas;
     if (type === 'clases') return classesList;
     if (type === 'maestros') return maestrosData;
     if (type === 'academias') return academiasData;
@@ -3872,7 +3885,7 @@ export default function ExploreHomeScreen() {
   };
 
   /** Fechas dropdown solo visible cuando Tipo es Sociales (fechas) o Clases. Oculta y resetea fechas para otros tipos. */
-  const showDatesDropdown = selectedType === 'fechas' || selectedType === 'clases';
+  const showDatesDropdown = isFechasLike || selectedType === 'clases';
 
   const TYPE_OPTIONS = [
     { id: 'fechas' as const, labelKey: 'explore_type_sociales' },
@@ -4022,7 +4035,7 @@ export default function ExploreHomeScreen() {
                   >
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                       <span className="pill-text">
-                        {t(TYPE_OPTIONS.find((o) => o.id === (filters.type || 'fechas'))?.labelKey ?? 'explore_type_sociales')}
+                        {t(TYPE_OPTIONS.find((o) => o.id === exploreTypeMenuId)?.labelKey ?? 'explore_type_sociales')}
                       </span>
                     </span>
                     <span aria-hidden style={{ opacity: 0.7 }}>▾</span>
@@ -4082,7 +4095,7 @@ export default function ExploreHomeScreen() {
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {TYPE_OPTIONS.map((opt) => {
-                      const active = (filters.type || 'fechas') === opt.id;
+                      const active = exploreTypeMenuId === opt.id;
                       return (
                         <button
                           key={opt.id}
@@ -4297,7 +4310,7 @@ export default function ExploreHomeScreen() {
             )}
           </section>
 
-          {shouldRenderSection('fechas') && (((showAll && (fechasLoading || hasFechas || fechasError)) || selectedType === 'fechas')) && (
+          {shouldRenderSection('fechas') && (((showAll && (fechasLoading || hasFechas || fechasError)) || isFechasLike)) && (
             <Section
               skipEntranceAnimation
               title={t('section_upcoming_scene')}
