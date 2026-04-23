@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Download, Filter, Music, ArrowRight, CalendarRange } from "lucide-react";
 import { landingContent } from "@/config/content";
 import { track, LANDING_EVENTS } from "@/lib/track";
+import { exploreHomeWithType } from "@/lib/urls";
 
 const STEP_ICONS = [Download, Filter, Music];
 const STEP_ACCENTS = [
@@ -71,7 +72,7 @@ export function HowItWorks() {
 
         <div className="landing-how-it-works__cta">
           <Link
-            to="/explore/list?type=sociales"
+            to={exploreHomeWithType("fechas")}
             className="btn btn-primary landing-how-it-works__cta-link"
             onClick={() => track(LANDING_EVENTS.CTA_EXPLORE, { location: "how_it_works", target: "fechas" })}
           >

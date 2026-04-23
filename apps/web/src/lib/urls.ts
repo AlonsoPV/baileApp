@@ -75,6 +75,13 @@ export function exploreHome(): string {
 }
 
 /**
+ * /explore con `?type=` (mismas claves que el menú Tipo / filter-pill: fechas, clases, etc.)
+ */
+export function exploreHomeWithType(type: string): string {
+  return `/explore?type=${encodeURIComponent(type)}`;
+}
+
+/**
  * Listado de exploración con filtros
  * @param type Tipo de contenido a explorar
  */

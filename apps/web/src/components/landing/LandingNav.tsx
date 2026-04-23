@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { track, LANDING_EVENTS } from "@/lib/track";
+import { exploreHomeWithType } from "@/lib/urls";
 
 const BRAND_ICON_URL = "https://xjagwppplovcqmztcymd.supabase.co/storage/v1/object/public/media/icon.png";
 
@@ -30,7 +31,7 @@ export function LandingNav({ onOpenDownload }: LandingNavProps) {
           </div>
 
           <div className="lnav__right">
-            <Link to="/explore" className="lnav__weblink" aria-label="Explorar en versión web">
+            <Link to={exploreHomeWithType("fechas")} className="lnav__weblink" aria-label="Explorar en versión web">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                 <circle cx="12" cy="12" r="10" />
                 <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />

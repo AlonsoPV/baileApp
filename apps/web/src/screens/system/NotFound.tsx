@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { colors as rawColors, typography, spacing, borderRadius } from '@/theme/colors';
 import { routes } from '@/routes/registry';
+import { exploreHomeWithType } from '@/lib/urls';
 
 const colors: any = rawColors;
 
@@ -239,8 +240,8 @@ export default function NotFound() {
             }}>
               {[
                 { label: 'Explorar', path: routes.app.explore, emoji: '🔍' },
-                { label: 'Sociales', path: '/explore/list?type=sociales', emoji: '📅' },
-                { label: 'Clases', path: '/explore/list?type=clases', emoji: '💃' }
+                { label: 'Sociales', path: exploreHomeWithType('fechas'), emoji: '📅' },
+                { label: 'Clases', path: exploreHomeWithType('clases'), emoji: '💃' }
               ].map((link) => (
                 <button
                   key={link.path}

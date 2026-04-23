@@ -1,9 +1,9 @@
 import React, { useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { m } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { useExploreFilters, type DatePreset, type ExploreType } from "../../state/exploreFilters";
+import { useExploreFilters, type DatePreset, type ExploreFilters, type ExploreType } from "../../state/exploreFilters";
 import { useExploreQuery } from "../../hooks/useExploreQuery";
 import { useUsedRhythmsByContext } from "@/hooks/useUsedRhythms";
 import { useUsedZonesByContext } from "@/hooks/useUsedZones";
@@ -2463,6 +2463,69 @@ export default function ExploreHomeScreen() {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const { filters, set } = useExploreFilters();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Hidratar store desde la URL (igual criterio que /explore/list) para que landing y enlaces con ?type= apliquen el filter-pill.
+  const searchParamsKey = searchParams.toString();
+  React.useLayoutEffect(() => {
+    const type = searchParams.get("type");
+    const ritmosRaw = searchParams.get("ritmos");
+    const zonasRaw = searchParams.get("zonas");
+    const whenRaw = searchParams.get("when");
+    const fromRaw = searchParams.get("from");
+    const toRaw = searchParams.get("to");
+
+    const parseCsv = (v: string | null) =>
+      (v ? v.split(",") : [])
+        .map((x) => Number(x))
+        .filter((n) => Number.isFinite(n) && n > 0)
+        .map((n) => Math.trunc(n));
+
+    const nextPatch: Partial<ExploreFilters> = {};
+    if (type) nextPatch.type = type as ExploreType;
+    if (ritmosRaw !== null) nextPatch.ritmos = parseCsv(ritmosRaw);
+    if (zonasRaw !== null) nextPatch.zonas = parseCsv(zonasRaw);
+    if (whenRaw) nextPatch.datePreset = whenRaw as DatePreset;
+    if (fromRaw !== null) nextPatch.dateFrom = fromRaw || undefined;
+    if (toRaw !== null) nextPatch.dateTo = toRaw || undefined;
+
+    if (Object.keys(nextPatch).length > 0) {
+      set(nextPatch);
+    }
+  }, [searchParamsKey, set, searchParams]);
+
+  // Mantener la URL alineada con el estado (misma lógica que ExploreListScreen).
+  React.useEffect(() => {
+    if (filters.type === "marcas") return;
+    const params = new URLSearchParams(searchParams);
+    params.set("type", filters.type);
+    if ((filters.ritmos || []).length > 0) params.set("ritmos", filters.ritmos.join(","));
+    else params.delete("ritmos");
+    if ((filters.zonas || []).length > 0) params.set("zonas", filters.zonas.join(","));
+    else params.delete("zonas");
+    if (filters.datePreset) params.set("when", String(filters.datePreset));
+    else params.delete("when");
+    if (filters.dateFrom) params.set("from", filters.dateFrom);
+    else params.delete("from");
+    if (filters.dateTo) params.set("to", filters.dateTo);
+    else params.delete("to");
+
+    const next = params.toString();
+    const curr = searchParams.toString();
+    if (next !== curr) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [
+    filters.type,
+    filters.ritmos,
+    filters.zonas,
+    filters.datePreset,
+    filters.dateFrom,
+    filters.dateTo,
+    searchParams,
+    setSearchParams,
+  ]);
+
   // "Marcas" oculto en el selector: si quedó persistido, volver a un tipo visible.
   React.useEffect(() => {
     if (filters.type === "marcas") set({ type: "fechas" });

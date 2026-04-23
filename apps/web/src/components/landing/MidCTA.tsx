@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { CalendarRange, Globe } from "lucide-react";
 import { landingContent } from "@/config/content";
 import { track, LANDING_EVENTS } from "@/lib/track";
+import { exploreHomeWithType } from "@/lib/urls";
 
 const { midCta } = landingContent;
 
@@ -24,7 +25,7 @@ export function MidCTA() {
           <p className="landing-mid-cta__microcopy">{midCta.microcopy}</p>
           <div className="landing-mid-cta__buttons">
             <Link
-              to="/explore/list?type=sociales"
+              to={exploreHomeWithType("fechas")}
               className="btn btn-primary landing-mid-cta__btn landing-mid-cta__link"
               onClick={() => track(LANDING_EVENTS.CTA_EXPLORE, { location: "mid", target: "fechas" })}
             >
@@ -32,7 +33,7 @@ export function MidCTA() {
               {midCta.ctaPrimary}
             </Link>
             <Link
-              to="/explore"
+              to={exploreHomeWithType("fechas")}
               className="btn btn-ghost landing-mid-cta__btn landing-mid-cta__link"
               onClick={() => track(LANDING_EVENTS.CTA_EXPLORE, { location: "mid", target: "explore_home" })}
             >

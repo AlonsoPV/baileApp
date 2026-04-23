@@ -4,6 +4,7 @@ import { CalendarRange, Check, MapPin, Music, Globe, ChevronLeft, ChevronRight }
 import { landingContent } from "@/config/content";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/config/links";
 import { track, LANDING_EVENTS } from "@/lib/track";
+import { exploreHomeWithType } from "@/lib/urls";
 import { Modal } from "@/components/ui/Modal";
 import EventCard from "@/components/explore/cards/EventCard";
 import { useHeroEvents } from "@/hooks/useHeroEvents";
@@ -204,7 +205,7 @@ export function Hero({ onOpenDownload }: HeroProps) {
             </p>
             <div className="landing-hero__ctas" id="descargar">
               <Link
-                to="/explore/list?type=sociales"
+                to={exploreHomeWithType("fechas")}
                 className="btn btn-primary landing-hero__cta-link"
                 onClick={handleExplorePrimary}
               >
@@ -212,7 +213,7 @@ export function Hero({ onOpenDownload }: HeroProps) {
                 {hero.ctaPrimary}
               </Link>
               <Link
-                to="/explore"
+                to={exploreHomeWithType("fechas")}
                 className="btn btn-ghost landing-hero__web-btn landing-hero__cta-link"
                 onClick={handleExploreSecondary}
                 aria-label={hero.ctaSecondary}
