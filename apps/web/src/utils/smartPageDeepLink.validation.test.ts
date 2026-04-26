@@ -120,6 +120,8 @@ describe("smart page / deep link edge cases", () => {
     const p = `${BASE}/social/fecha/1`;
     expect(isSameWebDestination(p, `${BASE}/social/fecha/1`)).toBe(true);
     expect(isSameWebDestination(p, `${BASE}/social/fecha/1/`)).toBe(true);
+    expect(isSameWebDestination(`${p}?__baileapp_dl=1`, `${p}?__baileapp_dl=2`)).toBe(true);
+    expect(isSameWebDestination(`${p}?__baileapp_route_retry=1`, p)).toBe(true);
   });
 
   it("safeDecodePathSegment: decodifica %2F y no rompe en ids simples", () => {

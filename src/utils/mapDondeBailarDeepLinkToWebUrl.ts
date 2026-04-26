@@ -40,6 +40,10 @@ export function isSameWebDestination(
   try {
     const a = new URL(pending);
     const b = new URL(currentDocumentUrl);
+    a.searchParams.delete("__baileapp_dl");
+    b.searchParams.delete("__baileapp_dl");
+    a.searchParams.delete("__baileapp_route_retry");
+    b.searchParams.delete("__baileapp_route_retry");
     const pathSearchA = `${a.pathname.replace(/\/$/, "")}${a.search || ""}`.toLowerCase();
     const pathSearchB = `${b.pathname.replace(/\/$/, "")}${b.search || ""}`.toLowerCase();
     if (a.host !== b.host) return false;

@@ -7,6 +7,7 @@ import { BioSection } from "../../components/profile/BioSection";
 import { colors, typography, spacing, borderRadius } from "../../theme/colors";
 import { resolveVersionedSupabaseStoragePublicUrl } from "../../utils/supabaseStoragePublicUrl";
 import { useBrandPublicProfile } from "../../hooks/useBrand";
+import { buildShareUrl } from "@/utils/shareUrls";
 import { 
   FaInstagram, 
   FaFacebookF, 
@@ -163,6 +164,10 @@ export default function BrandProfileLive() {
   // Configuración WhatsApp para productos
   const whatsappNumber = (brand as any)?.whatsapp_number || (brand as any)?.redes_sociales?.whatsapp || null;
   const whatsappMessageTemplate = (brand as any)?.whatsapp_message_template || 'me interesa el producto: {nombre}';
+  const publicShareUrl = React.useMemo(
+    () => (brandId ? buildShareUrl("marca", String(brandId)) : typeof window !== "undefined" ? window.location.href : ""),
+    [brandId]
+  );
 
   return (
     <>
@@ -407,7 +412,7 @@ export default function BrandProfileLive() {
                   title="Compartir"
                   onClick={() => {
                     try {
-                      const url = typeof window !== 'undefined' ? window.location.href : '';
+                      const url = publicShareUrl;
                       const title = (brand as any)?.nombre_publico || 'Marca';
                       const text = `Mira el perfil de ${title}`;
                       const navAny = (navigator as any);

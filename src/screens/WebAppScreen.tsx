@@ -296,6 +296,18 @@ function detectLoadPathKind(url: string): LoadPathKind | null {
   return null;
 }
 
+function withDeepLinkDocumentCacheBust(webUrl: string): string {
+  try {
+    const parsed = new URL(webUrl);
+    const base = new URL(WEB_APP_URL);
+    if (parsed.host !== base.host) return webUrl;
+    parsed.searchParams.set("__baileapp_dl", String(Date.now()));
+    return parsed.toString();
+  } catch {
+    return webUrl;
+  }
+}
+
 export default function WebAppScreen() {
   const [loading, setLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
@@ -600,8 +612,11 @@ export default function WebAppScreen() {
   const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
     const mapped = mapDondeBailarDeepLinkToWebUrl(incomingUrl, WEB_APP_URL);
     if (mapped) {
-      logWebAppLinking("map_success", { incomingUrl, mappedUrl: mapped });
-      return mapped;
+      const mappedUrl = incomingUrl.startsWith("dondebailarmx://")
+        ? withDeepLinkDocumentCacheBust(mapped)
+        : mapped;
+      logWebAppLinking("map_success", { incomingUrl, mappedUrl });
+      return mappedUrl;
     }
     console.warn("[WebAppScreen] Unmapped incoming URL:", incomingUrl);
     logWebAppLinking("map_rejected", { incomingUrl, reason: "unmapped" });

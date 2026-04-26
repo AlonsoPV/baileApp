@@ -8,6 +8,7 @@ type Props = {
 type State = { hasError: boolean; error?: Error };
 
 const ROUTE_LOAD_RETRY_KEY_PREFIX = "baileapp:route-load-retry:";
+const ROUTE_LOAD_RETRY_PARAM = "__baileapp_route_retry";
 let routeLoadRetryAttemptedInMemory = false;
 
 function isLikelyLazyRouteLoadError(error?: Error): boolean {
@@ -23,7 +24,18 @@ function isLikelyLazyRouteLoadError(error?: Error): boolean {
 
 function getRouteLoadRetryKey(): string {
   if (typeof window === "undefined") return ROUTE_LOAD_RETRY_KEY_PREFIX;
-  return `${ROUTE_LOAD_RETRY_KEY_PREFIX}${window.location.pathname}${window.location.search}`;
+  const params = new URLSearchParams(window.location.search);
+  params.delete(ROUTE_LOAD_RETRY_PARAM);
+  const normalizedSearch = params.toString();
+  return `${ROUTE_LOAD_RETRY_KEY_PREFIX}${window.location.pathname}${normalizedSearch ? `?${normalizedSearch}` : ""}`;
+}
+
+function reloadRouteWithCacheBust(): void {
+  if (typeof window === "undefined") return;
+  const next = new URL(window.location.href);
+  next.searchParams.set(ROUTE_LOAD_RETRY_PARAM, String(Date.now()));
+  // Usar replace evita dejar la URL rota en historial y fuerza al WebView a pedir index.html fresco.
+  window.location.replace(next.toString());
 }
 
 /**
@@ -51,7 +63,7 @@ export class RouteLoadErrorBoundary extends React.Component<Props, State> {
     }
 
     window.setTimeout(() => {
-      window.location.reload();
+      reloadRouteWithCacheBust();
     }, 150);
   }
 
@@ -80,7 +92,7 @@ export class RouteLoadErrorBoundary extends React.Component<Props, State> {
           </p>
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={reloadRouteWithCacheBust}
             style={{
               padding: "0.75rem 1.5rem",
               borderRadius: 999,
