@@ -35,6 +35,7 @@ import {
 import {
   mapDondeBailarDeepLinkToWebUrl,
   isSameWebDestination,
+  parseDondeBailarDeepLink,
 } from "../utils/mapDondeBailarDeepLinkToWebUrl";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
@@ -42,6 +43,16 @@ import {
 // Siempre HTTPS; no cargar http:// en el WebView (evita cleartext/SSL en Android).
 const WEB_APP_URL = "https://dondebailar.com.mx";
 const DEEP_LINK_FALLBACK_WEB_URL = `${WEB_APP_URL}/explore`;
+const SUPPORTED_DEEP_LINK_ENTITIES = new Set([
+  "academia",
+  "auth",
+  "clase",
+  "evento",
+  "maestro",
+  "marca",
+  "organizer",
+  "u",
+]);
 
 const NAVBAR_TEAL = "#297F96";
 
@@ -637,6 +648,25 @@ export default function WebAppScreen() {
   );
 
   const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
+    if (incomingUrl.startsWith("dondebailarmx://")) {
+      const parsed = parseDondeBailarDeepLink(incomingUrl);
+      if (parsed) {
+        console.log("[DEEPLINK_PARSED]", {
+          protocol: parsed.protocol,
+          hostname: parsed.hostname,
+          pathname: parsed.pathname,
+          search: parsed.search,
+          entity: parsed.entity,
+          parts: parsed.parts,
+        });
+      } else {
+        console.warn("[DEEPLINK_PARSED]", {
+          rawUrl: incomingUrl,
+          reason: "parse_failed",
+        });
+      }
+    }
+
     const mapped = mapDondeBailarDeepLinkToWebUrl(incomingUrl, WEB_APP_URL);
     if (mapped) {
       const mappedUrl = incomingUrl.startsWith("dondebailarmx://")
@@ -668,10 +698,37 @@ export default function WebAppScreen() {
       logWebAppLinking("incoming_url", { incomingUrl });
       const webUrl = mapIncomingUrlToWebUrl(incomingUrl);
       if (!webUrl) {
+        const parsed = incomingUrl.startsWith("dondebailarmx://")
+          ? parseDondeBailarDeepLink(incomingUrl)
+          : null;
+        const isSupportedEntity = parsed ? SUPPORTED_DEEP_LINK_ENTITIES.has(parsed.entity) : false;
+        const reason = isSupportedEntity
+          ? "supported_entity_missing_required_parts"
+          : "unsupported_or_malformed";
+        if (isSupportedEntity) {
+          console.warn("[DEEPLINK_UNSUPPORTED]", {
+            rawUrl: incomingUrl,
+            reason,
+            entity: parsed?.entity,
+            parts: parsed?.parts,
+          });
+          logWebAppLinking("incoming_url_ignored", {
+            incomingUrl,
+            entity: parsed?.entity,
+            parts: parsed?.parts,
+            reason,
+          });
+          return;
+        }
+        console.warn("[DEEPLINK_FALLBACK_HOME]", {
+          rawUrl: incomingUrl,
+          fallbackUrl: DEEP_LINK_FALLBACK_WEB_URL,
+          reason,
+        });
         logWebAppLinking("incoming_url_ignored", {
           incomingUrl,
           fallbackUrl: DEEP_LINK_FALLBACK_WEB_URL,
-          reason: "unsupported_fallback",
+          reason,
         });
         navigateWebView(DEEP_LINK_FALLBACK_WEB_URL);
         return;
@@ -1461,6 +1518,7 @@ export default function WebAppScreen() {
               url: currentUrl,
               navigationType: e?.nativeEvent?.navigationType ?? "unknown",
             });
+            console.log("[WEBVIEW_LOAD]", { mappedWebUrl: currentUrl });
             console.log("[WEBVIEW_LOAD_START]", { url: currentUrl });
             logDiagnosticEvent("load_phase", {
               phase: "loading",

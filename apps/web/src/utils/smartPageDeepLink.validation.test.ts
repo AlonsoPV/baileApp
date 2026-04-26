@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   mapDondeBailarDeepLinkToWebUrl,
   isSameWebDestination,
+  parseDondeBailarDeepLink,
   safeDecodePathSegment,
 } from "../../../../src/utils/mapDondeBailarDeepLinkToWebUrl";
 import { buildCanonicalUrl, buildDeepLink, buildShareUrl } from "./shareUrls";
@@ -106,6 +107,64 @@ describe("smart page / deep link alignment (iOS + Android WebView)", () => {
 
   it("URL opaca no se mapea", () => {
     expect(mapDondeBailarDeepLinkToWebUrl("https://google.com", BASE)).toBeNull();
+  });
+});
+
+describe("custom scheme parser formats", () => {
+  it("parsea formato host: dondebailarmx://evento/123", () => {
+    const parsed = parseDondeBailarDeepLink("dondebailarmx://evento/123?x=1");
+    expect(parsed).toMatchObject({
+      protocol: "dondebailarmx:",
+      hostname: "evento",
+      pathname: "/123",
+      search: "?x=1",
+      entity: "evento",
+      parts: ["123"],
+    });
+  });
+
+  it("parsea formato pathname: dondebailarmx:///evento/123", () => {
+    const parsed = parseDondeBailarDeepLink("dondebailarmx:///evento/123?x=1");
+    expect(parsed).toMatchObject({
+      protocol: "dondebailarmx:",
+      hostname: "",
+      pathname: "/evento/123",
+      search: "?x=1",
+      entity: "evento",
+      parts: ["123"],
+    });
+  });
+
+  it("mapea todas las entidades en formato host", () => {
+    const cases = [
+      ["dondebailarmx://evento/123", `${BASE}/social/fecha/123`],
+      ["dondebailarmx://clase/teacher/456?i=2", `${BASE}/clase/teacher/456?i=2`],
+      ["dondebailarmx://clase/academy/456", `${BASE}/clase/academy/456`],
+      ["dondebailarmx://academia/789", `${BASE}/academia/789`],
+      ["dondebailarmx://maestro/789", `${BASE}/maestro/789`],
+      ["dondebailarmx://organizer/789", `${BASE}/organizer/789`],
+      ["dondebailarmx://u/789", `${BASE}/u/789`],
+    ] as const;
+
+    for (const [deepLink, expected] of cases) {
+      expect(mapDondeBailarDeepLinkToWebUrl(deepLink, BASE), deepLink).toBe(expected);
+    }
+  });
+
+  it("mapea todas las entidades en formato pathname", () => {
+    const cases = [
+      ["dondebailarmx:///evento/123", `${BASE}/social/fecha/123`],
+      ["dondebailarmx:///clase/teacher/456?i=2", `${BASE}/clase/teacher/456?i=2`],
+      ["dondebailarmx:///clase/academy/456", `${BASE}/clase/academy/456`],
+      ["dondebailarmx:///academia/789", `${BASE}/academia/789`],
+      ["dondebailarmx:///maestro/789", `${BASE}/maestro/789`],
+      ["dondebailarmx:///organizer/789", `${BASE}/organizer/789`],
+      ["dondebailarmx:///u/789", `${BASE}/u/789`],
+    ] as const;
+
+    for (const [deepLink, expected] of cases) {
+      expect(mapDondeBailarDeepLinkToWebUrl(deepLink, BASE), deepLink).toBe(expected);
+    }
   });
 });
 

@@ -13,6 +13,16 @@
 
 export const DEFAULT_DONDE_BAILAR_WEB_ORIGIN = "https://dondebailar.com.mx";
 
+export type ParsedDondeBailarDeepLink = {
+  protocol: string;
+  hostname: string;
+  pathname: string;
+  search: string;
+  hash: string;
+  entity: string;
+  parts: string[];
+};
+
 function normalizeBase(base: string): string {
   return String(base || "").replace(/\/+$/, "");
 }
@@ -53,6 +63,33 @@ export function isSameWebDestination(
   }
 }
 
+export function parseDondeBailarDeepLink(incomingUrl: string): ParsedDondeBailarDeepLink | null {
+  try {
+    const u = new URL(incomingUrl);
+    if (u.protocol !== "dondebailarmx:") return null;
+
+    const hostname = (u.hostname || u.host || "").toLowerCase();
+    const pathParts = (u.pathname || "")
+      .split("/")
+      .filter(Boolean)
+      .map(safeDecodePathSegment);
+    const entity = hostname || String(pathParts.shift() || "").toLowerCase();
+    if (!entity) return null;
+
+    return {
+      protocol: u.protocol,
+      hostname,
+      pathname: u.pathname || "",
+      search: u.search || "",
+      hash: u.hash || "",
+      entity,
+      parts: pathParts,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * @param incomingUrl deep link o URL https del producto
  * @param webOrigin origen canónico (p.ej. https://dondebailar.com.mx)
@@ -66,68 +103,50 @@ export function mapDondeBailarDeepLinkToWebUrl(
 
   try {
     if (incomingUrl.startsWith("dondebailarmx://")) {
-      const u = new URL(incomingUrl);
-      const host = (u.host || "").toLowerCase();
-      const path = (u.pathname || "").replace(/^\/+/, "") || "";
-      const hash = u.hash || "";
+      const parsed = parseDondeBailarDeepLink(incomingUrl);
+      if (!parsed) return null;
+      const { entity, parts, search, hash } = parsed;
 
-      if (host === "evento" && path) {
-        const raw = path.split("/")[0];
-        if (!raw) return null;
-        const id = safeDecodePathSegment(raw);
+      if (entity === "evento") {
+        const id = parts[0];
         if (!id) return null;
-        return `${base}/social/fecha/${id}${u.search || ""}${hash}`;
+        return `${base}/social/fecha/${id}${search}${hash}`;
       }
 
-      if (host === "clase" && path) {
-        const parts = path.split("/").filter(Boolean);
+      if (entity === "clase") {
         if (parts.length >= 2) {
-          const type = safeDecodePathSegment(parts[0]);
-          const id = safeDecodePathSegment(parts[1]);
-          if ((type === "teacher" || type === "academy") && id) {
-            // u.search conserva ?i= y cualquier otro query (p. ej. cronograma)
-            return `${base}/clase/${type}/${id}${u.search || ""}${hash}`;
-          }
+          const type = parts[0];
+          const id = parts[1];
+          if ((type === "teacher" || type === "academy") && id) return `${base}/clase/${type}/${id}${search}${hash}`;
         }
         return null;
       }
 
-      if (host === "academia" && path) {
-        const raw = path.split("/")[0];
-        if (!raw) return null;
-        const id = safeDecodePathSegment(raw);
-        return id ? `${base}/academia/${id}${u.search || ""}${hash}` : null;
+      if (entity === "academia") {
+        const id = parts[0];
+        return id ? `${base}/academia/${id}${search}${hash}` : null;
       }
-      if (host === "maestro" && path) {
-        const raw = path.split("/")[0];
-        if (!raw) return null;
-        const id = safeDecodePathSegment(raw);
-        return id ? `${base}/maestro/${id}${u.search || ""}${hash}` : null;
+      if (entity === "maestro") {
+        const id = parts[0];
+        return id ? `${base}/maestro/${id}${search}${hash}` : null;
       }
-      if (host === "organizer" && path) {
-        const raw = path.split("/")[0];
-        if (!raw) return null;
-        const id = safeDecodePathSegment(raw);
-        return id ? `${base}/organizer/${id}${u.search || ""}${hash}` : null;
+      if (entity === "organizer") {
+        const id = parts[0];
+        return id ? `${base}/organizer/${id}${search}${hash}` : null;
       }
-      if (host === "u" && path) {
-        const raw = path.split("/")[0];
-        if (!raw) return null;
-        const idDecoded = safeDecodePathSegment(raw);
+      if (entity === "u") {
+        const idDecoded = parts[0];
         if (!idDecoded) return null;
-        return `${base}/u/${encodeURIComponent(idDecoded)}${u.search || ""}${hash}`;
+        return `${base}/u/${encodeURIComponent(idDecoded)}${search}${hash}`;
       }
-      if (host === "marca" && path) {
-        const raw = path.split("/")[0];
-        if (!raw) return null;
-        const id = safeDecodePathSegment(raw);
-        return id ? `${base}/marca/${id}${u.search || ""}${hash}` : null;
+      if (entity === "marca") {
+        const id = parts[0];
+        return id ? `${base}/marca/${id}${search}${hash}` : null;
       }
 
-      if (host === "auth") {
-        const hostSlash = u.host ? `/${u.host}` : "";
-        const mappedPath = `${hostSlash}${u.pathname || ""}` || "/auth/callback";
-        return `${base}${mappedPath}${u.search || ""}${hash}`;
+      if (entity === "auth") {
+        const authPath = parts.length > 0 ? `/auth/${parts.join("/")}` : "/auth/callback";
+        return `${base}${authPath}${search}${hash}`;
       }
 
       return null;
