@@ -5,7 +5,7 @@ import { useEventDate } from "@/hooks/useEventDate";
 import { useEventParent } from "@/hooks/useEventParent";
 import { useTeacherPublic } from "@/hooks/useTeacher";
 import { useAcademyPublic } from "@/hooks/useAcademy";
-import { useOrganizerPublic } from "@/hooks/useOrganizer";
+import { useOrganizerPublic as useOrganizerPublicByRouteId } from "@/hooks/useOrganizerPublic";
 import { useBrandPublic } from "@/hooks/useBrand";
 import { supabase } from "@/lib/supabase";
 import { buildCanonicalUrl, buildDeepLink, buildShareUrl, type ShareEntityType } from "@/utils/shareUrls";
@@ -276,7 +276,7 @@ export default function OpenEntityScreen({ entityType }: Props) {
   const index = indexParam !== null && indexParam !== "" ? parseInt(indexParam, 10) : undefined;
   const idNum = parseInt(idParam, 10);
   const isValidNumId = Number.isFinite(idNum) && idNum > 0;
-  const isValidUserId = entityType === "user" && idParam.length > 0;
+  const isValidRouteId = idParam.trim().length > 0;
 
   if (entityType === "evento") {
     if (!isValidNumId) return <OpenNotFound entityType={entityType} />;
@@ -300,13 +300,17 @@ export default function OpenEntityScreen({ entityType }: Props) {
   }
 
   if (isProfileEntityType(entityType)) {
-    if (entityType === "user" ? !isValidUserId : !isValidNumId) {
+    const isValidProfileId =
+      entityType === "user" || entityType === "organizer"
+        ? isValidRouteId
+        : isValidNumId;
+    if (!isValidProfileId) {
       return <OpenNotFound entityType={entityType} />;
     }
     return (
       <OpenProfileContent
         profileType={entityType}
-        id={entityType === "user" ? idParam : String(idNum)}
+        id={entityType === "user" || entityType === "organizer" ? idParam : String(idNum)}
       />
     );
   }
@@ -342,6 +346,7 @@ function OpenEventoContent({ dateId, dateIdParam }: { dateId: number; dateIdPara
   return (
     <OpenLayout
       entityType="evento"
+      entityId={String(dateId)}
       title={presentation.title}
       subtitle={presentation.subtitle}
       place={presentation.place}
@@ -400,6 +405,7 @@ function OpenClaseContent({
   return (
     <OpenLayout
       entityType="clase"
+      entityId={String(profileId)}
       title={presentation.title}
       subtitle={presentation.subtitle}
       place={presentation.place}
@@ -426,7 +432,7 @@ function OpenProfileContent({
 }) {
   const academyQ = useAcademyPublic(profileType === "academia" ? parseInt(id, 10) : (undefined as any));
   const teacherQ = useTeacherPublic(profileType === "maestro" ? parseInt(id, 10) : (undefined as any));
-  const organizerQ = useOrganizerPublic(profileType === "organizer" ? parseInt(id, 10) : (undefined as any));
+  const organizerByRouteIdQ = useOrganizerPublicByRouteId(profileType === "organizer" ? id : undefined);
   const brandQ = useBrandPublic(profileType === "marca" ? parseInt(id, 10) : (undefined as any));
   const userQ = useQuery({
     queryKey: ["user-public", id],
@@ -448,7 +454,7 @@ function OpenProfileContent({
       : profileType === "maestro"
         ? teacherQ
         : profileType === "organizer"
-          ? organizerQ
+          ? organizerByRouteIdQ
           : profileType === "marca"
             ? brandQ
             : userQ;
@@ -474,6 +480,7 @@ function OpenProfileContent({
   return (
     <OpenLayout
       entityType={profileType}
+      entityId={id}
       title={presentation.title}
       subtitle={undefined}
       place={undefined}
@@ -518,6 +525,7 @@ function AppleLogoIconSmall() {
 
 function OpenLayout({
   entityType,
+  entityId,
   title,
   subtitle,
   place,
@@ -531,6 +539,7 @@ function OpenLayout({
   seoUrl,
 }: {
   entityType: ShareEntityType;
+  entityId: string;
   title: string;
   subtitle?: string;
   place?: string;
@@ -561,11 +570,14 @@ function OpenLayout({
     logSmartPage("[SMART_PAGE]", {
       event: "open_in_app_click",
       entityType,
+      id: entityId,
       deepLink,
       canonicalUrl,
       shareUrl,
       env,
     });
+    logSmartPage("[SMART_PAGE_DEEPLINK]", { entityType, id: entityId, deepLink });
+    logSmartPage("[SMART_PAGE_CANONICAL]", { entityType, id: entityId, canonicalUrl });
     if (env.isIos) {
       logSmartPage("[DEEPLINK_IOS]", {
         event: "open_attempt",
@@ -590,7 +602,7 @@ function OpenLayout({
       });
       setShowFallback(true);
     }, env.isIos ? 2200 : 2000);
-  }, [canonicalUrl, deepLink, entityType, env, shareUrl]);
+  }, [canonicalUrl, deepLink, entityId, entityType, env, shareUrl]);
 
   React.useEffect(() => {
     return () => {
@@ -602,11 +614,14 @@ function OpenLayout({
     logSmartPage("[SMART_PAGE]", {
       event: "render",
       entityType,
+      id: entityId,
       deepLink,
       canonicalUrl,
       shareUrl,
       env,
     });
+    logSmartPage("[SMART_PAGE_DEEPLINK]", { entityType, id: entityId, deepLink });
+    logSmartPage("[SMART_PAGE_CANONICAL]", { entityType, id: entityId, canonicalUrl });
     if (env.isIos) {
       logSmartPage("[DEEPLINK_IOS]", {
         event: "render",
@@ -617,7 +632,7 @@ function OpenLayout({
         isEmbeddedBrowser: env.isEmbeddedBrowser,
       });
     }
-  }, [canonicalUrl, deepLink, entityType, env, shareUrl]);
+  }, [canonicalUrl, deepLink, entityId, entityType, env, shareUrl]);
 
   React.useEffect(() => {
     if (!showFallback) return;

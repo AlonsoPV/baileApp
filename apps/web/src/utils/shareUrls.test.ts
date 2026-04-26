@@ -20,6 +20,7 @@ describe("shareUrls", () => {
     expect(buildShareUrl(academy.kind, academy.id)).toBe(`${"https://dondebailar.com.mx"}/open/academia/1`);
     expect(buildDeepLink(academy.kind, academy.id)).toBe("dondebailarmx://academia/1");
     const org = { kind: "organizer" as const, id: "2" };
+    expect(buildCanonicalUrl(org.kind, org.id)).toBe("https://dondebailar.com.mx/organizer/2");
     expect(buildDeepLink(org.kind, org.id)).toBe("dondebailarmx://organizer/2");
   });
 });

@@ -62,6 +62,8 @@ function getSupabaseAdmin(): SupabaseClient | null {
 
 type ClassType = "teacher" | "academy";
 type OpenPayload = {
+  entityType: ShareEntityType;
+  id: string;
   shareUrl: string;
   canonicalUrl: string;
   deepLink: string;
@@ -550,6 +552,8 @@ async function fetchEventPayload(supabase: SupabaseClient, id: string): Promise<
   const presentation = buildOpenEventoPresentation(date as Record<string, unknown>, parent);
 
   return {
+    entityType: "evento",
+    id: String(dateId),
     shareUrl: buildShareUrl("evento", String(dateId)),
     canonicalUrl: buildCanonicalUrl("evento", String(dateId)),
     deepLink: buildDeepLink("evento", String(dateId)),
@@ -588,6 +592,8 @@ async function fetchClassPayload(
   const presentation = buildOpenClasePresentation(profile as Record<string, unknown>, index ?? undefined);
 
   return {
+    entityType: "clase",
+    id: String(profileId),
     shareUrl: buildShareUrl("clase", String(profileId), { type, index: index ?? undefined }),
     canonicalUrl: buildCanonicalUrl("clase", String(profileId), { type, index: index ?? undefined }),
     deepLink: buildDeepLink("clase", String(profileId), { type, index: index ?? undefined }),
@@ -609,33 +615,56 @@ async function fetchProfilePayload(
 ): Promise<OpenPayload | null> {
   if (!["academia", "maestro", "organizer", "user", "marca"].includes(entityType)) return null;
 
-  const lookupValue = entityType === "user" ? decodeURIComponent(id) : parsePositiveInt(id);
+  const rawLookupValue = decodeURIComponent(id).trim();
+  const lookupValue =
+    entityType === "user" || entityType === "organizer"
+      ? rawLookupValue
+      : parsePositiveInt(id);
   if (!lookupValue) return null;
+
+  let profile: Record<string, unknown> | null = null;
+  if (entityType === "organizer") {
+    const numericId = /^\d+$/.test(rawLookupValue) ? Number(rawLookupValue) : null;
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(rawLookupValue);
+    const column = numericId != null ? "id" : isUuid ? "user_id" : "slug";
+    const value = numericId ?? rawLookupValue;
+    const { data, error } = await supabase
+      .from("v_organizers_public")
+      .select("*")
+      .eq(column, value)
+      .maybeSingle();
+    if (error || !data) return null;
+    profile = data as Record<string, unknown>;
+  }
 
   const source =
     entityType === "academia"
       ? { table: "v_academies_public", column: "id" }
       : entityType === "maestro"
         ? { table: "profiles_teacher", column: "id" }
-        : entityType === "organizer"
-          ? { table: "profiles_organizer", column: "id" }
-          : entityType === "marca"
-            ? { table: "v_brands_public", column: "id" }
-            : { table: "v_user_public", column: "user_id" };
+        : entityType === "marca"
+          ? { table: "v_brands_public", column: "id" }
+          : { table: "v_user_public", column: "user_id" };
 
-  const { data: profile, error } = await supabase
-    .from(source.table)
-    .select("*")
-    .eq(source.column, lookupValue)
-    .maybeSingle();
-  if (error || !profile) return null;
+  if (!profile) {
+    const { data, error } = await supabase
+      .from(source.table)
+      .select("*")
+      .eq(source.column, lookupValue)
+      .maybeSingle();
+    if (error || !data) return null;
+    profile = data as Record<string, unknown>;
+  }
 
   const imageResult = resolveOpenEntityImageProfile({
-    profile: profile as Record<string, unknown>,
+    profile,
   });
-  const presentation = buildOpenProfilePresentation(entityType, profile as Record<string, unknown>);
+  const presentation = buildOpenProfilePresentation(entityType, profile);
 
   return {
+    entityType,
+    id: String(id),
     shareUrl: buildShareUrl(entityType, String(id)),
     canonicalUrl: buildCanonicalUrl(entityType, String(id)),
     deepLink: buildDeepLink(entityType, String(id)),
@@ -871,6 +900,8 @@ function renderHtml(payload: OpenPayload): string {
         var deepLink = ${JSON.stringify(payload.deepLink)};
         var canonicalUrl = ${JSON.stringify(payload.canonicalUrl)};
         var shareUrl = ${JSON.stringify(payload.shareUrl)};
+        var entityType = ${JSON.stringify(payload.entityType)};
+        var entityId = ${JSON.stringify(payload.id)};
         var entityLabel = ${JSON.stringify(payload.entityLabel)};
         var fallback = document.getElementById("fallback-notice");
         var iosHint = document.getElementById("ios-browser-hint");
@@ -911,12 +942,16 @@ function renderHtml(payload: OpenPayload): string {
         var env = detectEnv();
         log("[SMART_PAGE]", {
           event: "render",
+          entityType: entityType,
+          id: entityId,
           deepLink: deepLink,
           canonicalUrl: canonicalUrl,
           shareUrl: shareUrl,
           entityLabel: entityLabel,
           env: env
         });
+        log("[SMART_PAGE_DEEPLINK]", { entityType: entityType, id: entityId, deepLink: deepLink });
+        log("[SMART_PAGE_CANONICAL]", { entityType: entityType, id: entityId, canonicalUrl: canonicalUrl });
         if (env.isIos) {
           log("[DEEPLINK_IOS]", {
             event: "render",
@@ -965,11 +1000,15 @@ function renderHtml(payload: OpenPayload): string {
             clearTimer();
             log("[SMART_PAGE]", {
               event: "open_in_app_click",
+              entityType: entityType,
+              id: entityId,
               deepLink: deepLink,
               canonicalUrl: canonicalUrl,
               shareUrl: shareUrl,
               env: env
             });
+            log("[SMART_PAGE_DEEPLINK]", { entityType: entityType, id: entityId, deepLink: deepLink });
+            log("[SMART_PAGE_CANONICAL]", { entityType: entityType, id: entityId, canonicalUrl: canonicalUrl });
             if (env.isIos) {
               log("[DEEPLINK_IOS]", {
                 event: "open_attempt",

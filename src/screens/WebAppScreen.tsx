@@ -41,6 +41,7 @@ import {
 // Puedes ajustar esto a staging si  lo necesitas.
 // Siempre HTTPS; no cargar http:// en el WebView (evita cleartext/SSL en Android).
 const WEB_APP_URL = "https://dondebailar.com.mx";
+const DEEP_LINK_FALLBACK_WEB_URL = `${WEB_APP_URL}/explore`;
 
 const NAVBAR_TEAL = "#297F96";
 
@@ -306,6 +307,33 @@ function withDeepLinkDocumentCacheBust(webUrl: string): string {
   } catch {
     return webUrl;
   }
+}
+
+function buildWebViewNavigationScript(targetUrl: string): string {
+  return `
+    (function() {
+      var target = ${JSON.stringify(targetUrl)};
+      try {
+        var next = new URL(target, window.location.href);
+        if (next.origin === window.location.origin && window.history && window.history.replaceState) {
+          window.history.replaceState({}, "", next.href);
+          try {
+            window.dispatchEvent(new PopStateEvent("popstate", { state: {} }));
+          } catch (eventError) {
+            window.dispatchEvent(new Event("popstate"));
+          }
+          return;
+        }
+      } catch (spaError) {}
+
+      try {
+        window.location.replace(target);
+      } catch (replaceError) {
+        window.location.href = target;
+      }
+    })();
+    true;
+  `;
 }
 
 export default function WebAppScreen() {
@@ -594,9 +622,7 @@ export default function WebAppScreen() {
       }
       try {
         logWebAppLinking("pending_nav_flush", { reason, target });
-        webviewRef.current.injectJavaScript(
-          `try { window.location.replace(${JSON.stringify(target)}); } catch (e) {} true;`
-        );
+        webviewRef.current.injectJavaScript(buildWebViewNavigationScript(target));
         pendingMappedWebUrlRef.current = null;
       } catch (e) {
         logWebAppLinking("pending_nav_flush_error", {
@@ -615,9 +641,11 @@ export default function WebAppScreen() {
       const mappedUrl = incomingUrl.startsWith("dondebailarmx://")
         ? withDeepLinkDocumentCacheBust(mapped)
         : mapped;
+      console.log("[DEEPLINK_MAPPED]", { rawUrl: incomingUrl, mappedWebUrl: mappedUrl });
       logWebAppLinking("map_success", { incomingUrl, mappedUrl });
       return mappedUrl;
     }
+    console.warn("[DEEPLINK_UNSUPPORTED]", { rawUrl: incomingUrl });
     console.warn("[WebAppScreen] Unmapped incoming URL:", incomingUrl);
     logWebAppLinking("map_rejected", { incomingUrl, reason: "unmapped" });
     return null;
@@ -634,13 +662,16 @@ export default function WebAppScreen() {
 
   const handleIncomingUrl = React.useCallback(
     (incomingUrl: string) => {
+      console.log("[DEEPLINK_RECEIVED]", { rawUrl: incomingUrl });
       logWebAppLinking("incoming_url", { incomingUrl });
       const webUrl = mapIncomingUrlToWebUrl(incomingUrl);
       if (!webUrl) {
         logWebAppLinking("incoming_url_ignored", {
           incomingUrl,
-          reason: "map_returned_null",
+          fallbackUrl: DEEP_LINK_FALLBACK_WEB_URL,
+          reason: "unsupported_fallback",
         });
+        navigateWebView(DEEP_LINK_FALLBACK_WEB_URL);
         return;
       }
       console.log("[WebAppScreen] Handling deep link -> WebView:", webUrl);
@@ -1428,6 +1459,7 @@ export default function WebAppScreen() {
               url: currentUrl,
               navigationType: e?.nativeEvent?.navigationType ?? "unknown",
             });
+            console.log("[WEBVIEW_LOAD_START]", { url: currentUrl });
             logDiagnosticEvent("load_phase", {
               phase: "loading",
               elapsedMs: 0,
@@ -1533,6 +1565,10 @@ export default function WebAppScreen() {
             const url = ev.url ?? "";
             const canGoBack = ev.canGoBack;
             const canGoForward = ev.canGoForward;
+            console.warn("[WEBVIEW_LOAD_ERROR]", {
+              url,
+              error: description || code || "unknown",
+            });
             logWebViewError("onError", {
               code,
               description,
@@ -1581,6 +1617,10 @@ export default function WebAppScreen() {
             const statusCode = ev.statusCode;
             const description = ev.description ?? "";
             const url = ev.url ?? ev.target ?? "";
+            console.warn("[WEBVIEW_LOAD_ERROR]", {
+              url,
+              error: description || statusCode || "http_error",
+            });
             logWebViewError("onHttpError", {
               statusCode,
               description,
@@ -1677,6 +1717,10 @@ export default function WebAppScreen() {
           // Evitar que target="_blank" intente abrir una nueva "ventana" nativa
           setSupportMultipleWindows={false}
           // Inyectar JavaScript para forzar que window.open y redirecciones OAuth se mantengan en el WebView
+          injectedJavaScriptBeforeContentLoaded={`
+            window.IS_NATIVE_APP = true;
+            true;
+          `}
           injectedJavaScript={`
             (function() {
               const isOAuthLike = (url) => {

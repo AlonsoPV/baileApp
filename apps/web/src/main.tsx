@@ -106,6 +106,7 @@ if (hostWindow) {
 if (typeof window !== "undefined" && isNativeApp(window.location.search)) {
   void import("./screens/explore/ExploreHomeScreenModern");
   void import("./screens/events/EventDatePublicScreen");
+  void import("./screens/events/OrganizerPublicScreen");
   void import("./screens/classes/ClassPublicScreen");
 }
 

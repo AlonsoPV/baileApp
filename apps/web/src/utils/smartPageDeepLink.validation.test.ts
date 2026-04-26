@@ -21,6 +21,42 @@ describe("smart page / deep link alignment (iOS + Android WebView)", () => {
     expect(buildShareUrl("evento", id)).toBe(`${BASE}/open/evento/${id}`);
   });
 
+  it("Smart Page evento: /open/evento/:id -> deep link -> ruta web interna canónica", () => {
+    const id = "13321";
+    const shareUrl = buildShareUrl("evento", id);
+    const deepLink = buildDeepLink("evento", id);
+    const canonicalUrl = buildCanonicalUrl("evento", id);
+
+    expect(shareUrl).toBe(`${BASE}/open/evento/${id}`);
+    expect(deepLink).toBe(`dondebailarmx://evento/${id}`);
+    expect(mapDondeBailarDeepLinkToWebUrl(deepLink, BASE)).toBe(canonicalUrl);
+    expect(new URL(canonicalUrl).pathname).toBe(`/social/fecha/${id}`);
+  });
+
+  it("Smart Page organizador: /open/organizer/:id -> deep link -> ruta web interna canónica", () => {
+    const id = "56";
+    const shareUrl = buildShareUrl("organizer", id);
+    const deepLink = buildDeepLink("organizer", id);
+    const canonicalUrl = buildCanonicalUrl("organizer", id);
+
+    expect(shareUrl).toBe(`${BASE}/open/organizer/${id}`);
+    expect(deepLink).toBe(`dondebailarmx://organizer/${id}`);
+    expect(mapDondeBailarDeepLinkToWebUrl(deepLink, BASE)).toBe(canonicalUrl);
+    expect(new URL(canonicalUrl).pathname).toBe(`/organizer/${id}`);
+  });
+
+  it("Organizador: conserva slug y user_id como identificadores públicos válidos", () => {
+    const ids = ["salsa-night-mx", "a1b2c3d4-e5f6-4890-abcd-ef1234567890"];
+    for (const id of ids) {
+      const deepLink = buildDeepLink("organizer", id);
+      const canonicalUrl = buildCanonicalUrl("organizer", id);
+
+      expect(deepLink).toBe(`dondebailarmx://organizer/${id}`);
+      expect(canonicalUrl).toBe(`${BASE}/organizer/${id}`);
+      expect(mapDondeBailarDeepLinkToWebUrl(deepLink, BASE)).toBe(canonicalUrl);
+    }
+  });
+
   it("Clase (teacher) con query ?i= respeta shareUrls", () => {
     const opts = { type: "teacher" as const, index: 2 };
     const id = "456";

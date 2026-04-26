@@ -157,6 +157,15 @@ function NativeAwarePublicClassRoute() {
   );
 }
 
+function NativeAwarePublicOrganizerRoute() {
+  const location = useLocation();
+  return (
+    <PublicDeepLinkRouteSuspense key={isNativeApp(location.search) ? "native" : "web"}>
+      <OrganizerPublicScreen />
+    </PublicDeepLinkRouteSuspense>
+  );
+}
+
 function OrganizerEditorRouteSuspense({ children }: { children: React.ReactNode }) {
   return <RouteSuspense layout="appContent">{children}</RouteSuspense>;
 }
@@ -240,7 +249,7 @@ export default function AppRouter() {
           <Route path="/legal" element={<LegalScreen />} />
           <Route path="/aviso-de-privacidad" element={<LegalScreen />} />
           <Route path="/eliminar-cuenta" element={<DeleteAccountScreen />} />
-          <Route path="/organizer/:id" element={<OrganizerPublicScreen />} />
+          <Route path="/organizer/:id" element={<NativeAwarePublicOrganizerRoute />} />
           <Route path="/organizador/:organizerId" element={<OrganizerPublicScreen />} />
           <Route path="/social/:id" element={<EventParentPublicScreenModern />} />
           <Route path="/social/fecha/:id" element={<NativeAwarePublicEventDateRoute />} />
