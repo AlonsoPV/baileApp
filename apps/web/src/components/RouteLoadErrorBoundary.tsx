@@ -7,6 +7,25 @@ type Props = {
 
 type State = { hasError: boolean; error?: Error };
 
+const ROUTE_LOAD_RETRY_KEY_PREFIX = "baileapp:route-load-retry:";
+let routeLoadRetryAttemptedInMemory = false;
+
+function isLikelyLazyRouteLoadError(error?: Error): boolean {
+  const text = `${error?.name ?? ""} ${error?.message ?? ""}`.toLowerCase();
+  return (
+    text.includes("failed to fetch dynamically imported module") ||
+    text.includes("importing a module script failed") ||
+    text.includes("chunkloaderror") ||
+    text.includes("loading chunk") ||
+    text.includes("error loading dynamically imported module")
+  );
+}
+
+function getRouteLoadRetryKey(): string {
+  if (typeof window === "undefined") return ROUTE_LOAD_RETRY_KEY_PREFIX;
+  return `${ROUTE_LOAD_RETRY_KEY_PREFIX}${window.location.pathname}${window.location.search}`;
+}
+
 /**
  * Error boundary para errores al cargar rutas lazy (ej. red caída, dev server apagado).
  * Muestra un mensaje claro en lugar de romper toda la app.
@@ -20,6 +39,20 @@ export class RouteLoadErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[RouteLoadErrorBoundary] Failed to load route:", error?.message, info?.componentStack);
+    if (typeof window === "undefined" || !isLikelyLazyRouteLoadError(error)) return;
+
+    const retryKey = getRouteLoadRetryKey();
+    try {
+      if (window.sessionStorage.getItem(retryKey) === "1") return;
+      window.sessionStorage.setItem(retryKey, "1");
+    } catch {
+      if (routeLoadRetryAttemptedInMemory) return;
+      routeLoadRetryAttemptedInMemory = true;
+    }
+
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 150);
   }
 
   render() {

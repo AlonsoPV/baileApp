@@ -19,6 +19,7 @@ import EventCard from "../../components/explore/cards/EventCard";
 import ZonaGroupedChips from "../../components/profile/ZonaGroupedChips";
 import SeoHead from "@/components/SeoHead";
 import { SEO_BASE_URL, SEO_LOGO_URL } from "@/lib/seoConfig";
+import { buildShareUrl } from "@/utils/shareUrls";
 import { fmtDateTime } from "../../utils/format";
 import EventParentRatingComponent from "../../components/events/EventParentRatingComponent";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
@@ -542,6 +543,12 @@ export default function EventParentPublicScreen() {
       return dates[0] as any;
     }
   }, [dates]);
+
+  const smartShareUrl = React.useMemo(() => {
+    const dateId = (nextDate as any)?.id ?? (dates || [])[0]?.id;
+    if (dateId != null) return buildShareUrl("evento", String(dateId));
+    return typeof window !== "undefined" ? window.location.href : "";
+  }, [dates, nextDate]);
 
   // Dueño
   const isOwner = (organizer as any)?.id === parent?.organizer_id;
@@ -1142,7 +1149,7 @@ export default function EventParentPublicScreen() {
               )}
                 <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.97 }}>
                   <ShareButton
-                    url={typeof window !== 'undefined' ? window.location.href : ''}
+                    url={smartShareUrl}
                     title={parent.nombre}
                     style={{
                       padding: '1rem 1.75rem',
