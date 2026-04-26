@@ -126,18 +126,17 @@ export function mapDondeBailarDeepLinkToWebUrl(
         const id = parts[0];
         return id ? `${base}/academia/${id}${search}${hash}` : null;
       }
+      if (entity === "explore") {
+        return `${base}/explore${search || "?when=todos"}${hash}`;
+      }
       if (entity === "maestro") {
-        const id = parts[0];
-        return id ? `${base}/maestro/${id}${search}${hash}` : null;
+        return `${base}/explore?type=maestros&when=todos${hash}`;
       }
       if (entity === "organizer") {
-        const id = parts[0];
-        return id ? `${base}/organizer/${id}${search}${hash}` : null;
+        return `${base}/explore?type=organizadores&when=todos${hash}`;
       }
       if (entity === "u") {
-        const idDecoded = parts[0];
-        if (!idDecoded) return null;
-        return `${base}/u/${encodeURIComponent(idDecoded)}${search}${hash}`;
+        return `${base}/explore?type=usuarios&when=todos${hash}`;
       }
       if (entity === "marca") {
         const id = parts[0];

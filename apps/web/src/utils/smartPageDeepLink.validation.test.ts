@@ -41,29 +41,33 @@ describe("smart page / deep link alignment (iOS + Android WebView)", () => {
     const canonicalUrl = buildCanonicalUrl("organizer", id);
 
     expect(shareUrl).toBe(`${BASE}/open/organizer/${id}`);
-    expect(deepLink).toBe(`dondebailarmx://organizer/${id}`);
+    expect(deepLink).toBe("dondebailarmx://explore?type=organizadores&when=todos");
     expect(mapDondeBailarDeepLinkToWebUrl(deepLink, BASE)).toBe(canonicalUrl);
-    expect(new URL(canonicalUrl).pathname).toBe(`/organizer/${id}`);
+    expect(canonicalUrl).toBe(`${BASE}/explore?type=organizadores&when=todos`);
   });
 
-  it("Organizador: conserva slug y user_id como identificadores públicos válidos", () => {
-    const ids = ["salsa-night-mx", "a1b2c3d4-e5f6-4890-abcd-ef1234567890"];
-    for (const id of ids) {
-      const deepLink = buildDeepLink("organizer", id);
-      const canonicalUrl = buildCanonicalUrl("organizer", id);
+  it("Maestro, usuario y organizador apuntan a listados reales de Explore", () => {
+    const cases = [
+      { kind: "maestro" as const, id: "34", type: "maestros" },
+      { kind: "user" as const, id: "abc-def-123", type: "usuarios" },
+      { kind: "organizer" as const, id: "56", type: "organizadores" },
+    ];
+    for (const { kind, id, type } of cases) {
+      const deepLink = buildDeepLink(kind, id);
+      const canonicalUrl = buildCanonicalUrl(kind, id);
 
-      expect(deepLink).toBe(`dondebailarmx://organizer/${id}`);
-      expect(canonicalUrl).toBe(`${BASE}/organizer/${id}`);
+      expect(deepLink).toBe(`dondebailarmx://explore?type=${type}&when=todos`);
+      expect(canonicalUrl).toBe(`${BASE}/explore?type=${type}&when=todos`);
       expect(mapDondeBailarDeepLinkToWebUrl(deepLink, BASE)).toBe(canonicalUrl);
     }
   });
 
-  it("Clase (teacher) con query ?i= respeta shareUrls", () => {
-    const opts = { type: "teacher" as const, index: 2 };
+  it("Clase (teacher) con query ?i= y ?dia= respeta shareUrls", () => {
+    const opts = { type: "teacher" as const, index: 2, dia: 0 };
     const id = "456";
     const dl = buildDeepLink("clase", id, opts);
     expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(buildCanonicalUrl("clase", id, opts));
-    expect(buildShareUrl("clase", id, opts)).toBe(`${BASE}/open/clase/teacher/456?i=2`);
+    expect(buildShareUrl("clase", id, opts)).toBe(`${BASE}/open/clase/teacher/456?i=2&dia=0`);
   });
 
   it("Clase (academy) sin índice", () => {
@@ -138,12 +142,12 @@ describe("custom scheme parser formats", () => {
   it("mapea todas las entidades en formato host", () => {
     const cases = [
       ["dondebailarmx://evento/123", `${BASE}/social/fecha/123`],
-      ["dondebailarmx://clase/teacher/456?i=2", `${BASE}/clase/teacher/456?i=2`],
+      ["dondebailarmx://clase/teacher/456?i=2&dia=0", `${BASE}/clase/teacher/456?i=2&dia=0`],
       ["dondebailarmx://clase/academy/456", `${BASE}/clase/academy/456`],
       ["dondebailarmx://academia/789", `${BASE}/academia/789`],
-      ["dondebailarmx://maestro/789", `${BASE}/maestro/789`],
-      ["dondebailarmx://organizer/789", `${BASE}/organizer/789`],
-      ["dondebailarmx://u/789", `${BASE}/u/789`],
+      ["dondebailarmx://explore?type=maestros&when=todos", `${BASE}/explore?type=maestros&when=todos`],
+      ["dondebailarmx://explore?type=organizadores&when=todos", `${BASE}/explore?type=organizadores&when=todos`],
+      ["dondebailarmx://explore?type=usuarios&when=todos", `${BASE}/explore?type=usuarios&when=todos`],
     ] as const;
 
     for (const [deepLink, expected] of cases) {
@@ -154,12 +158,12 @@ describe("custom scheme parser formats", () => {
   it("mapea todas las entidades en formato pathname", () => {
     const cases = [
       ["dondebailarmx:///evento/123", `${BASE}/social/fecha/123`],
-      ["dondebailarmx:///clase/teacher/456?i=2", `${BASE}/clase/teacher/456?i=2`],
+      ["dondebailarmx:///clase/teacher/456?i=2&dia=0", `${BASE}/clase/teacher/456?i=2&dia=0`],
       ["dondebailarmx:///clase/academy/456", `${BASE}/clase/academy/456`],
       ["dondebailarmx:///academia/789", `${BASE}/academia/789`],
-      ["dondebailarmx:///maestro/789", `${BASE}/maestro/789`],
-      ["dondebailarmx:///organizer/789", `${BASE}/organizer/789`],
-      ["dondebailarmx:///u/789", `${BASE}/u/789`],
+      ["dondebailarmx:///explore?type=maestros&when=todos", `${BASE}/explore?type=maestros&when=todos`],
+      ["dondebailarmx:///explore?type=organizadores&when=todos", `${BASE}/explore?type=organizadores&when=todos`],
+      ["dondebailarmx:///explore?type=usuarios&when=todos", `${BASE}/explore?type=usuarios&when=todos`],
     ] as const;
 
     for (const [deepLink, expected] of cases) {
@@ -169,28 +173,28 @@ describe("custom scheme parser formats", () => {
 });
 
 describe("smart page / deep link edge cases", () => {
-  it("usuario: id con @ (decodifica path y coincide con buildCanonicalUrl; sin doble encoding)", () => {
+  it("usuario: buildDeepLink apunta al listado real de Explore", () => {
     const id = "user@domain.com";
     const dl = buildDeepLink("user", id);
     const mapped = mapDondeBailarDeepLinkToWebUrl(dl, BASE);
     const canonical = buildCanonicalUrl("user", id);
     expect(mapped).toBe(canonical);
-    expect(mapped).toBe(`${BASE}/u/${encodeURIComponent(id)}`);
+    expect(mapped).toBe(`${BASE}/explore?type=usuarios&when=todos`);
     expect(mapped).not.toContain("%25");
   });
 
-  it("usuario: segmento del path aún encoded (round-trip)", () => {
+  it("usuario: deep link legacy /u también cae al listado real de Explore", () => {
     const id = "a@b.c";
     const segment = encodeURIComponent(id);
     const dl = `dondebailarmx://u/${segment}`;
-    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(buildCanonicalUrl("user", id));
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(`${BASE}/explore?type=usuarios&when=todos`);
   });
 
-  it("clase: ?i= se conserva en la canónica", () => {
-    const dl = "dondebailarmx://clase/teacher/456?i=2";
-    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(`${BASE}/clase/teacher/456?i=2`);
-    expect(buildCanonicalUrl("clase", "456", { type: "teacher", index: 2 })).toBe(
-      `${BASE}/clase/teacher/456?i=2`
+  it("clase: ?i= y ?dia= se conservan en la canónica", () => {
+    const dl = "dondebailarmx://clase/teacher/456?i=2&dia=0";
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(`${BASE}/clase/teacher/456?i=2&dia=0`);
+    expect(buildCanonicalUrl("clase", "456", { type: "teacher", index: 2, dia: 0 })).toBe(
+      `${BASE}/clase/teacher/456?i=2&dia=0`
     );
   });
 

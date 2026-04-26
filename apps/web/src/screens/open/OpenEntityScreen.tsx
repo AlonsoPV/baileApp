@@ -277,7 +277,9 @@ export default function OpenEntityScreen({ entityType }: Props) {
   const typeParam =
     rawTypeParam === "teacher" || rawTypeParam === "academy" ? rawTypeParam : null;
   const indexParam = searchParams.get("i");
+  const diaParam = searchParams.get("dia");
   const index = indexParam !== null && indexParam !== "" ? parseInt(indexParam, 10) : undefined;
+  const dia = diaParam !== null && diaParam !== "" ? parseInt(diaParam, 10) : undefined;
   const idNum = parseInt(idParam, 10);
   const isValidNumId = Number.isFinite(idNum) && idNum > 0;
   const isValidRouteId = idParam.trim().length > 0;
@@ -299,6 +301,7 @@ export default function OpenEntityScreen({ entityType }: Props) {
         sourceType={typeParam}
         profileId={idNum}
         classIndex={Number.isFinite(index) ? index : undefined}
+        dia={Number.isFinite(dia) ? dia : undefined}
       />
     );
   }
@@ -370,10 +373,12 @@ function OpenClaseContent({
   sourceType,
   profileId,
   classIndex,
+  dia,
 }: {
   sourceType: "teacher" | "academy";
   profileId: number;
   classIndex?: number;
+  dia?: number;
 }) {
   const teacherQ = useTeacherPublic(sourceType === "teacher" ? profileId : (undefined as any));
   const academyQ = useAcademyPublic(sourceType === "academy" ? profileId : (undefined as any));
@@ -396,14 +401,17 @@ function OpenClaseContent({
   const canonicalUrl = buildCanonicalUrl("clase", String(profileId), {
     type: sourceType,
     index: classIndex,
+    dia,
   });
   const deepLink = buildDeepLink("clase", String(profileId), {
     type: sourceType,
     index: classIndex,
+    dia,
   });
   const shareUrl = buildShareUrl("clase", String(profileId), {
     type: sourceType,
     index: classIndex,
+    dia,
   });
 
   return (

@@ -101,13 +101,23 @@ function parsePositiveInt(value: string | null): number | null {
   return Number.isFinite(num) && num > 0 ? num : null;
 }
 
-function buildShareUrl(entityType: ShareEntityType, id: string, opts?: { type?: string; index?: number }): string {
+type ShareUrlOpts = { type?: string; index?: number; dia?: number };
+
+function appendClassQuery(path: string, opts?: ShareUrlOpts): string {
+  const params = new URLSearchParams();
+  if (Number.isFinite(opts?.index)) params.set("i", String(opts?.index));
+  if (Number.isFinite(opts?.dia)) params.set("dia", String(opts?.dia));
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
+function buildShareUrl(entityType: ShareEntityType, id: string, opts?: ShareUrlOpts): string {
   const base = `${SITE_URL.replace(/\/+$/, "")}/open`;
   if (entityType === "evento") return `${base}/evento/${id}`;
   if (entityType === "clase") {
     const type = opts?.type ?? "academy";
     const path = `${base}/clase/${type}/${id}`;
-    return Number.isFinite(opts?.index) ? `${path}?i=${opts?.index}` : path;
+    return appendClassQuery(path, opts);
   }
   if (entityType === "academia") return `${base}/academia/${id}`;
   if (entityType === "maestro") return `${base}/maestro/${id}`;
@@ -117,34 +127,34 @@ function buildShareUrl(entityType: ShareEntityType, id: string, opts?: { type?: 
   return `${base}/evento/${id}`;
 }
 
-function buildCanonicalUrl(entityType: ShareEntityType, id: string, opts?: { type?: string; index?: number }): string {
+function buildCanonicalUrl(entityType: ShareEntityType, id: string, opts?: ShareUrlOpts): string {
   const base = SITE_URL.replace(/\/+$/, "");
   if (entityType === "evento") return `${base}/social/fecha/${id}`;
   if (entityType === "clase") {
     const type = opts?.type ?? "academy";
     const path = `${base}/clase/${type}/${id}`;
-    return Number.isFinite(opts?.index) ? `${path}?i=${opts?.index}` : path;
+    return appendClassQuery(path, opts);
   }
   if (entityType === "academia") return `${base}/academia/${id}`;
-  if (entityType === "maestro") return `${base}/maestro/${id}`;
-  if (entityType === "organizer") return `${base}/organizer/${id}`;
-  if (entityType === "user") return `${base}/u/${encodeURIComponent(id)}`;
+  if (entityType === "maestro") return `${base}/explore?type=maestros&when=todos`;
+  if (entityType === "organizer") return `${base}/explore?type=organizadores&when=todos`;
+  if (entityType === "user") return `${base}/explore?type=usuarios&when=todos`;
   if (entityType === "marca") return `${base}/marca/${id}`;
   return `${base}/social/fecha/${id}`;
 }
 
-function buildDeepLink(entityType: ShareEntityType, id: string, opts?: { type?: string; index?: number }): string {
+function buildDeepLink(entityType: ShareEntityType, id: string, opts?: ShareUrlOpts): string {
   const scheme = "dondebailarmx";
   if (entityType === "evento") return `${scheme}://evento/${id}`;
   if (entityType === "clase") {
     const type = opts?.type ?? "academy";
     const path = `${scheme}://clase/${type}/${id}`;
-    return Number.isFinite(opts?.index) ? `${path}?i=${opts?.index}` : path;
+    return appendClassQuery(path, opts);
   }
   if (entityType === "academia") return `${scheme}://academia/${id}`;
-  if (entityType === "maestro") return `${scheme}://maestro/${id}`;
-  if (entityType === "organizer") return `${scheme}://organizer/${id}`;
-  if (entityType === "user") return `${scheme}://u/${encodeURIComponent(id)}`;
+  if (entityType === "maestro") return `${scheme}://explore?type=maestros&when=todos`;
+  if (entityType === "organizer") return `${scheme}://explore?type=organizadores&when=todos`;
+  if (entityType === "user") return `${scheme}://explore?type=usuarios&when=todos`;
   if (entityType === "marca") return `${scheme}://marca/${id}`;
   return `${scheme}://evento/${id}`;
 }
@@ -521,7 +531,8 @@ function readShareParams(req: IncomingMessage) {
   const id = url.searchParams.get("id");
   const type = parseClassType(url.searchParams.get("type"));
   const index = parsePositiveInt(url.searchParams.get("i"));
-  return { entityType, id, type, index };
+  const dia = url.searchParams.get("dia") !== null ? Number.parseInt(url.searchParams.get("dia") || "", 10) : undefined;
+  return { entityType, id, type, index, dia: Number.isFinite(dia) ? dia : undefined };
 }
 
 async function fetchEventPayload(supabase: SupabaseClient, id: string): Promise<OpenPayload | null> {
@@ -573,6 +584,7 @@ async function fetchClassPayload(
   id: string,
   type: ClassType,
   index?: number | null,
+  dia?: number,
 ): Promise<OpenPayload | null> {
   const profileId = parsePositiveInt(id);
   if (!profileId) return null;
@@ -594,9 +606,9 @@ async function fetchClassPayload(
   return {
     entityType: "clase",
     id: String(profileId),
-    shareUrl: buildShareUrl("clase", String(profileId), { type, index: index ?? undefined }),
-    canonicalUrl: buildCanonicalUrl("clase", String(profileId), { type, index: index ?? undefined }),
-    deepLink: buildDeepLink("clase", String(profileId), { type, index: index ?? undefined }),
+    shareUrl: buildShareUrl("clase", String(profileId), { type, index: index ?? undefined, dia }),
+    canonicalUrl: buildCanonicalUrl("clase", String(profileId), { type, index: index ?? undefined, dia }),
+    deepLink: buildDeepLink("clase", String(profileId), { type, index: index ?? undefined, dia }),
     title: presentation.title,
     subtitle: presentation.subtitle,
     place: presentation.place,
@@ -680,10 +692,10 @@ async function fetchProfilePayload(
 }
 
 async function resolvePayload(req: IncomingMessage, supabase: SupabaseClient): Promise<OpenPayload | null> {
-  const { entityType, id, type, index } = readShareParams(req);
+  const { entityType, id, type, index, dia } = readShareParams(req);
   if (!entityType || !id) return null;
   if (entityType === "evento") return fetchEventPayload(supabase, id);
-  if (entityType === "clase") return type ? fetchClassPayload(supabase, id, type, index) : null;
+  if (entityType === "clase") return type ? fetchClassPayload(supabase, id, type, index, dia) : null;
   return fetchProfilePayload(supabase, entityType, id);
 }
 

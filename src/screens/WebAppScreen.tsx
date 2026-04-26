@@ -48,6 +48,7 @@ const SUPPORTED_DEEP_LINK_ENTITIES = new Set([
   "auth",
   "clase",
   "evento",
+  "explore",
   "maestro",
   "marca",
   "organizer",
