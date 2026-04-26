@@ -35,8 +35,12 @@ function detectSmartPageClientEnv(): SmartPageClientEnv {
   const isIos = /iPhone|iPad|iPod/i.test(userAgent);
   const isAndroid = /Android/i.test(userAgent);
   const isSafari = isIos && /Safari/i.test(userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(userAgent);
+  const embeddedBrowserPattern = new RegExp(
+    "FBAN|FBAV|Instagram|Line|MicroMessenger|TikTok|Snapchat|Pinterest|LinkedInApp|Twitter|X/",
+    "i",
+  );
   const isEmbeddedBrowser =
-    /(FBAN|FBAV|Instagram|Line|MicroMessenger|TikTok|Snapchat|Pinterest|LinkedInApp|Twitter|X\/)/i.test(userAgent) ||
+    embeddedBrowserPattern.test(userAgent) ||
     (isIos && !isSafari && /AppleWebKit/i.test(userAgent));
 
   return {

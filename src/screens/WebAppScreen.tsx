@@ -341,6 +341,7 @@ export default function WebAppScreen() {
   const [hasError, setHasError] = React.useState(false);
   const [webViewImportError, setWebViewImportError] = React.useState<string | null>(null);
   const [webViewModule, setWebViewModule] = React.useState<any>(null);
+  const [webViewSourceUrl, setWebViewSourceUrl] = React.useState(WEB_APP_URL);
   const [nativeAuthInProgress, setNativeAuthInProgress] = React.useState(false);
   const [nativeAuthError, setNativeAuthError] = React.useState<string | null>(null);
   const [lastWebViewError, setLastWebViewError] = React.useState<WebViewErrorDetail | null>(null);
@@ -654,6 +655,7 @@ export default function WebAppScreen() {
   const navigateWebView = React.useCallback(
     (targetUrl: string) => {
       logWebAppLinking("navigate_webview", { targetUrl });
+      setWebViewSourceUrl(targetUrl);
       pendingMappedWebUrlRef.current = targetUrl;
       flushPendingWebNavigation("navigateWebView");
     },
@@ -1382,7 +1384,7 @@ export default function WebAppScreen() {
         {WebView ? (
           <WebView
             ref={webviewRef}
-            source={{ uri: WEB_APP_URL }}
+            source={{ uri: webViewSourceUrl }}
             style={styles.webview}
             originWhitelist={["*"]}
             onMessage={handleWebMessage}

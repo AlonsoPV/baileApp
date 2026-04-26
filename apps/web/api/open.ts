@@ -919,8 +919,9 @@ function renderHtml(payload: OpenPayload): string {
           var isIos = /iPhone|iPad|iPod/i.test(ua);
           var isAndroid = /Android/i.test(ua);
           var isSafari = isIos && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+          var embeddedBrowserPattern = new RegExp("FBAN|FBAV|Instagram|Line|MicroMessenger|TikTok|Snapchat|Pinterest|LinkedInApp|Twitter|X/", "i");
           var isEmbeddedBrowser =
-            /(FBAN|FBAV|Instagram|Line|MicroMessenger|TikTok|Snapchat|Pinterest|LinkedInApp|Twitter|X\/)/i.test(ua) ||
+            embeddedBrowserPattern.test(ua) ||
             (isIos && !isSafari && /AppleWebKit/i.test(ua));
           return {
             userAgent: ua,

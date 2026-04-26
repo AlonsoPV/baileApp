@@ -5,6 +5,8 @@ import { routes } from '@/routes/registry';
 import { exploreHomeWithType } from '@/lib/urls';
 
 const colors: any = rawColors;
+const textSecondary = rawColors.gray?.[300] ?? 'rgba(255, 255, 255, 0.72)';
+const darkBackground = rawColors.dark?.[400] ?? rawColors.darkBase ?? '#0E0E0E';
 
 export default function NotFound() {
   const navigate = useNavigate();
@@ -21,7 +23,7 @@ export default function NotFound() {
       alignItems: 'center',
       justifyContent: 'center',
       padding: spacing[6],
-      background: `linear-gradient(135deg, ${colors.dark} 0%, #1a1a1a 50%, ${colors.dark} 100%)`,
+      background: `linear-gradient(135deg, ${darkBackground} 0%, #1a1a1a 50%, ${darkBackground} 100%)`,
       position: 'relative',
       overflow: 'hidden',
       color: colors.light
@@ -133,7 +135,7 @@ export default function NotFound() {
             fontSize: typography.fontSize.lg,
             opacity: 0.85,
             marginBottom: spacing[8],
-            color: colors.text.secondary,
+            color: textSecondary,
             lineHeight: 1.6,
             maxWidth: '480px',
             margin: `0 auto ${spacing[8]}`
@@ -186,7 +188,7 @@ export default function NotFound() {
                 padding: `${spacing[3]} ${spacing[8]}`,
                 borderRadius: borderRadius.lg,
                 background: 'transparent',
-                color: colors.text.secondary,
+                color: textSecondary,
                 border: `2px solid ${colors.glass.medium}`,
                 fontSize: typography.fontSize.base,
                 fontWeight: typography.fontWeight.medium,
@@ -203,7 +205,7 @@ export default function NotFound() {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = colors.text.secondary;
+                e.currentTarget.style.color = textSecondary;
                 e.currentTarget.style.borderColor = colors.glass.medium;
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
@@ -226,7 +228,7 @@ export default function NotFound() {
           }}>
             <p style={{
               fontSize: typography.fontSize.sm,
-              color: colors.text.secondary,
+              color: textSecondary,
               opacity: 0.7,
               margin: 0
             }}>
@@ -250,7 +252,7 @@ export default function NotFound() {
                     padding: `${spacing[2]} ${spacing[4]}`,
                     borderRadius: borderRadius.md,
                     background: 'transparent',
-                    color: colors.text.secondary,
+                    color: textSecondary,
                     border: `1px solid ${colors.glass.medium}`,
                     fontSize: typography.fontSize.sm,
                     fontWeight: typography.fontWeight.medium,
@@ -267,7 +269,7 @@ export default function NotFound() {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = colors.text.secondary;
+                    e.currentTarget.style.color = textSecondary;
                     e.currentTarget.style.borderColor = colors.glass.medium;
                   }}
                 >

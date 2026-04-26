@@ -4,31 +4,15 @@ import { supabase } from "@/lib/supabase";
 const ORGANIZER_PUBLIC_SELECT = `
   id,
   user_id,
-  slug,
   nombre_publico,
   bio,
-  avatar_url,
-  logo_url,
-  foto_url,
-  portada_url,
   media,
   ritmos,
-  estilos,
   ritmos_seleccionados,
   zonas,
   faq,
-  invited_teachers,
   redes_sociales,
-  respuesta_1,
-  respuesta_2,
-  respuesta_3,
-  respuesta_4,
-  respuesta_5,
-  respuesta_6,
-  respuestas,
-  whatsapp_number,
-  whatsapp_message_template,
-  cuenta_bancaria,
+  estado_aprobacion,
   created_at,
   updated_at
 `;
@@ -69,13 +53,8 @@ export function useOrganizerPublic(routeId?: string) {
         if (data) return data;
       }
 
-      const { data, error } = await supabase
-        .from("v_organizers_public")
-        .select(ORGANIZER_PUBLIC_SELECT)
-        .eq("slug", trimmedId)
-        .maybeSingle();
-      if (error) throw error;
-      return data ?? null;
+      // La vista pública desplegada no expone `slug`; consultar esa columna provoca 400.
+      return null;
     },
   });
 }
