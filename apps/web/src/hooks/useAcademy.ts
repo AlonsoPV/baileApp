@@ -57,12 +57,13 @@ export function useAcademyPublic(id: number) {
         typeof (result as any).stripe_onboarding_status === 'undefined' ||
         typeof (result as any).stripe_charges_enabled === 'undefined' ||
         typeof (result as any).stripe_payouts_enabled === 'undefined';
+      const needsSubscriptionPlan = typeof (result as any).subscription_plan === 'undefined';
 
-      if (needsPromociones || needsRespuestas || needsWhatsapp || needsStripe) {
+      if (needsPromociones || needsRespuestas || needsWhatsapp || needsStripe || needsSubscriptionPlan) {
         // Una sola query para todos los extras
         const { data: extraData, error: extraError } = await supabase
           .from('profiles_academy')
-          .select('promociones, respuestas, whatsapp_number, whatsapp_message_template, stripe_account_id, stripe_onboarding_status, stripe_charges_enabled, stripe_payouts_enabled')
+          .select('promociones, respuestas, whatsapp_number, whatsapp_message_template, stripe_account_id, stripe_onboarding_status, stripe_charges_enabled, stripe_payouts_enabled, subscription_plan')
           .eq('id', id)
           .maybeSingle();
 
@@ -94,6 +95,9 @@ export function useAcademyPublic(id: number) {
             if (typeof extraData.stripe_payouts_enabled !== 'undefined') {
               (result as any).stripe_payouts_enabled = extraData.stripe_payouts_enabled;
             }
+          }
+          if (needsSubscriptionPlan && typeof (extraData as any).subscription_plan !== 'undefined') {
+            (result as any).subscription_plan = (extraData as any).subscription_plan;
           }
         }
       }

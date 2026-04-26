@@ -32,6 +32,10 @@ import {
   startNetworkDiagnostics,
   type ConnectivitySnapshot,
 } from "../lib/networkDiagnostics";
+import {
+  mapDondeBailarDeepLinkToWebUrl,
+  isSameWebDestination,
+} from "../utils/mapDondeBailarDeepLinkToWebUrl";
 
 // URL principal de la web que quieres mostrar dentro de la app móvil.
 // Puedes ajustar esto a staging si  lo necesitas.
@@ -329,6 +333,13 @@ export default function WebAppScreen() {
   const splashHiddenRef = React.useRef(false);
   const { reportWebViewInitialLoadComplete } = useInitialAppShell();
   const initialDocumentLoadReportedRef = React.useRef(false);
+  /**
+   * Deep link → URL canónica (https): getInitialURL puede resolverse antes de que
+   * el WebView acepte injectJavaScript. Guardamos la URL y reintentamos en onLoadEnd.
+   */
+  const pendingMappedWebUrlRef = React.useRef<string | null>(null);
+  /** Cancela el rAF anterior si onLoadEnd dispara dos veces seguidas (mitiga doble replace). */
+  const pendingNavLoadEndRafRef = React.useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
 
   const logReadyPhase = React.useCallback((phase: "READY_SHELL" | "READY", elapsedMs: number, msg: any) => {
     if (typeof console?.log === "function") {
@@ -544,152 +555,66 @@ export default function WebAppScreen() {
     }, LOAD_TIMEOUT_MS);
   }, [applyWebViewError, clearLoadWatchdog, logDiagnosticEvent]);
 
-  const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
-    try {
-      // Custom scheme deep link: auth, evento, clase
-      if (incomingUrl.startsWith("dondebailarmx://")) {
-        const u = new URL(incomingUrl);
-        const host = (u.host || "").toLowerCase();
-        const path = (u.pathname || "").replace(/^\/+/, "") || "";
-        const qs = u.search || "";
-        const hash = u.hash || "";
-
-        // dondebailarmx://evento/:id -> canonical web /social/fecha/:id
-        if (host === "evento" && path) {
-          const id = path.split("/")[0];
-          if (id) {
-            const mappedUrl = `${WEB_APP_URL}/social/fecha/${id}${qs}${hash}`;
-            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
-            return mappedUrl;
-          }
-        }
-        // dondebailarmx://clase/:type/:id -> canonical web /clase/:type/:id
-        if (host === "clase" && path) {
-          const parts = path.split("/").filter(Boolean);
-          if (parts.length >= 2) {
-            const [type, id] = parts;
-            if ((type === "teacher" || type === "academy") && id) {
-              const mappedUrl = `${WEB_APP_URL}/clase/${type}/${id}${qs}${hash}`;
-              logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
-              return mappedUrl;
-            }
-          }
-          logWebAppLinking("map_rejected", {
-            incomingUrl,
-            host,
-            path,
-            reason: "invalid_clase_path",
-          });
-          return null;
-        }
-        // Perfiles -> canonical web paths
-        if (host === "academia" && path) {
-          const id = path.split("/")[0];
-          if (id) {
-            const mappedUrl = `${WEB_APP_URL}/academia/${id}${qs}${hash}`;
-            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
-            return mappedUrl;
-          }
-        }
-        if (host === "maestro" && path) {
-          const id = path.split("/")[0];
-          if (id) {
-            const mappedUrl = `${WEB_APP_URL}/maestro/${id}${qs}${hash}`;
-            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
-            return mappedUrl;
-          }
-        }
-        if (host === "organizer" && path) {
-          const id = path.split("/")[0];
-          if (id) {
-            const mappedUrl = `${WEB_APP_URL}/organizer/${id}${qs}${hash}`;
-            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
-            return mappedUrl;
-          }
-        }
-        if (host === "u" && path) {
-          const id = path.split("/")[0];
-          if (id) {
-            const mappedUrl = `${WEB_APP_URL}/u/${id}${qs}${hash}`;
-            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
-            return mappedUrl;
-          }
-        }
-        if (host === "marca" && path) {
-          const id = path.split("/")[0];
-          if (id) {
-            const mappedUrl = `${WEB_APP_URL}/marca/${id}${qs}${hash}`;
-            logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
-            return mappedUrl;
-          }
-        }
-
-        // Auth callback (e.g. dondebailarmx://auth/callback?code=...)
-        if (host === "auth") {
-          const hostSlash = u.host ? `/${u.host}` : "";
-          const mappedPath = `${hostSlash}${u.pathname || ""}` || "/auth/callback";
-          const mappedUrl = `${WEB_APP_URL}${mappedPath}${qs}${hash}`;
-          logWebAppLinking("map_success", { incomingUrl, host, path, mappedUrl });
-          return mappedUrl;
-        }
-        logWebAppLinking("map_rejected", {
-          incomingUrl,
-          host,
-          path,
-          reason: "unsupported_custom_scheme_host",
-        });
-        return null;
-      }
-
-      // Universal/App link to our domain should stay in WebView
+  const flushPendingWebNavigation = React.useCallback(
+    (reason: string, currentDocumentUrl?: string) => {
+      const target = pendingMappedWebUrlRef.current;
+      if (!target) return;
       if (
-        incomingUrl.startsWith("https://dondebailar.com.mx") ||
-        incomingUrl.startsWith("https://www.dondebailar.com.mx")
+        currentDocumentUrl &&
+        isSameWebDestination(target, currentDocumentUrl, WEB_APP_URL)
       ) {
-        logWebAppLinking("map_success", {
-          incomingUrl,
-          host: "https",
-          path: incomingUrl,
-          mappedUrl: incomingUrl,
+        logWebAppLinking("pending_nav_skip_already_at_target", {
+          reason,
+          target,
+          currentDocumentUrl,
         });
-        return incomingUrl;
+        pendingMappedWebUrlRef.current = null;
+        return;
       }
+      if (!webviewRef.current?.injectJavaScript) {
+        logWebAppLinking("pending_nav_deferred", { reason, target, note: "no_inject_yet" });
+        return;
+      }
+      try {
+        webviewRef.current.stopLoading?.();
+      } catch {
+        // ignore
+      }
+      try {
+        logWebAppLinking("pending_nav_flush", { reason, target });
+        webviewRef.current.injectJavaScript(
+          `try { window.location.replace(${JSON.stringify(target)}); } catch (e) {} true;`
+        );
+        pendingMappedWebUrlRef.current = null;
+      } catch (e) {
+        logWebAppLinking("pending_nav_flush_error", {
+          reason,
+          target,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    },
+    []
+  );
 
-      logWebAppLinking("map_rejected", {
-        incomingUrl,
-        reason: "unsupported_url",
-      });
-      return null;
-    } catch (e) {
-      console.warn("[WebAppScreen] Failed to map incoming URL:", incomingUrl, e);
-      logWebAppLinking("map_error", {
-        incomingUrl,
-        error: e instanceof Error ? e.message : String(e),
-      });
-      return null;
+  const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
+    const mapped = mapDondeBailarDeepLinkToWebUrl(incomingUrl, WEB_APP_URL);
+    if (mapped) {
+      logWebAppLinking("map_success", { incomingUrl, mappedUrl: mapped });
+      return mapped;
     }
+    console.warn("[WebAppScreen] Unmapped incoming URL:", incomingUrl);
+    logWebAppLinking("map_rejected", { incomingUrl, reason: "unmapped" });
+    return null;
   }, []);
 
   const navigateWebView = React.useCallback(
     (targetUrl: string) => {
       logWebAppLinking("navigate_webview", { targetUrl });
-      // Prefer request URL change through WebView ref when possible.
-      // Fallback is to inject JS, which works even when ref APIs differ by platform.
-      try {
-        webviewRef.current?.stopLoading?.();
-      } catch {
-        // ignore
-      }
-
-      try {
-        webviewRef.current?.injectJavaScript?.(
-          `window.location.href = ${JSON.stringify(targetUrl)}; true;`
-        );
-      } catch (e) {
-        console.warn("[WebAppScreen] Failed to inject navigation JS:", e);
-      }
+      pendingMappedWebUrlRef.current = targetUrl;
+      flushPendingWebNavigation("navigateWebView");
     },
-    []
+    [flushPendingWebNavigation]
   );
 
   const handleIncomingUrl = React.useCallback(
@@ -1564,6 +1489,17 @@ export default function WebAppScreen() {
               initialDocumentLoadReportedRef.current = true;
               reportWebViewInitialLoadComplete();
             }
+            // Arranque en frío: reintentar pending si el ref aún no inyectaba en el primer intento.
+            if (pendingNavLoadEndRafRef.current != null) {
+              cancelAnimationFrame(pendingNavLoadEndRafRef.current);
+              pendingNavLoadEndRafRef.current = null;
+            }
+            const urlForCompare = currentUrl;
+            flushPendingWebNavigation("onLoadEnd", urlForCompare);
+            pendingNavLoadEndRafRef.current = requestAnimationFrame(() => {
+              pendingNavLoadEndRafRef.current = null;
+              flushPendingWebNavigation("onLoadEnd_raf", urlForCompare);
+            });
           }}
           onNavigationStateChange={(state: any) => {
             setCanGoBackInWebView(Boolean(state?.canGoBack));

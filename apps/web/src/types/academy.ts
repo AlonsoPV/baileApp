@@ -41,6 +41,10 @@ export type AcademyProfile = {
   horarios: AcademyHorario[];
   media: { type: 'image'|'video'; url: string }[];
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
+  /** Plan de suscripción (basic | pro | premium). Ausente en filas antiguas → tratar como basic en UI. */
+  subscription_plan?: string | null;
+  subscription_status?: string | null;
+  subscription_expires_at?: string | null;
   stripe_account_id?: string | null;
   stripe_onboarding_status?: string | null;
   stripe_charges_enabled?: boolean | null;

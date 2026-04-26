@@ -41,6 +41,24 @@ import ClassDatesSheet from "../../components/classes/ClassDatesSheet";
 import { type ClassItem } from "../../components/classes/ClassDatesSection";
 import { useToast } from "../../components/Toast";
 import { calculateNextDateWithTime } from "../../utils/calculateRecurringDates";
+import { getPlan } from "@/lib/subscription";
+import {
+  academyCronogramaExceedsBasicSpecificDateLimit,
+  wouldExceedSpecificDateLimit,
+} from "@/lib/academySpecificClassLimits";
+import {
+  academyCronogramaWeeklyViolation,
+  academyWeeklyFormViolation,
+  messageForAcademyWeeklyViolation,
+  weeklyDayCountFromFormInput,
+} from "@/lib/academyWeeklyClassRules";
+import { routes } from "@/routes/registry";
+import {
+  academyUbicacionesExceedsPlanLimit,
+  COPY_UBICACIONES_LEGACY_OVER_LIMIT,
+  countUbicaciones,
+} from "@/lib/academyLocationLimits";
+import { maxLocationsForPlan, profileHasCapability } from "@/lib/planCapabilities";
 
 const AcademyStudentsPanelLazy = React.lazy(() =>
   import("../../components/profile/AcademyStudentsPanel").then((m) => ({ default: m.AcademyStudentsPanel })),
@@ -59,6 +77,57 @@ function ApeSectionInfoHint({ label, children }: { label: string; children: Reac
         <span className="ape-section-info-hint__tip">{children}</span>
       </button>
     </span>
+  );
+}
+
+function AcademyMetricsPlanLockCard({
+  title,
+  description,
+  upgradeHint,
+}: {
+  title: string;
+  description: string;
+  upgradeHint: string;
+}) {
+  const navigate = useNavigate();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        maxWidth: 560,
+        margin: "2rem auto",
+        padding: "2rem 1.75rem",
+        borderRadius: 16,
+        border: "1px solid rgba(240,147,251,0.35)",
+        background: "linear-gradient(135deg, rgba(240,147,251,0.12), rgba(245,87,108,0.08))",
+        textAlign: "center",
+        color: "#fff",
+      }}
+    >
+      <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }} aria-hidden>
+        🔒
+      </div>
+      <h2 style={{ margin: "0 0 0.75rem", fontSize: "1.35rem", fontWeight: 800 }}>{title}</h2>
+      <p style={{ margin: "0 0 0.5rem", opacity: 0.92, lineHeight: 1.5 }}>{description}</p>
+      <p style={{ margin: "0 0 1.25rem", opacity: 0.85, fontSize: "0.95rem" }}>{upgradeHint}</p>
+      <button
+        type="button"
+        onClick={() => navigate(routes.misc.subscriptionPlans)}
+        style={{
+          padding: "12px 22px",
+          borderRadius: 999,
+          border: "none",
+          cursor: "pointer",
+          fontWeight: 700,
+          fontSize: "1rem",
+          color: "#1a1a1a",
+          background: "linear-gradient(135deg, #f093fb, #f5576c)",
+        }}
+      >
+        Ver planes
+      </button>
+    </motion.div>
   );
 }
 
@@ -1053,6 +1122,19 @@ export default function AcademyProfileEditor() {
   // Hooks para invitaciones
   const academyId = (academy as any)?.id;
 
+  const academyMetricsPlanRow = React.useMemo(
+    () => ({
+      subscription_plan: (form as any)?.subscription_plan ?? (academy as any)?.subscription_plan,
+    }),
+    [form, academy],
+  );
+  const canViewClassMetrics = profileHasCapability(academyMetricsPlanRow, "canViewClassMetrics");
+  const canViewStudentMetrics = profileHasCapability(academyMetricsPlanRow, "canViewStudentMetrics");
+  const canEditAcademyMetricsAttendanceAndPayment = profileHasCapability(
+    academyMetricsPlanRow,
+    "canEditAcademyMetricsAttendanceAndPayment",
+  );
+
   // Asistencia por rol (lead/follow/ambos) por fecha (no acumulable)
   const classDateKeyById = useMemo(() => {
     const map = new Map<number, string>();
@@ -1166,6 +1248,21 @@ export default function AcademyProfileEditor() {
       return;
     }
 
+    const planSection = getPlan((form as any)?.subscription_plan ?? (academy as any)?.subscription_plan);
+    if (
+      sectionData.ubicaciones !== undefined &&
+      academyUbicacionesExceedsPlanLimit(planSection, sectionData.ubicaciones)
+    ) {
+      setSectionStatus((prev) => ({
+        ...prev,
+        [sectionName]: { type: 'err', text: `❌ ${COPY_UBICACIONES_LEGACY_OVER_LIMIT}` },
+      }));
+      setTimeout(() => {
+        setSectionStatus((prev) => ({ ...prev, [sectionName]: null }));
+      }, 6000);
+      return;
+    }
+
     setSectionSaving(prev => ({ ...prev, [sectionName]: true }));
     setSectionStatus(prev => ({ ...prev, [sectionName]: null }));
 
@@ -1199,7 +1296,7 @@ export default function AcademyProfileEditor() {
     } finally {
       setSectionSaving(prev => ({ ...prev, [sectionName]: false }));
     }
-  }, [profileId, upsert, refetchAcademy, setFromServer]);
+  }, [profileId, upsert, refetchAcademy, setFromServer, form, academy]);
 
   // Guardado específico por sección
   const handleSavePersonalInfo = useCallback(async () => {
@@ -1249,6 +1346,24 @@ export default function AcademyProfileEditor() {
 
   const handleSave = useCallback(async () => {
     try {
+      const planSave = getPlan((form as any)?.subscription_plan ?? (academy as any)?.subscription_plan);
+      if (academyCronogramaExceedsBasicSpecificDateLimit(planSave, (form as any)?.cronograma)) {
+        showToast(
+          'Tu plan Basic permite hasta 5 clases con fecha específica. Actualiza a Pro o Premium.',
+          'error'
+        );
+        return;
+      }
+      const weeklyV = academyCronogramaWeeklyViolation(planSave, (form as any)?.cronograma);
+      if (weeklyV) {
+        showToast(messageForAcademyWeeklyViolation(weeklyV), 'error');
+        return;
+      }
+      if (academyUbicacionesExceedsPlanLimit(planSave, (form as any)?.ubicaciones)) {
+        showToast(COPY_UBICACIONES_LEGACY_OVER_LIMIT, 'error');
+        return;
+      }
+
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
 
       // Validar zonas contra el catálogo
@@ -1356,7 +1471,7 @@ export default function AcademyProfileEditor() {
       setStatusMsg({ type: 'err', text: `❌ Error al guardar: ${errorMessage}` });
       setTimeout(() => setStatusMsg(null), 5000);
     }
-  }, [form, allTags, supportsPromotions, academy, upsert, refetchAcademy, setAll, setStatusMsg, user?.id, queryClient, clearDraft]);
+  }, [form, allTags, supportsPromotions, academy, upsert, refetchAcademy, setAll, setStatusMsg, user?.id, queryClient, clearDraft, showToast]);
 
   // Ya no se usa toggleEstilo, ahora se maneja directamente en RitmosChips
   // const toggleEstilo = (estiloId: number) => {
@@ -1401,6 +1516,28 @@ export default function AcademyProfileEditor() {
         setTimeout(() => setStatusMsg(null), 3200);
         return;
       }
+
+      const planForLimit = getPlan((form as any)?.subscription_plan ?? (academy as any)?.subscription_plan);
+      if (academyCronogramaExceedsBasicSpecificDateLimit(planForLimit, cronogramaItems)) {
+        showToast(
+          'Tu plan Basic permite hasta 5 clases con fecha específica. Actualiza a Pro o Premium.',
+          'error'
+        );
+        if (rollbackData) {
+          setField('cronograma' as any, rollbackData.cronograma as any);
+          setField('costos' as any, rollbackData.costos as any);
+        }
+        return;
+      }
+      const weeklyAuto = academyCronogramaWeeklyViolation(planForLimit, cronogramaItems);
+      if (weeklyAuto) {
+        showToast(messageForAcademyWeeklyViolation(weeklyAuto), 'error');
+        if (rollbackData) {
+          setField('cronograma' as any, rollbackData.cronograma as any);
+          setField('costos' as any, rollbackData.costos as any);
+        }
+        return;
+      }
       
       // Si hay rollback data, significa que ya actualizamos la UI optimistamente
       // Solo necesitamos persistir en backend
@@ -1428,7 +1565,7 @@ export default function AcademyProfileEditor() {
         throw error;
       }
     },
-    [profileId, setStatusMsg, upsert, setField, showToast],
+    [profileId, setStatusMsg, upsert, setField, showToast, form, academy],
   );
 
   const uploadFile = useCallback(
@@ -1515,6 +1652,30 @@ export default function AcademyProfileEditor() {
     [(form as any).ubicaciones]
   );
 
+  const academyUbicacionesSubscriptionGate = useMemo(() => {
+    const plan = getPlan((form as any)?.subscription_plan ?? (academy as any)?.subscription_plan);
+    const n = countUbicaciones((form as any)?.ubicaciones);
+    const max = maxLocationsForPlan(plan);
+    return {
+      canAddMore: max == null || n < max,
+      legacyOverLimit: max != null && n > max,
+    };
+  }, [form, academy]);
+
+  const profileClassLimitContext = useMemo(() => {
+    const cronograma = (form as any)?.cronograma || [];
+    const id =
+      editingIndex !== null && editingIndex >= 0 && editingIndex < cronograma.length
+        ? cronograma[editingIndex]?.id
+        : undefined;
+    return {
+      subscriptionPlanRaw: (form as any)?.subscription_plan ?? (academy as any)?.subscription_plan,
+      cronograma,
+      editingCronogramaClassId: id,
+      upgradePlansHref: routes.misc.subscriptionPlans,
+    };
+  }, [form, academy, editingIndex]);
+
   const handleCrearClaseCancel = useCallback(() => {
     setEditingIndex(null);
     setEditInitial(undefined);
@@ -1524,6 +1685,47 @@ export default function AcademyProfileEditor() {
   const handleCrearClaseSubmit = useCallback((c: any) => {
     const currentCrono = ([...((form as any).cronograma || [])] as any[]);
     const currentCostos = ([...((form as any).costos || [])] as any[]);
+    const plan = getPlan((form as any)?.subscription_plan ?? (academy as any)?.subscription_plan);
+    const resolvedFechaModo =
+      c.fechaModo ||
+      (c.fecha
+        ? 'especifica'
+        : (c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0)
+          ? 'semanal'
+          : undefined);
+    let editingClassId: number | string | undefined;
+    if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
+      editingClassId = currentCrono[editingIndex]?.id;
+    }
+    if (
+      wouldExceedSpecificDateLimit({
+        plan,
+        cronograma: currentCrono,
+        nextItemFechaModo: resolvedFechaModo,
+        editingClassId,
+      })
+    ) {
+      showToast(
+        'Tu plan Basic permite hasta 5 clases con fecha específica. Actualiza a Pro o Premium.',
+        'error'
+      );
+      return Promise.resolve();
+    }
+
+    const modoSubmit = (c.fechaModo || resolvedFechaModo || 'especifica') as
+      | 'especifica'
+      | 'semanal'
+      | 'por_agendar';
+    const weeklyDayCount = weeklyDayCountFromFormInput({
+      fechaModo: modoSubmit,
+      diasSemana: c.diasSemana,
+      diaSemana: c.diaSemana ?? null,
+    });
+    const weeklyFormV = academyWeeklyFormViolation(plan, modoSubmit, weeklyDayCount);
+    if (weeklyFormV) {
+      showToast(messageForAcademyWeeklyViolation(weeklyFormV), 'error');
+      return Promise.resolve();
+    }
 
     if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
       const prev = currentCrono[editingIndex];
@@ -1689,7 +1891,7 @@ export default function AcademyProfileEditor() {
     };
 
     return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada', rollbackData);
-  }, [editingIndex, form, setField, autoSaveClasses]);
+  }, [academy, editingIndex, form, setField, autoSaveClasses, showToast]);
 
   // ✅ Esperar a que auth termine de cargar antes de renderizar
   if (authLoading && !authTimeoutReached) {
@@ -1889,13 +2091,35 @@ export default function AcademyProfileEditor() {
           </div>
 
           {activeTab === "metricas" && academyId && (
-            <AcademyMetricsPanel academyId={academyId} />
+            canViewClassMetrics ? (
+              <AcademyMetricsPanel
+                academyId={academyId}
+                canEditAttendanceAndPayment={canEditAcademyMetricsAttendanceAndPayment}
+              />
+            ) : (
+              <AcademyMetricsPlanLockCard
+                title="Métricas de clases bloqueadas"
+                description="Tu plan actual no incluye el panel de estadísticas por clase."
+                upgradeHint="Pásate a Pro o Premium para ver reservas, asistencias y desglose por rol y zona."
+              />
+            )
           )}
 
           {activeTab === "alumnos" && academyId && (
-            <Suspense fallback={<div style={{ padding: "2rem", color: "#fff" }}>Cargando gestión de alumnos...</div>}>
-              <AcademyStudentsPanelLazy academyId={academyId} />
-            </Suspense>
+            canViewStudentMetrics ? (
+              <Suspense fallback={<div style={{ padding: "2rem", color: "#fff" }}>Cargando gestión de alumnos...</div>}>
+                <AcademyStudentsPanelLazy
+                  academyId={academyId}
+                  canEditAttendanceAndPayment={canEditAcademyMetricsAttendanceAndPayment}
+                />
+              </Suspense>
+            ) : (
+              <AcademyMetricsPlanLockCard
+                title="Métricas de alumnos bloqueadas"
+                description="El listado agregado, segmentos y detalle por alumno están reservados al plan Premium."
+                upgradeHint="Actualiza a Premium para desbloquear la gestión avanzada por alumnos."
+              />
+            )
           )}
 
           {activeTab === "perfil" && (
@@ -2535,6 +2759,11 @@ export default function AcademyProfileEditor() {
                     onChange={(v) => setField('ubicaciones' as any, v as any)}
                     title="Ubicaciones"
                     allowedZoneIds={((form as any).zonas || []) as number[]}
+                    subscriptionLocationLimit={{
+                      canAddMore: academyUbicacionesSubscriptionGate.canAddMore,
+                      legacyOverLimit: academyUbicacionesSubscriptionGate.legacyOverLimit,
+                      onNavigatePlans: () => navigate(routes.misc.subscriptionPlans),
+                    }}
                   />
                   {/* Crear Clase rápida  */}
                   <div ref={classFormRef} className="academy-editor-classes-inner">
@@ -2552,6 +2781,7 @@ export default function AcademyProfileEditor() {
                       title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
                       onCancel={handleCrearClaseCancel}
                       onSubmit={handleCrearClaseSubmit}
+                      profileClassLimitContext={profileClassLimitContext}
                     />
 
                     {academy && (

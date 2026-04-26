@@ -1,0 +1,129 @@
+import { describe, expect, it } from "vitest";
+import {
+  mapDondeBailarDeepLinkToWebUrl,
+  isSameWebDestination,
+  safeDecodePathSegment,
+} from "../../../../src/utils/mapDondeBailarDeepLinkToWebUrl";
+import { buildCanonicalUrl, buildDeepLink, buildShareUrl } from "./shareUrls";
+
+const BASE = "https://dondebailar.com.mx";
+
+/**
+ * Regresión: shareUrls (web) y mapDondeBailarDeepLinkToWebUrl (iOS/Android WebView) deben
+ * coincidir en deep link → URL canónica. Smart page: /open/... → CTA "Abrir en app" → mapeo.
+ */
+describe("smart page / deep link alignment (iOS + Android WebView)", () => {
+  it("Evento: deep link y canónica coinciden con shareUrls", () => {
+    const id = "13321";
+    const dl = buildDeepLink("evento", id);
+    expect(dl).toBe("dondebailarmx://evento/13321");
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(buildCanonicalUrl("evento", id));
+    expect(buildShareUrl("evento", id)).toBe(`${BASE}/open/evento/${id}`);
+  });
+
+  it("Clase (teacher) con query ?i= respeta shareUrls", () => {
+    const opts = { type: "teacher" as const, index: 2 };
+    const id = "456";
+    const dl = buildDeepLink("clase", id, opts);
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(buildCanonicalUrl("clase", id, opts));
+    expect(buildShareUrl("clase", id, opts)).toBe(`${BASE}/open/clase/teacher/456?i=2`);
+  });
+
+  it("Clase (academy) sin índice", () => {
+    const opts = { type: "academy" as const };
+    const id = "789";
+    const dl = buildDeepLink("clase", id, opts);
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(buildCanonicalUrl("clase", id, opts));
+  });
+
+  it("rechaza tipo de clase inválido", () => {
+    expect(mapDondeBailarDeepLinkToWebUrl("dondebailarmx://clase/other/1", BASE)).toBeNull();
+  });
+
+  it("Academia, Maestro, Organizador, Usuario, Marca", () => {
+    const cases: { kind: "academia" | "maestro" | "organizer" | "user" | "marca"; id: string }[] = [
+      { kind: "academia", id: "12" },
+      { kind: "maestro", id: "34" },
+      { kind: "organizer", id: "56" },
+      { kind: "user", id: "abc-def-123" },
+      { kind: "marca", id: "78" },
+    ];
+    for (const { kind, id } of cases) {
+      const dl = buildDeepLink(kind, id);
+      const mapped = mapDondeBailarDeepLinkToWebUrl(dl, BASE);
+      const canonical = buildCanonicalUrl(kind, id);
+      expect(mapped, `${kind} ${id}`).toBe(canonical);
+      expect(buildShareUrl(kind, id)).toContain(`${BASE}/open/`);
+    }
+  });
+
+  it("Usuario: id alfanumérico (típico Supabase/UUID en URL)", () => {
+    const id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+    const dl = buildDeepLink("user", id);
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(buildCanonicalUrl("user", id));
+  });
+
+  it("pasa https del propio dominio al WebView sin cambio", () => {
+    const u = `${BASE}/explore`;
+    expect(mapDondeBailarDeepLinkToWebUrl(u, BASE)).toBe(u);
+  });
+
+  it("URL opaca no se mapea", () => {
+    expect(mapDondeBailarDeepLinkToWebUrl("https://google.com", BASE)).toBeNull();
+  });
+});
+
+describe("smart page / deep link edge cases", () => {
+  it("usuario: id con @ (decodifica path y coincide con buildCanonicalUrl; sin doble encoding)", () => {
+    const id = "user@domain.com";
+    const dl = buildDeepLink("user", id);
+    const mapped = mapDondeBailarDeepLinkToWebUrl(dl, BASE);
+    const canonical = buildCanonicalUrl("user", id);
+    expect(mapped).toBe(canonical);
+    expect(mapped).toBe(`${BASE}/u/${encodeURIComponent(id)}`);
+    expect(mapped).not.toContain("%25");
+  });
+
+  it("usuario: segmento del path aún encoded (round-trip)", () => {
+    const id = "a@b.c";
+    const segment = encodeURIComponent(id);
+    const dl = `dondebailarmx://u/${segment}`;
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(buildCanonicalUrl("user", id));
+  });
+
+  it("clase: ?i= se conserva en la canónica", () => {
+    const dl = "dondebailarmx://clase/teacher/456?i=2";
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(`${BASE}/clase/teacher/456?i=2`);
+    expect(buildCanonicalUrl("clase", "456", { type: "teacher", index: 2 })).toBe(
+      `${BASE}/clase/teacher/456?i=2`
+    );
+  });
+
+  it("clase: sin ?i= no añade query vacío", () => {
+    const dl = buildDeepLink("clase", "789", { type: "academy" });
+    const mapped = mapDondeBailarDeepLinkToWebUrl(dl, BASE);
+    expect(mapped).toBe(`${BASE}/clase/academy/789`);
+    expect(mapped).not.toContain("?i=");
+  });
+
+  it("evento: path sin id → null", () => {
+    expect(mapDondeBailarDeepLinkToWebUrl("dondebailarmx://evento/", BASE)).toBeNull();
+  });
+
+  it("marca: round-trip explícito", () => {
+    const id = "brand-99";
+    const dl = buildDeepLink("marca", id);
+    expect(mapDondeBailarDeepLinkToWebUrl(dl, BASE)).toBe(buildCanonicalUrl("marca", id));
+  });
+
+  it("isSameWebDestination: evita replace si el documento ya coincide (path+search)", () => {
+    const p = `${BASE}/social/fecha/1`;
+    expect(isSameWebDestination(p, `${BASE}/social/fecha/1`)).toBe(true);
+    expect(isSameWebDestination(p, `${BASE}/social/fecha/1/`)).toBe(true);
+  });
+
+  it("safeDecodePathSegment: decodifica %2F y no rompe en ids simples", () => {
+    expect(safeDecodePathSegment("100")).toBe("100");
+    expect(safeDecodePathSegment("x%2Fy")).toBe("x/y");
+  });
+});

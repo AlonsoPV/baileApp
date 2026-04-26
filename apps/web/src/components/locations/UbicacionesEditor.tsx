@@ -1,5 +1,7 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useTags } from '../../hooks/useTags';
+import { COPY_UBICACIONES_UPGRADE } from '@/lib/academyLocationLimits';
 
 type Ubicacion = {
   id?: string;
@@ -13,6 +15,12 @@ type Ubicacion = {
   zonas?: number[];
 };
 
+export type UbicacionesSubscriptionGateProps = {
+  canAddMore: boolean;
+  legacyOverLimit: boolean;
+  onNavigatePlans: () => void;
+};
+
 type Props = {
   value?: Ubicacion[];
   onChange?: (v: Ubicacion[]) => void;
@@ -20,6 +28,8 @@ type Props = {
   className?: string;
   style?: React.CSSProperties;
   allowedZoneIds?: number[];
+  /** Límite por plan (solo academia); omitir sin restricción. */
+  subscriptionLocationLimit?: UbicacionesSubscriptionGateProps | null;
 };
 
 const colors = {
@@ -36,7 +46,9 @@ export default function UbicacionesEditor({
   className,
   style,
   allowedZoneIds,
+  subscriptionLocationLimit = null,
 }: Props) {
+  const [upgradeModalOpen, setUpgradeModalOpen] = React.useState(false);
   const { data: allTags } = useTags();
   const allZonas = React.useMemo(
     () => (allTags || []).filter((t: any) => t.tipo === 'zona'),
@@ -79,6 +91,10 @@ const withName = (item: Ubicacion, value: string) => ({
   const update = (items: Ubicacion[]) => onChange?.(items.map(ensureId));
 
   const addItem = () => {
+    if (subscriptionLocationLimit && !subscriptionLocationLimit.canAddMore) {
+      setUpgradeModalOpen(true);
+      return;
+    }
     const item = ensureId({ nombre: '', sede: '', direccion: '', ciudad: '', referencias: '', zonaIds: [] });
     update([...(value || []), item]);
     if (item.id) setExpandedIds(new Set([...Array.from(expandedIds), item.id]));
@@ -147,18 +163,152 @@ const withName = (item: Ubicacion, value: string) => ({
     cursor: 'pointer'
   });
 
+  const addBlocked = Boolean(subscriptionLocationLimit && !subscriptionLocationLimit.canAddMore);
+
   return (
     <div className={className} style={style}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+      {subscriptionLocationLimit?.legacyOverLimit && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 12,
+            padding: '12px 14px',
+            borderRadius: 12,
+            border: '1px solid rgba(251,191,36,0.45)',
+            background: 'rgba(251,191,36,0.12)',
+            color: '#fff',
+            fontSize: 14,
+            lineHeight: 1.45,
+          }}
+        >
+          Esta academia tiene más ubicaciones de las permitidas en Basic. Para guardar cambios, reduce a 1
+          ubicación o{' '}
+          <button
+            type="button"
+            onClick={() => subscriptionLocationLimit.onNavigatePlans()}
+            style={{
+              margin: 0,
+              padding: 0,
+              border: 'none',
+              background: 'none',
+              color: '#fde68a',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              font: 'inherit',
+            }}
+          >
+            actualiza el plan
+          </button>
+          .
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <h3 style={{ margin: 0, fontSize: 18, color: '#fff' }}>{title}</h3>
         <button
           type="button"
           onClick={addItem}
-          style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${colors.line}`, background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer' }}
+          style={{
+            padding: '8px 12px',
+            borderRadius: 10,
+            border: `1px solid ${colors.line}`,
+            background: addBlocked ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)',
+            color: addBlocked ? 'rgba(255,255,255,0.55)' : '#fff',
+            cursor: 'pointer',
+            opacity: addBlocked ? 0.85 : 1,
+          }}
         >
           ➕ Agregar ubicación
         </button>
       </div>
+
+      {upgradeModalOpen &&
+        typeof document !== 'undefined' &&
+        subscriptionLocationLimit &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ubicaciones-upgrade-title"
+            style={{
+              position: 'fixed',
+              zIndex: 100000,
+              inset: 0,
+              width: '100%',
+              minHeight: '100dvh',
+              boxSizing: 'border-box',
+              background: 'rgba(0,0,0,0.65)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding:
+                'max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))',
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setUpgradeModalOpen(false);
+            }}
+          >
+            <div
+              style={{
+                maxWidth: 420,
+                width: '100%',
+                maxHeight: 'min(90dvh, calc(100dvh - 32px))',
+                overflowY: 'auto',
+                margin: 'auto',
+                borderRadius: 16,
+                padding: '1.25rem 1.5rem',
+                background: 'linear-gradient(145deg, #1a1f2e, #121620)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                color: '#fff',
+                flexShrink: 0,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 id="ubicaciones-upgrade-title" style={{ margin: '0 0 0.75rem', fontSize: '1.1rem', fontWeight: 800 }}>
+                Límite de ubicaciones
+              </h2>
+              <p style={{ margin: '0 0 1.25rem', lineHeight: 1.5, opacity: 0.92, fontSize: 15 }}>{COPY_UBICACIONES_UPGRADE}</p>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setUpgradeModalOpen(false)}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'rgba(255,255,255,0.06)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Entendido
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpgradeModalOpen(false);
+                    subscriptionLocationLimit.onNavigatePlans();
+                  }}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #297F96, #1a5a6b)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                  }}
+                >
+                  Ver planes
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
 
       <div style={{ display: 'grid', gap: 12 }}>
         {(value || []).map((raw, idx) => {

@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown,
   Calendar,
@@ -13,6 +15,22 @@ import '@/styles/crearClase.css';
 import ZonaGroupedChips from '../profile/ZonaGroupedChips';
 import RitmosChips from '../RitmosChips';
 import { RITMOS_CATALOG } from '@/lib/ritmosCatalog';
+import { getPlan } from '@/lib/subscription';
+import {
+  canCreateUnlimitedSpecificDateClasses,
+  canCreateWeeklyClasses,
+  maxWeeklyDaysPerClassForPlan,
+  specificDateClassLimitForPlan,
+} from '@/lib/planCapabilities';
+import {
+  countSpecificDateClassesInCronograma,
+  wouldExceedSpecificDateLimit,
+} from '@/lib/academySpecificClassLimits';
+import {
+  academyWeeklyFormViolation,
+  messageForAcademyWeeklyViolation,
+  weeklyDayCountFromFormInput,
+} from '@/lib/academyWeeklyClassRules';
 
 const TAG_NAME_TO_SLUG_MAP: Record<string, string> = {
   'Salsa On 1': 'salsa_on1',
@@ -75,6 +93,15 @@ export type CrearClaseValue = {
 
 type Tag = { id: number; nombre: string };
 
+/** Academia o maestro: cupos de cronograma según subscription_plan. */
+export type ProfileClassLimitContext = {
+  subscriptionPlanRaw?: string | null;
+  cronograma: unknown;
+  editingCronogramaClassId?: number | string | null;
+  /** Ruta para “Ver planes” (p. ej. routes.misc.subscriptionPlans). */
+  upgradePlansHref: string;
+};
+
 type Props = {
   value?: CrearClaseValue;
   editIndex?: number | null;
@@ -93,6 +120,8 @@ type Props = {
   enableDate?: boolean;
   /** Perfil editor: el formulario inicia colapsado; al editar una clase se expande solo. */
   defaultExpanded?: boolean;
+  /** Límites de cronograma por plan (academia / maestro). Omitir si no aplica. */
+  profileClassLimitContext?: ProfileClassLimitContext | null;
 };
 
 const normalizeTime = (t?: string) => {
@@ -206,8 +235,12 @@ const CrearClase = React.memo(function CrearClase({
   className,
   enableDate = true,
   defaultExpanded = false,
+  profileClassLimitContext = null,
 }: Props) {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState<boolean>(defaultExpanded);
+  const [limitModalOpen, setLimitModalOpen] = useState(false);
+  const [weeklyUpgradeModalOpen, setWeeklyUpgradeModalOpen] = useState(false);
   const prevEditingRef = useRef(false);
 
   /** Al entrar en edición (índice o datos) se expande; al salir se colapsa de nuevo. */
@@ -570,6 +603,68 @@ const CrearClase = React.memo(function CrearClase({
     setZonesExpanded(false);
   }, [selectedLocationId, selectedZonaIds]);
 
+  const academyLimitDerived = useMemo(() => {
+    if (!profileClassLimitContext) {
+      return {
+        active: false as const,
+        plan: getPlan(undefined),
+        used: 0,
+        limit: null as number | null,
+        atLimit: false,
+        unlimited: true,
+      };
+    }
+    const plan = getPlan(profileClassLimitContext.subscriptionPlanRaw);
+    const used = countSpecificDateClassesInCronograma(profileClassLimitContext.cronograma);
+    const limit = specificDateClassLimitForPlan(plan);
+    const unlimited = canCreateUnlimitedSpecificDateClasses(plan);
+    const atLimit = !unlimited && limit != null && used >= limit;
+    return { active: true as const, plan, used, limit, atLimit, unlimited };
+  }, [profileClassLimitContext]);
+
+  /** `null` = sin tope (Premium o maestro); `1` = Pro; `0` = Basic. */
+  const academyWeeklyMaxDays = useMemo(() => {
+    if (!profileClassLimitContext || !enableDate) return null;
+    return maxWeeklyDaysPerClassForPlan(getPlan(profileClassLimitContext.subscriptionPlanRaw));
+  }, [profileClassLimitContext, enableDate]);
+
+  const academyPlanForWeekly = useMemo(() => {
+    if (!profileClassLimitContext || !enableDate) return null;
+    return getPlan(profileClassLimitContext.subscriptionPlanRaw);
+  }, [profileClassLimitContext, enableDate]);
+
+  const weeklyLocked = Boolean(
+    profileClassLimitContext && enableDate && academyPlanForWeekly && !canCreateWeeklyClasses(academyPlanForWeekly)
+  );
+
+  const weeklyPlanViolation = useMemo(() => {
+    if (!profileClassLimitContext || !enableDate || !academyPlanForWeekly) return null;
+    const n = weeklyDayCountFromFormInput({
+      fechaModo: form.fechaModo,
+      diasSemana: form.diasSemana,
+      diaSemana: form.diaSemana ?? null,
+    });
+    return academyWeeklyFormViolation(academyPlanForWeekly, form.fechaModo, n);
+  }, [profileClassLimitContext, enableDate, academyPlanForWeekly, form.fechaModo, form.diasSemana, form.diaSemana]);
+
+  const proWeeklyLegacyMultiDay = useMemo(() => {
+    if (!academyPlanForWeekly || academyPlanForWeekly !== 'pro') return false;
+    if (form.fechaModo !== 'semanal') return false;
+    return (form.diasSemana?.length ?? 0) > 1;
+  }, [academyPlanForWeekly, form.fechaModo, form.diasSemana]);
+
+  const weeklyDaysReadOnly = Boolean(weeklyLocked && form.fechaModo === 'semanal');
+
+  const especificaLabelExtra = useMemo(() => {
+    if (!academyLimitDerived.active || !enableDate) return null;
+    if (academyLimitDerived.unlimited) return null;
+    const lim = academyLimitDerived.limit;
+    if (lim == null) return null;
+    const u = academyLimitDerived.used;
+    if (u >= lim) return ' · límite alcanzado';
+    return ` · ${u}/${lim} usadas`;
+  }, [academyLimitDerived, enableDate]);
+
   const canSubmit = useMemo(() => {
     const nombreOk = (form.nombre || '').trim().length > 0;
     const porAgendar = form.fechaModo === 'por_agendar';
@@ -586,8 +681,8 @@ const CrearClase = React.memo(function CrearClase({
           ? Boolean(form.fecha)
           : (form.diasSemana && form.diasSemana.length > 0) || form.diaSemana !== null
       : true;
-    return nombreOk && horarioOk && fechaOk;
-  }, [enableDate, form]);
+    return nombreOk && horarioOk && fechaOk && !weeklyPlanViolation;
+  }, [enableDate, form, weeklyPlanViolation]);
 
   const porAgendar = form.fechaModo === 'por_agendar';
   const horarioModo = form.horarioModo || (porAgendar ? 'duracion' : 'especifica');
@@ -599,6 +694,7 @@ const CrearClase = React.memo(function CrearClase({
     inicio: porAgendar ? false : (horarioModo === 'especifica' ? !form.inicio : false),
     fin: porAgendar ? false : (horarioModo === 'especifica' ? !form.fin : false),
     duracion: (porAgendar || horarioModo === 'duracion') ? !(form.duracionHoras && form.duracionHoras > 0) : false,
+    weeklyPlan: Boolean(weeklyPlanViolation),
   };
 
   const isEditing = (editIndex !== null && editIndex !== undefined) || Boolean(editValue);
@@ -674,21 +770,42 @@ const CrearClase = React.memo(function CrearClase({
     [currentComparable, initialComparable],
   );
 
-  const toggleDia = useCallback((dayId: number) => {
-    const diasActuales = form.diasSemana || [];
-    const exists = diasActuales.includes(dayId);
-    const next = exists ? diasActuales.filter((dia) => dia !== dayId) : [...diasActuales, dayId].sort((a, b) => a - b);
-    setField('diasSemana', next);
-    setField('diaSemana', next.length > 0 ? next[0] : null);
-  }, [form.diasSemana, setField]);
+  const toggleDia = useCallback(
+    (dayId: number) => {
+      if (weeklyDaysReadOnly) return;
+      const maxD = academyWeeklyMaxDays;
+      if (maxD === 1) {
+        const diasActuales = form.diasSemana || [];
+        const exists = diasActuales.includes(dayId);
+        const next = exists ? [] : [dayId];
+        setField('diasSemana', next);
+        setField('diaSemana', next.length > 0 ? next[0] : null);
+        return;
+      }
+      const diasActuales = form.diasSemana || [];
+      const exists = diasActuales.includes(dayId);
+      const next = exists
+        ? diasActuales.filter((dia) => dia !== dayId)
+        : [...diasActuales, dayId].sort((a, b) => a - b);
+      setField('diasSemana', next);
+      setField('diaSemana', next.length > 0 ? next[0] : null);
+    },
+    [academyWeeklyMaxDays, form.diasSemana, setField, weeklyDaysReadOnly]
+  );
 
-  const handleFechaModoChange = useCallback((modo: NonNullable<CrearClaseValue['fechaModo']>) => {
-    setField('fechaModo', modo);
-    // if (modo === 'por_agendar') { setField('horarioModo', 'duracion'); return; } // opcion oculta temporalmente
-    if (!form.horarioModo || form.horarioModo === 'duracion') {
-      setField('horarioModo', 'especifica');
-    }
-  }, [form.horarioModo, setField]);
+  const handleFechaModoChange = useCallback(
+    (modo: NonNullable<CrearClaseValue['fechaModo']>) => {
+      if (modo === 'semanal' && profileClassLimitContext && enableDate) {
+        const p = getPlan(profileClassLimitContext.subscriptionPlanRaw);
+        if (!canCreateWeeklyClasses(p)) return;
+      }
+      setField('fechaModo', modo);
+      if (!form.horarioModo || form.horarioModo === 'duracion') {
+        setField('horarioModo', 'especifica');
+      }
+    },
+    [profileClassLimitContext, enableDate, form.horarioModo, setField]
+  );
 
   const handleCancel = useCallback(() => {
     setSubmitState('idle');
@@ -699,6 +816,33 @@ const CrearClase = React.memo(function CrearClase({
 
   const handleSubmit = useCallback(async () => {
     if (submitState === 'saving' || !canSubmit) return;
+    if (profileClassLimitContext && enableDate) {
+      const plan = getPlan(profileClassLimitContext.subscriptionPlanRaw);
+      if (
+        wouldExceedSpecificDateLimit({
+          plan,
+          cronograma: profileClassLimitContext.cronograma,
+          nextItemFechaModo: form.fechaModo,
+          editingClassId: profileClassLimitContext.editingCronogramaClassId,
+        })
+      ) {
+        setLimitModalOpen(true);
+        return;
+      }
+    }
+    if (profileClassLimitContext && enableDate && academyPlanForWeekly) {
+      const n = weeklyDayCountFromFormInput({
+        fechaModo: form.fechaModo,
+        diasSemana: form.diasSemana,
+        diaSemana: form.diaSemana ?? null,
+      });
+      const wv = academyWeeklyFormViolation(academyPlanForWeekly, form.fechaModo, n);
+      if (wv === 'basic_no_weekly') {
+        setWeeklyUpgradeModalOpen(true);
+        return;
+      }
+      if (wv === 'pro_multi_day') return;
+    }
     try {
       setSubmitState('saving');
       const submissionBase = enableDate ? form : (() => {
@@ -719,7 +863,15 @@ const CrearClase = React.memo(function CrearClase({
       setSubmitState('error');
       setTimeout(() => setSubmitState('idle'), 2500);
     }
-  }, [canSubmit, enableDate, form, onSubmit, submitState]);
+  }, [
+    profileClassLimitContext,
+    academyPlanForWeekly,
+    canSubmit,
+    enableDate,
+    form,
+    onSubmit,
+    submitState,
+  ]);
 
   const submitLabel = useMemo(() => {
     if (submitState === 'saving') return isEditing ? 'Guardando...' : 'Creando...';
@@ -936,9 +1088,14 @@ const CrearClase = React.memo(function CrearClase({
                 <div className="cc__period-group">
                   <button type="button" className={`cc__period${form.fechaModo === 'especifica' ? ' cc__period--active' : ''}`} onClick={() => handleFechaModoChange('especifica')}>
                     <span className="cc__period-dot" />
-                    Fecha especifica
+                    Fecha especifica{especificaLabelExtra || ''}
                   </button>
-                  <button type="button" className={`cc__period${form.fechaModo === 'semanal' ? ' cc__period--active' : ''}`} onClick={() => handleFechaModoChange('semanal')}>
+                  <button
+                    type="button"
+                    disabled={weeklyLocked}
+                    className={`cc__period${form.fechaModo === 'semanal' ? ' cc__period--active' : ''}`}
+                    onClick={() => handleFechaModoChange('semanal')}
+                  >
                     <span className="cc__period-dot" />
                     Semanal
                   </button>
@@ -949,6 +1106,41 @@ const CrearClase = React.memo(function CrearClase({
                   </button>
                   */}
                 </div>
+                {weeklyLocked && (
+                  <div
+                    className="cc__upgrade-inline"
+                    style={{
+                      marginTop: 10,
+                      padding: '12px 14px',
+                      borderRadius: 12,
+                      border: '1px solid rgba(41,127,150,0.45)',
+                      background: 'rgba(41,127,150,0.12)',
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, fontSize: '0.95rem', marginBottom: 6, color: '#e0f7fa' }}>
+                      Modalidad semanal disponible en Pro
+                    </div>
+                    <p style={{ margin: '0 0 12px', fontSize: '0.88rem', lineHeight: 1.45, opacity: 0.92 }}>
+                      Actualiza tu plan para crear clases semanales recurrentes.
+                    </p>
+                    <button
+                      type="button"
+                      className="cc__btn cc__btn--primary"
+                      style={{ width: '100%', justifyContent: 'center' }}
+                      onClick={() => {
+                        const href = profileClassLimitContext?.upgradePlansHref || '/soporte';
+                        navigate(href);
+                      }}
+                    >
+                      Ver planes
+                    </button>
+                  </div>
+                )}
+                {academyLimitDerived.active && academyLimitDerived.unlimited && (
+                  <p className="cc__hint" style={{ marginTop: 8 }}>
+                    Clases con fecha específica ilimitadas en tu plan.
+                  </p>
+                )}
               </div>
             )}
 
@@ -972,6 +1164,16 @@ const CrearClase = React.memo(function CrearClase({
                 <label className="cc__label">
                   Dias de la semana<span className="cc__req">*</span>
                 </label>
+                {proWeeklyLegacyMultiDay && (
+                  <p className="cc__hint cc__hint--danger" style={{ marginBottom: 8 }}>
+                    Tu plan Pro permite solo 1 día semanal por clase. Esta clase tiene varios días (datos anteriores): deja uno antes de guardar.
+                  </p>
+                )}
+                {academyPlanForWeekly === 'pro' && !proWeeklyLegacyMultiDay && !weeklyLocked && (
+                  <p className="cc__hint" style={{ marginBottom: 8 }}>
+                    Tu plan Pro permite seleccionar 1 día semanal por clase.
+                  </p>
+                )}
                 <div className="cc__days">
                   {[
                     { id: 1, short: 'L', label: 'Lunes' },
@@ -987,6 +1189,7 @@ const CrearClase = React.memo(function CrearClase({
                       <button
                         key={day.id}
                         type="button"
+                        disabled={weeklyDaysReadOnly}
                         className={`cc__day${active ? ' cc__day--active' : ''}`}
                         onClick={() => toggleDia(day.id)}
                         aria-pressed={active}
@@ -997,7 +1200,17 @@ const CrearClase = React.memo(function CrearClase({
                     );
                   })}
                 </div>
+                {weeklyDaysReadOnly && (
+                  <span className="cc__hint" style={{ marginTop: 6 }}>
+                    Cambia a «Fecha específica» o actualiza el plan para editar días.
+                  </span>
+                )}
                 {invalid.dia && <span className="cc__hint cc__hint--danger">Elige al menos un dia.</span>}
+                {invalid.weeklyPlan && weeklyPlanViolation && (
+                  <span className="cc__hint cc__hint--danger" style={{ display: 'block', marginTop: 6 }}>
+                    {messageForAcademyWeeklyViolation(weeklyPlanViolation)}
+                  </span>
+                )}
               </div>
             )}
 
@@ -1204,6 +1417,158 @@ const CrearClase = React.memo(function CrearClase({
             })()}
           </div>
         </div>
+
+        {limitModalOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="academy-class-limit-title"
+              style={{
+                position: 'fixed',
+                zIndex: 100000,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: '100%',
+                minHeight: '100dvh',
+                boxSizing: 'border-box',
+                background: 'rgba(0,0,0,0.65)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding:
+                  'max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))',
+                overflowY: 'auto',
+                overscrollBehavior: 'contain',
+              }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setLimitModalOpen(false);
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: 420,
+                  width: '100%',
+                  maxHeight: 'min(90dvh, calc(100dvh - 32px))',
+                  overflowY: 'auto',
+                  margin: 'auto',
+                  borderRadius: 16,
+                  padding: '1.25rem 1.5rem',
+                  background: 'linear-gradient(145deg, #1a1f2e, #121620)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                  color: '#fff',
+                  flexShrink: 0,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 id="academy-class-limit-title" style={{ margin: '0 0 0.75rem', fontSize: '1.15rem', fontWeight: 800 }}>
+                  Límite de clases alcanzado
+                </h2>
+                <p style={{ margin: '0 0 1.25rem', lineHeight: 1.5, opacity: 0.92, fontSize: 15 }}>
+                  Tu plan Basic permite crear hasta 5 clases con fecha específica. Actualiza a Pro o Premium para crear clases ilimitadas.
+                </p>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    className="cc__btn"
+                    onClick={() => setLimitModalOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="cc__btn cc__btn--primary"
+                    onClick={() => {
+                      setLimitModalOpen(false);
+                      const href = profileClassLimitContext?.upgradePlansHref || '/soporte';
+                      navigate(href);
+                    }}
+                  >
+                    Ver planes
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
+        {weeklyUpgradeModalOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="academy-weekly-upgrade-title"
+              style={{
+                position: 'fixed',
+                zIndex: 100000,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: '100%',
+                minHeight: '100dvh',
+                boxSizing: 'border-box',
+                background: 'rgba(0,0,0,0.65)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding:
+                  'max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))',
+                overflowY: 'auto',
+                overscrollBehavior: 'contain',
+              }}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setWeeklyUpgradeModalOpen(false);
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: 420,
+                  width: '100%',
+                  maxHeight: 'min(90dvh, calc(100dvh - 32px))',
+                  overflowY: 'auto',
+                  margin: 'auto',
+                  borderRadius: 16,
+                  padding: '1.25rem 1.5rem',
+                  background: 'linear-gradient(145deg, #1a1f2e, #121620)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                  color: '#fff',
+                  flexShrink: 0,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 id="academy-weekly-upgrade-title" style={{ margin: '0 0 0.75rem', fontSize: '1.15rem', fontWeight: 800 }}>
+                  Modalidad semanal disponible en Pro
+                </h2>
+                <p style={{ margin: '0 0 1.25rem', lineHeight: 1.5, opacity: 0.92, fontSize: 15 }}>
+                  Actualiza tu plan para crear clases semanales recurrentes.
+                </p>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <button type="button" className="cc__btn" onClick={() => setWeeklyUpgradeModalOpen(false)}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="cc__btn cc__btn--primary"
+                    onClick={() => {
+                      setWeeklyUpgradeModalOpen(false);
+                      const href = profileClassLimitContext?.upgradePlansHref || '/soporte';
+                      navigate(href);
+                    }}
+                  >
+                    Ver planes
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
 
         <div className="cc__card">
           <div className="cc__footer">

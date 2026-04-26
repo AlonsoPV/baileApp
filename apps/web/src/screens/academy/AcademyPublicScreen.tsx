@@ -39,6 +39,7 @@ import OrganizerPublicGallery from "../../components/profile/gallery/OrganizerPu
 import { EventHero } from "../../components/events/EventDetail";
 import "../../components/events/EventDetail/eventDetailScreen.css";
 import "./AcademyPublicScreen.css";
+import { SubscriptionTierBadge } from "../../components/profile/SubscriptionTierBadge";
 
 // FAQ
 const FAQAccordion: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
@@ -657,53 +658,7 @@ export default function AcademyPublicScreen() {
           transition={{ duration: 0.45, delay: 0.05 }}
           className="academy-hero-below glass-card-container"
         >
-          {((academy as any)?.estado_aprobacion === 'aprobado') && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem',
-                flexWrap: 'wrap',
-                marginBottom: '1rem',
-              }}
-            >
-              <div
-                className="badge"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '.45rem',
-                  padding: '.35rem .6rem',
-                  borderRadius: '999px',
-                  fontWeight: 800,
-                  background: 'linear-gradient(135deg, #106c37, #0b5)',
-                  border: '1px solid #13a65a',
-                  boxShadow: '0 8px 18px rgba(0,0,0,.35)',
-                  fontSize: '.82rem',
-                  color: '#fff',
-                }}
-              >
-                <div
-                  className="dot"
-                  style={{
-                    width: '16px',
-                    height: '16px',
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: '#16c784',
-                    borderRadius: '50%',
-                    color: '#062d1f',
-                    fontSize: '.75rem',
-                    fontWeight: 900,
-                  }}
-                >
-                  ✓
-                </div>
-                <span>{t('verified')}</span>
-              </div>
-            </div>
-          )}
+          <SubscriptionTierBadge subscriptionPlan={(academy as any)?.subscription_plan} />
           <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
             <BioSection
               bio={(academy as any)?.bio}

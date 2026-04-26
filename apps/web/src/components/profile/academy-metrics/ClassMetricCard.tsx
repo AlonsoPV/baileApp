@@ -1,6 +1,10 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ClassSummary, ClassReservationMetric } from "@/hooks/useAcademyMetrics";
+import type { ClassSummary, ClassReservationMetric, ClassReservationPaymentType } from "@/hooks/useAcademyMetrics";
+import {
+  useUpdateClaseAsistenciaFlags,
+  type ClaseAsistenciaPaymentType,
+} from "@/hooks/useClassAttendanceActions";
 
 const INITIAL_ATTENDEES_VISIBLE = 10;
 
@@ -49,19 +53,6 @@ function formatLongDateLabel(fechaKey: string): string {
   return fechaKey;
 }
 
-function roleLabel(role: string | null | undefined): string {
-  if (role === "leader") return "Lead";
-  if (role === "follower") return "Follow";
-  if (role === "ambos") return "Ambos";
-  return "Otro";
-}
-
-function statusLabel(status: string | null | undefined): string {
-  if (status === "attended") return "Asistio";
-  if (status === "pagado") return "Pagado";
-  return "Tentativo";
-}
-
 function uniqueUserCount(reservations: ClassReservationMetric[]): number {
   return new Set(reservations.map((r) => r.userId)).size;
 }
@@ -93,13 +84,26 @@ function buildOrderedRows(summary: ClassSummary): FlatRow[] {
   return out;
 }
 
+function mapPaymentType(t: ClassReservationPaymentType | null | undefined): ClaseAsistenciaPaymentType {
+  if (t === "package" || t === "other" || t === "class") return t;
+  return "class";
+}
+
 export type ClassMetricCardProps = {
   classSummary: ClassSummary;
   isExpanded: boolean;
   onToggle: () => void;
+  academyId: number;
+  canEditAttendanceAndPayment?: boolean;
 };
 
-export function ClassMetricCard({ classSummary, isExpanded, onToggle }: ClassMetricCardProps) {
+export function ClassMetricCard({
+  classSummary,
+  isExpanded,
+  onToggle,
+  academyId,
+  canEditAttendanceAndPayment = false,
+}: ClassMetricCardProps) {
   const [showAllAttendees, setShowAllAttendees] = React.useState(false);
 
   React.useEffect(() => {
@@ -119,6 +123,7 @@ export function ClassMetricCard({ classSummary, isExpanded, onToggle }: ClassMet
 
   const unique = uniqueUserCount(classSummary.reservations);
   const purchases = classSummary.totalPurchases ?? 0;
+  const posibles = classSummary.totalAsistentes ?? 0;
 
   const byRole = classSummary.byRole;
   const leader = byRole.leader || 0;
@@ -190,54 +195,26 @@ export function ClassMetricCard({ classSummary, isExpanded, onToggle }: ClassMet
           </span>
         </div>
 
-        <div className="acm-kpi-row">
-          <div className="acm-kpi acm-kpi--primary">
-            <div className="acm-kpi-value">{unique}</div>
-            <div className="acm-kpi-label">Alumnos</div>
+        <div className="acm-scan-metrics" aria-label="Métricas de la sesión">
+          <div className="acm-scan-line">
+            <span aria-hidden>👥</span>
+            <span>
+              <strong>{posibles}</strong> posibles asistencias
+            </span>
           </div>
-          <div className="acm-kpi">
-            <div className="acm-kpi-value">{classSummary.totalTentative}</div>
-            <div className="acm-kpi-label">Tentativos</div>
+          <div className="acm-scan-line acm-scan-line--sub">
+            RSVP o agenda: intención de ir; no implica que vayan.
           </div>
-          <div className="acm-kpi">
-            <div className="acm-kpi-value">{classSummary.totalAttended}</div>
-            <div className="acm-kpi-label">Asistieron</div>
-          </div>
-          <div className="acm-kpi acm-kpi--purchases">
-            <div className="acm-kpi-value">{purchases}</div>
-            <div className="acm-kpi-label">Compras</div>
-          </div>
-        </div>
-
-        <div className="acm-roles">
-          {roleTotal === 0 ? (
-            <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.35)" }}>
-              Sin rol registrado en esta sesión.
-            </p>
-          ) : (
-            <>
-              <div className="acm-role-bar" aria-hidden>
-                <span style={{ width: `${pct(leader)}%`, background: "rgba(120, 170, 230, 0.55)" }} />
-                <span style={{ width: `${pct(follower)}%`, background: "rgba(210, 185, 120, 0.5)" }} />
-                <span style={{ width: `${pct(ambos)}%`, background: "rgba(130, 190, 145, 0.5)" }} />
-                <span style={{ width: `${pct(otro)}%`, background: "rgba(255,255,255,0.18)" }} />
-              </div>
-              <div className="acm-role-legend">
-                <span>
-                  Lead <i>{leader}</i>
-                </span>
-                <span>
-                  Follow <i>{follower}</i>
-                </span>
-                <span>
-                  Ambos <i>{ambos}</i>
-                </span>
-                <span>
-                  Otros <i>{otro}</i>
-                </span>
-              </div>
-            </>
-          )}
+          {unique > 0 && unique !== posibles ? (
+            <div className="acm-scan-line acm-scan-line--sub">
+              {unique} alumno{unique === 1 ? "" : "s"} único{unique === 1 ? "" : "s"} (más de una marca por persona)
+            </div>
+          ) : null}
+          {purchases > 0 ? (
+            <div className="acm-scan-line acm-scan-line--muted">
+              💳 {purchases} pago{purchases === 1 ? "" : "s"} registrado{purchases === 1 ? "" : "s"}
+            </div>
+          ) : null}
         </div>
       </button>
 
@@ -256,6 +233,40 @@ export function ClassMetricCard({ classSummary, isExpanded, onToggle }: ClassMet
               <span className="acm-detail-count">{totalRows} en lista</span>
             </div>
 
+            <div className="acm-roles" style={{ padding: "0 0 0.85rem" }}>
+              {roleTotal === 0 ? (
+                <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.35)" }}>
+                  Sin rol de baile registrado en esta sesión.
+                </p>
+              ) : (
+                <>
+                  <div className="acm-detail-title" style={{ padding: "0 0 0.5rem", letterSpacing: "0.06em" }}>
+                    Roles (baile)
+                  </div>
+                  <div className="acm-role-bar" aria-hidden>
+                    <span style={{ width: `${pct(leader)}%`, background: "rgba(120, 170, 230, 0.55)" }} />
+                    <span style={{ width: `${pct(follower)}%`, background: "rgba(210, 185, 120, 0.5)" }} />
+                    <span style={{ width: `${pct(ambos)}%`, background: "rgba(130, 190, 145, 0.5)" }} />
+                    <span style={{ width: `${pct(otro)}%`, background: "rgba(255,255,255,0.18)" }} />
+                  </div>
+                  <div className="acm-role-legend">
+                    <span>
+                      Lead <i>{leader}</i>
+                    </span>
+                    <span>
+                      Follow <i>{follower}</i>
+                    </span>
+                    <span>
+                      Ambos <i>{ambos}</i>
+                    </span>
+                    <span>
+                      Otros <i>{otro}</i>
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+
             {dateKeysOrdered.map((fechaKey) => {
               const rows = rowsByDate.get(fechaKey) || [];
               if (!rows.length) return null;
@@ -269,7 +280,12 @@ export function ClassMetricCard({ classSummary, isExpanded, onToggle }: ClassMet
                     </span>
                   </div>
                   {rows.map(({ r }) => (
-                    <AttendeeRow key={r.id} reservation={r} />
+                    <AttendeeRow
+                      key={r.id}
+                      reservation={r}
+                      academyId={academyId}
+                      canEditAttendanceAndPayment={canEditAttendanceAndPayment}
+                    />
                   ))}
                 </div>
               );
@@ -287,38 +303,90 @@ export function ClassMetricCard({ classSummary, isExpanded, onToggle }: ClassMet
   );
 }
 
-function AttendeeRow({ reservation }: { reservation: ClassReservationMetric }) {
-  const attendDate =
-    reservation.classDate &&
-    (() => {
-      try {
-        const d = new Date(reservation.classDate);
-        if (!isNaN(d.getTime()) && d.getFullYear() > 1970) {
-          return d.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
-        }
-      } catch {
-        /* noop */
-      }
-      return null;
-    })();
+function AttendeeRow({
+  reservation,
+  academyId,
+  canEditAttendanceAndPayment,
+}: {
+  reservation: ClassReservationMetric;
+  academyId: number;
+  canEditAttendanceAndPayment: boolean;
+}) {
+  const update = useUpdateClaseAsistenciaFlags(
+    canEditAttendanceAndPayment ? { academyId } : undefined,
+  );
+  const busy = update.isPending;
+  const busyHere = busy && String(update.variables?.attendanceId) === String(reservation.id);
+  const disabled = !canEditAttendanceAndPayment || busyHere;
 
-  const registered = new Date(reservation.createdAt).toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const onAttendanceChange = (next: boolean) => {
+    update.mutate({
+      attendanceId: reservation.id,
+      attended: next,
+      paid: reservation.paid,
+      paymentType: reservation.paid ? mapPaymentType(reservation.paymentType) : null,
+    });
+  };
 
-  const parts: string[] = [roleLabel(reservation.roleType)];
-  parts.push(statusLabel(reservation.status));
-  if (reservation.zone) parts.push(reservation.zone);
-  if (attendDate) parts.push(`Clase ${attendDate}`);
-  parts.push(`Registro ${registered}`);
+  const onPaidClick = () => {
+    if (reservation.paid) {
+      update.mutate({
+        attendanceId: reservation.id,
+        attended: reservation.attended,
+        paid: false,
+        paymentType: null,
+      });
+      return;
+    }
+    update.mutate({
+      attendanceId: reservation.id,
+      attended: reservation.attended,
+      paid: true,
+      paymentType: mapPaymentType(reservation.paymentType),
+    });
+  };
 
   return (
-    <div className="acm-row">
-      <div className="acm-row-name">{reservation.userName}</div>
-      <div className="acm-row-meta">{parts.join(" · ")}</div>
+    <div
+      className={`acm-row acm-row--std${busyHere ? " acm-row--updating" : ""}`}
+      data-attendance-id={reservation.id}
+    >
+      <div className="acm-row-std__name">{reservation.userName}</div>
+      <div className="acm-row-std__controls">
+        <div className="acm-std-ctl">
+          <span className="acm-std-ctl__lbl" id={`att-lbl-${reservation.id}`}>
+            Asistió
+          </span>
+          <button
+            type="button"
+            role="switch"
+            className="acm-switch"
+            aria-checked={reservation.attended}
+            aria-labelledby={`att-lbl-${reservation.id}`}
+            disabled={disabled}
+            onClick={() => onAttendanceChange(!reservation.attended)}
+          >
+            <span className="acm-switch__track">
+              <span className="acm-switch__thumb" />
+            </span>
+            <span className="acm-std-ctl__hint">{reservation.attended ? "Sí" : "No"}</span>
+          </button>
+        </div>
+        <div className="acm-std-ctl acm-std-ctl--pay">
+          <button
+            type="button"
+            className={`acm-pay-btn${reservation.paid ? " acm-pay-btn--on" : ""}`}
+            disabled={disabled}
+            onClick={onPaidClick}
+            aria-pressed={reservation.paid}
+          >
+            💰 {reservation.paid ? "Pagado" : "Sin pago"}
+          </button>
+        </div>
+        {!canEditAttendanceAndPayment ? (
+          <span className="acm-std-ctl__premium-hint">Registro en métricas: plan Premium.</span>
+        ) : null}
+      </div>
     </div>
   );
 }

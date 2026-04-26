@@ -63,6 +63,8 @@ export const routes = {
     support: '/soporte',
     notFound: '/404',
     unauthorized: '/unauthorized',
+    /** Destino “Ver planes” hasta tener página de pricing dedicada. */
+    subscriptionPlans: '/soporte',
   },
 } as const;
 

@@ -30,6 +30,9 @@ import { EventHero } from "../../components/events/EventDetail";
 import "../../components/events/EventDetail/eventDetailScreen.css";
 import { routes } from "../../routes/registry";
 import "./AcademyProfileLive.css";
+import { SubscriptionTierBadge } from "../../components/profile/SubscriptionTierBadge";
+import { useTranslation } from "react-i18next";
+import { profileHasCapability } from "@/lib/planCapabilities";
 
 // Lazy load heavy components
 const ClasesLive = lazy(() => import('../../components/events/ClasesLive'));
@@ -308,6 +311,7 @@ const formatPriceLabel = (value: any): string | null => {
 
 export default function AcademyProfileLive() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const { data: academy, isLoading, error, isError } = useAcademyMy();
   const { media } = useAcademyMedia();
@@ -410,6 +414,11 @@ export default function AcademyProfileLive() {
     Array.isArray((academy as any)?.promociones) ? (academy as any).promociones : [],
     [academy]
   );
+  const canHavePublicProfile = profileHasCapability(
+    { subscription_plan: (academy as any)?.subscription_plan },
+    "canHavePublicProfile",
+  );
+
   const promoBestValueIndex = useMemo(() => {
     let bestIndex = -1;
     let bestPerClass = Number.POSITIVE_INFINITY;
@@ -619,6 +628,47 @@ export default function AcademyProfileLive() {
           />
         </div>
 
+        {!canHavePublicProfile && (
+          <div
+            role="status"
+            style={{
+              maxWidth: 640,
+              margin: "0 auto 1rem",
+              padding: "12px 16px",
+              borderRadius: 12,
+              border: "1px solid rgba(240,147,251,0.35)",
+              background: "rgba(240,147,251,0.1)",
+              color: "#fff",
+              fontSize: "0.95rem",
+              lineHeight: 1.45,
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "10px",
+              textAlign: "center",
+            }}
+          >
+            <span style={{ flex: "1 1 220px" }}>{t("academy_live_public_requires_premium")}</span>
+            <button
+              type="button"
+              onClick={() => navigate(routes.misc.subscriptionPlans)}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 999,
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 700,
+                fontSize: "0.88rem",
+                color: "#1a1a1a",
+                background: "linear-gradient(135deg, #f093fb, #f5576c)",
+              }}
+            >
+              Ver planes
+            </button>
+          </div>
+        )}
+
         {/* Hero: mismo componente y estilos que EventDatePublicScreen (EventHero + eds-hero) */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -641,7 +691,7 @@ export default function AcademyProfileLive() {
               dateStr="Academia de baile"
               timeRange={heroLocationMeta.city}
               venueName={heroLocationMeta.venue}
-              onShare={onShare}
+              onShare={canHavePublicProfile ? onShare : undefined}
               onBack={handleBack}
             />
           </div>
@@ -653,53 +703,7 @@ export default function AcademyProfileLive() {
           transition={{ duration: 0.45, delay: 0.05 }}
           className="profile-live-hero-below glass-card-container"
         >
-          {((academy as any)?.estado_aprobacion === 'aprobado') && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.75rem',
-                flexWrap: 'wrap',
-                marginBottom: '1rem',
-              }}
-            >
-              <div
-                className="badge"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '.45rem',
-                  padding: '.35rem .6rem',
-                  borderRadius: '999px',
-                  fontWeight: 800,
-                  background: 'linear-gradient(135deg, #106c37, #0b5)',
-                  border: '1px solid #13a65a',
-                  boxShadow: '0 8px 18px rgba(0,0,0,.35)',
-                  fontSize: '.82rem',
-                  color: '#fff',
-                }}
-              >
-                <div
-                  className="dot"
-                  style={{
-                    width: '16px',
-                    height: '16px',
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: '#16c784',
-                    borderRadius: '50%',
-                    color: '#062d1f',
-                    fontSize: '.75rem',
-                    fontWeight: 900,
-                  }}
-                >
-                  ✓
-                </div>
-                <span>Verificado</span>
-              </div>
-            </div>
-          )}
+          <SubscriptionTierBadge subscriptionPlan={(academy as any)?.subscription_plan} />
           <div id="profile-hero-bio" style={{ width: '100%', marginBottom: '1rem' }}>
             <BioSection
               bio={academy.bio}

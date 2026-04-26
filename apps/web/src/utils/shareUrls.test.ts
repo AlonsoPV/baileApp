@@ -14,4 +14,12 @@ describe("shareUrls", () => {
     expect(buildCanonicalUrl("clase", "456", opts)).toBe("https://dondebailar.com.mx/clase/teacher/456?i=2");
     expect(buildDeepLink("clase", "456", opts)).toBe("dondebailarmx://clase/teacher/456?i=2");
   });
+
+  it("academia, maestro, organizer, user, marca: smart + canónica + deep link coherentes", () => {
+    const academy = { kind: "academia" as const, id: "1" };
+    expect(buildShareUrl(academy.kind, academy.id)).toBe(`${"https://dondebailar.com.mx"}/open/academia/1`);
+    expect(buildDeepLink(academy.kind, academy.id)).toBe("dondebailarmx://academia/1");
+    const org = { kind: "organizer" as const, id: "2" };
+    expect(buildDeepLink(org.kind, org.id)).toBe("dondebailarmx://organizer/2");
+  });
 });

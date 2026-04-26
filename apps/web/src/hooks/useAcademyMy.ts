@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "@/contexts/AuthProvider";
+import { friendlyAcademyProfileConstraintMessage } from "@/lib/cronogramaSubscriptionRpcErrors";
 
 export interface AcademyProfile {
   id: number;
@@ -103,6 +104,8 @@ export function useUpsertAcademy() {
 
       if (error) {
         console.error('[useAcademyMy] Error en RPC:', error);
+        const friendly = friendlyAcademyProfileConstraintMessage(error.message);
+        if (friendly) throw new Error(friendly);
         throw error;
       }
 

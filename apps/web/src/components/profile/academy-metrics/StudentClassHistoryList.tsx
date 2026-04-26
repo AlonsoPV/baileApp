@@ -1,10 +1,13 @@
 import React from "react";
-import type { StudentHistoryItem } from "@/hooks/useAcademyStudents";
+import type { StudentHistoryItem, StudentHistoryPaymentType } from "@/hooks/useAcademyStudents";
+import { useUpdateClaseAsistenciaFlags, type ClaseAsistenciaPaymentType } from "@/hooks/useClassAttendanceActions";
 
 type Props = {
   history: StudentHistoryItem[];
-  onMarkAttended?: (item: StudentHistoryItem) => void;
-  markingId?: number | null;
+  academyId?: number;
+  teacherId?: number;
+  /** Con academia: requiere Premium para editar. Con maestro: no aplica. */
+  canEditAttendancePayment?: boolean;
 };
 
 function formatDate(value: string | null): string {
@@ -23,17 +26,52 @@ function formatDate(value: string | null): string {
   }
 }
 
-function statusLabel(status: string): string {
-  const key = status.toLowerCase();
-  if (key === "tentative") return "Tentativa";
-  if (key === "pagado") return "Pagado";
-  if (key === "asistio" || key === "asistió" || key === "attended") return "Asistió";
-  if (key === "cancelado" || key === "cancelled" || key === "canceled") return "Cancelado";
-  if (key === "no_show" || key === "noshow") return "No show";
-  return status;
+function mapPay(t: StudentHistoryPaymentType | null | undefined): ClaseAsistenciaPaymentType {
+  if (t === "package" || t === "other" || t === "class") return t;
+  return "class";
 }
 
-export function StudentClassHistoryList({ history, onMarkAttended, markingId = null }: Props) {
+export function StudentClassHistoryList({ history, academyId, teacherId, canEditAttendancePayment = false }: Props) {
+  const showAttendanceControls = academyId != null || teacherId != null;
+  const canInteract =
+    (academyId != null && canEditAttendancePayment) || (teacherId != null);
+  const update = useUpdateClaseAsistenciaFlags(
+    canInteract
+      ? academyId != null
+        ? { academyId }
+        : { teacherId: teacherId! }
+      : undefined,
+  );
+  const busy = update.isPending;
+  const busyId = update.variables != null ? Number((update.variables as { attendanceId?: string | number }).attendanceId) : null;
+
+  const onAttendance = (item: StudentHistoryItem, next: boolean) => {
+    update.mutate({
+      attendanceId: item.id,
+      attended: next,
+      paid: item.paid,
+      paymentType: item.paid ? mapPay(item.paymentType) : null,
+    });
+  };
+
+  const onPaid = (item: StudentHistoryItem) => {
+    if (item.paid) {
+      update.mutate({
+        attendanceId: item.id,
+        attended: item.attended,
+        paid: false,
+        paymentType: null,
+      });
+      return;
+    }
+    update.mutate({
+      attendanceId: item.id,
+      attended: item.attended,
+      paid: true,
+      paymentType: mapPay(item.paymentType),
+    });
+  };
+
   const grouped = React.useMemo(() => {
     const map = new Map<string, StudentHistoryItem[]>();
     history.forEach((row) => {
@@ -54,59 +92,58 @@ export function StudentClassHistoryList({ history, onMarkAttended, markingId = n
   }
 
   return (
-    <div className="students-history-list">
+    <div className="students-history-list students-history-list--flat">
       {grouped.map(([dateKey, rows]) => (
         <div key={dateKey} className="students-history-group">
           <div className="students-history-date">{formatDate(dateKey === "sin-fecha" ? null : dateKey)}</div>
-          <div className="students-history-rows">
-            {rows.map((item) => (
-              <div key={item.id} className="students-history-row">
-                <div className="students-history-main">
-                  <div className="students-history-class">{item.className}</div>
-                  <div className="students-history-meta">
-                    <span>{statusLabel(item.status)}</span>
-                    <span className="dot">·</span>
-                    <span>{item.role}</span>
-                    {item.zone ? (
-                      <>
-                        <span className="dot">·</span>
-                        <span>{item.zone}</span>
-                      </>
-                    ) : null}
-                    {item.hour ? (
-                      <>
-                        <span className="dot">·</span>
-                        <span>{item.hour}</span>
-                      </>
-                    ) : null}
-                    {item.teacherName ? (
-                      <>
-                        <span className="dot">·</span>
-                        <span>{item.teacherName}</span>
-                      </>
-                    ) : null}
-                  </div>
+          <div className="students-history-rows students-history-rows--flat">
+            {rows.map((item) => {
+              const pendingHere = busy && busyId === item.id;
+              return (
+                <div
+                  key={item.id}
+                  className={`students-hist-line${pendingHere ? " students-hist-line--busy" : ""}`}
+                >
+                  <div className="students-hist-line__title">{item.className}</div>
+                  {showAttendanceControls ? (
+                    <div className="students-hist-line__actions">
+                      <button
+                        type="button"
+                        role="switch"
+                        className="students-hist-toggle"
+                        aria-checked={item.attended}
+                        aria-label={item.attended ? "Asistió, activo" : "No asistió"}
+                        disabled={!canInteract || pendingHere}
+                        onClick={() => onAttendance(item, !item.attended)}
+                      >
+                        <span className="students-hist-toggle__track">
+                          <span className="students-hist-toggle__thumb" />
+                        </span>
+                        <span className="students-hist-toggle__text">{item.attended ? "Sí" : "No"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`students-hist-pay${item.paid ? " students-hist-pay--on" : ""}`}
+                        disabled={!canInteract || pendingHere}
+                        onClick={() => onPaid(item)}
+                        aria-pressed={item.paid}
+                      >
+                        {item.paid ? "Pago" : "Sin pago"}
+                      </button>
+                      {!canInteract && academyId != null ? (
+                        <span className="students-hist-line__premium-hint">Registro en métricas: plan Premium.</span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="students-hist-line__ro">
+                      <p style={{ margin: 0 }}>
+                        {item.attended ? "Asistió" : "No asistió"} · {item.paid ? "Pagó" : "Sin pago"}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <div className="students-history-created">
-                  {new Date(item.createdAt).toLocaleDateString("es-MX", {
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-                {onMarkAttended && item.status.toLowerCase() === "tentative" ? (
-                  <button
-                    type="button"
-                    className="students-history-action"
-                    onClick={() => onMarkAttended(item)}
-                    disabled={markingId === item.id}
-                  >
-                    {markingId === item.id ? "Guardando..." : "Marcar como asistio"}
-                  </button>
-                ) : null}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}

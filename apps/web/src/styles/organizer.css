@@ -184,7 +184,8 @@
 }
 
 .academy-editor-classes-inner,
-.academy-editor-created-classes {
+.academy-editor-created-classes,
+.teacher-editor-classes-inner {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;

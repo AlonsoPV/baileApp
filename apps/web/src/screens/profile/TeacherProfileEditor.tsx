@@ -38,6 +38,18 @@ const TeacherMetricsPanel = React.lazy(() => import("../../components/profile/Te
 const TeacherStudentsPanelLazy = React.lazy(() => import("../../components/profile/TeacherStudentsPanel").then(m => ({ default: m.TeacherStudentsPanel })));
 const UbicacionesEditor = React.lazy(() => import("../../components/locations/UbicacionesEditor"));
 import ProfileEditorCrearClaseForm from "../../components/profile/ProfileEditorCrearClaseForm";
+import { getPlan } from "@/lib/subscription";
+import {
+  academyCronogramaExceedsBasicSpecificDateLimit,
+  wouldExceedSpecificDateLimit,
+} from "@/lib/academySpecificClassLimits";
+import {
+  academyCronogramaWeeklyViolation,
+  academyWeeklyFormViolation,
+  messageForAcademyWeeklyViolation,
+  weeklyDayCountFromFormInput,
+} from "@/lib/academyWeeklyClassRules";
+import { routes } from "@/routes/registry";
 const CostsPromotionsEditor = React.lazy(() => import("../../components/events/CostsPromotionsEditor"));
 const FAQEditor = React.lazy(() => import("../../components/common/FAQEditor"));
 const PhotoManagementSection = React.lazy(() => import("../../components/profile/PhotoManagementSection").then(m => ({ default: m.PhotoManagementSection })));
@@ -1183,6 +1195,7 @@ export default function TeacherProfileEditor() {
   const [wasNewProfile, setWasNewProfile] = React.useState(false);
   const [previousApprovalStatus, setPreviousApprovalStatus] = React.useState<string | null>(null);
   const [showWelcomeBanner, setShowWelcomeBanner] = React.useState(false);
+  const classFormRef = React.useRef<HTMLDivElement | null>(null);
 
   // ⏳ Timeouts de seguridad para evitar loops eternos de carga (especialmente en WebView)
   const [authTimeoutReached, setAuthTimeoutReached] = React.useState(false);
@@ -1463,6 +1476,22 @@ export default function TeacherProfileEditor() {
       // Detectar si es un perfil nuevo antes de guardar
       const isNewProfile = !teacher;
       setWasNewProfile(isNewProfile);
+
+      const planSave = getPlan((form as any)?.subscription_plan ?? (teacher as any)?.subscription_plan);
+      if (academyCronogramaExceedsBasicSpecificDateLimit(planSave, (form as any)?.cronograma)) {
+        setStatusMsg({
+          type: 'err',
+          text: 'Tu plan Basic permite hasta 5 clases con fecha específica. Actualiza a Pro o Premium.',
+        });
+        setTimeout(() => setStatusMsg(null), 5000);
+        return;
+      }
+      const weeklyV = academyCronogramaWeeklyViolation(planSave, (form as any)?.cronograma);
+      if (weeklyV) {
+        setStatusMsg({ type: 'err', text: messageForAcademyWeeklyViolation(weeklyV) });
+        setTimeout(() => setStatusMsg(null), 5000);
+        return;
+      }
       
       const selectedCatalogIds = ((form as any)?.ritmos_seleccionados || []) as string[];
       
@@ -1587,6 +1616,29 @@ export default function TeacherProfileEditor() {
         setTimeout(() => setStatusMsg(null), 3200);
         return;
       }
+      const planForLimit = getPlan((form as any)?.subscription_plan ?? (teacher as any)?.subscription_plan);
+      if (academyCronogramaExceedsBasicSpecificDateLimit(planForLimit, cronogramaItems)) {
+        setStatusMsg({
+          type: 'err',
+          text: 'Tu plan Basic permite hasta 5 clases con fecha específica. Actualiza a Pro o Premium.',
+        });
+        setTimeout(() => setStatusMsg(null), 3200);
+        if (rollbackData) {
+          setField('cronograma' as any, rollbackData.cronograma as any);
+          setField('costos' as any, rollbackData.costos as any);
+        }
+        return;
+      }
+      const weeklyAuto = academyCronogramaWeeklyViolation(planForLimit, cronogramaItems);
+      if (weeklyAuto) {
+        setStatusMsg({ type: 'err', text: messageForAcademyWeeklyViolation(weeklyAuto) });
+        setTimeout(() => setStatusMsg(null), 3200);
+        if (rollbackData) {
+          setField('cronograma' as any, rollbackData.cronograma as any);
+          setField('costos' as any, rollbackData.costos as any);
+        }
+        return;
+      }
       try {
         await upsert.mutateAsync({
           id: profileId,
@@ -1608,11 +1660,12 @@ export default function TeacherProfileEditor() {
         throw error;
       }
     },
-    [profileId, upsert, setField],
+    [profileId, upsert, setField, form, teacher],
   );
 
   // Handlers para editar/eliminar clases (movidos fuera de función condicional)
   const handleClassEdit = React.useCallback((idx: number, it: any, costo: any) => {
+    classFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setEditingIndex(idx);
     const dayNameToNumber = (dayName: string | number): number | null => {
       if (typeof dayName === 'number') return dayName;
@@ -1702,6 +1755,48 @@ export default function TeacherProfileEditor() {
   const handleClassSubmit = React.useCallback((c: any) => {
     const currentCrono = ([...((form as any).cronograma || [])] as any[]);
     const currentCostos = ([...((form as any).costos || [])] as any[]);
+    const plan = getPlan((form as any)?.subscription_plan ?? (teacher as any)?.subscription_plan);
+    const resolvedFechaModo =
+      c.fechaModo ||
+      (c.fecha
+        ? 'especifica'
+        : (c.diaSemana !== null && c.diaSemana !== undefined) || (c.diasSemana && c.diasSemana.length > 0)
+          ? 'semanal'
+          : undefined);
+    let editingClassId: number | string | undefined;
+    if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
+      editingClassId = currentCrono[editingIndex]?.id;
+    }
+    if (
+      wouldExceedSpecificDateLimit({
+        plan,
+        cronograma: currentCrono,
+        nextItemFechaModo: resolvedFechaModo,
+        editingClassId,
+      })
+    ) {
+      setStatusMsg({
+        type: 'err',
+        text: 'Tu plan Basic permite hasta 5 clases con fecha específica. Actualiza a Pro o Premium.',
+      });
+      setTimeout(() => setStatusMsg(null), 5000);
+      return;
+    }
+    const modoSubmit = (c.fechaModo || resolvedFechaModo || 'especifica') as
+      | 'especifica'
+      | 'semanal'
+      | 'por_agendar';
+    const weeklyDayCount = weeklyDayCountFromFormInput({
+      fechaModo: modoSubmit,
+      diasSemana: c.diasSemana,
+      diaSemana: c.diaSemana ?? null,
+    });
+    const weeklyFormV = academyWeeklyFormViolation(plan, modoSubmit, weeklyDayCount);
+    if (weeklyFormV) {
+      setStatusMsg({ type: 'err', text: messageForAcademyWeeklyViolation(weeklyFormV) });
+      setTimeout(() => setStatusMsg(null), 5000);
+      return;
+    }
 
     if (editingIndex !== null && editingIndex >= 0 && editingIndex < currentCrono.length) {
       const prev = currentCrono[editingIndex];
@@ -1869,7 +1964,7 @@ export default function TeacherProfileEditor() {
 
       return autoSaveClasses(nextCrono, nextCostos, '✅ Clase creada', rollbackData);
     }
-  }, [form, editingIndex, setField, autoSaveClasses, ensureClassId, generateClassId, setEditingIndex, setEditInitial]);
+  }, [form, teacher, editingIndex, setField, autoSaveClasses, ensureClassId, generateClassId, setEditingIndex, setEditInitial, setStatusMsg]);
 
   const uploadFile = React.useCallback(async (file: File, slot: string) => {
     try {
@@ -1944,6 +2039,20 @@ export default function TeacherProfileEditor() {
     })),
     [(form as any).ubicaciones]
   );
+
+  const profileClassLimitContext = React.useMemo(() => {
+    const cronograma = (form as any)?.cronograma || [];
+    const id =
+      editingIndex !== null && editingIndex >= 0 && editingIndex < cronograma.length
+        ? cronograma[editingIndex]?.id
+        : undefined;
+    return {
+      subscriptionPlanRaw: (form as any)?.subscription_plan ?? (teacher as any)?.subscription_plan,
+      cronograma,
+      editingCronogramaClassId: id,
+      upgradePlansHref: routes.misc.subscriptionPlans,
+    };
+  }, [form, teacher, editingIndex]);
 
   // Callbacks for handlers
   const handleTabChange = React.useCallback((tab: "perfil" | "metricas" | "alumnos") => {
@@ -2476,7 +2585,7 @@ export default function TeacherProfileEditor() {
             />
             </React.Suspense>
             {/* Crear Clase rápida */}
-            <div>
+            <div ref={classFormRef} className="teacher-editor-classes-inner">
               <ProfileEditorCrearClaseForm
                 profileKind="teacher"
                 profileSaved={!!teacher}
@@ -2491,6 +2600,7 @@ export default function TeacherProfileEditor() {
                 title={editingIndex !== null ? 'Editar Clase' : 'Crear Clase'}
                 onCancel={handleClassCancel}
                 onSubmit={handleClassSubmit}
+                profileClassLimitContext={profileClassLimitContext}
               />
 
               {teacher && Array.isArray((form as any)?.cronograma) && (form as any).cronograma.length > 0 && (() => {

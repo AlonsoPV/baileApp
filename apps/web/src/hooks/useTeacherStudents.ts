@@ -1,15 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type {
-  DateFilter,
-  StudentClassBreakdownItem,
-  StudentDetail,
-  StudentGlobalMetrics,
-  StudentHistoryItem,
-  StudentListItem,
-  StudentRoleFilter,
-  StudentSegment,
-  StudentsFilters,
+import {
+  mapHistoryItem,
+  type DateFilter,
+  type StudentClassBreakdownItem,
+  type StudentDetail,
+  type StudentGlobalMetrics,
+  type StudentHistoryItem,
+  type StudentListItem,
+  type StudentRoleFilter,
+  type StudentSegment,
+  type StudentsFilters,
 } from "@/hooks/useAcademyStudents";
 
 function toNum(value: unknown): number {
@@ -246,23 +247,11 @@ export function useTeacherStudentDetail(
           className: String(c.class_name ?? "Clase"),
           records: toNum(c.records),
           tentative: toNum(c.tentative),
-          attended: toNum(c.attended),
+          attended: c.attended !== undefined && c.attended !== null ? toNum(c.attended) : 0,
           paid: toNum(c.paid),
           lastActivityAt: c.last_activity_at ? String(c.last_activity_at) : null,
         })),
-        history: history.map((h: any): StudentHistoryItem => ({
-          id: toNum(h.id),
-          classId: toNum(h.class_id),
-          className: String(h.class_name ?? "Clase"),
-          sessionDate: h.session_date ? String(h.session_date) : null,
-          hour: h.hora ? String(h.hora) : null,
-          status: String(h.status ?? "unknown"),
-          role: String(h.role ?? "otro"),
-          zone: h.zone ? String(h.zone) : null,
-          teacherId: h.teacher_id !== null && h.teacher_id !== undefined ? toNum(h.teacher_id) : null,
-          teacherName: h.teacher_name ? String(h.teacher_name) : null,
-          createdAt: String(h.created_at),
-        })),
+        history: history.map((h: any): StudentHistoryItem => mapHistoryItem(h)),
       };
     },
     staleTime: 60_000,

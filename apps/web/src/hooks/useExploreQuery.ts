@@ -10,7 +10,14 @@ import { getEffectiveEventDate, getEffectiveEventDateYmd } from "@/utils/effecti
 
 const PAGE_LIMIT = 12;
 
-type QueryParams = ExploreFilters;
+type QueryParams = ExploreFilters & {
+  /**
+   * Solo aplica cuando `type === "academias"`:
+   * - `public` (defecto): `v_academies_public` → academias Premium (cards de academia en explore).
+   * - `all_approved`: `profiles_academy` aprobadas → cronogramas para cards de **clases** (cualquier plan).
+   */
+  academiasMode?: "public" | "all_approved";
+};
 
 function normalizeSearch(raw?: string) {
   const s = String(raw ?? "").trim();
@@ -220,7 +227,7 @@ const SELECT_USERS_EXPLORE = `
  * Determina qué tabla o vista usar para cada tipo de exploración
  * Para eventos y organizadores, usamos las vistas LIVE que solo muestran contenido aprobado/publicado
  */
-function baseSelect(type: ExploreType) {
+function baseSelect(type: ExploreType, academiasMode: "public" | "all_approved" = "public") {
   switch (type) {
     case "fechas":
       // Select mínimo para cards (payload < 10KB). Ver eventSelects.ts
@@ -230,8 +237,11 @@ function baseSelect(type: ExploreType) {
       return { table: "v_organizers_public", select: SELECT_ORGANIZERS_EXPLORE };
     case "maestros":       
       return { table: "profiles_teacher", select: SELECT_TEACHERS_EXPLORE };   // si aún no existe, dejar preparado
-    case "academias":      
-      return { table: "profiles_academy", select: SELECT_ACADEMIES_EXPLORE };    // usar profiles_academy
+    case "academias":
+      if (academiasMode === "all_approved") {
+        return { table: "profiles_academy", select: SELECT_ACADEMIES_EXPLORE };
+      }
+      return { table: "v_academies_public", select: SELECT_ACADEMIES_EXPLORE };
     case "marcas":         
       return { table: "profiles_brand", select: SELECT_BRANDS_EXPLORE };     // idem
     case "sociales":
@@ -249,8 +259,10 @@ function baseSelect(type: ExploreType) {
 export async function fetchExplorePage(params: QueryParams, page: number) {
   const fetchStart = performance.now();
   const isFirstPage = page === 0;
-  const { type, q, ritmos, zonas, dateFrom, dateTo } = params;
-  const { table, select } = baseSelect(type);
+  const { type, q, ritmos, zonas, dateFrom, dateTo, academiasMode: academiasModeRaw } = params;
+  const academiasMode =
+    type === "academias" ? (academiasModeRaw ?? "public") : "public";
+  const { table, select } = baseSelect(type, type === "academias" ? academiasMode : "public");
   const search = normalizeSearch(q);
 
   // Construir query
@@ -439,7 +451,7 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
     
     query = query.order("created_at", { ascending: false });
   }
-  else if (type === "maestros" || type === "academias") {
+  else if (type === "maestros") {
     if (search) query = query.ilike("nombre_publico", search.pattern);
     if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
       const parts: string[] = [];
@@ -453,9 +465,27 @@ export async function fetchExplorePage(params: QueryParams, page: number) {
       }
       if (parts.length > 0) query = query.or(parts.join(','));
     }
-    if (zonas?.length)  query = query.overlaps("zonas", zonas as any);
-    // Solo mostrar perfiles aprobados
+    if (zonas?.length) query = query.overlaps("zonas", zonas as any);
     query = query.eq("estado_aprobacion", "aprobado");
+    query = query.order("created_at", { ascending: false });
+  } else if (type === "academias") {
+    if (search) query = query.ilike("nombre_publico", search.pattern);
+    if ((ritmos?.length || 0) > 0 || (selectedCatalogIds?.length || 0) > 0) {
+      const parts: string[] = [];
+      if ((ritmos?.length || 0) > 0) {
+        const set = `{${(ritmos as number[]).join(',')}}`;
+        parts.push(`ritmos.ov.${set}`);
+      }
+      if ((selectedCatalogIds?.length || 0) > 0) {
+        const setCat = `{${selectedCatalogIds.join(',')}}`;
+        parts.push(`ritmos_seleccionados.ov.${setCat}`);
+      }
+      if (parts.length > 0) query = query.or(parts.join(','));
+    }
+    if (zonas?.length) query = query.overlaps("zonas", zonas as any);
+    if (academiasMode === "all_approved") {
+      query = query.eq("estado_aprobacion", "aprobado");
+    }
     query = query.order("created_at", { ascending: false });
   }
   else if (type === "sociales") {
@@ -1049,10 +1079,13 @@ export function useExploreQuery(params: QueryParams & { enabled?: boolean }) {
   const qKey = String(queryParams.q || "").trim().toLowerCase();
   const ritmosKey = Array.isArray(queryParams.ritmos) ? [...queryParams.ritmos].sort((a, b) => a - b).join(",") : "";
   const zonasKey = Array.isArray(queryParams.zonas) ? [...queryParams.zonas].sort((a, b) => a - b).join(",") : "";
+  const academiasModeKey =
+    queryParams.type === "academias" ? (queryParams.academiasMode ?? "public") : "-";
   return useInfiniteQuery({
     queryKey: [
       "explore",
       queryParams.type,
+      academiasModeKey,
       qKey,
       ritmosKey,
       zonasKey,

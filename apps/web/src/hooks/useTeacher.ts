@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { getMediaBySlot } from '@/utils/mediaSlots';
 import { useAuth } from '@/contexts/AuthProvider';
+import { friendlyCronogramaConstraintMessage } from '@/lib/cronogramaSubscriptionRpcErrors';
 
 export type TeacherProfile = {
   id?: number;
@@ -24,6 +25,9 @@ export type TeacherProfile = {
   media: { type: 'image'|'video'; url: string; slot?: string }[];
   faq?: { q: string; a: string }[];
   estado_aprobacion: 'borrador'|'en_revision'|'aprobado'|'rechazado';
+  subscription_plan?: string | null;
+  subscription_status?: string | null;
+  subscription_expires_at?: string | null;
   stripe_account_id?: string | null;
   stripe_onboarding_status?: string | null;
   stripe_charges_enabled?: boolean | null;
@@ -144,7 +148,8 @@ export function useUpsertTeacher() {
         'ritmos','ritmos_seleccionados','zonas',
         'redes_sociales','ubicaciones','cronograma','costos','promociones','faq',
         'whatsapp_number','whatsapp_message_template',
-        'estado_aprobacion','updated_at','created_at'
+        'estado_aprobacion','updated_at','created_at',
+        'subscription_plan','subscription_status','subscription_expires_at'
       ]);
       const filtered: any = {};
       for (const k of Object.keys(base)) {
@@ -159,6 +164,8 @@ export function useUpsertTeacher() {
         .single();
       
       if (error) {
+        const friendly = friendlyCronogramaConstraintMessage(error.message);
+        if (friendly) throw new Error(friendly);
         // Error 400 puede ser por falta de constraint único o datos inválidos
         // Intentar fallback: primero verificar si existe el registro
         const { data: existing } = await supabase
@@ -175,6 +182,8 @@ export function useUpsertTeacher() {
             .eq('user_id', user.id);
           if (updError) {
             console.error('❌ [useTeacher] Error en UPDATE:', updError);
+            const friendlyU = friendlyCronogramaConstraintMessage(updError.message);
+            if (friendlyU) throw new Error(friendlyU);
             throw updError;
           }
           const { data: refetch, error: refErr } = await supabase
@@ -197,6 +206,8 @@ export function useUpsertTeacher() {
             .single();
           if (insError) {
             console.error('❌ [useTeacher] Error en INSERT:', insError);
+            const friendlyI = friendlyCronogramaConstraintMessage(insError.message);
+            if (friendlyI) throw new Error(friendlyI);
             throw insError;
           }
           return normalizeTeacherProfile(inserted as TeacherProfile) as TeacherProfile;

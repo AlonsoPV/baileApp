@@ -3525,23 +3525,55 @@ export default function ExploreHomeScreen() {
     return flattenQueryData(organizadoresQuery.data);
   }, [organizadoresQuery.data, shouldLoadOrganizadores]);
 
-  const shouldLoadAcademias = selectedType === 'academias' || selectedType === 'clases';
-  const academiasQuery = useExploreQuery({
+  const shouldLoadAcademiasPublic = selectedType === 'academias';
+  const shouldLoadAcademiasForClasses = selectedType === 'clases';
+
+  const academiasPublicQuery = useExploreQuery({
     type: 'academias',
+    academiasMode: 'public',
     q: qDeferred || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,
     pageSize: 48,
-    enabled: shouldLoadAcademias
+    enabled: shouldLoadAcademiasPublic,
   });
-  const academiasLoadMore = useLoadMoreOnDemand(shouldLoadAcademias ? academiasQuery : null);
-  const academiasLoading = academiasQuery.isLoading;
-  const academiasError = (academiasQuery as any).isError;
-  const academiasErrObj = (academiasQuery as any).error;
+  const academiasCronogramaQuery = useExploreQuery({
+    type: 'academias',
+    academiasMode: 'all_approved',
+    q: qDeferred || undefined,
+    ritmos: filters.ritmos,
+    zonas: filters.zonas,
+    pageSize: 48,
+    enabled: shouldLoadAcademiasForClasses,
+  });
+
+  const academiasLoadMore = useLoadMoreOnDemand(shouldLoadAcademiasPublic ? academiasPublicQuery : null);
+  const academiasLoading =
+    selectedType === 'academias'
+      ? academiasPublicQuery.isLoading
+      : selectedType === 'clases'
+        ? academiasCronogramaQuery.isLoading
+        : false;
+  const academiasError =
+    selectedType === 'academias'
+      ? (academiasPublicQuery as any).isError
+      : selectedType === 'clases'
+        ? (academiasCronogramaQuery as any).isError
+        : false;
+  const academiasErrObj =
+    selectedType === 'academias'
+      ? (academiasPublicQuery as any).error
+      : selectedType === 'clases'
+        ? (academiasCronogramaQuery as any).error
+        : undefined;
   const academiasData = React.useMemo(() => {
-    if (!shouldLoadAcademias) return [];
-    return flattenQueryData(academiasQuery.data);
-  }, [academiasQuery.data, shouldLoadAcademias]);
+    if (selectedType === 'academias') return flattenQueryData(academiasPublicQuery.data);
+    return [];
+  }, [academiasPublicQuery.data, selectedType]);
+  const academiasDataForClasses = React.useMemo(() => {
+    if (selectedType !== 'clases') return [];
+    return flattenQueryData(academiasCronogramaQuery.data);
+  }, [academiasCronogramaQuery.data, selectedType]);
 
   const shouldLoadMarcas = selectedType === 'marcas';
   const marcasQuery = useExploreQuery({
@@ -3602,8 +3634,8 @@ export default function ExploreHomeScreen() {
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'academias') return;
-    void runZoneWarmupPage('academias', academiasQuery);
-  }, [hasZoneFilter, selectedType, academiasQuery.hasNextPage, academiasQuery.isFetchingNextPage, academiasQuery.isLoading, academiasQuery.fetchNextPage, runZoneWarmupPage]);
+    void runZoneWarmupPage('academias', academiasPublicQuery);
+  }, [hasZoneFilter, selectedType, academiasPublicQuery.hasNextPage, academiasPublicQuery.isFetchingNextPage, academiasPublicQuery.isLoading, academiasPublicQuery.fetchNextPage, runZoneWarmupPage]);
 
   React.useEffect(() => {
     if (!hasZoneFilter) return;
@@ -3632,15 +3664,15 @@ export default function ExploreHomeScreen() {
   React.useEffect(() => {
     if (!hasZoneFilter) return;
     if (selectedType !== 'clases') return;
-    void runZoneWarmupPage('clases_academias', academiasQuery);
+    void runZoneWarmupPage('clases_academias', academiasCronogramaQuery);
     void runZoneWarmupPage('clases_maestros', maestrosQuery);
   }, [
     hasZoneFilter,
     selectedType,
-    academiasQuery.hasNextPage,
-    academiasQuery.isFetchingNextPage,
-    academiasQuery.isLoading,
-    academiasQuery.fetchNextPage,
+    academiasCronogramaQuery.hasNextPage,
+    academiasCronogramaQuery.isFetchingNextPage,
+    academiasCronogramaQuery.isLoading,
+    academiasCronogramaQuery.fetchNextPage,
     maestrosQuery.hasNextPage,
     maestrosQuery.isFetchingNextPage,
     maestrosQuery.isLoading,
@@ -3722,7 +3754,7 @@ export default function ExploreHomeScreen() {
   }, [filteredFechas.length, fechasLoading]);
 
   const classesList = useClassesList({
-    academiasData,
+    academiasData: academiasDataForClasses,
     maestrosData,
     allTags: allTags as any[] | undefined,
     ritmos: filters.ritmos,
@@ -4502,7 +4534,7 @@ export default function ExploreHomeScreen() {
                       title="No se pudieron cargar las clases"
                       error={academiasErrObj || maestrosErrObj}
                       onRetry={() => {
-                        (academiasQuery as any).refetch?.();
+                        (academiasCronogramaQuery as any).refetch?.();
                         (maestrosQuery as any).refetch?.();
                       }}
                     />

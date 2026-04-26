@@ -280,18 +280,42 @@ export function useTeacherAcademies(teacherId?: number) {
           .from('v_academies_public')
           .select('id, nombre_publico, avatar_url, portada_url, media')
           .in('id', academyIds);
-        
+
+        const fromPublic = !publicError && publicData ? publicData : [];
+        const foundIds = new Set(fromPublic.map((p: any) => p.id));
+        const missingIds = academyIds.filter((aid) => !foundIds.has(aid));
+
+        let merged: any[] = [...fromPublic];
+
         if (!publicError && publicData) {
-          academyProfiles = publicData;
-          console.log('[useTeacherAcademies] Perfiles obtenidos desde v_academies_public:', academyProfiles);
+          console.log('[useTeacherAcademies] Perfiles obtenidos desde v_academies_public:', fromPublic.length);
         } else {
-          // Si falla la vista pública, intentar directamente desde profiles_academy
-          console.log('[useTeacherAcademies] Intentando desde profiles_academy directamente...');
+          console.log('[useTeacherAcademies] Vista pública vacía o error; rellenando desde profiles_academy si aplica');
+        }
+
+        if (missingIds.length > 0) {
+          const { data: directData, error: directError } = await supabase
+            .from('profiles_academy')
+            .select('id, nombre_publico, avatar_url, portada_url, media')
+            .in('id', missingIds);
+
+          if (directError) {
+            if (!academyError) academyError = directError;
+            console.error('[useTeacherAcademies] Error al obtener perfiles faltantes (profiles_academy):', directError);
+          } else if (directData?.length) {
+            merged = merged.concat(directData);
+            console.log('[useTeacherAcademies] Perfiles extra desde profiles_academy:', directData.length);
+          }
+        }
+
+        academyProfiles = merged.length > 0 ? merged : null;
+        if (publicError && !academyProfiles) {
+          console.log('[useTeacherAcademies] Intentando desde profiles_academy (fallback total)...');
           const { data: directData, error: directError } = await supabase
             .from('profiles_academy')
             .select('id, nombre_publico, avatar_url, portada_url, media')
             .in('id', academyIds);
-          
+
           if (directError) {
             academyError = directError;
             console.error('[useTeacherAcademies] Error al obtener perfiles de academias:', directError);

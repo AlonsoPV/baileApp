@@ -2,10 +2,15 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useAcademyMetrics, type DateFilter, type MetricsFilters } from "@/hooks/useAcademyMetrics";
 import { ClassMetricCard } from "@/components/profile/academy-metrics/ClassMetricCard";
+import { friendlyAcademyMetricsRpcMessage } from "@/lib/cronogramaSubscriptionRpcErrors";
 
-type PanelProps = { academyId: number };
+type PanelProps = {
+  academyId: number;
+  /** Marcar asistió / pago en filas (solo Premium). */
+  canEditAttendanceAndPayment?: boolean;
+};
 
-export function AcademyMetricsPanel({ academyId }: PanelProps) {
+export function AcademyMetricsPanel({ academyId, canEditAttendanceAndPayment = false }: PanelProps) {
   const [dateFilter, setDateFilter] = React.useState<DateFilter>("all");
   const [customFrom, setCustomFrom] = React.useState<string>("");
   const [customTo, setCustomTo] = React.useState<string>("");
@@ -49,8 +54,6 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
     );
   }, [byClass, searchQuery]);
   
-  const attendanceTotal = global?.totalTentative ?? 0;
-
   const roleBase = global?.totalAttendanceRecords ?? 0;
 
   const rolePercentages = React.useMemo(() => {
@@ -62,6 +65,15 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
       otro: ((global.byRole.otro || 0) / roleBase) * 100,
     };
   }, [global, roleBase]);
+
+  const sumClassRecords = React.useMemo(
+    () => byClass.reduce((s, c) => s + (c.totalAsistentes ?? 0), 0),
+    [byClass],
+  );
+  const recordsMismatch =
+    !!global &&
+    sumClassRecords > 0 &&
+    Math.abs(sumClassRecords - (global.totalAttendanceRecords ?? 0)) > 1;
   
   if (loading) {
     return (
@@ -80,7 +92,7 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
           Hubo un problema al cargar métricas
         </p>
         <p style={{ fontSize: "0.875rem", opacity: 0.8 }}>
-          {error?.message || "Error desconocido"}
+          {friendlyAcademyMetricsRpcMessage(error?.message) || error?.message || "Error desconocido"}
         </p>
         <button
           onClick={() => refetch()}
@@ -269,6 +281,59 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 1rem;
           }
+        }
+        .metrics-kpi-grid--mgmt {
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
+        }
+        @media (min-width: 960px) {
+          .metrics-kpi-grid--mgmt {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+        .metrics-optional-row {
+          margin-top: 0.85rem;
+          padding: 0.75rem 1rem;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.04);
+          font-size: 0.8rem;
+          color: rgba(255,255,255,0.78);
+          line-height: 1.5;
+        }
+        .metrics-optional-row strong {
+          color: #fff;
+          font-weight: 800;
+        }
+        .metrics-reconcile-hint {
+          margin-top: 0.65rem;
+          font-size: 0.72rem;
+          color: rgba(255,200,120,0.85);
+          line-height: 1.4;
+        }
+        .metrics-details {
+          margin-top: 1.1rem;
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(0,0,0,0.18);
+          overflow: hidden;
+        }
+        .metrics-details summary {
+          cursor: pointer;
+          padding: 0.85rem 1.1rem;
+          font-size: 0.82rem;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          color: rgba(255,255,255,0.88);
+          list-style: none;
+        }
+        .metrics-details summary::-webkit-details-marker {
+          display: none;
+        }
+        .metrics-details[open] summary {
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .metrics-details-body {
+          padding: 1rem 1.1rem 1.15rem;
         }
         .metrics-kpi-card {
           padding: 1rem 1rem 0.9rem;
@@ -652,6 +717,133 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
           opacity: 0.5;
           padding: 0 0.28rem;
         }
+        .acm-row--std {
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 0.5rem 0.75rem;
+          padding: 0.65rem 0;
+        }
+        .acm-row--updating {
+          opacity: 0.7;
+        }
+        .acm-row-std__name {
+          flex: 1 1 7rem;
+          min-width: 0;
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.95);
+          line-height: 1.3;
+        }
+        .acm-row-std__controls {
+          flex: 1 1 15rem;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 0.65rem 0.85rem;
+        }
+        .acm-std-ctl__premium-hint {
+          flex: 1 1 100%;
+          width: 100%;
+          text-align: right;
+          font-size: 0.68rem;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.38);
+          line-height: 1.3;
+          margin: 0;
+        }
+        .acm-std-ctl {
+          display: flex;
+          flex-wrap: nowrap;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        .acm-std-ctl__lbl {
+          font-size: 0.64rem;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.4);
+        }
+        .acm-std-ctl__hint {
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.5);
+          min-width: 1.25rem;
+        }
+        .acm-switch {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          min-height: 40px;
+          min-width: 0;
+          padding: 0;
+          border: none;
+          background: none;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .acm-switch:disabled,
+        .acm-pay-btn:disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+        .acm-switch__track {
+          display: block;
+          width: 2.4rem;
+          height: 1.35rem;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.2);
+          position: relative;
+          flex-shrink: 0;
+        }
+        .acm-switch[aria-checked="true"] .acm-switch__track {
+          background: rgba(100, 200, 150, 0.55);
+        }
+        .acm-switch__thumb {
+          position: absolute;
+          top: 0.1rem;
+          left: 0.1rem;
+          width: 1.1rem;
+          height: 1.1rem;
+          border-radius: 50%;
+          background: #fff;
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+          transition: transform 0.12s ease;
+        }
+        .acm-switch[aria-checked="true"] .acm-switch__thumb {
+          transform: translateX(1.02rem);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .acm-switch__thumb {
+            transition: none;
+          }
+        }
+        .acm-std-ctl--pay {
+          gap: 0.4rem;
+        }
+        .acm-pay-btn {
+          min-height: 40px;
+          padding: 0 0.65rem;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.05);
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 0.78rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .acm-pay-btn--on {
+          background: rgba(200, 170, 90, 0.2);
+          border-color: rgba(200, 170, 90, 0.45);
+          color: #f5e5b8;
+        }
+        @media (max-width: 420px) {
+          .acm-row-std__controls {
+            justify-content: space-between;
+          }
+        }
         .acm-more-btn {
           display: block;
           width: 100%;
@@ -682,6 +874,41 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
           .acm-kpi-row .acm-kpi {
             padding: 0.5rem 0.45rem;
           }
+        }
+        .acm-scan-metrics {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+          margin: 0.15rem 0 0.65rem;
+          padding: 0.65rem 0.75rem;
+          border-radius: 14px;
+          background: rgba(0,0,0,0.2);
+          border: 1px solid rgba(255,255,255,0.07);
+        }
+        .acm-scan-line {
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.92);
+          line-height: 1.45;
+          display: flex;
+          align-items: baseline;
+          gap: 0.35rem;
+        }
+        .acm-scan-line strong {
+          font-weight: 900;
+          font-variant-numeric: tabular-nums;
+          color: #fff;
+        }
+        .acm-scan-line--sub {
+          font-size: 0.72rem;
+          font-weight: 500;
+          color: rgba(255,255,255,0.45);
+          margin: -0.15rem 0 0 1.6rem;
+        }
+        .acm-scan-line--muted {
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: rgba(165,214,167,0.92);
         }
         .metrics-badge {
           padding: 0.2rem 0.5rem;
@@ -797,133 +1024,137 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
             aria-label="Resumen global del periodo"
           >
             <div className="metrics-section__head">
-              <h3 className="metrics-section__title">📊 Panel de gestión</h3>
+              <h3 className="metrics-section__title">📊 Resumen de gestión</h3>
               <p className="metrics-section__lead">
-                Números según el filtro de fechas. Separamos intención de asistencia y asistencia confirmada para evitar métricas ambiguas.
+                Indicadores del periodo. Las <strong>posibles asistencias</strong> cuentan cuando alguien marca la clase
+                (RSVP, agenda o tentativo): es intención de ir, no garantiza que vaya.
               </p>
             </div>
 
-            <div className="metrics-kpi-grid">
+            <div className="metrics-kpi-grid metrics-kpi-grid--mgmt">
               <div className="metrics-kpi-card metrics-kpi-card--accent">
-                <div className="metrics-kpi-label">Clases en cronograma</div>
+                <div className="metrics-kpi-label">Clases activas</div>
                 <div className="metrics-kpi-value">{global.totalClassesRegistered ?? 0}</div>
-                <p className="metrics-kpi-hint">Ítems en tu horario publicado (no depende del periodo).</p>
+                <p className="metrics-kpi-hint">Clases en tu cronograma publicado (inventario; no depende del periodo).</p>
               </div>
               <div className="metrics-kpi-card">
                 <div className="metrics-kpi-label">Alumnos únicos</div>
                 <div className="metrics-kpi-value">{global.uniqueStudents ?? 0}</div>
-                <p className="metrics-kpi-hint">Personas distintas con al menos una reserva en el periodo.</p>
+                <p className="metrics-kpi-hint">Personas distintas con al menos una marca o RSVP en el periodo.</p>
               </div>
               <div className="metrics-kpi-card">
-                <div className="metrics-kpi-label">Tentativos</div>
-                <div className="metrics-kpi-value">{attendanceTotal}</div>
-                <p className="metrics-kpi-hint">Intenciones de asistencia en el periodo.</p>
-              </div>
-              <div className="metrics-kpi-card">
-                <div className="metrics-kpi-label">Asistieron</div>
-                <div className="metrics-kpi-value">{global.totalAttended ?? 0}</div>
-                <p className="metrics-kpi-hint">Asistencias confirmadas por academy o teacher.</p>
-              </div>
-              <div className="metrics-kpi-card">
-                <div className="metrics-kpi-label">Sesiones con reserva</div>
-                <div className="metrics-kpi-value">{global.sessionsWithReservations ?? 0}</div>
-                <p className="metrics-kpi-hint">Clase + fecha con al menos un alumno en el periodo.</p>
-              </div>
-            </div>
-
-            <div className="metrics-kpi-grid" style={{ marginTop: "0.75rem" }}>
-              <div className="metrics-kpi-card" style={{ gridColumn: "1 / -1" }}>
-                <div className="metrics-kpi-label">Compras confirmadas (pagado)</div>
-                <div className="metrics-kpi-value" style={{ color: "#A5D6A7" }}>
-                  {global.totalPurchases ?? 0}
-                </div>
-                <p className="metrics-kpi-hint">Total histórico de pagos registrados en la academia (sin filtro de fechas).</p>
-              </div>
-            </div>
-
-            <div style={{ marginTop: "1.35rem" }}>
-              <div style={{ fontSize: "0.875rem", marginBottom: "0.65rem", color: "#fff", fontWeight: 700 }}>
-                Distribución por rol (sobre registros del periodo)
-              </div>
-              {roleBase === 0 ? (
-                <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)", margin: 0 }}>
-                  Sin datos en este periodo. Ajusta el filtro o espera a que los alumnos marquen asistencia.
+                <div className="metrics-kpi-label">Posibles asistencias</div>
+                <div className="metrics-kpi-value">{global.totalAttendanceRecords ?? 0}</div>
+                <p className="metrics-kpi-hint">
+                  Registros por intención de asistir (p. ej. tentativo/RSVP). El alumno puede no presentarse.
                 </p>
-              ) : (
-                <>
-                  {rolePercentages && (
-                    <div className="metrics-segmented-bar" aria-hidden>
-                      <span style={{ width: `${rolePercentages.leader}%`, background: "#1E88E5" }} />
-                      <span style={{ width: `${rolePercentages.follower}%`, background: "#FFD166" }} />
-                      <span style={{ width: `${rolePercentages.ambos}%`, background: "#4CAF50" }} />
-                      <span style={{ width: `${rolePercentages.otro}%`, background: "rgba(255,255,255,0.35)" }} />
-                    </div>
-                  )}
-                  <div className="metrics-role-grid" style={{ marginTop: "1rem" }}>
-                    {[
-                      { key: "leader" as const, label: "Lead", emoji: "🎯", count: global.byRole.leader || 0, color: "#1E88E5" },
-                      { key: "follower" as const, label: "Follow", emoji: "✨", count: global.byRole.follower || 0, color: "#FFD166" },
-                      { key: "ambos" as const, label: "Ambos", emoji: "👥", count: global.byRole.ambos || 0, color: "#4CAF50" },
-                      { key: "otro" as const, label: "Otros", emoji: "❓", count: global.byRole.otro || 0, color: "rgba(255,255,255,0.85)" },
-                    ].map(({ key, label, emoji, count, color }) => {
-                      const percentage = rolePercentages ? rolePercentages[key] : 0;
-                      return (
-                        <div key={key} className={`metrics-role-card ${key}`}>
-                          <div style={{ fontSize: "0.75rem", opacity: 0.85, marginBottom: "0.35rem", color: "#fff" }}>
-                            {emoji} {label}
-                          </div>
-                          <div style={{ fontSize: "1.35rem", fontWeight: 800, color, marginBottom: "0.2rem" }}>
-                            {count}
-                          </div>
-                          {rolePercentages && (
-                            <>
-                              <div style={{ fontSize: "0.68rem", opacity: 0.72, color: "#fff" }}>{percentage.toFixed(1)}%</div>
-                              <div className="metrics-progress-bar">
-                                <div className="metrics-progress-fill" style={{ width: `${percentage}%`, background: color }} />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+              </div>
             </div>
 
-            {(global.zoneRows && global.zoneRows.length > 0) || Object.keys(global.byZone).length > 0 ? (
-              <div style={{ marginTop: "1.35rem" }}>
-                <div style={{ fontSize: "0.875rem", marginBottom: "0.5rem", color: "#fff", fontWeight: 700 }}>
-                  Actividad por zona (tag de zona en la reserva)
-                </div>
-                <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", margin: "0 0 0.65rem", lineHeight: 1.4 }}>
-                  Refleja la zona guardada en cada registro de asistencia, no la zona del perfil del alumno.
-                </p>
-                <div className="metrics-zone-scroller" role="list">
-                  {(global.zoneRows && global.zoneRows.length > 0
-                    ? global.zoneRows
-                    : Object.entries(global.byZone)
-                        .sort(([, a], [, b]) => b - a)
-                        .map(([name, count], i) => ({
-                          zoneId: i,
-                          zoneName: name,
-                          attendanceCount: count,
-                          uniqueStudents: 0,
-                        }))
-                  ).map((z) => (
-                    <div key={`${z.zoneId}-${z.zoneName}`} className="metrics-zone-chip" role="listitem">
-                      <strong>📍 {z.zoneName}</strong>
-                      <div className="metrics-zone-meta">
-                        <div>Registros: <strong style={{ color: "#7FCCFF" }}>{z.attendanceCount}</strong></div>
-                        {z.uniqueStudents > 0 ? (
-                          <div>Alumnos únicos: <strong style={{ color: "#B39DFF" }}>{z.uniqueStudents}</strong></div>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
+            {(global.totalPurchases ?? 0) > 0 ? (
+              <div className="metrics-optional-row" aria-label="Métricas complementarias">
+                <div>
+                  <strong>Compras pagadas (histórico):</strong> {global.totalPurchases} — total acumulado en la academia,
+                  sin filtrar por fechas arriba.
                 </div>
               </div>
             ) : null}
+
+            {recordsMismatch ? (
+              <p className="metrics-reconcile-hint">
+                Nota: la suma de posibles asistencias por sesión en el listado ({sumClassRecords}) no coincide con el
+                total global ({global.totalAttendanceRecords}). Suele deberse al agrupado de sesiones o a datos fuera de
+                clase; revisa el detalle por clase.
+              </p>
+            ) : null}
+
+            <details className="metrics-details">
+              <summary>Distribución por rol y por zona</summary>
+              <div className="metrics-details-body">
+                {roleBase === 0 ? (
+                  <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)", margin: 0 }}>
+                    Sin posibles asistencias en este periodo para desglosar por rol.
+                  </p>
+                ) : (
+                  <>
+                    {rolePercentages && (
+                      <div className="metrics-segmented-bar" aria-hidden>
+                        <span style={{ width: `${rolePercentages.leader}%`, background: "#1E88E5" }} />
+                        <span style={{ width: `${rolePercentages.follower}%`, background: "#FFD166" }} />
+                        <span style={{ width: `${rolePercentages.ambos}%`, background: "#4CAF50" }} />
+                        <span style={{ width: `${rolePercentages.otro}%`, background: "rgba(255,255,255,0.35)" }} />
+                      </div>
+                    )}
+                    <div className="metrics-role-grid" style={{ marginTop: "1rem" }}>
+                      {[
+                        { key: "leader" as const, label: "Lead", emoji: "🎯", count: global.byRole.leader || 0, color: "#1E88E5" },
+                        { key: "follower" as const, label: "Follow", emoji: "✨", count: global.byRole.follower || 0, color: "#FFD166" },
+                        { key: "ambos" as const, label: "Ambos", emoji: "👥", count: global.byRole.ambos || 0, color: "#4CAF50" },
+                        { key: "otro" as const, label: "Otros", emoji: "❓", count: global.byRole.otro || 0, color: "rgba(255,255,255,0.85)" },
+                      ].map(({ key, label, emoji, count, color }) => {
+                        const percentage = rolePercentages ? rolePercentages[key] : 0;
+                        return (
+                          <div key={key} className={`metrics-role-card ${key}`}>
+                            <div style={{ fontSize: "0.75rem", opacity: 0.85, marginBottom: "0.35rem", color: "#fff" }}>
+                              {emoji} {label}
+                            </div>
+                            <div style={{ fontSize: "1.35rem", fontWeight: 800, color, marginBottom: "0.2rem" }}>
+                              {count}
+                            </div>
+                            {rolePercentages && (
+                              <>
+                                <div style={{ fontSize: "0.68rem", opacity: 0.72, color: "#fff" }}>{percentage.toFixed(1)}%</div>
+                                <div className="metrics-progress-bar">
+                                  <div className="metrics-progress-fill" style={{ width: `${percentage}%`, background: color }} />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {(global.zoneRows && global.zoneRows.length > 0) || Object.keys(global.byZone).length > 0 ? (
+                  <div style={{ marginTop: "1.25rem" }}>
+                    <div style={{ fontSize: "0.875rem", marginBottom: "0.5rem", color: "#fff", fontWeight: 700 }}>
+                      Por zona (tag en la reserva)
+                    </div>
+                    <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", margin: "0 0 0.65rem", lineHeight: 1.4 }}>
+                      Zona guardada en cada registro, no la del perfil del alumno.
+                    </p>
+                    <div className="metrics-zone-scroller" role="list">
+                      {(global.zoneRows && global.zoneRows.length > 0
+                        ? global.zoneRows
+                        : Object.entries(global.byZone)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([name, count], i) => ({
+                              zoneId: i,
+                              zoneName: name,
+                              attendanceCount: count,
+                              uniqueStudents: 0,
+                            }))
+                      ).map((z) => (
+                        <div key={`${z.zoneId}-${z.zoneName}`} className="metrics-zone-chip" role="listitem">
+                          <strong>📍 {z.zoneName}</strong>
+                          <div className="metrics-zone-meta">
+                            <div>
+                              Registros: <strong style={{ color: "#7FCCFF" }}>{z.attendanceCount}</strong>
+                            </div>
+                            {z.uniqueStudents > 0 ? (
+                              <div>
+                                Alumnos únicos: <strong style={{ color: "#B39DFF" }}>{z.uniqueStudents}</strong>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </details>
           </motion.section>
         )}
 
@@ -965,7 +1196,9 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
                 {searchQuery ? 'No se encontraron resultados' : 'No hay clases con reservas tentativas'}
               </p>
               <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>
-                {searchQuery ? 'Intenta con otros términos de búsqueda' : 'Las reservas aparecerán aquí cuando los usuarios agreguen clases a su calendario'}
+                {searchQuery
+                  ? 'Intenta con otros términos de búsqueda'
+                  : 'Cuando haya registros o asistencias en el periodo, verás aquí el detalle por sesión.'}
               </p>
             </div>
           ) : (
@@ -976,6 +1209,8 @@ export function AcademyMetricsPanel({ academyId }: PanelProps) {
                   classSummary={classSummary}
                   isExpanded={expandedClasses.has(classSummary.sessionKey)}
                   onToggle={() => toggleClassExpanded(classSummary.sessionKey)}
+                  academyId={academyId}
+                  canEditAttendanceAndPayment={canEditAttendanceAndPayment}
                 />
               ))}
             </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import type { StudentDetail, StudentHistoryItem } from "@/hooks/useAcademyStudents";
+import type { StudentDetail } from "@/hooks/useAcademyStudents";
 import { StudentClassHistoryList } from "@/components/profile/academy-metrics/StudentClassHistoryList";
 
 type Props = {
@@ -7,8 +7,12 @@ type Props = {
   loading: boolean;
   errorMessage?: string;
   onClose: () => void;
-  onMarkAttended?: (item: StudentHistoryItem) => void;
-  markingId?: number | null;
+  /** Estilo plano para usar dentro de modal (sin caja anidada). */
+  embedInModal?: boolean;
+  /** Permite editar asistencia/pago en el historial (academia: solo Premium). */
+  academyId?: number;
+  teacherId?: number;
+  canEditAttendancePayment?: boolean;
 };
 
 function formatDateTime(value: string | null): string {
@@ -28,33 +32,36 @@ function formatDateTime(value: string | null): string {
   }
 }
 
-function toPairs(data: Record<string, number>) {
-  return Object.entries(data).sort(([, a], [, b]) => b - a);
-}
-
 export function StudentDetailPanel({
   detail,
   loading,
   errorMessage,
   onClose,
-  onMarkAttended,
-  markingId = null,
+  embedInModal,
+  academyId,
+  teacherId,
+  canEditAttendancePayment,
 }: Props) {
   return (
-    <div className="students-detail-panel">
-      <div className="students-detail-head">
-        <div>
-          <h4>Detalle de alumno</h4>
+    <div
+      className={`students-detail-panel${embedInModal ? " students-detail-panel--embed" : ""}`}
+    >
+      <div className="students-detail-head students-detail-head--app">
+        <div className="students-detail-identity">
           {detail ? (
-            <p>
-              {detail.student.name}
-              {detail.student.email ? ` · ${detail.student.email}` : ""}
-            </p>
-          ) : null}
+            <>
+              <h4 className="students-detail-name">{detail.student.name}</h4>
+              {detail.student.email ? <p className="students-detail-email">{detail.student.email}</p> : null}
+            </>
+          ) : (
+            <h4 className="students-detail-name">Alumno</h4>
+          )}
         </div>
-        <button type="button" className="students-detail-close" onClick={onClose}>
-          Cerrar
-        </button>
+        {embedInModal ? null : (
+          <button type="button" className="students-detail-close" onClick={onClose}>
+            Cerrar
+          </button>
+        )}
       </div>
 
       {loading ? <div className="students-detail-empty">Cargando detalle...</div> : null}
@@ -65,87 +72,43 @@ export function StudentDetailPanel({
 
       {!loading && !errorMessage && detail ? (
         <>
-          <div className="students-detail-kpis">
-            <div className="students-detail-kpi">
+          <div className="students-detail-kpi-strip" aria-label="Resumen del alumno">
+            <div className="students-detail-kpi-pill">
               <span>Registros</span>
               <strong>{detail.metrics.totalRecords}</strong>
             </div>
-            <div className="students-detail-kpi">
-              <span>Reservas</span>
-              <strong>{detail.metrics.totalReservations}</strong>
-            </div>
-            <div className="students-detail-kpi">
-              <span>Compras</span>
-              <strong>{detail.metrics.totalPaid}</strong>
-            </div>
-            <div className="students-detail-kpi">
-              <span>Asistio</span>
+            <div className="students-detail-kpi-pill">
+              <span>Asistencias</span>
               <strong>{detail.metrics.totalAttended}</strong>
             </div>
-            <div className="students-detail-kpi">
-              <span>Clases distintas</span>
-              <strong>{detail.metrics.distinctClasses}</strong>
+            <div className="students-detail-kpi-pill">
+              <span>Pagos</span>
+              <strong>{detail.metrics.totalPaid}</strong>
             </div>
           </div>
 
-          <div className="students-detail-meta-grid">
-            <div>
-              <label>Primera actividad</label>
-              <p>{formatDateTime(detail.metrics.firstActivityAt)}</p>
-            </div>
-            <div>
-              <label>Última actividad</label>
-              <p>{formatDateTime(detail.metrics.lastActivityAt)}</p>
-            </div>
-            <div>
-              <label>Última clase</label>
-              <p>{detail.metrics.lastClassName || "—"}</p>
-            </div>
-            <div>
-              <label>Sesiones distintas</label>
-              <p>{detail.metrics.distinctSessions}</p>
-            </div>
-          </div>
+          {detail.metrics.lastActivityAt || detail.metrics.lastClassName ? (
+            <p className="students-detail-one-liner">
+              {detail.metrics.lastActivityAt ? (
+                <span>Última act. {formatDateTime(detail.metrics.lastActivityAt)}</span>
+              ) : null}
+              {detail.metrics.lastClassName ? (
+                <span>
+                  {detail.metrics.lastActivityAt ? " · " : ""}
+                  {detail.metrics.lastClassName}
+                </span>
+              ) : null}
+            </p>
+          ) : null}
 
-          <div className="students-detail-breakdowns">
-            <div>
-              <h5>Estado</h5>
-              <ul>
-                {toPairs(detail.statusBreakdown).map(([key, value]) => (
-                  <li key={key}>
-                    <span>{key}</span>
-                    <strong>{value}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h5>Roles</h5>
-              <ul>
-                {toPairs(detail.roleBreakdown).map(([key, value]) => (
-                  <li key={key}>
-                    <span>{key}</span>
-                    <strong>{value}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h5>Zonas</h5>
-              <ul>
-                {toPairs(detail.zoneBreakdown).map(([key, value]) => (
-                  <li key={key}>
-                    <span>{key}</span>
-                    <strong>{value}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="students-detail-section">
-            <h5>Historial de clases</h5>
-            <StudentClassHistoryList history={detail.history} onMarkAttended={onMarkAttended} markingId={markingId} />
+          <div className="students-detail-section students-detail-section--flat">
+            <h5>Historial</h5>
+            <StudentClassHistoryList
+              history={detail.history}
+              academyId={academyId}
+              teacherId={teacherId}
+              canEditAttendancePayment={canEditAttendancePayment}
+            />
           </div>
         </>
       ) : null}

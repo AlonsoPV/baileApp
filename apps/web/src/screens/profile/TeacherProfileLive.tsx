@@ -25,6 +25,7 @@ import { EventHero } from "../../components/events/EventDetail";
 import "../../components/events/EventDetail/eventDetailScreen.css";
 import { routes } from "../../routes/registry";
 import BankAccountDisplay from "../../components/profile/BankAccountDisplay";
+import { SubscriptionTierBadge } from "../../components/profile/SubscriptionTierBadge";
 
 // Lazy load heavy components
 const BioSection = lazy(() => import("../../components/profile/BioSection").then(m => ({ default: m.BioSection })));
@@ -689,53 +690,7 @@ export default function TeacherProfileLive() {
           transition={{ duration: 0.45, delay: 0.05 }}
           className="profile-live-hero-below glass-card-container"
         >
-          {((teacher as any)?.estado_aprobacion === "aprobado") && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.75rem",
-                flexWrap: "wrap",
-                marginBottom: "1rem",
-              }}
-            >
-              <div
-                className="badge"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: ".45rem",
-                  padding: ".35rem .6rem",
-                  borderRadius: "999px",
-                  fontWeight: 800,
-                  background: "linear-gradient(135deg, #106c37, #0b5)",
-                  border: "1px solid #13a65a",
-                  boxShadow: "0 8px 18px rgba(0,0,0,.35)",
-                  fontSize: ".82rem",
-                  color: "#fff",
-                }}
-              >
-                <div
-                  className="dot"
-                  style={{
-                    width: "16px",
-                    height: "16px",
-                    display: "grid",
-                    placeItems: "center",
-                    background: "#16c784",
-                    borderRadius: "50%",
-                    color: "#062d1f",
-                    fontSize: ".75rem",
-                    fontWeight: 900,
-                  }}
-                >
-                  ✓
-                </div>
-                <span>Verificado</span>
-              </div>
-            </div>
-          )}
+          <SubscriptionTierBadge subscriptionPlan={(teacher as any)?.subscription_plan} />
           <div id="profile-hero-bio" style={{ width: "100%", marginBottom: "1rem" }}>
             <Suspense fallback={null}>
               <BioSection

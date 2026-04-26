@@ -132,6 +132,12 @@ export default defineConfig({
       // RSVP expiration logic
       "utils/eventDateExpiration.test.ts",
       "utils/eventWhatsapp.test.ts",
+      "utils/subscriptionPlan.test.ts",
+      "utils/academySpecificClassLimits.test.ts",
+      "utils/academyWeeklyClassRules.test.ts",
+      "utils/academyLocationLimits.test.ts",
+      "utils/shareUrls.test.ts",
+      "utils/smartPageDeepLink.validation.test.ts",
       // Organizer FAQ: markdown sanitization, save flow, public section
       "utils/organizerFaqRichText.test.ts",
       "utils/organizerFaqSaveFlow.test.ts",

@@ -27,6 +27,7 @@ function ClassesSectionContent({ filters, q, enabled = true, renderAs = 'slider'
   // Obtener academias y maestros para construir clases
   const academiasQuery = useExploreQuery({
     type: 'academias',
+    academiasMode: 'all_approved',
     q: q || undefined,
     ritmos: filters.ritmos,
     zonas: filters.zonas,

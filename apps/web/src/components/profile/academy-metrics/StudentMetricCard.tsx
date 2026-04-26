@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronRight } from "lucide-react";
 import type { StudentListItem } from "@/hooks/useAcademyStudents";
 
 type Props = {
@@ -15,7 +16,6 @@ function formatDate(value: string | null): string {
     return d.toLocaleDateString("es-MX", {
       day: "2-digit",
       month: "short",
-      year: "numeric",
     });
   } catch {
     return value;
@@ -23,55 +23,33 @@ function formatDate(value: string | null): string {
 }
 
 export function StudentMetricCard({ student, selected, onSelect }: Props) {
-  const roleLabel =
-    student.primaryRole === "leader"
-      ? "Lead"
-      : student.primaryRole === "follower"
-      ? "Follow"
-      : student.primaryRole === "ambos"
-      ? "Ambos"
-      : "Otro";
-
+  const recent =
+    student.lastActivityAt && student.totalAttended > 0
+      ? `Reciente ${formatDate(student.lastActivityAt)}`
+      : null;
   return (
     <button
       type="button"
-      className={`students-row${selected ? " selected" : ""}`}
+      className={`students-row--lite${selected ? " students-row--selected" : ""}`}
       onClick={onSelect}
       aria-pressed={selected}
     >
-      <div className="students-row-main">
-        <div className="students-row-name">{student.studentName}</div>
-        <div className="students-row-meta">
-          <span>{roleLabel}</span>
-          <span className="dot">·</span>
-          <span>{student.primaryZone || "Sin zona"}</span>
-          {student.lastClassName ? (
-            <>
-              <span className="dot">·</span>
-              <span>{student.lastClassName}</span>
-            </>
-          ) : null}
+      <div className="students-row-main students-row-main--lite">
+        <div className="students-row-top">
+          <span className="students-row-name">{student.studentName}</span>
+          <span className="students-row-chevron" aria-hidden>
+            <ChevronRight size={20} strokeWidth={2.25} />
+          </span>
         </div>
-      </div>
-
-      <div className="students-row-kpis">
-        <div className="students-row-kpi">
-          <span>Asistencias</span>
-          <strong>{student.totalAttended}</strong>
+        <div className="students-row-chips" aria-label="Resumen">
+          <span className="students-chip">
+            {student.distinctClasses} {student.distinctClasses === 1 ? "clase" : "clases"}
+          </span>
+          <span className="students-chip students-chip--accent">
+            {student.totalAttended} asist.
+          </span>
         </div>
-        <div className="students-row-kpi">
-          <span>Reservas</span>
-          <strong>{student.totalTentative}</strong>
-        </div>
-        <div className="students-row-kpi">
-          <span>Compras</span>
-          <strong>{student.totalPaid}</strong>
-        </div>
-      </div>
-
-      <div className="students-row-dates">
-        <span>Primera: {formatDate(student.firstActivityAt)}</span>
-        <span>Última: {formatDate(student.lastActivityAt)}</span>
+        {recent ? <p className="students-row-hint">{recent}</p> : null}
       </div>
     </button>
   );

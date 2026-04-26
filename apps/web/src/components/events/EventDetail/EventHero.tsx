@@ -10,7 +10,8 @@ export interface EventHeroProps {
   dateStr: string;
   timeRange: string;
   venueName: string;
-  onShare: () => void;
+  /** Si no se pasa, no se muestra el botón compartir. */
+  onShare?: () => void;
   onToggleFavorite?: () => void;
   favoriteActive?: boolean;
   togglingEvent?: boolean;
@@ -80,14 +81,16 @@ export function EventHero({
               {favoriteActive ? <Heart size={20} fill="currentColor" strokeWidth={2} /> : <Heart size={20} strokeWidth={2} />}
             </button>
           )}
-          <button
-            type="button"
-            className="eds-hero__btn"
-            onClick={onShare}
-            aria-label="Compartir"
-          >
-            <Share2 size={20} strokeWidth={2} />
-          </button>
+          {onShare ? (
+            <button
+              type="button"
+              className="eds-hero__btn"
+              onClick={onShare}
+              aria-label="Compartir"
+            >
+              <Share2 size={20} strokeWidth={2} />
+            </button>
+          ) : null}
         </div>
       </div>
       <div className="eds-hero__content">

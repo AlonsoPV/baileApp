@@ -1,6 +1,6 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
-import CrearClase, { type CrearClaseValue } from "../events/CrearClase";
+import CrearClase, { type ProfileClassLimitContext, type CrearClaseValue } from "../events/CrearClase";
 import "@/styles/crearClase.css";
 
 type Tag = { id: number; nombre: string };
@@ -30,6 +30,8 @@ export type ProfileEditorCrearClaseFormProps = {
   title: string;
   onCancel: () => void;
   onSubmit: (v: CrearClaseValue) => void | Promise<void>;
+  /** Cupos de cronograma por plan (academia / maestro). */
+  profileClassLimitContext?: ProfileClassLimitContext | null;
 };
 
 const COPY = {
@@ -61,6 +63,7 @@ export default function ProfileEditorCrearClaseForm({
   title,
   onCancel,
   onSubmit,
+  profileClassLimitContext = null,
 }: ProfileEditorCrearClaseFormProps) {
   const copy = COPY[profileKind];
 
@@ -112,6 +115,7 @@ export default function ProfileEditorCrearClaseForm({
           title={title}
           onCancel={onCancel}
           onSubmit={onSubmit}
+          profileClassLimitContext={profileClassLimitContext}
         />
       )}
     </>

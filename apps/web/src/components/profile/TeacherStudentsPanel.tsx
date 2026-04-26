@@ -1,15 +1,14 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   useTeacherStudentDetail,
   useTeacherStudentsGlobalMetrics,
   useTeacherStudentsList,
 } from "@/hooks/useTeacherStudents";
-import type { DateFilter, StudentHistoryItem, StudentRoleFilter, StudentSegment, StudentsFilters } from "@/hooks/useAcademyStudents";
+import type { DateFilter, StudentRoleFilter, StudentSegment, StudentsFilters } from "@/hooks/useAcademyStudents";
 import { StudentMetricCard } from "@/components/profile/academy-metrics/StudentMetricCard";
 import { StudentDetailPanel } from "@/components/profile/academy-metrics/StudentDetailPanel";
-import { useMarkClassAttendanceAttended } from "@/hooks/useClassAttendanceActions";
+import { Modal } from "@/components/ui/Modal";
 
 type PanelProps = { teacherId: number };
 
@@ -35,7 +34,6 @@ function toPct(value: number, total: number): string {
 }
 
 export function TeacherStudentsPanel({ teacherId }: PanelProps) {
-  const queryClient = useQueryClient();
   const [dateFilter, setDateFilter] = React.useState<DateFilter>("all");
   const [customFrom, setCustomFrom] = React.useState("");
   const [customTo, setCustomTo] = React.useState("");
@@ -69,7 +67,6 @@ export function TeacherStudentsPanel({ teacherId }: PanelProps) {
     selectedUserId,
     filters,
   );
-  const markAttended = useMarkClassAttendanceAttended();
 
   React.useEffect(() => {
     if (selectedUserId && !students.some((s) => s.userId === selectedUserId)) {
@@ -87,19 +84,6 @@ export function TeacherStudentsPanel({ teacherId }: PanelProps) {
     () =>
       Object.values(metrics?.statusRecordBreakdown || {}).reduce((acc, value) => acc + Number(value || 0), 0),
     [metrics?.statusRecordBreakdown],
-  );
-
-  const handleMarkAttended = React.useCallback(
-    async (item: StudentHistoryItem) => {
-      await markAttended.mutateAsync(item.id);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["teacher-students-global", teacherId] }),
-        queryClient.invalidateQueries({ queryKey: ["teacher-students-list", teacherId] }),
-        queryClient.invalidateQueries({ queryKey: ["teacher-student-detail", teacherId, selectedUserId] }),
-        queryClient.invalidateQueries({ queryKey: ["teacher-class-metrics", teacherId] }),
-      ]);
-    },
-    [markAttended, queryClient, selectedUserId, teacherId],
   );
 
   if (loadingGlobal && loadingList) {
@@ -154,6 +138,23 @@ export function TeacherStudentsPanel({ teacherId }: PanelProps) {
         .students-status-breakdown { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
         .students-status-pill { border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 0.28rem 0.55rem; background: rgba(255,255,255,.05); color: rgba(255,255,255,.72); font-size: 0.7rem; font-weight: 600; }
         .students-layout { display: grid; gap: 0.9rem; grid-template-columns: 1fr; }
+        .students-list { display: grid; gap: 0.6rem; }
+        .students-row {
+          display: block; width: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 14px;
+          background: rgba(255,255,255,.025); text-align: left; padding: 0.7rem; color: inherit; cursor: pointer;
+        }
+        .students-row.selected { border-color: rgba(240,147,251,.36); background: rgba(240,147,251,.08); }
+        .students-row-main { min-width: 0; }
+        .students-row-name { color: #fff; font-size: 0.94rem; font-weight: 700; line-height: 1.25; }
+        .students-row-meta { color: rgba(255,255,255,.52); font-size: 0.74rem; margin-top: 0.2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem; }
+        .dot { opacity: 0.5; padding: 0 0.22rem; }
+        .students-row-kpis { display: grid; gap: 0.35rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 0.55rem; }
+        .students-row-kpi { border: 1px solid rgba(255,255,255,.08); border-radius: 9px; padding: 0.35rem 0.4rem; background: rgba(255,255,255,.04); }
+        .students-row-kpi span { display: block; color: rgba(255,255,255,.45); font-size: 0.58rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+        .students-row-kpi strong { display: block; color: #fff; font-size: 0.95rem; margin-top: 0.15rem; font-weight: 800; }
+        .students-row-dates { margin-top: 0.45rem; display: flex; gap: 0.65rem; flex-wrap: wrap; color: rgba(255,255,255,.43); font-size: 0.68rem; }
+        .students-row-main--compact .students-row-meta { display: none; }
+        .students-row-dates--one { margin-top: 0.35rem; }
         .students-empty { color: rgba(255,255,255,.58); font-size: 0.83rem; text-align: center; padding: 1rem 0.5rem; }
         .students-detail-panel { border: 1px solid rgba(255,255,255,.11); border-radius: 16px; background: rgba(0,0,0,.22); padding: 0.85rem; }
         .students-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; }
@@ -164,6 +165,10 @@ export function TeacherStudentsPanel({ teacherId }: PanelProps) {
         .students-detail-kpi { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(255,255,255,.03); padding: 0.45rem 0.55rem; }
         .students-detail-kpi span { display: block; color: rgba(255,255,255,.5); font-size: 0.62rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
         .students-detail-kpi strong { display: block; margin-top: 0.1rem; color: #fff; font-size: 1rem; font-weight: 800; }
+        .students-detail-kpis--compact { margin-top: 0.5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
+        @media (min-width: 520px) { .students-detail-kpis--compact { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        .students-detail-meta-compact { margin-top: 0.45rem; color: rgba(255, 255, 255, 0.5); font-size: 0.72rem; line-height: 1.4; }
+        .students-detail-hint { margin: 0.35rem 0 0; color: rgba(255, 255, 255, 0.42); font-size: 0.7rem; line-height: 1.4; }
         .students-detail-meta-grid { margin-top: 0.7rem; display: grid; gap: 0.5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .students-detail-meta-grid label { display: block; color: rgba(255,255,255,.44); font-size: 0.62rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 0.1rem; font-weight: 700; }
         .students-detail-meta-grid p { margin: 0; color: #fff; font-size: 0.78rem; line-height: 1.35; }
@@ -184,9 +189,115 @@ export function TeacherStudentsPanel({ teacherId }: PanelProps) {
         .students-history-created { color: rgba(255,255,255,.38); font-size: 0.66rem; }
         .students-history-action { justify-self: flex-start; border: 1px solid rgba(76,175,80,.35); border-radius: 999px; background: rgba(76,175,80,.16); color: #d8ffd8; font-size: 0.68rem; font-weight: 700; padding: 0.32rem 0.6rem; cursor: pointer; }
         .students-history-action:disabled { opacity: 0.65; cursor: wait; }
+        .students-history-list { display: grid; gap: 0.6rem; }
+        .students-history-rows--std { gap: 0.4rem; }
+        .students-history-std { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; background: rgba(255, 255, 255, 0.04); padding: 0.5rem 0.55rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem 0.65rem; }
+        .students-history-std--updating { opacity: 0.7; }
+        .students-history-std__name { flex: 1 1 8rem; min-width: 0; font-size: 0.84rem; font-weight: 600; color: #fff; line-height: 1.3; }
+        .students-history-std__controls { flex: 1 1 14rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem 0.75rem; }
+        .students-history-std__readonly { font-size: 0.7rem; color: rgba(255, 255, 255, 0.48); line-height: 1.4; }
+        .students-std-ctl { display: flex; flex-wrap: nowrap; align-items: center; gap: 0.35rem; }
+        .students-std-ctl--pay { gap: 0.35rem; }
+        .students-std-ctl__lbl { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255, 255, 255, 0.4); }
+        .students-std-ctl__hint { font-size: 0.68rem; font-weight: 600; color: rgba(255, 255, 255, 0.5); min-width: 1.25rem; }
+        .students-switch { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 40px; min-width: 0; padding: 0; border: none; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .students-switch:disabled, .students-pay-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+        .students-switch__track { display: block; width: 2.4rem; height: 1.35rem; border-radius: 999px; background: rgba(255, 255, 255, 0.2); position: relative; flex-shrink: 0; }
+        .students-switch[aria-checked="true"] .students-switch__track { background: rgba(100, 200, 150, 0.55); }
+        .students-switch__thumb { position: absolute; top: 0.1rem; left: 0.1rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12); transition: transform 0.12s ease; }
+        .students-switch[aria-checked="true"] .students-switch__thumb { transform: translateX(1.02rem); }
+        @media (prefers-reduced-motion: reduce) { .students-switch__thumb { transition: none; } }
+        .students-pay-btn { min-height: 40px; padding: 0 0.6rem; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.72); font-size: 0.76rem; font-weight: 700; cursor: pointer; }
+        .students-pay-btn--on { background: rgba(200, 170, 90, 0.2); border-color: rgba(200, 170, 90, 0.45); color: #f5e5b8; }
+        @media (max-width: 420px) { .students-history-std__controls { justify-content: space-between; width: 100%; } }
         @media (min-width: 960px) {
-          .students-layout { grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr); align-items: start; }
           .students-detail-breakdowns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        .students-list-block { display: flex; flex-direction: column; gap: 0.5rem; }
+        .students-row--lite {
+          text-align: left; display: block; width: 100%;
+          border: 1px solid rgba(255,255,255,0.09); border-radius: 14px;
+          background: rgba(255,255,255,0.03); padding: 0.65rem 0.7rem 0.65rem 0.8rem;
+          color: inherit; cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease;
+        }
+        .students-row--lite:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+        .students-row--selected, .students-row--selected:hover {
+          border-color: rgba(240,147,251,0.35); background: rgba(240,147,251,0.08);
+        }
+        .students-row-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+        .students-row--lite .students-row-name { font-size: 0.95rem; }
+        .students-row-chevron { color: rgba(255,255,255,0.3); flex-shrink: 0; display: flex; }
+        .students-row-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+        .students-chip {
+          font-size: 0.68rem; font-weight: 600; padding: 0.2rem 0.45rem; border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.15);
+        }
+        .students-chip--accent { border-color: rgba(120,200,160,0.35); color: rgba(200,255,220,0.9); }
+        .students-row-hint { margin: 0.35rem 0 0; font-size: 0.66rem; color: rgba(255,255,255,0.4); }
+        .students-detail-panel--embed {
+          border: none; background: transparent; box-shadow: none; border-radius: 0; padding: 1rem 1rem 1.25rem;
+        }
+        .students-detail-head--app { align-items: flex-start; }
+        .students-detail-identity { min-width: 0; }
+        .students-detail-name { margin: 0; color: #fff; font-size: 1.05rem; font-weight: 700; line-height: 1.25; }
+        .students-detail-email { margin: 0.25rem 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.5); word-break: break-word; }
+        .students-detail-kpi-strip {
+          display: flex; gap: 0.45rem; margin-top: 0.6rem; padding: 0.45rem 0.15rem 0.55rem;
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .students-detail-kpi-pill { flex: 1 1 0; min-width: 0; }
+        .students-detail-kpi-pill span {
+          display: block; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;
+          color: rgba(255,255,255,0.4); font-weight: 700;
+        }
+        .students-detail-kpi-pill strong {
+          display: block; margin-top: 0.08rem; font-size: 1.05rem; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums;
+        }
+        .students-detail-one-liner { margin: 0.4rem 0 0; font-size: 0.7rem; line-height: 1.4; color: rgba(255,255,255,0.45); }
+        .students-detail-section--flat { border-top: 1px solid rgba(255,255,255,0.08); margin-top: 0.65rem; padding-top: 0.55rem; }
+        .students-detail-section--flat h5 {
+          margin: 0 0 0.4rem; color: rgba(255,255,255,0.5); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .students-history-list--flat { gap: 0.85rem; }
+        .students-history-rows--flat { display: flex; flex-direction: column; gap: 0; }
+        .students-hist-line {
+          display: flex; flex-direction: column; gap: 0.4rem; padding: 0.55rem 0;
+          border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        .students-hist-line:last-child { border-bottom: none; }
+        .students-hist-line--busy { opacity: 0.65; }
+        .students-hist-line__title { font-size: 0.84rem; font-weight: 600; color: rgba(255,255,255,0.95); line-height: 1.3; }
+        .students-hist-line__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.55rem; }
+        .students-hist-line__ro { margin: 0; font-size: 0.7rem; color: rgba(255,255,255,0.45); }
+        .students-hist-toggle {
+          display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.3rem;
+          border: none; background: none; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .students-hist-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
+        .students-hist-toggle__track {
+          width: 2.15rem; height: 1.2rem; border-radius: 999px; background: rgba(255,255,255,0.18); position: relative;
+        }
+        .students-hist-toggle[aria-checked="true"] .students-hist-toggle__track { background: rgba(100,200,150,0.55); }
+        .students-hist-toggle__thumb {
+          position: absolute; top: 0.1rem; left: 0.1rem; width: 0.95rem; height: 0.95rem; border-radius: 50%;
+          background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.1); transition: transform 0.12s ease;
+        }
+        .students-hist-toggle[aria-checked="true"] .students-hist-toggle__thumb { transform: translateX(0.92rem); }
+        .students-hist-toggle__text { font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.45); }
+        .students-hist-pay {
+          min-height: 2.3rem; padding: 0 0.65rem; border-radius: 9px; font-size: 0.75rem; font-weight: 700;
+          border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.65); cursor: pointer;
+        }
+        .students-hist-pay:disabled { cursor: not-allowed; }
+        .students-hist-pay--on {
+          background: rgba(200, 170, 90, 0.18); border-color: rgba(200, 170, 90, 0.4); color: #f0e4c0;
+        }
+        @media (min-width: 480px) {
+          .students-hist-line {
+            flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 0.75rem;
+          }
+          .students-hist-line__title { flex: 1 1 10rem; min-width: 0; }
+          .students-hist-line__actions { flex: 0 0 auto; justify-content: flex-end; max-width: 100%; }
         }
       `}</style>
 
@@ -263,38 +374,43 @@ export function TeacherStudentsPanel({ teacherId }: PanelProps) {
 
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }} className="students-card">
           <div className="students-head">
-            <h3>Listado y detalle</h3>
-            <p>Toca un alumno para ver su ficha, métricas e historial de clases.</p>
+            <h3>Alumnos en tu lista</h3>
+            <p>Toca un nombre para abrir su ficha y el historial.</p>
           </div>
 
-          <div className="students-layout">
-            <div className="students-list">
-              {loadingList ? (
-                <div className="students-empty">Actualizando listado...</div>
-              ) : students.length === 0 ? (
-                <div className="students-empty">Sin alumnos para los filtros seleccionados.</div>
-              ) : (
-                students.map((student) => (
-                  <StudentMetricCard
-                    key={student.userId}
-                    student={student}
-                    selected={selectedUserId === student.userId}
-                    onSelect={() => setSelectedUserId((prev) => (prev === student.userId ? null : student.userId))}
-                  />
-                ))
-              )}
-            </div>
-
-            <StudentDetailPanel
-              detail={detail}
-              loading={loadingDetail}
-              errorMessage={detailError ? (detailError as Error).message : undefined}
-              onClose={() => setSelectedUserId(null)}
-              onMarkAttended={handleMarkAttended}
-              markingId={markAttended.isPending ? Number(markAttended.variables ?? 0) : null}
-            />
+          <div className="students-list-block">
+            {loadingList ? (
+              <div className="students-empty">Actualizando listado...</div>
+            ) : students.length === 0 ? (
+              <div className="students-empty">Sin alumnos para los filtros seleccionados.</div>
+            ) : (
+              students.map((student) => (
+                <StudentMetricCard
+                  key={student.userId}
+                  student={student}
+                  selected={Boolean(selectedUserId) && selectedUserId === student.userId}
+                  onSelect={() => setSelectedUserId(student.userId)}
+                />
+              ))
+            )}
           </div>
         </motion.section>
+
+        <Modal
+          open={Boolean(selectedUserId)}
+          onClose={() => setSelectedUserId(null)}
+          contentClassName="p-0"
+          panelClassName="relative max-h-[min(90vh,720px)] w-full max-w-md sm:max-w-lg overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#131118] border border-white/10 shadow-2xl self-end sm:self-center"
+        >
+          <StudentDetailPanel
+            embedInModal
+            detail={detail}
+            loading={loadingDetail}
+            errorMessage={detailError ? (detailError as Error).message : undefined}
+            onClose={() => setSelectedUserId(null)}
+            teacherId={teacherId}
+          />
+        </Modal>
       </div>
     </>
   );

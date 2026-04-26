@@ -3,6 +3,32 @@ import { supabase } from "@/lib/supabase";
 
 export type RoleType = 'lead' | 'follow' | 'ambos' | 'otro' | 'leader' | 'follower' | null;
 
+export type ClassReservationPaymentType = 'class' | 'package' | 'other';
+
+function rowAttendedFromData(row: { status?: string; attended?: boolean | null }): boolean {
+  if (typeof row.attended === 'boolean') return row.attended;
+  return String(row.status ?? '') === 'attended';
+}
+
+function rowPaidFromData(row: { status?: string; paid?: boolean | null }): boolean {
+  if (typeof row.paid === 'boolean') return row.paid;
+  return String(row.status ?? '') === 'pagado';
+}
+
+function rowPaymentTypeFromData(
+  row: { payment_type?: string | null; paid?: boolean | null; status?: string }
+): ClassReservationPaymentType | null {
+  if (!rowPaidFromData(row)) return null;
+  const t = row.payment_type;
+  if (t === 'class' || t === 'package' || t === 'other') return t;
+  return 'class';
+}
+
+/** `events_date.id` vía PostgREST + `in.()` debe ser entero en rango seguro (evita 400 y pérdida de precisión). */
+function isSafeIntegerForInFilter(n: number): boolean {
+  return Number.isInteger(n) && n > 0 && n <= Number.MAX_SAFE_INTEGER;
+}
+
 export type DateFilter = 'today' | 'this_week' | 'this_month' | 'all' | 'custom';
 
 export interface MetricsFilters {
@@ -50,6 +76,12 @@ export interface ClassReservationMetric {
   roleType: RoleType;
   zone?: string;
   createdAt: string;
+  /** Asistió a la sesión (independiente de pago). */
+  attended: boolean;
+  /** Pago registrado. */
+  paid: boolean;
+  /** Solo si paid: class | package | other */
+  paymentType: ClassReservationPaymentType | null;
 }
 
 export interface ClassSummary {
@@ -167,6 +199,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             role_baile,
             zona_tag_id,
             status,
+            attended,
+            paid,
+            payment_type,
             fecha_especifica,
             created_at
           `)
@@ -340,25 +375,34 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           });
         }
         
-        // Para clases que no se encontraron, intentar buscar en event_dates como último recurso
-        const missingClassIds = classIds.filter(id => !classInfoMap.has(id));
-        if (missingClassIds.length > 0) {
-          const { data: eventDates } = await supabase
+        // Para clases que no se encontraron, intentar buscar en event_dates como último recurso.
+        // Omitir IDs > MAX_SAFE_INTEGER: no se serializan bien a JSON/PostgREST y suelen ser class_id
+        // sintéticos (cronograma) que no existen en events_date.
+        const missingClassIds = classIds.filter((id) => !classInfoMap.has(id));
+        const eventDateInIds = missingClassIds.filter(isSafeIntegerForInFilter);
+        if (eventDateInIds.length > 0) {
+          const { data: eventDates, error: eventDateErr } = await supabase
             .from("events_date")
             .select("id, nombre, titulo")
-            .in("id", missingClassIds);
-          
-          (eventDates || []).forEach((event: any) => {
-            if (!classInfoMap.has(event.id)) {
-              classInfoMap.set(event.id, {
-                nombre: event.titulo || event.nombre || `Clase #${event.id}`,
-                fecha: null,
-                horaInicio: null,
-                diaSemana: null,
-                diaSemanaNombre: null
-              });
+            .in("id", eventDateInIds);
+          if (eventDateErr) {
+            if (import.meta.env.DEV) {
+              // eslint-disable-next-line no-console
+              console.warn("[useAcademyMetrics] events_date by class_id", eventDateErr);
             }
-          });
+          } else {
+            (eventDates || []).forEach((event: any) => {
+              if (!classInfoMap.has(event.id)) {
+                classInfoMap.set(event.id, {
+                  nombre: event.titulo || event.nombre || `Clase #${event.id}`,
+                  fecha: null,
+                  horaInicio: null,
+                  diaSemana: null,
+                  diaSemanaNombre: null
+                });
+              }
+            });
+          }
         }
         
         // Para clases que aún no se encontraron, usar el ID como nombre (último fallback)
@@ -475,8 +519,10 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         
         // Actualizar métricas globales (solo si no vinieron de rpc_get_academy_global_metrics)
         if (!global.globalRpcLoaded) {
-          if (row.status === "tentative") global.totalTentative += 1;
-          if (row.status === "attended") global.totalAttended += 1;
+          const a = rowAttendedFromData(row);
+          const p = rowPaidFromData(row);
+          if (!a && !p && String(row.status ?? '') === 'tentative') global.totalTentative += 1;
+          if (a) global.totalAttended += 1;
           global.totalAttendanceRecords += 1;
           global.byRole[normalizedRole] = (global.byRole[normalizedRole] || 0) + 1;
           if (row.zona_tag_id && zonaInfoMap.has(row.zona_tag_id)) {
@@ -539,7 +585,10 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
           zone: row.zona_tag_id && zonaInfoMap.has(row.zona_tag_id) 
             ? zonaInfoMap.get(row.zona_tag_id)! 
             : undefined,
-          createdAt: row.created_at
+          createdAt: row.created_at,
+          attended: rowAttendedFromData(row),
+          paid: rowPaidFromData(row),
+          paymentType: rowPaymentTypeFromData(row),
         });
       });
 
@@ -553,8 +602,14 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         });
         global.uniqueStudents = userSet.size;
         global.totalAttendanceRecords = rows.length;
-        global.totalTentative = rows.filter((row: any) => row.status === "tentative").length;
-        global.totalAttended = rows.filter((row: any) => row.status === "attended").length;
+        global.totalTentative = rows.filter(
+          (row: any) =>
+            !rowAttendedFromData(row) &&
+            !rowPaidFromData(row) &&
+            String(row.status ?? "") === "tentative"
+        ).length;
+        global.totalAttended = rows.filter((row: any) => rowAttendedFromData(row)).length;
+        global.totalPurchases = rows.filter((row: any) => rowPaidFromData(row)).length;
         global.sessionsWithReservations = sessionSet.size;
         const { data: paCron } = await supabase
           .from("profiles_academy")
@@ -602,8 +657,14 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         
         if (existing) {
           existing.totalAsistentes += 1;
-          if (reservation.status === "tentative") existing.totalTentative += 1;
-          if (reservation.status === "attended") existing.totalAttended += 1;
+          if (
+            !reservation.attended &&
+            !reservation.paid &&
+            reservation.status === "tentative"
+          ) {
+            existing.totalTentative += 1;
+          }
+          if (reservation.attended) existing.totalAttended += 1;
           existing.byRole[reservation.roleType || 'otro'] = (existing.byRole[reservation.roleType || 'otro'] || 0) + 1;
           existing.reservations.push(reservation);
           
@@ -649,8 +710,13 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
             diaSemana,
             diaSemanaNombre,
             totalAsistentes: 1,
-            totalTentative: reservation.status === "tentative" ? 1 : 0,
-            totalAttended: reservation.status === "attended" ? 1 : 0,
+            totalTentative:
+              !reservation.attended &&
+              !reservation.paid &&
+              reservation.status === "tentative"
+                ? 1
+                : 0,
+            totalAttended: reservation.attended ? 1 : 0,
             byRole: {
               leader: reservation.roleType === 'leader' ? 1 : 0,
               follower: reservation.roleType === 'follower' ? 1 : 0,
@@ -664,44 +730,9 @@ export function useAcademyMetrics(academyId: string | number | undefined, filter
         }
       });
 
-      // Métricas de compras (status = 'pagado')
-      try {
-        const { data: purchaseRows, error: purchaseError } = await supabase
-          .from("clase_asistencias")
-          .select("class_id, fecha_especifica, created_at")
-          .eq("academy_id", academyIdNum!)
-          .eq("status", "pagado");
-
-        if (!purchaseError) {
-          const purchasesBySessionKey = new Map<string, number>();
-          (purchaseRows || []).forEach((row: any) => {
-            const classId = row.class_id as number;
-            if (!classId) return;
-            if (!global.globalRpcLoaded) {
-              global.totalPurchases += 1;
-            }
-            const fechaKey = row.fecha_especifica ? String(row.fecha_especifica) : 'sin-fecha';
-            const sessionPrefix = `${classId}|${fechaKey}|`;
-            // Sumamos por prefix para cubrir claves legacy con día/hora en memoria.
-            purchasesBySessionKey.set(sessionPrefix, (purchasesBySessionKey.get(sessionPrefix) || 0) + 1);
-          });
-
-          // Asignar compras a cada resumen de clase
-          byClassMap.forEach((summary) => {
-            const fechaKey = summary.classDate ? String(summary.classDate) : 'sin-fecha';
-            const prefix = `${summary.classId}|${fechaKey}|`;
-            let count = purchasesBySessionKey.get(prefix) || 0;
-            if (!count && fechaKey === 'sin-fecha') {
-              // Fallback para datos viejos sin fecha_especifica.
-              count = Array.from(purchasesBySessionKey.entries())
-                .filter(([k]) => k.startsWith(`${summary.classId}|`))
-                .reduce((acc, [, n]) => acc + n, 0);
-            }
-            summary.totalPurchases = count;
-          });
-        }
-      } catch {
-      }
+      byClassMap.forEach((summary) => {
+        summary.totalPurchases = summary.reservations.filter((r) => r.paid).length;
+      });
       
       // Post-procesamiento: asegurar que todas las clases tengan classDate si alguna reserva tiene fecha
       byClassMap.forEach((classSummary) => {

@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 export type DateFilter = "today" | "this_week" | "this_month" | "all" | "custom";
 export type StudentSegment = "all" | "active" | "new" | "recurrent" | "with_history";
 export type StudentRoleFilter = "all" | "leader" | "follower" | "ambos" | "otro";
+export type StudentHistoryPaymentType = "class" | "package" | "other";
 
 export interface StudentsFilters {
   dateFilter: DateFilter;
@@ -70,6 +71,9 @@ export interface StudentHistoryItem {
   teacherId: number | null;
   teacherName: string | null;
   createdAt: string;
+  attended: boolean;
+  paid: boolean;
+  paymentType: StudentHistoryPaymentType | null;
 }
 
 export interface StudentClassBreakdownItem {
@@ -127,6 +131,35 @@ function parseAcademyId(academyId: string | number | undefined): number | null {
   const n = typeof academyId === "string" ? Number(academyId.trim()) : academyId;
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.floor(n);
+}
+
+export function mapHistoryItem(h: any): StudentHistoryItem {
+  const st = String(h?.status ?? "");
+  const attended =
+    typeof h?.attended === "boolean" ? h.attended : st === "attended" || st === "asistio" || st === "asistió";
+  const paid = typeof h?.paid === "boolean" ? h.paid : st === "pagado";
+  let paymentType: StudentHistoryPaymentType | null = null;
+  if (paid) {
+    const t = h?.payment_type;
+    if (t === "class" || t === "package" || t === "other") paymentType = t;
+    else paymentType = "class";
+  }
+  return {
+    id: toNum(h.id),
+    classId: toNum(h.class_id),
+    className: String(h.class_name ?? "Clase"),
+    sessionDate: h.session_date ? String(h.session_date) : null,
+    hour: h.hora ? String(h.hora) : null,
+    status: st || "unknown",
+    role: String(h.role ?? "otro"),
+    zone: h.zone ? String(h.zone) : null,
+    teacherId: h.teacher_id != null && h.teacher_id !== undefined ? toNum(h.teacher_id) : null,
+    teacherName: h.teacher_name ? String(h.teacher_name) : null,
+    createdAt: String(h.created_at),
+    attended,
+    paid,
+    paymentType,
+  };
 }
 
 function toRecord(value: unknown): Record<string, number> {
@@ -349,23 +382,11 @@ export function useAcademyStudentDetail(
           className: String(c.class_name ?? "Clase"),
           records: toNum(c.records),
           tentative: toNum(c.tentative),
-          attended: toNum(c.attended),
+          attended: c.attended !== undefined && c.attended !== null ? toNum(c.attended) : 0,
           paid: toNum(c.paid),
           lastActivityAt: c.last_activity_at ? String(c.last_activity_at) : null,
         })),
-        history: history.map((h: any) => ({
-          id: toNum(h.id),
-          classId: toNum(h.class_id),
-          className: String(h.class_name ?? "Clase"),
-          sessionDate: h.session_date ? String(h.session_date) : null,
-          hour: h.hora ? String(h.hora) : null,
-          status: String(h.status ?? "unknown"),
-          role: String(h.role ?? "otro"),
-          zone: h.zone ? String(h.zone) : null,
-          teacherId: h.teacher_id !== null && h.teacher_id !== undefined ? toNum(h.teacher_id) : null,
-          teacherName: h.teacher_name ? String(h.teacher_name) : null,
-          createdAt: String(h.created_at),
-        })),
+        history: history.map((h: any) => mapHistoryItem(h)),
       };
     },
     staleTime: 0,
