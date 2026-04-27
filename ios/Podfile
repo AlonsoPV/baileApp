@@ -212,6 +212,9 @@ target 'DondeBailarMX' do
         # Ensure we use C++20 consistently (some pods override the dialect).
         flags.reject! { |f| f.start_with?('-std=') } if flags.respond_to?(:reject!)
         flags << '-std=c++20'
+        # fmt 11 + C++20 can enable consteval format-string checks that fail in Xcode
+        # with "Call to consteval function ... is not a constant expression".
+        flags << '-DFMT_USE_CONSTEVAL=0' unless flags.include?('-DFMT_USE_CONSTEVAL=0')
         config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags
       end
     end
@@ -239,6 +242,7 @@ target 'DondeBailarMX' do
             flags = [flags] if flags.is_a?(String)
             flags.reject! { |f| f.start_with?('-std=') } if flags.respond_to?(:reject!)
             flags << '-std=c++20'
+            flags << '-DFMT_USE_CONSTEVAL=0' unless flags.include?('-DFMT_USE_CONSTEVAL=0')
             config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags
           end
         end
