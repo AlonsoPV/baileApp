@@ -216,6 +216,10 @@ target 'DondeBailarMX' do
         # with "Call to consteval function ... is not a constant expression".
         flags << '-DFMT_USE_CONSTEVAL=0' unless flags.include?('-DFMT_USE_CONSTEVAL=0')
         config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags
+        definitions = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
+        definitions = [definitions] if definitions.is_a?(String)
+        definitions << 'FMT_USE_CONSTEVAL=0' unless definitions.include?('FMT_USE_CONSTEVAL=0')
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = definitions
       end
     end
 
@@ -244,6 +248,10 @@ target 'DondeBailarMX' do
             flags << '-std=c++20'
             flags << '-DFMT_USE_CONSTEVAL=0' unless flags.include?('-DFMT_USE_CONSTEVAL=0')
             config.build_settings['OTHER_CPLUSPLUSFLAGS'] = flags
+            definitions = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
+            definitions = [definitions] if definitions.is_a?(String)
+            definitions << 'FMT_USE_CONSTEVAL=0' unless definitions.include?('FMT_USE_CONSTEVAL=0')
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = definitions
           end
         end
         user_project.save
