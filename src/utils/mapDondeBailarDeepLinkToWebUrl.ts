@@ -64,30 +64,34 @@ export function isSameWebDestination(
 }
 
 export function parseDondeBailarDeepLink(incomingUrl: string): ParsedDondeBailarDeepLink | null {
-  try {
-    const u = new URL(incomingUrl);
-    if (u.protocol !== "dondebailarmx:") return null;
+  const SCHEME = "dondebailarmx://";
+  if (!incomingUrl || !incomingUrl.startsWith(SCHEME)) return null;
 
-    const hostname = (u.hostname || u.host || "").toLowerCase();
-    const pathParts = (u.pathname || "")
-      .split("/")
-      .filter(Boolean)
-      .map(safeDecodePathSegment);
-    const entity = hostname || String(pathParts.shift() || "").toLowerCase();
-    if (!entity) return null;
+  const restWithHash = incomingUrl.slice(SCHEME.length);
+  const hashIndex = restWithHash.indexOf("#");
+  const beforeHash = hashIndex >= 0 ? restWithHash.slice(0, hashIndex) : restWithHash;
+  const hash = hashIndex >= 0 ? restWithHash.slice(hashIndex) : "";
+  const queryIndex = beforeHash.indexOf("?");
+  const pathPart = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash;
+  const search = queryIndex >= 0 ? beforeHash.slice(queryIndex) : "";
 
-    return {
-      protocol: u.protocol,
-      hostname,
-      pathname: u.pathname || "",
-      search: u.search || "",
-      hash: u.hash || "",
-      entity,
-      parts: pathParts,
-    };
-  } catch {
-    return null;
-  }
+  const hasPathOnlyAuthority = pathPart.startsWith("/");
+  const rawSegments = pathPart.split("/").filter(Boolean);
+  const hostname = hasPathOnlyAuthority ? "" : String(rawSegments.shift() || "").toLowerCase();
+  const entity = hostname || String(rawSegments.shift() || "").toLowerCase();
+  if (!entity) return null;
+
+  const pathname = hasPathOnlyAuthority ? pathPart : rawSegments.length ? `/${rawSegments.join("/")}` : "";
+
+  return {
+    protocol: "dondebailarmx:",
+    hostname,
+    pathname,
+    search,
+    hash,
+    entity,
+    parts: rawSegments.map(safeDecodePathSegment),
+  };
 }
 
 /**
@@ -130,13 +134,17 @@ export function mapDondeBailarDeepLinkToWebUrl(
         return `${base}/explore${search || "?when=todos"}${hash}`;
       }
       if (entity === "maestro") {
-        return `${base}/explore?type=maestros&when=todos${hash}`;
+        const id = parts[0];
+        return id ? `${base}/maestro/${id}${search}${hash}` : null;
       }
       if (entity === "organizer") {
-        return `${base}/explore?type=organizadores&when=todos${hash}`;
+        const id = parts[0];
+        return id ? `${base}/organizer/${id}${search}${hash}` : null;
       }
       if (entity === "u") {
-        return `${base}/explore?type=usuarios&when=todos${hash}`;
+        const idDecoded = parts[0];
+        if (!idDecoded) return null;
+        return `${base}/u/${encodeURIComponent(idDecoded)}${search}${hash}`;
       }
       if (entity === "marca") {
         const id = parts[0];

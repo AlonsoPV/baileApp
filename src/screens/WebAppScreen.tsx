@@ -669,6 +669,7 @@ export default function WebAppScreen() {
     }
 
     const mapped = mapDondeBailarDeepLinkToWebUrl(incomingUrl, WEB_APP_URL);
+    console.log("[deeplink] mapped a:", mapped);
     if (mapped) {
       const mappedUrl = incomingUrl.startsWith("dondebailarmx://")
         ? withDeepLinkDocumentCacheBust(mapped)
@@ -677,6 +678,7 @@ export default function WebAppScreen() {
       logWebAppLinking("map_success", { incomingUrl, mappedUrl });
       return mappedUrl;
     }
+    console.warn("[deeplink] mapping devolvió null — no se pudo mapear");
     console.warn("[DEEPLINK_UNSUPPORTED]", { rawUrl: incomingUrl });
     console.warn("[WebAppScreen] Unmapped incoming URL:", incomingUrl);
     logWebAppLinking("map_rejected", { incomingUrl, reason: "unmapped" });
@@ -695,6 +697,7 @@ export default function WebAppScreen() {
 
   const handleIncomingUrl = React.useCallback(
     (incomingUrl: string) => {
+      console.log("[deeplink] recibido:", JSON.stringify(incomingUrl));
       console.log("[DEEPLINK_RECEIVED]", { rawUrl: incomingUrl });
       logWebAppLinking("incoming_url", { incomingUrl });
       const webUrl = mapIncomingUrlToWebUrl(incomingUrl);

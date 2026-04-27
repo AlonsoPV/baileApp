@@ -27,9 +27,6 @@ export interface ShareUrlOpts {
 }
 
 const OPEN_BASE = `${SEO_BASE_URL}/open`;
-const EXPLORE_MAESTROS_URL = `${SEO_BASE_URL}/explore?type=maestros&when=todos`;
-const EXPLORE_USUARIOS_URL = `${SEO_BASE_URL}/explore?type=usuarios&when=todos`;
-const EXPLORE_ORGANIZADORES_URL = `${SEO_BASE_URL}/explore?type=organizadores&when=todos`;
 
 function appendClassQuery(path: string, opts?: ShareUrlOpts): string {
   const params = new URLSearchParams();
@@ -78,9 +75,9 @@ export function buildCanonicalUrl(
     return appendClassQuery(path, opts);
   }
   if (entityType === "academia") return `${SEO_BASE_URL}/academia/${id}`;
-  if (entityType === "maestro") return EXPLORE_MAESTROS_URL;
-  if (entityType === "organizer") return EXPLORE_ORGANIZADORES_URL;
-  if (entityType === "user") return EXPLORE_USUARIOS_URL;
+  if (entityType === "maestro") return `${SEO_BASE_URL}/maestro/${id}`;
+  if (entityType === "organizer") return `${SEO_BASE_URL}/organizer/${id}`;
+  if (entityType === "user") return `${SEO_BASE_URL}/u/${encodeURIComponent(id)}`;
   if (entityType === "marca") return `${SEO_BASE_URL}/marca/${id}`;
   return `${SEO_BASE_URL}/social/fecha/${id}`;
 }
@@ -101,9 +98,9 @@ export function buildDeepLink(
     return appendClassQuery(path, opts);
   }
   if (entityType === "academia") return `${DEEP_LINK_SCHEME}://academia/${id}`;
-  if (entityType === "maestro") return `${DEEP_LINK_SCHEME}://explore?type=maestros&when=todos`;
-  if (entityType === "organizer") return `${DEEP_LINK_SCHEME}://explore?type=organizadores&when=todos`;
-  if (entityType === "user") return `${DEEP_LINK_SCHEME}://explore?type=usuarios&when=todos`;
+  if (entityType === "maestro") return `${DEEP_LINK_SCHEME}://maestro/${id}`;
+  if (entityType === "organizer") return `${DEEP_LINK_SCHEME}://organizer/${id}`;
+  if (entityType === "user") return `${DEEP_LINK_SCHEME}://u/${encodeURIComponent(id)}`;
   if (entityType === "marca") return `${DEEP_LINK_SCHEME}://marca/${id}`;
   return `${DEEP_LINK_SCHEME}://evento/${id}`;
 }

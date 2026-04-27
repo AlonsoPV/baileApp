@@ -136,9 +136,9 @@ function buildCanonicalUrl(entityType: ShareEntityType, id: string, opts?: Share
     return appendClassQuery(path, opts);
   }
   if (entityType === "academia") return `${base}/academia/${id}`;
-  if (entityType === "maestro") return `${base}/explore?type=maestros&when=todos`;
-  if (entityType === "organizer") return `${base}/explore?type=organizadores&when=todos`;
-  if (entityType === "user") return `${base}/explore?type=usuarios&when=todos`;
+  if (entityType === "maestro") return `${base}/maestro/${id}`;
+  if (entityType === "organizer") return `${base}/organizer/${id}`;
+  if (entityType === "user") return `${base}/u/${encodeURIComponent(id)}`;
   if (entityType === "marca") return `${base}/marca/${id}`;
   return `${base}/social/fecha/${id}`;
 }
@@ -152,9 +152,9 @@ function buildDeepLink(entityType: ShareEntityType, id: string, opts?: ShareUrlO
     return appendClassQuery(path, opts);
   }
   if (entityType === "academia") return `${scheme}://academia/${id}`;
-  if (entityType === "maestro") return `${scheme}://explore?type=maestros&when=todos`;
-  if (entityType === "organizer") return `${scheme}://explore?type=organizadores&when=todos`;
-  if (entityType === "user") return `${scheme}://explore?type=usuarios&when=todos`;
+  if (entityType === "maestro") return `${scheme}://maestro/${id}`;
+  if (entityType === "organizer") return `${scheme}://organizer/${id}`;
+  if (entityType === "user") return `${scheme}://u/${encodeURIComponent(id)}`;
   if (entityType === "marca") return `${scheme}://marca/${id}`;
   return `${scheme}://evento/${id}`;
 }
