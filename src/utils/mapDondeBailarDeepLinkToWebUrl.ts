@@ -27,6 +27,26 @@ function normalizeBase(base: string): string {
   return String(base || "").replace(/\/+$/, "");
 }
 
+function mapEventoDeepLinkToWebUrl(incomingUrl: string, base: string): string | null {
+  const raw = String(incomingUrl || "").trim();
+  const prefix = "dondebailarmx:";
+  if (!raw.toLowerCase().startsWith(prefix)) return null;
+
+  const restWithHash = raw.slice(prefix.length).replace(/^\/+/, "");
+  const hashIndex = restWithHash.indexOf("#");
+  const beforeHash = hashIndex >= 0 ? restWithHash.slice(0, hashIndex) : restWithHash;
+  const hash = hashIndex >= 0 ? restWithHash.slice(hashIndex) : "";
+  const queryIndex = beforeHash.indexOf("?");
+  const pathPart = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash;
+  const search = queryIndex >= 0 ? beforeHash.slice(queryIndex) : "";
+  const segments = pathPart.split("/").filter(Boolean);
+
+  if (String(segments[0] || "").toLowerCase() !== "evento") return null;
+  const id = safeDecodePathSegment(String(segments[1] || ""));
+  if (!id) return null;
+  return `${base}/social/fecha/${id}${search}${hash}`;
+}
+
 /** Decodifica un segmento de path; si el decode falla, devuelve el original. */
 export function safeDecodePathSegment(segment: string): string {
   if (!segment) return segment;
@@ -106,6 +126,9 @@ export function mapDondeBailarDeepLinkToWebUrl(
   if (!base) return null;
 
   try {
+    const eventUrl = mapEventoDeepLinkToWebUrl(incomingUrl, base);
+    if (eventUrl) return eventUrl;
+
     if (incomingUrl.startsWith("dondebailarmx://")) {
       const parsed = parseDondeBailarDeepLink(incomingUrl);
       if (!parsed) return null;

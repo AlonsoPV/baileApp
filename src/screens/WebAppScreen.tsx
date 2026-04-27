@@ -43,6 +43,7 @@ import {
 // Siempre HTTPS; no cargar http:// en el WebView (evita cleartext/SSL en Android).
 const WEB_APP_URL = "https://dondebailar.com.mx";
 const DEEP_LINK_FALLBACK_WEB_URL = `${WEB_APP_URL}/explore`;
+const EVENT_DEEP_LINK_PATTERN = /^dondebailarmx:\/{0,3}evento\//i;
 const SUPPORTED_DEEP_LINK_ENTITIES = new Set([
   "academia",
   "auth",
@@ -649,7 +650,7 @@ export default function WebAppScreen() {
   );
 
   const mapIncomingUrlToWebUrl = React.useCallback((incomingUrl: string): string | null => {
-    if (incomingUrl.startsWith("dondebailarmx://")) {
+    if (incomingUrl.startsWith("dondebailarmx://") || EVENT_DEEP_LINK_PATTERN.test(incomingUrl)) {
       const parsed = parseDondeBailarDeepLink(incomingUrl);
       if (parsed) {
         console.log("[DEEPLINK_PARSED]", {
@@ -671,7 +672,7 @@ export default function WebAppScreen() {
     const mapped = mapDondeBailarDeepLinkToWebUrl(incomingUrl, WEB_APP_URL);
     console.log("[deeplink] mapped a:", mapped);
     if (mapped) {
-      const mappedUrl = incomingUrl.startsWith("dondebailarmx://")
+      const mappedUrl = incomingUrl.startsWith("dondebailarmx:") || EVENT_DEEP_LINK_PATTERN.test(incomingUrl)
         ? withDeepLinkDocumentCacheBust(mapped)
         : mapped;
       console.log("[DEEPLINK_MAPPED]", { rawUrl: incomingUrl, mappedWebUrl: mappedUrl });
@@ -1846,7 +1847,7 @@ export default function WebAppScreen() {
             const url = request.url;
 
             // Intercept auth deep links so they don't kick user to browser
-            if (url.startsWith("dondebailarmx://")) {
+            if (url.startsWith("dondebailarmx://") || EVENT_DEEP_LINK_PATTERN.test(url)) {
               logWebAppLinking("webview_custom_scheme_intercept", { url });
               handleIncomingUrl(url);
               // Navigation cancelled: make sure we don't leave native loader stuck.

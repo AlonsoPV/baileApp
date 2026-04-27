@@ -34,6 +34,22 @@ describe("smart page / deep link alignment (iOS + Android WebView)", () => {
     expect(new URL(canonicalUrl).pathname).toBe(`/social/fecha/${id}`);
   });
 
+  it("Evento: variantes del scheme nativo no caen a inicio/explore", () => {
+    const expected = `${BASE}/social/fecha/13166`;
+    const cases = [
+      "dondebailarmx://evento/13166",
+      "dondebailarmx:///evento/13166",
+      "dondebailarmx:/evento/13166",
+      "dondebailarmx:evento/13166",
+    ];
+
+    for (const deepLink of cases) {
+      const mapped = mapDondeBailarDeepLinkToWebUrl(deepLink, BASE);
+      expect(mapped, deepLink).toBe(expected);
+      expect(mapped, deepLink).not.toContain("/explore");
+    }
+  });
+
   it("Smart Page organizador: /open/organizer/:id -> deep link -> ruta web interna canónica", () => {
     const id = "56";
     const shareUrl = buildShareUrl("organizer", id);
