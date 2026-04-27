@@ -4,6 +4,46 @@ import type { EventDate } from "../types/events";
 import { perfLog } from "../utils/perfLog";
 import { SELECT_EVENTS_DETAIL } from "@/lib/eventSelects";
 
+function getMexicoTodayYmd(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Mexico_City",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+async function fetchEventDateByParentId(parentId: number): Promise<EventDate | null> {
+  const today = getMexicoTodayYmd();
+  const select = supabase
+    .from("events_date")
+    .select(SELECT_EVENTS_DETAIL)
+    .eq("parent_id", parentId);
+
+  const { data: upcoming, error: upcomingError } = await select
+    .gte("fecha", today)
+    .order("fecha", { ascending: true })
+    .order("hora_inicio", { ascending: true, nullsFirst: false })
+    .order("id", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (upcomingError) throw upcomingError;
+  if (upcoming) return upcoming as EventDate;
+
+  const { data: fallback, error: fallbackError } = await supabase
+    .from("events_date")
+    .select(SELECT_EVENTS_DETAIL)
+    .eq("parent_id", parentId)
+    .order("fecha", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (fallbackError) throw fallbackError;
+  return (fallback as EventDate | null) ?? null;
+}
+
 /**
  * Hook para usar con Suspense
  * 
@@ -46,6 +86,13 @@ export function useEventDateSuspense(dateId: number): EventDate {
       }
       
       if (!data) {
+        // Algunos deep links legacy de evento pueden traer events_parent.id.
+        // Resolverlo aquí evita 404 sin cambiar el mapping de perfiles.
+        const fallbackDate = await fetchEventDateByParentId(dateId);
+        if (fallbackDate) {
+          return fallbackDate;
+        }
+
         // En Suspense, null se considera un error (no encontrado)
         throw new Error(`Event date with ID ${dateId} not found`);
       }

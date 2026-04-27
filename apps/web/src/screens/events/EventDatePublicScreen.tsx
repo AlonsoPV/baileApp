@@ -111,7 +111,7 @@ export default function EventDatePublicScreen() {
   return (
     <QueryErrorBoundaryWithReset>
       <Suspense fallback={<EventDateSkeleton />}>
-        <EventDateContent dateId={dateIdNum} dateIdParam={dateIdParam} />
+        <EventDateContent dateId={dateIdNum} />
       </Suspense>
     </QueryErrorBoundaryWithReset>
   );
@@ -121,7 +121,7 @@ export default function EventDatePublicScreen() {
  * Content component using Suspense.
  * Assumes data is available (Suspense handles loading).
  */
-function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam: string | undefined }) {
+function EventDateContent({ dateId }: { dateId: number }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -132,7 +132,13 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   
   // With Suspense, date always exists when this renders
   const date = useEventDateSuspense(dateId);
+  const resolvedDateId = Number((date as any)?.id || dateId);
   const displayYmd = React.useMemo(() => resolveEventDateYmd(date), [date]);
+
+  React.useEffect(() => {
+    if (!Number.isFinite(resolvedDateId) || resolvedDateId === dateId) return;
+    navigate(`/social/fecha/${resolvedDateId}${location.search || ""}`, { replace: true });
+  }, [dateId, location.search, navigate, resolvedDateId]);
 
   // ✅ Recurring template (dia_semana, no fecha): materialize occurrences and redirect
   // to the next real future occurrence so we navigate with a real events_date.id.
@@ -163,7 +169,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
         if (cancelled) return;
         if (Array.isArray(nextRows) && nextRows[0]?.id) {
           const nextId = Number((nextRows[0] as any).id);
-          if (Number.isFinite(nextId) && nextId !== dateId) {
+          if (Number.isFinite(nextId) && nextId !== resolvedDateId) {
             navigate(`/social/fecha/${nextId}`, { replace: true });
           }
         }
@@ -175,7 +181,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     return () => {
       cancelled = true;
     };
-  }, [date?.parent_id, (date as any)?.organizer_id, (date as any)?.dia_semana, (date as any)?.fecha, (date as any)?.fecha_inicio, dateId, navigate]);
+  }, [date?.parent_id, (date as any)?.organizer_id, (date as any)?.dia_semana, (date as any)?.fecha, (date as any)?.fecha_inicio, resolvedDateId, navigate]);
   
   // Optional queries (not using Suspense)
   const { data: parent } = useEventParent(date?.parent_id ?? undefined);
@@ -229,17 +235,17 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     }
   }, []);
 
-  const [guestRsvpStatus, setGuestRsvpStatus] = React.useState<RSVPStatus | null>(() => readGuestRsvp(dateId));
+  const [guestRsvpStatus, setGuestRsvpStatus] = React.useState<RSVPStatus | null>(() => readGuestRsvp(resolvedDateId));
   React.useEffect(() => {
-    setGuestRsvpStatus(readGuestRsvp(dateId));
-  }, [dateId, readGuestRsvp]);
+    setGuestRsvpStatus(readGuestRsvp(resolvedDateId));
+  }, [resolvedDateId, readGuestRsvp]);
 
   const {
     userStatus,
     stats,
     setStatus,
     isUpdating,
-  } = useEventRSVP(dateId);
+  } = useEventRSVP(resolvedDateId);
 
   const canMutateRsvpBackend = !!user;
 
@@ -259,11 +265,11 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       ? 'active'
       : 'idle';
 
-  const favoriteActive = user ? isEventFavorite(dateId) : guestFavorites.isEventFavorite(dateId);
+  const favoriteActive = user ? isEventFavorite(resolvedDateId) : guestFavorites.isEventFavorite(resolvedDateId);
   const onToggleFavorite = React.useCallback(async () => {
     if (!user) {
       try {
-        const next = guestFavorites.toggleEventFavorite(dateId);
+        const next = guestFavorites.toggleEventFavorite(resolvedDateId);
         showToast(
           next ? t("added_to_favorites", "Added to favorites") : t("removed_from_favorites", "Removed from favorites"),
           "success"
@@ -274,20 +280,20 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
       return;
     }
     try {
-      const next = await toggleEventFavorite(dateId);
+      const next = await toggleEventFavorite(resolvedDateId);
       showToast(next ? t("added_to_favorites", "Added to favorites") : t("removed_from_favorites", "Removed from favorites"), "success");
     } catch {
       showToast(t("action_failed", "Could not complete the action"), "error");
     }
-  }, [user, guestFavorites, toggleEventFavorite, dateId, showToast, t]);
+  }, [user, guestFavorites, toggleEventFavorite, resolvedDateId, showToast, t]);
 
   const handleStatusChange = React.useCallback(
     (s: RSVPStatus | null) => {
       if (isUpdating) return;
       if (!canMutateRsvpBackend) {
         try {
-          if (s === null) localStorage.removeItem(GUEST_RSVP_KEY(dateId));
-          else localStorage.setItem(GUEST_RSVP_KEY(dateId), s);
+          if (s === null) localStorage.removeItem(GUEST_RSVP_KEY(resolvedDateId));
+          else localStorage.setItem(GUEST_RSVP_KEY(resolvedDateId), s);
         } catch {
           // ignore
         }
@@ -315,7 +321,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
           }
         });
     },
-    [dateId, canMutateRsvpBackend, effectiveStatus, isUpdating, setStatus, showToast, t]
+    [resolvedDateId, canMutateRsvpBackend, effectiveStatus, isUpdating, setStatus, showToast, t]
   );
 
   // Interested count (RPC get_event_rsvp_stats: { interesado, total }) — disabled for now
@@ -373,7 +379,7 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
   const aboutSectionBody = React.useMemo(() => getEventDateAboutSectionBody(date), [date]);
   const calendarButton = (
     <AddToCalendarWithStats
-      eventId={dateId}
+      eventId={resolvedDateId}
       title={dateName}
       description={aboutText || undefined}
       location={date.lugar || date.ciudad}
@@ -476,8 +482,8 @@ function EventDateContent({ dateId, dateIdParam }: { dateId: number; dateIdParam
     getMediaBySlot(parentMedia, 'p1')?.url ||
     SEO_LOGO_URL;
   const seoImage = seoImageRaw === SEO_LOGO_URL ? SEO_LOGO_URL : (toDirectPublicStorageUrl(seoImageRaw) || seoImageRaw);
-  const dateUrl = `${SEO_BASE_URL}/social/fecha/${dateIdParam ?? date.id}`;
-  const shareUrl = buildShareUrl("evento", String(dateIdParam ?? date.id));
+  const dateUrl = `${SEO_BASE_URL}/social/fecha/${resolvedDateId}`;
+  const shareUrl = buildShareUrl("evento", String(resolvedDateId));
 
   const handleBack = React.useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
